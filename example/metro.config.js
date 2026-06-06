@@ -13,6 +13,7 @@ if (!util.styleText) {
 
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const exclusionList = require('metro-config/src/defaults/exclusionList');
 
 const root = path.resolve(__dirname, '..');
 
@@ -25,11 +26,13 @@ const root = path.resolve(__dirname, '..');
 const config = {
   watchFolders: [root],
   resolver: {
+    blockList: exclusionList([
+      new RegExp(path.resolve(root, 'node_modules') + '/.*'),
+    ]),
     nodeModulesPaths: [
       path.resolve(__dirname, 'node_modules'),
-      path.resolve(root, 'node_modules'),
     ],
-    // Force all modules to resolve to the example app's node_modules to avoid duplicates
+    // Force all modules to resolve to the example project's node_modules to avoid duplicates
     extraNodeModules: new Proxy(
       {},
       {
