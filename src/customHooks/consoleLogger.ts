@@ -122,7 +122,7 @@ export const clearConsoleLogs = () => {
 export const getConsoleLogs = () => [...logs];
 
 export const setupConsoleLogger = () => {
-  if ((global as any).__CONSOLE_LOGGER_INITIALIZED__) return;
+  if ((globalThis as any).__CONSOLE_LOGGER_INITIALIZED__) return;
 
   const originalConsole = {
     log: console.log,
@@ -155,5 +155,5 @@ export const setupConsoleLogger = () => {
     originalConsole.error(...args);
   };
 
-  (global as any).__CONSOLE_LOGGER_INITIALIZED__ = true;
+  (globalThis as any).__CONSOLE_LOGGER_INITIALIZED__ = true;
 };

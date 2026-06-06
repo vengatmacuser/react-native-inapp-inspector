@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import Svg, {Circle, Path} from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
-import {useNavigationState} from '@react-navigation/native';
+import {useNavigationState, NavigationContext} from '@react-navigation/native';
 
 // Components
 import TouchableScale from './components/TouchableScale';
@@ -132,6 +132,18 @@ import {
 } from './types';
 import {METHOD_COLORS, STATUS_FILTERS} from './constants';
 
+interface NavigationTrackerProps {
+  onStateChange: (state: any) => void;
+}
+
+const NavigationTracker = ({onStateChange}: NavigationTrackerProps): null => {
+  const navState = useNavigationState(state => state);
+  useEffect(() => {
+    onStateChange(navState);
+  }, [navState, onStateChange]);
+  return null;
+};
+
 const NetworkInspector = (): React.JSX.Element => {
   const [logs, setLogs] = useState<NetworkLog[]>([]);
   const [visible, setVisible] = useState(false);
@@ -230,14 +242,18 @@ const NetworkInspector = (): React.JSX.Element => {
   const [newEventIds, setNewEventIds] = useState<Set<number>>(new Set());
   const prevEventIdsRef = useRef<Set<number>>(new Set());
 
-  const navState = useNavigationState(state => state);
+  const [navState, setNavState] = useState<any>(null);
+  const navigationContext = React.useContext(NavigationContext);
+  const hasNavigationContext = navigationContext !== undefined;
 
   const currentRouteRef = useRef<RouteInfo>({
     path: 'Navigators',
     params: null,
   });
   useEffect(() => {
-    currentRouteRef.current = getNavigationInfo(navState);
+    if (navState) {
+      currentRouteRef.current = getNavigationInfo(navState);
+    }
   }, [navState]);
 
   const logRouteMapRef = useRef<Map<number, RouteInfo>>(new Map());
@@ -1043,6 +1059,9 @@ const NetworkInspector = (): React.JSX.Element => {
 
   return (
     <>
+      {hasNavigationContext && (
+        <NavigationTracker onStateChange={setNavState} />
+      )}
       <TouchableScale
         style={styles.fabWrapper}
         onPress={() => setVisible(true)}
@@ -2853,7 +2872,7 @@ const NetworkInspector = (): React.JSX.Element => {
                           .map(f => {
                             if (f === 'user-log') return 'User Log';
                             if (f === 'analytics') return 'Analytics';
-                            return f.charAt(0).toUpperCase() + f.slice(1);
+                            return (f as string).charAt(0).toUpperCase() + (f as string).slice(1);
                           });
                         return (
                           <Text

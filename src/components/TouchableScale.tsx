@@ -10,7 +10,7 @@ const TouchableScale = ({
 }: {
   onPress?: () => void;
   style?: any;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   hitSlop?: any;
   disabled?: boolean;
 }) => {

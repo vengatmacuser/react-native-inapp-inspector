@@ -149,13 +149,13 @@ const addOrUpdateLog = (log: NetworkLog) => {
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 export const setupNetworkLogger = () => {
-  if ((global as any).__NETWORK_LOGGER_INITIALIZED__) return;
-  (global as any).__NETWORK_LOGGER__ = addOrUpdateLog;
+  if ((globalThis as any).__NETWORK_LOGGER_INITIALIZED__) return;
+  (globalThis as any).__NETWORK_LOGGER__ = addOrUpdateLog;
 
-  const originalFetch = global.fetch;
+  const originalFetch = (globalThis as any).fetch;
 
   if (originalFetch) {
-    global.fetch = async (url: any, options: any = {}) => {
+    (globalThis as any).fetch = async (url: any, options: any = {}) => {
       const method = (options?.method || 'GET').toUpperCase();
       if (!ALLOWED_METHODS.includes(method)) return originalFetch(url, options);
 
@@ -228,7 +228,7 @@ export const setupNetworkLogger = () => {
     };
   }
 
-  (global as any).__NETWORK_LOGGER_INITIALIZED__ = true;
+  (globalThis as any).__NETWORK_LOGGER_INITIALIZED__ = true;
 };
 
 // ─── Axios interceptor helper ─────────────────────────────────────────────────

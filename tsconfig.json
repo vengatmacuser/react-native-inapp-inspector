@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2020",
     "module": "commonjs",
-    "lib": ["es2020"],
+    "lib": ["es2020", "dom"],
     "allowJs": true,
     "jsx": "react-native",
     "declaration": true,
@@ -11,6 +11,14 @@
     "strict": false,
     "strictNullChecks": false,
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["./example/node_modules/*"]
+    },
+    "typeRoots": [
+      "./example/node_modules/@types"
+    ],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
