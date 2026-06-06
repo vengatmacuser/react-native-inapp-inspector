@@ -10,7 +10,9 @@
     "rootDir": "./src",
     "strict": false,
     "strictNullChecks": false,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "5.0",
+    "baseUrl": ".",
     "paths": {
       "*": ["./example/node_modules/*"]
     },
