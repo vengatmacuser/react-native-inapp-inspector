@@ -23,3 +23,9 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Backups and temporary files
+node_modules_backup/
+.eslintcache
+coverage/
+.npmrc
