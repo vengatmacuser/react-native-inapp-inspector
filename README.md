@@ -92,6 +92,14 @@ subscribeAnalyticsEvents((events) => {
 
 ---
 
+## Support
+
+If you find this project useful, consider sponsoring its development on GitHub Sponsors:
+
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-@vengatmacuser-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/vengatmacuser)
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
