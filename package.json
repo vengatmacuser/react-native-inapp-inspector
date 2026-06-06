@@ -47,6 +47,10 @@
     }
   ],
   "license": "MIT",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/vengatmacuser"
+  },
   "peerDependencies": {
     "@react-navigation/native": ">=6.0.0",
     "react": ">=18.0.0",
