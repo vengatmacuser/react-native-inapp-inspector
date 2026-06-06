@@ -18,6 +18,7 @@ import {
   ActivityIndicator,
   StatusBar,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import Svg, {Circle, Path} from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
@@ -2954,7 +2955,6 @@ const NetworkInspector = (): React.JSX.Element => {
               ) : activeTab === 'redux' ? (
                 renderReduxTab()
               ) : (
-              ) : (
                 <View style={{ flex: 1 }}>
                   {/* Non-scrollable details header */}
                   <View style={{ paddingHorizontal: 6, paddingTop: 4 }}>
@@ -3382,7 +3382,6 @@ const NetworkInspector = (): React.JSX.Element => {
                     )}
                   </ScrollView>
                 </View>
-              )
               )
             ) : (
               <View style={styles.empty}>
