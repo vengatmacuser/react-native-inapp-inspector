@@ -20,7 +20,8 @@ const CopyButton = ({value, label, iconType = 'copy'}: CopyButtonProps) => {
   const [copied, setCopied] = useState<boolean>(false);
 
   const handlePress = () => {
-    copyToClipboard(value, label);
+    const resolvedValue = typeof value === 'function' ? (value as Function)() : value;
+    copyToClipboard(resolvedValue, label);
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
   };

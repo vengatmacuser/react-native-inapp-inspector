@@ -233,8 +233,8 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
 
 const cardStyles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
   },
   gapContainer: {
     alignItems: 'center',
@@ -251,7 +251,7 @@ const cardStyles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#EFEFEF',
-    padding: 12,
+    padding: 8,
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 3,
@@ -263,11 +263,11 @@ const cardStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   nameBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
     borderRadius: 6,
     borderWidth: 1,
   },
@@ -302,8 +302,8 @@ const cardStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: AppColors.grayBackground,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
     borderColor: AppColors.grayBorderSecondary,
@@ -323,8 +323,8 @@ const cardStyles = StyleSheet.create({
     backgroundColor: '#FFE4E6',
     borderColor: '#FCC2D7',
     borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
     borderRadius: 4,
   },
   duplicateText: {

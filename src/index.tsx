@@ -17,6 +17,7 @@ import {
   InteractionManager,
   ActivityIndicator,
   StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import Svg, {Circle, Path} from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
@@ -64,7 +65,7 @@ import {
   ClearIcon,
   SortArrowIcon,
   FilterIcon,
-  MapPinIcon,
+  InsightsIcon,
   GlobeIcon,
   DownloadIcon,
   ExpandCollapseIcon,
@@ -72,12 +73,20 @@ import {
   CloseWhite,
   TrashIcon,
   WhiteBackNavigation,
+  TerminalIcon,
+  SignalIcon,
+  AnalyticsIcon,
+  SunIcon,
+  MoonIcon,
+  DebugIcon,
 } from './components/NetworkIcons';
+
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Stylesheet
 import {AppColors} from './styles/AppColors';
 import {AppFonts} from './styles/AppFonts';
-import styles from './styles';
+import styles, { toggleGlobalTheme } from './styles';
 
 // Network
 import {
@@ -117,6 +126,11 @@ import {
   subscribeWebView,
 } from './customHooks/webViewLogger';
 
+import {
+  getReduxState,
+  subscribeReduxState,
+} from './customHooks/reduxLogger';
+
 // Constants
 import {
   StatusFilter,
@@ -145,6 +159,9 @@ const NavigationTracker = ({onStateChange}: NavigationTrackerProps): null => {
 };
 
 const NetworkInspector = (): React.JSX.Element => {
+  const [isDark, setIsDark] = useState(false);
+  const [reduxState, setReduxState] = useState<any>(null);
+  const [expandedReducers, setExpandedReducers] = useState<Record<string, boolean>>({});
   const [logs, setLogs] = useState<NetworkLog[]>([]);
   const [visible, setVisible] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -152,6 +169,15 @@ const NetworkInspector = (): React.JSX.Element => {
   const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState('');
   const [detailSearch, setDetailSearch] = useState('');
+  const [reduxSearch, setReduxSearch] = useState('');
+  const [apiDetailActiveTab, setApiDetailActiveTab] = useState<'metadata' | 'headers' | 'request' | 'response'>('metadata');
+
+  useEffect(() => {
+    if (selected) {
+      setApiDetailActiveTab('metadata');
+      setDetailSearch('');
+    }
+  }, [selected]);
   const [statusFilters, setStatusFilters] = useState<Set<StatusFilter>>(
     new Set(),
   );
@@ -215,9 +241,6 @@ const NetworkInspector = (): React.JSX.Element => {
     'html',
   );
   const [webViewSearch, setWebViewSearch] = useState('');
-  const [htmlSearch, setHtmlSearch] = useState('');
-  const [cssSearch, setCssSearch] = useState('');
-  const [jsSearch, setJsSearch] = useState('');
   const [webViewHtml, setWebViewHtml] = useState('');
   const [webViewCss, setWebViewCss] = useState('');
   const [webViewJs, setWebViewJs] = useState('');
@@ -225,6 +248,15 @@ const NetworkInspector = (): React.JSX.Element => {
   const [htmlSubTab, setHtmlSubTab] = useState<'html' | 'css' | 'javascript'>(
     'html',
   );
+  const [isHtmlTabReady, setIsHtmlTabReady] = useState(true);
+
+  useEffect(() => {
+    setIsHtmlTabReady(false);
+    const timer = setTimeout(() => {
+      setIsHtmlTabReady(true);
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [htmlSubTab, webViewSubTab, activeTab]);
 
   const [selectedEvent, setSelectedEvent] = useState<AnalyticsEvent | null>(
     null,
@@ -234,10 +266,6 @@ const NetworkInspector = (): React.JSX.Element => {
   const [analyticsSubTab, setAnalyticsSubTab] = useState<
     'ga_events' | 'top_events'
   >('ga_events');
-  const [groupByScreen, setGroupByScreen] = useState(false);
-  const [expandedScreens, setExpandedScreens] = useState<Set<string>>(
-    new Set(),
-  );
   const [topEventsExpanded, setTopEventsExpanded] = useState(true);
   const [newEventIds, setNewEventIds] = useState<Set<number>>(new Set());
   const prevEventIdsRef = useRef<Set<number>>(new Set());
@@ -400,6 +428,11 @@ const NetworkInspector = (): React.JSX.Element => {
       }, 200);
     });
 
+    setReduxState(getReduxState());
+    const unsubscribeRedux = subscribeReduxState(() => {
+      setReduxState(getReduxState());
+    });
+
     return () => {
       unsubscribe();
       clearTimeout(timeoutId);
@@ -409,6 +442,7 @@ const NetworkInspector = (): React.JSX.Element => {
       clearTimeout(consoleTimeoutId);
       unsubscribeWebView();
       clearTimeout(webViewTimeoutId);
+      unsubscribeRedux();
     };
   }, []);
 
@@ -762,41 +796,6 @@ const NetworkInspector = (): React.JSX.Element => {
     };
   }, [visibleConsoleLogs, logSearch]);
 
-  const groupedAnalyticsEvents = useMemo(() => {
-    if (!groupByScreen) return [];
-    const map = new Map<string, typeof filteredAnalyticsEvents>();
-    for (const e of filteredAnalyticsEvents) {
-      const routeInfo = logRouteMapRef.current.get(e.id + 1000000);
-      let screenName =
-        e.screenName ||
-        e.screenClass ||
-        e.pageTitle ||
-        e.pageLocation ||
-        e.params?.firebase_screen ||
-        e.params?.screen_name ||
-        e.params?.firebase_screen_class ||
-        e.params?.screen_class;
-
-      if (!screenName) {
-        if (routeInfo && routeInfo.path !== 'Navigators') {
-          const parts = routeInfo.path.split(' ➔ ');
-          screenName = parts[parts.length - 1];
-        } else {
-          screenName = 'Unknown Component';
-        }
-      }
-
-      if (!map.has(screenName)) map.set(screenName, []);
-      map.get(screenName)!.push(e);
-    }
-    const sections: {title: string; data: typeof filteredAnalyticsEvents}[] =
-      [];
-    for (const [title, data] of map.entries()) {
-      sections.push({title, data});
-    }
-    return sections;
-  }, [groupByScreen, filteredAnalyticsEvents]);
-
   const topEventsArray = useMemo(() => {
     const freq: Record<string, number> = {};
     filteredAnalyticsEvents.forEach(e => {
@@ -805,62 +804,6 @@ const NetworkInspector = (): React.JSX.Element => {
     });
     return Object.entries(freq).sort((a, b) => b[1] - a[1]);
   }, [filteredAnalyticsEvents]);
-
-  const groupedNetworkLogs = useMemo(() => {
-    if (!groupByScreen) return [];
-    const map = new Map<string, NetworkLog[]>();
-    for (const l of filteredLogs) {
-      const routeInfo = logRouteMapRef.current.get(l.id);
-      let screenName = 'Unknown Origin';
-      if (routeInfo && routeInfo.path !== 'Navigators') {
-        const parts = routeInfo.path.split(' ➔ ');
-        screenName = parts[parts.length - 1];
-      }
-      if (!map.has(screenName)) map.set(screenName, []);
-      map.get(screenName)!.push(l);
-    }
-    const sections: {title: string; data: NetworkLog[]}[] = [];
-    for (const [title, data] of map.entries()) {
-      sections.push({title, data});
-    }
-    return sections;
-  }, [groupByScreen, filteredLogs]);
-
-  const toggleScreenAccordion = useCallback((title: string) => {
-    setExpandedScreens(prev => {
-      const next = new Set(prev);
-      if (next.has(title)) next.delete(title);
-      else next.add(title);
-      return next;
-    });
-  }, []);
-
-  const renderScreenSectionHeader = useCallback(
-    ({section: {title, data}}: {section: {title: string; data: any[]}}) => {
-      const isExpanded = expandedScreens.has(title);
-      return (
-        <Pressable
-          onPress={() => toggleScreenAccordion(title)}
-          style={styles.screenSectionHeader}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-            <View
-              style={{
-                transform: [{rotate: isExpanded ? '180deg' : '0deg'}],
-              }}>
-              <ExpandCollapseIcon
-                color={AppColors.primaryBlack}
-                size={14}
-                isExpanded={false}
-              />
-            </View>
-            <Text style={styles.screenSectionTitle}>{title}</Text>
-          </View>
-          <Text style={styles.screenSectionCount}>{data.length} logs</Text>
-        </Pressable>
-      );
-    },
-    [expandedScreens, toggleScreenAccordion],
-  );
 
   function closeModal() {
     setVisible(false);
@@ -1057,6 +1000,360 @@ const NetworkInspector = (): React.JSX.Element => {
     ],
   );
 
+  const renderInsightsDashboard = () => {
+    const apiTotal = logs.length;
+    const apiErrors = logs.filter(
+      l => (l.status != null && l.status >= 400) || l.status === 0 || l.status == null,
+    ).length;
+    const apiSuccess = apiTotal - apiErrors;
+    const apiSuccessRate = apiTotal > 0 ? Math.round((apiSuccess / apiTotal) * 100) : 100;
+    const durations = logs.filter(l => l.duration != null).map(l => l.duration!);
+    const avgTime = durations.length > 0
+      ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+      : null;
+
+    const logTotal = visibleConsoleLogs.length;
+    const logErrors = visibleConsoleLogs.filter(l => l.type === 'error').length;
+    const logWarns = visibleConsoleLogs.filter(l => l.type === 'warn').length;
+    const logInfos = visibleConsoleLogs.filter(l => l.type === 'info').length;
+
+    const analyticsTotal = analyticsEvents.length;
+    const uniqueEvents = new Set(analyticsEvents.map(e => e.name)).size;
+    const screenViews = analyticsEvents.filter(
+      e => e.name === 'screen_view' || e.name === 'page_view' || e.name === 'firebase_screen_class'
+    ).length;
+
+    const webviewTotal = webViewNavHistory.length;
+
+    return (
+      <View style={styles.dashboardContainer}>
+        {/* Module 1: APIs */}
+        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('apis')}>
+          <View style={styles.dashboardModuleHeader}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <SignalIcon color={AppColors.purple} size={18} />
+              <Text style={styles.dashboardModuleTitle}>APIs & Network</Text>
+            </View>
+            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+          </View>
+          <View style={styles.dashboardModuleGrid}>
+            <View style={styles.dashboardGridItem}>
+              <Text style={styles.dashboardGridVal}>{apiTotal}</Text>
+              <Text style={styles.dashboardGridLbl}>Requests</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={[styles.dashboardGridVal, apiSuccessRate < 90 && {color: AppColors.warningIconGold}]}>
+                {apiSuccessRate}%
+              </Text>
+              <Text style={styles.dashboardGridLbl}>Success Rate</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={[styles.dashboardGridVal, apiErrors > 0 && {color: AppColors.errorColor}]}>
+                {apiErrors}
+              </Text>
+              <Text style={styles.dashboardGridLbl}>Errors</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={styles.dashboardGridVal}>
+                {avgTime != null ? `${avgTime}ms` : '—'}
+              </Text>
+              <Text style={styles.dashboardGridLbl}>Avg Latency</Text>
+            </View>
+          </View>
+        </TouchableScale>
+
+        {/* Module 2: Logs */}
+        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('logs')}>
+          <View style={styles.dashboardModuleHeader}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <TerminalIcon color="#0D9488" size={18} />
+              <Text style={styles.dashboardModuleTitle}>Console Logs</Text>
+            </View>
+            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+          </View>
+          <View style={styles.dashboardModuleGrid}>
+            <View style={styles.dashboardGridItem}>
+              <Text style={styles.dashboardGridVal}>{logTotal}</Text>
+              <Text style={styles.dashboardGridLbl}>Total Logs</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={[styles.dashboardGridVal, {color: '#0D9488'}]}>{logInfos}</Text>
+              <Text style={styles.dashboardGridLbl}>Info</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={[styles.dashboardGridVal, logWarns > 0 && {color: AppColors.warningIconGold}]}>
+                {logWarns}
+              </Text>
+              <Text style={styles.dashboardGridLbl}>Warnings</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={[styles.dashboardGridVal, logErrors > 0 && {color: AppColors.errorColor}]}>
+                {logErrors}
+              </Text>
+              <Text style={styles.dashboardGridLbl}>Errors</Text>
+            </View>
+          </View>
+        </TouchableScale>
+
+        {/* Module 3: Analytics */}
+        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('analytics')}>
+          <View style={styles.dashboardModuleHeader}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <AnalyticsIcon color="#EA580C" size={18} />
+              <Text style={styles.dashboardModuleTitle}>Analytics Events</Text>
+            </View>
+            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+          </View>
+          <View style={styles.dashboardModuleGrid}>
+            <View style={styles.dashboardGridItem}>
+              <Text style={styles.dashboardGridVal}>{analyticsTotal}</Text>
+              <Text style={styles.dashboardGridLbl}>Total Events</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={[styles.dashboardGridVal, {color: '#EA580C'}]}>{uniqueEvents}</Text>
+              <Text style={styles.dashboardGridLbl}>Unique Names</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={styles.dashboardGridVal}>{screenViews}</Text>
+              <Text style={styles.dashboardGridLbl}>Screen Views</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={styles.dashboardGridVal}>
+                {analyticsTotal > 0 ? Math.round(analyticsTotal / Math.max(1, logs.length / 5)) : 0}
+              </Text>
+              <Text style={styles.dashboardGridLbl}>Events Ratio</Text>
+            </View>
+          </View>
+        </TouchableScale>
+
+        {/* Module 4: WebView */}
+        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('webview')}>
+          <View style={styles.dashboardModuleHeader}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <GlobeIcon color="#2563EB" size={18} />
+              <Text style={styles.dashboardModuleTitle}>WebView Captures</Text>
+            </View>
+            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+          </View>
+          <View style={styles.dashboardModuleGrid}>
+            <View style={styles.dashboardGridItem}>
+              <Text style={styles.dashboardGridVal}>{webviewTotal}</Text>
+              <Text style={styles.dashboardGridLbl}>History Size</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text style={[styles.dashboardGridVal, {color: '#16A34A'}]}>Active</Text>
+              <Text style={styles.dashboardGridLbl}>Status</Text>
+            </View>
+            <View style={styles.dashboardGridItem}>
+              <Text numberOfLines={1} style={styles.dashboardGridVal}>
+                {webviewTotal > 0 ? `${webViewNavHistory[0]?.title?.substring(0, 10) ?? ''}...` : '—'}
+              </Text>
+              <Text style={styles.dashboardGridLbl}>Last URL</Text>
+            </View>
+          </View>
+        </TouchableScale>
+
+        {/* Module 5: Redux Store */}
+        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('redux')}>
+          <View style={styles.dashboardModuleHeader}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <TerminalIcon color={AppColors.purple} size={18} />
+              <Text style={styles.dashboardModuleTitle}>Redux Store State</Text>
+            </View>
+            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+          </View>
+          {reduxState ? (
+            <View style={{ paddingHorizontal: 12, paddingBottom: 12, gap: 6 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.5 }}>
+                  REDUCER NAME
+                </Text>
+                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.5 }}>
+                  SIZE / FIELDS
+                </Text>
+              </View>
+              {Object.keys(reduxState).map(key => {
+                const val = reduxState[key];
+                const fieldsCount = typeof val === 'object' && val !== null ? Object.keys(val).length : 0;
+                const sizeStr = getSize(val);
+                return (
+                  <View key={key} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 2 }}>
+                    <Text style={{ fontFamily: AppFonts.interMedium, fontSize: 12, color: AppColors.grayTextStrong }}>
+                      {key}
+                    </Text>
+                    <Text style={{ fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.grayTextWeak }}>
+                      {sizeStr} ({fieldsCount} fields)
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={{ padding: 12, alignItems: 'center' }}>
+              <Text style={{ fontFamily: AppFonts.interRegular, fontSize: 12, color: AppColors.grayTextWeak }}>
+                No connected Redux store.
+              </Text>
+            </View>
+          )}
+        </TouchableScale>
+      </View>
+    );
+  };
+
+  const renderReduxTab = () => {
+    if (!reduxState) {
+      return (
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconWrap}>
+            <TerminalIcon color={AppColors.purple} size={32} />
+          </View>
+          <Text style={styles.emptyTitle}>No Redux Store</Text>
+          <Text style={styles.emptySub}>
+            To inspect Redux store, call connectReduxStore(store) at app start.
+          </Text>
+        </View>
+      );
+    }
+
+    const reducerKeys = Object.keys(reduxState);
+    if (reducerKeys.length === 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyTitle}>Empty Store</Text>
+          <Text style={styles.emptySub}>Connected store state is empty.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <ScrollView style={styles.detailScroll} contentContainerStyle={{ paddingBottom: 24 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            borderBottomWidth: 1,
+            borderBottomColor: AppColors.dividerColor,
+            backgroundColor: AppColors.primaryLight,
+          }}>
+          <Text
+            style={{
+              fontFamily: AppFonts.interBold,
+              color: AppColors.grayTextStrong,
+              fontSize: 12,
+              textTransform: 'uppercase',
+              letterSpacing: 0.6,
+            }}>
+            Redux Store ({reducerKeys.length} Reducers)
+          </Text>
+          <CopyButton value={() => reduxState} label="Overall Store" />
+        </View>
+
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: AppColors.grayBackground,
+          borderRadius: 8,
+          marginHorizontal: 16,
+          marginTop: 12,
+          marginBottom: 8,
+          paddingHorizontal: 10,
+          borderWidth: 1,
+          borderColor: AppColors.dividerColor,
+          height: 36,
+        }}>
+          <TextInput
+            placeholder="Search Redux keys or values..."
+            placeholderTextColor={AppColors.grayTextWeak}
+            value={reduxSearch}
+            onChangeText={setReduxSearch}
+            style={{
+              flex: 1,
+              fontFamily: AppFonts.interRegular,
+              fontSize: 12,
+              color: AppColors.grayTextStrong,
+              padding: 0,
+            }}
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          {reduxSearch.length > 0 && (
+            <Pressable onPress={() => setReduxSearch('')} hitSlop={10}>
+              <ClearIcon color={AppColors.grayTextWeak} size={14} />
+            </Pressable>
+          )}
+        </View>
+
+        {reducerKeys.map(key => {
+          const isExpanded = expandedReducers[key];
+          const val = reduxState[key];
+          return (
+            <View
+              key={key}
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderBottomWidth: 1,
+                borderBottomColor: AppColors.dividerColor,
+              }}>
+              <Pressable
+                onPress={() => {
+                  setExpandedReducers(prev => ({
+                    ...prev,
+                    [key]: !prev[key],
+                  }));
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                  <Animated.View style={{ transform: [{ rotate: isExpanded ? '0deg' : '-90deg' }] }}>
+                    <ChevronIcon color={AppColors.grayTextWeak} size={14} />
+                  </Animated.View>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 13,
+                      color: AppColors.purple,
+                    }}>
+                    {key}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      color: AppColors.grayTextWeak,
+                    }}>
+                    ({typeof val === 'object' && val !== null ? `${Object.keys(val).length} fields` : typeof val})
+                  </Text>
+                </View>
+                <CopyButton value={() => val} label={`${key} Reducer`} />
+              </Pressable>
+
+              {isExpanded && (
+                <View
+                  style={{
+                    backgroundColor: AppColors.grayBackground,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderTopWidth: 1,
+                    borderTopColor: AppColors.dividerColor,
+                  }}>
+                  <JsonViewer data={val} search={reduxSearch} />
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </ScrollView>
+    );
+  };
+
   return (
     <>
       {hasNavigationContext && (
@@ -1072,7 +1369,7 @@ const NetworkInspector = (): React.JSX.Element => {
         <LinearGradient
           colors={[AppColors.purple, '#8F6EFF']}
           style={styles.fab}>
-          <Text style={styles.fabText}>API</Text>
+          <DebugIcon color="#FFFFFF" size={28} />
         </LinearGradient>
         {(logs.length > 0 || analyticsEvents.length > 0) && (
           <Animated.View
@@ -1092,371 +1389,223 @@ const NetworkInspector = (): React.JSX.Element => {
 
       <Modal visible={visible} animationType="slide" transparent>
         {visible && (
-          <View style={{flex: 1, backgroundColor: AppColors.grayBackground}}>
-            <StatusBar
-              translucent
-              backgroundColor="transparent"
-              barStyle="light-content"
-            />
-
-            <LinearGradient
-              colors={[AppColors.purple, '#6B4EFF']}
-              style={styles.headerGradient}>
-              <View
-                style={[
-                  styles.header,
-                  {
-                    paddingTop:
-                      Platform.OS === 'android'
-                        ? (StatusBar.currentHeight ?? 24) + 16
-                        : 54,
-                  },
-                ]}>
-                <View
-                  style={[
-                    styles.headerLeft,
-                    {flexDirection: 'row', alignItems: 'center', gap: 16},
-                  ]}>
-                  <TouchableScale
-                    onPress={() => {
-                      requestAnimationFrame(() => {
-                        setSelected(null);
-                        setSelectedEvent(null);
-                      });
-                    }}
-                    hitSlop={15}
-                    style={[
-                      styles.iconBtnMinimal,
-                      selected == null &&
-                        selectedEvent == null && {display: 'none'},
-                    ]}>
-                    <WhiteBackNavigation />
-                  </TouchableScale>
-
-                  {selected == null && selectedEvent == null ? (
-                    <View style={styles.headerButtonGroup}>
-                      {/* Network Dropdown */}
-                      <Pressable
-                        onPress={() => {
-                          setShowNetworkMenu(prev => !prev);
-                          setShowUiMenu(false);
-                        }}
-                        style={[
-                          styles.headerGroupButton,
-                          ['apis', 'analytics', 'logs'].includes(activeTab) &&
-                            styles.headerGroupButtonActive,
-                        ]}>
-                        <Text
-                          style={[
-                            styles.headerGroupButtonText,
-                            ['apis', 'analytics', 'logs'].includes(
-                              activeTab,
-                            ) && {color: '#FFFFFF'},
-                          ]}>
-                          APIs
-                        </Text>
-                        <View
-                          style={{
-                            transform: [
-                              {rotate: showNetworkMenu ? '180deg' : '0deg'},
-                            ],
-                          }}>
-                          <ChevronIcon
-                            color={
-                              ['apis', 'analytics', 'logs'].includes(activeTab)
-                                ? '#FFFFFF'
-                                : 'rgba(255, 255, 255, 0.6)'
-                            }
-                            size={10}
-                          />
-                        </View>
-                      </Pressable>
-
-                      {/* UI Dropdown */}
-                      <Pressable
-                        onPress={() => {
-                          setShowUiMenu(prev => !prev);
-                          setShowNetworkMenu(false);
-                        }}
-                        style={[
-                          styles.headerGroupButton,
-                          activeTab === 'webview' &&
-                            styles.headerGroupButtonActive,
-                        ]}>
-                        <Text
-                          style={[
-                            styles.headerGroupButtonText,
-                            activeTab === 'webview' && {color: '#FFFFFF'},
-                          ]}>
-                          UI
-                        </Text>
-                        <View
-                          style={{
-                            transform: [
-                              {rotate: showUiMenu ? '180deg' : '0deg'},
-                            ],
-                          }}>
-                          <ChevronIcon
-                            color={
-                              activeTab === 'webview'
-                                ? '#FFFFFF'
-                                : 'rgba(255, 255, 255, 0.6)'
-                            }
-                            size={10}
-                          />
-                        </View>
-                      </Pressable>
-                    </View>
-                  ) : null}
-                </View>
-
-                <View style={styles.headerCenter}>
-                  {selected != null ? (
-                    <View style={styles.headerDetailCenter}>
-                      <View style={styles.headerDetailRow}>
-                        <View
-                          style={[
-                            styles.headerMethodBadge,
-                            {
-                              backgroundColor:
-                                METHOD_COLORS[selected.method as Method] ??
-                                AppColors.grayText,
-                            },
-                          ]}>
-                          <Text style={styles.headerMethodText}>
-                            {selected.method}
-                          </Text>
-                        </View>
-                        <Text
-                          style={styles.headerDetailTitle}
-                          numberOfLines={1}
-                          ellipsizeMode="middle">
-                          {detailTitle}
-                        </Text>
-                      </View>
-                      <View style={styles.headerDetailSubRow}>
-                        <View
-                          style={[
-                            styles.headerStatusDot,
-                            {backgroundColor: getStatusColor(selected.status)},
-                          ]}
-                        />
-                        <Text style={styles.headerSubTitle}>
-                          {selected.status === 0
-                            ? 'Failed'
-                            : selected.status ?? 'Pending'}{' '}
-                          •{' '}
-                          {selected.duration != null
-                            ? `${selected.duration}ms`
-                            : '-'}
-                        </Text>
-                      </View>
-                    </View>
-                  ) : selectedEvent != null ? (
-                    <View style={styles.headerDetailCenter}>
-                      <View style={styles.headerDetailRow}>
-                        <View
-                          style={[
-                            styles.headerMethodBadge,
-                            {
-                              backgroundColor:
-                                selectedEvent.source === 'firebase'
-                                  ? 'rgba(224,123,26,0.3)'
-                                  : 'rgba(124,92,191,0.3)',
-                            },
-                          ]}>
-                          <Text style={styles.headerMethodText}>
-                            {selectedEvent.source === 'firebase' ? 'FB' : 'MAN'}
-                          </Text>
-                        </View>
-                        <Text
-                          style={styles.headerDetailTitle}
-                          numberOfLines={1}
-                          ellipsizeMode="middle">
-                          {selectedEvent.name}
-                        </Text>
-                      </View>
-                      <View style={styles.headerDetailSubRow}>
-                        <View
-                          style={[
-                            styles.headerStatusDot,
-                            {
-                              backgroundColor:
-                                selectedEvent.source === 'firebase'
-                                  ? '#E07B1A'
-                                  : AppColors.purple,
-                            },
-                          ]}
-                        />
-                        <Text style={styles.headerSubTitle}>
-                          {Object.keys(selectedEvent.params).length} param
-                          {Object.keys(selectedEvent.params).length !== 1
-                            ? 's'
-                            : ''}
-                          {' · '}
-                          {selectedEvent.source}
-                        </Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.headerCountBadge}>
-                      <Text style={styles.headerCountText}>
-                        {activeTab === 'apis'
-                          ? `${logs.length} API${logs.length !== 1 ? 's' : ''}`
-                          : activeTab === 'logs'
-                          ? `${visibleConsoleLogs.length} log${
-                              visibleConsoleLogs.length !== 1 ? 's' : ''
-                            }`
-                          : activeTab === 'analytics'
-                          ? `${analyticsEvents.length} event${
-                              analyticsEvents.length !== 1 ? 's' : ''
-                            }`
-                          : `${webViewLogs.length} log${
-                              webViewLogs.length !== 1 ? 's' : ''
-                            }`}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.headerRight}>
-                  <TouchableScale
-                    onPress={closeModal}
-                    hitSlop={15}
-                    style={styles.iconBtnMinimal}>
-                    <CloseWhite />
-                  </TouchableScale>
-                </View>
-              </View>
-            </LinearGradient>
-
-            {(showNetworkMenu || showUiMenu) && selected == null && (
-              <Pressable
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 99,
-                }}
-                onPress={() => {
-                  setShowNetworkMenu(false);
-                  setShowUiMenu(false);
-                }}
+          <ErrorBoundary onClose={closeModal}>
+            <View style={styles.modalBackdrop}>
+            <Pressable style={styles.modalBackdropPressable} onPress={closeModal} />
+            <View style={styles.modalContentCard}>
+              <StatusBar
+                translucent
+                backgroundColor="transparent"
+                barStyle="light-content"
               />
-            )}
 
-            {selected == null && selectedEvent == null && (
-              <View
-                style={{
-                  paddingHorizontal: 16,
-                  paddingTop: 10,
-                  paddingBottom: 2,
-                }}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interMedium,
-                    fontSize: 11.5,
-                    color: AppColors.grayTextWeak,
-                  }}>
-                  {['apis', 'analytics', 'logs'].includes(activeTab)
-                    ? 'APIs'
-                    : 'UI'}
-                  {'  ➔  '}
-                  <Text
-                    style={{
-                      color: AppColors.purple,
-                      fontFamily: AppFonts.interBold,
-                    }}>
-                    {activeTab === 'apis'
-                      ? 'APIs'
-                      : activeTab === 'analytics'
-                      ? 'Analytics'
-                      : activeTab === 'logs'
-                      ? 'Logs'
-                      : 'WebView'}
-                  </Text>
-                </Text>
-              </View>
-            )}
-
-            {showNetworkMenu && selected == null && selectedEvent == null && (
-              <View style={[styles.menuDropdown, {left: 16}]}>
-                {['apis', 'analytics', 'logs'].map(tab => {
-                  const label =
-                    tab === 'apis'
-                      ? 'APIs'
-                      : tab === 'analytics'
-                      ? 'Analytics'
-                      : 'Logs';
-                  const count =
-                    tab === 'apis'
-                      ? logs.length
-                      : tab === 'analytics'
-                      ? analyticsEvents.length
-                      : visibleConsoleLogs.length;
-                  const isActive = activeTab === tab;
-                  return (
-                    <Pressable
-                      key={tab}
-                      style={[
-                        styles.dropdownItem,
-                        isActive && {backgroundColor: `${AppColors.purple}12`},
-                      ]}
+              <LinearGradient
+                colors={[AppColors.purple, '#6B4EFF']}
+                style={styles.headerGradient}>
+                <View style={styles.header}>
+                  <View
+                    style={[
+                      styles.headerLeft,
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 16,
+                        flex: (selected == null && selectedEvent == null) ? 5 : 1,
+                      },
+                    ]}>
+                    <TouchableScale
                       onPress={() => {
-                        setActiveTab(tab as ActiveTab);
-                        setShowNetworkMenu(false);
+                        requestAnimationFrame(() => {
+                          setSelected(null);
+                          setSelectedEvent(null);
+                        });
                       }}
-                      hitSlop={10}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interMedium,
-                          color: isActive
-                            ? AppColors.purple
-                            : AppColors.primaryBlack,
-                        }}>
-                        {label} {count > 0 ? `(${count})` : ''}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-
-            {showUiMenu && selected == null && selectedEvent == null && (
-              <View style={[styles.menuDropdown, {left: 120}]}>
-                {['webview'].map(tab => {
-                  const isActive = activeTab === tab;
-                  return (
-                    <Pressable
-                      key={tab}
+                      hitSlop={15}
                       style={[
-                        styles.dropdownItem,
-                        isActive && {backgroundColor: `${AppColors.purple}12`},
-                      ]}
+                        styles.iconBtnMinimal,
+                        selected == null &&
+                          selectedEvent == null && {display: 'none'},
+                      ]}>
+                      <WhiteBackNavigation />
+                    </TouchableScale>
+
+                    {selected == null && selectedEvent == null ? (
+                      <Text style={styles.headerTitle}>RN-InApp-Inspector</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.headerCenter}>
+                    {selected != null ? (
+                      <View style={styles.headerDetailCenter}>
+                        <View style={styles.headerDetailRow}>
+                          <View
+                            style={[
+                              styles.headerMethodBadge,
+                              {
+                                backgroundColor:
+                                  METHOD_COLORS[selected.method as Method] ??
+                                  AppColors.grayText,
+                              },
+                            ]}>
+                            <Text style={styles.headerMethodText}>
+                              {selected.method}
+                            </Text>
+                          </View>
+                          <Text
+                            style={styles.headerDetailTitle}
+                            numberOfLines={1}
+                            ellipsizeMode="middle">
+                            {detailTitle}
+                          </Text>
+                        </View>
+                        <View style={styles.headerDetailSubRow}>
+                          <View
+                            style={[
+                              styles.headerStatusDot,
+                              {backgroundColor: getStatusColor(selected.status)},
+                            ]}
+                          />
+                          <Text style={styles.headerSubTitle}>
+                            {selected.status === 0
+                              ? 'Failed'
+                              : selected.status ?? 'Pending'}{' '}
+                            •{' '}
+                            {selected.duration != null
+                              ? `${selected.duration}ms`
+                              : '-'}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : selectedEvent != null ? (
+                      <View style={styles.headerDetailCenter}>
+                        <View style={styles.headerDetailRow}>
+                          <View
+                            style={[
+                              styles.headerMethodBadge,
+                              {
+                                backgroundColor:
+                                  selectedEvent.source === 'firebase'
+                                    ? 'rgba(224,123,26,0.3)'
+                                    : 'rgba(124,92,191,0.3)',
+                              },
+                            ]}>
+                            <Text style={styles.headerMethodText}>
+                              {selectedEvent.source === 'firebase' ? 'FB' : 'MAN'}
+                            </Text>
+                          </View>
+                          <Text
+                            style={styles.headerDetailTitle}
+                            numberOfLines={1}
+                            ellipsizeMode="middle">
+                            {selectedEvent.name}
+                          </Text>
+                        </View>
+                        <View style={styles.headerDetailSubRow}>
+                          <View
+                            style={[
+                              styles.headerStatusDot,
+                              {
+                                backgroundColor:
+                                  selectedEvent.source === 'firebase'
+                                    ? '#E07B1A'
+                                    : AppColors.purple,
+                              },
+                            ]}
+                          />
+                          <Text style={styles.headerSubTitle}>
+                            {Object.keys(selectedEvent.params).length} param
+                            {Object.keys(selectedEvent.params).length !== 1
+                              ? 's'
+                              : ''}
+                            {' · '}
+                            {selectedEvent.source}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.headerRight}>
+                    <TouchableScale
                       onPress={() => {
-                        setActiveTab(tab as ActiveTab);
-                        setShowUiMenu(false);
+                        const newTheme = !isDark;
+                        setIsDark(newTheme);
+                        toggleGlobalTheme(newTheme);
                       }}
-                      hitSlop={10}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interMedium,
-                          color: isActive
-                            ? AppColors.purple
-                            : AppColors.primaryBlack,
-                        }}>
-                        WebView{' '}
-                        {webViewLogs.length > 0
-                          ? `(${webViewLogs.length})`
-                          : ''}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
+                      hitSlop={15}
+                      style={[styles.closeButtonCircle, {marginRight: 8}]}>
+                      {isDark ? (
+                        <SunIcon color="#FFFFFF" size={16} />
+                      ) : (
+                        <MoonIcon color="#FFFFFF" size={16} />
+                      )}
+                    </TouchableScale>
+
+                    <TouchableScale
+                      onPress={closeModal}
+                      hitSlop={15}
+                      style={styles.closeButtonCircle}>
+                      <CloseWhite size={16} />
+                    </TouchableScale>
+                  </View>
+                </View>
+              </LinearGradient>
+
+              {/* ─── Horizontal Scrollable Tab Bar inside Content ─── */}
+              {selected == null && selectedEvent == null ? (
+                <View style={styles.tabBarContainer}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{paddingRight: 16}}>
+                    {([
+                      { key: 'insights', label: 'Insights', count: 0, icon: 'insights' },
+                      { key: 'apis', label: 'APIs', count: logs.length, icon: 'apis' },
+                      { key: 'logs', label: 'Logs', count: consoleLogs.length, icon: 'logs' },
+                      { key: 'analytics', label: 'Analytics', count: analyticsEvents.length, icon: 'analytics' },
+                      { key: 'webview', label: 'WebView', count: webViewNavHistory.length, icon: 'webview' },
+                      { key: 'redux', label: 'Redux', count: 0, icon: 'redux' },
+                    ] as const).map(tab => {
+                      const isActive = activeTab === tab.key;
+                      const iconColor = isActive ? '#FFFFFF' : AppColors.grayText;
+                      const countLabel = tab.count > 9 ? '9+' : String(tab.count);
+                      return (
+                        <TouchableScale
+                          key={tab.key}
+                          onPress={() => {
+                            requestAnimationFrame(() => {
+                              setActiveTab(tab.key);
+                            });
+                          }}
+                          style={[
+                            styles.contentTabButton,
+                            isActive && styles.contentTabButtonActive,
+                          ]}>
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                            {tab.icon === 'insights' && <InsightsIcon color={iconColor} size={14} />}
+                            {tab.icon === 'apis' && <SignalIcon color={iconColor} size={14} />}
+                            {tab.icon === 'logs' && <TerminalIcon color={iconColor} size={14} />}
+                            {tab.icon === 'analytics' && <AnalyticsIcon color={iconColor} size={14} />}
+                            {tab.icon === 'webview' && <GlobeIcon color={iconColor} size={14} />}
+                            {tab.icon === 'redux' && <TerminalIcon color={iconColor} size={14} />}
+                            <Text
+                              numberOfLines={1}
+                              ellipsizeMode="tail"
+                              style={[
+                                styles.contentTabButtonText,
+                                isActive && styles.contentTabButtonTextActive,
+                              ]}>
+                              {tab.label} {tab.count > 0 ? `(${countLabel})` : ''}
+                            </Text>
+                          </View>
+                        </TouchableScale>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              ) : null}
+
+
 
             {/* ─── Secondary Tab Bar for Analytics ──────────────────────── */}
             {isReady && activeTab === 'analytics' && selectedEvent == null && (
@@ -1486,22 +1635,6 @@ const NetworkInspector = (): React.JSX.Element => {
                   </View>
                   {analyticsSubTab === 'ga_events' && (
                     <View style={styles.toolbarRight}>
-                      <TouchableScale
-                        style={[
-                          styles.toolbarBtn,
-                          groupByScreen && styles.toolbarBtnActive,
-                        ]}
-                        onPress={() => setGroupByScreen(prev => !prev)}
-                        hitSlop={10}>
-                        <MapPinIcon
-                          color={
-                            groupByScreen
-                              ? AppColors.purple
-                              : AppColors.grayTextStrong
-                          }
-                          size={18}
-                        />
-                      </TouchableScale>
                       <TouchableScale
                         style={[
                           styles.toolbarBtn,
@@ -1616,7 +1749,14 @@ const NetworkInspector = (): React.JSX.Element => {
             )}
 
             {isReady ? (
-              activeTab === 'analytics' ? (
+              activeTab === 'insights' ? (
+                <ScrollView
+                  style={styles.insightsContainer}
+                  contentContainerStyle={styles.insightsContent}
+                  showsVerticalScrollIndicator={false}>
+                  {renderInsightsDashboard()}
+                </ScrollView>
+              ) : activeTab === 'analytics' ? (
                 selectedEvent != null ? (
                   <AnalyticsDetail event={selectedEvent} />
                 ) : analyticsSubTab === 'top_events' ? (
@@ -1633,10 +1773,10 @@ const NetworkInspector = (): React.JSX.Element => {
                       return (
                         <View
                           style={[
-                            analyticsListStyles.topEventsCard,
+                            styles.analyticsTopEventsCard,
                             {marginBottom: 12, paddingVertical: 16},
                           ]}>
-                          <View style={analyticsListStyles.topEventRow}>
+                          <View style={styles.analyticsTopEventRow}>
                             <View
                               style={{
                                 flexDirection: 'row',
@@ -1646,7 +1786,7 @@ const NetworkInspector = (): React.JSX.Element => {
                               }}>
                               <View
                                 style={[
-                                  analyticsListStyles.iconCircle,
+                                  styles.analyticsIconCircle,
                                   {backgroundColor: `${color}1A`},
                                 ]}>
                                 <Svg
@@ -1671,18 +1811,18 @@ const NetworkInspector = (): React.JSX.Element => {
                                 </Svg>
                               </View>
                               <Text
-                                style={analyticsListStyles.topEventName}
+                                style={styles.analyticsTopEventName}
                                 numberOfLines={2}>
                                 {name}
                               </Text>
                             </View>
-                            <View style={analyticsListStyles.topEventBarWrap}>
+                            <View style={styles.analyticsTopEventBarWrap}>
                               <LinearGradient
                                 colors={[color, `${color}99`]}
                                 start={{x: 0, y: 0}}
                                 end={{x: 1, y: 0}}
                                 style={[
-                                  analyticsListStyles.topEventBar,
+                                  styles.analyticsTopEventBar,
                                   {
                                     width: `${Math.max(
                                       6,
@@ -1692,7 +1832,7 @@ const NetworkInspector = (): React.JSX.Element => {
                                 ]}
                               />
                             </View>
-                            <Text style={analyticsListStyles.topEventCount}>
+                            <Text style={styles.analyticsTopEventCount}>
                               {count}
                             </Text>
                           </View>
@@ -1707,66 +1847,6 @@ const NetworkInspector = (): React.JSX.Element => {
                         <Text style={styles.emptyTitle}>No Top Events</Text>
                       </View>
                     }
-                  />
-                ) : groupByScreen ? (
-                  <SectionList
-                    sections={groupedAnalyticsEvents}
-                    keyExtractor={item => item.id.toString()}
-                    renderSectionHeader={renderScreenSectionHeader}
-                    renderItem={({item, index, section}: any) => {
-                      if (expandedScreens.has(section.title)) return null;
-                      const events = section.data;
-                      const prev = events[index + 1];
-                      const next = events[index - 1];
-                      const msSincePrev = prev
-                        ? item.timestamp - prev.timestamp
-                        : undefined;
-                      const thisMin = Math.floor(item.timestamp / 60000);
-                      const nextMin = next
-                        ? Math.floor(next.timestamp / 60000)
-                        : -1;
-                      const showTimestamp = index === 0 || thisMin !== nextMin;
-                      return (
-                        <AnalyticsEventCard
-                          event={item}
-                          onPress={() => setSelectedEvent(item)}
-                          isNew={newEventIds.has(item.id)}
-                          searchStr={analyticsSearch}
-                          isFirst={index === 0}
-                          isLast={index === events.length - 1}
-                          msSincePrev={msSincePrev}
-                          showTimestamp={showTimestamp}
-                          computedScreenName={section.title}
-                        />
-                      );
-                    }}
-                    initialNumToRender={20}
-                    maxToRenderPerBatch={20}
-                    windowSize={5}
-                    removeClippedSubviews
-                    ListHeaderComponent={null}
-                    ListEmptyComponent={
-                      <View style={styles.emptyContainer}>
-                        <View style={styles.emptyIconWrap}>
-                          <EmptyRadarIcon color={AppColors.purple} size={32} />
-                        </View>
-                        <Text style={styles.emptyTitle}>
-                          {analyticsSearch.length > 0
-                            ? 'No matching events'
-                            : 'No analytics events yet'}
-                        </Text>
-                        <Text style={styles.emptySub}>
-                          {analyticsSearch.length > 0
-                            ? 'Try adjusting your search.'
-                            : 'Call setupAnalyticsLogger(analytics()) at app start.'}
-                        </Text>
-                      </View>
-                    }
-                    contentContainerStyle={[
-                      styles.listContent,
-                      filteredAnalyticsEvents.length === 0 && {flexGrow: 1},
-                    ]}
-                    keyboardShouldPersistTaps="handled"
                   />
                 ) : (
                   <FlatList
@@ -1824,7 +1904,6 @@ const NetworkInspector = (): React.JSX.Element => {
                     maxToRenderPerBatch={20}
                     windowSize={5}
                     removeClippedSubviews
-                    ListHeaderComponent={null}
                     ListEmptyComponent={
                       <View style={styles.emptyContainer}>
                         <View style={styles.emptyIconWrap}>
@@ -1850,366 +1929,8 @@ const NetworkInspector = (): React.JSX.Element => {
                   />
                 )
               ) : activeTab === 'apis' && selected == null ? (
-                groupByScreen ? (
-                  <SectionList
-                    sections={groupedNetworkLogs}
-                    keyExtractor={item => item?.id?.toString()}
-                    renderSectionHeader={renderScreenSectionHeader}
-                    renderItem={({item, section}: any) => {
-                      if (expandedScreens.has(section.title)) return null;
-                      return renderItem({
-                        item: {
-                          type: 'log',
-                          log: item,
-                          color: AppColors.purple,
-                        },
-                      } as any);
-                    }}
-                    initialNumToRender={10}
-                    maxToRenderPerBatch={10}
-                    windowSize={5}
-                    removeClippedSubviews={true}
-                    ListHeaderComponent={
-                      <View style={{marginTop: 8}}>
-                        {logs.length > 0 && (
-                          <View style={styles.dashboardCard}>
-                            <View style={styles.dashboardStatsRow}>
-                              <View style={styles.statBox}>
-                                <Text style={styles.statValue}>
-                                  {stats.filtered < stats.total
-                                    ? stats.filtered
-                                    : stats.total}
-                                </Text>
-                                <Text style={styles.statLabel}>
-                                  {stats.filtered < stats.total
-                                    ? `of ${stats.total} Req`
-                                    : 'Requests'}
-                                </Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniBarChart
-                                    data={stats.reqTrend}
-                                    color={AppColors.purple}
-                                  />
-                                </View>
-                              </View>
-                              <View style={styles.dashboardStatDivider} />
-                              <View style={styles.statBox}>
-                                <Text
-                                  style={[
-                                    styles.statValue,
-                                    stats.errors > 0 && {
-                                      color: AppColors.errorColor,
-                                    },
-                                  ]}>
-                                  {stats.errors}
-                                </Text>
-                                <Text style={styles.statLabel}>Errors</Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniBarChart
-                                    data={stats.errorTrend}
-                                    color={AppColors.errorColor}
-                                    maxVal={1}
-                                  />
-                                </View>
-                              </View>
-                              <View style={styles.dashboardStatDivider} />
-                              <View style={styles.statBox}>
-                                <Text
-                                  style={[
-                                    styles.statValue,
-                                    stats.avgDuration != null
-                                      ? {
-                                          color: getDurationColor(
-                                            stats.avgDuration,
-                                          ),
-                                        }
-                                      : null,
-                                  ]}>
-                                  {stats.avgDuration != null
-                                    ? `${stats.avgDuration}ms`
-                                    : '—'}
-                                </Text>
-                                <Text style={styles.statLabel}>Avg Time</Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniLineChart
-                                    data={stats.durationTrend}
-                                    color={AppColors.darkOrange}
-                                  />
-                                </View>
-                              </View>
-                              <View style={styles.dashboardStatDivider} />
-                              <View style={styles.statBox}>
-                                <Text
-                                  style={[
-                                    styles.statValue,
-                                    {color: AppColors.skyBlue},
-                                  ]}>
-                                  {stats.size}
-                                </Text>
-                                <Text style={styles.statLabel}>Payload</Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniBarChart
-                                    data={stats.sizeTrend}
-                                    color={AppColors.skyBlue}
-                                  />
-                                </View>
-                              </View>
-                            </View>
-                          </View>
-                        )}
-
-                        <View style={styles.toolbarRow}>
-                          <View style={styles.searchContainer}>
-                            <SearchIcon
-                              color={AppColors.grayTextWeak}
-                              size={16}
-                            />
-                            <TextInput
-                              placeholder="Search endpoints..."
-                              placeholderTextColor={AppColors.grayTextWeak}
-                              value={search}
-                              onChangeText={setSearch}
-                              style={styles.searchInput}
-                              autoCorrect={false}
-                              autoCapitalize="none"
-                            />
-                            {search.length > 0 && (
-                              <Pressable
-                                onPress={() => setSearch('')}
-                                hitSlop={10}
-                                style={styles.clearBtn}>
-                                <ClearIcon
-                                  color={AppColors.grayTextWeak}
-                                  size={14}
-                                />
-                              </Pressable>
-                            )}
-                          </View>
-
-                          <View style={styles.toolbarRight}>
-                            <TouchableScale
-                              style={styles.toolbarBtn}
-                              onPress={handleDelete}
-                              hitSlop={10}>
-                              <TrashIcon
-                                color={AppColors.grayTextStrong}
-                                size={18}
-                              />
-                              {selectedLogs.size > 0 && (
-                                <View style={styles.trashBadge}>
-                                  <Text style={styles.trashBadgeText}>
-                                    {selectedLogs.size}
-                                  </Text>
-                                </View>
-                              )}
-                            </TouchableScale>
-
-                            <TouchableScale
-                              style={[
-                                styles.toolbarBtn,
-                                groupByScreen && styles.toolbarBtnActive,
-                              ]}
-                              onPress={() => setGroupByScreen(prev => !prev)}
-                              hitSlop={10}>
-                              <MapPinIcon
-                                color={
-                                  groupByScreen
-                                    ? AppColors.purple
-                                    : AppColors.grayTextStrong
-                                }
-                                size={18}
-                              />
-                            </TouchableScale>
-
-                            <TouchableScale
-                              style={styles.toolbarBtn}
-                              onPress={() =>
-                                setSortOrder(o =>
-                                  o === 'newest' ? 'oldest' : 'newest',
-                                )
-                              }
-                              hitSlop={10}>
-                              <SortArrowIcon
-                                direction={
-                                  sortOrder === 'newest' ? 'down' : 'up'
-                                }
-                                color={AppColors.grayTextStrong}
-                                size={18}
-                              />
-                            </TouchableScale>
-
-                            <TouchableScale
-                              style={[
-                                styles.toolbarBtn,
-                                filtersAccordion.isOpen &&
-                                  styles.toolbarBtnActive,
-                              ]}
-                              onPress={filtersAccordion.toggleOpen}
-                              hitSlop={10}>
-                              <FilterIcon
-                                color={
-                                  filtersAccordion.isOpen
-                                    ? AppColors.purple
-                                    : AppColors.grayTextStrong
-                                }
-                                size={18}
-                              />
-                            </TouchableScale>
-                          </View>
-                        </View>
-
-                        <Animated.View
-                          style={[
-                            filtersAccordion.bodyStyle,
-                            {overflow: 'hidden'},
-                          ]}>
-                          <View style={styles.filtersContainer}>
-                            <Text style={styles.filtersHeading}>STATUS</Text>
-                            <ScrollView
-                              horizontal
-                              showsHorizontalScrollIndicator={false}
-                              contentContainerStyle={styles.statusRowContent}>
-                              {STATUS_FILTERS.map(filter => {
-                                const isAll = filter === 'ALL';
-                                const active = isAll
-                                  ? statusFilters.size === 0
-                                  : statusFilters.has(filter);
-                                return (
-                                  <TouchableScale
-                                    key={filter}
-                                    style={styles.statusFilterWrap}
-                                    onPress={() => {
-                                      if (isAll) {
-                                        setStatusFilters(new Set());
-                                      } else {
-                                        setStatusFilters(prev => {
-                                          const next = new Set(prev);
-                                          next.has(filter)
-                                            ? next.delete(filter)
-                                            : next.add(filter);
-                                          return next;
-                                        });
-                                      }
-                                    }}
-                                    hitSlop={10}>
-                                    {active ? (
-                                      <LinearGradient
-                                        colors={[
-                                          AppColors.purpleShade50,
-                                          '#EAE5FF',
-                                        ]}
-                                        style={[
-                                          styles.statusFilterChip,
-                                          styles.statusFilterActive,
-                                        ]}>
-                                        <Text
-                                          style={[
-                                            styles.statusFilterText,
-                                            {color: AppColors.purple},
-                                          ]}>
-                                          {filter}
-                                        </Text>
-                                      </LinearGradient>
-                                    ) : (
-                                      <View style={styles.statusFilterChip}>
-                                        <Text style={styles.statusFilterText}>
-                                          {filter}
-                                        </Text>
-                                      </View>
-                                    )}
-                                  </TouchableScale>
-                                );
-                              })}
-                            </ScrollView>
-
-                            <Text
-                              style={[styles.filtersHeading, {marginTop: 16}]}>
-                              METHOD
-                            </Text>
-                            <ScrollView
-                              horizontal
-                              showsHorizontalScrollIndicator={false}
-                              contentContainerStyle={styles.statusRowContent}>
-                              {availableMethods.map(filter => {
-                                const isAll = filter === 'ALL';
-                                const active = isAll
-                                  ? methodFilters.size === 0
-                                  : methodFilters.has(filter as Method);
-                                return (
-                                  <TouchableScale
-                                    key={filter}
-                                    style={styles.statusFilterWrap}
-                                    onPress={() => {
-                                      if (isAll) {
-                                        setMethodFilters(new Set());
-                                      } else {
-                                        setMethodFilters(prev => {
-                                          const next = new Set(prev);
-                                          next.has(filter as Method)
-                                            ? next.delete(filter as Method)
-                                            : next.add(filter as Method);
-                                          return next;
-                                        });
-                                      }
-                                    }}
-                                    hitSlop={10}>
-                                    {active ? (
-                                      <LinearGradient
-                                        colors={[
-                                          AppColors.purpleShade50,
-                                          '#EAE5FF',
-                                        ]}
-                                        style={[
-                                          styles.statusFilterChip,
-                                          styles.statusFilterActive,
-                                        ]}>
-                                        <Text
-                                          style={[
-                                            styles.statusFilterText,
-                                            {color: AppColors.purple},
-                                          ]}>
-                                          {filter}
-                                        </Text>
-                                      </LinearGradient>
-                                    ) : (
-                                      <View style={styles.statusFilterChip}>
-                                        <Text style={styles.statusFilterText}>
-                                          {filter}
-                                        </Text>
-                                      </View>
-                                    )}
-                                  </TouchableScale>
-                                );
-                              })}
-                            </ScrollView>
-                          </View>
-                        </Animated.View>
-
-                        {(search ||
-                          statusFilters.size > 0 ||
-                          methodFilters.size > 0) && (
-                          <Text style={styles.resultCount}>
-                            {filteredLogs.length === logs.length
-                              ? `${logs.length} requests`
-                              : `${filteredLogs.length} of ${logs.length} filtered requests`}
-                          </Text>
-                        )}
-                      </View>
-                    }
-                    ListEmptyComponent={
-                      <EmptyState
-                        isSearch={search.length > 0 || statusFilters.size > 0}
-                      />
-                    }
-                    contentContainerStyle={[
-                      styles.listContent,
-                      filteredLogs.length === 0 && {flexGrow: 1},
-                    ]}
-                    keyboardShouldPersistTaps="handled"
-                  />
-                ) : (
-                  <FlatList
-                    data={groupedData}
+                <FlatList
+                  data={groupedData}
                     keyExtractor={item => item?.id?.toString()}
                     renderItem={renderItem}
                     initialNumToRender={10}
@@ -2218,93 +1939,6 @@ const NetworkInspector = (): React.JSX.Element => {
                     removeClippedSubviews={true}
                     ListHeaderComponent={
                       <View style={{marginTop: 8}}>
-                        {logs.length > 0 && (
-                          <View style={styles.dashboardCard}>
-                            <View style={styles.dashboardStatsRow}>
-                              <View style={styles.statBox}>
-                                <Text style={styles.statValue}>
-                                  {stats.filtered < stats.total
-                                    ? stats.filtered
-                                    : stats.total}
-                                </Text>
-                                <Text style={styles.statLabel}>
-                                  {stats.filtered < stats.total
-                                    ? `of ${stats.total} Req`
-                                    : 'Requests'}
-                                </Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniBarChart
-                                    data={stats.reqTrend}
-                                    color={AppColors.purple}
-                                  />
-                                </View>
-                              </View>
-                              <View style={styles.dashboardStatDivider} />
-                              <View style={styles.statBox}>
-                                <Text
-                                  style={[
-                                    styles.statValue,
-                                    stats.errors > 0 && {
-                                      color: AppColors.errorColor,
-                                    },
-                                  ]}>
-                                  {stats.errors}
-                                </Text>
-                                <Text style={styles.statLabel}>Errors</Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniBarChart
-                                    data={stats.errorTrend}
-                                    color={AppColors.errorColor}
-                                    maxVal={1}
-                                  />
-                                </View>
-                              </View>
-                              <View style={styles.dashboardStatDivider} />
-                              <View style={styles.statBox}>
-                                <Text
-                                  style={[
-                                    styles.statValue,
-                                    stats.avgDuration != null
-                                      ? {
-                                          color: getDurationColor(
-                                            stats.avgDuration,
-                                          ),
-                                        }
-                                      : null,
-                                  ]}>
-                                  {stats.avgDuration != null
-                                    ? `${stats.avgDuration}ms`
-                                    : '—'}
-                                </Text>
-                                <Text style={styles.statLabel}>Avg Time</Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniLineChart
-                                    data={stats.durationTrend}
-                                    color={AppColors.darkOrange}
-                                  />
-                                </View>
-                              </View>
-                              <View style={styles.dashboardStatDivider} />
-                              <View style={styles.statBox}>
-                                <Text
-                                  style={[
-                                    styles.statValue,
-                                    {color: AppColors.skyBlue},
-                                  ]}>
-                                  {stats.size}
-                                </Text>
-                                <Text style={styles.statLabel}>Payload</Text>
-                                <View style={styles.miniGraphWrap}>
-                                  <MiniBarChart
-                                    data={stats.sizeTrend}
-                                    color={AppColors.skyBlue}
-                                  />
-                                </View>
-                              </View>
-                            </View>
-                          </View>
-                        )}
-
                         <View style={styles.toolbarRow}>
                           <View style={styles.searchContainer}>
                             <SearchIcon
@@ -2351,22 +1985,6 @@ const NetworkInspector = (): React.JSX.Element => {
                               )}
                             </TouchableScale>
 
-                            <TouchableScale
-                              style={[
-                                styles.toolbarBtn,
-                                groupByScreen && styles.toolbarBtnActive,
-                              ]}
-                              onPress={() => setGroupByScreen(prev => !prev)}
-                              hitSlop={10}>
-                              <MapPinIcon
-                                color={
-                                  groupByScreen
-                                    ? AppColors.purple
-                                    : AppColors.grayTextStrong
-                                }
-                                size={18}
-                              />
-                            </TouchableScale>
 
                             <TouchableScale
                               style={styles.toolbarBtn}
@@ -2440,15 +2058,21 @@ const NetworkInspector = (): React.JSX.Element => {
                                     }}
                                     hitSlop={10}>
                                     {active ? (
-                                      <LinearGradient
-                                        colors={[
-                                          AppColors.purpleShade50,
-                                          '#EAE5FF',
-                                        ]}
+                                      <View
                                         style={[
                                           styles.statusFilterChip,
                                           styles.statusFilterActive,
+                                          {overflow: 'hidden'},
                                         ]}>
+                                        <LinearGradient
+                                          colors={[
+                                            AppColors.purpleShade50,
+                                            '#EAE5FF',
+                                          ]}
+                                          style={StyleSheet.absoluteFill}
+                                          start={{x: 0, y: 0}}
+                                          end={{x: 1, y: 0}}
+                                        />
                                         <Text
                                           style={[
                                             styles.statusFilterText,
@@ -2456,7 +2080,7 @@ const NetworkInspector = (): React.JSX.Element => {
                                           ]}>
                                           {filter}
                                         </Text>
-                                      </LinearGradient>
+                                      </View>
                                     ) : (
                                       <View style={styles.statusFilterChip}>
                                         <Text style={styles.statusFilterText}>
@@ -2501,15 +2125,21 @@ const NetworkInspector = (): React.JSX.Element => {
                                     }}
                                     hitSlop={10}>
                                     {active ? (
-                                      <LinearGradient
-                                        colors={[
-                                          AppColors.purpleShade50,
-                                          '#EAE5FF',
-                                        ]}
+                                      <View
                                         style={[
                                           styles.statusFilterChip,
                                           styles.statusFilterActive,
+                                          {overflow: 'hidden'},
                                         ]}>
+                                        <LinearGradient
+                                          colors={[
+                                            AppColors.purpleShade50,
+                                            '#EAE5FF',
+                                          ]}
+                                          style={StyleSheet.absoluteFill}
+                                          start={{x: 0, y: 0}}
+                                          end={{x: 1, y: 0}}
+                                        />
                                         <Text
                                           style={[
                                             styles.statusFilterText,
@@ -2517,7 +2147,7 @@ const NetworkInspector = (): React.JSX.Element => {
                                           ]}>
                                           {filter}
                                         </Text>
-                                      </LinearGradient>
+                                      </View>
                                     ) : (
                                       <View style={styles.statusFilterChip}>
                                         <Text style={styles.statusFilterText}>
@@ -2554,8 +2184,7 @@ const NetworkInspector = (): React.JSX.Element => {
                     ]}
                     keyboardShouldPersistTaps="handled"
                   />
-                )
-              ) : activeTab === 'logs' ? (
+                ) : activeTab === 'logs' ? (
                 <View style={{flex: 1}}>
                   <View
                     style={{
@@ -3124,59 +2753,16 @@ const NetworkInspector = (): React.JSX.Element => {
                             )}
                           </View>
                           <View style={{flex: 1, padding: 12}}>
-                            {htmlSubTab === 'html' ? (
+                            {!isHtmlTabReady ? (
+                              <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', minHeight: 200}}>
+                                <ActivityIndicator size="large" color={AppColors.purple} />
+                              </View>
+                            ) : htmlSubTab === 'html' ? (
                               webViewHtml ? (
-                                <View style={{flex: 1}}>
-                                  <View
-                                    style={{
-                                      flexDirection: 'row',
-                                      alignItems: 'center',
-                                      marginBottom: 8,
-                                      gap: 8,
-                                    }}>
-                                    <View
-                                      style={[
-                                        styles.searchContainer,
-                                        {flex: 1},
-                                      ]}>
-                                      <SearchIcon
-                                        color={AppColors.grayTextWeak}
-                                        size={16}
-                                      />
-                                      <TextInput
-                                        placeholder="Search HTML..."
-                                        placeholderTextColor={
-                                          AppColors.grayTextWeak
-                                        }
-                                        value={htmlSearch}
-                                        onChangeText={setHtmlSearch}
-                                        style={styles.searchInput}
-                                        autoCorrect={false}
-                                        autoCapitalize="none"
-                                      />
-                                      {htmlSearch.length > 0 && (
-                                        <Pressable
-                                          onPress={() => setHtmlSearch('')}
-                                          hitSlop={10}
-                                          style={styles.clearBtn}>
-                                          <ClearIcon
-                                            color={AppColors.grayTextWeak}
-                                            size={14}
-                                          />
-                                        </Pressable>
-                                      )}
-                                    </View>
-                                    <CopyButton
-                                      value={webViewHtml}
-                                      label="HTML Source"
-                                    />
-                                  </View>
-                                  <CodeSnippet
-                                    code={webViewHtml}
-                                    language="html"
-                                    search={htmlSearch}
-                                  />
-                                </View>
+                                <CodeSnippet
+                                  code={webViewHtml}
+                                  language="html"
+                                />
                               ) : (
                                 <Text
                                   style={{
@@ -3190,57 +2776,10 @@ const NetworkInspector = (): React.JSX.Element => {
                               )
                             ) : htmlSubTab === 'css' ? (
                               webViewCss ? (
-                                <View style={{flex: 1}}>
-                                  <View
-                                    style={{
-                                      flexDirection: 'row',
-                                      alignItems: 'center',
-                                      marginBottom: 8,
-                                      gap: 8,
-                                    }}>
-                                    <View
-                                      style={[
-                                        styles.searchContainer,
-                                        {flex: 1},
-                                      ]}>
-                                      <SearchIcon
-                                        color={AppColors.grayTextWeak}
-                                        size={16}
-                                      />
-                                      <TextInput
-                                        placeholder="Search CSS..."
-                                        placeholderTextColor={
-                                          AppColors.grayTextWeak
-                                        }
-                                        value={cssSearch}
-                                        onChangeText={setCssSearch}
-                                        style={styles.searchInput}
-                                        autoCorrect={false}
-                                        autoCapitalize="none"
-                                      />
-                                      {cssSearch.length > 0 && (
-                                        <Pressable
-                                          onPress={() => setCssSearch('')}
-                                          hitSlop={10}
-                                          style={styles.clearBtn}>
-                                          <ClearIcon
-                                            color={AppColors.grayTextWeak}
-                                            size={14}
-                                          />
-                                        </Pressable>
-                                      )}
-                                    </View>
-                                    <CopyButton
-                                      value={webViewCss}
-                                      label="CSS Source"
-                                    />
-                                  </View>
-                                  <CodeSnippet
-                                    code={webViewCss}
-                                    language="css"
-                                    search={cssSearch}
-                                  />
-                                </View>
+                                <CodeSnippet
+                                  code={webViewCss}
+                                  language="css"
+                                />
                               ) : (
                                 <Text
                                   style={{
@@ -3253,54 +2792,10 @@ const NetworkInspector = (): React.JSX.Element => {
                                 </Text>
                               )
                             ) : webViewJs ? (
-                              <View style={{flex: 1}}>
-                                <View
-                                  style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    marginBottom: 8,
-                                    gap: 8,
-                                  }}>
-                                  <View
-                                    style={[styles.searchContainer, {flex: 1}]}>
-                                    <SearchIcon
-                                      color={AppColors.grayTextWeak}
-                                      size={16}
-                                    />
-                                    <TextInput
-                                      placeholder="Search Javascript..."
-                                      placeholderTextColor={
-                                        AppColors.grayTextWeak
-                                      }
-                                      value={jsSearch}
-                                      onChangeText={setJsSearch}
-                                      style={styles.searchInput}
-                                      autoCorrect={false}
-                                      autoCapitalize="none"
-                                    />
-                                    {jsSearch.length > 0 && (
-                                      <Pressable
-                                        onPress={() => setJsSearch('')}
-                                        hitSlop={10}
-                                        style={styles.clearBtn}>
-                                        <ClearIcon
-                                          color={AppColors.grayTextWeak}
-                                          size={14}
-                                        />
-                                      </Pressable>
-                                    )}
-                                  </View>
-                                  <CopyButton
-                                    value={webViewJs}
-                                    label="JS Source"
-                                  />
-                                </View>
-                                <CodeSnippet
-                                  code={webViewJs}
-                                  language="javascript"
-                                  search={jsSearch}
-                                />
-                              </View>
+                              <CodeSnippet
+                                code={webViewJs}
+                                language="javascript"
+                              />
                             ) : (
                               <Text
                                 style={{
@@ -3456,314 +2951,438 @@ const NetworkInspector = (): React.JSX.Element => {
                     />
                   )}
                 </View>
+              ) : activeTab === 'redux' ? (
+                renderReduxTab()
               ) : (
-                <ScrollView
-                  style={styles.detailScroll}
-                  contentContainerStyle={styles.detailContent}
-                  showsVerticalScrollIndicator={true}>
-                  {(() => {
-                    const routeInfo = logRouteMapRef.current.get(selected.id);
-                    const screenPath =
-                      routeInfo && routeInfo.path !== 'Navigators'
-                        ? routeInfo.path.split(' ➔ ')
-                        : [];
-                    const parts = ['APIs', 'APIs', ...screenPath];
-                    return (
-                      <View style={{marginBottom: 12, marginTop: 4}}>
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interMedium,
-                            fontSize: 11.5,
-                            color: AppColors.grayTextWeak,
-                          }}>
-                          {parts.map((part, index) => (
-                            <React.Fragment key={index}>
-                              {index > 0 && '  ➔  '}
-                              <Text
-                                style={
-                                  index === parts.length - 1
-                                    ? {
-                                        color: AppColors.purple,
-                                        fontFamily: AppFonts.interBold,
-                                      }
-                                    : undefined
-                                }>
-                                {part}
-                              </Text>
-                            </React.Fragment>
-                          ))}
-                        </Text>
-                      </View>
-                    );
-                  })()}
-
-                  <View style={styles.detailInfoBar}>
-                    <View style={styles.detailInfoTop}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 10,
-                        }}>
-                        <View
-                          style={[
-                            styles.methodBadge,
-                            {
-                              backgroundColor: `${
-                                METHOD_COLORS[selected.method as Method] ??
-                                METHOD_COLORS.ALL
-                              }15`,
-                            },
-                          ]}>
-                          <Text
-                            style={[
-                              styles.methodBadgeText,
-                              {
-                                color:
-                                  METHOD_COLORS[selected.method as Method] ??
-                                  METHOD_COLORS.ALL,
-                              },
-                            ]}>
-                            {selected.method}
-                          </Text>
-                        </View>
-
-                        {selected.status != null && (
-                          <View
-                            style={[
-                              styles.chip,
-                              {
-                                backgroundColor:
-                                  selected.status === 0
-                                    ? `${AppColors.errorColor}15`
-                                    : `${getStatusColor(selected.status)}15`,
-                                borderColor:
-                                  selected.status === 0
-                                    ? `${AppColors.errorColor}40`
-                                    : `${getStatusColor(selected.status)}40`,
-                              },
-                            ]}>
-                            {selected.status === 0 ? (
-                              <FailIcon size={8} color={AppColors.errorColor} />
-                            ) : (
-                              <Svg
-                                width={6}
-                                height={6}
-                                viewBox="0 0 10 10"
-                                fill="none">
-                                <Circle
-                                  cx="5"
-                                  cy="5"
-                                  r="5"
-                                  fill={getStatusColor(selected.status)}
-                                />
-                              </Svg>
-                            )}
-                            <Text
-                              style={[
-                                styles.chipText,
-                                {
-                                  color:
-                                    selected.status === 0
-                                      ? AppColors.errorColor
-                                      : getStatusColor(selected.status),
-                                },
-                              ]}>
-                              {selected.status === 0
-                                ? 'Failed'
-                                : String(selected.status)}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      <View style={styles.detailInfoRight}>
-                        <TouchableScale
-                          style={styles.iconSquareBtn}
-                          onPress={() => Linking.openURL(detailDisplayUrl)}
-                          hitSlop={12}>
-                          <GlobeIcon color={AppColors.grayTextWeak} size={14} />
-                        </TouchableScale>
-                        <CopyButton
-                          value={getFetchCommand(selected)}
-                          label="fetch()"
-                          iconType="fetch"
-                        />
-                        <CopyButton
-                          value={getCurlCommand(selected)}
-                          label="cURL"
-                          iconType="terminal"
-                        />
-                        <CopyButton value={detailDisplayUrl} label="URL" />
-                      </View>
-                    </View>
-
-                    <Pressable
-                      style={styles.detailUrlContainer}
-                      onPress={() => Linking.openURL(detailDisplayUrl)}>
-                      <Text selectable={true} style={styles.detailUrl}>
-                        {detailDisplayUrl}
-                      </Text>
-                    </Pressable>
-                  </View>
-
-                  <MetaAccordion
-                    status={selected.status}
-                    statusColor={getStatusColor(selected.status)}
-                    duration={selected.duration}
-                    size={getSize(selected.response)}
-                    triggeredAt={formatDateTime(selected.startTime)}
-                  />
-
-                  {(() => {
-                    const routeInfo = logRouteMapRef.current.get(selected.id);
-                    if (!routeInfo || routeInfo.path === 'Navigators')
-                      return null;
-                    return <SourcePageCard routeInfo={routeInfo} />;
-                  })()}
-
-                  <View style={styles.seperator} />
-
-                  {(() => {
-                    const cType =
-                      selected.responseHeaders?.['content-type'] ||
-                      selected.responseHeaders?.['Content-Type'];
-                    if (cType?.includes('image/')) {
+              ) : (
+                <View style={{ flex: 1 }}>
+                  {/* Non-scrollable details header */}
+                  <View style={{ paddingHorizontal: 6, paddingTop: 4 }}>
+                    {(() => {
+                      const routeInfo = logRouteMapRef.current.get(selected.id);
+                      const screenPath =
+                        routeInfo && routeInfo.path !== 'Navigators'
+                          ? routeInfo.path.split(' ➔ ')
+                          : [];
+                      const parts = ['APIs', ...screenPath];
                       return (
-                        <View style={styles.imagePreviewWrapper}>
-                          <Image
-                            source={{uri: selected.url}}
-                            style={styles.imagePreview}
-                            resizeMode="contain"
-                          />
-                          <TouchableScale
-                            style={styles.imageDownloadBtn}
-                            onPress={() => Linking.openURL(selected.url)}
-                            hitSlop={10}>
-                            <DownloadIcon color={AppColors.purple} size={18} />
-                          </TouchableScale>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            backgroundColor: AppColors.primaryLight,
+                            borderRadius: 8,
+                            paddingVertical: 8,
+                            paddingHorizontal: 12,
+                            borderWidth: 1,
+                            borderColor: AppColors.dividerColor,
+                            marginBottom: 12,
+                            marginTop: 4,
+                          }}>
+                          <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}>
+                            {parts.map((part, index) => {
+                              const isLast = index === parts.length - 1;
+                              return (
+                                <React.Fragment key={index}>
+                                  {index > 0 && (
+                                    <Text style={{ color: AppColors.grayTextWeak, fontSize: 11, marginHorizontal: 2 }}>
+                                      /
+                                    </Text>
+                                  )}
+                                  <View
+                                    style={
+                                      isLast
+                                        ? {
+                                            backgroundColor: `${AppColors.purple}12`,
+                                            paddingHorizontal: 8,
+                                            paddingVertical: 3,
+                                            borderRadius: 6,
+                                          }
+                                        : {
+                                            paddingHorizontal: 4,
+                                            paddingVertical: 2,
+                                          }
+                                    }>
+                                    <Text
+                                      style={{
+                                        fontFamily: isLast ? AppFonts.interBold : AppFonts.interMedium,
+                                        fontSize: 11.5,
+                                        color: isLast ? AppColors.purple : AppColors.grayText,
+                                      }}>
+                                      {part}
+                                    </Text>
+                                  </View>
+                                </React.Fragment>
+                              );
+                            })}
+                          </ScrollView>
                         </View>
                       );
-                    }
-                    return null;
-                  })()}
+                    })()}
 
-                  <View style={styles.detailSearchRow}>
-                    <View style={styles.detailSearchBox}>
-                      <TextInput
-                        placeholder="Search in request / response..."
-                        placeholderTextColor={AppColors.grayTextWeak}
-                        value={detailSearch}
-                        onChangeText={setDetailSearch}
-                        style={styles.detailSearchInput}
-                        autoCorrect={false}
-                        autoCapitalize="none"
-                      />
-                      {detailSearch.length > 0 && (
-                        <Pressable
-                          onPress={() => setDetailSearch('')}
-                          hitSlop={10}
-                          style={{padding: 8}}>
-                          <ClearIcon color={AppColors.grayTextWeak} size={14} />
-                        </Pressable>
-                      )}
+                    <View style={styles.detailInfoBar}>
+                      <View style={styles.detailInfoTop}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 10,
+                          }}>
+                          <View
+                            style={[
+                              styles.methodBadge,
+                              {
+                                backgroundColor: `${
+                                  METHOD_COLORS[selected.method as Method] ??
+                                  METHOD_COLORS.ALL
+                                }15`,
+                              },
+                            ]}>
+                            <Text
+                              style={[
+                                styles.methodBadgeText,
+                                {
+                                  color:
+                                    METHOD_COLORS[selected.method as Method] ??
+                                    METHOD_COLORS.ALL,
+                                },
+                              ]}>
+                              {selected.method}
+                            </Text>
+                          </View>
+
+                          {selected.status != null && (
+                            <View
+                              style={[
+                                styles.chip,
+                                {
+                                  backgroundColor:
+                                    selected.status === 0
+                                      ? `${AppColors.errorColor}15`
+                                      : `${getStatusColor(selected.status)}15`,
+                                  borderColor:
+                                    selected.status === 0
+                                      ? `${AppColors.errorColor}40`
+                                      : `${getStatusColor(selected.status)}40`,
+                                },
+                              ]}>
+                              {selected.status === 0 ? (
+                                <FailIcon size={8} color={AppColors.errorColor} />
+                              ) : (
+                                <Svg
+                                  width={6}
+                                  height={6}
+                                  viewBox="0 0 10 10"
+                                  fill="none">
+                                  <Circle
+                                    cx="5"
+                                    cy="5"
+                                    r="5"
+                                    fill={getStatusColor(selected.status)}
+                                  />
+                                </Svg>
+                              )}
+                              <Text
+                                style={[
+                                  styles.chipText,
+                                  {
+                                    color:
+                                      selected.status === 0
+                                        ? AppColors.errorColor
+                                        : getStatusColor(selected.status),
+                                  },
+                                ]}>
+                                {selected.status === 0
+                                  ? 'Failed'
+                                  : String(selected.status)}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        <View style={styles.detailInfoRight}>
+                          <TouchableScale
+                            style={styles.iconSquareBtn}
+                            onPress={() => Linking.openURL(detailDisplayUrl)}
+                            hitSlop={12}>
+                            <GlobeIcon color={AppColors.grayTextWeak} size={14} />
+                          </TouchableScale>
+                          <CopyButton
+                            value={getFetchCommand(selected)}
+                            label="fetch()"
+                            iconType="fetch"
+                          />
+                          <CopyButton
+                            value={getCurlCommand(selected)}
+                            label="cURL"
+                            iconType="terminal"
+                          />
+                          <CopyButton value={detailDisplayUrl} label="URL" />
+                        </View>
+                      </View>
+
+                      <Pressable
+                        style={styles.detailUrlContainer}
+                        onPress={() => Linking.openURL(detailDisplayUrl)}>
+                        <Text selectable={true} style={styles.detailUrl}>
+                          {detailDisplayUrl}
+                        </Text>
+                      </Pressable>
                     </View>
-                    <TouchableScale
-                      style={[styles.iconSquareBtn, {marginLeft: 8}]}
-                      onPress={() => {
-                        const next =
-                          reqExpanded === true || resExpanded === true
-                            ? false
-                            : true;
-                        setReqExpanded(next);
-                        setResExpanded(next);
-                      }}
-                      hitSlop={10}>
-                      <ExpandCollapseIcon
-                        isExpanded={
-                          reqExpanded === true || resExpanded === true
-                        }
-                        color={
-                          reqExpanded === true || resExpanded === true
-                            ? AppColors.purple
-                            : AppColors.grayTextWeak
-                        }
-                        size={14}
-                      />
-                    </TouchableScale>
                   </View>
 
-                  <HeadersSection
-                    title="Request Headers"
-                    headers={selected.requestHeaders}
-                    search={detailSearch}
-                    resetKey={selected.id}
-                  />
-                  <HeadersSection
-                    title="Response Headers"
-                    headers={selected.responseHeaders}
-                    search={detailSearch}
-                    resetKey={selected.id}
-                  />
+                  {/* Sticky Segment Control */}
+                  <View style={{
+                    flexDirection: 'row',
+                    backgroundColor: AppColors.grayBackground,
+                    borderRadius: 10,
+                    padding: 3,
+                    marginHorizontal: 6,
+                    marginBottom: 10,
+                    marginTop: 6,
+                    borderWidth: 1,
+                    borderColor: AppColors.dividerColor,
+                  }}>
+                    {(['metadata', 'headers', 'request', 'response'] as const).map(tab => {
+                      const isActive = apiDetailActiveTab === tab;
+                      if (tab === 'request' && selected.request == null) return null;
+                      
+                      const getLabel = () => {
+                        if (tab === 'metadata') return 'Metadata';
+                        if (tab === 'headers') return 'Headers';
+                        if (tab === 'request') return 'Request';
+                        return 'Response';
+                      };
 
-                  {selected.request != null && selected.method !== 'GET' && (
-                    <View style={styles.sectionContainer}>
-                      <SectionHeader
-                        title="Request"
-                        value={selected.request}
-                        expanded={reqExpanded}
-                        onToggleExpand={() => setReqExpanded(v => !v)}
-                        showDiff={prevRequestData != null}
-                        isDiffing={showReqDiff}
-                        onToggleDiff={() => {
-                          setShowReqDiff(v => !v);
-                          if (!reqExpanded && !showReqDiff)
-                            setReqExpanded(true);
-                        }}
-                      />
-                      {showReqDiff ? (
-                        <DiffViewer
-                          oldData={prevRequestData}
-                          newData={selected.request}
-                          forceOpen={reqExpanded}
-                        />
-                      ) : (
-                        <JsonViewer
-                          data={selected.request}
-                          search={detailSearch}
-                          forceOpen={reqExpanded}
-                        />
-                      )}
-                    </View>
-                  )}
+                      return (
+                        <TouchableOpacity
+                          key={tab}
+                          onPress={() => setApiDetailActiveTab(tab)}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 6,
+                            alignItems: 'center',
+                            borderRadius: 8,
+                            backgroundColor: isActive ? AppColors.purple : 'transparent',
+                          }}
+                        >
+                          <Text style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 11,
+                            color: isActive ? '#FFFFFF' : AppColors.grayText,
+                          }}>
+                            {getLabel()}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
 
-                  <View style={styles.sectionContainer}>
-                    <SectionHeader
-                      title="Response"
-                      value={selected.response}
-                      expanded={resExpanded}
-                      onToggleExpand={() => setResExpanded(v => !v)}
-                      showDiff={prevResponseData != null}
-                      isDiffing={showResDiff}
-                      onToggleDiff={() => {
-                        setShowResDiff(v => !v);
-                        if (!resExpanded && !showResDiff) setResExpanded(true);
-                      }}
-                    />
-                    {showResDiff ? (
-                      <DiffViewer
-                        oldData={prevResponseData}
-                        newData={selected.response}
-                        forceOpen={resExpanded}
-                      />
-                    ) : (
-                      <JsonViewer
-                        data={selected.response}
-                        search={detailSearch}
-                        forceOpen={resExpanded}
-                      />
+                  {/* Scrollable Tab Content */}
+                  <ScrollView
+                    style={styles.detailScroll}
+                    contentContainerStyle={{ paddingHorizontal: 6, paddingBottom: 24 }}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {apiDetailActiveTab === 'metadata' && (
+                      <>
+                        <MetaAccordion
+                          status={selected.status}
+                          statusColor={getStatusColor(selected.status)}
+                          duration={selected.duration}
+                          size={getSize(selected.response)}
+                          triggeredAt={formatDateTime(selected.startTime)}
+                        />
+
+                        {(() => {
+                          const routeInfo = logRouteMapRef.current.get(selected.id);
+                          if (!routeInfo || routeInfo.path === 'Navigators')
+                            return null;
+                          return <SourcePageCard routeInfo={routeInfo} />;
+                        })()}
+
+                        {(() => {
+                          const cType =
+                            selected.responseHeaders?.['content-type'] ||
+                            selected.responseHeaders?.['Content-Type'];
+                          if (cType?.includes('image/')) {
+                            return (
+                              <View style={styles.imagePreviewWrapper}>
+                                <Image
+                                  source={{uri: selected.url}}
+                                  style={styles.imagePreview}
+                                  resizeMode="contain"
+                                />
+                                <TouchableScale
+                                  style={styles.imageDownloadBtn}
+                                  onPress={() => Linking.openURL(selected.url)}
+                                  hitSlop={10}>
+                                  <DownloadIcon color={AppColors.purple} size={18} />
+                                </TouchableScale>
+                              </View>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </>
                     )}
-                  </View>
-                </ScrollView>
+
+                    {apiDetailActiveTab === 'headers' && (
+                      <>
+                        <View style={styles.detailSearchRow}>
+                          <View style={styles.detailSearchBox}>
+                            <TextInput
+                              placeholder="Search headers..."
+                              placeholderTextColor={AppColors.grayTextWeak}
+                              value={detailSearch}
+                              onChangeText={setDetailSearch}
+                              style={styles.detailSearchInput}
+                              autoCorrect={false}
+                              autoCapitalize="none"
+                            />
+                            {detailSearch.length > 0 && (
+                              <Pressable
+                                onPress={() => setDetailSearch('')}
+                                hitSlop={10}
+                                style={{padding: 8}}>
+                                <ClearIcon color={AppColors.grayTextWeak} size={14} />
+                              </Pressable>
+                            )}
+                          </View>
+                        </View>
+
+                        <HeadersSection
+                          title="Request Headers"
+                          headers={selected.requestHeaders}
+                          search={detailSearch}
+                          resetKey={selected.id}
+                        />
+                        <HeadersSection
+                          title="Response Headers"
+                          headers={selected.responseHeaders}
+                          search={detailSearch}
+                          resetKey={selected.id}
+                        />
+                      </>
+                    )}
+
+                    {apiDetailActiveTab === 'request' && selected.request != null && (
+                      <>
+                        <View style={styles.detailSearchRow}>
+                          <View style={styles.detailSearchBox}>
+                            <TextInput
+                              placeholder="Search request..."
+                              placeholderTextColor={AppColors.grayTextWeak}
+                              value={detailSearch}
+                              onChangeText={setDetailSearch}
+                              style={styles.detailSearchInput}
+                              autoCorrect={false}
+                              autoCapitalize="none"
+                            />
+                            {detailSearch.length > 0 && (
+                              <Pressable
+                                onPress={() => setDetailSearch('')}
+                                hitSlop={10}
+                                style={{padding: 8}}>
+                                <ClearIcon color={AppColors.grayTextWeak} size={14} />
+                              </Pressable>
+                            )}
+                          </View>
+                        </View>
+
+                        <View style={styles.sectionContainer}>
+                          <SectionHeader
+                            title="Request"
+                            value={selected.request}
+                            expanded={reqExpanded}
+                            onToggleExpand={() => setReqExpanded(v => !v)}
+                            showDiff={prevRequestData != null}
+                            isDiffing={showReqDiff}
+                            onToggleDiff={() => {
+                              setShowReqDiff(v => !v);
+                              if (!reqExpanded && !showReqDiff)
+                                setReqExpanded(true);
+                            }}
+                          />
+                          {showReqDiff ? (
+                            <DiffViewer
+                              oldData={prevRequestData}
+                              newData={selected.request}
+                              forceOpen={reqExpanded}
+                            />
+                          ) : (
+                            <JsonViewer
+                              data={selected.request}
+                              search={detailSearch}
+                              forceOpen={reqExpanded}
+                            />
+                          )}
+                        </View>
+                      </>
+                    )}
+
+                    {apiDetailActiveTab === 'response' && (
+                      <>
+                        <View style={styles.detailSearchRow}>
+                          <View style={styles.detailSearchBox}>
+                            <TextInput
+                              placeholder="Search response..."
+                              placeholderTextColor={AppColors.grayTextWeak}
+                              value={detailSearch}
+                              onChangeText={setDetailSearch}
+                              style={styles.detailSearchInput}
+                              autoCorrect={false}
+                              autoCapitalize="none"
+                            />
+                            {detailSearch.length > 0 && (
+                              <Pressable
+                                onPress={() => setDetailSearch('')}
+                                hitSlop={10}
+                                style={{padding: 8}}>
+                                <ClearIcon color={AppColors.grayTextWeak} size={14} />
+                              </Pressable>
+                            )}
+                          </View>
+                        </View>
+
+                        <View style={styles.sectionContainer}>
+                          <SectionHeader
+                            title="Response"
+                            value={selected.response}
+                            expanded={resExpanded}
+                            onToggleExpand={() => setResExpanded(v => !v)}
+                            showDiff={prevResponseData != null}
+                            isDiffing={showResDiff}
+                            onToggleDiff={() => {
+                              setShowResDiff(v => !v);
+                              if (!resExpanded && !showResDiff) setResExpanded(true);
+                            }}
+                          />
+                          {showResDiff ? (
+                            <DiffViewer
+                              oldData={prevResponseData}
+                              newData={selected.response}
+                              forceOpen={resExpanded}
+                            />
+                          ) : (
+                            <JsonViewer
+                              data={selected.response}
+                              search={detailSearch}
+                              forceOpen={resExpanded}
+                            />
+                          )}
+                        </View>
+                      </>
+                    )}
+                  </ScrollView>
+                </View>
+              )
               )
             ) : (
               <View style={styles.empty}>
@@ -3773,92 +3392,26 @@ const NetworkInspector = (): React.JSX.Element => {
                 </Text>
               </View>
             )}
+            </View>
           </View>
+          </ErrorBoundary>
         )}
       </Modal>
     </>
   );
 };
 
-export default NetworkInspector;
+const NetworkInspectorWrapper = (props: any) => {
+  return (
+    <ErrorBoundary fallbackType="inline">
+      <NetworkInspector {...props} />
+    </ErrorBoundary>
+  );
+};
 
-// ─── Analytics list styles (Firebase DebugView look) ─────────────────────────
-const analyticsListStyles = StyleSheet.create({
-  cardRow: {},
+export default NetworkInspectorWrapper;
 
-  // ── Top Events summary card (mirrors Firebase DebugView right panel) ────────
-  topEventsCard: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    backgroundColor: AppColors.primaryLight,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    shadowOffset: {width: 0, height: 1},
-    elevation: 1,
-  },
-  topEventsHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  topEventsTitle: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  topEventsSubtitle: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 9,
-    color: AppColors.grayTextWeak,
-    letterSpacing: 0.4,
-  },
-  topEventRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
-  },
-  topEventName: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 12,
-    color: AppColors.primaryBlack,
-    flex: 1,
-  },
-  topEventBarWrap: {
-    flex: 0.8,
-    height: 3,
-    backgroundColor: AppColors.grayBackground,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  topEventBar: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  topEventCount: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 11,
-    color: AppColors.grayText,
-    width: 24,
-    textAlign: 'right',
-  },
-  iconCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+
 
 // Re-export public APIs
 export {
@@ -3881,6 +3434,7 @@ export {
 } from './customHooks/analyticsLogger';
 
 export {
+  WebView,
   getWebViewLogs,
   getWebViewNavHistory,
   getWebViewHtml,
@@ -3890,4 +3444,12 @@ export {
   clearWebViewData,
   subscribeWebView,
 } from './customHooks/webViewLogger';
+
+export { default as ErrorBoundary } from './components/ErrorBoundary';
+
+export {
+  connectReduxStore,
+  getReduxState,
+  subscribeReduxState,
+} from './customHooks/reduxLogger';
 

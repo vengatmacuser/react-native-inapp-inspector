@@ -77,6 +77,77 @@ const getJsonPreviewText = (data: any): {text: string; hasMore: boolean} => {
   }
 };
 
+const getLogMessageWithBadges = (
+  message: string,
+  searchStr: string,
+  textStyle: any,
+  highlightStyle: any,
+  numberOfLines?: number,
+) => {
+  if (!message) return null;
+  const prefixRegex = /^((?:\[[^\]]+\]\s*)+)/;
+  const match = message.match(prefixRegex);
+  if (match) {
+    const fullPrefix = match[1];
+    const remainingText = message.substring(fullPrefix.length);
+    const tags = fullPrefix.match(/\[[^\]]+\]/g) || [];
+    
+    const getTagColor = (tag: string) => {
+      const cleanTag = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
+      if (cleanTag === 'API') return '#0284C7';
+      if (cleanTag === 'TEST') return '#16A34A';
+      if (cleanTag === 'APP') return '#4F46E5';
+      if (cleanTag === 'DETAILS') return '#7C3AED';
+      if (cleanTag === 'WEBVIEW') return '#EA580C';
+      if (cleanTag === 'MOCK REDUX' || cleanTag === 'REDUX') return '#DB2777';
+      
+      let hash = 0;
+      for (let i = 0; i < cleanTag.length; i++) {
+        hash = cleanTag.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const colors = ['#0891B2', '#0D9488', '#2563EB', '#D97706', '#E11D48', '#8B5CF6'];
+      return colors[Math.abs(hash) % colors.length];
+    };
+
+    return (
+      <Text style={textStyle} numberOfLines={numberOfLines}>
+        {tags.map((tag, idx) => {
+          const color = getTagColor(tag);
+          return (
+            <Text
+              key={idx}
+              style={{
+                fontWeight: 'bold',
+                color: color,
+                fontFamily: AppFonts.interBold,
+              }}>
+              {tag}{' '}
+            </Text>
+          );
+        })}
+        <HighlightText
+          text={remainingText}
+          search={searchStr}
+          style={textStyle}
+          highlightStyle={highlightStyle}
+          detectLinks={true}
+        />
+      </Text>
+    );
+  }
+  
+  return (
+    <HighlightText
+      text={message}
+      search={searchStr}
+      style={textStyle}
+      highlightStyle={highlightStyle}
+      numberOfLines={numberOfLines}
+      detectLinks={true}
+    />
+  );
+};
+
 export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   item,
   searchStr = '',
@@ -261,14 +332,13 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             <>
               {jsonContent.header ? (
                 <Pressable onPress={() => setExpanded(prev => !prev)}>
-                  <HighlightText
-                    text={jsonContent.header}
-                    search={searchStr}
-                    style={styles.messageText}
-                    highlightStyle={styles.highlight}
-                    numberOfLines={numLines}
-                    detectLinks={true}
-                  />
+                  {getLogMessageWithBadges(
+                    jsonContent.header,
+                    searchStr,
+                    styles.messageText,
+                    styles.highlight,
+                    numLines,
+                  )}
                 </Pressable>
               ) : null}
               {expanded ? (
@@ -295,14 +365,13 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             </>
           ) : (
             <Pressable onPress={() => setExpanded(prev => !prev)}>
-              <HighlightText
-                text={item.message}
-                search={searchStr}
-                style={styles.messageText}
-                highlightStyle={styles.highlight}
-                numberOfLines={numLines}
-                detectLinks={true}
-              />
+              {getLogMessageWithBadges(
+                item.message,
+                searchStr,
+                styles.messageText,
+                styles.highlight,
+                numLines,
+              )}
             </Pressable>
           )}
           {hasLongMessage && (
@@ -329,8 +398,8 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 3,
   },
   card: {
     alignSelf: 'stretch',
@@ -338,7 +407,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#EFEFEF',
-    padding: 12,
+    padding: 8,
     shadowColor: '#000',
     shadowOpacity: 0.03,
     shadowRadius: 3,
@@ -351,7 +420,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -385,10 +454,10 @@ const styles = StyleSheet.create({
     maxWidth: '50%',
   },
   cardBody: {
-    marginTop: 8,
+    marginTop: 6,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#EBECEF',

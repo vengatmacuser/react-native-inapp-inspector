@@ -17,12 +17,12 @@ A premium, self-contained, and interactive in-app debugger for React Native appl
 
 ## Installation
 
-Install the package and its peer dependencies in your React Native project:
+Install the package as a development dependency in your React Native project:
 
 ```bash
-npm install react-native-inapp-inspector
+npm install --save-dev react-native-inapp-inspector
 # OR
-yarn add react-native-inapp-inspector
+yarn add -D react-native-inapp-inspector
 ```
 
 ### Peer Dependencies

@@ -1,5 +1,11 @@
-import React, {useMemo} from 'react';
-import {StyleSheet, Text, View, Platform, FlatList} from 'react-native';
+import React, {useMemo, useState, useRef, useEffect} from 'react';
+import {StyleSheet, Text, View, Platform, FlatList, TextInput, Pressable} from 'react-native';
+import Svg, {Path} from 'react-native-svg';
+import {SearchIcon, ClearIcon} from './NetworkIcons';
+import CopyButton from './CopyButton';
+import TouchableScale from './TouchableScale';
+import {AppColors} from '../styles/AppColors';
+import {AppFonts} from '../styles/AppFonts';
 
 interface CodeSnippetProps {
   code: string;
@@ -124,7 +130,7 @@ const formatJS = (js: string): string => {
 const tokenizeJS = (text: string) => {
   const tokens: {text: string; type: string}[] = [];
   const regex =
-    /(\/\/.*|\/\*[\s\S]*?\*\/)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b(?:const|let|var|function|return|if|else|for|while|import|export|class|try|catch|new|this|async|await|break|continue|switch|case|default|throw|typeof|yield|let)\b)|(\b(?:console|window|document|fetch|global|require|module|exports|Promise|Map|Set|Array|Object|String|Number|Boolean)\b)|(\b\d+(?:\.\d+)?\b)/g;
+    /(\/\/.*|\/\*[\s\S]*?\*\/)|(\"(?:\\.|[^\"\\])*\"|\'(?:\\.|[^\'\\])*\'|\`(?:\\.|[^\`\\])*\`)|(\b(const|let|var|function|return|if|else|for|while|import|export|class|try|catch|new|this|async|await|break|continue|switch|case|default|throw|typeof|yield)\b)|(\b(console|window|document|fetch|global|require|module|exports|Promise|Map|Set|Array|Object|String|Number|Boolean)\b)|(\b\d+(?:\.\d+)?\b)/g;
 
   let lastIndex = 0;
   let match;
@@ -190,7 +196,7 @@ const tokenizeCSS = (text: string) => {
 const tokenizeHTML = (text: string) => {
   const tokens: {text: string; type: string}[] = [];
   const regex =
-    /(<!--[\s\S]*?-->)|(<\/?[a-zA-Z0-9:-]+>?)|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|([a-zA-Z0-9:-]+(?=\s*=))/g;
+    /(<!--[\s\S]*?-->)|(<\/?[a-zA-Z0-9:-]+>?)|(\"(?:\\.|[^\"\\])*\"|\'(?:\\.|[^\'\\])*\')|([a-zA-Z0-9:-]+(?=\s*=))/g;
 
   let lastIndex = 0;
   let match;
@@ -245,17 +251,31 @@ const getStyleForType = (type: string) => {
   }
 };
 
+const ArrowUpIcon = ({color = '#64748B', size = 16}: {color?: string; size?: number}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M18 15l-6-6-6 6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const ArrowDownIcon = ({color = '#64748B', size = 16}: {color?: string; size?: number}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
 const CodeSnippetLine = React.memo(
   ({
     line,
     lineIndex,
     language,
     search,
+    isActiveMatch,
   }: {
     line: string;
     lineIndex: number;
     language: 'html' | 'css' | 'javascript';
     search: string;
+    isActiveMatch: boolean;
   }) => {
     const tokens = useMemo(() => {
       if (language === 'html') return tokenizeHTML(line);
@@ -287,10 +307,10 @@ const CodeSnippetLine = React.memo(
     };
 
     return (
-      <View style={styles.lineRow}>
+      <View style={[styles.lineRow, isActiveMatch && styles.activeMatchRow]}>
         {/* Gutter Line Number */}
-        <View style={styles.gutter}>
-          <Text style={styles.lineNumber}>{lineIndex + 1}</Text>
+        <View style={[styles.gutter, isActiveMatch && styles.activeMatchGutter]}>
+          <Text style={[styles.lineNumber, isActiveMatch && styles.activeMatchLineNumber]}>{lineIndex + 1}</Text>
         </View>
 
         {/* Highlighted Code Line */}
@@ -315,10 +335,29 @@ const CodeSnippetLine = React.memo(
 const CodeSnippet: React.FC<CodeSnippetProps> = ({
   code,
   language,
-  search = '',
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [currentMatchIdx, setCurrentMatchIdx] = useState(-1);
+  const [visibleLinesCount, setVisibleLinesCount] = useState(200);
+
+  const flatListRef = useRef<FlatList>(null);
+
+  // Debounce search query updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // If code is extremely large (e.g. > 150KB), skip the pretty printers
+  // to avoid blocking the single JS thread.
   const formattedCode = useMemo(() => {
     if (!code) return '';
+    if (code.length > 150000) {
+      return code;
+    }
     if (language === 'html') return formatHTML(code);
     if (language === 'css') return formatCSS(code);
     if (language === 'javascript') return formatJS(code);
@@ -330,26 +369,175 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
     return formattedCode.split(/\r?\n/);
   }, [formattedCode]);
 
-  const renderLine = ({item, index}: {item: string; index: number}) => (
-    <CodeSnippetLine
-      line={item}
-      lineIndex={index}
-      language={language}
-      search={search}
-    />
-  );
+  // Find all line indices matching the search query
+  const matches = useMemo(() => {
+    if (!debouncedQuery.trim() || debouncedQuery.length < 2) return [];
+    const query = debouncedQuery.toLowerCase();
+    const indices: number[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].toLowerCase().includes(query)) {
+        indices.push(i);
+      }
+    }
+    return indices;
+  }, [debouncedQuery, lines]);
+
+  // Reset scroll and states on code/language changes
+  useEffect(() => {
+    setVisibleLinesCount(200);
+    setSearchQuery('');
+    setCurrentMatchIdx(-1);
+  }, [code, language]);
+
+  // Auto-scroll to the first match when search query returns matches
+  useEffect(() => {
+    if (matches.length > 0) {
+      setCurrentMatchIdx(0);
+      scrollToMatch(0);
+    } else {
+      setCurrentMatchIdx(-1);
+    }
+  }, [matches]);
+
+  const scrollToMatch = (matchIdx: number) => {
+    if (matches.length === 0 || matchIdx < 0 || matchIdx >= matches.length) return;
+    const lineIdx = matches[matchIdx];
+
+    // Ensure the targeted index is loaded in FlatList
+    if (lineIdx >= visibleLinesCount) {
+      setVisibleLinesCount(lineIdx + 100);
+    }
+
+    // Schedule scroll after state has applied
+    setTimeout(() => {
+      try {
+        flatListRef.current?.scrollToIndex({
+          index: lineIdx,
+          animated: true,
+          viewPosition: 0.5,
+        });
+      } catch (e) {
+        // Fallback recovery is handled by onScrollToIndexFailed
+      }
+    }, 100);
+  };
+
+  const onScrollToIndexFailed = (error: any) => {
+    flatListRef.current?.scrollToOffset({
+      offset: error.averageItemLength * error.index,
+      animated: true,
+    });
+    setTimeout(() => {
+      try {
+        flatListRef.current?.scrollToIndex({
+          index: error.index,
+          animated: true,
+          viewPosition: 0.5,
+        });
+      } catch (err) {
+        console.warn('Scroll to line index failed after fallback retry:', err);
+      }
+    }, 120);
+  };
+
+  const handleNextMatch = () => {
+    if (matches.length === 0) return;
+    const nextIdx = (currentMatchIdx + 1) % matches.length;
+    setCurrentMatchIdx(nextIdx);
+    scrollToMatch(nextIdx);
+  };
+
+  const handlePrevMatch = () => {
+    if (matches.length === 0) return;
+    const prevIdx = (currentMatchIdx - 1 + matches.length) % matches.length;
+    setCurrentMatchIdx(prevIdx);
+    scrollToMatch(prevIdx);
+  };
+
+  const visibleLines = useMemo(() => {
+    return lines.slice(0, visibleLinesCount);
+  }, [lines, visibleLinesCount]);
+
+  const handleEndReached = () => {
+    if (visibleLinesCount < lines.length) {
+      setVisibleLinesCount(prev => Math.min(prev + 150, lines.length));
+    }
+  };
+
+  const renderLine = ({item, index}: {item: string; index: number}) => {
+    const isActiveMatch = matches.length > 0 && currentMatchIdx >= 0 && index === matches[currentMatchIdx];
+    return (
+      <CodeSnippetLine
+        line={item}
+        lineIndex={index}
+        language={language}
+        search={debouncedQuery}
+        isActiveMatch={isActiveMatch}
+      />
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={lines}
-        renderItem={renderLine}
-        keyExtractor={(_, index) => String(index)}
-        maxToRenderPerBatch={50}
-        windowSize={10}
-        initialNumToRender={30}
-        removeClippedSubviews={Platform.OS === 'android'}
-      />
+    <View style={{flex: 1}}>
+      {/* Search Header Row */}
+      <View style={styles.searchRow}>
+        <View style={styles.searchBar}>
+          <SearchIcon color={AppColors.grayTextWeak} size={15} />
+          <TextInput
+            placeholder={`Search ${language.toUpperCase()}...`}
+            placeholderTextColor={AppColors.grayTextWeak}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            style={styles.searchInput}
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+
+          {/* Matches Info */}
+          {debouncedQuery.length >= 2 && (
+            <Text style={styles.matchCountText}>
+              {matches.length > 0 ? `${currentMatchIdx + 1}/${matches.length}` : '0/0'}
+            </Text>
+          )}
+
+          {searchQuery.length > 0 && (
+            <Pressable onPress={() => setSearchQuery('')} hitSlop={8} style={styles.clearBtn}>
+              <ClearIcon color={AppColors.grayTextWeak} size={12} />
+            </Pressable>
+          )}
+        </View>
+
+        {/* Up / Down Arrow Navigation Buttons */}
+        {matches.length > 0 && (
+          <View style={styles.navArrowsGroup}>
+            <TouchableScale onPress={handlePrevMatch} hitSlop={8} style={styles.navArrowBtn}>
+              <ArrowUpIcon color="#475569" size={14} />
+            </TouchableScale>
+            <TouchableScale onPress={handleNextMatch} hitSlop={8} style={styles.navArrowBtn}>
+              <ArrowDownIcon color="#475569" size={14} />
+            </TouchableScale>
+          </View>
+        )}
+
+        <CopyButton value={code} label={`${language.toUpperCase()} Source`} />
+      </View>
+
+      {/* Code Snippet list container */}
+      <View style={styles.container}>
+        <FlatList
+          ref={flatListRef}
+          data={visibleLines}
+          renderItem={renderLine}
+          keyExtractor={(_, index) => String(index)}
+          maxToRenderPerBatch={30}
+          windowSize={5}
+          initialNumToRender={50}
+          removeClippedSubviews={Platform.OS === 'android'}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          onScrollToIndexFailed={onScrollToIndexFailed}
+        />
+      </View>
     </View>
   );
 };
@@ -365,11 +553,68 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     overflow: 'hidden',
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 8,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 8,
+    height: 32,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: AppFonts.interRegular,
+    fontSize: 12,
+    color: '#0F172A',
+    marginLeft: 6,
+    paddingVertical: 0,
+  },
+  matchCountText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10,
+    color: '#64748B',
+    marginHorizontal: 6,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  clearBtn: {
+    padding: 4,
+  },
+  navArrowsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    height: 32,
+    paddingHorizontal: 2,
+  },
+  navArrowBtn: {
+    padding: 5,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   lineRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
     minHeight: 20,
     paddingVertical: 1,
+  },
+  activeMatchRow: {
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
   },
   gutter: {
     width: 40,
@@ -381,10 +626,18 @@ const styles = StyleSheet.create({
     paddingRight: 6,
     paddingTop: 1,
   },
+  activeMatchGutter: {
+    backgroundColor: 'rgba(234, 179, 8, 0.25)',
+    borderRightColor: 'rgba(234, 179, 8, 0.4)',
+  },
   lineNumber: {
     fontFamily: monoFont,
     fontSize: 9,
     color: '#94A3B8',
+  },
+  activeMatchLineNumber: {
+    color: '#854D0E',
+    fontWeight: 'bold',
   },
   codeLine: {
     flex: 1,
@@ -464,3 +717,4 @@ const styles = StyleSheet.create({
 });
 
 export default CodeSnippet;
+

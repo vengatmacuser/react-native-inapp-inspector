@@ -2,7 +2,7 @@ import React from 'react';
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
-export type ActiveTab = 'apis' | 'analytics' | 'logs' | 'webview';
+export type ActiveTab = 'insights' | 'apis' | 'analytics' | 'logs' | 'webview' | 'redux';
 
 export interface ConsoleLog {
   id: number;
@@ -79,7 +79,7 @@ export type DiffResult = {
 };
 
 export interface CopyButtonProps {
-  value: unknown;
+  value: unknown | (() => unknown);
   label: string;
   iconType?: 'copy' | 'terminal' | 'fetch';
 }

@@ -55,8 +55,9 @@ export const getSize = (data: unknown): string => {
 };
 
 export const copyToClipboard = (value: unknown, label: string): void => {
+  const resolved = typeof value === 'function' ? (value as Function)() : value;
   const text =
-    typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+    typeof resolved === 'string' ? resolved : JSON.stringify(resolved, null, 2);
   Clipboard.setString(text ?? '');
   if (Platform.OS === 'android') {
     ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);

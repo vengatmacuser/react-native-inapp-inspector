@@ -591,3 +591,118 @@ export const WhiteBackNavigation = ({color = '#FFFFFF', size = 20}: any) => {
   );
 };
 
+export const AnalyticsIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M18 20V10M12 20V4M6 20v-6"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const InsightsIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M2 17l6-6 4 4 10-10M22 12V7h-5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const DebugIcon = ({color = '#FFFFFF', size = 18}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Hammer: diagonal from bottom-left to top-right */}
+      {/* Handle */}
+      <Path
+        d="M6 18l8-8"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      {/* Head */}
+      <Path
+        d="M13.5 10.5l2-2 1.5 1.5-2 2-1.5-1.5z"
+        fill={color}
+      />
+      <Path
+        d="M15.5 8.5L19 5c.5-.5 1.2-.5 1.7 0s.5 1.2 0 1.7L17.2 10.2"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* Screwdriver: diagonal from bottom-right to top-left */}
+      {/* Handle */}
+      <Path
+        d="M15 15l4 4"
+        stroke={color}
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+      {/* Shaft */}
+      <Path
+        d="M15 15L8.5 8.5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* Flat tip */}
+      <Path
+        d="M9 9L5 5M4.5 6.5l2-2"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const SunIcon = ({color = '#FFFFFF', size = 16}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="5" stroke={color} strokeWidth="2" />
+      <Path
+        d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const MoonIcon = ({color = '#FFFFFF', size = 16}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+        fill={color}
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+
+
+
