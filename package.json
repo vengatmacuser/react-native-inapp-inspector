@@ -40,6 +40,12 @@
     "debug-tool"
   ],
   "author": "Vengateswaran Balakrishnan",
+  "contributors": [
+    {
+      "name": "Vengateswaran Balakrishnan",
+      "url": "https://github.com/vengatmacuser"
+    }
+  ],
   "license": "MIT",
   "peerDependencies": {
     "@react-navigation/native": ">=6.0.0",
