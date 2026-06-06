@@ -1,0 +1,52 @@
+{
+  "name": "react-native-inapp-inspector",
+  "version": "1.0.0",
+  "description": "A self-contained network, console, analytics, and webview inspector for React Native applications.",
+  "main": "dist/commonjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/commonjs/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/commonjs/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/commonjs/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "fonts"
+  ],
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.esm.json",
+    "watch": "tsc -w",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "react-native",
+    "network-logger",
+    "network-inspector",
+    "analytics-logger",
+    "webview-logger",
+    "debug-tool"
+  ],
+  "author": "Vengateswaran Balakrishnan",
+  "license": "MIT",
+  "peerDependencies": {
+    "@react-navigation/native": ">=6.0.0",
+    "react": ">=18.0.0",
+    "react-native": ">=0.60.0",
+    "react-native-linear-gradient": ">=2.0.0",
+    "react-native-svg": ">=12.0.0"
+  },
+  "devDependencies": {
+    "@react-navigation/native": "^6.1.9",
+    "@types/react": "^19.1.0",
+    "@types/react-native": "^0.72.0",
+    "react": "19.1.0",
+    "react-native": "0.81.4",
+    "react-native-linear-gradient": "^2.8.3",
+    "react-native-svg": "^15.14.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,97 @@
+# React Native In-App Inspector
+
+A premium, self-contained, and interactive in-app debugger for React Native applications. Inspect network requests, console logs, analytics events, and WebView states directly from your device.
+
+![React Native In-App Inspector](https://img.shields.io/badge/React_Native-In--App_Inspector-blue?style=for-the-badge&logo=react)
+
+## Features
+
+- **🌐 Network Inspector**: Intercept and view HTTP requests and responses, track latency, export as cURL or Fetch, search logs, and view differences between subsequent requests.
+- **💻 Console Logger**: In-app terminal displaying your `console.log`, `console.warn`, and `console.error` logs with customizable filters.
+- **📊 Analytics Event Tracker**: Real-time logging and analytics debugging (e.g. Firebase Analytics, GA events).
+- **🕸️ WebView Inspector**: Live tracking of navigation history, console logs, and inspection of HTML, CSS, and JS inside your `WebView` components.
+- **📈 Embedded Visualizations**: Built-in mini charts visualizing metrics like latency, payload size, and errors over time.
+- **🎨 Modern Dark UI**: Sleek, glassmorphism-inspired dark design with smooth micro-animations.
+
+---
+
+## Installation
+
+Install the package and its peer dependencies in your React Native project:
+
+```bash
+npm install react-native-inapp-inspector
+# OR
+yarn add react-native-inapp-inspector
+```
+
+### Peer Dependencies
+Make sure you have the following peer dependencies installed in your project:
+
+```bash
+npm install react-native-svg react-native-linear-gradient @react-navigation/native
+```
+
+For iOS projects, don't forget to run pod install:
+```bash
+cd ios && pod install
+```
+
+---
+
+## Integration
+
+### 1. Embed the Inspector Component
+Place the `<NetworkInspector />` component at the root level of your application (usually in `App.tsx` or your root navigation container):
+
+```tsx
+import React from 'react';
+import { SafeAreaView } from 'react-native';
+import NetworkInspector from 'react-native-inapp-inspector';
+
+const App = () => {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* Your application components */}
+      
+      {/* Floating Inspector overlay */}
+      <NetworkInspector />
+    </SafeAreaView>
+  );
+};
+
+export default App;
+```
+
+### 2. Auto-Intercept Network Requests (Axios / Fetch)
+The library automatically intercepts standard `fetch` and `XMLHttpRequest` requests when loaded. If you are using `axios`, you can register it to intercept requests:
+
+```typescript
+import axios from 'axios';
+import { addAxiosInterceptors } from 'react-native-inapp-inspector';
+
+const api = axios.create({
+  baseURL: 'https://api.example.com',
+});
+
+// Register the interceptor
+addAxiosInterceptors(api);
+```
+
+### 3. Log Analytics Events
+Subscribe to and log custom analytics events:
+
+```typescript
+import { subscribeAnalyticsEvents } from 'react-native-inapp-inspector';
+
+// Log your custom events
+subscribeAnalyticsEvents((events) => {
+  // Access and analyze logged events
+});
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

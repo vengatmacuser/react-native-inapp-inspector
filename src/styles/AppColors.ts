@@ -1,0 +1,28 @@
+export const AppColors = {
+  primaryLight: '#FFFFFF',
+  purple: '#684B9B',
+  purpleShade50: '#F9F5FF',
+  offerPurple: '#F246CB',
+  grayBorderSecondary: '#DFE0EB',
+  grayBackground: '#F9F9FC',
+  grayText: '#6A6D87',
+  grayTextWeak: '#9596AC',
+  greenColor: '#55CD7D',
+  graySurface: '#DFE0EB',
+  skyBlue: '#007AFF',
+  primaryBlack: '#2C3059',
+  grayTextStrong: '#2C3059',
+  dividerColor: '#EBECEF',
+  warningIconGold: '#BFA252',
+  shadowColorString: '#101828',
+  errorColor: '#FF2E57',
+  lightOrange: '#FFC738',
+  darkOrange: '#996F04',
+  successGreen: '#55CD7D',
+  purpleShade700: '#6941C6',
+  greenStatus: '#D0F8DE',
+  greenBaggageText: '#159E44',
+  paleYellow: '#F9DB7C',
+};
+
+export default AppColors;
