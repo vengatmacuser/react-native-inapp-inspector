@@ -13,7 +13,7 @@ if (!util.styleText) {
 
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const exclusionList = require('metro-config/src/defaults/exclusionList');
+const exclusionList = require('metro-config/private/defaults/exclusionList').default || require('metro-config/private/defaults/exclusionList');
 
 const root = path.resolve(__dirname, '..');
 
