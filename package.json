@@ -1,7 +1,15 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A self-contained network, console, analytics, and webview inspector for React Native applications.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vengatmacuser/react-native-inapp-inspector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vengatmacuser/react-native-inapp-inspector/issues"
+  },
+  "homepage": "https://github.com/vengatmacuser/react-native-inapp-inspector#readme",
   "main": "dist/commonjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/commonjs/index.d.ts",
