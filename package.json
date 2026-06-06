@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A self-contained network, console, analytics, and webview inspector for React Native applications.",
   "main": "dist/commonjs/index.js",
   "module": "dist/esm/index.js",
@@ -15,7 +15,8 @@
   },
   "files": [
     "dist",
-    "fonts"
+    "fonts",
+    "example"
   ],
   "scripts": {
     "build": "tsc && tsc -p tsconfig.esm.json",
