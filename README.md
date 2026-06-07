@@ -1,8 +1,18 @@
 # React Native In-App Inspector
 
-A premium, self-contained, and interactive in-app debugger for React Native applications. Inspect network requests, console logs, analytics events, and WebView states directly from your device.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/icon_circle.svg" width="120" height="120" alt="React Native In-App Inspector Icon">
+</p>
 
-![React Native In-App Inspector](https://img.shields.io/badge/React_Native-In--App_Inspector-blue?style=for-the-badge&logo=react)
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg">
+    <img alt="React Native In-App Inspector Banner" src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg" width="100%">
+  </picture>
+</p>
+
+A premium, self-contained, and interactive in-app debugger for React Native applications. Inspect network requests, console logs, analytics events, and WebView states directly from your device.
 
 ## Features
 
