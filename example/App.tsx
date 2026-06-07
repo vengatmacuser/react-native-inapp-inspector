@@ -17,7 +17,6 @@ import NetworkInspector, {
   ErrorBoundary,
   connectReduxStore,
   setupNetworkLogger,
-  addAxiosInterceptors,
   subscribeNetworkLogs,
   subscribeConsoleLogs,
   logAnalyticsEvent,
@@ -130,8 +129,7 @@ function HomeScreen({ navigation }: any) {
     };
   }, []);
 
-  // Create an Axios instance to test automatic interception of custom instances.
-  // Note: No manual addAxiosInterceptors call is performed! It is now automatic.
+  // Axios client — interceptors are automatically applied by setupNetworkLogger()
   const axiosClient = React.useMemo(() => axios.create({
     baseURL: 'https://jsonplaceholder.typicode.com',
   }), []);

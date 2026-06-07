@@ -229,25 +229,21 @@ export const setupNetworkLogger = () => {
     };
   }
 
-  // ✅ Hook Axios using the imported module
+  // Hook Axios — patches both the default instance and any future axios.create() instances
   try {
     if (axios) {
       addAxiosInterceptors(axios);
-      console.log('✅ Axios interceptors added to imported axios');
       const originalCreate = axios.create;
       if (typeof originalCreate === 'function') {
         axios.create = function (...args: any[]) {
           const instance = originalCreate.apply(this, args);
           addAxiosInterceptors(instance);
-          console.log('✅ Axios interceptors added to custom axios instance (imported)');
           return instance;
         };
       }
-    } else {
-      console.warn('⚠️ Axios module not found for interceptor setup');
     }
-  } catch (e) {
-    console.error('❌ Error during Axios interceptor setup', e);
+  } catch (_e) {
+    // Axios not available — fetch-only mode
   }
 
   (globalThis as any).__NETWORK_LOGGER_INITIALIZED__ = true;
