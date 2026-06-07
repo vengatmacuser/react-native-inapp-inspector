@@ -1298,7 +1298,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
                 borderWidth: 1,
                 borderColor: 'rgba(255, 255, 255, 0.1)'
               }}>
-                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10.5, color: '#FFFFFF' }}>v1.0.11</Text>
+                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10.5, color: '#FFFFFF' }}>v1.0.12</Text>
               </View>
             </View>
           </LinearGradient>
@@ -2410,7 +2410,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
                           <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
                             <Animated.View style={{width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ADE80', opacity: activePulseAnim}} />
                             <Text style={{fontFamily: AppFonts.interMedium, fontSize: 10, color: 'rgba(255,255,255,0.78)', letterSpacing: 0.3}}>
-                              Active • {Platform.OS === 'ios' ? 'iOS' : 'Android'} (v1.0.11)
+                              Active • {Platform.OS === 'ios' ? 'iOS' : 'Android'} (v1.0.12)
                             </Text>
                           </View>
                         </View>

@@ -21,6 +21,14 @@ A premium, self-contained, and interactive in-app debugger for React Native appl
 
 ---
 
+## Video Walkthrough
+
+Watch the library in action, demonstrating network inspection, Redux state tree analysis, WebView debugging, and console logging:
+
+[🎬 Download or watch the Video Walkthrough](https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/example/guidance/Video-WalkThrough.mp4)
+
+---
+
 ## Installation
 
 Install the package as a development dependency in your React Native project:
