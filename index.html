@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>React Native In-App Inspector — Premium Debugging Companion</title>
+  <meta name="description" content="A self-contained network logger, console logger, webview inspector, and analytics tracker for React Native applications.">
+  <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/icon_circle.svg">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/icon_circle.svg" alt="Logo" class="nav-logo">
+        <span class="nav-title">RN In-App Inspector</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#demo">Interactive Demo</a>
+        <a href="#install">Getting Started</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector" class="nav-btn github" target="_blank">
+          <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
+          GitHub
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-bg-gradients">
+      <div class="g-blue"></div>
+      <div class="g-purple"></div>
+    </div>
+    <div class="container hero-container">
+      <div class="hero-badge">🎉 PREMIUM DEV COMPANION</div>
+      <h1 class="hero-title">Self-Contained In-App Inspector for React Native</h1>
+      <p class="hero-subtitle">Intercept network requests, analyze console streams, track navigation routes, and monitor custom analytics events directly from your device screens. No debugger ports or cables required.</p>
+      
+      <div class="hero-actions">
+        <a href="#install" class="btn primary">Get Started Now</a>
+        <a href="https://www.npmjs.com/package/react-native-inapp-inspector" class="btn secondary" target="_blank">
+          <img src="https://img.shields.io/npm/v/react-native-inapp-inspector.svg?color=purple&style=flat-square" alt="npm version">
+        </a>
+      </div>
+
+      <div class="hero-preview-frame">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
+          <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg">
+          <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg" alt="React Native In-App Inspector Banner" class="hero-banner-img">
+        </picture>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Built for Modern Mobile Developers</h2>
+        <p class="section-subtitle">Everything you need to troubleshoot, audit, and verify your mobile application states in real-time.</p>
+      </div>
+      
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon icon-cyan">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-15c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+          </div>
+          <h3 class="feature-name">🌐 Network Logger</h3>
+          <p class="feature-desc">Monitor raw HTTP packets, track headers, body payloads, latency, and status codes. Copy requests directly as Axios fetch or cURL commands.</p>
+        </div>
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon icon-purple">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 12H4v-2h8v2zm8-4H4V8h16v4z"/></svg>
+          </div>
+          <h3 class="feature-name">💻 Log Terminal</h3>
+          <p class="feature-desc">Interactive in-app logs window displaying React Native warnings, errors, and system logging messages in color-coded cards.</p>
+        </div>
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon icon-blue">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          </div>
+          <h3 class="feature-name">🕸️ WebView Inspector</h3>
+          <p class="feature-desc">Audit scripts, styles, resources, navigation history, and console messages running inside nested web views dynamically.</p>
+        </div>
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon icon-pink">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          </div>
+          <h3 class="feature-name">📊 Analytics Event Tracker</h3>
+          <p class="feature-desc">Observe real-time events triggered inside Google Analytics, Firebase, or custom marketing platforms as they happen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Demo Mockup -->
+  <section id="demo" class="demo-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Experience the Interface</h2>
+        <p class="section-subtitle">Interact with our simulation of the React Native inspector client. Toggle tabs to see mock network requests and logs.</p>
+      </div>
+
+      <div class="device-mockup-wrapper">
+        <div class="device-mockup">
+          <div class="device-header">
+            <div class="device-camera"></div>
+            <div class="device-speaker"></div>
+          </div>
+          
+          <!-- Inspector App Inside Mockup -->
+          <div class="inspector-client">
+            <div class="inspector-header">
+              <span class="client-title">RN-InApp-Inspector</span>
+              <div class="client-tabs">
+                <button class="client-tab active" onclick="switchDemoTab('apis')">APIs</button>
+                <button class="client-tab" onclick="switchDemoTab('logs')">Logs</button>
+                <button class="client-tab" onclick="switchDemoTab('analytics')">Analytics</button>
+              </div>
+            </div>
+
+            <div class="inspector-content">
+              <!-- APIs tab content -->
+              <div id="demo-tab-apis" class="demo-tab-content active">
+                <div class="demo-list-item success">
+                  <div class="item-meta">
+                    <span class="badge get">GET</span>
+                    <span class="status">200 OK</span>
+                    <span class="time">45ms</span>
+                  </div>
+                  <span class="item-url">https://api.example.com/users/profile</span>
+                </div>
+                
+                <div class="demo-list-item success">
+                  <div class="item-meta">
+                    <span class="badge post">POST</span>
+                    <span class="status">201 Created</span>
+                    <span class="time">120ms</span>
+                  </div>
+                  <span class="item-url">https://api.example.com/auth/login</span>
+                </div>
+
+                <div class="demo-list-item error">
+                  <div class="item-meta">
+                    <span class="badge get">GET</span>
+                    <span class="status failed">500 Server Error</span>
+                    <span class="time">88ms</span>
+                  </div>
+                  <span class="item-url">https://api.example.com/analytics/v2/events</span>
+                </div>
+              </div>
+
+              <!-- Logs tab content -->
+              <div id="demo-tab-logs" class="demo-tab-content">
+                <div class="log-card log">
+                  <span class="log-tag">[App]</span>
+                  <span class="log-msg">HomeScreen mounted and tracking initialized.</span>
+                </div>
+                <div class="log-card warn">
+                  <span class="log-tag">[System]</span>
+                  <span class="log-msg">API request latency is above average (120ms).</span>
+                </div>
+                <div class="log-card error">
+                  <span class="log-tag">[Critical]</span>
+                  <span class="log-msg">Simulated crash: DB connection timeout.</span>
+                </div>
+              </div>
+
+              <!-- Analytics tab content -->
+              <div id="demo-tab-analytics" class="demo-tab-content">
+                <div class="event-card">
+                  <div class="event-header">
+                    <span class="event-name">user_login_success</span>
+                    <span class="event-time">12:04:12</span>
+                  </div>
+                  <pre class="event-params">{ "method": "Google", "role": "Lead Architect" }</pre>
+                </div>
+                
+                <div class="event-card">
+                  <div class="event-header">
+                    <span class="event-name">screen_view</span>
+                    <span class="event-time">12:04:08</span>
+                  </div>
+                  <pre class="event-params">{ "screen_name": "HomeScreen" }</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Getting Started Section -->
+  <section id="install" class="install-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Simple Integration</h2>
+        <p class="section-subtitle">Add the inspector to your app in under three minutes.</p>
+      </div>
+
+      <div class="code-flow-grid">
+        <div class="install-steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Install Dependencies</h4>
+              <p>Add the library as a dev dependency via npm or yarn package manager.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Mount the Inspector Component</h4>
+              <p>Place the inspector at the root level overlay of your application.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Start Inspecting</h4>
+              <p>Open your app, tap the floating overlay trigger, and explore the runtime details.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-showcase">
+          <div class="code-header">
+            <span class="code-title">App.tsx</span>
+          </div>
+          <pre class="code-block"><code><span class="token keyword">import</span> React <span class="token keyword">from</span> <span class="token string">'react'</span>;
+<span class="token keyword">import</span> { SafeAreaView } <span class="token keyword">from</span> <span class="token string">'react-native'</span>;
+<span class="token keyword">import</span> NetworkInspector <span class="token keyword">from</span> <span class="token string">'react-native-inapp-inspector'</span>;
+
+<span class="token keyword">const</span> <span class="token function">App</span> = () => {
+  <span class="token keyword">return</span> (
+    &lt;<span class="token class">SafeAreaView</span> style={{ flex: 1 }}&gt;
+      <span class="token comment">{/* Your application components */}</span>
+      
+      <span class="token comment">{/* Floating overlay UI */}</span>
+      &lt;<span class="token class">NetworkInspector</span> /&gt;
+    &lt;/<span class="token class">SafeAreaView</span>&gt;
+  );
+};
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> App;</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-left">
+        <p>© 2026 Vengateswaran Balakrishnan. All rights reserved.</p>
+        <p class="footer-notes">Licensed under the MIT License.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector" target="_blank">GitHub</a>
+        <a href="https://www.npmjs.com/package/react-native-inapp-inspector" target="_blank">npm</a>
+        <a href="https://github.com/sponsors/vengatmacuser" target="_blank">Sponsor</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    function switchDemoTab(tabId) {
+      // Deactivate all tabs
+      document.querySelectorAll('.client-tab').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.demo-tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      // Activate selected tab button
+      const activeBtn = Array.from(document.querySelectorAll('.client-tab')).find(btn => btn.innerText.toLowerCase() === tabId);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      // Activate content block
+      const contentBlock = document.getElementById('demo-tab-' + tabId);
+      if (contentBlock) contentBlock.classList.add('active');
+    }
+  </script>
+</body>
+</html>
