@@ -11,17 +11,21 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import axios from 'axios';
 import NetworkInspector, {
   WebView,
   ErrorBoundary,
   connectReduxStore,
+  setupNetworkLogger,
+  addAxiosInterceptors,
   subscribeNetworkLogs,
   subscribeConsoleLogs,
   logAnalyticsEvent,
   subscribeAnalyticsEvents,
 } from 'react-native-inapp-inspector';
-import axios from 'axios';
 
+// ⚡ Call BEFORE any component renders so axios.create() is already patched
+setupNetworkLogger();
 // ─── Mock Redux Store ────────────────────────────────────────────────────────
 const mockStore = {
   state: {

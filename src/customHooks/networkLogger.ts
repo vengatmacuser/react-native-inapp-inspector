@@ -1,4 +1,5 @@
 import './webViewLogger';
+import axios from 'axios';
 
 type NetworkLog = {
   id: number;
@@ -228,26 +229,25 @@ export const setupNetworkLogger = () => {
     };
   }
 
-  // ✅ Auto-detect and hook Axios dynamically without requiring manual setup
+  // ✅ Hook Axios using the imported module
   try {
-    const req = typeof require !== 'undefined' ? require : undefined;
-    if (req) {
-      const axios = Function('r', 'try { return r("axios"); } catch(e) { return null; }')(req);
-      const targetAxios = axios && (axios.default || axios);
-      if (targetAxios) {
-        addAxiosInterceptors(targetAxios);
-        const originalCreate = targetAxios.create;
-        if (typeof originalCreate === 'function') {
-          targetAxios.create = function (...args: any[]) {
-            const instance = originalCreate.apply(this, args);
-            addAxiosInterceptors(instance);
-            return instance;
-          };
-        }
+    if (axios) {
+      addAxiosInterceptors(axios);
+      console.log('✅ Axios interceptors added to imported axios');
+      const originalCreate = axios.create;
+      if (typeof originalCreate === 'function') {
+        axios.create = function (...args: any[]) {
+          const instance = originalCreate.apply(this, args);
+          addAxiosInterceptors(instance);
+          console.log('✅ Axios interceptors added to custom axios instance (imported)');
+          return instance;
+        };
       }
+    } else {
+      console.warn('⚠️ Axios module not found for interceptor setup');
     }
   } catch (e) {
-    // Silent fail
+    console.error('❌ Error during Axios interceptor setup', e);
   }
 
   (globalThis as any).__NETWORK_LOGGER_INITIALIZED__ = true;

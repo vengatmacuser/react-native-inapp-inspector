@@ -4717,6 +4717,7 @@ export {
   setupNetworkLogger,
   clearNetworkLogs,
   subscribeNetworkLogs,
+  addAxiosInterceptors,
 } from './customHooks/networkLogger';
 
 export {
