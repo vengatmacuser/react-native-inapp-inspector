@@ -11,10 +11,12 @@ const JsonViewer = ({
   data,
   search,
   forceOpen,
+  defaultExpandDepth,
 }: {
   data: unknown;
   search?: string;
   forceOpen?: boolean;
+  defaultExpandDepth?: number;
 }) => {
   return (
     <ScrollView
@@ -22,7 +24,12 @@ const JsonViewer = ({
       showsHorizontalScrollIndicator={true}
       style={styles.codeBlockScroll}>
       <View style={styles.codeBlock}>
-        <TreeNode data={data} search={search} forceOpen={forceOpen} />
+        <TreeNode
+          data={data}
+          search={search}
+          forceOpen={forceOpen}
+          defaultExpandDepth={defaultExpandDepth}
+        />
       </View>
     </ScrollView>
   );

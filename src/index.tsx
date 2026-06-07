@@ -19,6 +19,7 @@ import {
   StatusBar,
   SafeAreaView,
   TouchableOpacity,
+  LogBox,
 } from 'react-native';
 import Svg, {Circle, Path} from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
@@ -34,6 +35,7 @@ import MiniLineChart from './components/MiniLineChart';
 import SectionHeader from './components/SectionHeader';
 import EmptyState from './components/EmptyState';
 import JsonViewer from './components/JsonViewer';
+import {ReduxTreeView} from './components/ReduxTreeView';
 import DomainHeader from './components/DomainHeader';
 import DiffViewer from './components/DiffViewer';
 import LogCard from './components/LogCard';
@@ -81,6 +83,19 @@ import {
   MoonIcon,
   DebugIcon,
   BrandCircleIcon,
+  BrandSquareIcon,
+  HtmlIcon,
+  CssIcon,
+  JsIcon,
+  ClockIcon,
+  EyeIcon,
+  CheckIcon,
+  SettingsIcon,
+  RequestIcon,
+  ResponseIcon,
+  HeadersIcon,
+  StatusIcon,
+  FolderIcon,
 } from './components/NetworkIcons';
 
 import ErrorBoundary from './components/ErrorBoundary';
@@ -114,7 +129,6 @@ import AnalyticsEventCard, {
 } from './components/AnalyticsEventCard';
 import AnalyticsDetail from './components/AnalyticsDetail';
 
-// WebView
 import {
   WebViewLog,
   WebViewNavState,
@@ -128,9 +142,73 @@ import {
   subscribeWebView,
 } from './customHooks/webViewLogger';
 
+let OriginalWebView: any = null;
+try {
+  const RNWebView = require('react-native-webview');
+  OriginalWebView = RNWebView.WebView || RNWebView.default;
+} catch (e) {
+  // Silent fail
+}
+
+const previewInspectScript = `
+(function() {
+  var style = document.createElement('style');
+  style.innerHTML = '* { cursor: pointer !important; }';
+  document.head.appendChild(style);
+
+  document.addEventListener('click', function(e) {
+    var el = e.target;
+    if (!el) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var oldOutline = el.style.outline;
+    var oldTransition = el.style.transition;
+    el.style.transition = 'outline 0.15s ease';
+    el.style.outline = '3px solid #684B9B';
+    setTimeout(function() {
+      el.style.outline = oldOutline;
+      el.style.transition = oldTransition;
+    }, 600);
+
+    var tagName = el.tagName.toLowerCase();
+    var searchStr = '<' + tagName;
+    
+    if (el.id) {
+      searchStr += ' id="' + el.id + '"';
+    } else if (el.className && typeof el.className === 'string') {
+      var firstClass = el.className.trim().split(/\\s+/)[0];
+      if (firstClass) {
+        searchStr += ' class="' + firstClass;
+      }
+    } else {
+      var text = (el.textContent || '').trim().substring(0, 25);
+      if (text) {
+        searchStr = text;
+      }
+    }
+
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'preview-inspect',
+        tagName: tagName,
+        id: el.id || '',
+        className: typeof el.className === 'string' ? el.className : '',
+        searchStr: searchStr
+      }));
+    }
+  }, true);
+})();
+true;
+`;
+
 import {
   getReduxState,
   subscribeReduxState,
+  setReduxAutoRefresh,
+  getLastActionForReducer,
+  clearLastActionForReducer,
 } from './customHooks/reduxLogger';
 
 // Constants
@@ -160,10 +238,15 @@ const NavigationTracker = ({onStateChange}: NavigationTrackerProps): null => {
   return null;
 };
 
-const NetworkInspector = (): React.JSX.Element => {
+interface NetworkInspectorProps {
+  enabled?: boolean;
+}
+
+const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.Element => {
   const [isDark, setIsDark] = useState(false);
   const [reduxState, setReduxState] = useState<any>(null);
   const [expandedReducers, setExpandedReducers] = useState<Record<string, boolean>>({});
+
   const [logs, setLogs] = useState<NetworkLog[]>([]);
   const [visible, setVisible] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -172,11 +255,22 @@ const NetworkInspector = (): React.JSX.Element => {
   const [search, setSearch] = useState('');
   const [detailSearch, setDetailSearch] = useState('');
   const [reduxSearch, setReduxSearch] = useState('');
-  const [apiDetailActiveTab, setApiDetailActiveTab] = useState<'metadata' | 'headers' | 'request' | 'response'>('metadata');
+  const [apiDetailActiveTab, setApiDetailActiveTab] = useState<'metadata' | 'headers' | 'request' | 'response'>('response');
+
+  useEffect(() => {
+    if (enabled && visible) {
+      LogBox.ignoreAllLogs(true);
+    } else {
+      LogBox.ignoreAllLogs(false);
+    }
+    return () => {
+      LogBox.ignoreAllLogs(false);
+    };
+  }, [enabled, visible]);
 
   useEffect(() => {
     if (selected) {
-      setApiDetailActiveTab('metadata');
+      setApiDetailActiveTab('response');
       setDetailSearch('');
     }
   }, [selected]);
@@ -209,9 +303,45 @@ const NetworkInspector = (): React.JSX.Element => {
 
   // ─── Logs state ────────────────────────────────────────────────────────────
   const [consoleLogs, setConsoleLogs] = useState<ConsoleLog[]>([]);
+  const [lastReadLogsCount, setLastReadLogsCount] = useState(0);
+  const [lastReadApisCount, setLastReadApisCount] = useState(0);
+
+  useEffect(() => {
+    if (visible) {
+      if (activeTab === 'apis') {
+        setLastReadApisCount(logs.length);
+      }
+      if (activeTab === 'logs') {
+        setLastReadLogsCount(consoleLogs.length);
+      }
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (activeTab === 'apis') {
+      setLastReadApisCount(logs.length);
+    }
+  }, [activeTab, logs.length]);
+
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      setLastReadLogsCount(consoleLogs.length);
+    }
+  }, [activeTab, consoleLogs.length]);
+
+  const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(200);
+  const [showConsoleLevels, setShowConsoleLevels] = useState<{info: boolean; warn: boolean; error: boolean}>({
+    info: true,
+    warn: true,
+    error: true,
+  });
   const visibleConsoleLogs = useMemo(() => {
-    return consoleLogs.filter(log => {
+    const filtered = consoleLogs.filter(log => {
       const type = log.type;
+      if (type === 'info' && !showConsoleLevels.info) return false;
+      if (type === 'warn' && !showConsoleLevels.warn) return false;
+      if (type === 'error' && !showConsoleLevels.error) return false;
+
       const message = log.message || '';
       const allPrefixes = [
         ...((IGNORED_LOG_PREFIXES && IGNORED_LOG_PREFIXES.info) || []),
@@ -228,7 +358,8 @@ const NetworkInspector = (): React.JSX.Element => {
       );
       return !isIgnored;
     });
-  }, [consoleLogs]);
+    return filtered.slice(0, maxConsoleLogs);
+  }, [consoleLogs, showConsoleLevels, maxConsoleLogs]);
   const [logSearch, setLogSearch] = useState('');
   const [logFilters, setLogFilters] = useState<
     Set<'all' | 'info' | 'warn' | 'error' | 'user-log' | 'analytics'>
@@ -239,9 +370,83 @@ const NetworkInspector = (): React.JSX.Element => {
   const [webViewNavHistory, setWebViewNavHistory] = useState<WebViewNavState[]>(
     [],
   );
-  const [webViewSubTab, setWebViewSubTab] = useState<'html' | 'navigation'>(
-    'html',
-  );
+  const [webViewSubTab, setWebViewSubTab] = useState<
+    'html' | 'navigation' | 'preview' | 'console'
+  >('html');
+  const [inspectedElement, setInspectedElement] = useState<{
+    tagName: string;
+    id?: string;
+    className?: string;
+    searchStr: string;
+  } | null>(null);
+
+  // ─── Settings state ──────────────────────────────────────────────────────────
+  const [settingsPage, setSettingsPage] = useState<
+    'main' | 'insights' | 'apis' | 'logs' | 'analytics' | 'webview' | 'redux' | null
+  >(null);
+  const [tabVisibility, setTabVisibility] = useState<Record<ActiveTab, boolean>>({
+    insights: true,
+    apis: true,
+    logs: true,
+    analytics: true,
+    webview: true,
+    redux: true,
+  });
+
+  const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
+  const [webViewCaptureCssJs, setWebViewCaptureCssJs] = useState<boolean>(true);
+
+  const [reduxAutoRefresh, setReduxAutoRefreshState] = useState<boolean>(true);
+  const [reduxExpandDepth, setReduxExpandDepth] = useState<number>(1);
+  const [slowRequestThreshold, setSlowRequestThreshold] = useState<number>(1000);
+  const [insightsShowConsoleAlerts, setInsightsShowConsoleAlerts] = useState<boolean>(true);
+
+  useEffect(() => {
+    setReduxAutoRefresh(reduxAutoRefresh);
+  }, [reduxAutoRefresh]);
+
+  const toggleTabVisibility = (key: ActiveTab) => {
+    if (key === 'apis') return;
+    setTabVisibility(prev => {
+      const nextVal = !prev[key];
+      const newVisibility = { ...prev, [key]: nextVal };
+      if (!nextVal && activeTab === key) {
+        setActiveTab('apis');
+      }
+      return newVisibility;
+    });
+  };
+
+  const navigateFromDashboard = (key: ActiveTab) => {
+    setTabVisibility(prev => ({ ...prev, [key]: true }));
+    setActiveTab(key);
+  };
+
+  const getSearchTermForTab = () => {
+    if (!inspectedElement) return '';
+    const { tagName, id, className, searchStr } = inspectedElement;
+    if (htmlSubTab === 'html') {
+      return searchStr;
+    }
+    if (htmlSubTab === 'css') {
+      if (className) {
+        const firstClass = className.trim().split(/\s+/)[0];
+        if (firstClass) return `.${firstClass}`;
+      }
+      if (id) return `#${id}`;
+      return tagName;
+    }
+    if (htmlSubTab === 'javascript') {
+      if (id) return id;
+      if (className) {
+        const firstClass = className.trim().split(/\s+/)[0];
+        if (firstClass) return firstClass;
+      }
+      return tagName;
+    }
+    return '';
+  };
+
   const [webViewSearch, setWebViewSearch] = useState('');
   const [webViewHtml, setWebViewHtml] = useState('');
   const [webViewCss, setWebViewCss] = useState('');
@@ -292,6 +497,8 @@ const NetworkInspector = (): React.JSX.Element => {
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const badgeAnim = useRef(new Animated.Value(1)).current;
+  const activePulseAnim = useRef(new Animated.Value(0.4)).current;
+  const unreadPulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -311,6 +518,44 @@ const NetworkInspector = (): React.JSX.Element => {
     loop.start();
     return () => loop.stop();
   }, [pulseAnim]);
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(activePulseAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(activePulseAnim, {
+          toValue: 0.4,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [activePulseAnim]);
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(unreadPulseAnim, {
+          toValue: 1.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(unreadPulseAnim, {
+          toValue: 0.8,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [unreadPulseAnim]);
 
   useEffect(() => {
     if ((logs.length > 0 || analyticsEvents.length > 0) && newLogIds.size > 0) {
@@ -487,8 +732,8 @@ const NetworkInspector = (): React.JSX.Element => {
     if (sortOrder === 'oldest') {
       result = [...result].reverse();
     }
-    return result;
-  }, [logs, search, statusFilters, methodFilters, sortOrder]);
+    return result.slice(0, maxNetworkLogs);
+  }, [logs, search, statusFilters, methodFilters, sortOrder, maxNetworkLogs]);
 
   const availableMethods = useMemo(() => {
     const methods = new Set<Method>();
@@ -1002,6 +1247,686 @@ const NetworkInspector = (): React.JSX.Element => {
     ],
   );
 
+  const renderSettings = () => {
+    if (settingsPage === 'main') {
+      const settingsTabs = [
+        { key: 'insights', label: 'Insights', icon: 'insights' },
+        { key: 'apis', label: 'APIs', icon: 'apis' },
+        { key: 'logs', label: 'Logs', icon: 'logs' },
+        { key: 'analytics', label: 'Analytics', icon: 'analytics' },
+        { key: 'webview', label: 'WebView', icon: 'webview' },
+        { key: 'redux', label: 'Redux', icon: 'redux' },
+      ] as const;
+
+      return (
+        <View style={{flex: 1, backgroundColor: AppColors.grayBackground}}>
+          {/* Settings Header with back button */}
+          <LinearGradient
+            colors={[AppColors.purple, '#6B4EFF']}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 0}}
+            style={styles.headerGradient}
+          >
+            <View style={[styles.header, { paddingHorizontal: 16, gap: 12 }]}>
+              <TouchableScale
+                onPress={() => {
+                  setSettingsPage(null);
+                  setActiveTab('apis');
+                }}
+                hitSlop={12}
+                style={{
+                  padding: 8,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                }}>
+                <WhiteBackNavigation color="#FFFFFF" size={16} />
+              </TouchableScale>
+              <View style={{flex: 1}}>
+                <Text style={{fontFamily: AppFonts.interBold, fontSize: 17, color: '#FFFFFF'}}>Settings</Text>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 1}}>Manage modules and preferences</Text>
+              </View>
+              <View style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.1)'
+              }}>
+                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10.5, color: '#FFFFFF' }}>v1.0.10</Text>
+              </View>
+            </View>
+          </LinearGradient>
+
+          <ScrollView style={{flex: 1}} contentContainerStyle={{padding: 16, gap: 12}}>
+
+            {/* Tab list */}
+            <View style={{backgroundColor: AppColors.primaryLight, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, overflow: 'hidden'}}>
+              {/* Table Header */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                backgroundColor: AppColors.grayBackground,
+                borderBottomWidth: 1,
+                borderBottomColor: AppColors.dividerColor,
+                gap: 12,
+              }}>
+                <Text style={{fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.6, flex: 1}}>MODULE</Text>
+                <Text style={{fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.6, width: 90, textAlign: 'right', paddingRight: 4}}>VISIBILITY</Text>
+              </View>
+
+              {settingsTabs.map((tab, idx) => {
+                const isVisible = tab.key === 'apis' || tabVisibility[tab.key];
+                const isLast = idx === settingsTabs.length - 1;
+                const isLocked = tab.key === 'apis';
+
+                return (
+                  <View
+                    key={tab.key}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingVertical: 10,
+                      paddingHorizontal: 14,
+                      borderBottomWidth: isLast ? 0 : 1,
+                      borderBottomColor: AppColors.dividerColor,
+                      gap: 12,
+                    }}
+                  >
+                    {/* Icon + Label — fills remaining space */}
+                    <View style={{flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      {/* Small icon tile */}
+                      <View style={{
+                        width: 20, height: 20, borderRadius: 6,
+                        backgroundColor: isLocked ? AppColors.grayBorderSecondary : AppColors.purpleShade50,
+                        borderWidth: 1,
+                        borderColor: isLocked ? AppColors.dividerColor : 'rgba(104,75,155,0.2)',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {tab.icon === 'insights' && <InsightsIcon color={isLocked ? AppColors.grayTextWeak : AppColors.purple} size={11} />}
+                        {tab.icon === 'apis' && <SignalIcon color={isLocked ? AppColors.grayTextWeak : AppColors.purple} size={11} />}
+                        {tab.icon === 'logs' && <TerminalIcon color={isLocked ? AppColors.grayTextWeak : AppColors.purple} size={11} />}
+                        {tab.icon === 'analytics' && <AnalyticsIcon color={isLocked ? AppColors.grayTextWeak : AppColors.purple} size={11} />}
+                        {tab.icon === 'webview' && <GlobeIcon color={isLocked ? AppColors.grayTextWeak : AppColors.purple} size={11} />}
+                        {tab.icon === 'redux' && <TerminalIcon color={isLocked ? AppColors.grayTextWeak : AppColors.purple} size={11} />}
+                      </View>
+                      {/* Label + Required badge */}
+                      <Text style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 13,
+                        color: isLocked ? AppColors.grayText : AppColors.primaryBlack,
+                      }}>
+                        {tab.label}
+                      </Text>
+                      {isLocked && (
+                        <View style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(104,75,155,0.08)',
+                          borderRadius: 20,
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderWidth: 1,
+                          borderColor: 'rgba(104,75,155,0.18)',
+                          gap: 3,
+                        }}>
+                          <View style={{width: 4, height: 4, borderRadius: 2, backgroundColor: AppColors.purple, opacity: 0.7}} />
+                          <Text style={{fontFamily: AppFonts.interBold, fontSize: 8.5, color: AppColors.purple, letterSpacing: 0.4}}>
+                            DEFAULT
+                          </Text>
+                        </View>
+                      )}
+
+                      {/* Settings gear icon next to label */}
+                      <TouchableScale
+                        onPress={() => setSettingsPage(tab.key)}
+                        hitSlop={8}
+                        style={{
+                          marginLeft: 4,
+                          padding: 4,
+                          borderRadius: 6,
+                          backgroundColor: AppColors.purpleShade50,
+                          borderWidth: 1,
+                          borderColor: 'rgba(104,75,155,0.15)',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <SettingsIcon color={AppColors.purple} size={10} />
+                      </TouchableScale>
+                    </View>
+
+                    {/* Visibility Switch in VISIBILITY column */}
+                    <View style={{width: 90, alignItems: 'flex-end', justifyContent: 'center'}}>
+                      <TouchableScale
+                        disabled={isLocked}
+                        onPress={() => toggleTabVisibility(tab.key as any)}
+                        style={{
+                          width: 38,
+                          height: 22,
+                          borderRadius: 11,
+                          backgroundColor: isVisible ? AppColors.purple : AppColors.grayBorderSecondary,
+                          padding: 2,
+                          justifyContent: 'center',
+                          alignItems: isVisible ? 'flex-end' : 'flex-start',
+                        }}
+                      >
+                        <View style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: 9,
+                          backgroundColor: '#FFFFFF',
+                          shadowColor: '#000',
+                          shadowOpacity: 0.15,
+                          shadowRadius: 1.5,
+                          shadowOffset: { width: 0, height: 1 },
+                        }} />
+                      </TouchableScale>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* Preferences Section */}
+            <View style={{marginTop: 8}}>
+              <Text style={{fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.6, marginBottom: 8}}>PREFERENCES</Text>
+              <View style={{backgroundColor: AppColors.primaryLight, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, overflow: 'hidden'}}>
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 14,
+                  gap: 12,
+                }}>
+                  {/* Icon + Label */}
+                  <View style={{flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                    <View style={{
+                      width: 20, height: 20, borderRadius: 6,
+                      backgroundColor: AppColors.purpleShade50,
+                      borderWidth: 1,
+                      borderColor: 'rgba(104,75,155,0.2)',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {isDark ? (
+                        <SunIcon color={AppColors.purple} size={11} />
+                      ) : (
+                        <MoonIcon color={AppColors.purple} size={11} />
+                      )}
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 13,
+                        color: AppColors.primaryBlack,
+                      }}>
+                        Dark Theme
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Toggle Switch */}
+                  <TouchableScale
+                    onPress={() => {
+                      const newTheme = !isDark;
+                      setIsDark(newTheme);
+                      toggleGlobalTheme(newTheme);
+                    }}
+                    style={{
+                      width: 38,
+                      height: 22,
+                      borderRadius: 11,
+                      backgroundColor: isDark ? AppColors.purple : AppColors.grayBorderSecondary,
+                      padding: 2,
+                      justifyContent: 'center',
+                      alignItems: isDark ? 'flex-end' : 'flex-start',
+                    }}
+                  >
+                    <View style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      backgroundColor: '#FFFFFF',
+                      shadowColor: '#000',
+                      shadowOpacity: 0.15,
+                      shadowRadius: 1.5,
+                      shadowOffset: { width: 0, height: 1 },
+                    }} />
+                  </TouchableScale>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      );
+    }
+
+    const goBackToMain = () => setSettingsPage('main');
+
+    const renderSubHeader = (title: string, icon?: React.ReactNode, rightInfo?: string) => (
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingBottom: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: AppColors.dividerColor,
+        marginBottom: 16,
+      }}>
+        <TouchableScale
+          onPress={goBackToMain}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            backgroundColor: AppColors.purpleShade50,
+            borderWidth: 1,
+            borderColor: 'rgba(104,75,155,0.2)',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <WhiteBackNavigation color={AppColors.purple} size={16} />
+        </TouchableScale>
+        {icon && (
+          <View style={{
+            width: 36, height: 36, borderRadius: 10,
+            backgroundColor: AppColors.purpleShade50,
+            borderWidth: 1, borderColor: 'rgba(104,75,155,0.2)',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {icon}
+          </View>
+        )}
+        <Text style={{fontFamily: AppFonts.interBold, fontSize: 18, color: AppColors.primaryBlack, flex: 1}}>
+          {title}
+        </Text>
+        {rightInfo ? (
+          <View style={{
+            backgroundColor: 'rgba(104,75,155,0.08)',
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: 'rgba(104,75,155,0.15)',
+          }}>
+            <Text style={{fontFamily: AppFonts.interBold, fontSize: 11, color: AppColors.purple}}>
+              {rightInfo}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+    );
+
+    // Helper: settings row with icon + label + optional description
+    const renderSettingRow = (opts: {
+      icon: React.ReactNode;
+      label: string;
+      description?: string;
+      right?: React.ReactNode;
+      picker?: {
+        options: readonly any[];
+        selectedValue: any;
+        onSelect: (val: any) => void;
+      };
+      onPress?: () => void;
+      isLast?: boolean;
+    }) => (
+      <View
+        style={{
+          paddingVertical: 12,
+          borderBottomWidth: opts.isLast ? 0 : 1,
+          borderBottomColor: AppColors.dividerColor,
+        }}>
+        <TouchableScale
+          disabled={!opts.onPress}
+          onPress={opts.onPress}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}>
+          <View style={{
+            width: 36, height: 36, borderRadius: 10,
+            backgroundColor: AppColors.purpleShade50,
+            borderWidth: 1, borderColor: 'rgba(104,75,155,0.18)',
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            {opts.icon}
+          </View>
+          <View style={{flex: 1}}>
+            <Text style={{fontFamily: AppFonts.interBold, fontSize: 14, color: AppColors.primaryBlack}}>
+              {opts.label}
+            </Text>
+            {opts.description ? (
+              <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.grayText, marginTop: 1}}>
+                {opts.description}
+              </Text>
+            ) : null}
+          </View>
+          {opts.right || null}
+        </TouchableScale>
+        {opts.picker && (
+          <View style={{
+            flexDirection: 'row',
+            backgroundColor: AppColors.grayBackground,
+            borderRadius: 8,
+            padding: 2.5,
+            marginTop: 10,
+            borderWidth: 1,
+            borderColor: AppColors.dividerColor,
+          }}>
+            {opts.picker.options.map(opt => {
+              const isActive = opts.picker!.selectedValue === opt;
+              return (
+                <TouchableScale
+                  key={String(opt)}
+                  onPress={() => opts.picker!.onSelect(opt)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 6,
+                    alignItems: 'center',
+                    borderRadius: 6,
+                    backgroundColor: isActive ? AppColors.purple : 'transparent',
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    color: isActive ? '#FFFFFF' : AppColors.grayText,
+                  }}>
+                    {typeof opt === 'number' && opt >= 500 && settingsPage === 'insights' ? `${opt}ms` : opt}
+                  </Text>
+                </TouchableScale>
+              );
+            })}
+          </View>
+        )}
+      </View>
+    );
+
+    if (settingsPage === 'apis') {
+      return (
+        <ScrollView style={{flex: 1, backgroundColor: AppColors.grayBackground}} contentContainerStyle={{padding: 16}}>
+          {renderSubHeader('APIs Settings', <SignalIcon color={AppColors.purple} size={16} />, `Total: ${logs.length}`)}
+          <View style={{backgroundColor: AppColors.primaryLight, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, gap: 4}}>
+            {renderSettingRow({
+              icon: <SignalIcon color={AppColors.purple} size={16} />,
+              label: 'Max Request Logs',
+              description: 'How many network requests to keep in memory',
+              picker: {
+                options: [50, 100, 200, 500] as const,
+                selectedValue: maxNetworkLogs,
+                onSelect: setMaxNetworkLogs,
+              },
+              isLast: true,
+            })}
+          </View>
+
+          <View style={{backgroundColor: AppColors.primaryLight, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, padding: 16, marginTop: 12}}>
+            {renderSettingRow({
+              icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+              label: 'Clear Network Logs',
+              description: `${logs.length} requests stored`,
+              isLast: true,
+              onPress: () => {
+                clearNetworkLogs();
+                setSelected(null);
+                Alert.alert('Success', 'Network logs cleared.');
+              },
+              right: (
+                <View style={{paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, backgroundColor: 'rgba(255,46,87,0.08)', borderWidth: 1, borderColor: 'rgba(255,46,87,0.2)'}}>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11, color: AppColors.errorColor}}>Clear</Text>
+                </View>
+              ),
+            })}
+          </View>
+        </ScrollView>
+      );
+    }
+
+    if (settingsPage === 'logs') {
+      return (
+        <ScrollView style={{flex: 1, backgroundColor: AppColors.grayBackground}} contentContainerStyle={{padding: 16}}>
+          {renderSubHeader('Logs Settings', <TerminalIcon color={AppColors.purple} size={16} />, `Total: ${consoleLogs.length}`)}
+          <View style={{backgroundColor: AppColors.primaryLight, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, gap: 4}}>
+            {renderSettingRow({
+              icon: <TerminalIcon color={AppColors.purple} size={16} />,
+              label: 'Max Console Logs',
+              description: 'How many console messages to retain',
+              picker: {
+                options: [100, 200, 500, 1000] as const,
+                selectedValue: maxConsoleLogs,
+                onSelect: setMaxConsoleLogs,
+              },
+            })}
+            <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
+            <Text style={{fontFamily: AppFonts.interBold, fontSize: 13, color: AppColors.primaryBlack, paddingTop: 4}}>Log Levels</Text>
+            {(['info', 'warn', 'error'] as const).map((level, li) => {
+              const isLvlActive = showConsoleLevels[level];
+              const levelColor = level === 'error' ? AppColors.errorColor : level === 'warn' ? AppColors.warningIconGold : AppColors.skyBlue;
+              return renderSettingRow({
+                icon: <View style={{width: 10, height: 10, borderRadius: 5, backgroundColor: levelColor}} />,
+                label: `Show ${level.charAt(0).toUpperCase() + level.slice(1)} logs`,
+                description: level === 'info' ? 'Informational messages' : level === 'warn' ? 'Warning messages' : 'Error messages',
+                isLast: level === 'error',
+                onPress: () => setShowConsoleLevels(prev => ({...prev, [level]: !prev[level]})),
+                right: (
+                  <View
+                    style={{
+                      width: 22, height: 22, borderRadius: 6,
+                      borderWidth: 2,
+                      borderColor: isLvlActive ? AppColors.purple : AppColors.grayTextWeak,
+                      backgroundColor: isLvlActive ? 'rgba(104, 75, 155, 0.1)' : 'transparent',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                    {isLvlActive && <CheckIcon size={12} color={AppColors.purple} />}
+                  </View>
+                ),
+              });
+            })}
+          </View>
+
+          <View style={{backgroundColor: AppColors.primaryLight, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, padding: 16, marginTop: 12}}>
+            {renderSettingRow({
+              icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+              label: 'Clear Console Logs',
+              description: `${consoleLogs.length} logs stored`,
+              isLast: true,
+              onPress: () => {
+                clearConsoleLogs();
+                Alert.alert('Success', 'Console logs cleared.');
+              },
+              right: (
+                <View style={{paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, backgroundColor: 'rgba(255,46,87,0.08)', borderWidth: 1, borderColor: 'rgba(255,46,87,0.2)'}}>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11, color: AppColors.errorColor}}>Clear</Text>
+                </View>
+              ),
+            })}
+          </View>
+        </ScrollView>
+      );
+    }
+
+    if (settingsPage === 'analytics') {
+      return (
+        <ScrollView style={{flex: 1, backgroundColor: AppColors.grayBackground}} contentContainerStyle={{padding: 16}}>
+          {renderSubHeader('Analytics Settings', <AnalyticsIcon color={AppColors.purple} size={16} />, `Events: ${analyticsEvents.length}`)}
+          <View style={{backgroundColor: AppColors.primaryLight, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, gap: 4}}>
+            {renderSettingRow({
+              icon: <AnalyticsIcon color={AppColors.purple} size={16} />,
+              label: 'Events Captured',
+              description: `${analyticsEvents.length} analytics events stored`,
+              isLast: true,
+            })}
+          </View>
+          <View style={{backgroundColor: AppColors.primaryLight, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, padding: 16, marginTop: 12}}>
+            {renderSettingRow({
+              icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+              label: 'Clear Analytics History',
+              description: 'Remove all captured events',
+              isLast: true,
+              onPress: () => {
+                clearAnalyticsEvents();
+                setSelectedEvent(null);
+                Alert.alert('Success', 'Analytics events cleared.');
+              },
+              right: (
+                <View style={{paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, backgroundColor: 'rgba(255,46,87,0.08)', borderWidth: 1, borderColor: 'rgba(255,46,87,0.2)'}}>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11, color: AppColors.errorColor}}>Clear</Text>
+                </View>
+              ),
+            })}
+          </View>
+        </ScrollView>
+      );
+    }
+
+    if (settingsPage === 'webview') {
+      return (
+        <ScrollView style={{flex: 1, backgroundColor: AppColors.grayBackground}} contentContainerStyle={{padding: 16}}>
+          {renderSubHeader('WebView Settings', <GlobeIcon color={AppColors.purple} size={16} />, `History: ${webViewNavHistory.length}`)}
+          <View style={{backgroundColor: AppColors.primaryLight, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, gap: 4}}>
+            {renderSettingRow({
+              icon: <GlobeIcon color={AppColors.purple} size={16} />,
+              label: 'Capture CSS & JavaScript',
+              description: 'Extract stylesheet and script source from pages',
+              onPress: () => setWebViewCaptureCssJs(prev => !prev),
+              right: (
+                <View style={{
+                  width: 22, height: 22, borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: webViewCaptureCssJs ? AppColors.purple : AppColors.grayTextWeak,
+                  backgroundColor: webViewCaptureCssJs ? 'rgba(104, 75, 155, 0.1)' : 'transparent',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {webViewCaptureCssJs && <CheckIcon size={12} color={AppColors.purple} />}
+                </View>
+              ),
+              isLast: true,
+            })}
+          </View>
+          <View style={{backgroundColor: AppColors.primaryLight, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, padding: 16, marginTop: 12}}>
+            {renderSettingRow({
+              icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+              label: 'Clear WebView Data',
+              description: 'Remove all captured source & navigation history',
+              isLast: true,
+              onPress: () => {
+                clearWebViewData();
+                Alert.alert('Success', 'WebView source history cleared.');
+              },
+              right: (
+                <View style={{paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, backgroundColor: 'rgba(255,46,87,0.08)', borderWidth: 1, borderColor: 'rgba(255,46,87,0.2)'}}>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11, color: AppColors.errorColor}}>Clear</Text>
+                </View>
+              ),
+            })}
+          </View>
+        </ScrollView>
+      );
+    }
+
+    if (settingsPage === 'redux') {
+      return (
+        <ScrollView style={{flex: 1, backgroundColor: AppColors.grayBackground}} contentContainerStyle={{padding: 16}}>
+          {renderSubHeader('Redux Settings', <TerminalIcon color={AppColors.purple} size={16} />, `Reducers: ${Object.keys(reduxState || {}).length}`)}
+          <View style={{backgroundColor: AppColors.primaryLight, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, gap: 4}}>
+            {renderSettingRow({
+              icon: <TerminalIcon color={AppColors.purple} size={16} />,
+              label: 'Auto-refresh Store',
+              description: 'Automatically capture Redux store state updates',
+              onPress: () => setReduxAutoRefreshState(prev => !prev),
+              right: (
+                <View style={{
+                  width: 22, height: 22, borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: reduxAutoRefresh ? AppColors.purple : AppColors.grayTextWeak,
+                  backgroundColor: reduxAutoRefresh ? 'rgba(104, 75, 155, 0.1)' : 'transparent',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {reduxAutoRefresh && <CheckIcon size={12} color={AppColors.purple} />}
+                </View>
+              ),
+            })}
+            <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
+            {renderSettingRow({
+              icon: <InsightsIcon color={AppColors.purple} size={16} />,
+              label: 'Default JSON Expand Depth',
+              description: 'Initial depth of Redux state tree to auto-expand',
+              picker: {
+                options: [1, 2, 3, 5] as const,
+                selectedValue: reduxExpandDepth,
+                onSelect: setReduxExpandDepth,
+              },
+              isLast: true,
+            })}
+          </View>
+
+          <View style={{backgroundColor: AppColors.primaryLight, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, padding: 16, marginTop: 12}}>
+            {renderSettingRow({
+              icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+              label: 'Clear Redux State',
+              description: reduxState ? 'Reset state snapshot in inspector' : 'No store snapshot stored',
+              isLast: true,
+              onPress: () => {
+                setReduxState(null);
+                Alert.alert('Success', 'Redux state snapshot cleared.');
+              },
+              right: (
+                <View style={{paddingHorizontal: 10, paddingVertical: 5, borderRadius: 7, backgroundColor: 'rgba(255,46,87,0.08)', borderWidth: 1, borderColor: 'rgba(255,46,87,0.2)'}}>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11, color: AppColors.errorColor}}>Clear</Text>
+                </View>
+              ),
+            })}
+          </View>
+        </ScrollView>
+      );
+    }
+
+    // Default return page is Insights settings
+    return (
+      <ScrollView style={{flex: 1, backgroundColor: AppColors.grayBackground}} contentContainerStyle={{padding: 16}}>
+        {renderSubHeader('Insights Settings', <InsightsIcon color={AppColors.purple} size={16} />)}
+        <View style={{backgroundColor: AppColors.primaryLight, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: AppColors.grayBorderSecondary, gap: 4}}>
+          {renderSettingRow({
+            icon: <SignalIcon color={AppColors.purple} size={16} />,
+            label: 'Slow Latency Warning',
+            description: 'Alert threshold for slow API request duration',
+            picker: {
+              options: [500, 1000, 2000] as const,
+              selectedValue: slowRequestThreshold,
+              onSelect: setSlowRequestThreshold,
+            },
+          })}
+          <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
+          {renderSettingRow({
+            icon: <TerminalIcon color={AppColors.purple} size={16} />,
+            label: 'Show Console Alerts',
+            description: 'Flags critical warnings or crash events on dashboard',
+            isLast: true,
+            onPress: () => setInsightsShowConsoleAlerts(prev => !prev),
+            right: (
+              <View style={{
+                width: 22, height: 22, borderRadius: 6,
+                borderWidth: 2,
+                borderColor: insightsShowConsoleAlerts ? AppColors.purple : AppColors.grayTextWeak,
+                backgroundColor: insightsShowConsoleAlerts ? 'rgba(104, 75, 155, 0.1)' : 'transparent',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                {insightsShowConsoleAlerts && <CheckIcon size={12} color={AppColors.purple} />}
+              </View>
+            ),
+          })}
+        </View>
+      </ScrollView>
+    );
+  };
+
   const renderInsightsDashboard = () => {
     const apiTotal = logs.length;
     const apiErrors = logs.filter(
@@ -1030,174 +1955,184 @@ const NetworkInspector = (): React.JSX.Element => {
     return (
       <View style={styles.dashboardContainer}>
         {/* Module 1: APIs */}
-        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('apis')}>
-          <View style={styles.dashboardModuleHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-              <SignalIcon color={AppColors.purple} size={18} />
-              <Text style={styles.dashboardModuleTitle}>APIs & Network</Text>
+        {tabVisibility.apis && (
+          <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('apis')}>
+            <View style={styles.dashboardModuleHeader}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <SignalIcon color={AppColors.purple} size={18} />
+                <Text style={styles.dashboardModuleTitle}>APIs & Network</Text>
+              </View>
+              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
             </View>
-            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-          </View>
-          <View style={styles.dashboardModuleGrid}>
-            <View style={styles.dashboardGridItem}>
-              <Text style={styles.dashboardGridVal}>{apiTotal}</Text>
-              <Text style={styles.dashboardGridLbl}>Requests</Text>
+            <View style={styles.dashboardModuleGrid}>
+              <View style={styles.dashboardGridItem}>
+                <Text style={styles.dashboardGridVal}>{apiTotal}</Text>
+                <Text style={styles.dashboardGridLbl}>Requests</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={[styles.dashboardGridVal, apiSuccessRate < 90 && {color: AppColors.warningIconGold}]}>
+                  {apiSuccessRate}%
+                </Text>
+                <Text style={styles.dashboardGridLbl}>Success Rate</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={[styles.dashboardGridVal, apiErrors > 0 && {color: AppColors.errorColor}]}>
+                  {apiErrors}
+                </Text>
+                <Text style={styles.dashboardGridLbl}>Errors</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={styles.dashboardGridVal}>
+                  {avgTime != null ? `${avgTime}ms` : '—'}
+                </Text>
+                <Text style={styles.dashboardGridLbl}>Avg Latency</Text>
+              </View>
             </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={[styles.dashboardGridVal, apiSuccessRate < 90 && {color: AppColors.warningIconGold}]}>
-                {apiSuccessRate}%
-              </Text>
-              <Text style={styles.dashboardGridLbl}>Success Rate</Text>
-            </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={[styles.dashboardGridVal, apiErrors > 0 && {color: AppColors.errorColor}]}>
-                {apiErrors}
-              </Text>
-              <Text style={styles.dashboardGridLbl}>Errors</Text>
-            </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={styles.dashboardGridVal}>
-                {avgTime != null ? `${avgTime}ms` : '—'}
-              </Text>
-              <Text style={styles.dashboardGridLbl}>Avg Latency</Text>
-            </View>
-          </View>
-        </TouchableScale>
+          </TouchableScale>
+        )}
 
         {/* Module 2: Logs */}
-        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('logs')}>
-          <View style={styles.dashboardModuleHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-              <TerminalIcon color="#0D9488" size={18} />
-              <Text style={styles.dashboardModuleTitle}>Console Logs</Text>
+        {tabVisibility.logs && (
+          <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('logs')}>
+            <View style={styles.dashboardModuleHeader}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <TerminalIcon color="#0D9488" size={18} />
+                <Text style={styles.dashboardModuleTitle}>Console Logs</Text>
+              </View>
+              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
             </View>
-            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-          </View>
-          <View style={styles.dashboardModuleGrid}>
-            <View style={styles.dashboardGridItem}>
-              <Text style={styles.dashboardGridVal}>{logTotal}</Text>
-              <Text style={styles.dashboardGridLbl}>Total Logs</Text>
+            <View style={styles.dashboardModuleGrid}>
+              <View style={styles.dashboardGridItem}>
+                <Text style={styles.dashboardGridVal}>{logTotal}</Text>
+                <Text style={styles.dashboardGridLbl}>Total Logs</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={[styles.dashboardGridVal, {color: '#0D9488'}]}>{logInfos}</Text>
+                <Text style={styles.dashboardGridLbl}>Info</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={[styles.dashboardGridVal, logWarns > 0 && {color: AppColors.warningIconGold}]}>
+                  {logWarns}
+                </Text>
+                <Text style={styles.dashboardGridLbl}>Warnings</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={[styles.dashboardGridVal, logErrors > 0 && {color: AppColors.errorColor}]}>
+                  {logErrors}
+                </Text>
+                <Text style={styles.dashboardGridLbl}>Errors</Text>
+              </View>
             </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={[styles.dashboardGridVal, {color: '#0D9488'}]}>{logInfos}</Text>
-              <Text style={styles.dashboardGridLbl}>Info</Text>
-            </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={[styles.dashboardGridVal, logWarns > 0 && {color: AppColors.warningIconGold}]}>
-                {logWarns}
-              </Text>
-              <Text style={styles.dashboardGridLbl}>Warnings</Text>
-            </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={[styles.dashboardGridVal, logErrors > 0 && {color: AppColors.errorColor}]}>
-                {logErrors}
-              </Text>
-              <Text style={styles.dashboardGridLbl}>Errors</Text>
-            </View>
-          </View>
-        </TouchableScale>
+          </TouchableScale>
+        )}
 
         {/* Module 3: Analytics */}
-        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('analytics')}>
-          <View style={styles.dashboardModuleHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-              <AnalyticsIcon color="#EA580C" size={18} />
-              <Text style={styles.dashboardModuleTitle}>Analytics Events</Text>
+        {tabVisibility.analytics && (
+          <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('analytics')}>
+            <View style={styles.dashboardModuleHeader}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <AnalyticsIcon color="#EA580C" size={18} />
+                <Text style={styles.dashboardModuleTitle}>Analytics Events</Text>
+              </View>
+              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
             </View>
-            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-          </View>
-          <View style={styles.dashboardModuleGrid}>
-            <View style={styles.dashboardGridItem}>
-              <Text style={styles.dashboardGridVal}>{analyticsTotal}</Text>
-              <Text style={styles.dashboardGridLbl}>Total Events</Text>
+            <View style={styles.dashboardModuleGrid}>
+              <View style={styles.dashboardGridItem}>
+                <Text style={styles.dashboardGridVal}>{analyticsTotal}</Text>
+                <Text style={styles.dashboardGridLbl}>Total Events</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={[styles.dashboardGridVal, {color: '#EA580C'}]}>{uniqueEvents}</Text>
+                <Text style={styles.dashboardGridLbl}>Unique Names</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={styles.dashboardGridVal}>{screenViews}</Text>
+                <Text style={styles.dashboardGridLbl}>Screen Views</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={styles.dashboardGridVal}>
+                  {analyticsTotal > 0 ? Math.round(analyticsTotal / Math.max(1, logs.length / 5)) : 0}
+                </Text>
+                <Text style={styles.dashboardGridLbl}>Events Ratio</Text>
+              </View>
             </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={[styles.dashboardGridVal, {color: '#EA580C'}]}>{uniqueEvents}</Text>
-              <Text style={styles.dashboardGridLbl}>Unique Names</Text>
-            </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={styles.dashboardGridVal}>{screenViews}</Text>
-              <Text style={styles.dashboardGridLbl}>Screen Views</Text>
-            </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={styles.dashboardGridVal}>
-                {analyticsTotal > 0 ? Math.round(analyticsTotal / Math.max(1, logs.length / 5)) : 0}
-              </Text>
-              <Text style={styles.dashboardGridLbl}>Events Ratio</Text>
-            </View>
-          </View>
-        </TouchableScale>
+          </TouchableScale>
+        )}
 
         {/* Module 4: WebView */}
-        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('webview')}>
-          <View style={styles.dashboardModuleHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-              <GlobeIcon color="#2563EB" size={18} />
-              <Text style={styles.dashboardModuleTitle}>WebView Captures</Text>
+        {tabVisibility.webview && (
+          <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('webview')}>
+            <View style={styles.dashboardModuleHeader}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <GlobeIcon color="#2563EB" size={18} />
+                <Text style={styles.dashboardModuleTitle}>WebView Captures</Text>
+              </View>
+              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
             </View>
-            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-          </View>
-          <View style={styles.dashboardModuleGrid}>
-            <View style={styles.dashboardGridItem}>
-              <Text style={styles.dashboardGridVal}>{webviewTotal}</Text>
-              <Text style={styles.dashboardGridLbl}>History Size</Text>
+            <View style={styles.dashboardModuleGrid}>
+              <View style={styles.dashboardGridItem}>
+                <Text style={styles.dashboardGridVal}>{webviewTotal}</Text>
+                <Text style={styles.dashboardGridLbl}>History Size</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text style={[styles.dashboardGridVal, {color: '#16A34A'}]}>Active</Text>
+                <Text style={styles.dashboardGridLbl}>Status</Text>
+              </View>
+              <View style={styles.dashboardGridItem}>
+                <Text numberOfLines={1} style={styles.dashboardGridVal}>
+                  {webviewTotal > 0 ? `${webViewNavHistory[0]?.title?.substring(0, 10) ?? ''}...` : '—'}
+                </Text>
+                <Text style={styles.dashboardGridLbl}>Last URL</Text>
+              </View>
             </View>
-            <View style={styles.dashboardGridItem}>
-              <Text style={[styles.dashboardGridVal, {color: '#16A34A'}]}>Active</Text>
-              <Text style={styles.dashboardGridLbl}>Status</Text>
-            </View>
-            <View style={styles.dashboardGridItem}>
-              <Text numberOfLines={1} style={styles.dashboardGridVal}>
-                {webviewTotal > 0 ? `${webViewNavHistory[0]?.title?.substring(0, 10) ?? ''}...` : '—'}
-              </Text>
-              <Text style={styles.dashboardGridLbl}>Last URL</Text>
-            </View>
-          </View>
-        </TouchableScale>
+          </TouchableScale>
+        )}
 
         {/* Module 5: Redux Store */}
-        <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('redux')}>
-          <View style={styles.dashboardModuleHeader}>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-              <TerminalIcon color={AppColors.purple} size={18} />
-              <Text style={styles.dashboardModuleTitle}>Redux Store State</Text>
+        {tabVisibility.redux && (
+          <TouchableScale style={styles.dashboardModuleCard} onPress={() => setActiveTab('redux')}>
+            <View style={styles.dashboardModuleHeader}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <TerminalIcon color={AppColors.purple} size={18} />
+                <Text style={styles.dashboardModuleTitle}>Redux Store State</Text>
+              </View>
+              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
             </View>
-            <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-          </View>
-          {reduxState ? (
-            <View style={{ paddingHorizontal: 12, paddingBottom: 12, gap: 6 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.5 }}>
-                  REDUCER NAME
-                </Text>
-                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.5 }}>
-                  SIZE / FIELDS
+            {reduxState ? (
+              <View style={{ paddingHorizontal: 12, paddingBottom: 12, gap: 6 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.5 }}>
+                    REDUCER NAME
+                  </Text>
+                  <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10, color: AppColors.grayTextWeak, letterSpacing: 0.5 }}>
+                    SIZE / FIELDS
+                  </Text>
+                </View>
+                {Object.keys(reduxState).map(key => {
+                  const val = reduxState[key];
+                  const fieldsCount = typeof val === 'object' && val !== null ? Object.keys(val).length : 0;
+                  const sizeStr = getSize(val);
+                  return (
+                    <View key={key} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 2 }}>
+                      <Text style={{ fontFamily: AppFonts.interMedium, fontSize: 12, color: AppColors.grayTextStrong }}>
+                        {key}
+                      </Text>
+                      <Text style={{ fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.grayTextWeak }}>
+                        {sizeStr} ({fieldsCount} fields)
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={{ padding: 12, alignItems: 'center' }}>
+                <Text style={{ fontFamily: AppFonts.interRegular, fontSize: 12, color: AppColors.grayTextWeak }}>
+                  No connected Redux store.
                 </Text>
               </View>
-              {Object.keys(reduxState).map(key => {
-                const val = reduxState[key];
-                const fieldsCount = typeof val === 'object' && val !== null ? Object.keys(val).length : 0;
-                const sizeStr = getSize(val);
-                return (
-                  <View key={key} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 2 }}>
-                    <Text style={{ fontFamily: AppFonts.interMedium, fontSize: 12, color: AppColors.grayTextStrong }}>
-                      {key}
-                    </Text>
-                    <Text style={{ fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.grayTextWeak }}>
-                      {sizeStr} ({fieldsCount} fields)
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          ) : (
-            <View style={{ padding: 12, alignItems: 'center' }}>
-              <Text style={{ fontFamily: AppFonts.interRegular, fontSize: 12, color: AppColors.grayTextWeak }}>
-                No connected Redux store.
-              </Text>
-            </View>
-          )}
-        </TouchableScale>
+            )}
+          </TouchableScale>
+        )}
       </View>
     );
   };
@@ -1227,40 +2162,54 @@ const NetworkInspector = (): React.JSX.Element => {
       );
     }
 
+    // Build hierarchical tree: Store -> Reducers -> Action -> Data
+    const lastActionMap = getLastActionForReducer();
+
     return (
       <ScrollView style={styles.detailScroll} contentContainerStyle={{ paddingBottom: 24 }}>
-        <View
-          style={{
-            flexDirection: 'row',
+        {/* Top Summary Card */}
+        <View style={{
+          backgroundColor: AppColors.primaryLight,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: AppColors.grayBorderSecondary,
+          padding: 14,
+          marginHorizontal: 16,
+          marginTop: 12,
+          marginBottom: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+          <View style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            backgroundColor: AppColors.purpleShade50,
             alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            borderBottomWidth: 1,
-            borderBottomColor: AppColors.dividerColor,
-            backgroundColor: AppColors.primaryLight,
+            justifyContent: 'center',
           }}>
-          <Text
-            style={{
-              fontFamily: AppFonts.interBold,
-              color: AppColors.grayTextStrong,
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: 0.6,
-            }}>
-            Redux Store ({reducerKeys.length} Reducers)
-          </Text>
+            <TerminalIcon color={AppColors.purple} size={20} />
+          </View>
+          <View style={{flex: 1}}>
+            <Text style={{fontFamily: AppFonts.interBold, fontSize: 13, color: AppColors.primaryBlack}}>
+              Redux Store Snapshot
+            </Text>
+            <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.grayText, marginTop: 2}}>
+              Total size: {getSize(reduxState)} • {reducerKeys.length} Reducers
+            </Text>
+          </View>
           <CopyButton value={() => reduxState} label="Overall Store" />
         </View>
 
+        {/* Search Bar */}
         <View style={{
           flexDirection: 'row',
           alignItems: 'center',
           backgroundColor: AppColors.grayBackground,
           borderRadius: 8,
           marginHorizontal: 16,
-          marginTop: 12,
-          marginBottom: 8,
+          marginBottom: 12,
           paddingHorizontal: 10,
           borderWidth: 1,
           borderColor: AppColors.dividerColor,
@@ -1288,70 +2237,17 @@ const NetworkInspector = (): React.JSX.Element => {
           )}
         </View>
 
-        {reducerKeys.map(key => {
-          const isExpanded = expandedReducers[key];
-          const val = reduxState[key];
-          return (
-            <View
-              key={key}
-              style={{
-                backgroundColor: AppColors.primaryLight,
-                borderBottomWidth: 1,
-                borderBottomColor: AppColors.dividerColor,
-              }}>
-              <Pressable
-                onPress={() => {
-                  setExpandedReducers(prev => ({
-                    ...prev,
-                    [key]: !prev[key],
-                  }));
-                }}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                  <Animated.View style={{ transform: [{ rotate: isExpanded ? '0deg' : '-90deg' }] }}>
-                    <ChevronIcon color={AppColors.grayTextWeak} size={14} />
-                  </Animated.View>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 13,
-                      color: AppColors.purple,
-                    }}>
-                    {key}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interRegular,
-                      fontSize: 11,
-                      color: AppColors.grayTextWeak,
-                    }}>
-                    ({typeof val === 'object' && val !== null ? `${Object.keys(val).length} fields` : typeof val})
-                  </Text>
-                </View>
-                <CopyButton value={() => val} label={`${key} Reducer`} />
-              </Pressable>
-
-              {isExpanded && (
-                <View
-                  style={{
-                    backgroundColor: AppColors.grayBackground,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderTopWidth: 1,
-                    borderTopColor: AppColors.dividerColor,
-                  }}>
-                  <JsonViewer data={val} search={reduxSearch} />
-                </View>
-              )}
-            </View>
-          );
-        })}
+        {/* Main Tree Card */}
+        <View style={{
+          backgroundColor: AppColors.primaryLight,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: AppColors.grayBorderSecondary,
+          marginHorizontal: 16,
+          padding: 12,
+        }}>
+          <ReduxTreeView state={reduxState} lastActionMap={lastActionMap} search={reduxSearch} />
+        </View>
       </ScrollView>
     );
   };
@@ -1368,7 +2264,7 @@ const NetworkInspector = (): React.JSX.Element => {
         <Animated.View
           style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
         />
-        <BrandCircleIcon size={56} />
+        <BrandCircleIcon size={62} />
         {(logs.length > 0 || analyticsEvents.length > 0) && (
           <Animated.View
             style={[
@@ -1428,7 +2324,34 @@ const NetworkInspector = (): React.JSX.Element => {
                     </TouchableScale>
 
                     {selected == null && selectedEvent == null ? (
-                      <Text style={styles.headerTitle}>RN-InApp-Inspector</Text>
+                      <View style={{flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1}}>
+                        <View
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 10,
+                            backgroundColor: 'rgba(255,255,255,0.13)',
+                            borderWidth: 1.5,
+                            borderColor: 'rgba(255,255,255,0.25)',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            shadowColor: '#000',
+                            shadowOpacity: 0.15,
+                            shadowRadius: 4,
+                            shadowOffset: {width: 0, height: 2},
+                          }}>
+                          <BrandSquareIcon size={36} />
+                        </View>
+                        <View style={{gap: 3}}>
+                          <Text style={[styles.headerTitle, {fontSize: 17, letterSpacing: 0.2}]}>RN InApp Inspector</Text>
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                            <Animated.View style={{width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ADE80', opacity: activePulseAnim}} />
+                            <Text style={{fontFamily: AppFonts.interMedium, fontSize: 10, color: 'rgba(255,255,255,0.78)', letterSpacing: 0.3}}>
+                              Active • {Platform.OS === 'ios' ? 'iOS' : 'Android'} (v1.0.10)
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
                     ) : null}
                   </View>
 
@@ -1524,25 +2447,19 @@ const NetworkInspector = (): React.JSX.Element => {
                   </View>
 
                   <View style={styles.headerRight}>
-                    <TouchableScale
-                      onPress={() => {
-                        const newTheme = !isDark;
-                        setIsDark(newTheme);
-                        toggleGlobalTheme(newTheme);
-                      }}
-                      hitSlop={15}
-                      style={[styles.closeButtonCircle, {marginRight: 8}]}>
-                      {isDark ? (
-                        <SunIcon color="#FFFFFF" size={16} />
-                      ) : (
-                        <MoonIcon color="#FFFFFF" size={16} />
-                      )}
-                    </TouchableScale>
+                    {selected == null && selectedEvent == null && (
+                      <TouchableScale
+                        onPress={() => setSettingsPage('main')}
+                        hitSlop={15}
+                        style={[styles.closeButtonSquare, {marginRight: 8, backgroundColor: 'rgba(255,255,255,0.15)'}]}>
+                        <SettingsIcon color="#FFFFFF" size={16} />
+                      </TouchableScale>
+                    )}
 
                     <TouchableScale
                       onPress={closeModal}
                       hitSlop={15}
-                      style={styles.closeButtonCircle}>
+                      style={styles.closeButtonSquare}>
                       <CloseWhite size={16} />
                     </TouchableScale>
                   </View>
@@ -1550,7 +2467,7 @@ const NetworkInspector = (): React.JSX.Element => {
               </LinearGradient>
 
               {/* ─── Horizontal Scrollable Tab Bar inside Content ─── */}
-              {selected == null && selectedEvent == null ? (
+              {selected == null && selectedEvent == null && settingsPage === null ? (
                 <View style={styles.tabBarContainer}>
                   <ScrollView
                     horizontal
@@ -1563,10 +2480,12 @@ const NetworkInspector = (): React.JSX.Element => {
                       { key: 'analytics', label: 'Analytics', count: analyticsEvents.length, icon: 'analytics' },
                       { key: 'webview', label: 'WebView', count: webViewNavHistory.length, icon: 'webview' },
                       { key: 'redux', label: 'Redux', count: 0, icon: 'redux' },
-                    ] as const).map(tab => {
+                    ] as const).filter(tab => tabVisibility[tab.key]).map(tab => {
                       const isActive = activeTab === tab.key;
                       const iconColor = isActive ? '#FFFFFF' : AppColors.grayText;
                       const countLabel = tab.count > 9 ? '9+' : String(tab.count);
+                      const hasUnreadApis = activeTab !== 'apis' && logs.length > lastReadApisCount;
+                      const hasUnreadLogs = activeTab !== 'logs' && consoleLogs.length > lastReadLogsCount;
                       return (
                         <TouchableScale
                           key={tab.key}
@@ -1595,6 +2514,17 @@ const NetworkInspector = (): React.JSX.Element => {
                               ]}>
                               {tab.label} {tab.count > 0 ? `(${countLabel})` : ''}
                             </Text>
+                            {((tab.key === 'apis' && hasUnreadApis) || (tab.key === 'logs' && hasUnreadLogs)) && (
+                              <Animated.View style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: 3,
+                                backgroundColor: AppColors.errorColor,
+                                marginLeft: 4,
+                                alignSelf: 'center',
+                                transform: [{ scale: unreadPulseAnim }],
+                              }} />
+                            )}
                           </View>
                         </TouchableScale>
                       );
@@ -2533,147 +3463,50 @@ const NetworkInspector = (): React.JSX.Element => {
                   />
                 </View>
               ) : activeTab === 'webview' ? (
-                <View style={{flex: 1}}>
-                  <View
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                      borderBottomWidth: 1,
-                      borderBottomColor: AppColors.dividerColor,
-                      paddingBottom: 6,
-                    }}>
-                    {/* ─── WebView Sub-Tabs ─────────────────────────────────────── */}
-                    <View
-                      style={{
-                        marginHorizontal: 16,
-                        marginTop: webViewSubTab === 'navigation' ? 12 : 4,
-                        marginBottom: 8,
-                        backgroundColor: AppColors.grayBackground,
-                        borderRadius: 8,
-                        padding: 4,
-                        flexDirection: 'row',
-                        borderWidth: 1,
-                        borderColor: AppColors.grayBorderSecondary,
-                      }}>
-                      <Pressable
-                        style={[
-                          {
-                            flex: 1,
-                            paddingVertical: 8,
-                            borderRadius: 6,
-                            alignItems: 'center',
-                          },
-                          webViewSubTab === 'html' && {
-                            backgroundColor: AppColors.primaryLight,
-                            shadowColor: '#000',
-                            shadowOpacity: 0.1,
-                            shadowRadius: 3,
-                            shadowOffset: {width: 0, height: 1},
-                            elevation: 2,
-                          },
-                        ]}
-                        onPress={() => setWebViewSubTab('html')}>
-                        <Text
-                          style={[
-                            {
-                              fontFamily: AppFonts.interMedium,
-                              fontSize: 12,
-                              color: AppColors.grayTextStrong,
-                            },
-                            webViewSubTab === 'html' && {
-                              fontFamily: AppFonts.interBold,
-                              color: '#475569',
-                            },
-                          ]}>
-                          HTML Source
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        style={[
-                          {
-                            flex: 1,
-                            paddingVertical: 8,
-                            borderRadius: 6,
-                            alignItems: 'center',
-                          },
-                          webViewSubTab === 'navigation' && {
-                            backgroundColor: AppColors.primaryLight,
-                            shadowColor: '#000',
-                            shadowOpacity: 0.1,
-                            shadowRadius: 3,
-                            shadowOffset: {width: 0, height: 1},
-                            elevation: 2,
-                          },
-                        ]}
-                        onPress={() => setWebViewSubTab('navigation')}>
-                        <Text
-                          style={[
-                            {
-                              fontFamily: AppFonts.interMedium,
-                              fontSize: 12,
-                              color: AppColors.grayTextStrong,
-                            },
-                            webViewSubTab === 'navigation' && {
-                              fontFamily: AppFonts.interBold,
-                              color: '#475569',
-                            },
-                          ]}>
-                          Nav History ({webViewNavHistory.length})
-                        </Text>
-                      </Pressable>
+                webViewNavHistory.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <View style={styles.emptyIconWrap}>
+                      <GlobeIcon color={AppColors.purple} size={32} />
                     </View>
+                    <Text style={styles.emptyTitle}>No WebView Activity</Text>
+                    <Text style={styles.emptySub}>
+                      Load a webpage within a connected WebView component to inspect pages, page source, and console logs.
+                    </Text>
                   </View>
-
-                  {/* ─── Current Page Address Bar (Always visible at the top) ─── */}
+                ) : (
+                  <View style={{flex: 1}}>
+                    {/* ─── Current Page Address Bar (Now on top) ─── */}
                   {(() => {
                     const currentUrl = webViewNavHistory[0]?.url;
                     if (!currentUrl) return null;
                     return (
                       <View
                         style={{
-                          paddingHorizontal: 16,
-                          paddingTop: 10,
-                          paddingBottom: 10,
-                          backgroundColor: '#FFFFFF',
+                          paddingHorizontal: 12,
+                          paddingTop: 6,
+                          paddingBottom: 6,
+                          backgroundColor: AppColors.primaryLight,
                           borderBottomWidth: 1,
                           borderBottomColor: AppColors.dividerColor,
                         }}>
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 10,
-                            color: '#64748B',
-                            textTransform: 'uppercase',
-                            letterSpacing: 0.5,
-                            marginBottom: 6,
-                          }}>
-                          Currently debugging for URL
-                        </Text>
                         <View
                           style={{
                             flexDirection: 'row',
                             alignItems: 'center',
-                            backgroundColor: '#F1F5F9',
-                            borderRadius: 20,
-                            borderWidth: 1,
-                            borderColor: '#E2E8F0',
-                            paddingHorizontal: 12,
-                            paddingVertical: 6,
+                            backgroundColor: AppColors.grayBackground,
+                            borderRadius: 8,
+                            borderWidth: 1.5,
+                            borderColor: AppColors.grayBorderSecondary,
+                            paddingHorizontal: 10,
+                            paddingVertical: 5,
                             gap: 8,
                           }}>
-                          {/* Left: Clickable Globe Icon to open browser */}
-                          <TouchableScale
-                            onPress={() => Linking.openURL(currentUrl)}
-                            hitSlop={8}
-                            style={{
-                              width: 24,
-                              height: 24,
-                              borderRadius: 12,
-                              backgroundColor: '#E2E8F0',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                            children={<GlobeIcon size={12} color="#475569" />}
-                          />
+                          {/* Left: Lock and HTTPS label */}
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                            <Text style={{ fontSize: 11 }}>🔒</Text>
+                            <Text style={{ fontFamily: AppFonts.interBold, fontSize: 9.5, color: AppColors.greenColor, letterSpacing: 0.5 }}>HTTPS</Text>
+                          </View>
+                          <View style={{ width: 1.5, height: 12, backgroundColor: AppColors.grayBorderSecondary }} />
 
                           {/* Middle: URL text (Address style) */}
                           <View style={{flex: 1}}>
@@ -2684,8 +3517,8 @@ const NetworkInspector = (): React.JSX.Element => {
                               ellipsizeMode="tail"
                               style={{
                                 fontFamily: AppFonts.interMedium,
-                                fontSize: 11,
-                                color: '#475569',
+                                fontSize: 11.5,
+                                color: AppColors.primaryBlack,
                               }}
                               highlightStyle={styles.highlight}
                               detectLinks={false}
@@ -2694,23 +3527,229 @@ const NetworkInspector = (): React.JSX.Element => {
 
                           {/* Right: Copy Button */}
                           <CopyButton value={currentUrl} label="URL" />
+
+                          {/* Right: Globe Icon button to open browser */}
+                          <TouchableScale
+                            onPress={() => Linking.openURL(currentUrl)}
+                            hitSlop={8}
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: 13,
+                              backgroundColor: AppColors.grayBackground,
+                              borderWidth: 1,
+                              borderColor: AppColors.grayBorderSecondary,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}>
+                            <GlobeIcon size={11} color={AppColors.purple} />
+                          </TouchableScale>
                         </View>
                       </View>
                     );
                   })()}
 
+                  {/* ─── WebView Sub-Tabs (Now below Address Bar) ─── */}
+                  <View
+                    style={{
+                      backgroundColor: AppColors.primaryLight,
+                      borderBottomWidth: 1,
+                      borderBottomColor: AppColors.dividerColor,
+                      paddingVertical: 6,
+                    }}>
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{
+                        paddingHorizontal: 12,
+                        flexDirection: 'row',
+                        gap: 8,
+                      }}>
+                      {/* Sub-tab 1: Preview */}
+                      <Pressable
+                        style={[
+                          {
+                            paddingVertical: 6,
+                            paddingHorizontal: 14,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            gap: 6,
+                            backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                            borderWidth: 1,
+                            borderColor: 'transparent',
+                          },
+                          webViewSubTab === 'preview' && {
+                            backgroundColor: AppColors.purple,
+                            borderColor: AppColors.purple,
+                          },
+                        ]}
+                        onPress={() => setWebViewSubTab('preview')}>
+                        <EyeIcon color={webViewSubTab === 'preview' ? '#FFFFFF' : AppColors.grayTextWeak} size={13} />
+                        <Text
+                          style={{
+                            fontFamily: webViewSubTab === 'preview' ? AppFonts.interBold : AppFonts.interMedium,
+                            fontSize: 12,
+                            color: webViewSubTab === 'preview' ? '#FFFFFF' : AppColors.grayTextStrong,
+                          }}>
+                          Preview
+                        </Text>
+                      </Pressable>
+
+                      {/* Sub-tab 2: Page Source */}
+                      <Pressable
+                        style={[
+                          {
+                            paddingVertical: 6,
+                            paddingHorizontal: 14,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            gap: 6,
+                            backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                            borderWidth: 1,
+                            borderColor: 'transparent',
+                          },
+                          webViewSubTab === 'html' && {
+                            backgroundColor: AppColors.purple,
+                            borderColor: AppColors.purple,
+                          },
+                        ]}
+                        onPress={() => setWebViewSubTab('html')}>
+                        <HtmlIcon color={webViewSubTab === 'html' ? '#FFFFFF' : AppColors.grayTextWeak} size={13} />
+                        <Text
+                          style={{
+                            fontFamily: webViewSubTab === 'html' ? AppFonts.interBold : AppFonts.interMedium,
+                            fontSize: 12,
+                            color: webViewSubTab === 'html' ? '#FFFFFF' : AppColors.grayTextStrong,
+                          }}>
+                          Page Source
+                        </Text>
+                      </Pressable>
+
+                      {/* Sub-tab 3: History */}
+                      <Pressable
+                        style={[
+                          {
+                            paddingVertical: 6,
+                            paddingHorizontal: 14,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            gap: 6,
+                            backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                            borderWidth: 1,
+                            borderColor: 'transparent',
+                          },
+                          webViewSubTab === 'navigation' && {
+                            backgroundColor: AppColors.purple,
+                            borderColor: AppColors.purple,
+                          },
+                        ]}
+                        onPress={() => setWebViewSubTab('navigation')}>
+                        <ClockIcon color={webViewSubTab === 'navigation' ? '#FFFFFF' : AppColors.grayTextWeak} size={13} />
+                        <Text
+                          style={{
+                            fontFamily: webViewSubTab === 'navigation' ? AppFonts.interBold : AppFonts.interMedium,
+                            fontSize: 12,
+                            color: webViewSubTab === 'navigation' ? '#FFFFFF' : AppColors.grayTextStrong,
+                          }}>
+                          History ({webViewNavHistory.length})
+                        </Text>
+                      </Pressable>
+
+                      {/* Sub-tab 4: Console */}
+                      <Pressable
+                        style={[
+                          {
+                            paddingVertical: 6,
+                            paddingHorizontal: 14,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            gap: 6,
+                            backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                            borderWidth: 1,
+                            borderColor: 'transparent',
+                          },
+                          webViewSubTab === 'console' && {
+                            backgroundColor: AppColors.purple,
+                            borderColor: AppColors.purple,
+                          },
+                        ]}
+                        onPress={() => setWebViewSubTab('console')}>
+                        <TerminalIcon color={webViewSubTab === 'console' ? '#FFFFFF' : AppColors.grayTextWeak} size={13} />
+                        <Text
+                          style={{
+                            fontFamily: webViewSubTab === 'console' ? AppFonts.interBold : AppFonts.interMedium,
+                            fontSize: 12,
+                            color: webViewSubTab === 'console' ? '#FFFFFF' : AppColors.grayTextStrong,
+                          }}>
+                          Console ({webViewLogs.length})
+                        </Text>
+                      </Pressable>
+                    </ScrollView>
+                  </View>
+
                   {webViewSubTab === 'html' ? (
                     <View style={{flex: 1}}>
                       {webViewHtml || webViewCss || webViewJs ? (
                         <View style={{flex: 1}}>
+                          {/* Clear Inspect Banner */}
+                          {inspectedElement && (
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                backgroundColor: AppColors.purpleShade50,
+                                paddingHorizontal: 12,
+                                paddingVertical: 6,
+                                borderBottomWidth: 1,
+                                borderBottomColor: AppColors.dividerColor,
+                              }}>
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interMedium,
+                                  fontSize: 11.5,
+                                  color: AppColors.purple,
+                                  flex: 1,
+                                }}>
+                                Inspecting element:{' '}
+                                <Text style={{fontFamily: AppFonts.interBold}}>
+                                  &lt;{inspectedElement.tagName}
+                                  {inspectedElement.id ? ` id="${inspectedElement.id}"` : ''}
+                                  {inspectedElement.className ? ` class="${inspectedElement.className.trim().split(/\s+/)[0]}"` : ''}
+                                  &gt;
+                                </Text>
+                              </Text>
+                              <Pressable
+                                onPress={() => setInspectedElement(null)}
+                                style={{
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 4,
+                                }}>
+                                <Text
+                                  style={{
+                                    fontFamily: AppFonts.interBold,
+                                    fontSize: 11,
+                                    color: AppColors.purple,
+                                  }}>
+                                  Clear Inspect
+                                </Text>
+                              </Pressable>
+                            </View>
+                          )}
+
                           {/* Inner sub-tabs inside HTML source view */}
                           <View
                             style={{
                               flexDirection: 'row',
                               borderBottomWidth: 1,
-                              borderBottomColor: '#E2E8F0',
-                              backgroundColor: '#FFFFFF',
-                              paddingHorizontal: 16,
+                              borderBottomColor: AppColors.dividerColor,
+                              backgroundColor: AppColors.primaryLight,
+                              paddingHorizontal: 12,
+                              gap: 12,
                             }}>
                             {(['html', 'css', 'javascript'] as const).map(
                               tab => {
@@ -2720,28 +3759,55 @@ const NetworkInspector = (): React.JSX.Element => {
                                     ? 'HTML'
                                     : tab === 'css'
                                     ? 'CSS'
-                                    : 'Javascript';
+                                    : 'JavaScript';
+                                const activeColor =
+                                  tab === 'html'
+                                    ? '#EA580C' // Orange
+                                    : tab === 'css'
+                                    ? '#2563EB' // Blue
+                                    : '#D97706'; // Dark Yellow/Amber
                                 return (
                                   <Pressable
                                     key={tab}
                                     onPress={() => setHtmlSubTab(tab)}
                                     style={{
-                                      paddingVertical: 10,
-                                      marginRight: 16,
+                                      paddingVertical: 8,
+                                      paddingHorizontal: 4,
                                       borderBottomWidth: 2,
                                       borderBottomColor: active
-                                        ? AppColors.purple
+                                        ? activeColor
                                         : 'transparent',
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 4,
                                     }}>
+                                    {tab === 'html' && (
+                                      <HtmlIcon
+                                        color={active ? activeColor : AppColors.grayTextWeak}
+                                        size={14}
+                                      />
+                                    )}
+                                    {tab === 'css' && (
+                                      <CssIcon
+                                        color={active ? activeColor : AppColors.grayTextWeak}
+                                        size={14}
+                                      />
+                                    )}
+                                    {tab === 'javascript' && (
+                                      <JsIcon
+                                        color={active ? activeColor : AppColors.grayTextWeak}
+                                        size={14}
+                                      />
+                                    )}
                                     <Text
                                       style={{
                                         fontFamily: active
                                           ? AppFonts.interBold
                                           : AppFonts.interMedium,
-                                        fontSize: 12,
+                                        fontSize: 13,
                                         color: active
-                                          ? AppColors.purple
-                                          : '#64748B',
+                                          ? activeColor
+                                          : AppColors.grayTextWeak,
                                       }}>
                                       {label}
                                     </Text>
@@ -2760,6 +3826,7 @@ const NetworkInspector = (): React.JSX.Element => {
                                 <CodeSnippet
                                   code={webViewHtml}
                                   language="html"
+                                  search={getSearchTermForTab()}
                                 />
                               ) : (
                                 <Text
@@ -2777,6 +3844,7 @@ const NetworkInspector = (): React.JSX.Element => {
                                 <CodeSnippet
                                   code={webViewCss}
                                   language="css"
+                                  search={getSearchTermForTab()}
                                 />
                               ) : (
                                 <Text
@@ -2793,6 +3861,7 @@ const NetworkInspector = (): React.JSX.Element => {
                               <CodeSnippet
                                 code={webViewJs}
                                 language="javascript"
+                                search={getSearchTermForTab()}
                               />
                             ) : (
                               <Text
@@ -2822,12 +3891,13 @@ const NetworkInspector = (): React.JSX.Element => {
                         </View>
                       )}
                     </View>
-                  ) : (
+                  ) : webViewSubTab === 'navigation' ? (
                     <FlatList
                       data={filteredNavHistory}
                       keyExtractor={(item: WebViewNavState, index: number) =>
                         `${index}-${item.timestamp}`
                       }
+                      style={{flex: 1, backgroundColor: AppColors.grayBackground}}
                       ListHeaderComponent={
                         <View
                           style={{
@@ -2861,22 +3931,30 @@ const NetworkInspector = (): React.JSX.Element => {
                         return (
                           <View
                             style={{
-                              paddingHorizontal: 16,
-                              paddingVertical: 8,
-                              backgroundColor: isLatest ? '#F1F5F9' : '#FFFFFF',
-                              borderBottomWidth: 1,
-                              borderBottomColor: '#E2E8F0',
+                              marginHorizontal: 16,
+                              marginVertical: 6,
+                              borderRadius: 12,
+                              borderWidth: 1,
+                              borderColor: AppColors.grayBorderSecondary,
+                              backgroundColor: isLatest ? AppColors.purpleShade50 : AppColors.primaryLight,
+                              padding: 14,
                               flexDirection: 'row',
                               alignItems: 'center',
                               justifyContent: 'space-between',
                               gap: 12,
+                              shadowColor: '#000000',
+                              shadowOffset: {width: 0, height: 2},
+                              shadowOpacity: isDark ? 0.2 : 0.04,
+                              shadowRadius: 4,
+                              elevation: 2,
                             }}>
-                            <View style={{flex: 1, gap: 2}}>
+                            <View style={{flex: 1, gap: 8}}>
+                              {/* Top row: Title and Badge */}
                               <View
                                 style={{
                                   flexDirection: 'row',
                                   alignItems: 'center',
-                                  gap: 6,
+                                  gap: 8,
                                   flexWrap: 'wrap',
                                 }}>
                                 <Text
@@ -2884,8 +3962,8 @@ const NetworkInspector = (): React.JSX.Element => {
                                   ellipsizeMode="tail"
                                   style={{
                                     fontFamily: AppFonts.interBold,
-                                    fontSize: 13,
-                                    color: '#334155',
+                                    fontSize: 14,
+                                    color: AppColors.primaryBlack,
                                     flexShrink: 1,
                                   }}>
                                   {item.title || 'Untitled Page'}
@@ -2893,46 +3971,62 @@ const NetworkInspector = (): React.JSX.Element => {
                                 {isLatest && (
                                   <View
                                     style={{
-                                      backgroundColor: '#E2E8F0',
-                                      paddingHorizontal: 6,
-                                      paddingVertical: 2,
-                                      borderRadius: 4,
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 4,
+                                      backgroundColor: AppColors.greenStatus,
+                                      paddingHorizontal: 8,
+                                      paddingVertical: 3,
+                                      borderRadius: 12,
                                     }}>
+                                    <View
+                                      style={{
+                                        width: 6,
+                                        height: 6,
+                                        borderRadius: 3,
+                                        backgroundColor: AppColors.greenBaggageText,
+                                      }}
+                                    />
                                     <Text
                                       style={{
                                         fontFamily: AppFonts.interBold,
-                                        fontSize: 9,
-                                        color: '#475569',
+                                        fontSize: 9.5,
+                                        color: AppColors.greenBaggageText,
                                       }}>
                                       Active
                                     </Text>
                                   </View>
                                 )}
                               </View>
-                              <HighlightText
-                                text={item.url}
-                                search={webViewSearch}
-                                numberOfLines={3}
-                                ellipsizeMode="tail"
-                                style={{
-                                  fontFamily: AppFonts.interRegular,
-                                  fontSize: 11,
-                                  color: '#64748B',
-                                  flexShrink: 1,
-                                }}
-                                highlightStyle={styles.highlight}
-                                detectLinks={true}
-                              />
-                              <Text
-                                style={{
-                                  fontFamily: AppFonts.interRegular,
-                                  fontSize: 10,
-                                  color: '#94A3B8',
-                                }}>
-                                {formatNavTime(item.timestamp)}
-                              </Text>
+
+                              {/* Middle row: URL with Globe Icon */}
+                              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                                <GlobeIcon size={12} color={AppColors.grayTextWeak} />
+                                <HighlightText
+                                  text={item.url}
+                                  search={webViewSearch}
+                                  numberOfLines={2}
+                                  ellipsizeMode="tail"
+                                  style={{
+                                    fontFamily: AppFonts.interRegular,
+                                    fontSize: 12,
+                                    color: AppColors.grayText,
+                                    flex: 1,
+                                  }}
+                                  highlightStyle={styles.highlight}
+                                  detectLinks={true}
+                                />
+                              </View>
+
+                              {/* Bottom row: Time */}
+                              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                                <ClockIcon size={11} color={AppColors.grayTextWeak} />
+                                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.grayTextWeak}}>
+                                  {formatNavTime(item.timestamp)}
+                                </Text>
+                              </View>
                             </View>
-                            <CopyButton value={item.url} label="Copy URL" />
+                            <CopyButton value={item.url} label="URL" />
                           </View>
                         );
                       }}
@@ -2940,197 +4034,319 @@ const NetworkInspector = (): React.JSX.Element => {
                       maxToRenderPerBatch={15}
                       windowSize={7}
                       removeClippedSubviews={true}
-                      ListEmptyComponent={<EmptyState isSearch={false} />}
+                      ListEmptyComponent={<EmptyState isSearch={webViewSearch.length > 0} />}
                       contentContainerStyle={[
                         styles.listContent,
                         filteredNavHistory.length === 0 && {flexGrow: 1},
                       ]}
                       keyboardShouldPersistTaps="handled"
                     />
+                  ) : webViewSubTab === 'console' ? (
+                    <View style={{flex: 1, backgroundColor: AppColors.grayBackground}}>
+                      {webViewLogs.length > 0 ? (
+                        <FlatList
+                          data={webViewLogs}
+                          keyExtractor={(item: WebViewLog) => String(item.id)}
+                          style={{flex: 1}}
+                          ListHeaderComponent={
+                            <View style={{paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                              <Text style={styles.resultCount}>
+                                Console Logs ({webViewLogs.length})
+                              </Text>
+                              <TouchableScale
+                                onPress={() => clearWebViewData()}
+                                style={{padding: 6, borderRadius: 6, backgroundColor: AppColors.primaryLight, borderWidth: 1, borderColor: AppColors.grayBorderSecondary}}>
+                                <TrashIcon color={AppColors.errorColor} size={14} />
+                              </TouchableScale>
+                            </View>
+                          }
+                          renderItem={({item}: {item: WebViewLog}) => {
+                            const logColor =
+                              item.type === 'error' ? AppColors.errorColor :
+                              item.type === 'warn' ? AppColors.warningIconGold :
+                              item.type === 'info' ? AppColors.skyBlue :
+                              AppColors.grayTextWeak;
+                            const bgColor =
+                              item.type === 'error' ? 'rgba(255, 46, 87, 0.06)' :
+                              item.type === 'warn' ? 'rgba(191, 162, 82, 0.08)' :
+                              AppColors.primaryLight;
+                            const d = new Date(item.timestamp);
+                            const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+                            return (
+                              <View
+                                style={{
+                                  marginHorizontal: 12,
+                                  marginVertical: 3,
+                                  borderRadius: 8,
+                                  borderWidth: 1,
+                                  borderColor: AppColors.grayBorderSecondary,
+                                  borderLeftWidth: 3,
+                                  borderLeftColor: logColor,
+                                  backgroundColor: bgColor,
+                                  padding: 10,
+                                  flexDirection: 'row',
+                                  gap: 8,
+                                  alignItems: 'flex-start',
+                                }}>
+                                <View style={{paddingTop: 1}}>
+                                  <TerminalIcon color={logColor} size={11} />
+                                </View>
+                                <View style={{flex: 1, gap: 3}}>
+                                  <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                                    <Text style={{fontFamily: AppFonts.interBold, fontSize: 10, color: logColor, textTransform: 'uppercase', letterSpacing: 0.5}}>
+                                      {item.type}
+                                    </Text>
+                                    <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak}}>
+                                      {timeStr}
+                                    </Text>
+                                  </View>
+                                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 12, color: AppColors.primaryBlack, lineHeight: 16}}>
+                                    {item.message}
+                                  </Text>
+                                </View>
+                              </View>
+                            );
+                          }}
+                          initialNumToRender={20}
+                          maxToRenderPerBatch={20}
+                          windowSize={7}
+                          contentContainerStyle={[styles.listContent, webViewLogs.length === 0 && {flexGrow: 1}]}
+                        />
+                      ) : (
+                        <View style={styles.emptyContainer}>
+                          <View style={styles.emptyIconWrap}>
+                            <TerminalIcon color={AppColors.purple} size={32} />
+                          </View>
+                          <Text style={styles.emptyTitle}>No Console Logs</Text>
+                          <Text style={styles.emptySub}>
+                            Console logs from the WebView will appear here.
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  ) : (
+                    <View style={{flex: 1, backgroundColor: AppColors.grayBackground}}>
+                      {webViewHtml ? (
+                        OriginalWebView ? (
+                          <OriginalWebView
+                            source={{ html: webViewHtml, baseUrl: webViewHtmlUrl }}
+                            injectedJavaScript={previewInspectScript}
+                            onMessage={(event: any) => {
+                              try {
+                                const data = JSON.parse(event.nativeEvent.data);
+                                if (data.type === 'preview-inspect') {
+                                  setInspectedElement({
+                                    tagName: data.tagName,
+                                    id: data.id,
+                                    className: data.className,
+                                    searchStr: data.searchStr,
+                                  });
+                                  setWebViewSubTab('html');
+                                  setHtmlSubTab('html');
+                                }
+                              } catch (err) {}
+                            }}
+                            style={{ flex: 1 }}
+                          />
+                        ) : (
+                          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20}}>
+                            <Text style={{color: AppColors.grayText, textAlign: 'center', fontFamily: AppFonts.interMedium}}>
+                              react-native-webview is not installed in the target project. Install it to enable Preview mode.
+                            </Text>
+                          </View>
+                        )
+                      ) : (
+                        <View style={styles.emptyContainer}>
+                          <View style={styles.emptyIconWrap}>
+                            <GlobeIcon color={AppColors.purple} size={32} />
+                          </View>
+                          <Text style={styles.emptyTitle}>
+                            No Preview Available
+                          </Text>
+                          <Text style={styles.emptySub}>
+                            Load a page in the WebView to see its visual preview.
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   )}
                 </View>
+                )
               ) : activeTab === 'redux' ? (
                 renderReduxTab()
               ) : (
                 <View style={{ flex: 1 }}>
                   {/* Non-scrollable details header */}
                   <View style={{ paddingHorizontal: 6, paddingTop: 4 }}>
-                    {(() => {
-                      const routeInfo = logRouteMapRef.current.get(selected.id);
-                      const screenPath =
-                        routeInfo && routeInfo.path !== 'Navigators'
-                          ? routeInfo.path.split(' ➔ ')
-                          : [];
-                      const parts = ['APIs', ...screenPath];
-                      return (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: AppColors.primaryLight,
-                            borderRadius: 8,
-                            paddingVertical: 8,
-                            paddingHorizontal: 12,
-                            borderWidth: 1,
-                            borderColor: AppColors.dividerColor,
-                            marginBottom: 12,
-                            marginTop: 4,
-                          }}>
-                          <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 6,
-                            }}>
-                            {parts.map((part, index) => {
-                              const isLast = index === parts.length - 1;
-                              return (
-                                <React.Fragment key={index}>
-                                  {index > 0 && (
-                                    <Text style={{ color: AppColors.grayTextWeak, fontSize: 11, marginHorizontal: 2 }}>
-                                      /
-                                    </Text>
-                                  )}
+                    <View style={styles.detailInfoBar}>
+                      {(() => {
+                        let hostStr = '';
+                        let pathStr = detailDisplayUrl;
+                        let queryStr = '';
+                        try {
+                          // Simple parsing fallback for React Native environments
+                          const qIndex = detailDisplayUrl.indexOf('?');
+                          let cleanUrlForParsing = detailDisplayUrl;
+                          if (qIndex !== -1) {
+                            pathStr = detailDisplayUrl.substring(0, qIndex);
+                            queryStr = detailDisplayUrl.substring(qIndex);
+                            cleanUrlForParsing = pathStr;
+                          }
+                          const schemeIndex = cleanUrlForParsing.indexOf('://');
+                          if (schemeIndex !== -1) {
+                            const withoutScheme = cleanUrlForParsing.substring(schemeIndex + 3);
+                            const firstSlash = withoutScheme.indexOf('/');
+                            if (firstSlash !== -1) {
+                              hostStr = withoutScheme.substring(0, firstSlash);
+                              pathStr = withoutScheme.substring(firstSlash);
+                            } else {
+                              hostStr = withoutScheme;
+                              pathStr = '/';
+                            }
+                          }
+                        } catch (e) {}
+
+                        return (
+                          <>
+                            <View style={styles.detailInfoTop}>
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 8,
+                                }}>
+                                <View
+                                  style={[
+                                    styles.methodBadge,
+                                    {
+                                      backgroundColor: `${
+                                        METHOD_COLORS[selected.method as Method] ??
+                                        METHOD_COLORS.ALL
+                                      }15`,
+                                    },
+                                  ]}>
+                                  <Text
+                                    style={[
+                                      styles.methodBadgeText,
+                                      {
+                                        color:
+                                          METHOD_COLORS[selected.method as Method] ??
+                                          METHOD_COLORS.ALL,
+                                      },
+                                    ]}>
+                                    {selected.method}
+                                  </Text>
+                                </View>
+
+                                {selected.status != null && (
                                   <View
-                                    style={
-                                      isLast
-                                        ? {
-                                            backgroundColor: `${AppColors.purple}12`,
-                                            paddingHorizontal: 8,
-                                            paddingVertical: 3,
-                                            borderRadius: 6,
-                                          }
-                                        : {
-                                            paddingHorizontal: 4,
-                                            paddingVertical: 2,
-                                          }
-                                    }>
+                                    style={[
+                                      styles.chip,
+                                      {
+                                        backgroundColor:
+                                          selected.status === 0
+                                            ? `${AppColors.errorColor}15`
+                                            : `${getStatusColor(selected.status)}15`,
+                                        borderColor:
+                                          selected.status === 0
+                                            ? `${AppColors.errorColor}40`
+                                            : `${getStatusColor(selected.status)}40`,
+                                      },
+                                    ]}>
+                                    {selected.status === 0 ? (
+                                      <FailIcon size={8} color={AppColors.errorColor} />
+                                    ) : (
+                                      <Svg
+                                        width={6}
+                                        height={6}
+                                        viewBox="0 0 10 10"
+                                        fill="none">
+                                        <Circle
+                                          cx="5"
+                                          cy="5"
+                                          r="5"
+                                          fill={getStatusColor(selected.status)}
+                                        />
+                                      </Svg>
+                                    )}
                                     <Text
-                                      style={{
-                                        fontFamily: isLast ? AppFonts.interBold : AppFonts.interMedium,
-                                        fontSize: 11.5,
-                                        color: isLast ? AppColors.purple : AppColors.grayText,
-                                      }}>
-                                      {part}
+                                      style={[
+                                        styles.chipText,
+                                        {
+                                          color:
+                                            selected.status === 0
+                                              ? AppColors.errorColor
+                                              : getStatusColor(selected.status),
+                                        },
+                                      ]}>
+                                      {selected.status === 0
+                                        ? 'Failed'
+                                        : String(selected.status)}
                                     </Text>
                                   </View>
-                                </React.Fragment>
-                              );
-                            })}
-                          </ScrollView>
-                        </View>
-                      );
-                    })()}
+                                )}
 
-                    <View style={styles.detailInfoBar}>
-                      <View style={styles.detailInfoTop}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 10,
-                          }}>
-                          <View
-                            style={[
-                              styles.methodBadge,
-                              {
-                                backgroundColor: `${
-                                  METHOD_COLORS[selected.method as Method] ??
-                                  METHOD_COLORS.ALL
-                                }15`,
-                              },
-                            ]}>
-                            <Text
-                              style={[
-                                styles.methodBadgeText,
-                                {
-                                  color:
-                                    METHOD_COLORS[selected.method as Method] ??
-                                    METHOD_COLORS.ALL,
-                                },
-                              ]}>
-                              {selected.method}
-                            </Text>
-                          </View>
-
-                          {selected.status != null && (
-                            <View
-                              style={[
-                                styles.chip,
-                                {
-                                  backgroundColor:
-                                    selected.status === 0
-                                      ? `${AppColors.errorColor}15`
-                                      : `${getStatusColor(selected.status)}15`,
-                                  borderColor:
-                                    selected.status === 0
-                                      ? `${AppColors.errorColor}40`
-                                      : `${getStatusColor(selected.status)}40`,
-                                },
-                              ]}>
-                              {selected.status === 0 ? (
-                                <FailIcon size={8} color={AppColors.errorColor} />
-                              ) : (
-                                <Svg
-                                  width={6}
-                                  height={6}
-                                  viewBox="0 0 10 10"
-                                  fill="none">
-                                  <Circle
-                                    cx="5"
-                                    cy="5"
-                                    r="5"
-                                    fill={getStatusColor(selected.status)}
-                                  />
-                                </Svg>
-                              )}
-                              <Text
-                                style={[
-                                  styles.chipText,
-                                  {
-                                    color:
-                                      selected.status === 0
-                                        ? AppColors.errorColor
-                                        : getStatusColor(selected.status),
-                                  },
-                                ]}>
-                                {selected.status === 0
-                                  ? 'Failed'
-                                  : String(selected.status)}
-                              </Text>
+                                {selected.duration != null && (
+                                  <View style={[styles.chip, { backgroundColor: 'rgba(104,75,155,0.08)', borderColor: 'rgba(104,75,155,0.18)' }]}>
+                                    <Text style={[styles.chipText, { color: AppColors.purple }]}>
+                                      {selected.duration}ms
+                                    </Text>
+                                  </View>
+                                )}
+                              </View>
+                              <View style={styles.detailInfoRight}>
+                                <TouchableScale
+                                  style={styles.iconSquareBtn}
+                                  onPress={() => Linking.openURL(detailDisplayUrl)}
+                                  hitSlop={12}>
+                                  <GlobeIcon color={AppColors.grayTextWeak} size={14} />
+                                </TouchableScale>
+                                <CopyButton
+                                  value={getFetchCommand(selected)}
+                                  label="fetch()"
+                                  iconType="fetch"
+                                />
+                                <CopyButton
+                                  value={getCurlCommand(selected)}
+                                  label="cURL"
+                                  iconType="terminal"
+                                />
+                                <CopyButton value={detailDisplayUrl} label="URL" />
+                              </View>
                             </View>
-                          )}
-                        </View>
-                        <View style={styles.detailInfoRight}>
-                          <TouchableScale
-                            style={styles.iconSquareBtn}
-                            onPress={() => Linking.openURL(detailDisplayUrl)}
-                            hitSlop={12}>
-                            <GlobeIcon color={AppColors.grayTextWeak} size={14} />
-                          </TouchableScale>
-                          <CopyButton
-                            value={getFetchCommand(selected)}
-                            label="fetch()"
-                            iconType="fetch"
-                          />
-                          <CopyButton
-                            value={getCurlCommand(selected)}
-                            label="cURL"
-                            iconType="terminal"
-                          />
-                          <CopyButton value={detailDisplayUrl} label="URL" />
-                        </View>
-                      </View>
 
-                      <Pressable
-                        style={styles.detailUrlContainer}
-                        onPress={() => Linking.openURL(detailDisplayUrl)}>
-                        <Text selectable={true} style={styles.detailUrl}>
-                          {detailDisplayUrl}
-                        </Text>
-                      </Pressable>
+                            <Pressable
+                              style={{
+                                backgroundColor: AppColors.grayBackground,
+                                borderRadius: 10,
+                                borderWidth: 1,
+                                borderColor: AppColors.dividerColor,
+                                padding: 10,
+                                marginTop: 6,
+                              }}
+                              onPress={() => Linking.openURL(detailDisplayUrl)}>
+                              <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2}}>
+                                <Text style={{fontFamily: AppFonts.interMedium, fontSize: 10, color: AppColors.grayTextWeak, flex: 1}} numberOfLines={1}>
+                                  {hostStr || 'API Endpoint'}
+                                </Text>
+                                {queryStr ? (
+                                  <View style={{backgroundColor: 'rgba(104,75,155,0.08)', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4}}>
+                                    <Text style={{fontFamily: AppFonts.interBold, fontSize: 8.5, color: AppColors.purple}}>Query Params</Text>
+                                  </View>
+                                ) : null}
+                              </View>
+                              <Text selectable={true} style={{fontFamily: AppFonts.interBold, fontSize: 12, color: AppColors.primaryBlack, marginTop: 2}} numberOfLines={2}>
+                                {pathStr}
+                              </Text>
+                              {queryStr ? (
+                                <Text selectable={true} style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak, marginTop: 4}} numberOfLines={1}>
+                                  {queryStr}
+                                </Text>
+                              ) : null}
+                            </Pressable>
+                          </>
+                        );
+                      })()}
                     </View>
                   </View>
 
@@ -3157,6 +4373,14 @@ const NetworkInspector = (): React.JSX.Element => {
                         return 'Response';
                       };
 
+                      const getIcon = () => {
+                        const iconColor = isActive ? '#FFFFFF' : AppColors.grayText;
+                        if (tab === 'metadata') return <StatusIcon color={iconColor} />;
+                        if (tab === 'headers') return <HeadersIcon color={iconColor} />;
+                        if (tab === 'request') return <RequestIcon color={iconColor} />;
+                        return <ResponseIcon color={iconColor} />;
+                      };
+
                       return (
                         <TouchableOpacity
                           key={tab}
@@ -3164,14 +4388,18 @@ const NetworkInspector = (): React.JSX.Element => {
                           style={{
                             flex: 1,
                             paddingVertical: 6,
+                            flexDirection: 'row',
                             alignItems: 'center',
+                            justifyContent: 'center',
                             borderRadius: 8,
                             backgroundColor: isActive ? AppColors.purple : 'transparent',
+                            gap: 4,
                           }}
                         >
+                          {getIcon()}
                           <Text style={{
                             fontFamily: AppFonts.interBold,
-                            fontSize: 11,
+                            fontSize: 10,
                             color: isActive ? '#FFFFFF' : AppColors.grayText,
                           }}>
                             {getLabel()}
@@ -3195,6 +4423,12 @@ const NetworkInspector = (): React.JSX.Element => {
                           duration={selected.duration}
                           size={getSize(selected.response)}
                           triggeredAt={formatDateTime(selected.startTime)}
+                          method={selected.method}
+                          contentType={
+                            selected.responseHeaders?.['content-type'] ||
+                            selected.responseHeaders?.['Content-Type']
+                          }
+                          url={selected.url}
                         />
 
                         {(() => {
@@ -3386,6 +4620,12 @@ const NetworkInspector = (): React.JSX.Element => {
                 <Text style={[styles.emptySub, {marginTop: 12}]}>
                   Loading logs...
                 </Text>
+              </View>
+            )}
+
+            {settingsPage !== null && (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: AppColors.grayBackground, zIndex: 99999 }]}>
+                {renderSettings()}
               </View>
             )}
             </View>

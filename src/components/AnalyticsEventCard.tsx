@@ -96,12 +96,12 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
       {/* ── Gap Indicator ─────────────────────────────────────────────────── */}
       {showGap && (
         <View style={cardStyles.gapContainer}>
-          <Text style={cardStyles.gapText}>{formatGap(msSincePrev)}</Text>
+          <Text style={[cardStyles.gapText, {color: AppColors.grayTextWeak}]}>{formatGap(msSincePrev)}</Text>
         </View>
       )}
 
       {/* ── Main Card ─────────────────────────────────────────────────────── */}
-      <TouchableScale onPress={onPress} style={cardStyles.modernCard}>
+      <TouchableScale onPress={onPress} style={[cardStyles.modernCard, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
@@ -150,7 +150,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
               </View>
             ) : null}
           </View>
-          <Text style={cardStyles.timestamp}>
+          <Text style={[cardStyles.timestamp, {color: AppColors.grayTextWeak}]}>
             {formatTime(event.timestamp)}
           </Text>
         </View>
@@ -163,11 +163,11 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
             event.params?.firebase_screen ||
             event.params?.screen_name ||
             event.params?.firebase_screen_class ? (
-              <View style={cardStyles.chip}>
+              <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
                 <View
                   style={[cardStyles.screenDot, {backgroundColor: color}]}
                 />
-                <Text style={cardStyles.chipText} numberOfLines={1}>
+                <Text style={[cardStyles.chipText, {color: AppColors.grayText}]} numberOfLines={1}>
                   {computedScreenName ||
                     event.screenName ||
                     event.params?.firebase_screen ||
@@ -177,15 +177,15 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
               </View>
             ) : null}
 
-            <View style={cardStyles.chip}>
-              <Text style={cardStyles.chipText}>
+            <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
+              <Text style={[cardStyles.chipText, {color: AppColors.grayText}]}>
                 {'{} '} {paramCount} params
               </Text>
             </View>
 
             {userPropCount > 0 && (
-              <View style={cardStyles.chip}>
-                <Text style={cardStyles.chipText}>★ {userPropCount} props</Text>
+              <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
+                <Text style={[cardStyles.chipText, {color: AppColors.grayText}]}>★ {userPropCount} props</Text>
               </View>
             )}
           </View>

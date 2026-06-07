@@ -704,6 +704,102 @@ export const MoonIcon = ({color = '#FFFFFF', size = 16}: any) => {
 };
 
 export { BrandCircleIcon } from './BrandCircleIcon';
+export { BrandSquareIcon } from './BrandSquareIcon';
+
+export const HtmlIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M17.5 8.5L21 12l-3.5 3.5M6.5 8.5L3 12l3.5 3.5M14 4.5l-4 15"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const CssIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const JsIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="3" width="18" height="18" rx="4" stroke={color} strokeWidth="2" />
+      <Path
+        d="M8 12v2.5a1.5 1.5 0 003 0V11M13 15.5a1 1 0 001.5.8h.5a1 1 0 001-1v-.5a1 1 0 00-1-1h-1a1 1 0 01-1-1v-.5a1 1 0 011-1h.5a1 1 0 011.5.8"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const EyeIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle
+        cx="12"
+        cy="12"
+        r="3"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const SettingsIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="2" />
+    </Svg>
+  );
+};
+
+export const FolderIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
 
 
 

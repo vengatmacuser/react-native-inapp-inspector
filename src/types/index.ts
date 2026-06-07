@@ -100,6 +100,7 @@ export interface TreeNodeProps {
   level?: number;
   search?: string;
   forceOpen?: boolean;
+  defaultExpandDepth?: number;
 }
 
 export interface LogCardProps {
@@ -119,6 +120,9 @@ export interface MetaAccordionProps {
   duration: number | null;
   size: string;
   triggeredAt: string;
+  method?: string;
+  contentType?: string;
+  url?: string;
 }
 
 export interface HeadersSectionProps {

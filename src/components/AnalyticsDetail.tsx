@@ -44,20 +44,20 @@ const ParamRowItem = ({
   const isLong = valStr.length > 80 || valStr.includes('\n') || isObject;
 
   return (
-    <View style={detailStyles.dataBox}>
+    <View style={[detailStyles.dataBox, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
       <View style={detailStyles.dataBoxHeader}>
-        <Text style={detailStyles.dataBoxKey} numberOfLines={1}>
+        <Text style={[detailStyles.dataBoxKey, {color: AppColors.primaryBlack}]} numberOfLines={1}>
           {paramKey}
         </Text>
         <CopyButton value={valStr} label={paramKey} />
       </View>
       {expanded && isObject ? (
-        <View style={detailStyles.jsonBlock}>
+        <View style={[detailStyles.jsonBlock, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
           <JsonViewer data={value} />
         </View>
       ) : (
         <Text
-          style={detailStyles.dataBoxVal}
+          style={[detailStyles.dataBoxVal, {color: AppColors.primaryBlack}]}
           selectable
           numberOfLines={expanded ? undefined : 2}>
           {valStr}
@@ -66,8 +66,8 @@ const ParamRowItem = ({
       {isLong && (
         <Pressable
           onPress={() => setExpanded(!expanded)}
-          style={detailStyles.showMoreBtn}>
-          <Text style={detailStyles.showMoreText}>
+          style={[detailStyles.showMoreBtn, {backgroundColor: AppColors.grayBackground}]}>
+          <Text style={[detailStyles.showMoreText, {color: AppColors.grayTextStrong}]}>
             {expanded ? 'Show Less' : 'Show More'}
           </Text>
         </Pressable>
@@ -90,8 +90,8 @@ const ParamTable = ({
 
   if (entries.length === 0) {
     return (
-      <View style={detailStyles.emptyParams}>
-        <Text style={detailStyles.emptyParamsText}>
+      <View style={[detailStyles.emptyParams, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
+        <Text style={[detailStyles.emptyParamsText, {color: AppColors.grayTextWeak}]}>
           {emptyLabel ?? 'No parameters'}
         </Text>
       </View>
@@ -122,7 +122,7 @@ const SectionCard = ({
   }
 
   return (
-    <View style={detailStyles.sectionCard}>
+    <View style={[detailStyles.sectionCard, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
       <View style={detailStyles.sectionHeader}>
         <View style={detailStyles.sectionTitleRow}>
           <View
@@ -131,7 +131,7 @@ const SectionCard = ({
               {backgroundColor: accentColor},
             ]}
           />
-          <Text style={detailStyles.sectionTitle}>{title.toUpperCase()}</Text>
+          <Text style={[detailStyles.sectionTitle, {color: AppColors.primaryBlack}]}>{title.toUpperCase()}</Text>
         </View>
         {typeof count === 'number' && (
           <View
@@ -254,7 +254,7 @@ const AnalyticsDetail = ({
 
   return (
     <ScrollView
-      style={detailStyles.scroll}
+      style={[detailStyles.scroll, {backgroundColor: AppColors.grayBackground}]}
       contentContainerStyle={detailStyles.content}
       showsVerticalScrollIndicator
       contentInsetAdjustmentBehavior="never"
@@ -323,9 +323,12 @@ const AnalyticsDetail = ({
                 key={idx}
                 style={[
                   detailStyles.metricCard,
-                  {borderLeftColor: item.color},
+                  {
+                    borderLeftColor: item.color,
+                    backgroundColor: AppColors.primaryLight,
+                  },
                 ]}>
-                <Text style={detailStyles.metricLabel}>{item.key}</Text>
+                <Text style={[detailStyles.metricLabel, {color: AppColors.grayTextWeak}]}>{item.key}</Text>
                 <Text
                   style={[detailStyles.metricValue, {color: item.color}]}
                   numberOfLines={1}>
@@ -337,17 +340,18 @@ const AnalyticsDetail = ({
         )}
       </LinearGradient>
 
-      <View style={detailStyles.tabRow}>
+      <View style={[detailStyles.tabRow, {backgroundColor: AppColors.grayBackground}]}>
         <Pressable
           style={[
             detailStyles.tabButton,
-            activeTab === 'unformatted' && detailStyles.tabActive,
+            activeTab === 'unformatted' && [detailStyles.tabActive, {backgroundColor: AppColors.primaryLight}],
           ]}
           onPress={() => setActiveTab('unformatted')}>
           <Text
             style={[
               detailStyles.tabText,
-              activeTab === 'unformatted' && detailStyles.tabTextActive,
+              {color: AppColors.grayTextWeak},
+              activeTab === 'unformatted' && [detailStyles.tabTextActive, {color: AppColors.primaryBlack}],
             ]}>
             JSON Viewer
           </Text>
@@ -355,13 +359,14 @@ const AnalyticsDetail = ({
         <Pressable
           style={[
             detailStyles.tabButton,
-            activeTab === 'formatted' && detailStyles.tabActive,
+            activeTab === 'formatted' && [detailStyles.tabActive, {backgroundColor: AppColors.primaryLight}],
           ]}
           onPress={() => setActiveTab('formatted')}>
           <Text
             style={[
               detailStyles.tabText,
-              activeTab === 'formatted' && detailStyles.tabTextActive,
+              {color: AppColors.grayTextWeak},
+              activeTab === 'formatted' && [detailStyles.tabTextActive, {color: AppColors.primaryBlack}],
             ]}>
             Tabular View
           </Text>
@@ -370,13 +375,13 @@ const AnalyticsDetail = ({
 
       {activeTab === 'unformatted' && (
         <View style={detailStyles.searchRow}>
-          <View style={styles.detailSearchBox}>
+          <View style={[styles.detailSearchBox, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
             <TextInput
               placeholder="Search JSON data..."
               placeholderTextColor={AppColors.grayTextWeak}
               value={search}
               onChangeText={setSearch}
-              style={styles.detailSearchInput}
+              style={[styles.detailSearchInput, {color: AppColors.primaryBlack}]}
               autoCorrect={false}
               autoCapitalize="none"
             />
@@ -419,7 +424,7 @@ const AnalyticsDetail = ({
 
       {activeTab === 'unformatted' && (
         <SectionCard accentColor={AppColors.purple}>
-          <View style={[detailStyles.jsonBlock, {marginLeft: 0, marginTop: 0}]}>
+          <View style={[detailStyles.jsonBlock, {marginLeft: 0, marginTop: 0, backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
             <JsonViewer
               data={{
                 name: event.name,
@@ -438,8 +443,8 @@ const AnalyticsDetail = ({
 
       {/* Empty state */}
       {paramCount === 0 && upCount === 0 && activeTab !== 'unformatted' && (
-        <View style={detailStyles.emptyParams}>
-          <Text style={detailStyles.emptyParamsText}>
+        <View style={[detailStyles.emptyParams, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
+          <Text style={[detailStyles.emptyParamsText, {color: AppColors.grayTextWeak}]}>
             No parameters recorded for this event
           </Text>
         </View>

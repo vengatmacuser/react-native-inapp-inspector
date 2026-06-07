@@ -17,6 +17,8 @@ import NetworkInspector, {
   connectReduxStore,
   subscribeNetworkLogs,
   subscribeConsoleLogs,
+  logAnalyticsEvent,
+  subscribeAnalyticsEvents,
 } from 'react-native-inapp-inspector';
 
 // ─── Mock Redux Store ────────────────────────────────────────────────────────
@@ -101,12 +103,14 @@ function HomeScreen({ navigation }: any) {
   const [activeCrash, setActiveCrash] = React.useState<'none' | 'js' | 'native'>('none');
   const [apiCount, setApiCount] = React.useState(0);
   const [logCount, setLogCount] = React.useState(0);
+  const [analyticsCount, setAnalyticsCount] = React.useState(0);
   const [reduxState, setReduxState] = React.useState(mockStore.getState());
 
   React.useEffect(() => {
     // Subscribe to logs to display live dashboard counters
     const unsubNet = subscribeNetworkLogs(logs => setApiCount(logs.length));
     const unsubConsole = subscribeConsoleLogs(logs => setLogCount(logs.length));
+    const unsubAnalytics = subscribeAnalyticsEvents(events => setAnalyticsCount(events.length));
     const unsubRedux = mockStore.subscribe(() => setReduxState(mockStore.getState()));
 
     // Initial Logs to populate stats
@@ -116,6 +120,7 @@ function HomeScreen({ navigation }: any) {
     return () => {
       unsubNet();
       unsubConsole();
+      unsubAnalytics();
       unsubRedux();
     };
   }, []);
@@ -176,6 +181,10 @@ function HomeScreen({ navigation }: any) {
               <Text style={styles.statLbl}>Logs</Text>
             </View>
             <View style={styles.statBox}>
+              <Text style={[styles.statVal, { color: '#EA580C' }]}>{analyticsCount}</Text>
+              <Text style={styles.statLbl}>Analytics</Text>
+            </View>
+            <View style={styles.statBox}>
               <Text style={[styles.statVal, { color: '#A78BFA' }]}>
                 {reduxState.ui.sidebarOpen ? 'Open' : 'Closed'}
               </Text>
@@ -202,6 +211,43 @@ function HomeScreen({ navigation }: any) {
           <TouchableOpacity style={[styles.fullWidthBtn, { backgroundColor: '#6366F1' }]} onPress={triggerConsoleLogs}>
             <Text style={styles.fullWidthBtnText}>Trigger Log, Warn & Error Logs</Text>
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.panelCard}>
+          <Text style={styles.panelHeader}>📊 ANALYTICS LOG TESTS</Text>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={[styles.gridBtn, { borderColor: '#EA580C' }]}
+              onPress={() => {
+                console.log('[App] Logged custom analytics event: click_button');
+                logAnalyticsEvent('click_button', {
+                  button_name: 'test_action',
+                  screen_name: 'Home',
+                  clicked_at: new Date().toLocaleTimeString(),
+                });
+              }}
+            >
+              <Text style={[styles.btnText, { color: '#EA580C' }]}>Log Custom Event</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.gridBtn, { borderColor: '#E11D48' }]}
+              onPress={() => {
+                console.log('[App] Logged analytics ecommerce event: item_purchase');
+                logAnalyticsEvent('item_purchase', {
+                  item_id: 'prod_999',
+                  item_name: 'Premium Debug Kit',
+                  price: 29.99,
+                  currency: 'USD',
+                  items: [{ id: 'prod_999', name: 'Premium Debug Kit', price: 29.99 }],
+                }, {
+                  user_tier: 'gold_member',
+                  signup_platform: 'ios_app',
+                });
+              }}
+            >
+              <Text style={[styles.btnText, { color: '#E11D48' }]}>Log Purchase</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.panelCard}>

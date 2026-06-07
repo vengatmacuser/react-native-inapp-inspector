@@ -247,7 +247,7 @@ const getStyleForType = (type: string) => {
     case 'value':
       return styles.value;
     default:
-      return styles.plain;
+      return [styles.plain, {color: AppColors.primaryBlack}];
   }
 };
 
@@ -309,15 +309,15 @@ const CodeSnippetLine = React.memo(
     return (
       <View style={[styles.lineRow, isActiveMatch && styles.activeMatchRow]}>
         {/* Gutter Line Number */}
-        <View style={[styles.gutter, isActiveMatch && styles.activeMatchGutter]}>
-          <Text style={[styles.lineNumber, isActiveMatch && styles.activeMatchLineNumber]}>{lineIndex + 1}</Text>
+        <View style={[styles.gutter, {backgroundColor: AppColors.grayBackground, borderRightColor: AppColors.grayBorderSecondary}, isActiveMatch && styles.activeMatchGutter]}>
+          <Text style={[styles.lineNumber, {color: AppColors.grayTextWeak}, isActiveMatch && styles.activeMatchLineNumber]}>{lineIndex + 1}</Text>
         </View>
 
         {/* Highlighted Code Line */}
         <View style={styles.codeLine}>
-          <Text style={styles.codeLineText}>
+          <Text style={[styles.codeLineText, {color: AppColors.primaryBlack}]}>
             {tokens.length === 0 ? (
-              <Text style={styles.plain}> </Text>
+              <Text style={[styles.plain, {color: AppColors.primaryBlack}]}> </Text>
             ) : (
               tokens.map((token, tokenIdx) => (
                 <React.Fragment key={tokenIdx}>
@@ -335,6 +335,7 @@ const CodeSnippetLine = React.memo(
 const CodeSnippet: React.FC<CodeSnippetProps> = ({
   code,
   language,
+  search,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -342,6 +343,13 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
   const [visibleLinesCount, setVisibleLinesCount] = useState(200);
 
   const flatListRef = useRef<FlatList>(null);
+
+  // Sync prop search to searchQuery
+  useEffect(() => {
+    if (search !== undefined) {
+      setSearchQuery(search);
+    }
+  }, [search]);
 
   // Debounce search query updates
   useEffect(() => {
@@ -385,7 +393,7 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
   // Reset scroll and states on code/language changes
   useEffect(() => {
     setVisibleLinesCount(200);
-    setSearchQuery('');
+    setSearchQuery(search || '');
     setCurrentMatchIdx(-1);
   }, [code, language]);
 
@@ -413,31 +421,31 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
       try {
         flatListRef.current?.scrollToIndex({
           index: lineIdx,
-          animated: true,
-          viewPosition: 0.5,
+          animated: false,
+          viewPosition: 0.3,
         });
       } catch (e) {
         // Fallback recovery is handled by onScrollToIndexFailed
       }
-    }, 100);
+    }, 50);
   };
 
   const onScrollToIndexFailed = (error: any) => {
     flatListRef.current?.scrollToOffset({
       offset: error.averageItemLength * error.index,
-      animated: true,
+      animated: false,
     });
     setTimeout(() => {
       try {
         flatListRef.current?.scrollToIndex({
           index: error.index,
-          animated: true,
-          viewPosition: 0.5,
+          animated: false,
+          viewPosition: 0.3,
         });
       } catch (err) {
         console.warn('Scroll to line index failed after fallback retry:', err);
       }
-    }, 120);
+    }, 60);
   };
 
   const handleNextMatch = () => {
@@ -481,21 +489,21 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
     <View style={{flex: 1}}>
       {/* Search Header Row */}
       <View style={styles.searchRow}>
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
           <SearchIcon color={AppColors.grayTextWeak} size={15} />
           <TextInput
             placeholder={`Search ${language.toUpperCase()}...`}
             placeholderTextColor={AppColors.grayTextWeak}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            style={styles.searchInput}
+            style={[styles.searchInput, {color: AppColors.primaryBlack}]}
             autoCorrect={false}
             autoCapitalize="none"
           />
 
           {/* Matches Info */}
           {debouncedQuery.length >= 2 && (
-            <Text style={styles.matchCountText}>
+            <Text style={[styles.matchCountText, {backgroundColor: AppColors.grayBackground, color: AppColors.grayTextWeak}]}>
               {matches.length > 0 ? `${currentMatchIdx + 1}/${matches.length}` : '0/0'}
             </Text>
           )}
@@ -509,12 +517,12 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
 
         {/* Up / Down Arrow Navigation Buttons */}
         {matches.length > 0 && (
-          <View style={styles.navArrowsGroup}>
+          <View style={[styles.navArrowsGroup, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
             <TouchableScale onPress={handlePrevMatch} hitSlop={8} style={styles.navArrowBtn}>
-              <ArrowUpIcon color="#475569" size={14} />
+              <ArrowUpIcon color={AppColors.grayTextStrong} size={14} />
             </TouchableScale>
             <TouchableScale onPress={handleNextMatch} hitSlop={8} style={styles.navArrowBtn}>
-              <ArrowDownIcon color="#475569" size={14} />
+              <ArrowDownIcon color={AppColors.grayTextStrong} size={14} />
             </TouchableScale>
           </View>
         )}
@@ -523,7 +531,7 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
       </View>
 
       {/* Code Snippet list container */}
-      <View style={styles.container}>
+      <View style={[styles.container, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
         <FlatList
           ref={flatListRef}
           data={visibleLines}
@@ -614,7 +622,9 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   activeMatchRow: {
-    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    backgroundColor: 'rgba(234, 179, 8, 0.22)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#EAB308',
   },
   gutter: {
     width: 40,
@@ -627,8 +637,8 @@ const styles = StyleSheet.create({
     paddingTop: 1,
   },
   activeMatchGutter: {
-    backgroundColor: 'rgba(234, 179, 8, 0.25)',
-    borderRightColor: 'rgba(234, 179, 8, 0.4)',
+    backgroundColor: 'rgba(234, 179, 8, 0.35)',
+    borderRightColor: 'rgba(234, 179, 8, 0.5)',
   },
   lineNumber: {
     fontFamily: monoFont,

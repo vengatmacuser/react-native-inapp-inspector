@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.9] - 2026-06-07
+## [1.0.10] - 2026-06-07
+
+### Added
+- Created a visual Redux tree representation (`ReduxTreeView` component) displaying Store, Reducers, Actions, and State Data with collapsible nodes, action metadata (type badges, timestamps), and visual connector lines.
 
 ### Changed
-- Floating action trigger button: Upgraded the generic icon/gradient layout to use the custom circle brand logo component (`BrandCircleIcon` based on `icon_circle.svg`).
+- Moved theme toggles (Light/Dark mode) from the top-right header overlay into the main settings menu under a new "Preferences" section.
+- Modernized the API details view, grouping method/status/latency badges on the left, copy actions on the right, and displaying a compact, parsed URL container.
+- Aligned the Console Log Card collapse/expand chevron down into its own right-aligned column of the card, completely preventing it from wrapping with caller details or text.
+- Changed `@react-navigation/native`, `react-native-linear-gradient`, and `react-native-svg` dependencies to direct dependencies inside `package.json` to enable automated installation, documenting isolation behavior in the `README.md`.
+
+## [1.0.9] - 2026-06-07
 
 ## [1.0.8] - 2026-06-07
 
@@ -89,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript support with full type exports (CommonJS + ESM dual output)
 - Inter font family bundled for consistent typography
 
+[1.0.10]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.6...v1.0.7

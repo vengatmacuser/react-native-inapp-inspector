@@ -20,8 +20,9 @@ const TreeNode = React.memo(function TreeNode({
   level = 0,
   search,
   forceOpen,
+  defaultExpandDepth,
 }: TreeNodeProps) {
-  const [localOpen, setLocalOpen] = useState(level < 1);
+  const [localOpen, setLocalOpen] = useState(level < (defaultExpandDepth ?? 1));
   const open = forceOpen !== undefined ? forceOpen : localOpen;
 
   const isObject = typeof data === 'object' && data !== null;
@@ -160,6 +161,7 @@ const TreeNode = React.memo(function TreeNode({
             level={level + 1}
             search={search}
             forceOpen={forceOpen}
+            defaultExpandDepth={defaultExpandDepth}
           />
         ))}
 

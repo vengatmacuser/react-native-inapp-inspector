@@ -1,5 +1,5 @@
 import React, {useRef} from 'react';
-import {Animated, Pressable} from 'react-native';
+import {Animated, Pressable, StyleSheet} from 'react-native';
 
 const TouchableScale = ({
   onPress,
@@ -16,6 +16,19 @@ const TouchableScale = ({
 }) => {
   const scale = useRef(new Animated.Value(1)).current;
 
+  const flattenedStyle = StyleSheet.flatten(style) || {};
+  const layoutStyle = {
+    flex: flattenedStyle.flex,
+    flexDirection: flattenedStyle.flexDirection,
+    alignItems: flattenedStyle.alignItems,
+    justifyContent: flattenedStyle.justifyContent,
+    flexWrap: flattenedStyle.flexWrap,
+    alignSelf: flattenedStyle.alignSelf,
+    flexGrow: flattenedStyle.flexGrow,
+    flexShrink: flattenedStyle.flexShrink,
+    gap: flattenedStyle.gap,
+  };
+
   return (
     <Pressable
       disabled={disabled}
@@ -28,7 +41,9 @@ const TouchableScale = ({
       }
       onPress={onPress}
       hitSlop={hitSlop}>
-      <Animated.View style={{transform: [{scale}]}}>{children}</Animated.View>
+      <Animated.View style={[{transform: [{scale}]}, layoutStyle]}>
+        {children}
+      </Animated.View>
     </Pressable>
   );
 };

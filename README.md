@@ -31,17 +31,16 @@ npm install --save-dev react-native-inapp-inspector
 yarn add -D react-native-inapp-inspector
 ```
 
-### Peer Dependencies
-Make sure you have the following peer dependencies installed in your project:
-
-```bash
-npm install react-native-svg react-native-linear-gradient @react-navigation/native
-```
+The package will automatically install its dependencies (`@react-navigation/native`, `react-native-linear-gradient`, and `react-native-svg`).
 
 For iOS projects, don't forget to run pod install:
 ```bash
 cd ios && pod install
 ```
+
+### Dependency Isolation
+
+This package is designed to operate in strict isolation. If the host application already uses `@react-navigation/native`, `react-native-linear-gradient`, or `react-native-svg`, the package's dependencies will not conflict with the application's runtime. The bundler (Metro/Webpack) and autolink systems automatically resolve duplicate native module links without affecting your main application environment.
 
 ---
 

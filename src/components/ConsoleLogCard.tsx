@@ -162,6 +162,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   const caller = 'caller' in item ? item.caller : undefined;
 
   const getLogColors = () => {
+    const isDark = AppColors.primaryLight !== '#FFFFFF';
     if (isWebView) {
       const label = item.type.toUpperCase();
       switch (item.type) {
@@ -171,7 +172,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             badgeBg: `${AppColors.errorColor}15`,
             badgeText: AppColors.errorColor,
             label,
-            cardBg: '#FFF5F6',
+            cardBg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FFF5F6',
           };
         case 'warn':
           return {
@@ -179,15 +180,15 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             badgeBg: `${AppColors.lightOrange}15`,
             badgeText: AppColors.darkOrange || AppColors.lightOrange,
             label,
-            cardBg: '#FFFDF6',
+            cardBg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFDF6',
           };
         default:
           return {
             border: '#475569',
-            badgeBg: '#F1F5F9',
-            badgeText: '#475569',
+            badgeBg: isDark ? '#374151' : '#F1F5F9',
+            badgeText: isDark ? '#9CA3AF' : '#475569',
             label,
-            cardBg: '#F8FAFC',
+            cardBg: isDark ? '#1E1E24' : '#F8FAFC',
           };
       }
     }
@@ -197,7 +198,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
         badgeBg: `${AppColors.skyBlue}15`,
         badgeText: AppColors.skyBlue,
         label: 'ERROR',
-        cardBg: '#E6F2FF', // light sky blue background for analytics errors
+        cardBg: isDark ? 'rgba(96, 165, 250, 0.15)' : '#E6F2FF',
       };
     }
     switch (item.type) {
@@ -207,7 +208,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           badgeBg: `${AppColors.errorColor}15`,
           badgeText: AppColors.errorColor,
           label: 'ERROR',
-          cardBg: '#FFF5F6', // light red background
+          cardBg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FFF5F6',
         };
       case 'warn':
         return {
@@ -215,16 +216,16 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           badgeBg: `${AppColors.lightOrange}15`,
           badgeText: AppColors.darkOrange || AppColors.lightOrange,
           label: 'WARN',
-          cardBg: '#FFFDF6', // light yellow/orange background
+          cardBg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFDF6',
         };
       default:
         if (isUserLog) {
           return {
             border: '#475569',
-            badgeBg: '#E2E8F0',
-            badgeText: '#334155',
+            badgeBg: isDark ? '#374151' : '#E2E8F0',
+            badgeText: isDark ? '#D1D5DB' : '#334155',
             label: 'INFO',
-            cardBg: '#F1F5F9', // slate-blue / steel-blue background for user log
+            cardBg: isDark ? '#1E1E24' : '#F1F5F9',
           };
         }
         return {
@@ -232,7 +233,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           badgeBg: `${AppColors.purple}15`,
           badgeText: AppColors.purple,
           label: 'INFO',
-          cardBg: '#F9F5FF', // light purple background for general info
+          cardBg: isDark ? 'rgba(167, 139, 250, 0.12)' : '#F9F5FF',
         };
     }
   };
@@ -256,141 +257,205 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             borderLeftWidth: 4,
             borderLeftColor: colors.border,
             backgroundColor: colors.cardBg,
+            borderColor: AppColors.grayBorderSecondary,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingRight: 4,
           },
         ]}>
+        
+        {/* Left Content Area */}
         <Pressable
           onPress={() => setExpanded(prev => !prev)}
-          style={styles.cardHeader}>
-          <View style={styles.headerLeft}>
-            <CopyButton value={item.message} label="Log message" />
-            <View style={[styles.badge, {backgroundColor: colors.badgeBg}]}>
-              <Text style={[styles.badgeText, {color: colors.badgeText}]}>
-                {colors.label}
-              </Text>
+          style={{ flex: 1, paddingRight: 6 }}>
+          
+          <View style={styles.cardHeader}>
+            <View style={styles.headerLeft}>
+              <CopyButton value={item.message} label="Log message" />
+              <View style={[styles.badge, {backgroundColor: colors.badgeBg}]}>
+                <Text style={[styles.badgeText, {color: colors.badgeText}]}>
+                  {colors.label}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    backgroundColor: 'rgba(107, 78, 255, 0.08)',
+                    borderColor: 'rgba(107, 78, 255, 0.2)',
+                    borderWidth: 1,
+                  },
+                ]}>
+                <Text style={[styles.badgeText, {color: '#6B4EFF'}]}>
+                  console.{('sourceMethod' in item ? item.sourceMethod : undefined) || item.type || 'log'}
+                </Text>
+              </View>
+              {jsonContent && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: 'rgba(13, 148, 136, 0.08)',
+                      borderColor: 'rgba(13, 148, 136, 0.18)',
+                      borderWidth: 1,
+                    },
+                  ]}>
+                  <Text style={[styles.badgeText, {color: '#0D9488'}]}>
+                    {Array.isArray(jsonContent.data) ? `Array[${jsonContent.data.length}]` : `Object{${Object.keys(jsonContent.data).length}}`}
+                  </Text>
+                </View>
+              )}
+              {isAnalyticsError && (
+                <View
+                  style={[
+                    styles.badge,
+                    {backgroundColor: `${AppColors.skyBlue}15`},
+                  ]}>
+                  <Text style={[styles.badgeText, {color: AppColors.skyBlue}]}>
+                    Analytics
+                  </Text>
+                </View>
+              )}
+              {isUserLog && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: AppColors.grayBackground,
+                      borderColor: AppColors.grayBorderSecondary,
+                      borderWidth: 1,
+                    },
+                  ]}>
+                  <Text style={[styles.badgeText, {color: AppColors.grayTextStrong}]}>
+                    user-log
+                  </Text>
+                </View>
+              )}
+              {isWebView && (
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: AppColors.grayBackground,
+                      borderColor: AppColors.grayBorderSecondary,
+                      borderWidth: 1,
+                    },
+                  ]}>
+                  <Text style={[styles.badgeText, {color: AppColors.grayText}]}>
+                    webview
+                  </Text>
+                </View>
+              )}
+              <Text style={[styles.serialNumber, {color: AppColors.grayTextWeak}]}>#{item.id + 1}</Text>
+              <Text style={[styles.timestamp, {color: AppColors.grayTextWeak}]}>{formatTime(item.timestamp)}</Text>
             </View>
-            {isAnalyticsError && (
-              <View
-                style={[
-                  styles.badge,
-                  {backgroundColor: `${AppColors.skyBlue}15`},
-                ]}>
-                <Text style={[styles.badgeText, {color: AppColors.skyBlue}]}>
-                  Analytics
-                </Text>
-              </View>
-            )}
-            {isUserLog && (
-              <View
-                style={[
-                  styles.badge,
-                  {
-                    backgroundColor: '#F3F4F6',
-                    borderColor: '#D1D5DB',
-                    borderWidth: 1,
-                  },
-                ]}>
-                <Text style={[styles.badgeText, {color: '#4B5563'}]}>
-                  user-log
-                </Text>
-              </View>
-            )}
-            {isWebView && (
-              <View
-                style={[
-                  styles.badge,
-                  {
-                    backgroundColor: '#F1F5F9',
-                    borderColor: '#E2E8F0',
-                    borderWidth: 1,
-                  },
-                ]}>
-                <Text style={[styles.badgeText, {color: '#475569'}]}>
-                  webview
-                </Text>
-              </View>
-            )}
-            <Text style={styles.serialNumber}>#{item.id + 1}</Text>
-            <Text style={styles.timestamp}>{formatTime(item.timestamp)}</Text>
-          </View>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            
             {caller && caller !== 'Unknown' && (
               <Text
-                style={styles.callerText}
+                style={[styles.callerText, {color: AppColors.grayTextWeak, marginRight: 4}]}
                 numberOfLines={1}
                 ellipsizeMode="middle">
                 {caller.split('/').pop() || caller}
               </Text>
             )}
-            <View style={{transform: [{rotate: expanded ? '180deg' : '0deg'}]}}>
-              <ChevronIcon size={14} color={AppColors.grayTextWeak} />
+          </View>
+
+          <View style={[styles.cardBody, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.dividerColor}]}>
+            {jsonContent ? (
+              <>
+                {jsonContent.header ? (
+                  <Pressable onPress={() => setExpanded(prev => !prev)}>
+                    {getLogMessageWithBadges(
+                      jsonContent.header,
+                      searchStr,
+                      [styles.messageText, {color: AppColors.primaryBlack}],
+                      styles.highlight,
+                      numLines,
+                    )}
+                  </Pressable>
+                ) : null}
+                {expanded ? (
+                  <View style={[styles.jsonContainer, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.dividerColor}]}>
+                    <JsonViewer
+                      data={jsonContent.data}
+                      search={searchStr}
+                      forceOpen={expanded}
+                    />
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => setExpanded(prev => !prev)}
+                    style={[styles.jsonPreviewContainer, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.dividerColor}]}>
+                    <HighlightText
+                      text={getJsonPreviewText(jsonContent.data).text}
+                      search={searchStr}
+                      style={[styles.jsonPreviewText, {color: AppColors.primaryBlack}]}
+                      highlightStyle={styles.highlight}
+                      detectLinks={true}
+                    />
+                  </Pressable>
+                )}
+              </>
+            ) : (
+              <Pressable onPress={() => setExpanded(prev => !prev)}>
+                {getLogMessageWithBadges(
+                  item.message,
+                  searchStr,
+                  [styles.messageText, {color: AppColors.primaryBlack}],
+                  styles.highlight,
+                  numLines,
+                )}
+              </Pressable>
+            )}
+            {hasLongMessage && (
+              <Pressable
+                onPress={() => setExpanded(prev => !prev)}
+                style={styles.seeMoreBtn}
+                hitSlop={8}>
+                <Text style={styles.seeMoreText}>
+                  {expanded ? 'See Less' : 'See More'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          {expanded && (
+            <View style={[styles.cardFooter, {borderTopColor: AppColors.dividerColor, gap: 6}]}>
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10.5, color: AppColors.grayTextWeak}}>
+                  Length: {item.message.length} chars • Size: {encodeURIComponent(item.message).replace(/%[0-9A-F]{2}/g, 'a').length} bytes
+                </Text>
+              </View>
+              {caller && caller !== 'Unknown' && (
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4}}>
+                  <Text style={[styles.fullCallerText, {color: AppColors.grayText, flex: 1, marginRight: 8}]} numberOfLines={2}>
+                    Caller: {caller}
+                  </Text>
+                  <CopyButton value={caller} label="Caller stack frame" />
+                </View>
+              )}
             </View>
+          )}
+        </Pressable>
+
+        {/* Right Isolated Chevron Area */}
+        <Pressable
+          onPress={() => setExpanded(prev => !prev)}
+          style={{
+            width: 28,
+            alignItems: 'center',
+            justifyContent: 'center',
+            alignSelf: expanded ? 'flex-start' : 'center',
+            marginTop: expanded ? 8 : 0,
+            height: expanded ? 32 : undefined,
+          }}
+          hitSlop={12}
+        >
+          <View style={{transform: [{rotate: expanded ? '180deg' : '0deg'}]}}>
+            <ChevronIcon size={16} color={AppColors.grayTextWeak} />
           </View>
         </Pressable>
 
-        <View style={styles.cardBody}>
-          {jsonContent ? (
-            <>
-              {jsonContent.header ? (
-                <Pressable onPress={() => setExpanded(prev => !prev)}>
-                  {getLogMessageWithBadges(
-                    jsonContent.header,
-                    searchStr,
-                    styles.messageText,
-                    styles.highlight,
-                    numLines,
-                  )}
-                </Pressable>
-              ) : null}
-              {expanded ? (
-                <View style={styles.jsonContainer}>
-                  <JsonViewer
-                    data={jsonContent.data}
-                    search={searchStr}
-                    forceOpen={expanded}
-                  />
-                </View>
-              ) : (
-                <Pressable
-                  onPress={() => setExpanded(prev => !prev)}
-                  style={styles.jsonPreviewContainer}>
-                  <HighlightText
-                    text={getJsonPreviewText(jsonContent.data).text}
-                    search={searchStr}
-                    style={styles.jsonPreviewText}
-                    highlightStyle={styles.highlight}
-                    detectLinks={true}
-                  />
-                </Pressable>
-              )}
-            </>
-          ) : (
-            <Pressable onPress={() => setExpanded(prev => !prev)}>
-              {getLogMessageWithBadges(
-                item.message,
-                searchStr,
-                styles.messageText,
-                styles.highlight,
-                numLines,
-              )}
-            </Pressable>
-          )}
-          {hasLongMessage && (
-            <Pressable
-              onPress={() => setExpanded(prev => !prev)}
-              style={styles.seeMoreBtn}
-              hitSlop={8}>
-              <Text style={styles.seeMoreText}>
-                {expanded ? 'See Less' : 'See More'}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-
-        {caller && caller !== 'Unknown' && expanded && (
-          <View style={styles.cardFooter}>
-            <Text style={styles.fullCallerText}>Caller: {caller}</Text>
-          </View>
-        )}
       </View>
     </View>
   );
@@ -425,7 +490,9 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 6,
+    flex: 1,
   },
   badge: {
     paddingHorizontal: 6,
