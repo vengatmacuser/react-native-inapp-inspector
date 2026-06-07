@@ -20,6 +20,7 @@ import NetworkInspector, {
   logAnalyticsEvent,
   subscribeAnalyticsEvents,
 } from 'react-native-inapp-inspector';
+import axios from 'axios';
 
 // ─── Mock Redux Store ────────────────────────────────────────────────────────
 const mockStore = {
@@ -125,6 +126,73 @@ function HomeScreen({ navigation }: any) {
     };
   }, []);
 
+  // Create an Axios instance to test automatic interception of custom instances.
+  // Note: No manual addAxiosInterceptors call is performed! It is now automatic.
+  const axiosClient = React.useMemo(() => axios.create({
+    baseURL: 'https://jsonplaceholder.typicode.com',
+  }), []);
+
+  const triggerAxiosGet = async () => {
+    try {
+      console.log('[Axios] Triggering GET...');
+      const response = await axiosClient.get('/posts/1');
+      console.log('[Axios] GET response data title:', response.data.title);
+    } catch (error: any) {
+      console.error('[Axios] GET failed:', error.message);
+    }
+  };
+
+  const triggerAxiosPost = async () => {
+    try {
+      console.log('[Axios] Triggering POST...');
+      const response = await axiosClient.post('/posts', {
+        title: 'New Post via Axios',
+        body: 'This is a test post body sent via Axios auto-intercept.',
+        userId: 1,
+      });
+      console.log('[Axios] POST response data:', response.data);
+    } catch (error: any) {
+      console.error('[Axios] POST failed:', error.message);
+    }
+  };
+
+  const triggerAxiosPut = async () => {
+    try {
+      console.log('[Axios] Triggering PUT...');
+      const response = await axiosClient.put('/posts/1', {
+        id: 1,
+        title: 'Updated Title via Axios',
+        body: 'This is updated post body content sent via Axios.',
+        userId: 1,
+      });
+      console.log('[Axios] PUT response data:', response.data);
+    } catch (error: any) {
+      console.error('[Axios] PUT failed:', error.message);
+    }
+  };
+
+  const triggerAxiosPatch = async () => {
+    try {
+      console.log('[Axios] Triggering PATCH...');
+      const response = await axiosClient.patch('/posts/1', {
+        title: 'Partially Updated Title via Axios',
+      });
+      console.log('[Axios] PATCH response data:', response.data);
+    } catch (error: any) {
+      console.error('[Axios] PATCH failed:', error.message);
+    }
+  };
+
+  const triggerAxiosDelete = async () => {
+    try {
+      console.log('[Axios] Triggering DELETE...');
+      const response = await axiosClient.delete('/posts/1');
+      console.log('[Axios] DELETE response status:', response.status);
+    } catch (error: any) {
+      console.error('[Axios] DELETE failed:', error.message);
+    }
+  };
+
   const triggerNetworkRequest = async () => {
     try {
       console.log('[API] Triggering fetch user...');
@@ -203,6 +271,31 @@ function HomeScreen({ navigation }: any) {
             <TouchableOpacity style={[styles.gridBtn, { borderColor: '#F43F5E' }]} onPress={triggerFailedNetworkRequest}>
               <Text style={[styles.btnText, { color: '#F43F5E' }]}>Fetch (404 Err)</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.panelCard}>
+          <Text style={styles.panelHeader}>⚡ AXIOS AUTOMATIC INTERCEPTION</Text>
+          <View style={{ gap: 8 }}>
+            <View style={styles.btnRow}>
+              <TouchableOpacity style={[styles.gridBtn, { borderColor: '#10B981' }]} onPress={triggerAxiosGet}>
+                <Text style={[styles.btnText, { color: '#10B981' }]}>Axios GET</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.gridBtn, { borderColor: '#8B5CF6' }]} onPress={triggerAxiosPost}>
+                <Text style={[styles.btnText, { color: '#8B5CF6' }]}>Axios POST</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.btnRow}>
+              <TouchableOpacity style={[styles.gridBtn, { borderColor: '#F59E0B' }]} onPress={triggerAxiosPut}>
+                <Text style={[styles.btnText, { color: '#F59E0B' }]}>Axios PUT</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.gridBtn, { borderColor: '#38BDF8' }]} onPress={triggerAxiosPatch}>
+                <Text style={[styles.btnText, { color: '#38BDF8' }]}>Axios PATCH</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.gridBtn, { borderColor: '#EF4444' }]} onPress={triggerAxiosDelete}>
+                <Text style={[styles.btnText, { color: '#EF4444' }]}>Axios DEL</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 

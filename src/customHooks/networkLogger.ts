@@ -228,6 +228,28 @@ export const setupNetworkLogger = () => {
     };
   }
 
+  // ✅ Auto-detect and hook Axios dynamically without requiring manual setup
+  try {
+    const req = typeof require !== 'undefined' ? require : undefined;
+    if (req) {
+      const axios = Function('r', 'try { return r("axios"); } catch(e) { return null; }')(req);
+      const targetAxios = axios && (axios.default || axios);
+      if (targetAxios) {
+        addAxiosInterceptors(targetAxios);
+        const originalCreate = targetAxios.create;
+        if (typeof originalCreate === 'function') {
+          targetAxios.create = function (...args: any[]) {
+            const instance = originalCreate.apply(this, args);
+            addAxiosInterceptors(instance);
+            return instance;
+          };
+        }
+      }
+    }
+  } catch (e) {
+    // Silent fail
+  }
+
   (globalThis as any).__NETWORK_LOGGER_INITIALIZED__ = true;
 };
 
