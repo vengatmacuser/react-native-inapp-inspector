@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "A self-contained network, console, analytics, and webview inspector for React Native applications.",
   "repository": {
     "type": "git",
