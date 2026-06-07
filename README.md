@@ -1,10 +1,6 @@
 # React Native In-App Inspector
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/icon_circle.svg" width="120" height="120" alt="React Native In-App Inspector Icon">
-</p>
-
-<p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg">
