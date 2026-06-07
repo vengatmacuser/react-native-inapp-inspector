@@ -703,6 +703,9 @@ export const MoonIcon = ({color = '#FFFFFF', size = 16}: any) => {
   );
 };
 
+export { BrandCircleIcon } from './BrandCircleIcon';
+
+
 
 
 

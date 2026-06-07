@@ -80,6 +80,7 @@ import {
   SunIcon,
   MoonIcon,
   DebugIcon,
+  BrandCircleIcon,
 } from './components/NetworkIcons';
 
 import ErrorBoundary from './components/ErrorBoundary';
@@ -1367,11 +1368,7 @@ const NetworkInspector = (): React.JSX.Element => {
         <Animated.View
           style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
         />
-        <LinearGradient
-          colors={[AppColors.purple, '#8F6EFF']}
-          style={styles.fab}>
-          <DebugIcon color="#FFFFFF" size={28} />
-        </LinearGradient>
+        <BrandCircleIcon size={56} />
         {(logs.length > 0 || analyticsEvents.length > 0) && (
           <Animated.View
             style={[
