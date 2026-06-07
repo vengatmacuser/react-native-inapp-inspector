@@ -5,10 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.10] - 2026-06-07
+## [1.0.11] - 2026-06-07
 
 ### Added
-- Created a visual Redux tree representation (`ReduxTreeView` component) displaying Store, Reducers, Actions, and State Data with collapsible nodes, action metadata (type badges, timestamps), and visual connector lines.
+- Chronological Action Timeline view inside the Redux module. Features custom vertical timeline layout, action type badges, timestamps, collapsible payload inspectors, and direct tags indicating which state slices were modified.
+- Clear action history button inside the Action Timeline tab.
+
+### Changed
+- Switched Redux tab view to a segment-controlled dual interface: Action Timeline vs Store Tree.
+
+## [1.0.10] - 2026-06-07
 
 ### Changed
 - Moved theme toggles (Light/Dark mode) from the top-right header overlay into the main settings menu under a new "Preferences" section.
@@ -97,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript support with full type exports (CommonJS + ESM dual output)
 - Inter font family bundled for consistent typography
 
+[1.0.11]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.10...v1.0.11
 [1.0.10]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.9...v1.0.10
 [1.0.9]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/vengatmacuser/react-native-inapp-inspector/compare/v1.0.7...v1.0.8

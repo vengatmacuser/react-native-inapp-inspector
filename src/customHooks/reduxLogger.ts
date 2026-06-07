@@ -3,6 +3,13 @@ const listeners = new Set<() => void>();
 let globalReduxAutoRefresh = true;
 
 let lastActionForReducer: Record<string, any> = {};
+let actionHistory: Array<{
+  id: number;
+  type: string;
+  payload: any;
+  timestamp: string;
+  affectedSlices: string[];
+}> = [];
 
 export const getReduxState = () => currentReduxState;
 
@@ -16,6 +23,13 @@ export const getLastActionForReducer = () => lastActionForReducer;
 
 export const clearLastActionForReducer = () => {
   lastActionForReducer = {};
+  listeners.forEach(cb => cb());
+};
+
+export const getActionHistory = () => actionHistory;
+
+export const clearActionHistory = () => {
+  actionHistory = [];
   listeners.forEach(cb => cb());
 };
 
@@ -45,6 +59,7 @@ export const connectReduxStore = (store: any) => {
     const nextState = store.getState();
 
     // Map the dispatched action to state slices that actually changed
+    const affectedSlices: string[] = [];
     if (
       prevState &&
       nextState &&
@@ -55,13 +70,29 @@ export const connectReduxStore = (store: any) => {
     ) {
       Object.keys(nextState).forEach(key => {
         if (prevState[key] !== nextState[key]) {
-          lastActionForReducer[key] = {
+          const actionObj = {
             type: action.type || 'UNKNOWN_ACTION',
             payload: action.payload !== undefined ? action.payload : null,
             timestamp: new Date().toLocaleTimeString(),
           };
+          lastActionForReducer[key] = actionObj;
+          affectedSlices.push(key);
         }
       });
+
+      // Push to history
+      actionHistory.unshift({
+        id: Date.now() + Math.random(),
+        type: action.type || 'UNKNOWN_ACTION',
+        payload: action.payload !== undefined ? action.payload : null,
+        timestamp: new Date().toLocaleTimeString(),
+        affectedSlices,
+      });
+
+      // Cap size at 50
+      if (actionHistory.length > 50) {
+        actionHistory.pop();
+      }
     }
 
     if (globalReduxAutoRefresh) {

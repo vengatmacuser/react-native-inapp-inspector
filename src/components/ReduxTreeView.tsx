@@ -281,6 +281,124 @@ export const ReduxTreeView = ({
   );
 };
 
+export const ReduxActionTimeline = ({
+  history,
+  onClear,
+  search,
+}: {
+  history: Array<{
+    id: number;
+    type: string;
+    payload: any;
+    timestamp: string;
+    affectedSlices: string[];
+  }>;
+  onClear: () => void;
+  search?: string;
+}) => {
+  const [expandedActionId, setExpandedActionId] = useState<number | null>(null);
+
+  const toggleExpand = (id: number) => {
+    setExpandedActionId(prev => (prev === id ? null : id));
+  };
+
+  const filteredHistory = history.filter(action => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    if (action.type.toLowerCase().includes(s)) return true;
+    if (action.affectedSlices.some(slice => slice.toLowerCase().includes(s))) return true;
+    if (action.payload && typeof action.payload === 'object') {
+      return JSON.stringify(action.payload).toLowerCase().includes(s);
+    }
+    return false;
+  });
+
+  return (
+    <View style={timelineStyles.container}>
+      <View style={timelineStyles.headerRow}>
+        <Text style={timelineStyles.headerTitle}>⚡ Dispatched Actions ({filteredHistory.length})</Text>
+        {history.length > 0 && (
+          <Pressable onPress={onClear} style={timelineStyles.clearBtn}>
+            <Text style={timelineStyles.clearBtnText}>Clear Log</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {filteredHistory.length === 0 ? (
+        <View style={timelineStyles.emptyContainer}>
+          <Text style={timelineStyles.emptyText}>
+            {history.length === 0
+              ? 'No actions dispatched yet.\nDispatch actions in your application to see the timeline.'
+              : 'No matching actions found.'}
+          </Text>
+        </View>
+      ) : (
+        <View style={timelineStyles.listContainer}>
+          {filteredHistory.map((item, index) => {
+            const isLast = index === filteredHistory.length - 1;
+            const isExpanded = expandedActionId === item.id;
+
+            return (
+              <View key={item.id} style={timelineStyles.timelineItem}>
+                {/* Visual Line */}
+                <View style={[timelineStyles.verticalLine, isLast && { bottom: '50%' }]} />
+                <View style={timelineStyles.circleIndicator}>
+                  <View style={timelineStyles.circleInner} />
+                </View>
+
+                {/* Card */}
+                <Pressable
+                  onPress={() => toggleExpand(item.id)}
+                  style={[
+                    timelineStyles.card,
+                    isExpanded && { borderColor: AppColors.purple, backgroundColor: AppColors.purpleShade50 },
+                  ]}
+                >
+                  <View style={timelineStyles.cardHeader}>
+                    <View style={timelineStyles.typeBadge}>
+                      <Text style={timelineStyles.typeText}>{item.type}</Text>
+                    </View>
+                    <Text style={timelineStyles.timestamp}>{item.timestamp}</Text>
+                  </View>
+
+                  {item.affectedSlices.length > 0 && (
+                    <View style={timelineStyles.slicesRow}>
+                      <Text style={timelineStyles.slicesLabel}>Affected:</Text>
+                      {item.affectedSlices.map(slice => (
+                        <View key={slice} style={timelineStyles.slicePill}>
+                          <Text style={timelineStyles.sliceText}>{slice}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {isExpanded && (
+                    <View style={timelineStyles.payloadContainer}>
+                      <Text style={timelineStyles.payloadTitle}>Payload</Text>
+                      {item.payload !== null && typeof item.payload === 'object' ? (
+                        <ReduxValueNode
+                          name="action.payload"
+                          value={item.payload}
+                          level={0}
+                          search={search}
+                        />
+                      ) : (
+                        <Text style={timelineStyles.primitivePayload}>
+                          {item.payload === null ? 'null' : String(item.payload)}
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </Pressable>
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+};
+
 const reduxValueStyles = StyleSheet.create({
   treeNodeBlock: {
     marginTop: 4,
@@ -330,6 +448,159 @@ const reduxValueStyles = StyleSheet.create({
     fontFamily: AppFonts.interRegular,
     fontSize: 11,
     color: AppColors.grayTextWeak,
+  },
+});
+
+const timelineStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  headerTitle: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 14,
+    color: AppColors.primaryBlack,
+  },
+  clearBtn: {
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  clearBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: '#EF4444',
+  },
+  emptyContainer: {
+    paddingVertical: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 12,
+    color: AppColors.grayTextWeak,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  listContainer: {
+    paddingLeft: 12,
+  },
+  timelineItem: {
+    position: 'relative',
+    paddingLeft: 20,
+    marginBottom: 12,
+  },
+  verticalLine: {
+    position: 'absolute',
+    left: 4,
+    top: 0,
+    bottom: -12,
+    width: 1,
+    backgroundColor: AppColors.dividerColor,
+  },
+  circleIndicator: {
+    position: 'absolute',
+    left: 0,
+    top: 10,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: AppColors.purpleShade50,
+    borderWidth: 1,
+    borderColor: AppColors.purple,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleInner: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: AppColors.purple,
+  },
+  card: {
+    backgroundColor: AppColors.primaryLight,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+    borderRadius: 8,
+    padding: 10,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  typeBadge: {
+    backgroundColor: 'rgba(104,75,155,0.08)',
+    borderColor: 'rgba(104,75,155,0.18)',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    flexShrink: 1,
+  },
+  typeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 11,
+    color: AppColors.purple,
+  },
+  timestamp: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+  },
+  slicesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginTop: 6,
+  },
+  slicesLabel: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+    marginRight: 2,
+  },
+  slicePill: {
+    backgroundColor: AppColors.grayBackground,
+    borderColor: AppColors.dividerColor,
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  sliceText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 9,
+    color: AppColors.grayText,
+  },
+  payloadContainer: {
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.dividerColor,
+    paddingTop: 8,
+  },
+  payloadTitle: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  primitivePayload: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 11,
+    color: AppColors.grayTextStrong,
   },
 });
 

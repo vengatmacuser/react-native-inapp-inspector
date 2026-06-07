@@ -35,7 +35,7 @@ import MiniLineChart from './components/MiniLineChart';
 import SectionHeader from './components/SectionHeader';
 import EmptyState from './components/EmptyState';
 import JsonViewer from './components/JsonViewer';
-import {ReduxTreeView} from './components/ReduxTreeView';
+import {ReduxTreeView, ReduxActionTimeline} from './components/ReduxTreeView';
 import DomainHeader from './components/DomainHeader';
 import DiffViewer from './components/DiffViewer';
 import LogCard from './components/LogCard';
@@ -209,6 +209,8 @@ import {
   setReduxAutoRefresh,
   getLastActionForReducer,
   clearLastActionForReducer,
+  getActionHistory,
+  clearActionHistory,
 } from './customHooks/reduxLogger';
 
 // Constants
@@ -255,6 +257,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
   const [search, setSearch] = useState('');
   const [detailSearch, setDetailSearch] = useState('');
   const [reduxSearch, setReduxSearch] = useState('');
+  const [reduxActiveSubTab, setReduxActiveSubTab] = useState<'tree' | 'timeline'>('timeline');
   const [apiDetailActiveTab, setApiDetailActiveTab] = useState<'metadata' | 'headers' | 'request' | 'response'>('response');
 
   useEffect(() => {
@@ -1295,7 +1298,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
                 borderWidth: 1,
                 borderColor: 'rgba(255, 255, 255, 0.1)'
               }}>
-                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10.5, color: '#FFFFFF' }}>v1.0.10</Text>
+                <Text style={{ fontFamily: AppFonts.interBold, fontSize: 10.5, color: '#FFFFFF' }}>v1.0.11</Text>
               </View>
             </View>
           </LinearGradient>
@@ -2164,6 +2167,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
 
     // Build hierarchical tree: Store -> Reducers -> Action -> Data
     const lastActionMap = getLastActionForReducer();
+    const actionHistory = getActionHistory();
 
     return (
       <ScrollView style={styles.detailScroll} contentContainerStyle={{ paddingBottom: 24 }}>
@@ -2202,6 +2206,57 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
           <CopyButton value={() => reduxState} label="Overall Store" />
         </View>
 
+        {/* Tab View Selection Segments */}
+        <View style={{
+          flexDirection: 'row',
+          backgroundColor: AppColors.grayBackground,
+          borderRadius: 10,
+          padding: 3,
+          marginHorizontal: 16,
+          marginBottom: 12,
+          borderWidth: 1,
+          borderColor: AppColors.dividerColor,
+        }}>
+          <TouchableOpacity
+            onPress={() => setReduxActiveSubTab('timeline')}
+            style={{
+              flex: 1,
+              paddingVertical: 6,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 8,
+              backgroundColor: reduxActiveSubTab === 'timeline' ? AppColors.purple : 'transparent',
+            }}
+          >
+            <Text style={{
+              fontFamily: AppFonts.interBold,
+              fontSize: 11,
+              color: reduxActiveSubTab === 'timeline' ? '#FFFFFF' : AppColors.grayText,
+            }}>
+              ⚡ Action Timeline
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setReduxActiveSubTab('tree')}
+            style={{
+              flex: 1,
+              paddingVertical: 6,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 8,
+              backgroundColor: reduxActiveSubTab === 'tree' ? AppColors.purple : 'transparent',
+            }}
+          >
+            <Text style={{
+              fontFamily: AppFonts.interBold,
+              fontSize: 11,
+              color: reduxActiveSubTab === 'tree' ? '#FFFFFF' : AppColors.grayText,
+            }}>
+              🏪 Store Tree
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Search Bar */}
         <View style={{
           flexDirection: 'row',
@@ -2216,7 +2271,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
           height: 36,
         }}>
           <TextInput
-            placeholder="Search Redux keys or values..."
+            placeholder={reduxActiveSubTab === 'timeline' ? "Search actions or payloads..." : "Search Redux keys or values..."}
             placeholderTextColor={AppColors.grayTextWeak}
             value={reduxSearch}
             onChangeText={setReduxSearch}
@@ -2237,7 +2292,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
           )}
         </View>
 
-        {/* Main Tree Card */}
+        {/* Main Content Card */}
         <View style={{
           backgroundColor: AppColors.primaryLight,
           borderRadius: 12,
@@ -2246,7 +2301,15 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
           marginHorizontal: 16,
           padding: 12,
         }}>
-          <ReduxTreeView state={reduxState} lastActionMap={lastActionMap} search={reduxSearch} />
+          {reduxActiveSubTab === 'timeline' ? (
+            <ReduxActionTimeline
+              history={actionHistory}
+              onClear={clearActionHistory}
+              search={reduxSearch}
+            />
+          ) : (
+            <ReduxTreeView state={reduxState} lastActionMap={lastActionMap} search={reduxSearch} />
+          )}
         </View>
       </ScrollView>
     );
@@ -2347,7 +2410,7 @@ const NetworkInspector = ({ enabled = true }: NetworkInspectorProps): React.JSX.
                           <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
                             <Animated.View style={{width: 6, height: 6, borderRadius: 3, backgroundColor: '#4ADE80', opacity: activePulseAnim}} />
                             <Text style={{fontFamily: AppFonts.interMedium, fontSize: 10, color: 'rgba(255,255,255,0.78)', letterSpacing: 0.3}}>
-                              Active • {Platform.OS === 'ios' ? 'iOS' : 'Android'} (v1.0.10)
+                              Active • {Platform.OS === 'ios' ? 'iOS' : 'Android'} (v1.0.11)
                             </Text>
                           </View>
                         </View>
