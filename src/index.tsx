@@ -108,6 +108,7 @@ import {
   setupConsoleLogger,
   clearConsoleLogs,
   subscribeConsoleLogs,
+  autoSetupAnalyticsLogger,
 } from './customHooks/consoleLogger';
 import {IGNORED_LOG_PREFIXES} from './customHooks/logFilters';
 
@@ -597,7 +598,7 @@ const NetworkInspector = ({
     setupNetworkLogger();
     clearNetworkLogs();
     setupConsoleLogger();
-    // Note: setupAnalyticsLogger(analytics()) is called by the consumer at app startup
+    autoSetupAnalyticsLogger();
 
     let timeoutId: ReturnType<typeof setTimeout>;
 

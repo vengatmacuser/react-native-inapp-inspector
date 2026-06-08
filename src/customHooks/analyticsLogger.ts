@@ -37,7 +37,7 @@ let currentUserId: string | undefined;
 
 const notify = () => {
   const snapshot = [...events];
-  listeners.forEach((cb) => cb(snapshot));
+  listeners.forEach(cb => cb(snapshot));
 };
 
 const addEvent = (event: AnalyticsEvent) => {
@@ -54,7 +54,7 @@ export const subscribeAnalyticsEvents = (
   listeners.push(callback);
   callback([...events]);
   return () => {
-    listeners = listeners.filter((l) => l !== callback);
+    listeners = listeners.filter(l => l !== callback);
   };
 };
 
@@ -76,17 +76,17 @@ export const logAnalyticsEvent = (
   params: Record<string, any> = {},
   userProperties: Record<string, any> = {},
 ) => {
-    addEvent({
-      id: counter++,
-      name,
-      params,
-      userProperties: { ...currentUserProperties, ...userProperties },
-      timestamp: Date.now(),
-      source: "manual",
-      userId: currentUserId ?? "",
-      screenName: "",
-      screenClass: "",
-    });
+  addEvent({
+    id: counter++,
+    name,
+    params,
+    userProperties: {...currentUserProperties, ...userProperties},
+    timestamp: Date.now(),
+    source: 'manual',
+    userId: currentUserId ?? '',
+    screenName: '',
+    screenClass: '',
+  });
 };
 
 // ─── Firebase Analytics instance patcher ─────────────────────────────────────
@@ -105,7 +105,7 @@ export const logAnalyticsEvent = (
 export const setupAnalyticsLogger = (analyticsInstance: any): void => {
   if (!analyticsInstance) {
     console.warn(
-      "[AnalyticsLogger] No analytics instance provided — skipping setup.",
+      '[AnalyticsLogger] No analytics instance provided — skipping setup.',
     );
     return;
   }
@@ -124,12 +124,12 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
       id: counter++,
       name,
       params: params ?? {},
-      userProperties: { ...currentUserProperties },
+      userProperties: {...currentUserProperties},
       timestamp: Date.now(),
-      source: "firebase",
-      userId: currentUserId ?? "",
-      screenName: "",
-      screenClass: "",
+      source: 'firebase',
+      userId: currentUserId ?? '',
+      screenName: '',
+      screenClass: '',
     });
     return originalLogEvent(name, params);
   };
@@ -144,14 +144,14 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
   }) => {
     addEvent({
       id: counter++,
-      name: "screen_view",
+      name: 'screen_view',
       params: params ?? {},
-      userProperties: { ...currentUserProperties },
+      userProperties: {...currentUserProperties},
       timestamp: Date.now(),
-      source: "firebase",
-      screenName: params?.screen_name ?? "",
-      screenClass: params?.screen_class ?? "",
-      userId: currentUserId ?? "",
+      source: 'firebase',
+      screenName: params?.screen_name ?? '',
+      screenClass: params?.screen_class ?? '',
+      userId: currentUserId ?? '',
     });
     return originalLogScreenView(params);
   };
@@ -190,4 +190,42 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     currentUserId = id ?? undefined;
     return originalSetUserId(id);
   };
+};
+
+export const autoSetupAnalyticsLogger = (): boolean => {
+  if ((globalThis as any).__INSPECTOR_ANALYTICS_AUTOSETUP__) return true;
+
+  let mod: any;
+  try {
+    mod = require('@react-native-firebase/analytics'); // optional dep
+  } catch {
+    return false; // GA not installed — silent no-op
+  }
+
+  const accessor = mod?.default ?? mod;
+  if (typeof accessor !== 'function') return false;
+
+  try {
+    setupAnalyticsLogger(accessor());
+  } catch {} // patch default-app instance
+
+  if (!accessor.__INSPECTOR_WRAPPED__) {
+    // patch future/named instances
+    const wrapped: any = function (this: any, ...args: any[]) {
+      const instance = accessor.apply(this, args);
+      try {
+        setupAnalyticsLogger(instance);
+      } catch {}
+      return instance;
+    };
+    Object.setPrototypeOf(wrapped, accessor);
+    Object.assign(wrapped, accessor);
+    wrapped.__INSPECTOR_WRAPPED__ = true;
+    try {
+      if (mod.default !== undefined) mod.default = wrapped;
+    } catch {}
+  }
+
+  (globalThis as any).__INSPECTOR_ANALYTICS_AUTOSETUP__ = true;
+  return true;
 };
