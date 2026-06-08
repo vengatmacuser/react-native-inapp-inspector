@@ -1,5 +1,5 @@
-import './webViewLogger';
-import axios from 'axios';
+import "./webViewLogger";
+import axios from "axios";
 
 type NetworkLog = {
   id: number;
@@ -19,7 +19,14 @@ let logs: NetworkLog[] = [];
 let listeners: ((logs: NetworkLog[]) => void)[] = [];
 let counter = 0;
 
-const ALLOWED_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+const ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+
+const IGNORED_URL_PATTERNS: RegExp[] = [/\/symbolicate(?:[/?#]|$)/];
+
+function shouldIgnoreUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  return IGNORED_URL_PATTERNS.some((re) => re.test(url));
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,7 +35,7 @@ function normaliseHeaders(
 ): Record<string, string> | undefined {
   if (!raw) return undefined;
 
-  if (typeof (raw as Headers).forEach === 'function') {
+  if (typeof (raw as Headers).forEach === "function") {
     const result: Record<string, string> = {};
     (raw as Headers).forEach((value: string, key: string | number) => {
       result[key] = value;
@@ -64,18 +71,18 @@ function parseRequestData(data: any): any {
       const key = part[0];
       const value = part[1];
 
-      if (value && typeof value === 'object' && value.uri) {
+      if (value && typeof value === "object" && value.uri) {
         parsedFormData[key] = {
           _isFile: true,
-          name: value.name || 'unknown',
-          type: value.type || 'unknown',
+          name: value.name || "unknown",
+          type: value.type || "unknown",
           uri: value.uri,
         };
       } else {
         parsedFormData[key] = value;
       }
     });
-    return {_isFormData: true, ...parsedFormData};
+    return { _isFormData: true, ...parsedFormData };
   }
 
   return data;
@@ -85,23 +92,23 @@ function parseRequestData(data: any): any {
 function getCallerFromStack(): string {
   try {
     const stack = new Error().stack;
-    if (!stack) return 'Unknown';
-    const lines = stack.split('\n');
+    if (!stack) return "Unknown";
+    const lines = stack.split("\n");
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       // Skip internal react-native network modules and the logger itself
       if (
-        line.includes('networkLogger') ||
-        line.includes('node_modules') ||
-        line.includes('Error') ||
-        line.includes('regeneratorRuntime')
+        line.includes("networkLogger") ||
+        line.includes("node_modules") ||
+        line.includes("Error") ||
+        line.includes("regeneratorRuntime")
       ) {
         continue;
       }
-      return line.trim().replace(/^at /, '');
+      return line.trim().replace(/^at /, "");
     }
   } catch (e) {}
-  return 'Unknown';
+  return "Unknown";
 }
 
 // ─── Subscribe ────────────────────────────────────────────────────────────────
@@ -112,7 +119,7 @@ export const subscribeNetworkLogs = (
   listeners.push(callback);
   callback([...logs]);
   return () => {
-    listeners = listeners.filter(l => l !== callback);
+    listeners = listeners.filter((l) => l !== callback);
   };
 };
 
@@ -127,7 +134,7 @@ export const getNetworkLogs = () => [...logs];
 
 const notify = () => {
   const snapshot = [...logs];
-  listeners.forEach(cb => cb(snapshot));
+  listeners.forEach((cb) => cb(snapshot));
 };
 
 const addOrUpdateLog = (log: NetworkLog) => {
@@ -135,10 +142,12 @@ const addOrUpdateLog = (log: NetworkLog) => {
 
   if (!ALLOWED_METHODS.includes(method)) return;
 
-  const index = logs.findIndex(l => l.id === log.id);
+  if (shouldIgnoreUrl(log.url)) return;
+
+  const index = logs.findIndex((l) => l.id === log.id);
 
   if (index >= 0) {
-    logs[index] = {...logs[index], ...log};
+    logs[index] = { ...logs[index], ...log };
   } else {
     logs.unshift(log);
   }
@@ -157,12 +166,15 @@ export const setupNetworkLogger = () => {
 
   if (originalFetch) {
     (globalThis as any).fetch = async (url: any, options: any = {}) => {
-      const method = (options?.method || 'GET').toUpperCase();
+      const method = (options?.method || "GET").toUpperCase();
       if (!ALLOWED_METHODS.includes(method)) return originalFetch(url, options);
 
       const id = counter++;
       const start = Date.now();
-      const finalUrl = typeof url === 'string' ? url : url?.url;
+      const finalUrl = typeof url === "string" ? url : url?.url;
+
+      if (shouldIgnoreUrl(finalUrl)) return originalFetch(url, options);
+
       const requestHeaders = normaliseHeaders(options?.headers);
       const caller = getCallerFromStack(); // ✅ Capture call line
 
@@ -172,7 +184,7 @@ export const setupNetworkLogger = () => {
         method,
         startTime: start,
         caller,
-        request: method === 'GET' ? undefined : parseRequestData(options?.body),
+        request: method === "GET" ? undefined : parseRequestData(options?.body),
         requestHeaders,
       });
 
@@ -183,11 +195,11 @@ export const setupNetworkLogger = () => {
 
         let data: any = null;
         const contentType =
-          responseHeaders?.['content-type'] ||
-          responseHeaders?.['Content-Type'] ||
-          '';
-        if (contentType.includes('image/')) {
-          data = '[Image Data]';
+          responseHeaders?.["content-type"] ||
+          responseHeaders?.["Content-Type"] ||
+          "";
+        if (contentType.includes("image/")) {
+          data = "[Image Data]";
         } else {
           try {
             const clone = response.clone();
@@ -234,7 +246,7 @@ export const setupNetworkLogger = () => {
     if (axios) {
       addAxiosInterceptors(axios);
       const originalCreate = axios.create;
-      if (typeof originalCreate === 'function') {
+      if (typeof originalCreate === "function") {
         axios.create = function (...args: any[]) {
           const instance = originalCreate.apply(this, args);
           addAxiosInterceptors(instance);
@@ -252,19 +264,22 @@ export const setupNetworkLogger = () => {
 // ─── Axios interceptor helper ─────────────────────────────────────────────────
 export const addAxiosInterceptors = (axiosInstance: any) => {
   axiosInstance.interceptors.request.use(async (config: any) => {
-    const method = (config.method || 'GET').toUpperCase();
+    const method = (config.method || "GET").toUpperCase();
     if (!ALLOWED_METHODS.includes(method)) return config;
 
     const id = counter++;
     const start = Date.now();
     const caller = getCallerFromStack(); // ✅ Capture call line
 
+    let url = config.url ?? "";
+    if (!url.startsWith("http")) url = `${config.baseURL ?? ""}${url}`;
+
+    // ✅ Leave config untagged so the response interceptor skips it too.
+    if (shouldIgnoreUrl(url)) return config;
+
     config.__logId = id;
     config.__logStart = start;
     config.__logCaller = caller;
-
-    let url = config.url ?? '';
-    if (!url.startsWith('http')) url = `${config.baseURL ?? ''}${url}`;
 
     addOrUpdateLog({
       id,
@@ -272,7 +287,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       method,
       startTime: start,
       caller,
-      request: method === 'GET' ? undefined : parseRequestData(config.data),
+      request: method === "GET" ? undefined : parseRequestData(config.data),
       requestHeaders: normaliseHeaders(config.headers),
     });
 
@@ -285,12 +300,12 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       const id = config.__logId;
       const start = config.__logStart;
       const caller = config.__logCaller;
-      const method = (config.method || 'GET').toUpperCase();
+      const method = (config.method || "GET").toUpperCase();
 
       if (id == null || !ALLOWED_METHODS.includes(method)) return response;
 
-      let url = config.url ?? '';
-      if (!url.startsWith('http')) url = `${config.baseURL ?? ''}${url}`;
+      let url = config.url ?? "";
+      if (!url.startsWith("http")) url = `${config.baseURL ?? ""}${url}`;
 
       addOrUpdateLog({
         id,
@@ -311,11 +326,11 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       const id = config.__logId;
       const start = config.__logStart;
       const caller = config.__logCaller;
-      const method = (config.method || 'GET').toUpperCase();
+      const method = (config.method || "GET").toUpperCase();
 
       if (id != null && ALLOWED_METHODS.includes(method)) {
-        let url = config.url ?? '';
-        if (!url.startsWith('http')) url = `${config.baseURL ?? ''}${url}`;
+        let url = config.url ?? "";
+        if (!url.startsWith("http")) url = `${config.baseURL ?? ""}${url}`;
 
         addOrUpdateLog({
           id,
