@@ -14,7 +14,7 @@
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/badge/platform-iOS%20%7C%20Android-blue" alt="platform" /></a>
 </p>
 
-A premium, self-contained in-app debugger for React Native. Inspect **network requests**, **console logs**, **analytics events**, **Redux state**, and **WebView** activity — directly on your device, without leaving the app.
+A self-contained in-app debugging overlay for React Native. Inspect network traffic, console output, analytics events, Redux state, and WebView activity directly inside your app.
 
 ---
 
@@ -22,130 +22,136 @@ A premium, self-contained in-app debugger for React Native. Inspect **network re
 
 | Feature | Description |
 |---|---|
-| 🌐 **Network Inspector** | Intercepts `fetch` and `axios` — view requests, responses, headers, latency, and diffs. Export as cURL or Fetch snippet. |
-| 💻 **Console Logger** | In-app terminal displaying `console.log`, `console.warn`, and `console.error` with level filters. |
-| 📊 **Analytics Tracker** | Real-time event logging for Firebase Analytics, GA, or any custom analytics. |
-| 🕸️ **WebView Inspector** | Live HTML/CSS/JS viewer, navigation history, and console log capture from WebViews. |
-| 🗄️ **Redux Inspector** | Live Redux state tree viewer with action timeline and auto-refresh. |
-| 📈 **Insights Dashboard** | Mini charts for latency, payload size, error rates, and slow request detection. |
-| 🎨 **Dark UI** | Glassmorphism-inspired dark design with smooth micro-animations. |
+| Network inspector | Captures `fetch` and axios `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` calls with URL, method, status, headers, body, response, duration, caller, cURL, and fetch snippets. |
+| Insights dashboard | Shows request totals, status breakdowns, latency, payload size, slow requests, and recent activity charts. |
+| Console logger | Captures `console.log`, `console.info`, `console.warn`, and `console.error` with source method and caller details. |
+| Analytics tracker | Captures manual analytics events and patched `@react-native-firebase/analytics` calls including `logEvent`, `logScreenView`, user properties, and user id. |
+| Redux inspector | Connects to a Redux store, displays the live state tree, tracks dispatched actions, affected slices, and action history. |
+| WebView inspector | Provides an instrumented `WebView` with console capture, navigation history, HTML/CSS/JS snapshots, and optional loading overlay. |
+| Error boundary | Exports an `ErrorBoundary` for catching React errors and wrapping the inspector safely. |
 
 ---
 
 ## Video Walkthrough
 
-Watch the library in action — network inspection, Redux state tree, WebView debugging, and console logging:
-
-[🎬 Download or watch the Video Walkthrough](https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/example/guidance/Video-WalkThrough.mp4)
+[Download or watch the Video Walkthrough](https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/example/guidance/Video-WalkThrough.mp4)
 
 ---
 
 ## Installation
 
 ```bash
-npm install --save-dev react-native-inapp-inspector
-# OR
-yarn add -D react-native-inapp-inspector
+npm install --save-dev react-native-inapp-inspector axios
 ```
 
-For iOS, install native pods:
+```bash
+yarn add -D react-native-inapp-inspector axios
+```
+
+The package has React and React Native as peer dependencies. It depends on `@react-navigation/native`, `react-native-linear-gradient`, and `react-native-svg`. The current network logger imports `axios` for axios interception, so install `axios` even if most of your requests use `fetch`.
+
+Install optional integrations when you use WebView or Firebase Analytics capture:
+
+```bash
+npm install react-native-webview @react-native-firebase/analytics
+```
+
+For iOS, install pods after adding native dependencies:
 
 ```bash
 cd ios && pod install
 ```
 
-> **Dependencies:** `@react-navigation/native`, `react-native-linear-gradient`, `react-native-svg`, and `axios` are bundled as dependencies and will not conflict with versions already installed in your host app.
-
 ---
 
-## Setup
+## Basic Setup
 
-### Step 1 — Call `setupNetworkLogger()` at app entry
-
-Call this **before any component renders** (at module level in your root file, e.g. `App.tsx`). This ensures `fetch` is patched and `axios.create()` is intercepted from the very first call.
+Mount the inspector once near the root of your app.
 
 ```tsx
-// App.tsx
-import axios from 'axios';
-import NetworkInspector, { setupNetworkLogger } from 'react-native-inapp-inspector';
+import React from 'react';
+import {SafeAreaView} from 'react-native';
+import NetworkInspector from 'react-native-inapp-inspector';
 
-// ⚡ Must be called at module level — before any component renders
-setupNetworkLogger();
-```
-
-### Step 2 — Mount the Inspector component
-
-Place `<NetworkInspector />` at the root of your app tree (inside `SafeAreaView` or your navigation container):
-
-```tsx
 const App = () => {
   return (
-    <NavigationContainer>
-      <SafeAreaView style={{ flex: 1 }}>
-        {/* Your app screens / navigation */}
-        <Stack.Navigator>...</Stack.Navigator>
-
-        {/* Floating inspector overlay — drag & open anywhere */}
-        <NetworkInspector />
-      </SafeAreaView>
-    </NavigationContainer>
+    <SafeAreaView style={{flex: 1}}>
+      {/* Your app */}
+      <NetworkInspector />
+    </SafeAreaView>
   );
 };
 
 export default App;
 ```
 
----
+When mounted, the inspector sets up network logging, clears previous network logs, patches console logging, and attempts Firebase Analytics auto-setup if `@react-native-firebase/analytics` is installed.
 
-## Network Interception
-
-### Fetch (automatic)
-
-`fetch` is automatically intercepted by `setupNetworkLogger()`. No extra setup required.
-
-### Axios (automatic)
-
-Import `axios` before calling `setupNetworkLogger()`. Both the **default instance** and **any custom instances** created via `axios.create()` are automatically intercepted:
+If you need to capture requests that happen before the component mounts, call `setupNetworkLogger()` at module level in your app entry file.
 
 ```tsx
-import axios from 'axios';
-import { setupNetworkLogger } from 'react-native-inapp-inspector';
+import NetworkInspector, {setupNetworkLogger} from 'react-native-inapp-inspector';
 
-setupNetworkLogger(); // patches axios + fetch
-
-// Custom instances are automatically captured too
-const api = axios.create({ baseURL: 'https://api.example.com' });
-
-// All of these will appear in the APIs tab
-api.get('/users');
-api.post('/login', { email, password });
-axios.get('https://other-api.com/data');
+setupNetworkLogger();
 ```
 
-### Axios (manual — for pre-existing instances)
+You can disable the overlay without removing it from your tree:
 
-If you create an axios instance **before** calling `setupNetworkLogger()`, use `addAxiosInterceptors` to patch it manually:
+```tsx
+<NetworkInspector enabled={false} />
+```
+
+---
+
+## Network Logging
+
+`setupNetworkLogger()` patches global `fetch`, the default axios instance, and future axios instances created with `axios.create()`.
 
 ```tsx
 import axios from 'axios';
-import { addAxiosInterceptors } from 'react-native-inapp-inspector';
+import {setupNetworkLogger} from 'react-native-inapp-inspector';
 
-const api = axios.create({ baseURL: 'https://api.example.com' });
+setupNetworkLogger();
 
-// Manually register this existing instance
+const api = axios.create({baseURL: 'https://api.example.com'});
+
+await fetch('https://api.example.com/users');
+await api.post('/login', {email, password});
+```
+
+If an axios instance was created before `setupNetworkLogger()` ran, attach interceptors manually:
+
+```tsx
+import {addAxiosInterceptors} from 'react-native-inapp-inspector';
+
 addAxiosInterceptors(api);
 ```
 
+Network logs are capped at 100 entries and ignore React Native symbolication requests.
+
 ---
 
-## Analytics Tracking
+## Console Logging
 
-Log custom analytics events to view them in the **Analytics** tab:
+The inspector captures console output automatically when mounted. You can also set it up manually:
 
 ```tsx
-import { logAnalyticsEvent } from 'react-native-inapp-inspector';
+import {setupConsoleLogger} from 'react-native-inapp-inspector';
 
-// Log any event with a name and optional params
+setupConsoleLogger();
+```
+
+Captured levels are `log`, `info`, `warn`, and `error`.
+
+---
+
+## Analytics Logging
+
+Manual events can be pushed into the Analytics tab:
+
+```tsx
+import {logAnalyticsEvent} from 'react-native-inapp-inspector';
+
 logAnalyticsEvent('purchase_completed', {
   item_id: 'SKU-42',
   value: 29.99,
@@ -153,43 +159,58 @@ logAnalyticsEvent('purchase_completed', {
 });
 ```
 
----
-
-## Redux State Inspection
-
-Connect your Redux store to view live state and action history in the **Redux** tab:
+For Firebase Analytics, pass the result of `analytics()` to `setupAnalyticsLogger()` before analytics calls begin:
 
 ```tsx
-import { connectReduxStore } from 'react-native-inapp-inspector';
-import store from './store'; // your Redux store
+import analytics from '@react-native-firebase/analytics';
+import {setupAnalyticsLogger} from 'react-native-inapp-inspector';
 
-// Call once at app startup
+setupAnalyticsLogger(analytics());
+```
+
+The logger patches `logEvent`, `logScreenView`, `setUserProperty`, `setUserProperties`, and `setUserId`. Analytics events are capped at 200 entries.
+
+---
+
+## Redux Inspection
+
+Connect your Redux store once during app startup.
+
+```tsx
+import {connectReduxStore} from 'react-native-inapp-inspector';
+import store from './store';
+
 connectReduxStore(store);
 ```
+
+The Redux tab shows the latest state tree, recent dispatches, payloads, and changed top-level state slices. Action history is capped at 50 entries.
 
 ---
 
 ## WebView Inspection
 
-Replace your `react-native-webview` import with the instrumented `WebView` from this library:
+Use the exported `WebView` as a drop-in wrapper around `react-native-webview`.
 
 ```tsx
-import { WebView } from 'react-native-inapp-inspector';
+import {WebView} from 'react-native-inapp-inspector';
 
-// Use exactly like react-native-webview
-<WebView source={{ uri: 'https://example.com' }} />
+<WebView source={{uri: 'https://example.com'}} />;
 ```
 
-The inspector will capture HTML, CSS, JS snapshots, navigation history, and console logs from the WebView.
+The wrapper forwards your props and ref, preserves your `onMessage`, `onNavigationStateChange`, `onLoadStart`, and `onLoadEnd` handlers, and injects scripts for WebView console logs, navigation history, and source snapshots.
+
+Disable the loading overlay with `showLoader={false}`:
+
+```tsx
+<WebView source={{uri: 'https://example.com'}} showLoader={false} />
+```
 
 ---
 
 ## Error Boundary
 
-Wrap components to catch and display JavaScript crashes in the inspector:
-
 ```tsx
-import { ErrorBoundary } from 'react-native-inapp-inspector';
+import {ErrorBoundary} from 'react-native-inapp-inspector';
 
 <ErrorBoundary>
   <YourComponent />
@@ -198,61 +219,48 @@ import { ErrorBoundary } from 'react-native-inapp-inspector';
 
 ---
 
-## Full Example
-
-```tsx
-// App.tsx
-import React from 'react';
-import { SafeAreaView } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import axios from 'axios';
-import NetworkInspector, {
-  setupNetworkLogger,
-  connectReduxStore,
-  logAnalyticsEvent,
-  WebView,
-} from 'react-native-inapp-inspector';
-import store from './store';
-
-// ⚡ Must be at module level — before any render
-setupNetworkLogger();
-connectReduxStore(store);
-
-const App = () => {
-  return (
-    <NavigationContainer>
-      <SafeAreaView style={{ flex: 1 }}>
-        {/* Your app */}
-
-        {/* Inspector — tap the floating icon to open */}
-        <NetworkInspector />
-      </SafeAreaView>
-    </NavigationContainer>
-  );
-};
-
-export default App;
-```
-
----
-
 ## Public API
 
 | Export | Type | Description |
 |---|---|---|
-| `NetworkInspector` | Component | Floating inspector overlay. Mount once at root. |
-| `setupNetworkLogger()` | Function | Patches `fetch` and `axios`. Call at module level before render. |
-| `addAxiosInterceptors(instance)` | Function | Manually attach interceptors to an existing axios instance. |
-| `clearNetworkLogs()` | Function | Clear all captured network logs. |
-| `subscribeNetworkLogs(cb)` | Function | Subscribe to network log updates. Returns unsubscribe function. |
-| `logAnalyticsEvent(name, params)` | Function | Log a custom analytics event. |
-| `subscribeAnalyticsEvents(cb)` | Function | Subscribe to analytics event updates. |
-| `setupConsoleLogger()` | Function | Called internally — patches `console.log/warn/error`. |
-| `clearConsoleLogs()` | Function | Clear all captured console logs. |
-| `subscribeConsoleLogs(cb)` | Function | Subscribe to console log updates. |
-| `connectReduxStore(store)` | Function | Connect a Redux store for live state inspection. |
-| `WebView` | Component | Instrumented drop-in replacement for `react-native-webview`. |
-| `ErrorBoundary` | Component | React error boundary that surfaces crashes in the inspector. |
+| `NetworkInspector` | default component | Floating inspector overlay. Mount once near the root of the app. |
+| `setupNetworkLogger()` | function | Patches `fetch`, default axios, and future `axios.create()` instances. |
+| `addAxiosInterceptors(instance)` | function | Manually attaches axios interceptors to an existing instance. |
+| `clearNetworkLogs()` | function | Clears captured network logs. |
+| `subscribeNetworkLogs(callback)` | function | Subscribes to network log updates and returns an unsubscribe function. |
+| `setupConsoleLogger()` | function | Patches console methods. |
+| `clearConsoleLogs()` | function | Clears captured console logs. |
+| `subscribeConsoleLogs(callback)` | function | Subscribes to console log updates and returns an unsubscribe function. |
+| `setupAnalyticsLogger(instance)` | function | Patches a Firebase Analytics instance. |
+| `logAnalyticsEvent(name, params?, userProperties?)` | function | Adds a manual analytics event to the inspector. |
+| `clearAnalyticsEvents()` | function | Clears captured analytics events. |
+| `subscribeAnalyticsEvents(callback)` | function | Subscribes to analytics event updates and returns an unsubscribe function. |
+| `connectReduxStore(store)` | function | Connects a Redux store for live state and action inspection. |
+| `getReduxState()` | function | Returns the latest captured Redux state. |
+| `subscribeReduxState(callback)` | function | Subscribes to Redux state updates and returns an unsubscribe function. |
+| `WebView` | component | Instrumented WebView wrapper. |
+| `getWebViewLogs()` | function | Returns captured WebView console logs. |
+| `getWebViewNavHistory()` | function | Returns captured WebView navigation history. |
+| `getWebViewHtml()` | function | Returns the latest captured WebView HTML. |
+| `getWebViewCss()` | function | Returns the latest captured WebView CSS. |
+| `getWebViewJs()` | function | Returns the latest captured WebView JavaScript. |
+| `getWebViewHtmlUrl()` | function | Returns the URL for the latest captured WebView source snapshot. |
+| `clearWebViewData()` | function | Clears captured WebView logs, navigation, and source data. |
+| `subscribeWebView(callback)` | function | Subscribes to WebView data changes and returns an unsubscribe function. |
+| `ErrorBoundary` | component | React error boundary component. |
+
+---
+
+## Example App
+
+The `example` directory contains a React Native sample app and video walkthrough.
+
+```bash
+cd example
+npm install
+cd ios && pod install && cd ..
+npm run ios
+```
 
 ---
 
@@ -266,4 +274,4 @@ If you find this project useful, consider sponsoring its development:
 
 ## License
 
-MIT — see the [LICENSE](LICENSE) file for details.
+MIT - see the [LICENSE](LICENSE) file for details.

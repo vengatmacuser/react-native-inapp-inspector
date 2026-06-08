@@ -108,13 +108,13 @@ import {
   setupConsoleLogger,
   clearConsoleLogs,
   subscribeConsoleLogs,
-  autoSetupAnalyticsLogger,
 } from './customHooks/consoleLogger';
 import {IGNORED_LOG_PREFIXES} from './customHooks/logFilters';
 
 import {
   subscribeAnalyticsEvents,
   clearAnalyticsEvents,
+  autoSetupAnalyticsLogger,
 } from './customHooks/analyticsLogger';
 import AnalyticsEventCard, {
   getEventColor,
