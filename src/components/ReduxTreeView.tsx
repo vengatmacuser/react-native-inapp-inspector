@@ -67,6 +67,93 @@ const FolderIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
   </Svg>
 );
 
+// Exported icons so the Redux tab's section headers and sub-tab buttons can
+// render real vector icons instead of emoji (which fail to render on some
+// Android/font setups).
+export const ReduxStoreIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 9l1.5-5h15L21 9M3 9v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9M3 9h18M7 9v3a2 2 0 0 0 4 0V9m2 0v3a2 2 0 0 0 4 0V9"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ReduxBoltIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+      fill={color}
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+// Action Timeline — a history/clock icon reads as "sequence over time".
+export const ReduxTimelineIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 3v5h5"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M3.05 13A9 9 0 1 0 6 5.3L3 8"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M12 7v5l3 2"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+// Store Tree — a node hierarchy icon reads as "nested tree structure".
+export const ReduxTreeIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M9 4h6v4H9zM3 16h6v4H3zm12 0h6v4h-6z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M12 8v4M6 16v-2h12v2"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 const animateTreeLayout = () => {
   LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 };
@@ -271,7 +358,10 @@ export const ReduxTreeView = ({
           size={12}
           style={styles.chevronWrap}
         />
-        <Text style={styles.storeTitle}>🏪 Redux Store</Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+          <ReduxStoreIcon color="#FFFFFF" size={14} />
+          <Text style={styles.storeTitle}>Redux Store</Text>
+        </View>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{reducers.length} Reducers</Text>
         </View>
@@ -432,9 +522,12 @@ export const ReduxActionTimeline = ({
   return (
     <View style={timelineStyles.container}>
       <View style={timelineStyles.headerRow}>
-        <Text style={timelineStyles.headerTitle}>
-          ⚡ Dispatched Actions ({filteredHistory.length})
-        </Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+          <ReduxBoltIcon color={AppColors.purple} size={15} />
+          <Text style={timelineStyles.headerTitle}>
+            Dispatched Actions ({filteredHistory.length})
+          </Text>
+        </View>
         {history.length > 0 && (
           <Pressable onPress={onClear} style={timelineStyles.clearBtn}>
             <Text style={timelineStyles.clearBtnText}>Clear Log</Text>

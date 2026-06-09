@@ -33,7 +33,12 @@ import CopyButton from './components/CopyButton';
 import SectionHeader from './components/SectionHeader';
 import EmptyState from './components/EmptyState';
 import JsonViewer from './components/JsonViewer';
-import {ReduxTreeView, ReduxActionTimeline} from './components/ReduxTreeView';
+import {
+  ReduxTreeView,
+  ReduxActionTimeline,
+  ReduxTimelineIcon,
+  ReduxTreeIcon,
+} from './components/ReduxTreeView';
 import DomainHeader from './components/DomainHeader';
 import DiffViewer from './components/DiffViewer';
 import LogCard from './components/LogCard';
@@ -220,7 +225,7 @@ import {
   Method,
   AnalyticsEvent,
 } from './types';
-import {METHOD_COLORS, STATUS_FILTERS} from './constants';
+import {METHOD_COLORS, STATUS_FILTERS, LIB_VERSION} from './constants';
 
 interface NavigationTrackerProps {
   onStateChange: (state: any) => void;
@@ -247,6 +252,14 @@ const NetworkInspector = ({
 }: NetworkInspectorProps): React.JSX.Element => {
   const [isDark, setIsDark] = useState(false);
   const [reduxState, setReduxState] = useState<any>(null);
+  // Action timeline + per-reducer last action are kept in component state so the
+  // Redux tab re-renders live on every dispatch, independent of the state tree ref.
+  const [reduxActionHistory, setReduxActionHistory] = useState<any[]>([]);
+  const [reduxLastActionMap, setReduxLastActionMap] = useState<
+    Record<string, any>
+  >({});
+  // Inspector panel height as a percentage of the screen (configurable in Settings).
+  const [modalHeightPercent, setModalHeightPercent] = useState<number>(90);
   const [expandedReducers, setExpandedReducers] = useState<
     Record<string, boolean>
   >({});
@@ -709,8 +722,14 @@ const NetworkInspector = ({
     });
 
     setReduxState(getReduxState());
+    setReduxActionHistory([...getActionHistory()]);
+    setReduxLastActionMap({...getLastActionForReducer()});
     const unsubscribeRedux = subscribeReduxState(() => {
+      // New references each time guarantee the Redux tab updates live, even when
+      // the root state object reference is unchanged or auto-refresh is paused.
       setReduxState(getReduxState());
+      setReduxActionHistory([...getActionHistory()]);
+      setReduxLastActionMap({...getLastActionForReducer()});
     });
 
     return () => {
@@ -1356,7 +1375,7 @@ const NetworkInspector = ({
                     fontSize: 10.5,
                     color: '#FFFFFF',
                   }}>
-                  v1.0.13
+                  v{LIB_VERSION}
                 </Text>
               </View>
             </View>
@@ -1592,26 +1611,68 @@ const NetworkInspector = ({
                           width: 38,
                           height: 22,
                           borderRadius: 11,
-                          backgroundColor: isVisible
+                          backgroundColor: isLocked
+                            ? AppColors.grayBackground
+                            : isVisible
                             ? AppColors.purple
                             : AppColors.grayBorderSecondary,
+                          borderWidth: isLocked ? 1.5 : 0,
+                          borderColor: isLocked
+                            ? AppColors.grayBorderSecondary
+                            : 'transparent',
+                          borderStyle: isLocked ? 'dashed' : 'solid',
                           padding: 2,
                           justifyContent: 'center',
                           alignItems: isVisible ? 'flex-end' : 'flex-start',
+                          opacity: isLocked ? 0.9 : 1,
                         }}>
                         <View
                           style={{
                             width: 18,
                             height: 18,
                             borderRadius: 9,
-                            backgroundColor: '#FFFFFF',
+                            backgroundColor: isLocked
+                              ? AppColors.grayBorderSecondary
+                              : '#FFFFFF',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             shadowColor: '#000',
-                            shadowOpacity: 0.15,
+                            shadowOpacity: isLocked ? 0 : 0.15,
                             shadowRadius: 1.5,
                             shadowOffset: {width: 0, height: 1},
-                          }}
-                        />
+                          }}>
+                          {isLocked && (
+                            <Svg
+                              width={10}
+                              height={10}
+                              viewBox="0 0 24 24"
+                              fill="none">
+                              <Path
+                                d="M7 10V7a5 5 0 0 1 10 0v3"
+                                stroke={AppColors.grayText}
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                              />
+                              <Path
+                                d="M5 10h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"
+                                fill={AppColors.grayText}
+                              />
+                            </Svg>
+                          )}
+                        </View>
                       </TouchableScale>
+                      {isLocked && (
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 8,
+                            color: AppColors.grayTextWeak,
+                            letterSpacing: 0.4,
+                            marginTop: 3,
+                          }}>
+                          REQUIRED
+                        </Text>
+                      )}
                     </View>
                   </View>
                 );
@@ -1715,6 +1776,100 @@ const NetworkInspector = ({
                     />
                   </TouchableScale>
                 </View>
+
+                {/* Divider */}
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: AppColors.dividerColor,
+                  }}
+                />
+
+                {/* Modal Height */}
+                <View
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 6,
+                        backgroundColor: AppColors.purpleShade50,
+                        borderWidth: 1,
+                        borderColor: 'rgba(104,75,155,0.2)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <ScreenIcon color={AppColors.purple} size={11} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        Modal Height
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        Height of the inspector panel relative to the screen
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Segmented picker */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      backgroundColor: AppColors.grayBackground,
+                      borderRadius: 8,
+                      padding: 2.5,
+                      marginTop: 10,
+                      borderWidth: 1,
+                      borderColor: AppColors.dividerColor,
+                    }}>
+                    {[50, 70, 90, 100].map(opt => {
+                      const isActive = modalHeightPercent === opt;
+                      return (
+                        <TouchableScale
+                          key={opt}
+                          onPress={() => setModalHeightPercent(opt)}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 6,
+                            alignItems: 'center',
+                            borderRadius: 6,
+                            backgroundColor: isActive
+                              ? AppColors.purple
+                              : 'transparent',
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 11,
+                              color: isActive ? '#FFFFFF' : AppColors.grayText,
+                            }}>
+                            {opt}%
+                          </Text>
+                        </TouchableScale>
+                      );
+                    })}
+                  </View>
+                </View>
               </View>
             </View>
           </ScrollView>
@@ -1813,6 +1968,7 @@ const NetworkInspector = ({
         options: readonly any[];
         selectedValue: any;
         onSelect: (val: any) => void;
+        formatLabel?: (val: any) => string;
       };
       onPress?: () => void;
       isLast?: boolean;
@@ -1899,9 +2055,11 @@ const NetworkInspector = ({
                       fontSize: 11,
                       color: isActive ? '#FFFFFF' : AppColors.grayText,
                     }}>
-                    {typeof opt === 'number' &&
-                    opt >= 500 &&
-                    settingsPage === 'insights'
+                    {opts.picker!.formatLabel
+                      ? opts.picker!.formatLabel(opt)
+                      : typeof opt === 'number' &&
+                        opt >= 500 &&
+                        settingsPage === 'insights'
                       ? `${opt}ms`
                       : opt}
                   </Text>
@@ -2502,8 +2660,231 @@ const NetworkInspector = ({
 
     const webviewTotal = webViewNavHistory.length;
 
+    // --- Richer insights metrics ---
+    const slowestTime = durations.length > 0 ? Math.max(...durations) : null;
+    const fastestTime = durations.length > 0 ? Math.min(...durations) : null;
+    const slowCount = durations.filter(d => d >= slowRequestThreshold).length;
+
+    const status2xx = logs.filter(
+      l => l.status != null && l.status >= 200 && l.status < 300,
+    ).length;
+    const status3xx = logs.filter(
+      l => l.status != null && l.status >= 300 && l.status < 400,
+    ).length;
+    const status4xx = logs.filter(
+      l => l.status != null && l.status >= 400 && l.status < 500,
+    ).length;
+    const status5xx = logs.filter(
+      l => l.status != null && l.status >= 500,
+    ).length;
+
+    const totalSignals = apiTotal + logTotal + analyticsTotal + webviewTotal;
+    const totalIssues = apiErrors + logErrors;
+    const activeModules = [
+      tabVisibility.apis,
+      tabVisibility.logs,
+      tabVisibility.analytics,
+      tabVisibility.webview,
+      tabVisibility.redux,
+    ].filter(Boolean).length;
+
+    // Composite health score: success rate penalised by error volume and slow requests.
+    const healthScore =
+      totalSignals === 0
+        ? 100
+        : Math.max(
+            0,
+            Math.min(
+              100,
+              Math.round(
+                apiSuccessRate -
+                  (logErrors > 0 ? Math.min(15, logErrors * 3) : 0) -
+                  (slowCount > 0 ? Math.min(10, slowCount * 2) : 0),
+              ),
+            ),
+          );
+    const healthColor =
+      healthScore >= 90
+        ? AppColors.greenColor
+        : healthScore >= 70
+        ? AppColors.warningIconGold
+        : AppColors.errorColor;
+    const healthLabel =
+      healthScore >= 90
+        ? 'Healthy'
+        : healthScore >= 70
+        ? 'Needs attention'
+        : 'Degraded';
+
     return (
       <View style={styles.dashboardContainer}>
+        {/* Overview hero card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            padding: 16,
+            marginBottom: 12,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 14,
+            }}>
+            {/* Health ring stand-in */}
+            <View
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                borderWidth: 4,
+                borderColor: healthColor,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: AppColors.purpleShade50,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 18,
+                  color: healthColor,
+                }}>
+                {healthScore}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interMedium,
+                  fontSize: 7.5,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.4,
+                }}>
+                HEALTH
+              </Text>
+            </View>
+            <View style={{flex: 1}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 15,
+                  color: AppColors.primaryBlack,
+                }}>
+                Session Overview
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginTop: 3,
+                }}>
+                <View
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: 3.5,
+                    backgroundColor: healthColor,
+                  }}
+                />
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interMedium,
+                    fontSize: 11.5,
+                    color: healthColor,
+                  }}>
+                  {healthLabel}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 11.5,
+                    color: AppColors.grayTextWeak,
+                  }}>
+                  • {activeModules} modules active
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Quick totals strip */}
+          <View
+            style={{
+              flexDirection: 'row',
+              marginTop: 14,
+              borderTopWidth: 1,
+              borderTopColor: AppColors.dividerColor,
+              paddingTop: 12,
+            }}>
+            <View style={{flex: 1, alignItems: 'center'}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 16,
+                  color: AppColors.primaryBlack,
+                }}>
+                {totalSignals}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 10,
+                  color: AppColors.grayTextWeak,
+                  marginTop: 1,
+                }}>
+                Signals
+              </Text>
+            </View>
+            <View style={{width: 1, backgroundColor: AppColors.dividerColor}} />
+            <View style={{flex: 1, alignItems: 'center'}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 16,
+                  color:
+                    totalIssues > 0
+                      ? AppColors.errorColor
+                      : AppColors.primaryBlack,
+                }}>
+                {totalIssues}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 10,
+                  color: AppColors.grayTextWeak,
+                  marginTop: 1,
+                }}>
+                Issues
+              </Text>
+            </View>
+            <View style={{width: 1, backgroundColor: AppColors.dividerColor}} />
+            <View style={{flex: 1, alignItems: 'center'}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 16,
+                  color:
+                    slowCount > 0
+                      ? AppColors.warningIconGold
+                      : AppColors.primaryBlack,
+                }}>
+                {slowCount}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 10,
+                  color: AppColors.grayTextWeak,
+                  marginTop: 1,
+                }}>
+                Slow ({slowRequestThreshold}ms+)
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {/* Module 1: APIs */}
         {tabVisibility.apis && (
           <TouchableScale
@@ -2549,10 +2930,89 @@ const NetworkInspector = ({
                 <Text style={styles.dashboardGridLbl}>Avg Latency</Text>
               </View>
             </View>
+
+            {/* Status-class breakdown + latency range */}
+            <View
+              style={{
+                marginTop: 10,
+                paddingTop: 10,
+                borderTopWidth: 1,
+                borderTopColor: AppColors.dividerColor,
+                flexDirection: 'row',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 6,
+              }}>
+              {[
+                {label: '2xx', value: status2xx, color: AppColors.greenColor},
+                {label: '3xx', value: status3xx, color: AppColors.skyBlue},
+                {
+                  label: '4xx',
+                  value: status4xx,
+                  color: AppColors.warningIconGold,
+                },
+                {label: '5xx', value: status5xx, color: AppColors.errorColor},
+              ].map(s => (
+                <View
+                  key={s.label}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    backgroundColor: AppColors.grayBackground,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: AppColors.dividerColor,
+                    paddingHorizontal: 7,
+                    paddingVertical: 3,
+                  }}>
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: s.color,
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10,
+                      color: AppColors.grayTextStrong,
+                    }}>
+                    {s.label} {s.value}
+                  </Text>
+                </View>
+              ))}
+              {slowestTime != null && (
+                <View
+                  style={{
+                    marginLeft: 'auto',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 10,
+                      color: AppColors.grayTextWeak,
+                    }}>
+                    Range
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10,
+                      color: AppColors.grayTextStrong,
+                    }}>
+                    {fastestTime}–{slowestTime}ms
+                  </Text>
+                </View>
+              )}
+            </View>
           </TouchableScale>
         )}
-
-        {/* Module 2: Logs */}
         {tabVisibility.logs && (
           <TouchableScale
             style={styles.dashboardModuleCard}
@@ -2803,9 +3263,10 @@ const NetworkInspector = ({
       );
     }
 
-    // Build hierarchical tree: Store -> Reducers -> Action -> Data
-    const lastActionMap = getLastActionForReducer();
-    const actionHistory = getActionHistory();
+    // Build hierarchical tree: Store -> Reducers -> Action -> Data.
+    // These come from component state (refreshed on every dispatch) so the view stays live.
+    const lastActionMap = reduxLastActionMap;
+    const actionHistory = reduxActionHistory;
 
     return (
       <ScrollView
@@ -2887,17 +3348,33 @@ const NetworkInspector = ({
                   ? AppColors.purple
                   : 'transparent',
             }}>
-            <Text
+            <View
               style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 11,
-                color:
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}>
+              <ReduxTimelineIcon
+                color={
                   reduxActiveSubTab === 'timeline'
                     ? '#FFFFFF'
-                    : AppColors.grayText,
-              }}>
-              ⚡ Action Timeline
-            </Text>
+                    : AppColors.grayText
+                }
+                size={13}
+              />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  color:
+                    reduxActiveSubTab === 'timeline'
+                      ? '#FFFFFF'
+                      : AppColors.grayText,
+                }}>
+                Action Timeline
+              </Text>
+            </View>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
@@ -2913,15 +3390,31 @@ const NetworkInspector = ({
               backgroundColor:
                 reduxActiveSubTab === 'tree' ? AppColors.purple : 'transparent',
             }}>
-            <Text
+            <View
               style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 11,
-                color:
-                  reduxActiveSubTab === 'tree' ? '#FFFFFF' : AppColors.grayText,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
               }}>
-              🏪 Store Tree
-            </Text>
+              <ReduxTreeIcon
+                color={
+                  reduxActiveSubTab === 'tree' ? '#FFFFFF' : AppColors.grayText
+                }
+                size={13}
+              />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  color:
+                    reduxActiveSubTab === 'tree'
+                      ? '#FFFFFF'
+                      : AppColors.grayText,
+                }}>
+                Store Tree
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -3030,7 +3523,11 @@ const NetworkInspector = ({
                 style={styles.modalBackdropPressable}
                 onPress={closeModal}
               />
-              <View style={styles.modalContentCard}>
+              <View
+                style={[
+                  styles.modalContentCard,
+                  {height: `${modalHeightPercent}%`},
+                ]}>
                 <StatusBar
                   translucent
                   backgroundColor="transparent"
@@ -3106,28 +3603,93 @@ const NetworkInspector = ({
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                gap: 5,
+                                gap: 6,
                               }}>
-                              <Animated.View
+                              {/* OS chip */}
+                              <View
                                 style={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: 3,
-                                  backgroundColor: '#4ADE80',
-                                  opacity: activePulseAnim,
-                                }}
-                              />
-                              <Text
-                                style={{
-                                  fontFamily: AppFonts.interMedium,
-                                  fontSize: 10,
-                                  color: 'rgba(255,255,255,0.78)',
-                                  letterSpacing: 0.3,
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  borderRadius: 6,
+                                  overflow: 'hidden',
+                                  borderWidth: 1,
+                                  borderColor: 'rgba(255,255,255,0.18)',
                                 }}>
-                                Active •{' '}
-                                {Platform.OS === 'ios' ? 'iOS' : 'Android'}{' '}
-                                (v1.0.13)
-                              </Text>
+                                <View
+                                  style={{
+                                    paddingHorizontal: 5,
+                                    paddingVertical: 2,
+                                    backgroundColor: 'rgba(255,255,255,0.28)',
+                                  }}>
+                                  <Text
+                                    style={{
+                                      fontFamily: AppFonts.interBold,
+                                      fontSize: 9,
+                                      color: '#FFFFFF',
+                                      letterSpacing: 0.3,
+                                    }}>
+                                    {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+                                  </Text>
+                                </View>
+                                <View
+                                  style={{
+                                    paddingHorizontal: 5,
+                                    paddingVertical: 2,
+                                    backgroundColor: 'rgba(255,255,255,0.12)',
+                                  }}>
+                                  <Text
+                                    style={{
+                                      fontFamily: AppFonts.interMedium,
+                                      fontSize: 9.5,
+                                      color: 'rgba(255,255,255,0.92)',
+                                    }}>
+                                    {String(Platform.Version)}
+                                  </Text>
+                                </View>
+                              </View>
+
+                              {/* npm chip */}
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  borderRadius: 6,
+                                  overflow: 'hidden',
+                                  borderWidth: 1,
+                                  borderColor: 'rgba(255,255,255,0.18)',
+                                }}>
+                                <View
+                                  style={{
+                                    paddingHorizontal: 5,
+                                    paddingVertical: 2,
+                                    backgroundColor: 'rgba(255,255,255,0.28)',
+                                  }}>
+                                  <Text
+                                    style={{
+                                      fontFamily: AppFonts.interBold,
+                                      fontSize: 9,
+                                      color: '#FFFFFF',
+                                      letterSpacing: 0.3,
+                                    }}>
+                                    npm
+                                  </Text>
+                                </View>
+                                <View
+                                  style={{
+                                    paddingHorizontal: 5,
+                                    paddingVertical: 2,
+                                    backgroundColor: 'rgba(255,255,255,0.12)',
+                                  }}>
+                                  <Text
+                                    style={{
+                                      fontFamily: AppFonts.interMedium,
+                                      fontSize: 9.5,
+                                      color: 'rgba(255,255,255,0.92)',
+                                    }}>
+                                    v{LIB_VERSION}
+                                  </Text>
+                                </View>
+                              </View>
                             </View>
                           </View>
                         </View>

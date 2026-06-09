@@ -46,8 +46,14 @@ export const subscribeReduxState = (cb: () => void) => {
 };
 
 export const connectReduxStore = (store: any) => {
-  if (!store || typeof store.getState !== 'function' || typeof store.subscribe !== 'function') {
-    console.warn('[NetworkInspector] Invalid Redux store passed to connectReduxStore.');
+  if (
+    !store ||
+    typeof store.getState !== 'function' ||
+    typeof store.subscribe !== 'function'
+  ) {
+    console.warn(
+      '[NetworkInspector] Invalid Redux store passed to connectReduxStore.',
+    );
     return;
   }
 
@@ -96,7 +102,12 @@ export const connectReduxStore = (store: any) => {
     }
 
     if (globalReduxAutoRefresh) {
+      // Refresh the displayed state tree snapshot.
       setReduxState(nextState);
+    } else {
+      // Tree is paused, but the action timeline / last-action map still changed,
+      // so notify subscribers to re-render those without moving the tree snapshot.
+      listeners.forEach(cb => cb());
     }
 
     return result;

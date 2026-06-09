@@ -39,3 +39,7 @@ export const DOMAIN_COLORS = [
 
 export const DURATION_FAST_MS = 200;
 export const DURATION_SLOW_MS = 800;
+
+// Package version — auto-generated from package.json at build time.
+// See scripts/gen-version.js (wired to the "prebuild" npm script).
+export {LIB_VERSION} from './version';

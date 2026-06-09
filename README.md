@@ -2,9 +2,9 @@
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg">
-    <img alt="React Native In-App Inspector Banner" src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg" width="100%">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
+    <img alt="React Native In-App Inspector Banner" src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg" width="100%">
   </picture>
 </p>
 
@@ -20,15 +20,15 @@ A self-contained in-app debugging overlay for React Native. Inspect network traf
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| Network inspector | Captures `fetch` and axios `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` calls with URL, method, status, headers, body, response, duration, caller, cURL, and fetch snippets. |
-| Insights dashboard | Shows request totals, status breakdowns, latency, payload size, slow requests, and recent activity charts. |
-| Console logger | Captures `console.log`, `console.info`, `console.warn`, and `console.error` with source method and caller details. |
-| Analytics tracker | Captures manual analytics events and patched `@react-native-firebase/analytics` calls including `logEvent`, `logScreenView`, user properties, and user id. |
-| Redux inspector | Connects to a Redux store, displays the live state tree, tracks dispatched actions, affected slices, and action history. |
-| WebView inspector | Provides an instrumented `WebView` with console capture, navigation history, HTML/CSS/JS snapshots, and optional loading overlay. |
-| Error boundary | Exports an `ErrorBoundary` for catching React errors and wrapping the inspector safely. |
+| Feature            | Description                                                                                                                                                                 |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Network inspector  | Captures `fetch` and axios `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` calls with URL, method, status, headers, body, response, duration, caller, cURL, and fetch snippets. |
+| Insights dashboard | Shows request totals, status breakdowns, latency, payload size, slow requests, and recent activity charts.                                                                  |
+| Console logger     | Captures `console.log`, `console.info`, `console.warn`, and `console.error` with source method and caller details.                                                          |
+| Analytics tracker  | Captures manual analytics events and patched `@react-native-firebase/analytics` calls including `logEvent`, `logScreenView`, user properties, and user id.                  |
+| Redux inspector    | Connects to a Redux store, displays the live state tree, tracks dispatched actions, affected slices, and action history.                                                    |
+| WebView inspector  | Provides an instrumented `WebView` with console capture, navigation history, HTML/CSS/JS snapshots, and optional loading overlay.                                           |
+| Error boundary     | Exports an `ErrorBoundary` for catching React errors and wrapping the inspector safely.                                                                                     |
 
 ---
 
@@ -90,7 +90,9 @@ When mounted, the inspector sets up network logging, clears previous network log
 If you need to capture requests that happen before the component mounts, call `setupNetworkLogger()` at module level in your app entry file.
 
 ```tsx
-import NetworkInspector, {setupNetworkLogger} from 'react-native-inapp-inspector';
+import NetworkInspector, {
+  setupNetworkLogger,
+} from 'react-native-inapp-inspector';
 
 setupNetworkLogger();
 ```
@@ -214,40 +216,40 @@ import {ErrorBoundary} from 'react-native-inapp-inspector';
 
 <ErrorBoundary>
   <YourComponent />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 ---
 
 ## Public API
 
-| Export | Type | Description |
-|---|---|---|
-| `NetworkInspector` | default component | Floating inspector overlay. Mount once near the root of the app. |
-| `setupNetworkLogger()` | function | Patches `fetch`, default axios, and future `axios.create()` instances. |
-| `addAxiosInterceptors(instance)` | function | Manually attaches axios interceptors to an existing instance. |
-| `clearNetworkLogs()` | function | Clears captured network logs. |
-| `subscribeNetworkLogs(callback)` | function | Subscribes to network log updates and returns an unsubscribe function. |
-| `setupConsoleLogger()` | function | Patches console methods. |
-| `clearConsoleLogs()` | function | Clears captured console logs. |
-| `subscribeConsoleLogs(callback)` | function | Subscribes to console log updates and returns an unsubscribe function. |
-| `setupAnalyticsLogger(instance)` | function | Patches a Firebase Analytics instance. |
-| `logAnalyticsEvent(name, params?, userProperties?)` | function | Adds a manual analytics event to the inspector. |
-| `clearAnalyticsEvents()` | function | Clears captured analytics events. |
-| `subscribeAnalyticsEvents(callback)` | function | Subscribes to analytics event updates and returns an unsubscribe function. |
-| `connectReduxStore(store)` | function | Connects a Redux store for live state and action inspection. |
-| `getReduxState()` | function | Returns the latest captured Redux state. |
-| `subscribeReduxState(callback)` | function | Subscribes to Redux state updates and returns an unsubscribe function. |
-| `WebView` | component | Instrumented WebView wrapper. |
-| `getWebViewLogs()` | function | Returns captured WebView console logs. |
-| `getWebViewNavHistory()` | function | Returns captured WebView navigation history. |
-| `getWebViewHtml()` | function | Returns the latest captured WebView HTML. |
-| `getWebViewCss()` | function | Returns the latest captured WebView CSS. |
-| `getWebViewJs()` | function | Returns the latest captured WebView JavaScript. |
-| `getWebViewHtmlUrl()` | function | Returns the URL for the latest captured WebView source snapshot. |
-| `clearWebViewData()` | function | Clears captured WebView logs, navigation, and source data. |
-| `subscribeWebView(callback)` | function | Subscribes to WebView data changes and returns an unsubscribe function. |
-| `ErrorBoundary` | component | React error boundary component. |
+| Export                                              | Type              | Description                                                                |
+| --------------------------------------------------- | ----------------- | -------------------------------------------------------------------------- |
+| `NetworkInspector`                                  | default component | Floating inspector overlay. Mount once near the root of the app.           |
+| `setupNetworkLogger()`                              | function          | Patches `fetch`, default axios, and future `axios.create()` instances.     |
+| `addAxiosInterceptors(instance)`                    | function          | Manually attaches axios interceptors to an existing instance.              |
+| `clearNetworkLogs()`                                | function          | Clears captured network logs.                                              |
+| `subscribeNetworkLogs(callback)`                    | function          | Subscribes to network log updates and returns an unsubscribe function.     |
+| `setupConsoleLogger()`                              | function          | Patches console methods.                                                   |
+| `clearConsoleLogs()`                                | function          | Clears captured console logs.                                              |
+| `subscribeConsoleLogs(callback)`                    | function          | Subscribes to console log updates and returns an unsubscribe function.     |
+| `setupAnalyticsLogger(instance)`                    | function          | Patches a Firebase Analytics instance.                                     |
+| `logAnalyticsEvent(name, params?, userProperties?)` | function          | Adds a manual analytics event to the inspector.                            |
+| `clearAnalyticsEvents()`                            | function          | Clears captured analytics events.                                          |
+| `subscribeAnalyticsEvents(callback)`                | function          | Subscribes to analytics event updates and returns an unsubscribe function. |
+| `connectReduxStore(store)`                          | function          | Connects a Redux store for live state and action inspection.               |
+| `getReduxState()`                                   | function          | Returns the latest captured Redux state.                                   |
+| `subscribeReduxState(callback)`                     | function          | Subscribes to Redux state updates and returns an unsubscribe function.     |
+| `WebView`                                           | component         | Instrumented WebView wrapper.                                              |
+| `getWebViewLogs()`                                  | function          | Returns captured WebView console logs.                                     |
+| `getWebViewNavHistory()`                            | function          | Returns captured WebView navigation history.                               |
+| `getWebViewHtml()`                                  | function          | Returns the latest captured WebView HTML.                                  |
+| `getWebViewCss()`                                   | function          | Returns the latest captured WebView CSS.                                   |
+| `getWebViewJs()`                                    | function          | Returns the latest captured WebView JavaScript.                            |
+| `getWebViewHtmlUrl()`                               | function          | Returns the URL for the latest captured WebView source snapshot.           |
+| `clearWebViewData()`                                | function          | Clears captured WebView logs, navigation, and source data.                 |
+| `subscribeWebView(callback)`                        | function          | Subscribes to WebView data changes and returns an unsubscribe function.    |
+| `ErrorBoundary`                                     | component         | React error boundary component.                                            |
 
 ---
 

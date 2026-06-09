@@ -28,6 +28,7 @@
     "assets"
   ],
   "scripts": {
+    "prebuild": "node scripts/gen-version.js",
     "build": "tsc && tsc -p tsconfig.esm.json",
     "watch": "tsc -w",
     "prepack": "npm run build",
