@@ -1,5 +1,14 @@
-import React, {useState} from 'react';
-import {StyleSheet, Text, View, Pressable, Platform} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  Animated,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
+} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import {ConsoleLog} from '../types';
@@ -91,21 +100,31 @@ const getLogMessageWithBadges = (
     const fullPrefix = match[1];
     const remainingText = message.substring(fullPrefix.length);
     const tags = fullPrefix.match(/\[[^\]]+\]/g) || [];
-    
+
     const getTagColor = (tag: string) => {
-      const cleanTag = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
+      const cleanTag = tag
+        .replace(/[\[\]]/g, '')
+        .trim()
+        .toUpperCase();
       if (cleanTag === 'API') return '#0284C7';
       if (cleanTag === 'TEST') return '#16A34A';
       if (cleanTag === 'APP') return '#4F46E5';
       if (cleanTag === 'DETAILS') return '#7C3AED';
       if (cleanTag === 'WEBVIEW') return '#EA580C';
       if (cleanTag === 'MOCK REDUX' || cleanTag === 'REDUX') return '#DB2777';
-      
+
       let hash = 0;
       for (let i = 0; i < cleanTag.length; i++) {
         hash = cleanTag.charCodeAt(i) + ((hash << 5) - hash);
       }
-      const colors = ['#0891B2', '#0D9488', '#2563EB', '#D97706', '#E11D48', '#8B5CF6'];
+      const colors = [
+        '#0891B2',
+        '#0D9488',
+        '#2563EB',
+        '#D97706',
+        '#E11D48',
+        '#8B5CF6',
+      ];
       return colors[Math.abs(hash) % colors.length];
     };
 
@@ -135,7 +154,7 @@ const getLogMessageWithBadges = (
       </Text>
     );
   }
-  
+
   return (
     <HighlightText
       text={message}
@@ -154,6 +173,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   isWebView = false,
 }: ConsoleLogCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const chevronAnim = useRef(new Animated.Value(0)).current;
   const jsonContent = getJsonContent(item.message);
   const isAnalyticsError = item.message
     .toLowerCase()
@@ -240,6 +260,30 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 
   const colors = getLogColors();
 
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      UIManager.setLayoutAnimationEnabledExperimental?.(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    Animated.timing(chevronAnim, {
+      toValue: expanded ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [chevronAnim, expanded]);
+
+  const toggleExpanded = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(prev => !prev);
+  };
+
+  const chevronRotate = chevronAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
   // Show limited lines unless expanded
   const numLines = expanded ? undefined : 5;
   const hasLongMessage = jsonContent
@@ -263,12 +307,8 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             paddingRight: 4,
           },
         ]}>
-        
         {/* Left Content Area */}
-        <Pressable
-          onPress={() => setExpanded(prev => !prev)}
-          style={{ flex: 1, paddingRight: 6 }}>
-          
+        <Pressable onPress={toggleExpanded} style={{flex: 1, paddingRight: 6}}>
           <View style={styles.cardHeader}>
             <View style={styles.headerLeft}>
               <CopyButton value={item.message} label="Log message" />
@@ -287,7 +327,10 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   },
                 ]}>
                 <Text style={[styles.badgeText, {color: '#6B4EFF'}]}>
-                  console.{('sourceMethod' in item ? item.sourceMethod : undefined) || item.type || 'log'}
+                  console.
+                  {('sourceMethod' in item ? item.sourceMethod : undefined) ||
+                    item.type ||
+                    'log'}
                 </Text>
               </View>
               {jsonContent && (
@@ -301,7 +344,9 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                     },
                   ]}>
                   <Text style={[styles.badgeText, {color: '#0D9488'}]}>
-                    {Array.isArray(jsonContent.data) ? `Array[${jsonContent.data.length}]` : `Object{${Object.keys(jsonContent.data).length}}`}
+                    {Array.isArray(jsonContent.data)
+                      ? `Array[${jsonContent.data.length}]`
+                      : `Object{${Object.keys(jsonContent.data).length}}`}
                   </Text>
                 </View>
               )}
@@ -326,7 +371,11 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                       borderWidth: 1,
                     },
                   ]}>
-                  <Text style={[styles.badgeText, {color: AppColors.grayTextStrong}]}>
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      {color: AppColors.grayTextStrong},
+                    ]}>
                     user-log
                   </Text>
                 </View>
@@ -346,13 +395,21 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   </Text>
                 </View>
               )}
-              <Text style={[styles.serialNumber, {color: AppColors.grayTextWeak}]}>#{item.id + 1}</Text>
-              <Text style={[styles.timestamp, {color: AppColors.grayTextWeak}]}>{formatTime(item.timestamp)}</Text>
+              <Text
+                style={[styles.serialNumber, {color: AppColors.grayTextWeak}]}>
+                #{item.id + 1}
+              </Text>
+              <Text style={[styles.timestamp, {color: AppColors.grayTextWeak}]}>
+                {formatTime(item.timestamp)}
+              </Text>
             </View>
-            
+
             {caller && caller !== 'Unknown' && (
               <Text
-                style={[styles.callerText, {color: AppColors.grayTextWeak, marginRight: 4}]}
+                style={[
+                  styles.callerText,
+                  {color: AppColors.grayTextWeak, marginRight: 4},
+                ]}
                 numberOfLines={1}
                 ellipsizeMode="middle">
                 {caller.split('/').pop() || caller}
@@ -360,11 +417,18 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             )}
           </View>
 
-          <View style={[styles.cardBody, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.dividerColor}]}>
+          <View
+            style={[
+              styles.cardBody,
+              {
+                backgroundColor: AppColors.primaryLight,
+                borderColor: AppColors.dividerColor,
+              },
+            ]}>
             {jsonContent ? (
               <>
                 {jsonContent.header ? (
-                  <Pressable onPress={() => setExpanded(prev => !prev)}>
+                  <Pressable onPress={toggleExpanded}>
                     {getLogMessageWithBadges(
                       jsonContent.header,
                       searchStr,
@@ -375,7 +439,14 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   </Pressable>
                 ) : null}
                 {expanded ? (
-                  <View style={[styles.jsonContainer, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.dividerColor}]}>
+                  <View
+                    style={[
+                      styles.jsonContainer,
+                      {
+                        backgroundColor: AppColors.grayBackground,
+                        borderColor: AppColors.dividerColor,
+                      },
+                    ]}>
                     <JsonViewer
                       data={jsonContent.data}
                       search={searchStr}
@@ -384,12 +455,21 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   </View>
                 ) : (
                   <Pressable
-                    onPress={() => setExpanded(prev => !prev)}
-                    style={[styles.jsonPreviewContainer, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.dividerColor}]}>
+                    onPress={toggleExpanded}
+                    style={[
+                      styles.jsonPreviewContainer,
+                      {
+                        backgroundColor: AppColors.grayBackground,
+                        borderColor: AppColors.dividerColor,
+                      },
+                    ]}>
                     <HighlightText
                       text={getJsonPreviewText(jsonContent.data).text}
                       search={searchStr}
-                      style={[styles.jsonPreviewText, {color: AppColors.primaryBlack}]}
+                      style={[
+                        styles.jsonPreviewText,
+                        {color: AppColors.primaryBlack},
+                      ]}
                       highlightStyle={styles.highlight}
                       detectLinks={true}
                     />
@@ -397,7 +477,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                 )}
               </>
             ) : (
-              <Pressable onPress={() => setExpanded(prev => !prev)}>
+              <Pressable onPress={toggleExpanded}>
                 {getLogMessageWithBadges(
                   item.message,
                   searchStr,
@@ -409,7 +489,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             )}
             {hasLongMessage && (
               <Pressable
-                onPress={() => setExpanded(prev => !prev)}
+                onPress={toggleExpanded}
                 style={styles.seeMoreBtn}
                 hitSlop={8}>
                 <Text style={styles.seeMoreText}>
@@ -420,15 +500,47 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           </View>
 
           {expanded && (
-            <View style={[styles.cardFooter, {borderTopColor: AppColors.dividerColor, gap: 6}]}>
-              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10.5, color: AppColors.grayTextWeak}}>
-                  Length: {item.message.length} chars • Size: {encodeURIComponent(item.message).replace(/%[0-9A-F]{2}/g, 'a').length} bytes
+            <View
+              style={[
+                styles.cardFooter,
+                {borderTopColor: AppColors.dividerColor, gap: 6},
+              ]}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 10.5,
+                    color: AppColors.grayTextWeak,
+                  }}>
+                  Length: {item.message.length} chars • Size:{' '}
+                  {
+                    encodeURIComponent(item.message).replace(
+                      /%[0-9A-F]{2}/g,
+                      'a',
+                    ).length
+                  }{' '}
+                  bytes
                 </Text>
               </View>
               {caller && caller !== 'Unknown' && (
-                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4}}>
-                  <Text style={[styles.fullCallerText, {color: AppColors.grayText, flex: 1, marginRight: 8}]} numberOfLines={2}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 4,
+                  }}>
+                  <Text
+                    style={[
+                      styles.fullCallerText,
+                      {color: AppColors.grayText, flex: 1, marginRight: 8},
+                    ]}
+                    numberOfLines={2}>
                     Caller: {caller}
                   </Text>
                   <CopyButton value={caller} label="Caller stack frame" />
@@ -440,7 +552,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 
         {/* Right Isolated Chevron Area */}
         <Pressable
-          onPress={() => setExpanded(prev => !prev)}
+          onPress={toggleExpanded}
           style={{
             width: 28,
             alignItems: 'center',
@@ -449,13 +561,11 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             marginTop: expanded ? 8 : 0,
             height: expanded ? 32 : undefined,
           }}
-          hitSlop={12}
-        >
-          <View style={{transform: [{rotate: expanded ? '180deg' : '0deg'}]}}>
+          hitSlop={12}>
+          <Animated.View style={{transform: [{rotate: chevronRotate}]}}>
             <ChevronIcon size={16} color={AppColors.grayTextWeak} />
-          </View>
+          </Animated.View>
         </Pressable>
-
       </View>
     </View>
   );

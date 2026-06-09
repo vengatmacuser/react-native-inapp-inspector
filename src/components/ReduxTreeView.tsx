@@ -1,12 +1,22 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { AppColors } from '../styles/AppColors';
-import { AppFonts } from '../styles/AppFonts';
-import { ChevronIcon } from './NetworkIcons';
-import Svg, { Path } from 'react-native-svg';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  Animated,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
+} from 'react-native';
+import {AppColors} from '../styles/AppColors';
+import {AppFonts} from '../styles/AppFonts';
+import {ChevronIcon} from './NetworkIcons';
+import Svg, {Path} from 'react-native-svg';
+import AnimatedEntrance from './AnimatedEntrance';
 
 // Custom icons
-const DatabaseIcon = ({ color = AppColors.grayTextWeak, size = 12 }: any) => (
+const DatabaseIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 2C6.5 2 2 4.2 2 7v10c0 2.8 4.5 5 10 5s10-2.2 10-5V7c0-2.8-4.5-5-10-5z"
@@ -32,7 +42,7 @@ const DatabaseIcon = ({ color = AppColors.grayTextWeak, size = 12 }: any) => (
   </Svg>
 );
 
-const BoltIcon = ({ color = AppColors.grayTextWeak, size = 12 }: any) => (
+const BoltIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
@@ -45,7 +55,7 @@ const BoltIcon = ({ color = AppColors.grayTextWeak, size = 12 }: any) => (
   </Svg>
 );
 
-const FolderIcon = ({ color = AppColors.grayTextWeak, size = 12 }: any) => (
+const FolderIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
@@ -57,6 +67,43 @@ const FolderIcon = ({ color = AppColors.grayTextWeak, size = 12 }: any) => (
   </Svg>
 );
 
+const animateTreeLayout = () => {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+};
+
+const AnimatedChevron = ({
+  color,
+  expanded,
+  size,
+  style,
+}: {
+  color: string;
+  expanded: boolean;
+  size: number;
+  style: any;
+}) => {
+  const progress = useRef(new Animated.Value(expanded ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(progress, {
+      toValue: expanded ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [expanded, progress]);
+
+  const rotate = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '90deg'],
+  });
+
+  return (
+    <Animated.View style={[style, {transform: [{rotate}]}]}>
+      <ChevronIcon color={color} size={size} />
+    </Animated.View>
+  );
+};
+
 interface ReduxValueNodeProps {
   name: string | number;
   value: any;
@@ -64,7 +111,7 @@ interface ReduxValueNodeProps {
   search?: string;
 }
 
-const ReduxValueNode = ({ name, value, level, search }: ReduxValueNodeProps) => {
+const ReduxValueNode = ({name, value, level, search}: ReduxValueNodeProps) => {
   const [expanded, setExpanded] = useState(level < 1);
   const isObject = typeof value === 'object' && value !== null;
   const isArray = Array.isArray(value);
@@ -76,7 +123,8 @@ const ReduxValueNode = ({ name, value, level, search }: ReduxValueNodeProps) => 
     if (!search) return true;
     const s = search.toLowerCase();
     if (k.toLowerCase().includes(s)) return true;
-    if (typeof val !== 'object' && String(val).toLowerCase().includes(s)) return true;
+    if (typeof val !== 'object' && String(val).toLowerCase().includes(s))
+      return true;
     if (typeof val === 'object' && val !== null) {
       return Object.keys(val).some(key => matchesSearch(key, val[key]));
     }
@@ -88,8 +136,13 @@ const ReduxValueNode = ({ name, value, level, search }: ReduxValueNodeProps) => 
   }
 
   if (!isObject) {
-    const valStr = value === null ? 'null' : value === undefined ? 'undefined' : String(value);
-    
+    const valStr =
+      value === null
+        ? 'null'
+        : value === undefined
+        ? 'undefined'
+        : String(value);
+
     // Pick different colors for primitives
     let valColor = '#0D9488'; // String
     if (value === null || value === undefined) {
@@ -101,12 +154,14 @@ const ReduxValueNode = ({ name, value, level, search }: ReduxValueNodeProps) => 
     }
 
     return (
-      <View style={[reduxValueStyles.treeRow, { paddingLeft: 12 }]}>
+      <View style={[reduxValueStyles.treeRow, {paddingLeft: 12}]}>
         <View style={reduxValueStyles.treeLeafConnector} />
         <Text style={reduxValueStyles.keyText} selectable={true}>
           {nameStr}
           <Text style={reduxValueStyles.colonText}>: </Text>
-          <Text style={[reduxValueStyles.valText, { color: valColor }]} selectable={true}>
+          <Text
+            style={[reduxValueStyles.valText, {color: valColor}]}
+            selectable={true}>
             {valStr}
           </Text>
         </Text>
@@ -115,15 +170,25 @@ const ReduxValueNode = ({ name, value, level, search }: ReduxValueNodeProps) => 
   }
 
   const keys = Object.keys(value);
-  const summaryText = isArray ? `Array [${keys.length}]` : `Object {${keys.length}}`;
+  const summaryText = isArray
+    ? `Array [${keys.length}]`
+    : `Object {${keys.length}}`;
 
   return (
     <View style={reduxValueStyles.treeNodeBlock}>
-      <Pressable onPress={() => setExpanded(!expanded)} style={reduxValueStyles.treeRow}>
+      <Pressable
+        onPress={() => {
+          animateTreeLayout();
+          setExpanded(!expanded);
+        }}
+        style={reduxValueStyles.treeRow}>
         <View style={reduxValueStyles.treeLeafConnector} />
-        <View style={[reduxValueStyles.chevronWrap, { transform: [{ rotate: expanded ? '90deg' : '0deg' }] }]}>
-          <ChevronIcon color={AppColors.grayTextWeak} size={10} />
-        </View>
+        <AnimatedChevron
+          color={AppColors.grayTextWeak}
+          expanded={expanded}
+          size={10}
+          style={reduxValueStyles.chevronWrap}
+        />
         <Text style={reduxValueStyles.keyText} selectable={true}>
           {nameStr}
           <Text style={reduxValueStyles.colonText}>: </Text>
@@ -157,11 +222,25 @@ export const ReduxTreeView = ({
   search?: string;
 }) => {
   const [storeExpanded, setStoreExpanded] = useState(true);
-  const [reducerExpanded, setReducerExpanded] = useState<Record<string, boolean>>({});
+  const [reducerExpanded, setReducerExpanded] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      UIManager.setLayoutAnimationEnabledExperimental?.(true);
+    }
+  }, []);
 
   if (!state || typeof state !== 'object') {
     return (
-      <Text style={{ fontFamily: AppFonts.interRegular, fontSize: 12, color: AppColors.grayTextWeak, padding: 12 }}>
+      <Text
+        style={{
+          fontFamily: AppFonts.interRegular,
+          fontSize: 12,
+          color: AppColors.grayTextWeak,
+          padding: 12,
+        }}>
         No state object to display.
       </Text>
     );
@@ -170,6 +249,7 @@ export const ReduxTreeView = ({
   const reducers = Object.keys(state);
 
   const toggleReducer = (key: string) => {
+    animateTreeLayout();
     setReducerExpanded(prev => ({
       ...prev,
       [key]: !prev[key],
@@ -179,10 +259,18 @@ export const ReduxTreeView = ({
   return (
     <View style={styles.container}>
       {/* Root Node: Store */}
-      <Pressable onPress={() => setStoreExpanded(!storeExpanded)} style={styles.storeHeader}>
-        <View style={[styles.chevronWrap, { transform: [{ rotate: storeExpanded ? '90deg' : '0deg' }] }]}>
-          <ChevronIcon color="#FFFFFF" size={12} />
-        </View>
+      <Pressable
+        onPress={() => {
+          animateTreeLayout();
+          setStoreExpanded(!storeExpanded);
+        }}
+        style={styles.storeHeader}>
+        <AnimatedChevron
+          color="#FFFFFF"
+          expanded={storeExpanded}
+          size={12}
+          style={styles.chevronWrap}
+        />
         <Text style={styles.storeTitle}>🏪 Redux Store</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{reducers.length} Reducers</Text>
@@ -200,14 +288,24 @@ export const ReduxTreeView = ({
             return (
               <View key={reducerKey} style={styles.reducerContainer}>
                 {/* Visual Branch Line for Reducer */}
-                <View style={[styles.reducerVerticalLine, isLastReducer && { bottom: '50%' }]} />
+                <View
+                  style={[
+                    styles.reducerVerticalLine,
+                    isLastReducer && {bottom: '50%'},
+                  ]}
+                />
 
                 {/* Reducer Header */}
-                <Pressable onPress={() => toggleReducer(reducerKey)} style={styles.reducerHeader}>
+                <Pressable
+                  onPress={() => toggleReducer(reducerKey)}
+                  style={styles.reducerHeader}>
                   <View style={styles.reducerHorizontalLine} />
-                  <View style={[styles.chevronWrap, { transform: [{ rotate: isExpanded ? '90deg' : '0deg' }] }]}>
-                    <ChevronIcon color={AppColors.purple} size={10} />
-                  </View>
+                  <AnimatedChevron
+                    color={AppColors.purple}
+                    expanded={isExpanded}
+                    size={10}
+                    style={styles.chevronWrap}
+                  />
                   <View style={styles.iconWrap}>
                     <FolderIcon color={AppColors.purple} size={11} />
                   </View>
@@ -222,25 +320,38 @@ export const ReduxTreeView = ({
                     {/* Node 1: Last Action */}
                     <View style={styles.childItem}>
                       <View style={styles.childHorizontalLine} />
-                      <View style={[styles.iconWrap, { backgroundColor: '#FDF2F8' }]}>
+                      <View
+                        style={[styles.iconWrap, {backgroundColor: '#FDF2F8'}]}>
                         <BoltIcon color="#DB2777" size={11} />
                       </View>
-                      <View style={{ flex: 1 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                      <View style={{flex: 1}}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                          }}>
                           <Text style={styles.childLabel}>Last Action:</Text>
                           {lastAction ? (
                             <View style={styles.actionTypeBadge}>
-                              <Text style={styles.actionTypeText}>{lastAction.type}</Text>
+                              <Text style={styles.actionTypeText}>
+                                {lastAction.type}
+                              </Text>
                             </View>
                           ) : (
-                            <Text style={styles.noActionText}>None dispatched</Text>
+                            <Text style={styles.noActionText}>
+                              None dispatched
+                            </Text>
                           )}
                         </View>
                         {lastAction && (
-                          <Text style={styles.timestampText}>Dispatched: {lastAction.timestamp}</Text>
+                          <Text style={styles.timestampText}>
+                            Dispatched: {lastAction.timestamp}
+                          </Text>
                         )}
                         {lastAction && lastAction.payload !== null && (
-                          <View style={{ marginTop: 6 }}>
+                          <View style={{marginTop: 6}}>
                             <ReduxValueNode
                               name="payload"
                               value={lastAction.payload}
@@ -254,13 +365,16 @@ export const ReduxTreeView = ({
 
                     {/* Node 2: State Data */}
                     <View style={styles.childItem}>
-                      <View style={[styles.childHorizontalLine, { bottom: '50%' }]} />
-                      <View style={[styles.iconWrap, { backgroundColor: '#ECFDF5' }]}>
+                      <View
+                        style={[styles.childHorizontalLine, {bottom: '50%'}]}
+                      />
+                      <View
+                        style={[styles.iconWrap, {backgroundColor: '#ECFDF5'}]}>
                         <DatabaseIcon color="#059669" size={11} />
                       </View>
-                      <View style={{ flex: 1 }}>
+                      <View style={{flex: 1}}>
                         <Text style={styles.childLabel}>State Slice Data</Text>
-                        <View style={{ marginTop: 6 }}>
+                        <View style={{marginTop: 6}}>
                           <ReduxValueNode
                             name="state"
                             value={sliceData}
@@ -299,6 +413,7 @@ export const ReduxActionTimeline = ({
   const [expandedActionId, setExpandedActionId] = useState<number | null>(null);
 
   const toggleExpand = (id: number) => {
+    animateTreeLayout();
     setExpandedActionId(prev => (prev === id ? null : id));
   };
 
@@ -306,7 +421,8 @@ export const ReduxActionTimeline = ({
     if (!search) return true;
     const s = search.toLowerCase();
     if (action.type.toLowerCase().includes(s)) return true;
-    if (action.affectedSlices.some(slice => slice.toLowerCase().includes(s))) return true;
+    if (action.affectedSlices.some(slice => slice.toLowerCase().includes(s)))
+      return true;
     if (action.payload && typeof action.payload === 'object') {
       return JSON.stringify(action.payload).toLowerCase().includes(s);
     }
@@ -316,7 +432,9 @@ export const ReduxActionTimeline = ({
   return (
     <View style={timelineStyles.container}>
       <View style={timelineStyles.headerRow}>
-        <Text style={timelineStyles.headerTitle}>⚡ Dispatched Actions ({filteredHistory.length})</Text>
+        <Text style={timelineStyles.headerTitle}>
+          ⚡ Dispatched Actions ({filteredHistory.length})
+        </Text>
         {history.length > 0 && (
           <Pressable onPress={onClear} style={timelineStyles.clearBtn}>
             <Text style={timelineStyles.clearBtnText}>Clear Log</Text>
@@ -339,9 +457,18 @@ export const ReduxActionTimeline = ({
             const isExpanded = expandedActionId === item.id;
 
             return (
-              <View key={item.id} style={timelineStyles.timelineItem}>
+              <AnimatedEntrance
+                key={item.id}
+                index={index}
+                distance={8}
+                style={timelineStyles.timelineItem}>
                 {/* Visual Line */}
-                <View style={[timelineStyles.verticalLine, isLast && { bottom: '50%' }]} />
+                <View
+                  style={[
+                    timelineStyles.verticalLine,
+                    isLast && {bottom: '50%'},
+                  ]}
+                />
                 <View style={timelineStyles.circleIndicator}>
                   <View style={timelineStyles.circleInner} />
                 </View>
@@ -351,14 +478,18 @@ export const ReduxActionTimeline = ({
                   onPress={() => toggleExpand(item.id)}
                   style={[
                     timelineStyles.card,
-                    isExpanded && { borderColor: AppColors.purple, backgroundColor: AppColors.purpleShade50 },
-                  ]}
-                >
+                    isExpanded && {
+                      borderColor: AppColors.purple,
+                      backgroundColor: AppColors.purpleShade50,
+                    },
+                  ]}>
                   <View style={timelineStyles.cardHeader}>
                     <View style={timelineStyles.typeBadge}>
                       <Text style={timelineStyles.typeText}>{item.type}</Text>
                     </View>
-                    <Text style={timelineStyles.timestamp}>{item.timestamp}</Text>
+                    <Text style={timelineStyles.timestamp}>
+                      {item.timestamp}
+                    </Text>
                   </View>
 
                   {item.affectedSlices.length > 0 && (
@@ -375,7 +506,8 @@ export const ReduxActionTimeline = ({
                   {isExpanded && (
                     <View style={timelineStyles.payloadContainer}>
                       <Text style={timelineStyles.payloadTitle}>Payload</Text>
-                      {item.payload !== null && typeof item.payload === 'object' ? (
+                      {item.payload !== null &&
+                      typeof item.payload === 'object' ? (
                         <ReduxValueNode
                           name="action.payload"
                           value={item.payload}
@@ -384,13 +516,15 @@ export const ReduxActionTimeline = ({
                         />
                       ) : (
                         <Text style={timelineStyles.primitivePayload}>
-                          {item.payload === null ? 'null' : String(item.payload)}
+                          {item.payload === null
+                            ? 'null'
+                            : String(item.payload)}
                         </Text>
                       )}
                     </View>
                   )}
                 </Pressable>
-              </View>
+              </AnimatedEntrance>
             );
           })}
         </View>

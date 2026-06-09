@@ -15,6 +15,23 @@ const TouchableScale = ({
   disabled?: boolean;
 }) => {
   const scale = useRef(new Animated.Value(1)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  const animatePress = (pressed: boolean) => {
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue: pressed ? 0.94 : 1,
+        friction: 6,
+        tension: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: pressed ? 0.86 : 1,
+        duration: pressed ? 90 : 140,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const flattenedStyle = StyleSheet.flatten(style) || {};
   const layoutStyle = {
@@ -33,15 +50,11 @@ const TouchableScale = ({
     <Pressable
       disabled={disabled}
       style={style}
-      onPressIn={() =>
-        Animated.spring(scale, {toValue: 0.94, useNativeDriver: true}).start()
-      }
-      onPressOut={() =>
-        Animated.spring(scale, {toValue: 1, useNativeDriver: true}).start()
-      }
+      onPressIn={() => animatePress(true)}
+      onPressOut={() => animatePress(false)}
       onPress={onPress}
       hitSlop={hitSlop}>
-      <Animated.View style={[{transform: [{scale}]}, layoutStyle]}>
+      <Animated.View style={[{opacity, transform: [{scale}]}, layoutStyle]}>
         {children}
       </Animated.View>
     </Pressable>

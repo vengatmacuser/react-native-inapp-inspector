@@ -4,6 +4,7 @@ import {
   Animated,
   StyleSheet,
   FlatList,
+  LayoutAnimation,
   Modal,
   Platform,
   Pressable,
@@ -17,6 +18,7 @@ import {
   ActivityIndicator,
   StatusBar,
   TouchableOpacity,
+  UIManager,
   LogBox,
 } from 'react-native';
 import Svg, {Circle, Path} from 'react-native-svg';
@@ -40,6 +42,7 @@ import SourcePageCard from './components/SourcePageCard';
 import {ConsoleLogCard} from './components/ConsoleLogCard';
 import HighlightText from './components/HighlightText';
 import CodeSnippet from './components/CodeSnippet';
+import AnimatedEntrance from './components/AnimatedEntrance';
 
 // Helpers
 import {
@@ -235,6 +238,10 @@ interface NetworkInspectorProps {
   enabled?: boolean;
 }
 
+const animateNextLayout = () => {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+};
+
 const NetworkInspector = ({
   enabled = true,
 }: NetworkInspectorProps): React.JSX.Element => {
@@ -424,13 +431,20 @@ const NetworkInspector = ({
       const nextVal = !prev[key];
       const newVisibility = {...prev, [key]: nextVal};
       if (!nextVal && activeTab === key) {
+        animateNextLayout();
         setActiveTab('apis');
       }
       return newVisibility;
     });
   };
 
+  const switchActiveTab = useCallback((key: ActiveTab) => {
+    animateNextLayout();
+    setActiveTab(key);
+  }, []);
+
   const navigateFromDashboard = (key: ActiveTab) => {
+    animateNextLayout();
     setTabVisibility(prev => ({...prev, [key]: true}));
     setActiveTab(key);
   };
@@ -512,6 +526,12 @@ const NetworkInspector = ({
   const badgeAnim = useRef(new Animated.Value(1)).current;
   const activePulseAnim = useRef(new Animated.Value(0.4)).current;
   const unreadPulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      UIManager.setLayoutAnimationEnabledExperimental?.(true);
+    }
+  }, []);
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -1066,6 +1086,7 @@ const NetworkInspector = ({
   }, [filteredAnalyticsEvents]);
 
   function closeModal() {
+    animateNextLayout();
     setVisible(false);
     setSelected(null);
     setSelectedEvent(null);
@@ -1201,26 +1222,28 @@ const NetworkInspector = ({
   }, []);
 
   const renderItem = useCallback(
-    ({item}: {item: GroupedListItem}) => {
+    ({item, index}: {item: GroupedListItem; index: number}) => {
       if (item.type === 'header') {
         return (
-          <DomainHeader
-            pageName={item.pageName}
-            color={item.color}
-            stats={item.stats}
-            activeFilters={item.activeFilters}
-            onToggleFilter={toggleSectionFilter}
-            isCollapsed={item.isCollapsed}
-            onToggleCollapse={toggleSectionCollapse}
-            isFirst={item.isFirst}
-            timestamp={item.timestamp}
-          />
+          <AnimatedEntrance index={index} distance={8}>
+            <DomainHeader
+              pageName={item.pageName}
+              color={item.color}
+              stats={item.stats}
+              activeFilters={item.activeFilters}
+              onToggleFilter={toggleSectionFilter}
+              isCollapsed={item.isCollapsed}
+              onToggleCollapse={toggleSectionCollapse}
+              isFirst={item.isFirst}
+              timestamp={item.timestamp}
+            />
+          </AnimatedEntrance>
         );
       }
 
       const {log, isLast, color} = item;
       return (
-        <View style={styles.treeNodeRow}>
+        <AnimatedEntrance index={index} distance={8} style={styles.treeNodeRow}>
           <View style={styles.treeLines}>
             <View
               style={[
@@ -1238,14 +1261,17 @@ const NetworkInspector = ({
               item={log}
               isSelected={selectedLogs.has(log.id)}
               onToggleSelect={toggleSelect}
-              onPress={() => setSelected(log)}
+              onPress={() => {
+                animateNextLayout();
+                setSelected(log);
+              }}
               timelineMinStart={minStart}
               timelineTotalRange={totalRange}
               isNew={newLogIds.has(log.id)}
               searchStr={search}
             />
           </View>
-        </View>
+        </AnimatedEntrance>
       );
     },
     [
@@ -1282,8 +1308,9 @@ const NetworkInspector = ({
             <View style={[styles.header, {paddingHorizontal: 16, gap: 12}]}>
               <TouchableScale
                 onPress={() => {
+                  animateNextLayout();
                   setSettingsPage(null);
-                  setActiveTab('apis');
+                  switchActiveTab('apis');
                 }}
                 hitSlop={12}
                 style={{
@@ -1532,7 +1559,10 @@ const NetworkInspector = ({
 
                       {/* Settings gear icon next to label */}
                       <TouchableScale
-                        onPress={() => setSettingsPage(tab.key)}
+                        onPress={() => {
+                          animateNextLayout();
+                          setSettingsPage(tab.key);
+                        }}
                         hitSlop={8}
                         style={{
                           marginLeft: 4,
@@ -1692,7 +1722,10 @@ const NetworkInspector = ({
       );
     }
 
-    const goBackToMain = () => setSettingsPage('main');
+    const goBackToMain = () => {
+      animateNextLayout();
+      setSettingsPage('main');
+    };
 
     const renderSubHeader = (
       title: string,
@@ -2475,7 +2508,7 @@ const NetworkInspector = ({
         {tabVisibility.apis && (
           <TouchableScale
             style={styles.dashboardModuleCard}
-            onPress={() => setActiveTab('apis')}>
+            onPress={() => switchActiveTab('apis')}>
             <View style={styles.dashboardModuleHeader}>
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
@@ -2523,7 +2556,7 @@ const NetworkInspector = ({
         {tabVisibility.logs && (
           <TouchableScale
             style={styles.dashboardModuleCard}
-            onPress={() => setActiveTab('logs')}>
+            onPress={() => switchActiveTab('logs')}>
             <View style={styles.dashboardModuleHeader}>
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
@@ -2571,7 +2604,7 @@ const NetworkInspector = ({
         {tabVisibility.analytics && (
           <TouchableScale
             style={styles.dashboardModuleCard}
-            onPress={() => setActiveTab('analytics')}>
+            onPress={() => switchActiveTab('analytics')}>
             <View style={styles.dashboardModuleHeader}>
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
@@ -2613,7 +2646,7 @@ const NetworkInspector = ({
         {tabVisibility.webview && (
           <TouchableScale
             style={styles.dashboardModuleCard}
-            onPress={() => setActiveTab('webview')}>
+            onPress={() => switchActiveTab('webview')}>
             <View style={styles.dashboardModuleHeader}>
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
@@ -2653,7 +2686,7 @@ const NetworkInspector = ({
         {tabVisibility.redux && (
           <TouchableScale
             style={styles.dashboardModuleCard}
-            onPress={() => setActiveTab('redux')}>
+            onPress={() => switchActiveTab('redux')}>
             <View style={styles.dashboardModuleHeader}>
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
@@ -2839,7 +2872,10 @@ const NetworkInspector = ({
             borderColor: AppColors.dividerColor,
           }}>
           <TouchableOpacity
-            onPress={() => setReduxActiveSubTab('timeline')}
+            onPress={() => {
+              animateNextLayout();
+              setReduxActiveSubTab('timeline');
+            }}
             style={{
               flex: 1,
               paddingVertical: 6,
@@ -2864,7 +2900,10 @@ const NetworkInspector = ({
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => setReduxActiveSubTab('tree')}
+            onPress={() => {
+              animateNextLayout();
+              setReduxActiveSubTab('tree');
+            }}
             style={{
               flex: 1,
               paddingVertical: 6,
@@ -3016,6 +3055,7 @@ const NetworkInspector = ({
                       <TouchableScale
                         onPress={() => {
                           requestAnimationFrame(() => {
+                            animateNextLayout();
                             setSelected(null);
                             setSelectedEvent(null);
                           });
@@ -3285,7 +3325,7 @@ const NetworkInspector = ({
                               key={tab.key}
                               onPress={() => {
                                 requestAnimationFrame(() => {
-                                  setActiveTab(tab.key);
+                                  switchActiveTab(tab.key);
                                 });
                               }}
                               style={[
@@ -3447,7 +3487,10 @@ const NetworkInspector = ({
                               elevation: 2,
                             },
                           ]}
-                          onPress={() => setAnalyticsSubTab('ga_events')}>
+                          onPress={() => {
+                            animateNextLayout();
+                            setAnalyticsSubTab('ga_events');
+                          }}>
                           <Text
                             style={[
                               {
@@ -3484,7 +3527,10 @@ const NetworkInspector = ({
                               elevation: 2,
                             },
                           ]}
-                          onPress={() => setAnalyticsSubTab('top_events')}>
+                          onPress={() => {
+                            animateNextLayout();
+                            setAnalyticsSubTab('top_events');
+                          }}>
                           <Text
                             style={[
                               {
@@ -3523,11 +3569,13 @@ const NetworkInspector = ({
                           styles.listContent,
                           {paddingHorizontal: 16, paddingTop: 16},
                         ]}
-                        renderItem={({item: [name, count]}) => {
+                        renderItem={({item: [name, count], index}) => {
                           const maxCount = topEventsArray[0]?.[1] || 1;
                           const color = getEventColor(name);
                           return (
-                            <View
+                            <AnimatedEntrance
+                              index={index}
+                              distance={8}
                               style={[
                                 styles.analyticsTopEventsCard,
                                 {marginBottom: 12, paddingVertical: 16},
@@ -3592,7 +3640,7 @@ const NetworkInspector = ({
                                   {count}
                                 </Text>
                               </View>
-                            </View>
+                            </AnimatedEntrance>
                           );
                         }}
                         ListEmptyComponent={
@@ -3624,42 +3672,47 @@ const NetworkInspector = ({
                           const showTimestamp =
                             index === 0 || thisMin !== nextMin;
                           return (
-                            <AnalyticsEventCard
-                              event={item}
-                              onPress={() => setSelectedEvent(item)}
-                              isNew={newEventIds.has(item.id)}
-                              searchStr={analyticsSearch}
-                              isFirst={index === 0}
-                              isLast={
-                                index === filteredAnalyticsEvents.length - 1
-                              }
-                              msSincePrev={msSincePrev}
-                              showTimestamp={showTimestamp}
-                              computedScreenName={(() => {
-                                let screenName =
-                                  item.screenName ||
-                                  item.screenClass ||
-                                  item.pageTitle ||
-                                  item.pageLocation ||
-                                  item.params?.firebase_screen ||
-                                  item.params?.screen_name ||
-                                  item.params?.firebase_screen_class ||
-                                  item.params?.screen_class;
-                                const routeInfo = logRouteMapRef.current.get(
-                                  item.id + 1000000,
-                                );
-                                if (!screenName) {
-                                  if (
-                                    routeInfo &&
-                                    routeInfo.path !== 'Navigators'
-                                  ) {
-                                    const parts = routeInfo.path.split(' ➔ ');
-                                    screenName = parts[parts.length - 1];
-                                  }
+                            <AnimatedEntrance index={index} distance={8}>
+                              <AnalyticsEventCard
+                                event={item}
+                                onPress={() => {
+                                  animateNextLayout();
+                                  setSelectedEvent(item);
+                                }}
+                                isNew={newEventIds.has(item.id)}
+                                searchStr={analyticsSearch}
+                                isFirst={index === 0}
+                                isLast={
+                                  index === filteredAnalyticsEvents.length - 1
                                 }
-                                return screenName;
-                              })()}
-                            />
+                                msSincePrev={msSincePrev}
+                                showTimestamp={showTimestamp}
+                                computedScreenName={(() => {
+                                  let screenName =
+                                    item.screenName ||
+                                    item.screenClass ||
+                                    item.pageTitle ||
+                                    item.pageLocation ||
+                                    item.params?.firebase_screen ||
+                                    item.params?.screen_name ||
+                                    item.params?.firebase_screen_class ||
+                                    item.params?.screen_class;
+                                  const routeInfo = logRouteMapRef.current.get(
+                                    item.id + 1000000,
+                                  );
+                                  if (!screenName) {
+                                    if (
+                                      routeInfo &&
+                                      routeInfo.path !== 'Navigators'
+                                    ) {
+                                      const parts = routeInfo.path.split(' ➔ ');
+                                      screenName = parts[parts.length - 1];
+                                    }
+                                  }
+                                  return screenName;
+                                })()}
+                              />
+                            </AnimatedEntrance>
                           );
                         }}
                         initialNumToRender={20}
@@ -4290,8 +4343,10 @@ const NetworkInspector = ({
                             );
                           }
                         })()}
-                        renderItem={({item}) => (
-                          <ConsoleLogCard item={item} searchStr={logSearch} />
+                        renderItem={({item, index}) => (
+                          <AnimatedEntrance index={index} distance={8}>
+                            <ConsoleLogCard item={item} searchStr={logSearch} />
+                          </AnimatedEntrance>
                         )}
                         initialNumToRender={15}
                         maxToRenderPerBatch={15}
@@ -4459,7 +4514,10 @@ const NetworkInspector = ({
                                   borderColor: AppColors.purple,
                                 },
                               ]}
-                              onPress={() => setWebViewSubTab('preview')}>
+                              onPress={() => {
+                                animateNextLayout();
+                                setWebViewSubTab('preview');
+                              }}>
                               <EyeIcon
                                 color={
                                   webViewSubTab === 'preview'
@@ -4503,7 +4561,10 @@ const NetworkInspector = ({
                                   borderColor: AppColors.purple,
                                 },
                               ]}
-                              onPress={() => setWebViewSubTab('html')}>
+                              onPress={() => {
+                                animateNextLayout();
+                                setWebViewSubTab('html');
+                              }}>
                               <HtmlIcon
                                 color={
                                   webViewSubTab === 'html'
@@ -4547,7 +4608,10 @@ const NetworkInspector = ({
                                   borderColor: AppColors.purple,
                                 },
                               ]}
-                              onPress={() => setWebViewSubTab('navigation')}>
+                              onPress={() => {
+                                animateNextLayout();
+                                setWebViewSubTab('navigation');
+                              }}>
                               <ClockIcon
                                 color={
                                   webViewSubTab === 'navigation'
@@ -4591,7 +4655,10 @@ const NetworkInspector = ({
                                   borderColor: AppColors.purple,
                                 },
                               ]}
-                              onPress={() => setWebViewSubTab('console')}>
+                              onPress={() => {
+                                animateNextLayout();
+                                setWebViewSubTab('console');
+                              }}>
                               <TerminalIcon
                                 color={
                                   webViewSubTab === 'console'
@@ -4707,7 +4774,10 @@ const NetworkInspector = ({
                                       return (
                                         <Pressable
                                           key={tab}
-                                          onPress={() => setHtmlSubTab(tab)}
+                                          onPress={() => {
+                                            animateNextLayout();
+                                            setHtmlSubTab(tab);
+                                          }}
                                           style={{
                                             paddingVertical: 8,
                                             paddingHorizontal: 4,
@@ -4896,7 +4966,9 @@ const NetworkInspector = ({
                                 )}:${String(d.getSeconds()).padStart(2, '0')}`;
                               };
                               return (
-                                <View
+                                <AnimatedEntrance
+                                  index={index}
+                                  distance={8}
                                   style={{
                                     marginHorizontal: 16,
                                     marginVertical: 6,
@@ -5019,7 +5091,7 @@ const NetworkInspector = ({
                                     </View>
                                   </View>
                                   <CopyButton value={item.url} label="URL" />
-                                </View>
+                                </AnimatedEntrance>
                               );
                             }}
                             initialNumToRender={15}
@@ -5104,7 +5176,9 @@ const NetworkInspector = ({
                                     d.getSeconds(),
                                   ).padStart(2, '0')}`;
                                   return (
-                                    <View
+                                    <AnimatedEntrance
+                                      index={item.id}
+                                      distance={8}
                                       style={{
                                         marginHorizontal: 12,
                                         marginVertical: 3,
@@ -5162,7 +5236,7 @@ const NetworkInspector = ({
                                           {item.message}
                                         </Text>
                                       </View>
-                                    </View>
+                                    </AnimatedEntrance>
                                   );
                                 }}
                                 initialNumToRender={20}
@@ -5575,7 +5649,10 @@ const NetworkInspector = ({
                           return (
                             <TouchableOpacity
                               key={tab}
-                              onPress={() => setApiDetailActiveTab(tab)}
+                              onPress={() => {
+                                animateNextLayout();
+                                setApiDetailActiveTab(tab);
+                              }}
                               style={{
                                 flex: 1,
                                 paddingVertical: 6,

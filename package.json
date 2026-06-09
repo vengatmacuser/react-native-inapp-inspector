@@ -30,7 +30,8 @@
   "scripts": {
     "build": "tsc && tsc -p tsconfig.esm.json",
     "watch": "tsc -w",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "publish": "node scripts/publish.js"
   },
   "keywords": [
     "react-native",
