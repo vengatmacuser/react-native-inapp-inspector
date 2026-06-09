@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "1.0.19",
+  "version": "1.0.15",
   "description": "A self-contained network, console, analytics, and webview inspector for React Native applications.",
   "repository": {
     "type": "git",
@@ -30,8 +30,7 @@
   "scripts": {
     "build": "tsc && tsc -p tsconfig.esm.json",
     "watch": "tsc -w",
-    "prepack": "npm run build",
-    "publish": "node scripts/publish.js"
+    "prepack": "npm run build"
   },
   "keywords": [
     "react-native",
