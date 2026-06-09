@@ -1,5 +1,5 @@
 import {StyleSheet, Platform, StatusBar} from 'react-native';
-import AppColors, { updateAppColorsTheme, getThemeColors } from './AppColors';
+import AppColors, {updateAppColorsTheme, getThemeColors} from './AppColors';
 import {AppFonts} from './AppFonts';
 
 export const getRawStyles = (colors: typeof AppColors) => ({
@@ -27,8 +27,9 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   headerTitle: {
     fontFamily: AppFonts.interBold,
     color: colors.primaryLight,
-    fontSize: 18,
+    fontSize: 15,
     letterSpacing: 0.3,
+    paddingBottom: 4,
   },
   headerButtonGroup: {
     flexDirection: 'row',
@@ -153,6 +154,23 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   },
 
   listContent: {paddingBottom: 12},
+  scrollTopBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.purple,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 6,
+    zIndex: 50,
+  },
   detailScroll: {flex: 1},
   detailContent: {paddingHorizontal: 6, paddingTop: 8, paddingBottom: 20},
 
@@ -1321,6 +1339,9 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   },
   headerGradient: {
     width: '100%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
   },
 
   // Status chip used in MetaAccordion
@@ -1596,7 +1617,7 @@ const styles = {} as any;
 const rebuildStyles = (isDark: boolean) => {
   const colors = isDark ? getThemeColors(true) : AppColors;
   const newStyles = getRawStyles(colors);
-  
+
   // Clear old keys and copy new ones
   Object.keys(styles).forEach(key => delete styles[key]);
   Object.assign(styles, newStyles);

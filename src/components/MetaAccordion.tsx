@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Pressable, Text, Animated} from 'react-native';
+import {View, Pressable, Text, Animated, Linking} from 'react-native';
 
 // Constants
 import {DURATION_FAST_MS, DURATION_SLOW_MS} from '../constants';
@@ -69,20 +69,25 @@ const MetaAccordion = ({
             </Text>
           </View>
           <View style={styles.metaDivider} />
-          
+
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <TerminalIcon color={AppColors.grayTextWeak} size={14} />
               <Text style={styles.metaLabel}>Method</Text>
             </View>
-            <View style={[
-              styles.statusChip,
-              {
-                borderColor: 'rgba(107, 78, 255, 0.25)',
-                backgroundColor: 'rgba(107, 78, 255, 0.08)',
-              }
-            ]}>
-              <Text style={[styles.statusText, {color: AppColors.purple, fontFamily: AppFonts.interBold}]}>
+            <View
+              style={[
+                styles.statusChip,
+                {
+                  borderColor: 'rgba(107, 78, 255, 0.25)',
+                  backgroundColor: 'rgba(107, 78, 255, 0.08)',
+                },
+              ]}>
+              <Text
+                style={[
+                  styles.statusText,
+                  {color: AppColors.purple, fontFamily: AppFonts.interBold},
+                ]}>
                 {method || 'GET'}
               </Text>
             </View>
@@ -122,7 +127,9 @@ const MetaAccordion = ({
               <GlobeIcon color={AppColors.grayTextWeak} size={14} />
               <Text style={styles.metaLabel}>Content Type</Text>
             </View>
-            <Text style={styles.metaValue}>{contentType || 'application/json'}</Text>
+            <Text style={styles.metaValue}>
+              {contentType || 'application/json'}
+            </Text>
           </View>
           <View style={styles.metaDivider} />
 
@@ -160,7 +167,7 @@ const MetaAccordion = ({
             </View>
           </View>
           <View style={styles.metaDivider} />
-          
+
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <SizeIcon color={AppColors.grayTextWeak} />
@@ -170,12 +177,32 @@ const MetaAccordion = ({
           </View>
           <View style={styles.metaDivider} />
 
-          <View style={[styles.metaRow, { alignItems: 'flex-start' }]}>
+          <View style={[styles.metaRow, {alignItems: 'flex-start'}]}>
             <View style={styles.metaLabelRow}>
               <GlobeIcon color={AppColors.grayTextWeak} size={14} />
               <Text style={styles.metaLabel}>Full URL</Text>
             </View>
-            <Text selectable={true} numberOfLines={3} ellipsizeMode="tail" style={[styles.metaValue, { fontSize: 11.5, color: AppColors.grayTextWeak, flex: 1, textAlign: 'right', lineHeight: 16 }]}>
+            <Text
+              selectable={true}
+              numberOfLines={3}
+              ellipsizeMode="tail"
+              onPress={() => {
+                if (url) {
+                  Linking.openURL(url).catch(() => {});
+                }
+              }}
+              style={[
+                styles.metaValue,
+                {
+                  fontSize: 11.5,
+                  color: url ? AppColors.purple : AppColors.grayTextWeak,
+                  textDecorationLine: url ? 'underline' : 'none',
+                  fontFamily: AppFonts.interMedium,
+                  flex: 1,
+                  textAlign: 'right',
+                  lineHeight: 16,
+                },
+              ]}>
               {url || '—'}
             </Text>
           </View>

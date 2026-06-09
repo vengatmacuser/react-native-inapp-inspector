@@ -6,6 +6,8 @@ import {
   FlatList,
   LayoutAnimation,
   Modal,
+  PanResponder,
+  Dimensions,
   Platform,
   Pressable,
   ScrollView,
@@ -95,6 +97,7 @@ import {
   ResponseIcon,
   HeadersIcon,
   StatusIcon,
+  ChevronIcon,
 } from './components/NetworkIcons';
 
 import ErrorBoundary from './components/ErrorBoundary';
@@ -305,6 +308,8 @@ const NetworkInspector = ({
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
   const [showUiMenu, setShowUiMenu] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  // #7 — sort order for the Logs (console) tab
+  const [logSortOrder, setLogSortOrder] = useState<SortOrder>('newest');
   const [reqExpanded, setReqExpanded] = useState<boolean | undefined>(
     undefined,
   );
@@ -539,6 +544,72 @@ const NetworkInspector = ({
   const badgeAnim = useRef(new Animated.Value(1)).current;
   const activePulseAnim = useRef(new Animated.Value(0.4)).current;
   const unreadPulseAnim = useRef(new Animated.Value(1)).current;
+  // #11 — header "clear all" icon spin/scale animation
+  const clearAnim = useRef(new Animated.Value(0)).current;
+
+  // #4 — draggable floating launcher (drag anywhere on screen)
+  const fabPan = useRef(new Animated.ValueXY({x: 0, y: 0})).current;
+  const fabPanRef = useRef({x: 0, y: 0});
+  useEffect(() => {
+    const idX = fabPan.x.addListener(v => (fabPanRef.current.x = v.value));
+    const idY = fabPan.y.addListener(v => (fabPanRef.current.y = v.value));
+    return () => {
+      fabPan.x.removeListener(idX);
+      fabPan.y.removeListener(idY);
+    };
+  }, [fabPan]);
+  const fabDraggedRef = useRef(false);
+  const fabPanResponder = useRef(
+    PanResponder.create({
+      // Let taps fall through to the launcher; only hijack once the
+      // finger actually moves, so onPress still fires on a tap.
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_e, g) =>
+        Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
+      onPanResponderGrant: () => {
+        fabDraggedRef.current = true;
+        fabPan.setOffset({
+          x: fabPanRef.current.x,
+          y: fabPanRef.current.y,
+        });
+        fabPan.setValue({x: 0, y: 0});
+      },
+      onPanResponderMove: Animated.event([null, {dx: fabPan.x, dy: fabPan.y}], {
+        useNativeDriver: false,
+      }),
+      onPanResponderRelease: () => {
+        fabPan.flattenOffset();
+        // small delay so the trailing tap (if any) is ignored
+        setTimeout(() => {
+          fabDraggedRef.current = false;
+        }, 50);
+      },
+      onPanResponderTerminate: () => {
+        fabPan.flattenOffset();
+        fabDraggedRef.current = false;
+      },
+    }),
+  ).current;
+
+  // #10 — scroll-to-top affordance for the main APIs list
+  const apisListRef = useRef<FlatList<any>>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const runClearAllWithAnimation = useCallback(() => {
+    Animated.sequence([
+      Animated.timing(clearAnim, {
+        toValue: 1,
+        duration: 320,
+        useNativeDriver: true,
+      }),
+      Animated.timing(clearAnim, {
+        toValue: 0,
+        duration: 0,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    handleClearAll();
+  }, [clearAnim]);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -1041,8 +1112,15 @@ const NetworkInspector = ({
       );
     }
 
+    // #7 — apply sort order (newest/oldest first)
+    result = [...result].sort((a, b) =>
+      logSortOrder === 'newest'
+        ? b.timestamp - a.timestamp
+        : a.timestamp - b.timestamp,
+    );
+
     return result;
-  }, [visibleConsoleLogs, logFilters, logSearch]);
+  }, [visibleConsoleLogs, logFilters, logSearch, logSortOrder]);
 
   const filteredWebViewLogs = useMemo(() => {
     let result = webViewLogs;
@@ -1200,6 +1278,26 @@ const NetworkInspector = ({
       );
       return;
     }
+    if (activeTab === 'redux') {
+      Alert.alert(
+        'Clear Redux Timeline',
+        'Are you sure you want to clear the dispatched action history?',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {
+            text: 'Clear All',
+            onPress: () => {
+              clearActionHistory();
+              setReduxActionHistory([]);
+              setReduxLastActionMap({});
+            },
+            style: 'destructive',
+          },
+        ],
+      );
+      return;
+    }
+    // Default: APIs tab. Only clears NETWORK logs — never touches the other tabs.
     if (selectedLogs.size > 0) {
       setLogs(prev => prev.filter(l => !selectedLogs.has(l.id)));
       setSelectedLogs(new Set());
@@ -1209,10 +1307,23 @@ const NetworkInspector = ({
         'Are you sure you want to clear all network logs?',
         [
           {text: 'Cancel', style: 'cancel'},
-          {text: 'Clear All', onPress: handleClearAll, style: 'destructive'},
+          {text: 'Clear All', onPress: clearNetworkOnly, style: 'destructive'},
         ],
       );
     }
+  }
+
+  // Clears ONLY network logs + their derived selection/filter state.
+  function clearNetworkOnly() {
+    clearNetworkLogs();
+    setLogs([]);
+    setSelectedLogs(new Set());
+    setSectionFilters({});
+    setCollapsedSections(new Set());
+    setStatusFilters(new Set());
+    setMethodFilters(new Set());
+    prevLogIdsRef.current = new Set();
+    logRouteMapRef.current = new Map();
   }
 
   const detailTitle = useMemo(() => {
@@ -1679,7 +1790,7 @@ const NetworkInspector = ({
               })}
             </View>
 
-            {/* Preferences Section */}
+            {/* UI Preferences Section */}
             <View style={{marginTop: 8}}>
               <Text
                 style={{
@@ -1689,7 +1800,7 @@ const NetworkInspector = ({
                   letterSpacing: 0.6,
                   marginBottom: 8,
                 }}>
-                PREFERENCES
+                UI PREFERENCES
               </Text>
               <View
                 style={{
@@ -3272,54 +3383,6 @@ const NetworkInspector = ({
       <ScrollView
         style={styles.detailScroll}
         contentContainerStyle={{paddingBottom: 24}}>
-        {/* Top Summary Card */}
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            padding: 14,
-            marginHorizontal: 16,
-            marginTop: 12,
-            marginBottom: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-          }}>
-          <View
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              backgroundColor: AppColors.purpleShade50,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            <TerminalIcon color={AppColors.purple} size={20} />
-          </View>
-          <View style={{flex: 1}}>
-            <Text
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 13,
-                color: AppColors.primaryBlack,
-              }}>
-              Redux Store Snapshot
-            </Text>
-            <Text
-              style={{
-                fontFamily: AppFonts.interRegular,
-                fontSize: 11,
-                color: AppColors.grayText,
-                marginTop: 2,
-              }}>
-              Total size: {getSize(reduxState)} • {reducerKeys.length} Reducers
-            </Text>
-          </View>
-          <CopyButton value={() => reduxState} label="Overall Store" />
-        </View>
-
         {/* Tab View Selection Segments */}
         <View
           style={{
@@ -3328,6 +3391,7 @@ const NetworkInspector = ({
             borderRadius: 10,
             padding: 3,
             marginHorizontal: 16,
+            marginTop: 12,
             marginBottom: 12,
             borderWidth: 1,
             borderColor: AppColors.dividerColor,
@@ -3374,6 +3438,31 @@ const NetworkInspector = ({
                 }}>
                 Action Timeline
               </Text>
+              <View
+                style={{
+                  minWidth: 18,
+                  paddingHorizontal: 5,
+                  height: 16,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor:
+                    reduxActiveSubTab === 'timeline'
+                      ? 'rgba(255,255,255,0.28)'
+                      : AppColors.dividerColor,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 9,
+                    color:
+                      reduxActiveSubTab === 'timeline'
+                        ? '#FFFFFF'
+                        : AppColors.grayText,
+                  }}>
+                  {actionHistory.length}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
           <TouchableOpacity
@@ -3414,6 +3503,31 @@ const NetworkInspector = ({
                 }}>
                 Store Tree
               </Text>
+              <View
+                style={{
+                  minWidth: 18,
+                  paddingHorizontal: 5,
+                  height: 16,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor:
+                    reduxActiveSubTab === 'tree'
+                      ? 'rgba(255,255,255,0.28)'
+                      : AppColors.dividerColor,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 9,
+                    color:
+                      reduxActiveSubTab === 'tree'
+                        ? '#FFFFFF'
+                        : AppColors.grayText,
+                  }}>
+                  {reducerKeys.length}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         </View>
@@ -3491,29 +3605,36 @@ const NetworkInspector = ({
       {hasNavigationContext && (
         <NavigationTracker onStateChange={setNavState} />
       )}
-      <TouchableScale
-        style={styles.fabWrapper}
-        onPress={() => setVisible(true)}
-        hitSlop={10}>
-        <Animated.View
-          style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
-        />
-        <BrandCircleIcon size={62} />
-        {(logs.length > 0 || analyticsEvents.length > 0) && (
+      <Animated.View
+        style={[styles.fabWrapper, {transform: fabPan.getTranslateTransform()}]}
+        {...fabPanResponder.panHandlers}>
+        <TouchableScale
+          style={{alignItems: 'center', justifyContent: 'center'}}
+          onPress={() => {
+            if (fabDraggedRef.current) return;
+            setVisible(true);
+          }}
+          hitSlop={10}>
           <Animated.View
-            style={[
-              styles.fabBadge,
-              hasErrors ? styles.fabBadgeError : styles.fabBadgeNormal,
-              {transform: [{scale: badgeAnim}]},
-            ]}>
-            <Text style={styles.fabBadgeText}>
-              {logs.length + analyticsEvents.length > 99
-                ? '99+'
-                : logs.length + analyticsEvents.length}
-            </Text>
-          </Animated.View>
-        )}
-      </TouchableScale>
+            style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
+          />
+          <BrandCircleIcon size={62} />
+          {(logs.length > 0 || analyticsEvents.length > 0) && (
+            <Animated.View
+              style={[
+                styles.fabBadge,
+                hasErrors ? styles.fabBadgeError : styles.fabBadgeNormal,
+                {transform: [{scale: badgeAnim}]},
+              ]}>
+              <Text style={styles.fabBadgeText}>
+                {logs.length + analyticsEvents.length > 99
+                  ? '99+'
+                  : logs.length + analyticsEvents.length}
+              </Text>
+            </Animated.View>
+          )}
+        </TouchableScale>
+      </Animated.View>
 
       <Modal visible={visible} animationType="slide" transparent>
         {visible && (
@@ -3559,10 +3680,29 @@ const NetworkInspector = ({
                         }}
                         hitSlop={15}
                         style={[
-                          styles.iconBtnMinimal,
+                          {
+                            width: 38,
+                            height: 38,
+                            borderRadius: 19,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: 'rgba(255,255,255,0.18)',
+                            borderWidth: 1,
+                            borderColor: 'rgba(255,255,255,0.30)',
+                          },
                           selected == null &&
                             selectedEvent == null && {display: 'none'},
                         ]}>
+                        {/* Soft outer glow to fake a blurred circle */}
+                        <View
+                          style={{
+                            position: 'absolute',
+                            width: 48,
+                            height: 48,
+                            borderRadius: 24,
+                            backgroundColor: 'rgba(255,255,255,0.10)',
+                          }}
+                        />
                         <WhiteBackNavigation />
                       </TouchableScale>
 
@@ -3576,8 +3716,8 @@ const NetworkInspector = ({
                           }}>
                           <View
                             style={{
-                              width: 42,
-                              height: 42,
+                              width: 50,
+                              height: 50,
                               borderRadius: 10,
                               backgroundColor: 'rgba(255,255,255,0.13)',
                               borderWidth: 1.5,
@@ -3589,14 +3729,10 @@ const NetworkInspector = ({
                               shadowRadius: 4,
                               shadowOffset: {width: 0, height: 2},
                             }}>
-                            <BrandSquareIcon size={36} />
+                            <BrandSquareIcon size={45} />
                           </View>
                           <View style={{gap: 3}}>
-                            <Text
-                              style={[
-                                styles.headerTitle,
-                                {fontSize: 17, letterSpacing: 0.2},
-                              ]}>
+                            <Text style={[styles.headerTitle]}>
                               RN InApp Inspector
                             </Text>
                             <View
@@ -3722,24 +3858,58 @@ const NetworkInspector = ({
                           </View>
                           <View style={styles.headerDetailSubRow}>
                             <View
-                              style={[
-                                styles.headerStatusDot,
-                                {
-                                  backgroundColor: getStatusColor(
-                                    selected.status,
-                                  ),
-                                },
-                              ]}
-                            />
-                            <Text style={styles.headerSubTitle}>
-                              {selected.status === 0
-                                ? 'Failed'
-                                : selected.status ?? 'Pending'}{' '}
-                              •{' '}
-                              {selected.duration != null
-                                ? `${selected.duration}ms`
-                                : '-'}
-                            </Text>
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 5,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                                borderRadius: 20,
+                                backgroundColor: `${getStatusColor(
+                                  selected.status,
+                                )}26`,
+                                borderWidth: 1,
+                                borderColor: `${getStatusColor(
+                                  selected.status,
+                                )}55`,
+                              }}>
+                              <View
+                                style={[
+                                  styles.headerStatusDot,
+                                  {
+                                    backgroundColor: getStatusColor(
+                                      selected.status,
+                                    ),
+                                  },
+                                ]}
+                              />
+                              <Text
+                                style={[
+                                  styles.headerSubTitle,
+                                  {fontFamily: AppFonts.interBold},
+                                ]}>
+                                {selected.status === 0
+                                  ? 'Failed'
+                                  : selected.status ?? 'Pending'}
+                              </Text>
+                            </View>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                                borderRadius: 20,
+                                backgroundColor: 'rgba(255,255,255,0.16)',
+                              }}>
+                              <ClockIcon color="#FFFFFF" size={11} />
+                              <Text style={styles.headerSubTitle}>
+                                {selected.duration != null
+                                  ? `${selected.duration}ms`
+                                  : '—'}
+                              </Text>
+                            </View>
                           </View>
                         </View>
                       ) : selectedEvent != null ? (
@@ -3793,7 +3963,61 @@ const NetworkInspector = ({
                       ) : null}
                     </View>
 
-                    <View style={styles.headerRight}>
+                    <View
+                      style={[
+                        styles.headerRight,
+                        selected == null &&
+                          selectedEvent == null && {
+                            flexShrink: 0,
+                            minWidth: 116,
+                          },
+                      ]}>
+                      {selected == null && selectedEvent == null && (
+                        <TouchableScale
+                          onPress={() => {
+                            Alert.alert(
+                              'Clear Everything',
+                              'This clears all tabs — APIs, Logs, Analytics, WebView and Redux timeline. Continue?',
+                              [
+                                {text: 'Cancel', style: 'cancel'},
+                                {
+                                  text: 'Clear All',
+                                  onPress: runClearAllWithAnimation,
+                                  style: 'destructive',
+                                },
+                              ],
+                            );
+                          }}
+                          hitSlop={15}
+                          style={[
+                            styles.closeButtonSquare,
+                            {
+                              marginRight: 8,
+                              backgroundColor: 'rgba(255,255,255,0.15)',
+                            },
+                          ]}>
+                          <Animated.View
+                            style={{
+                              transform: [
+                                {
+                                  rotate: clearAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ['0deg', '-25deg'],
+                                  }),
+                                },
+                                {
+                                  scale: clearAnim.interpolate({
+                                    inputRange: [0, 0.5, 1],
+                                    outputRange: [1, 1.25, 1],
+                                  }),
+                                },
+                              ],
+                            }}>
+                            <TrashIcon color="#FFFFFF" size={15} />
+                          </Animated.View>
+                        </TouchableScale>
+                      )}
+
                       {selected == null && selectedEvent == null && (
                         <TouchableScale
                           onPress={() => setSettingsPage('main')}
@@ -4311,263 +4535,296 @@ const NetworkInspector = ({
                       />
                     )
                   ) : activeTab === 'apis' && selected == null ? (
-                    <FlatList
-                      data={groupedData}
-                      keyExtractor={item => item?.id?.toString()}
-                      renderItem={renderItem}
-                      initialNumToRender={10}
-                      maxToRenderPerBatch={10}
-                      windowSize={5}
-                      removeClippedSubviews={true}
-                      ListHeaderComponent={
-                        <View style={{marginTop: 8}}>
-                          <View style={styles.toolbarRow}>
-                            <View style={styles.searchContainer}>
-                              <SearchIcon
-                                color={AppColors.grayTextWeak}
-                                size={16}
-                              />
-                              <TextInput
-                                placeholder="Search endpoints..."
-                                placeholderTextColor={AppColors.grayTextWeak}
-                                value={search}
-                                onChangeText={setSearch}
-                                style={styles.searchInput}
-                                autoCorrect={false}
-                                autoCapitalize="none"
-                              />
-                              {search.length > 0 && (
-                                <Pressable
-                                  onPress={() => setSearch('')}
-                                  hitSlop={10}
-                                  style={styles.clearBtn}>
-                                  <ClearIcon
-                                    color={AppColors.grayTextWeak}
-                                    size={14}
-                                  />
-                                </Pressable>
-                              )}
-                            </View>
-
-                            <View style={styles.toolbarRight}>
-                              <TouchableScale
-                                style={styles.toolbarBtn}
-                                onPress={handleDelete}
-                                hitSlop={10}>
-                                <TrashIcon
-                                  color={AppColors.grayTextStrong}
-                                  size={18}
+                    <View style={{flex: 1}}>
+                      <FlatList
+                        ref={apisListRef}
+                        onScroll={e =>
+                          setShowScrollTop(e.nativeEvent.contentOffset.y > 320)
+                        }
+                        scrollEventThrottle={16}
+                        data={groupedData}
+                        keyExtractor={item => item?.id?.toString()}
+                        renderItem={renderItem}
+                        initialNumToRender={10}
+                        maxToRenderPerBatch={10}
+                        windowSize={5}
+                        removeClippedSubviews={true}
+                        ListHeaderComponent={
+                          <View style={{marginTop: 8}}>
+                            <View style={styles.toolbarRow}>
+                              <View style={styles.searchContainer}>
+                                <SearchIcon
+                                  color={AppColors.grayTextWeak}
+                                  size={16}
                                 />
-                                {selectedLogs.size > 0 && (
-                                  <View style={styles.trashBadge}>
-                                    <Text style={styles.trashBadgeText}>
-                                      {selectedLogs.size}
-                                    </Text>
-                                  </View>
+                                <TextInput
+                                  placeholder="Search endpoints..."
+                                  placeholderTextColor={AppColors.grayTextWeak}
+                                  value={search}
+                                  onChangeText={setSearch}
+                                  style={styles.searchInput}
+                                  autoCorrect={false}
+                                  autoCapitalize="none"
+                                />
+                                {search.length > 0 && (
+                                  <Pressable
+                                    onPress={() => setSearch('')}
+                                    hitSlop={10}
+                                    style={styles.clearBtn}>
+                                    <ClearIcon
+                                      color={AppColors.grayTextWeak}
+                                      size={14}
+                                    />
+                                  </Pressable>
                                 )}
-                              </TouchableScale>
+                              </View>
 
-                              <TouchableScale
-                                style={styles.toolbarBtn}
-                                onPress={() =>
-                                  setSortOrder(o =>
-                                    o === 'newest' ? 'oldest' : 'newest',
-                                  )
-                                }
-                                hitSlop={10}>
-                                <SortArrowIcon
-                                  direction={
-                                    sortOrder === 'newest' ? 'down' : 'up'
-                                  }
-                                  color={AppColors.grayTextStrong}
-                                  size={18}
-                                />
-                              </TouchableScale>
+                              <View style={styles.toolbarRight}>
+                                <TouchableScale
+                                  style={styles.toolbarBtn}
+                                  onPress={handleDelete}
+                                  hitSlop={10}>
+                                  <TrashIcon
+                                    color={AppColors.grayTextStrong}
+                                    size={18}
+                                  />
+                                  {selectedLogs.size > 0 && (
+                                    <View style={styles.trashBadge}>
+                                      <Text style={styles.trashBadgeText}>
+                                        {selectedLogs.size}
+                                      </Text>
+                                    </View>
+                                  )}
+                                </TouchableScale>
 
-                              <TouchableScale
-                                style={[
-                                  styles.toolbarBtn,
-                                  filtersAccordion.isOpen &&
-                                    styles.toolbarBtnActive,
-                                ]}
-                                onPress={filtersAccordion.toggleOpen}
-                                hitSlop={10}>
-                                <FilterIcon
-                                  color={
-                                    filtersAccordion.isOpen
-                                      ? AppColors.purple
-                                      : AppColors.grayTextStrong
+                                <TouchableScale
+                                  style={styles.toolbarBtn}
+                                  onPress={() =>
+                                    setSortOrder(o =>
+                                      o === 'newest' ? 'oldest' : 'newest',
+                                    )
                                   }
-                                  size={18}
-                                />
-                              </TouchableScale>
+                                  hitSlop={10}>
+                                  <SortArrowIcon
+                                    direction={
+                                      sortOrder === 'newest' ? 'down' : 'up'
+                                    }
+                                    color={AppColors.grayTextStrong}
+                                    size={18}
+                                  />
+                                </TouchableScale>
+
+                                <TouchableScale
+                                  style={[
+                                    styles.toolbarBtn,
+                                    filtersAccordion.isOpen &&
+                                      styles.toolbarBtnActive,
+                                  ]}
+                                  onPress={filtersAccordion.toggleOpen}
+                                  hitSlop={10}>
+                                  <FilterIcon
+                                    color={
+                                      filtersAccordion.isOpen
+                                        ? AppColors.purple
+                                        : AppColors.grayTextStrong
+                                    }
+                                    size={18}
+                                  />
+                                </TouchableScale>
+                              </View>
                             </View>
-                          </View>
 
-                          <Animated.View
-                            style={[
-                              filtersAccordion.bodyStyle,
-                              {overflow: 'hidden'},
-                            ]}>
-                            <View style={styles.filtersContainer}>
-                              <Text style={styles.filtersHeading}>STATUS</Text>
-                              <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.statusRowContent}>
-                                {STATUS_FILTERS.map(filter => {
-                                  const isAll = filter === 'ALL';
-                                  const active = isAll
-                                    ? statusFilters.size === 0
-                                    : statusFilters.has(filter);
-                                  return (
-                                    <TouchableScale
-                                      key={filter}
-                                      style={styles.statusFilterWrap}
-                                      onPress={() => {
-                                        if (isAll) {
-                                          setStatusFilters(new Set());
-                                        } else {
-                                          setStatusFilters(prev => {
-                                            const next = new Set(prev);
-                                            next.has(filter)
-                                              ? next.delete(filter)
-                                              : next.add(filter);
-                                            return next;
-                                          });
-                                        }
-                                      }}
-                                      hitSlop={10}>
-                                      {active ? (
-                                        <View
-                                          style={[
-                                            styles.statusFilterChip,
-                                            styles.statusFilterActive,
-                                            {overflow: 'hidden'},
-                                          ]}>
-                                          <LinearGradient
-                                            colors={[
-                                              AppColors.purpleShade50,
-                                              '#EAE5FF',
-                                            ]}
-                                            style={StyleSheet.absoluteFill}
-                                            start={{x: 0, y: 0}}
-                                            end={{x: 1, y: 0}}
-                                          />
-                                          <Text
+                            <Animated.View
+                              style={[
+                                filtersAccordion.bodyStyle,
+                                {overflow: 'hidden'},
+                              ]}>
+                              <View style={styles.filtersContainer}>
+                                <Text style={styles.filtersHeading}>
+                                  STATUS
+                                </Text>
+                                <ScrollView
+                                  horizontal
+                                  showsHorizontalScrollIndicator={false}
+                                  contentContainerStyle={
+                                    styles.statusRowContent
+                                  }>
+                                  {STATUS_FILTERS.map(filter => {
+                                    const isAll = filter === 'ALL';
+                                    const active = isAll
+                                      ? statusFilters.size === 0
+                                      : statusFilters.has(filter);
+                                    return (
+                                      <TouchableScale
+                                        key={filter}
+                                        style={styles.statusFilterWrap}
+                                        onPress={() => {
+                                          if (isAll) {
+                                            setStatusFilters(new Set());
+                                          } else {
+                                            setStatusFilters(prev => {
+                                              const next = new Set(prev);
+                                              next.has(filter)
+                                                ? next.delete(filter)
+                                                : next.add(filter);
+                                              return next;
+                                            });
+                                          }
+                                        }}
+                                        hitSlop={10}>
+                                        {active ? (
+                                          <View
                                             style={[
-                                              styles.statusFilterText,
-                                              {color: AppColors.purple},
+                                              styles.statusFilterChip,
+                                              styles.statusFilterActive,
+                                              {overflow: 'hidden'},
                                             ]}>
-                                            {filter}
-                                          </Text>
-                                        </View>
-                                      ) : (
-                                        <View style={styles.statusFilterChip}>
-                                          <Text style={styles.statusFilterText}>
-                                            {filter}
-                                          </Text>
-                                        </View>
-                                      )}
-                                    </TouchableScale>
-                                  );
-                                })}
-                              </ScrollView>
+                                            <LinearGradient
+                                              colors={[
+                                                AppColors.purpleShade50,
+                                                '#EAE5FF',
+                                              ]}
+                                              style={StyleSheet.absoluteFill}
+                                              start={{x: 0, y: 0}}
+                                              end={{x: 1, y: 0}}
+                                            />
+                                            <Text
+                                              style={[
+                                                styles.statusFilterText,
+                                                {color: AppColors.purple},
+                                              ]}>
+                                              {filter}
+                                            </Text>
+                                          </View>
+                                        ) : (
+                                          <View style={styles.statusFilterChip}>
+                                            <Text
+                                              style={styles.statusFilterText}>
+                                              {filter}
+                                            </Text>
+                                          </View>
+                                        )}
+                                      </TouchableScale>
+                                    );
+                                  })}
+                                </ScrollView>
 
-                              <Text
-                                style={[
-                                  styles.filtersHeading,
-                                  {marginTop: 16},
-                                ]}>
-                                METHOD
+                                <Text
+                                  style={[
+                                    styles.filtersHeading,
+                                    {marginTop: 16},
+                                  ]}>
+                                  METHOD
+                                </Text>
+                                <ScrollView
+                                  horizontal
+                                  showsHorizontalScrollIndicator={false}
+                                  contentContainerStyle={
+                                    styles.statusRowContent
+                                  }>
+                                  {availableMethods.map(filter => {
+                                    const isAll = filter === 'ALL';
+                                    const active = isAll
+                                      ? methodFilters.size === 0
+                                      : methodFilters.has(filter as Method);
+                                    return (
+                                      <TouchableScale
+                                        key={filter}
+                                        style={styles.statusFilterWrap}
+                                        onPress={() => {
+                                          if (isAll) {
+                                            setMethodFilters(new Set());
+                                          } else {
+                                            setMethodFilters(prev => {
+                                              const next = new Set(prev);
+                                              next.has(filter as Method)
+                                                ? next.delete(filter as Method)
+                                                : next.add(filter as Method);
+                                              return next;
+                                            });
+                                          }
+                                        }}
+                                        hitSlop={10}>
+                                        {active ? (
+                                          <View
+                                            style={[
+                                              styles.statusFilterChip,
+                                              styles.statusFilterActive,
+                                              {overflow: 'hidden'},
+                                            ]}>
+                                            <LinearGradient
+                                              colors={[
+                                                AppColors.purpleShade50,
+                                                '#EAE5FF',
+                                              ]}
+                                              style={StyleSheet.absoluteFill}
+                                              start={{x: 0, y: 0}}
+                                              end={{x: 1, y: 0}}
+                                            />
+                                            <Text
+                                              style={[
+                                                styles.statusFilterText,
+                                                {color: AppColors.purple},
+                                              ]}>
+                                              {filter}
+                                            </Text>
+                                          </View>
+                                        ) : (
+                                          <View style={styles.statusFilterChip}>
+                                            <Text
+                                              style={styles.statusFilterText}>
+                                              {filter}
+                                            </Text>
+                                          </View>
+                                        )}
+                                      </TouchableScale>
+                                    );
+                                  })}
+                                </ScrollView>
+                              </View>
+                            </Animated.View>
+
+                            {(search ||
+                              statusFilters.size > 0 ||
+                              methodFilters.size > 0) && (
+                              <Text style={styles.resultCount}>
+                                {filteredLogs.length === logs.length
+                                  ? `${logs.length} requests`
+                                  : `${filteredLogs.length} of ${logs.length} filtered requests`}
                               </Text>
-                              <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.statusRowContent}>
-                                {availableMethods.map(filter => {
-                                  const isAll = filter === 'ALL';
-                                  const active = isAll
-                                    ? methodFilters.size === 0
-                                    : methodFilters.has(filter as Method);
-                                  return (
-                                    <TouchableScale
-                                      key={filter}
-                                      style={styles.statusFilterWrap}
-                                      onPress={() => {
-                                        if (isAll) {
-                                          setMethodFilters(new Set());
-                                        } else {
-                                          setMethodFilters(prev => {
-                                            const next = new Set(prev);
-                                            next.has(filter as Method)
-                                              ? next.delete(filter as Method)
-                                              : next.add(filter as Method);
-                                            return next;
-                                          });
-                                        }
-                                      }}
-                                      hitSlop={10}>
-                                      {active ? (
-                                        <View
-                                          style={[
-                                            styles.statusFilterChip,
-                                            styles.statusFilterActive,
-                                            {overflow: 'hidden'},
-                                          ]}>
-                                          <LinearGradient
-                                            colors={[
-                                              AppColors.purpleShade50,
-                                              '#EAE5FF',
-                                            ]}
-                                            style={StyleSheet.absoluteFill}
-                                            start={{x: 0, y: 0}}
-                                            end={{x: 1, y: 0}}
-                                          />
-                                          <Text
-                                            style={[
-                                              styles.statusFilterText,
-                                              {color: AppColors.purple},
-                                            ]}>
-                                            {filter}
-                                          </Text>
-                                        </View>
-                                      ) : (
-                                        <View style={styles.statusFilterChip}>
-                                          <Text style={styles.statusFilterText}>
-                                            {filter}
-                                          </Text>
-                                        </View>
-                                      )}
-                                    </TouchableScale>
-                                  );
-                                })}
-                              </ScrollView>
-                            </View>
-                          </Animated.View>
-
-                          {(search ||
-                            statusFilters.size > 0 ||
-                            methodFilters.size > 0) && (
-                            <Text style={styles.resultCount}>
-                              {filteredLogs.length === logs.length
-                                ? `${logs.length} requests`
-                                : `${filteredLogs.length} of ${logs.length} filtered requests`}
-                            </Text>
-                          )}
-                        </View>
-                      }
-                      ListEmptyComponent={
-                        <EmptyState
-                          isSearch={search.length > 0 || statusFilters.size > 0}
-                        />
-                      }
-                      contentContainerStyle={[
-                        styles.listContent,
-                        filteredLogs.length === 0 && {flexGrow: 1},
-                      ]}
-                      keyboardShouldPersistTaps="handled"
-                    />
+                            )}
+                          </View>
+                        }
+                        ListEmptyComponent={
+                          <EmptyState
+                            isSearch={
+                              search.length > 0 || statusFilters.size > 0
+                            }
+                          />
+                        }
+                        contentContainerStyle={[
+                          styles.listContent,
+                          filteredLogs.length === 0 && {flexGrow: 1},
+                        ]}
+                        keyboardShouldPersistTaps="handled"
+                      />
+                      {showScrollTop && (
+                        <TouchableScale
+                          onPress={() => {
+                            apisListRef.current?.scrollToOffset({
+                              offset: 0,
+                              animated: true,
+                            });
+                            setShowScrollTop(false);
+                          }}
+                          hitSlop={10}
+                          style={styles.scrollTopBtn}>
+                          <View style={{transform: [{rotate: '180deg'}]}}>
+                            <ChevronIcon color="#FFFFFF" size={18} />
+                          </View>
+                        </TouchableScale>
+                      )}
+                    </View>
                   ) : activeTab === 'logs' ? (
                     <View style={{flex: 1}}>
                       <View
@@ -4610,6 +4867,22 @@ const NetworkInspector = ({
                           </View>
 
                           <View style={styles.toolbarRight}>
+                            <TouchableScale
+                              style={styles.toolbarBtn}
+                              onPress={() =>
+                                setLogSortOrder(o =>
+                                  o === 'newest' ? 'oldest' : 'newest',
+                                )
+                              }
+                              hitSlop={10}>
+                              <SortArrowIcon
+                                color={AppColors.grayTextStrong}
+                                size={18}
+                                direction={
+                                  logSortOrder === 'newest' ? 'down' : 'up'
+                                }
+                              />
+                            </TouchableScale>
                             <TouchableScale
                               style={styles.toolbarBtn}
                               onPress={handleDelete}
@@ -6462,6 +6735,7 @@ const NetworkInspector = ({
                                   data={selected.response}
                                   search={detailSearch}
                                   forceOpen={resExpanded}
+                                  wrap
                                 />
                               )}
                             </View>

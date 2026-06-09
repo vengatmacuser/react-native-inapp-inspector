@@ -11,9 +11,60 @@ import {
 } from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
-import {ChevronIcon} from './NetworkIcons';
+import {ChevronIcon, CopyIcon, CheckIcon} from './NetworkIcons';
 import Svg, {Path} from 'react-native-svg';
 import AnimatedEntrance from './AnimatedEntrance';
+import {copyToClipboard} from '../helpers';
+
+// #15 — copy-to-clipboard control for a single dispatched action
+const ActionCopyButton = ({value}: {value: () => unknown}) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Pressable
+      hitSlop={10}
+      onPress={() => {
+        copyToClipboard(value(), 'Action');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1200);
+      }}
+      style={{
+        width: 26,
+        height: 26,
+        borderRadius: 7,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: copied
+          ? `${AppColors.greenColor}1A`
+          : AppColors.grayBackground,
+        borderWidth: 1,
+        borderColor: AppColors.dividerColor,
+      }}>
+      {copied ? (
+        <CheckIcon color={AppColors.greenColor} size={13} />
+      ) : (
+        <CopyIcon color={AppColors.grayTextWeak} size={13} />
+      )}
+    </Pressable>
+  );
+};
+
+// #15 — derive the redux module / folder name from an action type.
+// Supports RTK slice convention ("booking/setDate" -> "Booking") and
+// falls back to the first affected slice.
+const getActionModule = (
+  type: string,
+  affectedSlices: string[],
+): string | null => {
+  if (type && type.includes('/')) {
+    const prefix = type.split('/')[0];
+    if (prefix) return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+  if (affectedSlices && affectedSlices.length > 0) {
+    const s = affectedSlices[0];
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  return null;
+};
 
 // Custom icons
 const DatabaseIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
@@ -577,12 +628,60 @@ export const ReduxActionTimeline = ({
                     },
                   ]}>
                   <View style={timelineStyles.cardHeader}>
-                    <View style={timelineStyles.typeBadge}>
-                      <Text style={timelineStyles.typeText}>{item.type}</Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        flex: 1,
+                      }}>
+                      {(() => {
+                        const moduleName = getActionModule(
+                          item.type,
+                          item.affectedSlices,
+                        );
+                        return moduleName ? (
+                          <View
+                            style={{
+                              paddingHorizontal: 7,
+                              paddingVertical: 2,
+                              borderRadius: 6,
+                              backgroundColor: `${AppColors.purple}14`,
+                              borderWidth: 1,
+                              borderColor: `${AppColors.purple}33`,
+                            }}>
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 9.5,
+                                color: AppColors.purple,
+                                letterSpacing: 0.2,
+                              }}>
+                              {moduleName}
+                            </Text>
+                          </View>
+                        ) : null;
+                      })()}
+                      <View style={timelineStyles.typeBadge}>
+                        <Text style={timelineStyles.typeText}>{item.type}</Text>
+                      </View>
                     </View>
-                    <Text style={timelineStyles.timestamp}>
-                      {item.timestamp}
-                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
+                      <Text style={timelineStyles.timestamp}>
+                        {item.timestamp}
+                      </Text>
+                      <ActionCopyButton
+                        value={() => ({
+                          type: item.type,
+                          payload: item.payload,
+                        })}
+                      />
+                    </View>
                   </View>
 
                   {item.affectedSlices.length > 0 && (
