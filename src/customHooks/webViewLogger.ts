@@ -242,7 +242,9 @@ true;
 
 export const WebView = forwardRef((props: any, ref: any) => {
   if (!OriginalWebView) {
-    console.warn('[NetworkInspector] react-native-webview not found. Make sure it is installed.');
+    console.warn(
+      '[NetworkInspector] react-native-webview not found. Make sure it is installed.',
+    );
     return null;
   }
 
@@ -290,10 +292,9 @@ export const WebView = forwardRef((props: any, ref: any) => {
     }
   }, [props.source?.uri]);
 
-  const combinedInjectedJSBefore =
-    props.injectedJavaScriptBeforeContentLoaded
-      ? `${injectJS}\n${props.injectedJavaScriptBeforeContentLoaded}`
-      : injectJS;
+  const combinedInjectedJSBefore = props.injectedJavaScriptBeforeContentLoaded
+    ? `${injectJS}\n${props.injectedJavaScriptBeforeContentLoaded}`
+    : injectJS;
 
   const combinedInjectedJS = props.injectedJavaScript
     ? `${injectJS}\n${props.injectedJavaScript}`
@@ -303,10 +304,10 @@ export const WebView = forwardRef((props: any, ref: any) => {
 
   return React.createElement(
     View,
-    { style: props.style || { flex: 1 } },
+    {style: props.style || {flex: 1}},
     React.createElement(OriginalWebView, {
       ...props,
-      style: { flex: 1 },
+      style: {flex: 1},
       ref: ref,
       injectedJavaScriptBeforeContentLoaded: combinedInjectedJSBefore,
       injectedJavaScript: combinedInjectedJS,
@@ -315,18 +316,23 @@ export const WebView = forwardRef((props: any, ref: any) => {
       onLoadStart: handleLoadStart,
       onLoadEnd: handleLoadEnd,
     }),
-    loading && showLoader && React.createElement(
-      View,
-      {
-        style: {
-          ...StyleSheet.absoluteFill,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    loading &&
+      showLoader &&
+      React.createElement(
+        View,
+        {
+          style: {
+            ...StyleSheet.absoluteFill,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.4)',
+          },
         },
-      },
-      React.createElement(ActivityIndicator, { size: 'large', color: '#684B9B' })
-    )
+        React.createElement(ActivityIndicator, {
+          size: 'large',
+          color: '#684B9B',
+        }),
+      ),
   );
 });
 

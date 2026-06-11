@@ -154,10 +154,11 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   },
 
   listContent: {paddingBottom: 12},
+  // #2 — scroll-to-top button, always shown at the bottom right.
   scrollTopBtn: {
     position: 'absolute',
-    top: 12,
-    right: 16,
+    bottom: 25,
+    right: 15,
     width: 38,
     height: 38,
     borderRadius: 19,
@@ -203,6 +204,22 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     height: 60,
     borderRadius: 30,
     backgroundColor: `${colors.purple}25`,
+  },
+  // #4 — circular clipping mask for the FAB shine sweep.
+  fabShineClip: {
+    position: 'absolute',
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    overflow: 'hidden',
+  },
+  // #4 — diagonal light streak that sweeps across the launcher.
+  fabShineStreak: {
+    position: 'absolute',
+    top: -20,
+    width: 26,
+    height: 102,
+    transform: [{rotate: '25deg'}],
   },
   fab: {
     width: 56,
@@ -1134,7 +1151,12 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     fontSize: 11,
   },
 
-  diffBlock: {paddingTop: 12, paddingHorizontal: 12, paddingBottom: 16, gap: 4},
+  diffBlock: {
+    paddingTop: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+    gap: 4,
+  },
   diffAdded: {
     color: colors.greenColor,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',

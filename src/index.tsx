@@ -63,6 +63,8 @@ import {
   getCurlCommand,
   getSize,
 } from './helpers';
+// #5 — settings persistence
+import {loadSettings, saveSettings} from './helpers/settingsStore';
 
 // Assets
 import {
@@ -98,6 +100,13 @@ import {
   HeadersIcon,
   StatusIcon,
   ChevronIcon,
+  WipeIcon,
+  LayersIcon,
+  UserIcon,
+  InfoCircleIcon,
+  WarningTriangleIcon,
+  ErrorCircleIcon,
+  TrendingUpIcon,
 } from './components/NetworkIcons';
 
 import ErrorBoundary from './components/ErrorBoundary';
@@ -439,6 +448,139 @@ const NetworkInspector = ({
   const [insightsShowConsoleAlerts, setInsightsShowConsoleAlerts] =
     useState<boolean>(true);
 
+  // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
+  const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
+  // #9 — when false (default), consecutive identical entries in the API and
+  // Console lists are collapsed into one row with a ×N counter.
+  const [showDuplicateLogs, setShowDuplicateLogs] = useState<boolean>(false);
+
+  // #5 — hydrate persisted settings once, then auto-save on any change.
+  const settingsHydratedRef = useRef(false);
+  useEffect(() => {
+    let cancelled = false;
+    loadSettings().then(saved => {
+      if (cancelled) return;
+      if (saved.isDark != null) {
+        setIsDark(saved.isDark);
+        toggleGlobalTheme(saved.isDark);
+      }
+      if (saved.modalHeightPercent != null)
+        setModalHeightPercent(saved.modalHeightPercent);
+      if (saved.tabVisibility)
+        setTabVisibility(prev => ({
+          ...prev,
+          ...(saved.tabVisibility as Record<ActiveTab, boolean>),
+          apis: true, // APIs is always required
+        }));
+      if (saved.defaultTab) setDefaultTab(saved.defaultTab as ActiveTab);
+      if (saved.maxNetworkLogs != null) setMaxNetworkLogs(saved.maxNetworkLogs);
+      if (saved.maxConsoleLogs != null) setMaxConsoleLogs(saved.maxConsoleLogs);
+      if (saved.showConsoleLevels)
+        setShowConsoleLevels(saved.showConsoleLevels);
+      if (saved.webViewCaptureCssJs != null)
+        setWebViewCaptureCssJs(saved.webViewCaptureCssJs);
+      if (saved.reduxAutoRefresh != null)
+        setReduxAutoRefreshState(saved.reduxAutoRefresh);
+      if (saved.reduxExpandDepth != null)
+        setReduxExpandDepth(saved.reduxExpandDepth);
+      if (saved.slowRequestThreshold != null)
+        setSlowRequestThreshold(saved.slowRequestThreshold);
+      if (saved.insightsShowConsoleAlerts != null)
+        setInsightsShowConsoleAlerts(saved.insightsShowConsoleAlerts);
+      if (saved.showDuplicateLogs != null)
+        setShowDuplicateLogs(saved.showDuplicateLogs);
+      if (saved.defaultTab) {
+        const dt = saved.defaultTab as ActiveTab;
+        const vis = {
+          ...{
+            insights: true,
+            apis: true,
+            logs: true,
+            analytics: true,
+            webview: true,
+            redux: true,
+          },
+          ...(saved.tabVisibility || {}),
+          apis: true,
+        } as Record<ActiveTab, boolean>;
+        setActiveTab(vis[dt] ? dt : 'apis');
+      }
+      settingsHydratedRef.current = true;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!settingsHydratedRef.current) return;
+    saveSettings({
+      isDark,
+      modalHeightPercent,
+      tabVisibility,
+      defaultTab,
+      maxNetworkLogs,
+      maxConsoleLogs,
+      showConsoleLevels,
+      webViewCaptureCssJs,
+      reduxAutoRefresh,
+      reduxExpandDepth,
+      slowRequestThreshold,
+      insightsShowConsoleAlerts,
+      showDuplicateLogs,
+    });
+  }, [
+    isDark,
+    modalHeightPercent,
+    tabVisibility,
+    defaultTab,
+    maxNetworkLogs,
+    maxConsoleLogs,
+    showConsoleLevels,
+    webViewCaptureCssJs,
+    reduxAutoRefresh,
+    reduxExpandDepth,
+    slowRequestThreshold,
+    insightsShowConsoleAlerts,
+    showDuplicateLogs,
+  ]);
+
+  // #1 — check NPM for a newer published version; surfaces an animated dot
+  // in the header next to the npm chip when an update is available.
+  const [latestNpmVersion, setLatestNpmVersion] = useState<string | null>(null);
+  const updateAvailable = useMemo(() => {
+    if (!latestNpmVersion) return false;
+    const parse = (v: string) =>
+      v
+        .replace(/^v/, '')
+        .split('.')
+        .map(n => parseInt(n, 10) || 0);
+    const cur = parse(LIB_VERSION);
+    const latest = parse(latestNpmVersion);
+    for (let i = 0; i < 3; i++) {
+      if ((latest[i] || 0) > (cur[i] || 0)) return true;
+      if ((latest[i] || 0) < (cur[i] || 0)) return false;
+    }
+    return false;
+  }, [latestNpmVersion]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('https://registry.npmjs.org/react-native-inapp-inspector/latest')
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (!cancelled && data && typeof data.version === 'string') {
+          setLatestNpmVersion(data.version);
+        }
+      })
+      .catch(() => {
+        // Offline / blocked — silently skip the update check.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     setReduxAutoRefresh(reduxAutoRefresh);
   }, [reduxAutoRefresh]);
@@ -451,6 +593,10 @@ const NetworkInspector = ({
       if (!nextVal && activeTab === key) {
         animateNextLayout();
         setActiveTab('apis');
+      }
+      // #6 — a hidden module can't be the default landing tab.
+      if (!nextVal && defaultTab === key) {
+        setDefaultTab('apis');
       }
       return newVisibility;
     });
@@ -544,6 +690,8 @@ const NetworkInspector = ({
   const badgeAnim = useRef(new Animated.Value(1)).current;
   const activePulseAnim = useRef(new Animated.Value(0.4)).current;
   const unreadPulseAnim = useRef(new Animated.Value(1)).current;
+  // #4 — diagonal light streak sweeping across the floating launcher
+  const fabShineAnim = useRef(new Animated.Value(0)).current;
   // #11 — header "clear all" icon spin/scale animation
   const clearAnim = useRef(new Animated.Value(0)).current;
 
@@ -591,9 +739,9 @@ const NetworkInspector = ({
     }),
   ).current;
 
-  // #10 — scroll-to-top affordance for the main APIs list
+  // #2 — scroll-to-top button for the main APIs list, always visible at the
+  // bottom right of the list.
   const apisListRef = useRef<FlatList<any>>(null);
-  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const runClearAllWithAnimation = useCallback(() => {
     Animated.sequence([
@@ -635,6 +783,27 @@ const NetworkInspector = ({
     loop.start();
     return () => loop.stop();
   }, [pulseAnim]);
+
+  // #4 — sweep the shine streak across the launcher, pause, repeat.
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(fabShineAnim, {
+          toValue: 1,
+          duration: 1100,
+          useNativeDriver: true,
+        }),
+        Animated.delay(1600),
+        Animated.timing(fabShineAnim, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [fabShineAnim]);
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -685,6 +854,18 @@ const NetworkInspector = ({
       }).start();
     }
   }, [newLogIds]);
+
+  // #6 — every time the inspector is opened, land on the chosen default tab.
+  useEffect(() => {
+    if (visible) {
+      const target =
+        defaultTab === 'apis' || tabVisibility[defaultTab]
+          ? defaultTab
+          : 'apis';
+      setActiveTab(target);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   useEffect(() => {
     if (visible) {
@@ -855,8 +1036,41 @@ const NetworkInspector = ({
     if (sortOrder === 'oldest') {
       result = [...result].reverse();
     }
+
+    // #9 — collapse consecutive identical requests (same method + url +
+    // status) into one row carrying a ×N counter, unless the user opted in
+    // to seeing every duplicate via Settings → "Show Duplicate Logs".
+    if (!showDuplicateLogs) {
+      const collapsed: NetworkLog[] = [];
+      for (const log of result) {
+        const last = collapsed[collapsed.length - 1];
+        if (
+          last &&
+          last.method === log.method &&
+          last.url === log.url &&
+          last.status === log.status
+        ) {
+          collapsed[collapsed.length - 1] = {
+            ...last,
+            duplicateCount: (last.duplicateCount || 1) + 1,
+          };
+        } else {
+          collapsed.push({...log, duplicateCount: 1});
+        }
+      }
+      result = collapsed;
+    }
+
     return result.slice(0, maxNetworkLogs);
-  }, [logs, search, statusFilters, methodFilters, sortOrder, maxNetworkLogs]);
+  }, [
+    logs,
+    search,
+    statusFilters,
+    methodFilters,
+    sortOrder,
+    maxNetworkLogs,
+    showDuplicateLogs,
+  ]);
 
   const availableMethods = useMemo(() => {
     const methods = new Set<Method>();
@@ -1119,8 +1333,37 @@ const NetworkInspector = ({
         : a.timestamp - b.timestamp,
     );
 
+    // #9 — collapse consecutive identical messages into one row with a ×N
+    // counter unless duplicates are explicitly enabled in Settings.
+    if (!showDuplicateLogs) {
+      const collapsed: ConsoleLog[] = [];
+      for (const log of result) {
+        const last = collapsed[collapsed.length - 1];
+        if (
+          last &&
+          last.type === log.type &&
+          last.sourceMethod === log.sourceMethod &&
+          last.message === log.message
+        ) {
+          collapsed[collapsed.length - 1] = {
+            ...last,
+            duplicateCount: (last.duplicateCount || 1) + 1,
+          };
+        } else {
+          collapsed.push({...log, duplicateCount: 1});
+        }
+      }
+      result = collapsed;
+    }
+
     return result;
-  }, [visibleConsoleLogs, logFilters, logSearch, logSortOrder]);
+  }, [
+    visibleConsoleLogs,
+    logFilters,
+    logSearch,
+    logSortOrder,
+    showDuplicateLogs,
+  ]);
 
   const filteredWebViewLogs = useMemo(() => {
     let result = webViewLogs;
@@ -1307,7 +1550,11 @@ const NetworkInspector = ({
         'Are you sure you want to clear all network logs?',
         [
           {text: 'Cancel', style: 'cancel'},
-          {text: 'Clear All', onPress: clearNetworkOnly, style: 'destructive'},
+          {
+            text: 'Clear All',
+            onPress: clearNetworkOnly,
+            style: 'destructive',
+          },
         ],
       );
     }
@@ -1653,7 +1900,8 @@ const NetworkInspector = ({
                         }}>
                         {tab.label}
                       </Text>
-                      {isLocked && (
+                      {/* #6 — badge marks the configured default tab */}
+                      {tab.key === defaultTab && (
                         <View
                           style={{
                             flexDirection: 'row',
@@ -1980,6 +2228,196 @@ const NetworkInspector = ({
                       );
                     })}
                   </View>
+                </View>
+
+                {/* Divider */}
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: AppColors.dividerColor,
+                  }}
+                />
+
+                {/* #6 — Default Tab */}
+                <View
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 6,
+                        backgroundColor: AppColors.purpleShade50,
+                        borderWidth: 1,
+                        borderColor: 'rgba(104,75,155,0.2)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <LayersIcon color={AppColors.purple} size={11} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        Default Tab
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        Tab shown when the inspector opens
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Segmented picker — only visible tabs are offered */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      flexWrap: 'wrap',
+                      backgroundColor: AppColors.grayBackground,
+                      borderRadius: 8,
+                      padding: 2.5,
+                      marginTop: 10,
+                      borderWidth: 1,
+                      borderColor: AppColors.dividerColor,
+                      gap: 2,
+                    }}>
+                    {settingsTabs
+                      .filter(
+                        tab => tab.key === 'apis' || tabVisibility[tab.key],
+                      )
+                      .map(tab => {
+                        const isActive = defaultTab === tab.key;
+                        return (
+                          <TouchableScale
+                            key={tab.key}
+                            onPress={() => setDefaultTab(tab.key)}
+                            style={{
+                              paddingVertical: 6,
+                              paddingHorizontal: 10,
+                              alignItems: 'center',
+                              borderRadius: 6,
+                              backgroundColor: isActive
+                                ? AppColors.purple
+                                : 'transparent',
+                            }}>
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 11,
+                                color: isActive
+                                  ? '#FFFFFF'
+                                  : AppColors.grayText,
+                              }}>
+                              {tab.label}
+                            </Text>
+                          </TouchableScale>
+                        );
+                      })}
+                  </View>
+                </View>
+
+                {/* Divider */}
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: AppColors.dividerColor,
+                  }}
+                />
+
+                {/* #9 — Show Duplicate Logs */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    gap: 12,
+                  }}>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 6,
+                        backgroundColor: AppColors.purpleShade50,
+                        borderWidth: 1,
+                        borderColor: 'rgba(104,75,155,0.2)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <EyeIcon color={AppColors.purple} size={11} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        Show Duplicate Logs
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        Off: repeated identical entries collapse into one row
+                        with a ×N count
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Toggle Switch */}
+                  <TouchableScale
+                    onPress={() => setShowDuplicateLogs(prev => !prev)}
+                    style={{
+                      width: 38,
+                      height: 22,
+                      borderRadius: 11,
+                      backgroundColor: showDuplicateLogs
+                        ? AppColors.purple
+                        : AppColors.grayBorderSecondary,
+                      padding: 2,
+                      justifyContent: 'center',
+                      alignItems: showDuplicateLogs ? 'flex-end' : 'flex-start',
+                    }}>
+                    <View
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 9,
+                        backgroundColor: '#FFFFFF',
+                        shadowColor: '#000',
+                        shadowOpacity: 0.15,
+                        shadowRadius: 1.5,
+                        shadowOffset: {width: 0, height: 1},
+                      }}
+                    />
+                  </TouchableScale>
                 </View>
               </View>
             </View>
@@ -3619,6 +4057,35 @@ const NetworkInspector = ({
             style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
           />
           <BrandCircleIcon size={62} />
+          {/* #4 — shining sweep, clipped inside the circular launcher */}
+          <View pointerEvents="none" style={styles.fabShineClip}>
+            <Animated.View
+              style={[
+                styles.fabShineStreak,
+                {
+                  transform: [
+                    {
+                      translateX: fabShineAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-48, 96],
+                      }),
+                    },
+                    {rotate: '25deg'},
+                  ],
+                },
+              ]}>
+              <LinearGradient
+                colors={[
+                  'rgba(255,255,255,0)',
+                  'rgba(255,255,255,0.55)',
+                  'rgba(255,255,255,0)',
+                ]}
+                start={{x: 0, y: 0.5}}
+                end={{x: 1, y: 0.5}}
+                style={{flex: 1}}
+              />
+            </Animated.View>
+          </View>
           {(logs.length > 0 || analyticsEvents.length > 0) && (
             <Animated.View
               style={[
@@ -3826,6 +4293,45 @@ const NetworkInspector = ({
                                   </Text>
                                 </View>
                               </View>
+
+                              {/* #1 — pulsing dot when a newer version is on NPM */}
+                              {updateAvailable && (
+                                <Pressable
+                                  hitSlop={10}
+                                  onPress={() =>
+                                    Alert.alert(
+                                      'Update Available',
+                                      `react-native-inapp-inspector v${latestNpmVersion} is available on NPM (installed: v${LIB_VERSION}).`,
+                                      [
+                                        {text: 'Later', style: 'cancel'},
+                                        {
+                                          text: 'View on NPM',
+                                          onPress: () =>
+                                            Linking.openURL(
+                                              'https://www.npmjs.com/package/react-native-inapp-inspector',
+                                            ).catch(() => {}),
+                                        },
+                                      ],
+                                    )
+                                  }
+                                  style={{
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}>
+                                  <Animated.View
+                                    style={{
+                                      width: 8,
+                                      height: 8,
+                                      borderRadius: 4,
+                                      backgroundColor: '#4ADE80',
+                                      borderWidth: 1,
+                                      borderColor: 'rgba(255,255,255,0.9)',
+                                      opacity: activePulseAnim,
+                                      transform: [{scale: unreadPulseAnim}],
+                                    }}
+                                  />
+                                </Pressable>
+                              )}
                             </View>
                           </View>
                         </View>
@@ -4013,7 +4519,7 @@ const NetworkInspector = ({
                                 },
                               ],
                             }}>
-                            <TrashIcon color="#FFFFFF" size={15} />
+                            <WipeIcon color="#FFFFFF" size={16} />
                           </Animated.View>
                         </TouchableScale>
                       )}
@@ -4277,24 +4783,40 @@ const NetworkInspector = ({
                             animateNextLayout();
                             setAnalyticsSubTab('ga_events');
                           }}>
-                          <Text
-                            style={[
-                              {
-                                fontFamily: AppFonts.interMedium,
-                                fontSize: 13,
-                                color: AppColors.grayTextStrong,
-                              },
-                              analyticsSubTab === 'ga_events' && {
-                                fontFamily: AppFonts.interBold,
-                                color: AppColors.purple,
-                              },
-                            ]}>
-                            GA Events (
-                            {analyticsSearch
-                              ? filteredAnalyticsEvents.length
-                              : analyticsEvents.length}
-                            )
-                          </Text>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}>
+                            {/* #7 */}
+                            <AnalyticsIcon
+                              size={13}
+                              color={
+                                analyticsSubTab === 'ga_events'
+                                  ? AppColors.purple
+                                  : AppColors.grayTextStrong
+                              }
+                            />
+                            <Text
+                              style={[
+                                {
+                                  fontFamily: AppFonts.interMedium,
+                                  fontSize: 13,
+                                  color: AppColors.grayTextStrong,
+                                },
+                                analyticsSubTab === 'ga_events' && {
+                                  fontFamily: AppFonts.interBold,
+                                  color: AppColors.purple,
+                                },
+                              ]}>
+                              GA Events (
+                              {analyticsSearch
+                                ? filteredAnalyticsEvents.length
+                                : analyticsEvents.length}
+                              )
+                            </Text>
+                          </View>
                         </Pressable>
                         <Pressable
                           style={[
@@ -4317,20 +4839,36 @@ const NetworkInspector = ({
                             animateNextLayout();
                             setAnalyticsSubTab('top_events');
                           }}>
-                          <Text
-                            style={[
-                              {
-                                fontFamily: AppFonts.interMedium,
-                                fontSize: 13,
-                                color: AppColors.grayTextStrong,
-                              },
-                              analyticsSubTab === 'top_events' && {
-                                fontFamily: AppFonts.interBold,
-                                color: AppColors.purple,
-                              },
-                            ]}>
-                            Top Events ({topEventsArray.length})
-                          </Text>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}>
+                            {/* #7 */}
+                            <TrendingUpIcon
+                              size={13}
+                              color={
+                                analyticsSubTab === 'top_events'
+                                  ? AppColors.purple
+                                  : AppColors.grayTextStrong
+                              }
+                            />
+                            <Text
+                              style={[
+                                {
+                                  fontFamily: AppFonts.interMedium,
+                                  fontSize: 13,
+                                  color: AppColors.grayTextStrong,
+                                },
+                                analyticsSubTab === 'top_events' && {
+                                  fontFamily: AppFonts.interBold,
+                                  color: AppColors.purple,
+                                },
+                              ]}>
+                              Top Events ({topEventsArray.length})
+                            </Text>
+                          </View>
                         </Pressable>
                       </View>
                     </View>
@@ -4538,10 +5076,6 @@ const NetworkInspector = ({
                     <View style={{flex: 1}}>
                       <FlatList
                         ref={apisListRef}
-                        onScroll={e =>
-                          setShowScrollTop(e.nativeEvent.contentOffset.y > 320)
-                        }
-                        scrollEventThrottle={16}
                         data={groupedData}
                         keyExtractor={item => item?.id?.toString()}
                         renderItem={renderItem}
@@ -4808,22 +5342,20 @@ const NetworkInspector = ({
                         ]}
                         keyboardShouldPersistTaps="handled"
                       />
-                      {showScrollTop && (
-                        <TouchableScale
-                          onPress={() => {
-                            apisListRef.current?.scrollToOffset({
-                              offset: 0,
-                              animated: true,
-                            });
-                            setShowScrollTop(false);
-                          }}
-                          hitSlop={10}
-                          style={styles.scrollTopBtn}>
-                          <View style={{transform: [{rotate: '180deg'}]}}>
-                            <ChevronIcon color="#FFFFFF" size={18} />
-                          </View>
-                        </TouchableScale>
-                      )}
+                      {/* #2 — always-visible scroll-to-top, bottom right */}
+                      <TouchableScale
+                        onPress={() => {
+                          apisListRef.current?.scrollToOffset({
+                            offset: 0,
+                            animated: true,
+                          });
+                        }}
+                        hitSlop={10}
+                        style={styles.scrollTopBtn}>
+                        <View style={{transform: [{rotate: '180deg'}]}}>
+                          <ChevronIcon color="#FFFFFF" size={18} />
+                        </View>
+                      </TouchableScale>
                     </View>
                   ) : activeTab === 'logs' ? (
                     <View style={{flex: 1}}>
@@ -4921,17 +5453,33 @@ const NetworkInspector = ({
                                       backgroundColor: '#F4EBFF',
                                     },
                                   ]}>
-                                  <Text
-                                    numberOfLines={1}
-                                    style={[
-                                      styles.statusFilterText,
-                                      active && {
-                                        color: AppColors.purpleShade700,
-                                        fontFamily: AppFonts.interBold,
-                                      },
-                                    ]}>
-                                    All ({logCounts.all})
-                                  </Text>
+                                  {/* #7 */}
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}>
+                                    <LayersIcon
+                                      size={12}
+                                      color={
+                                        active
+                                          ? AppColors.purpleShade700
+                                          : AppColors.grayTextStrong
+                                      }
+                                    />
+                                    <Text
+                                      numberOfLines={1}
+                                      style={[
+                                        styles.statusFilterText,
+                                        active && {
+                                          color: AppColors.purpleShade700,
+                                          fontFamily: AppFonts.interBold,
+                                        },
+                                      ]}>
+                                      All ({logCounts.all})
+                                    </Text>
+                                  </View>
                                 </View>
                               </TouchableScale>
                             );
@@ -4960,17 +5508,33 @@ const NetworkInspector = ({
                                       backgroundColor: '#F1F5F9',
                                     },
                                   ]}>
-                                  <Text
-                                    numberOfLines={1}
-                                    style={[
-                                      styles.statusFilterText,
-                                      active && {
-                                        color: '#334155',
-                                        fontFamily: AppFonts.interBold,
-                                      },
-                                    ]}>
-                                    User Log ({logCounts['user-log']})
-                                  </Text>
+                                  {/* #7 */}
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}>
+                                    <UserIcon
+                                      size={12}
+                                      color={
+                                        active
+                                          ? '#334155'
+                                          : AppColors.grayTextStrong
+                                      }
+                                    />
+                                    <Text
+                                      numberOfLines={1}
+                                      style={[
+                                        styles.statusFilterText,
+                                        active && {
+                                          color: '#334155',
+                                          fontFamily: AppFonts.interBold,
+                                        },
+                                      ]}>
+                                      User Log ({logCounts['user-log']})
+                                    </Text>
+                                  </View>
                                 </View>
                               </TouchableScale>
                             );
@@ -4999,17 +5563,33 @@ const NetworkInspector = ({
                                       backgroundColor: AppColors.purpleShade50,
                                     },
                                   ]}>
-                                  <Text
-                                    numberOfLines={1}
-                                    style={[
-                                      styles.statusFilterText,
-                                      active && {
-                                        color: AppColors.purple,
-                                        fontFamily: AppFonts.interBold,
-                                      },
-                                    ]}>
-                                    Info ({logCounts.info})
-                                  </Text>
+                                  {/* #7 */}
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}>
+                                    <InfoCircleIcon
+                                      size={12}
+                                      color={
+                                        active
+                                          ? AppColors.purple
+                                          : AppColors.grayTextStrong
+                                      }
+                                    />
+                                    <Text
+                                      numberOfLines={1}
+                                      style={[
+                                        styles.statusFilterText,
+                                        active && {
+                                          color: AppColors.purple,
+                                          fontFamily: AppFonts.interBold,
+                                        },
+                                      ]}>
+                                      Info ({logCounts.info})
+                                    </Text>
+                                  </View>
                                 </View>
                               </TouchableScale>
                             );
@@ -5038,19 +5618,36 @@ const NetworkInspector = ({
                                       backgroundColor: '#FFFDF6',
                                     },
                                   ]}>
-                                  <Text
-                                    numberOfLines={1}
-                                    style={[
-                                      styles.statusFilterText,
-                                      active && {
-                                        color:
-                                          AppColors.darkOrange ||
-                                          AppColors.lightOrange,
-                                        fontFamily: AppFonts.interBold,
-                                      },
-                                    ]}>
-                                    Warning ({logCounts.warn})
-                                  </Text>
+                                  {/* #7 */}
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}>
+                                    <WarningTriangleIcon
+                                      size={12}
+                                      color={
+                                        active
+                                          ? AppColors.darkOrange ||
+                                            AppColors.lightOrange
+                                          : AppColors.grayTextStrong
+                                      }
+                                    />
+                                    <Text
+                                      numberOfLines={1}
+                                      style={[
+                                        styles.statusFilterText,
+                                        active && {
+                                          color:
+                                            AppColors.darkOrange ||
+                                            AppColors.lightOrange,
+                                          fontFamily: AppFonts.interBold,
+                                        },
+                                      ]}>
+                                      Warning ({logCounts.warn})
+                                    </Text>
+                                  </View>
                                 </View>
                               </TouchableScale>
                             );
@@ -5079,17 +5676,33 @@ const NetworkInspector = ({
                                       backgroundColor: '#FFF5F6',
                                     },
                                   ]}>
-                                  <Text
-                                    numberOfLines={1}
-                                    style={[
-                                      styles.statusFilterText,
-                                      active && {
-                                        color: AppColors.errorColor,
-                                        fontFamily: AppFonts.interBold,
-                                      },
-                                    ]}>
-                                    Error ({logCounts.error})
-                                  </Text>
+                                  {/* #7 */}
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}>
+                                    <ErrorCircleIcon
+                                      size={12}
+                                      color={
+                                        active
+                                          ? AppColors.errorColor
+                                          : AppColors.grayTextStrong
+                                      }
+                                    />
+                                    <Text
+                                      numberOfLines={1}
+                                      style={[
+                                        styles.statusFilterText,
+                                        active && {
+                                          color: AppColors.errorColor,
+                                          fontFamily: AppFonts.interBold,
+                                        },
+                                      ]}>
+                                      Error ({logCounts.error})
+                                    </Text>
+                                  </View>
                                 </View>
                               </TouchableScale>
                             );
@@ -5118,17 +5731,33 @@ const NetworkInspector = ({
                                       backgroundColor: `${AppColors.skyBlue}15`,
                                     },
                                   ]}>
-                                  <Text
-                                    numberOfLines={1}
-                                    style={[
-                                      styles.statusFilterText,
-                                      active && {
-                                        color: AppColors.skyBlue,
-                                        fontFamily: AppFonts.interBold,
-                                      },
-                                    ]}>
-                                    Analytics ({logCounts.analytics})
-                                  </Text>
+                                  {/* #7 */}
+                                  <View
+                                    style={{
+                                      flexDirection: 'row',
+                                      alignItems: 'center',
+                                      gap: 5,
+                                    }}>
+                                    <AnalyticsIcon
+                                      size={12}
+                                      color={
+                                        active
+                                          ? AppColors.skyBlue
+                                          : AppColors.grayTextStrong
+                                      }
+                                    />
+                                    <Text
+                                      numberOfLines={1}
+                                      style={[
+                                        styles.statusFilterText,
+                                        active && {
+                                          color: AppColors.skyBlue,
+                                          fontFamily: AppFonts.interBold,
+                                        },
+                                      ]}>
+                                      Analytics ({logCounts.analytics})
+                                    </Text>
+                                  </View>
                                 </View>
                               </TouchableScale>
                             );
@@ -6821,6 +7450,9 @@ export {default as ErrorBoundary} from './components/ErrorBoundary';
 
 export {
   connectReduxStore,
+  inspectorReduxMiddleware,
   getReduxState,
   subscribeReduxState,
+  getActionHistory,
+  clearActionHistory,
 } from './customHooks/reduxLogger';

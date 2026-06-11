@@ -127,6 +127,27 @@ const LogCard = React.memo(function LogCard({
               </Text>
             </View>
           )}
+
+          {/* #9 — collapsed duplicate counter */}
+          {item.duplicateCount != null && item.duplicateCount > 1 && (
+            <View
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: `${AppColors.purple}15`,
+                  borderColor: `${AppColors.purple}30`,
+                  marginLeft: 6,
+                },
+              ]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  {color: AppColors.purple, fontWeight: '700'},
+                ]}>
+                ×{item.duplicateCount}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.cardBottomRow}>

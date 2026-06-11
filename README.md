@@ -185,6 +185,20 @@ import store from './store';
 connectReduxStore(store);
 ```
 
+**Recommended:** if you use thunks, sagas or RTK Query, also add the inspector middleware so actions dispatched from inside them are captured with full type/payload attribution (they bypass the wrapped outer dispatch otherwise):
+
+```tsx
+import {inspectorReduxMiddleware} from 'react-native-inapp-inspector';
+
+const store = configureStore({
+  reducer,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(inspectorReduxMiddleware),
+});
+```
+
+Using both together is safe — they de-duplicate automatically.
+
 The Redux tab shows the latest state tree, recent dispatches, payloads, and changed top-level state slices. Action history is capped at 50 entries.
 
 ---

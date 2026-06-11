@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- NPM update indicator: an animated pulsing dot appears in the header next to the npm chip when a newer version is published; tapping it links to the package page.
+- Shining sweep animation on the floating launcher (FAB), layered on top of the existing pulse ring.
+- Settings persistence: theme, modal height, module visibility, default tab, log limits, log levels, Redux preferences and other selections now survive app restarts (via `@react-native-async-storage/async-storage` when the host app ships it; in-memory fallback otherwise — no new required native dependency).
+- Default Tab setting: choose which tab the inspector opens on; the chosen module shows a `DEFAULT` badge after its label in the Settings module list.
+- Icons on inner tabs: All, User Log, Info, Warning, Error and Analytics filter chips in the Logs tab, plus GA Events and Top Events sub-tabs in Analytics.
+- Duplicate collapsing in the APIs and Logs lists: consecutive identical entries collapse into a single row with a `×N` counter. A new "Show Duplicate Logs" setting (default **off**) restores the old behavior.
+- `inspectorReduxMiddleware` export — a standard Redux middleware that captures every dispatched action, including ones from thunks, sagas and RTK Query.
+
+### Changed
+- The header clear-everything button now uses a wipe (broom) icon instead of the delete/trash icon.
+- The scroll-to-top button is now always visible, anchored at the bottom right of the APIs list (bottom: 10, right: 10).
+- `connectReduxStore` is now idempotent (safe to call twice), de-duplicates with the middleware, and diffs state on `store.subscribe` so changes dispatched outside the wrapped dispatch (thunk/saga internals) no longer desync the state tree and timeline.
+
+### Fixed
+- TypeScript build errors from spreading `StyleSheet.absoluteFill` (now `absoluteFillObject`).
+
 ## [1.0.13] - 2026-06-07
 
 ### Added

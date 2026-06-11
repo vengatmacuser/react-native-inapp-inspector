@@ -350,6 +350,28 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   </Text>
                 </View>
               )}
+              {/* #9 — collapsed duplicate counter */}
+              {'duplicateCount' in item &&
+                item.duplicateCount != null &&
+                item.duplicateCount > 1 && (
+                  <View
+                    style={[
+                      styles.badge,
+                      {
+                        backgroundColor: 'rgba(104, 75, 155, 0.1)',
+                        borderColor: 'rgba(104, 75, 155, 0.25)',
+                        borderWidth: 1,
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        {color: AppColors.purple, fontWeight: '700'},
+                      ]}>
+                      ×{item.duplicateCount}
+                    </Text>
+                  </View>
+                )}
               {isAnalyticsError && (
                 <View
                   style={[

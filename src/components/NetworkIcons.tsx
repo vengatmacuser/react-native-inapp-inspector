@@ -637,10 +637,7 @@ export const DebugIcon = ({color = '#FFFFFF', size = 18}: any) => {
         strokeLinecap="round"
       />
       {/* Head */}
-      <Path
-        d="M13.5 10.5l2-2 1.5 1.5-2 2-1.5-1.5z"
-        fill={color}
-      />
+      <Path d="M13.5 10.5l2-2 1.5 1.5-2 2-1.5-1.5z" fill={color} />
       <Path
         d="M15.5 8.5L19 5c.5-.5 1.2-.5 1.7 0s.5 1.2 0 1.7L17.2 10.2"
         stroke={color}
@@ -703,8 +700,8 @@ export const MoonIcon = ({color = '#FFFFFF', size = 16}: any) => {
   );
 };
 
-export { BrandCircleIcon } from './BrandCircleIcon';
-export { BrandSquareIcon } from './BrandSquareIcon';
+export {BrandCircleIcon} from './BrandCircleIcon';
+export {BrandSquareIcon} from './BrandSquareIcon';
 
 export const HtmlIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   return (
@@ -737,7 +734,15 @@ export const CssIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
 export const JsIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Rect x="3" y="3" width="18" height="18" rx="4" stroke={color} strokeWidth="2" />
+      <Rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="4"
+        stroke={color}
+        strokeWidth="2"
+      />
       <Path
         d="M8 12v2.5a1.5 1.5 0 003 0V11M13 15.5a1 1 0 001.5.8h.5a1 1 0 001-1v-.5a1 1 0 00-1-1h-1a1 1 0 01-1-1v-.5a1 1 0 011-1h.5a1 1 0 011.5.8"
         stroke={color}
@@ -771,7 +776,10 @@ export const EyeIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const SettingsIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const SettingsIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -786,7 +794,10 @@ export const SettingsIcon = ({color = AppColors.grayTextWeak, size = 14}: any) =
   );
 };
 
-export const FolderIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const FolderIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -800,8 +811,152 @@ export const FolderIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => 
   );
 };
 
+// #3 — Broom/sweep "wipe" icon used by the header Clear-Everything button.
+export const WipeIcon = ({color = '#FFFFFF', size = 16}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Handle */}
+      <Path
+        d="M19.5 3.5L12.7 10.3"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* Brush head */}
+      <Path
+        d="M13.5 9.5l1.5 1.5c.8.8.8 2 0 2.8L10 19l-5-5 5.2-5.5c.8-.8 2-.8 2.8 0z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* Bristle strokes */}
+      <Path
+        d="M7.5 16.5L5.5 18.5M10 19l-1.5 1.5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* Dust sparks */}
+      <Path
+        d="M3 11.5h.01M5.5 8.5h.01"
+        stroke={color}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
 
+// #7 — Icons for the inner filter chips / sub tabs.
+export const LayersIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
 
+export const UserIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx="12" cy="7" r="4" stroke={color} strokeWidth="2" />
+    </Svg>
+  );
+};
 
+export const InfoCircleIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+      <Path
+        d="M12 16v-4M12 8h.01"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
 
+export const WarningTriangleIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M12 9v4M12 17h.01"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
 
+export const ErrorCircleIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+      <Path
+        d="M15 9l-6 6M9 9l6 6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const TrendingUpIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 12,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M23 6l-9.5 9.5-5-5L1 18"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M17 6h6v6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};

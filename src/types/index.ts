@@ -2,7 +2,13 @@ import React from 'react';
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
-export type ActiveTab = 'insights' | 'apis' | 'analytics' | 'logs' | 'webview' | 'redux';
+export type ActiveTab =
+  | 'insights'
+  | 'apis'
+  | 'analytics'
+  | 'logs'
+  | 'webview'
+  | 'redux';
 
 export interface ConsoleLog {
   id: number;
@@ -11,6 +17,8 @@ export interface ConsoleLog {
   timestamp: number;
   caller?: string;
   sourceMethod?: 'log' | 'info' | 'warn' | 'error';
+  /** #9 — number of consecutive identical logs collapsed into this entry. */
+  duplicateCount?: number;
 }
 
 export interface AnalyticsEvent {
@@ -44,6 +52,8 @@ export interface NetworkLog {
   response?: unknown;
   requestHeaders?: Record<string, string>;
   responseHeaders?: Record<string, string>;
+  /** #9 — number of consecutive identical requests collapsed into this entry. */
+  duplicateCount?: number;
 }
 
 export interface RouteInfo {
@@ -69,7 +79,13 @@ export type GroupedListItem =
       isCollapsed: boolean;
       isFirst: boolean;
     }
-  | {type: 'log'; id: number; log: NetworkLog; isLast: boolean; color: string};
+  | {
+      type: 'log';
+      id: number;
+      log: NetworkLog;
+      isLast: boolean;
+      color: string;
+    };
 
 export type DiffResult = {
   type: 'added' | 'removed' | 'changed';
