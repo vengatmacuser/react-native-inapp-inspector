@@ -115,6 +115,7 @@ const LogCard = React.memo(function LogCard({
             style={styles.urlPathText}
             highlightStyle={styles.highlight}
             numberOfLines={0}
+            detectLinks={true}
           />
 
           {isJson && (
