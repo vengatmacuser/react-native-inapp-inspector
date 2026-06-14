@@ -272,8 +272,11 @@ import {ErrorBoundary} from 'react-native-inapp-inspector';
 | `clearAnalyticsEvents()`                            | function          | Clears captured analytics events.                                          |
 | `subscribeAnalyticsEvents(callback)`                | function          | Subscribes to analytics event updates and returns an unsubscribe function. |
 | `connectReduxStore(store)`                          | function          | Connects a Redux store for live state and action inspection.               |
+| `inspectorReduxMiddleware`                          | middleware        | Redux middleware to capture actions dispatched from thunks/sagas.          |
 | `getReduxState()`                                   | function          | Returns the latest captured Redux state.                                   |
 | `subscribeReduxState(callback)`                     | function          | Subscribes to Redux state updates and returns an unsubscribe function.     |
+| `getActionHistory()`                                | function          | Returns the recent dispatched Redux actions.                               |
+| `clearActionHistory()`                              | function          | Clears the Redux action history.                                           |
 | `WebView`                                           | component         | Instrumented WebView wrapper.                                              |
 | `getWebViewLogs()`                                  | function          | Returns captured WebView console logs.                                     |
 | `getWebViewNavHistory()`                            | function          | Returns captured WebView navigation history.                               |
