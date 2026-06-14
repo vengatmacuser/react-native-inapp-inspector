@@ -443,6 +443,8 @@ const NetworkInspector = ({
     | 'redux'
     | null
   >(null);
+  const [settingsActiveSubTab, setSettingsActiveSubTab] = useState<'module' | 'ui'>('module');
+  const [insightsActiveSubTab, setInsightsActiveSubTab] = useState<'apis' | 'logs' | 'analytics' | 'webview' | 'redux'>('apis');
   const [tabVisibility, setTabVisibility] = useState<
     Record<ActiveTab, boolean>
   >({
@@ -641,6 +643,9 @@ const NetworkInspector = ({
       // #6 — a hidden module can't be the default landing tab.
       if (!nextVal && defaultTab === key) {
         setDefaultTab('apis');
+      }
+      if (!nextVal && insightsActiveSubTab === key) {
+        setInsightsActiveSubTab('apis');
       }
       return newVisibility;
     });
@@ -1788,314 +1793,373 @@ const NetworkInspector = ({
           <ScrollView
             style={{flex: 1}}
             contentContainerStyle={{padding: 16, gap: 12}}>
-            {/* Tab list */}
+            {/* Sub Tabs */}
             <View
               style={{
+                flexDirection: 'row',
                 backgroundColor: AppColors.primaryLight,
-                borderRadius: 12,
+                borderRadius: 10,
+                padding: 3,
                 borderWidth: 1,
                 borderColor: AppColors.grayBorderSecondary,
-                overflow: 'hidden',
+                marginBottom: 4,
               }}>
-              {/* Table Header */}
-              <View
+              <TouchableOpacity
+                onPress={() => {
+                  animateNextLayout();
+                  setSettingsActiveSubTab('module');
+                }}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
+                  flex: 1,
                   paddingVertical: 8,
-                  paddingHorizontal: 14,
-                  backgroundColor: AppColors.grayBackground,
-                  borderBottomWidth: 1,
-                  borderBottomColor: AppColors.dividerColor,
-                  gap: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 8,
+                  backgroundColor:
+                    settingsActiveSubTab === 'module'
+                      ? AppColors.purple
+                      : 'transparent',
                 }}>
                 <Text
                   style={{
                     fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: AppColors.grayTextWeak,
-                    letterSpacing: 0.6,
-                    flex: 1,
+                    fontSize: 12,
+                    color:
+                      settingsActiveSubTab === 'module'
+                        ? '#FFFFFF'
+                        : AppColors.grayText,
                   }}>
-                  MODULE
+                  Module
                 </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  animateNextLayout();
+                  setSettingsActiveSubTab('ui');
+                }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 8,
+                  backgroundColor:
+                    settingsActiveSubTab === 'ui'
+                      ? AppColors.purple
+                      : 'transparent',
+                }}>
                 <Text
                   style={{
                     fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: AppColors.grayTextWeak,
-                    letterSpacing: 0.6,
-                    width: 90,
-                    textAlign: 'right',
-                    paddingRight: 4,
+                    fontSize: 12,
+                    color:
+                      settingsActiveSubTab === 'ui'
+                        ? '#FFFFFF'
+                        : AppColors.grayText,
                   }}>
-                  VISIBILITY
+                  UI Preferences
                 </Text>
-              </View>
+              </TouchableOpacity>
+            </View>
 
-              {settingsTabs.map((tab, idx) => {
-                const isVisible = tab.key === 'apis' || tabVisibility?.[tab.key];
-                const isLast = idx === settingsTabs.length - 1;
-                const isLocked = tab.key === 'apis';
-
-                return (
-                  <View
-                    key={tab.key}
+            {settingsActiveSubTab === 'module' ? (
+              /* Tab list */
+              <View
+                style={{
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  overflow: 'hidden',
+                }}>
+                {/* Table Header */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    backgroundColor: AppColors.grayBackground,
+                    borderBottomWidth: 1,
+                    borderBottomColor: AppColors.dividerColor,
+                    gap: 12,
+                  }}>
+                  <Text
                     style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingVertical: 10,
-                      paddingHorizontal: 14,
-                      borderBottomWidth: isLast ? 0 : 1,
-                      borderBottomColor: AppColors.dividerColor,
-                      gap: 12,
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10,
+                      color: AppColors.grayTextWeak,
+                      letterSpacing: 0.6,
+                      flex: 1,
                     }}>
-                    {/* Icon + Label — fills remaining space */}
+                    MODULE
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10,
+                      color: AppColors.grayTextWeak,
+                      letterSpacing: 0.6,
+                      width: 90,
+                      textAlign: 'right',
+                      paddingRight: 4,
+                    }}>
+                    VISIBILITY
+                  </Text>
+                </View>
+
+                {settingsTabs.map((tab, idx) => {
+                  const isVisible = tab.key === 'apis' || tabVisibility?.[tab.key];
+                  const isLast = idx === settingsTabs.length - 1;
+                  const isLocked = tab.key === 'apis';
+
+                  return (
                     <View
+                      key={tab.key}
                       style={{
-                        flex: 1,
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 8,
+                        paddingVertical: 10,
+                        paddingHorizontal: 14,
+                        borderBottomWidth: isLast ? 0 : 1,
+                        borderBottomColor: AppColors.dividerColor,
+                        gap: 12,
                       }}>
-                      {/* Small icon tile */}
+                      {/* Icon + Label — fills remaining space */}
                       <View
                         style={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: 6,
-                          backgroundColor: isLocked
-                            ? AppColors.grayBorderSecondary
-                            : AppColors.purpleShade50,
-                          borderWidth: 1,
-                          borderColor: isLocked
-                            ? AppColors.dividerColor
-                            : 'rgba(104,75,155,0.2)',
+                          flex: 1,
+                          flexDirection: 'row',
                           alignItems: 'center',
-                          justifyContent: 'center',
+                          gap: 8,
                         }}>
-                        {tab.icon === 'insights' && (
-                          <InsightsIcon
-                            color={
-                              isLocked
-                                ? AppColors.grayTextWeak
-                                : AppColors.purple
-                            }
-                            size={11}
-                          />
-                        )}
-                        {tab.icon === 'apis' && (
-                          <SignalIcon
-                            color={
-                              isLocked
-                                ? AppColors.grayTextWeak
-                                : AppColors.purple
-                            }
-                            size={11}
-                          />
-                        )}
-                        {tab.icon === 'logs' && (
-                          <TerminalIcon
-                            color={
-                              isLocked
-                                ? AppColors.grayTextWeak
-                                : AppColors.purple
-                            }
-                            size={11}
-                          />
-                        )}
-                        {tab.icon === 'analytics' && (
-                          <AnalyticsIcon
-                            color={
-                              isLocked
-                                ? AppColors.grayTextWeak
-                                : AppColors.purple
-                            }
-                            size={11}
-                          />
-                        )}
-                        {tab.icon === 'webview' && (
-                          <GlobeIcon
-                            color={
-                              isLocked
-                                ? AppColors.grayTextWeak
-                                : AppColors.purple
-                            }
-                            size={11}
-                          />
-                        )}
-                        {tab.icon === 'redux' && (
-                          <TerminalIcon
-                            color={
-                              isLocked
-                                ? AppColors.grayTextWeak
-                                : AppColors.purple
-                            }
-                            size={11}
-                          />
-                        )}
-                      </View>
-                      {/* Label + Required badge */}
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 13,
-                          color: isLocked
-                            ? AppColors.grayText
-                            : AppColors.primaryBlack,
-                        }}>
-                        {tab.label}
-                      </Text>
-                      {/* #6 — badge marks the configured default tab */}
-                      {tab.key === defaultTab && (
+                        {/* Small icon tile */}
                         <View
                           style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: 'rgba(104,75,155,0.08)',
-                            borderRadius: 20,
-                            paddingHorizontal: 6,
-                            paddingVertical: 2,
-                            borderWidth: 1,
-                            borderColor: 'rgba(104,75,155,0.18)',
-                            gap: 3,
-                          }}>
-                          <View
-                            style={{
-                              width: 4,
-                              height: 4,
-                              borderRadius: 2,
-                              backgroundColor: AppColors.purple,
-                              opacity: 0.7,
-                            }}
-                          />
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 8.5,
-                              color: AppColors.purple,
-                              letterSpacing: 0.4,
-                            }}>
-                            DEFAULT
-                          </Text>
-                        </View>
-                      )}
-
-                      {/* Settings gear icon next to label */}
-                      <TouchableScale
-                        onPress={() => {
-                          animateNextLayout();
-                          setSettingsPage(tab.key);
-                        }}
-                        hitSlop={8}
-                        style={{
-                          marginLeft: 4,
-                          padding: 4,
-                          borderRadius: 6,
-                          backgroundColor: AppColors.purpleShade50,
-                          borderWidth: 1,
-                          borderColor: 'rgba(104,75,155,0.15)',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                        <SettingsIcon color={AppColors.purple} size={10} />
-                      </TouchableScale>
-                    </View>
-
-                    {/* Visibility Switch in VISIBILITY column */}
-                    <View
-                      style={{
-                        width: 90,
-                        alignItems: 'flex-end',
-                        justifyContent: 'center',
-                      }}>
-                      <TouchableScale
-                        disabled={isLocked}
-                        onPress={() => toggleTabVisibility(tab.key as any)}
-                        style={{
-                          width: 38,
-                          height: 22,
-                          borderRadius: 11,
-                          backgroundColor: isLocked
-                            ? AppColors.grayBackground
-                            : isVisible
-                            ? AppColors.purple
-                            : AppColors.grayBorderSecondary,
-                          borderWidth: isLocked ? 1.5 : 0,
-                          borderColor: isLocked
-                            ? AppColors.grayBorderSecondary
-                            : 'transparent',
-                          borderStyle: isLocked ? 'dashed' : 'solid',
-                          padding: 2,
-                          justifyContent: 'center',
-                          alignItems: isVisible ? 'flex-end' : 'flex-start',
-                          opacity: isLocked ? 0.9 : 1,
-                        }}>
-                        <View
-                          style={{
-                            width: 18,
-                            height: 18,
-                            borderRadius: 9,
+                            width: 20,
+                            height: 20,
+                            borderRadius: 6,
                             backgroundColor: isLocked
                               ? AppColors.grayBorderSecondary
-                              : '#FFFFFF',
+                              : AppColors.purpleShade50,
+                            borderWidth: 1,
+                            borderColor: isLocked
+                              ? AppColors.dividerColor
+                              : 'rgba(104,75,155,0.2)',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            shadowColor: '#000',
-                            shadowOpacity: isLocked ? 0 : 0.15,
-                            shadowRadius: 1.5,
-                            shadowOffset: {width: 0, height: 1},
                           }}>
-                          {isLocked && (
-                            <Svg
-                              width={10}
-                              height={10}
-                              viewBox="0 0 24 24"
-                              fill="none">
-                              <Path
-                                d="M7 10V7a5 5 0 0 1 10 0v3"
-                                stroke={AppColors.grayText}
-                                strokeWidth="2.2"
-                                strokeLinecap="round"
-                              />
-                              <Path
-                                d="M5 10h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"
-                                fill={AppColors.grayText}
-                              />
-                            </Svg>
+                          {tab.icon === 'insights' && (
+                            <InsightsIcon
+                              color={
+                                isLocked
+                                  ? AppColors.grayTextWeak
+                                  : AppColors.purple
+                              }
+                              size={11}
+                            />
+                          )}
+                          {tab.icon === 'apis' && (
+                            <SignalIcon
+                              color={
+                                isLocked
+                                  ? AppColors.grayTextWeak
+                                  : AppColors.purple
+                              }
+                              size={11}
+                            />
+                          )}
+                          {tab.icon === 'logs' && (
+                            <TerminalIcon
+                              color={
+                                isLocked
+                                  ? AppColors.grayTextWeak
+                                  : AppColors.purple
+                              }
+                              size={11}
+                            />
+                          )}
+                          {tab.icon === 'analytics' && (
+                            <AnalyticsIcon
+                              color={
+                                isLocked
+                                  ? AppColors.grayTextWeak
+                                  : AppColors.purple
+                              }
+                              size={11}
+                            />
+                          )}
+                          {tab.icon === 'webview' && (
+                            <GlobeIcon
+                              color={
+                                isLocked
+                                  ? AppColors.grayTextWeak
+                                  : AppColors.purple
+                              }
+                              size={11}
+                            />
+                          )}
+                          {tab.icon === 'redux' && (
+                            <TerminalIcon
+                              color={
+                                isLocked
+                                  ? AppColors.grayTextWeak
+                                  : AppColors.purple
+                              }
+                              size={11}
+                            />
                           )}
                         </View>
-                      </TouchableScale>
-                      {isLocked && (
+                        {/* Label + Required badge */}
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
-                            fontSize: 8,
-                            color: AppColors.grayTextWeak,
-                            letterSpacing: 0.4,
-                            marginTop: 3,
+                            fontSize: 13,
+                            color: isLocked
+                              ? AppColors.grayText
+                              : AppColors.primaryBlack,
                           }}>
-                          REQUIRED
+                          {tab.label}
                         </Text>
-                      )}
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
+                        {/* #6 — badge marks the configured default tab */}
+                        {tab.key === defaultTab && (
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: 'rgba(104,75,155,0.08)',
+                              borderRadius: 20,
+                              paddingHorizontal: 6,
+                              paddingVertical: 2,
+                              borderWidth: 1,
+                              borderColor: 'rgba(104,75,155,0.18)',
+                              gap: 3,
+                            }}>
+                            <View
+                              style={{
+                                width: 4,
+                                height: 4,
+                                borderRadius: 2,
+                                backgroundColor: AppColors.purple,
+                                opacity: 0.7,
+                              }}
+                            />
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 8.5,
+                                color: AppColors.purple,
+                                letterSpacing: 0.4,
+                              }}>
+                              DEFAULT
+                            </Text>
+                          </View>
+                        )}
 
-            {/* UI Preferences Section */}
-            <View style={{marginTop: 8}}>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 10,
-                  color: AppColors.grayTextWeak,
-                  letterSpacing: 0.6,
-                  marginBottom: 8,
-                }}>
-                UI PREFERENCES
-              </Text>
+                        {/* Settings gear icon next to label */}
+                        <TouchableScale
+                          onPress={() => {
+                            animateNextLayout();
+                            setSettingsPage(tab.key);
+                          }}
+                          hitSlop={8}
+                          style={{
+                            marginLeft: 4,
+                            padding: 4,
+                            borderRadius: 6,
+                            backgroundColor: AppColors.purpleShade50,
+                            borderWidth: 1,
+                            borderColor: 'rgba(104,75,155,0.15)',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                          <SettingsIcon color={AppColors.purple} size={10} />
+                        </TouchableScale>
+                      </View>
+
+                      {/* Visibility Switch in VISIBILITY column */}
+                      <View
+                        style={{
+                          width: 90,
+                          alignItems: 'flex-end',
+                          justifyContent: 'center',
+                        }}>
+                        <TouchableScale
+                          disabled={isLocked}
+                          onPress={() => toggleTabVisibility(tab.key as any)}
+                          style={{
+                            width: 38,
+                            height: 22,
+                            borderRadius: 11,
+                            backgroundColor: isLocked
+                              ? AppColors.grayBackground
+                              : isVisible
+                              ? AppColors.purple
+                              : AppColors.grayBorderSecondary,
+                            borderWidth: isLocked ? 1.5 : 0,
+                            borderColor: isLocked
+                              ? AppColors.grayBorderSecondary
+                              : 'transparent',
+                            borderStyle: isLocked ? 'dashed' : 'solid',
+                            padding: 2,
+                            justifyContent: 'center',
+                            alignItems: isVisible ? 'flex-end' : 'flex-start',
+                            opacity: isLocked ? 0.9 : 1,
+                          }}>
+                          <View
+                            style={{
+                              width: 18,
+                              height: 18,
+                              borderRadius: 9,
+                              backgroundColor: isLocked
+                                ? AppColors.grayBorderSecondary
+                                : '#FFFFFF',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              shadowColor: '#000',
+                              shadowOpacity: isLocked ? 0 : 0.15,
+                              shadowRadius: 1.5,
+                              shadowOffset: {width: 0, height: 1},
+                            }}>
+                            {isLocked && (
+                              <Svg
+                                width={10}
+                                height={10}
+                                viewBox="0 0 24 24"
+                                fill="none">
+                                <Path
+                                  d="M7 10V7a5 5 0 0 1 10 0v3"
+                                  stroke={AppColors.grayText}
+                                  strokeWidth="2.2"
+                                  strokeLinecap="round"
+                                />
+                                <Path
+                                  d="M5 10h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"
+                                  fill={AppColors.grayText}
+                                />
+                              </Svg>
+                            )}
+                          </View>
+                        </TouchableScale>
+                        {isLocked && (
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 8,
+                              color: AppColors.grayTextWeak,
+                              letterSpacing: 0.4,
+                              marginTop: 3,
+                            }}>
+                            REQUIRED
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              /* UI Preferences Section */
               <View
                 style={{
                   backgroundColor: AppColors.primaryLight,
@@ -2584,7 +2648,8 @@ const NetworkInspector = ({
                   </TouchableScale>
                 </View>
               </View>
-            </View>
+            )}
+
 
             {/* Storage Status */}
             <View
@@ -3628,355 +3693,484 @@ const NetworkInspector = ({
           </View>
         </View>
 
-        {/* Module 1: APIs */}
-        {tabVisibility?.apis && (
-          <TouchableScale
-            style={styles.dashboardModuleCard}
-            onPress={() => switchActiveTab('apis')}>
-            <View style={styles.dashboardModuleHeader}>
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                <SignalIcon color={AppColors.purple} size={18} />
-                <Text style={styles.dashboardModuleTitle}>APIs & Network</Text>
-              </View>
-              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-            </View>
-            <View style={styles.dashboardModuleGrid}>
-              <View style={styles.dashboardGridItem}>
-                <Text style={styles.dashboardGridVal}>{apiTotal}</Text>
-                <Text style={styles.dashboardGridLbl}>Requests</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text
-                  style={[
-                    styles.dashboardGridVal,
-                    apiSuccessRate < 90 && {color: AppColors.warningIconGold},
-                  ]}>
-                  {apiSuccessRate}%
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Success Rate</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text
-                  style={[
-                    styles.dashboardGridVal,
-                    apiErrors > 0 && {color: AppColors.errorColor},
-                  ]}>
-                  {apiErrors}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Errors</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text style={styles.dashboardGridVal}>
-                  {avgTime != null ? `${avgTime}ms` : '—'}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Avg Latency</Text>
-              </View>
-            </View>
+        {/* ── Insights Sub-Tab Selector ── */}
+        {(() => {
+          const insightTabs: Array<{
+            key: 'apis' | 'logs' | 'analytics' | 'webview' | 'redux';
+            label: string;
+            icon: (c: string, s: number) => React.ReactNode;
+            color: string;
+            count: number;
+            visible: boolean;
+          }> = [
+            {
+              key: 'apis',
+              label: 'APIs',
+              icon: (c, s) => <SignalIcon color={c} size={s} />,
+              color: AppColors.purple,
+              count: apiTotal,
+              visible: !!tabVisibility?.apis,
+            },
+            {
+              key: 'logs',
+              label: 'Logs',
+              icon: (c, s) => <TerminalIcon color={c} size={s} />,
+              color: '#0D9488',
+              count: logTotal,
+              visible: !!tabVisibility?.logs,
+            },
+            {
+              key: 'analytics',
+              label: 'Analytics',
+              icon: (c, s) => <AnalyticsIcon color={c} size={s} />,
+              color: '#EA580C',
+              count: analyticsTotal,
+              visible: !!tabVisibility?.analytics,
+            },
+            {
+              key: 'webview',
+              label: 'WebView',
+              icon: (c, s) => <GlobeIcon color={c} size={s} />,
+              color: '#2563EB',
+              count: webviewTotal,
+              visible: !!tabVisibility?.webview,
+            },
+            {
+              key: 'redux',
+              label: 'Redux',
+              icon: (c, s) => <TerminalIcon color={c} size={s} />,
+              color: AppColors.purple,
+              count: reduxState ? Object.keys(reduxState).length : 0,
+              visible: !!tabVisibility?.redux,
+            },
+          ];
+          const visibleTabs = insightTabs.filter(t => t.visible);
+          if (visibleTabs.length === 0) return null;
 
-            {/* Status-class breakdown + latency range */}
-            <View
-              style={{
-                marginTop: 10,
-                paddingTop: 10,
-                borderTopWidth: 1,
-                borderTopColor: AppColors.dividerColor,
-                flexDirection: 'row',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 6,
-              }}>
-              {[
-                {label: '2xx', value: status2xx, color: AppColors.greenColor},
-                {label: '3xx', value: status3xx, color: AppColors.skyBlue},
-                {
-                  label: '4xx',
-                  value: status4xx,
-                  color: AppColors.warningIconGold,
-                },
-                {label: '5xx', value: status5xx, color: AppColors.errorColor},
-              ].map(s => (
-                <View
-                  key={s.label}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    backgroundColor: AppColors.grayBackground,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: AppColors.dividerColor,
-                    paddingHorizontal: 7,
-                    paddingVertical: 3,
-                  }}>
-                  <View
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: s.color,
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 10,
-                      color: AppColors.grayTextStrong,
-                    }}>
-                    {s.label} {s.value}
-                  </Text>
-                </View>
-              ))}
-              {slowestTime != null && (
-                <View
-                  style={{
-                    marginLeft: 'auto',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interRegular,
-                      fontSize: 10,
-                      color: AppColors.grayTextWeak,
-                    }}>
-                    Range
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 10,
-                      color: AppColors.grayTextStrong,
-                    }}>
-                    {fastestTime}–{slowestTime}ms
-                  </Text>
-                </View>
-              )}
-            </View>
-          </TouchableScale>
-        )}
-        {tabVisibility?.logs && (
-          <TouchableScale
-            style={styles.dashboardModuleCard}
-            onPress={() => switchActiveTab('logs')}>
-            <View style={styles.dashboardModuleHeader}>
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                <TerminalIcon color="#0D9488" size={18} />
-                <Text style={styles.dashboardModuleTitle}>Console Logs</Text>
-              </View>
-              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-            </View>
-            <View style={styles.dashboardModuleGrid}>
-              <View style={styles.dashboardGridItem}>
-                <Text style={styles.dashboardGridVal}>{logTotal}</Text>
-                <Text style={styles.dashboardGridLbl}>Total Logs</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text style={[styles.dashboardGridVal, {color: '#0D9488'}]}>
-                  {logInfos}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Info</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text
-                  style={[
-                    styles.dashboardGridVal,
-                    logWarns > 0 && {color: AppColors.warningIconGold},
-                  ]}>
-                  {logWarns}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Warnings</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text
-                  style={[
-                    styles.dashboardGridVal,
-                    logErrors > 0 && {color: AppColors.errorColor},
-                  ]}>
-                  {logErrors}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Errors</Text>
-              </View>
-            </View>
-          </TouchableScale>
-        )}
-
-        {/* Module 3: Analytics */}
-        {tabVisibility?.analytics && (
-          <TouchableScale
-            style={styles.dashboardModuleCard}
-            onPress={() => switchActiveTab('analytics')}>
-            <View style={styles.dashboardModuleHeader}>
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                <AnalyticsIcon color="#EA580C" size={18} />
-                <Text style={styles.dashboardModuleTitle}>
-                  Analytics Events
-                </Text>
-              </View>
-              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-            </View>
-            <View style={styles.dashboardModuleGrid}>
-              <View style={styles.dashboardGridItem}>
-                <Text style={styles.dashboardGridVal}>{analyticsTotal}</Text>
-                <Text style={styles.dashboardGridLbl}>Total Events</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text style={[styles.dashboardGridVal, {color: '#EA580C'}]}>
-                  {uniqueEvents}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Unique Names</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text style={styles.dashboardGridVal}>{screenViews}</Text>
-                <Text style={styles.dashboardGridLbl}>Screen Views</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text style={styles.dashboardGridVal}>
-                  {analyticsTotal > 0
-                    ? Math.round(analyticsTotal / Math.max(1, logs.length / 5))
-                    : 0}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Events Ratio</Text>
-              </View>
-            </View>
-          </TouchableScale>
-        )}
-
-        {/* Module 4: WebView */}
-        {tabVisibility?.webview && (
-          <TouchableScale
-            style={styles.dashboardModuleCard}
-            onPress={() => switchActiveTab('webview')}>
-            <View style={styles.dashboardModuleHeader}>
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                <GlobeIcon color="#2563EB" size={18} />
-                <Text style={styles.dashboardModuleTitle}>
-                  WebView Captures
-                </Text>
-              </View>
-              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-            </View>
-            <View style={styles.dashboardModuleGrid}>
-              <View style={styles.dashboardGridItem}>
-                <Text style={styles.dashboardGridVal}>{webviewTotal}</Text>
-                <Text style={styles.dashboardGridLbl}>History Size</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text style={[styles.dashboardGridVal, {color: '#16A34A'}]}>
-                  Active
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Status</Text>
-              </View>
-              <View style={styles.dashboardGridItem}>
-                <Text numberOfLines={1} style={styles.dashboardGridVal}>
-                  {webviewTotal > 0
-                    ? `${
-                        webViewNavHistory[0]?.title?.substring(0, 10) ?? ''
-                      }...`
-                    : '—'}
-                </Text>
-                <Text style={styles.dashboardGridLbl}>Last URL</Text>
-              </View>
-            </View>
-          </TouchableScale>
-        )}
-
-        {/* Module 5: Redux Store */}
-        {tabVisibility?.redux && (
-          <TouchableScale
-            style={styles.dashboardModuleCard}
-            onPress={() => switchActiveTab('redux')}>
-            <View style={styles.dashboardModuleHeader}>
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                <TerminalIcon color={AppColors.purple} size={18} />
-                <Text style={styles.dashboardModuleTitle}>
-                  Redux Store State
-                </Text>
-              </View>
-              <Text style={styles.dashboardModuleGoText}>View Details →</Text>
-            </View>
-            {reduxState ? (
-              <View style={{paddingHorizontal: 12, paddingBottom: 12, gap: 6}}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    marginBottom: 4,
-                  }}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 10,
-                      color: AppColors.grayTextWeak,
-                      letterSpacing: 0.5,
-                    }}>
-                    REDUCER NAME
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 10,
-                      color: AppColors.grayTextWeak,
-                      letterSpacing: 0.5,
-                    }}>
-                    SIZE / FIELDS
-                  </Text>
-                </View>
-                {Object.keys(reduxState).map(key => {
-                  const val = reduxState[key];
-                  const fieldsCount =
-                    typeof val === 'object' && val !== null
-                      ? Object.keys(val).length
-                      : 0;
-                  const sizeStr = getSize(val);
+          return (
+            <>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingHorizontal: 2,
+                  paddingVertical: 2,
+                  gap: 8,
+                }}
+                style={{
+                  marginBottom: 12,
+                  flexGrow: 0,
+                }}>
+                {visibleTabs.map(tab => {
+                  const isActive = insightsActiveSubTab === tab.key;
                   return (
-                    <View
-                      key={key}
+                    <TouchableOpacity
+                      key={tab.key}
+                      onPress={() => {
+                        animateNextLayout();
+                        setInsightsActiveSubTab(tab.key);
+                      }}
+                      activeOpacity={0.7}
                       style={{
                         flexDirection: 'row',
-                        justifyContent: 'space-between',
                         alignItems: 'center',
-                        paddingVertical: 2,
+                        gap: 6,
+                        paddingHorizontal: 14,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        backgroundColor: isActive
+                          ? tab.color
+                          : AppColors.primaryLight,
+                        borderWidth: 1,
+                        borderColor: isActive
+                          ? tab.color
+                          : AppColors.grayBorderSecondary,
                       }}>
+                      {tab.icon(isActive ? '#FFFFFF' : tab.color, 14)}
                       <Text
                         style={{
-                          fontFamily: AppFonts.interMedium,
-                          fontSize: 12,
-                          color: AppColors.grayTextStrong,
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 11.5,
+                          color: isActive ? '#FFFFFF' : AppColors.grayTextStrong,
                         }}>
-                        {key}
+                        {tab.label}
                       </Text>
+                      <View
+                        style={{
+                          minWidth: 20,
+                          height: 18,
+                          borderRadius: 9,
+                          paddingHorizontal: 5,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: isActive
+                            ? 'rgba(255,255,255,0.25)'
+                            : AppColors.grayBackground,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 9.5,
+                            color: isActive ? '#FFFFFF' : AppColors.grayTextWeak,
+                          }}>
+                          {tab.count}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              {/* ── Active Module Card ── */}
+              {insightsActiveSubTab === 'apis' && tabVisibility?.apis && (
+                <TouchableScale
+                  style={styles.dashboardModuleCard}
+                  onPress={() => switchActiveTab('apis')}>
+                  <View style={styles.dashboardModuleHeader}>
+                    <View
+                      style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      <SignalIcon color={AppColors.purple} size={18} />
+                      <Text style={styles.dashboardModuleTitle}>APIs & Network</Text>
+                    </View>
+                    <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+                  </View>
+                  <View style={styles.dashboardModuleGrid}>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={styles.dashboardGridVal}>{apiTotal}</Text>
+                      <Text style={styles.dashboardGridLbl}>Requests</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text
+                        style={[
+                          styles.dashboardGridVal,
+                          apiSuccessRate < 90 && {color: AppColors.warningIconGold},
+                        ]}>
+                        {apiSuccessRate}%
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Success Rate</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text
+                        style={[
+                          styles.dashboardGridVal,
+                          apiErrors > 0 && {color: AppColors.errorColor},
+                        ]}>
+                        {apiErrors}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Errors</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={styles.dashboardGridVal}>
+                        {avgTime != null ? `${avgTime}ms` : '—'}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Avg Latency</Text>
+                    </View>
+                  </View>
+
+                  {/* Status-class breakdown + latency range */}
+                  <View
+                    style={{
+                      marginTop: 10,
+                      paddingTop: 10,
+                      borderTopWidth: 1,
+                      borderTopColor: AppColors.dividerColor,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 6,
+                    }}>
+                    {[
+                      {label: '2xx', value: status2xx, color: AppColors.greenColor},
+                      {label: '3xx', value: status3xx, color: AppColors.skyBlue},
+                      {
+                        label: '4xx',
+                        value: status4xx,
+                        color: AppColors.warningIconGold,
+                      },
+                      {label: '5xx', value: status5xx, color: AppColors.errorColor},
+                    ].map(s => (
+                      <View
+                        key={s.label}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          backgroundColor: AppColors.grayBackground,
+                          borderRadius: 6,
+                          borderWidth: 1,
+                          borderColor: AppColors.dividerColor,
+                          paddingHorizontal: 7,
+                          paddingVertical: 3,
+                        }}>
+                        <View
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor: s.color,
+                          }}
+                        />
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: AppColors.grayTextStrong,
+                          }}>
+                          {s.label} {s.value}
+                        </Text>
+                      </View>
+                    ))}
+                    {slowestTime != null && (
+                      <View
+                        style={{
+                          marginLeft: 'auto',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interRegular,
+                            fontSize: 10,
+                            color: AppColors.grayTextWeak,
+                          }}>
+                          Range
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: AppColors.grayTextStrong,
+                          }}>
+                          {fastestTime}–{slowestTime}ms
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableScale>
+              )}
+
+              {insightsActiveSubTab === 'logs' && tabVisibility?.logs && (
+                <TouchableScale
+                  style={styles.dashboardModuleCard}
+                  onPress={() => switchActiveTab('logs')}>
+                  <View style={styles.dashboardModuleHeader}>
+                    <View
+                      style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      <TerminalIcon color="#0D9488" size={18} />
+                      <Text style={styles.dashboardModuleTitle}>Console Logs</Text>
+                    </View>
+                    <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+                  </View>
+                  <View style={styles.dashboardModuleGrid}>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={styles.dashboardGridVal}>{logTotal}</Text>
+                      <Text style={styles.dashboardGridLbl}>Total Logs</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={[styles.dashboardGridVal, {color: '#0D9488'}]}>
+                        {logInfos}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Info</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text
+                        style={[
+                          styles.dashboardGridVal,
+                          logWarns > 0 && {color: AppColors.warningIconGold},
+                        ]}>
+                        {logWarns}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Warnings</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text
+                        style={[
+                          styles.dashboardGridVal,
+                          logErrors > 0 && {color: AppColors.errorColor},
+                        ]}>
+                        {logErrors}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Errors</Text>
+                    </View>
+                  </View>
+                </TouchableScale>
+              )}
+
+              {insightsActiveSubTab === 'analytics' && tabVisibility?.analytics && (
+                <TouchableScale
+                  style={styles.dashboardModuleCard}
+                  onPress={() => switchActiveTab('analytics')}>
+                  <View style={styles.dashboardModuleHeader}>
+                    <View
+                      style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      <AnalyticsIcon color="#EA580C" size={18} />
+                      <Text style={styles.dashboardModuleTitle}>
+                        Analytics Events
+                      </Text>
+                    </View>
+                    <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+                  </View>
+                  <View style={styles.dashboardModuleGrid}>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={styles.dashboardGridVal}>{analyticsTotal}</Text>
+                      <Text style={styles.dashboardGridLbl}>Total Events</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={[styles.dashboardGridVal, {color: '#EA580C'}]}>
+                        {uniqueEvents}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Unique Names</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={styles.dashboardGridVal}>{screenViews}</Text>
+                      <Text style={styles.dashboardGridLbl}>Screen Views</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={styles.dashboardGridVal}>
+                        {analyticsTotal > 0
+                          ? Math.round(analyticsTotal / Math.max(1, logs.length / 5))
+                          : 0}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Events Ratio</Text>
+                    </View>
+                  </View>
+                </TouchableScale>
+              )}
+
+              {insightsActiveSubTab === 'webview' && tabVisibility?.webview && (
+                <TouchableScale
+                  style={styles.dashboardModuleCard}
+                  onPress={() => switchActiveTab('webview')}>
+                  <View style={styles.dashboardModuleHeader}>
+                    <View
+                      style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      <GlobeIcon color="#2563EB" size={18} />
+                      <Text style={styles.dashboardModuleTitle}>
+                        WebView Captures
+                      </Text>
+                    </View>
+                    <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+                  </View>
+                  <View style={styles.dashboardModuleGrid}>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={styles.dashboardGridVal}>{webviewTotal}</Text>
+                      <Text style={styles.dashboardGridLbl}>History Size</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text style={[styles.dashboardGridVal, {color: '#16A34A'}]}>
+                        Active
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Status</Text>
+                    </View>
+                    <View style={styles.dashboardGridItem}>
+                      <Text numberOfLines={1} style={styles.dashboardGridVal}>
+                        {webviewTotal > 0
+                          ? `${
+                              webViewNavHistory[0]?.title?.substring(0, 10) ?? ''
+                            }...`
+                          : '—'}
+                      </Text>
+                      <Text style={styles.dashboardGridLbl}>Last URL</Text>
+                    </View>
+                  </View>
+                </TouchableScale>
+              )}
+
+              {insightsActiveSubTab === 'redux' && tabVisibility?.redux && (
+                <TouchableScale
+                  style={styles.dashboardModuleCard}
+                  onPress={() => switchActiveTab('redux')}>
+                  <View style={styles.dashboardModuleHeader}>
+                    <View
+                      style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      <TerminalIcon color={AppColors.purple} size={18} />
+                      <Text style={styles.dashboardModuleTitle}>
+                        Redux Store State
+                      </Text>
+                    </View>
+                    <Text style={styles.dashboardModuleGoText}>View Details →</Text>
+                  </View>
+                  {reduxState ? (
+                    <View style={{paddingHorizontal: 12, paddingBottom: 12, gap: 6}}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          marginBottom: 4,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: AppColors.grayTextWeak,
+                            letterSpacing: 0.5,
+                          }}>
+                          REDUCER NAME
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: AppColors.grayTextWeak,
+                            letterSpacing: 0.5,
+                          }}>
+                          SIZE / FIELDS
+                        </Text>
+                      </View>
+                      {Object.keys(reduxState).map(key => {
+                        const val = reduxState[key];
+                        const fieldsCount =
+                          typeof val === 'object' && val !== null
+                            ? Object.keys(val).length
+                            : 0;
+                        const sizeStr = getSize(val);
+                        return (
+                          <View
+                            key={key}
+                            style={{
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              paddingVertical: 2,
+                            }}>
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interMedium,
+                                fontSize: 12,
+                                color: AppColors.grayTextStrong,
+                              }}>
+                              {key}
+                            </Text>
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interRegular,
+                                fontSize: 11,
+                                color: AppColors.grayTextWeak,
+                              }}>
+                              {sizeStr} ({fieldsCount} fields)
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  ) : (
+                    <View style={{padding: 12, alignItems: 'center'}}>
                       <Text
                         style={{
                           fontFamily: AppFonts.interRegular,
-                          fontSize: 11,
+                          fontSize: 12,
                           color: AppColors.grayTextWeak,
                         }}>
-                        {sizeStr} ({fieldsCount} fields)
+                        No connected Redux store.
                       </Text>
                     </View>
-                  );
-                })}
-              </View>
-            ) : (
-              <View style={{padding: 12, alignItems: 'center'}}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interRegular,
-                    fontSize: 12,
-                    color: AppColors.grayTextWeak,
-                  }}>
-                  No connected Redux store.
-                </Text>
-              </View>
-            )}
-          </TouchableScale>
-        )}
+                  )}
+                </TouchableScale>
+              )}
+            </>
+          );
+        })()}
       </View>
     );
   };
