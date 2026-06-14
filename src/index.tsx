@@ -265,6 +265,7 @@ interface NetworkInspectorProps {
     setItem: (key: string, value: string) => void | Promise<void>;
     removeItem?: (key: string) => void | Promise<void>;
   };
+  navigationRef?: any;
 }
 
 const animateNextLayout = () => {
@@ -274,6 +275,7 @@ const animateNextLayout = () => {
 const NetworkInspector = ({
   enabled = true,
   storage,
+  navigationRef,
 }: NetworkInspectorProps): React.JSX.Element => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
@@ -737,6 +739,39 @@ const NetworkInspector = ({
       currentRouteRef.current = getNavigationInfo(navState);
     }
   }, [navState]);
+
+  useEffect(() => {
+    if (!navigationRef) return;
+
+    const updateState = () => {
+      try {
+        if (typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
+          const state = navigationRef.getRootState();
+          if (state) {
+            setNavState(state);
+          }
+        }
+      } catch (err) {
+        // Safe check
+      }
+    };
+
+    // Initialize state
+    updateState();
+
+    // Listen to changes
+    const unsubscribe = typeof navigationRef.addListener === 'function'
+      ? navigationRef.addListener('state', () => {
+          updateState();
+        })
+      : null;
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [navigationRef]);
 
   const logRouteMapRef = useRef<Map<number, RouteInfo>>(new Map());
   const prevLogIdsRef = useRef<Set<number>>(new Set());

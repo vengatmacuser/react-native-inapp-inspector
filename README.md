@@ -125,6 +125,32 @@ If no `storage` prop is passed, Android will fall back to an in-memory store (se
 
 ---
 
+## Navigation & Screen Tracking
+
+To group network requests, console logs, and analytics events by the specific navigation screen where they occurred, the inspector automatically hooks into React Navigation context.
+
+If you mount `<NetworkInspector />` globally at the root of your application (outside of the `<NavigationContainer>`), it won't have access to React Navigation's context. To enable accurate screen tracking in this setup, create a navigation ref and pass it to the `navigationRef` prop:
+
+```tsx
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import NetworkInspector from 'react-native-inapp-inspector';
+
+const navigationRef = createNavigationContainerRef();
+
+const App = () => {
+  return (
+    <>
+      <NavigationContainer ref={navigationRef}>
+        {/* Navigators / Screens */}
+      </NavigationContainer>
+      <NetworkInspector navigationRef={navigationRef} />
+    </>
+  );
+};
+```
+
+---
+
 ## Network Logging
 
 `setupNetworkLogger()` patches global `fetch`, the default axios instance, and future axios instances created with `axios.create()`.

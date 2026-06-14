@@ -8,9 +8,11 @@ import {
   getStatusColor,
   getDurationColor,
   getPath,
+  getBaseUrl,
   formatDateTime,
 } from '../helpers';
 import {CalendarIcon, ClockIcon} from './NetworkIcons';
+import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
 import {LogCardProps} from '../types';
 import HighlightText from './HighlightText';
@@ -61,6 +63,8 @@ const LogCard = React.memo(function LogCard({
   }, [isNew]);
 
   const path = getPath(item.url);
+  const baseUrl = getBaseUrl(item.url) || item.url;
+  const showPathRow = baseUrl !== item.url && path !== '/';
   const triggeredAt = formatDateTime(item.startTime);
   const isJson = item.url.split('?')[0].toLowerCase().endsWith('.json');
 
@@ -106,10 +110,11 @@ const LogCard = React.memo(function LogCard({
           </View>
 
           <HighlightText
-            text={path}
+            text={baseUrl}
             search={searchStr}
             style={styles.urlPathText}
             highlightStyle={styles.highlight}
+            numberOfLines={0}
           />
 
           {isJson && (
@@ -149,6 +154,24 @@ const LogCard = React.memo(function LogCard({
             </View>
           )}
         </View>
+
+        {showPathRow && (
+          <View style={{flexDirection: 'row', alignItems: 'flex-start', marginTop: 3, marginBottom: 5, paddingLeft: 30, gap: 6}}>
+            <Text style={{color: AppColors.grayTextWeak, fontSize: 9, fontFamily: AppFonts.interBold, letterSpacing: 0.5, marginTop: 2.5}}>PATH</Text>
+            <HighlightText
+              text={path}
+              search={searchStr}
+              style={{
+                fontFamily: AppFonts.Sfprotext || 'System',
+                fontSize: 12,
+                color: AppColors.grayText,
+                flex: 1,
+              }}
+              highlightStyle={styles.highlight}
+              numberOfLines={0}
+            />
+          </View>
+        )}
 
         <View style={styles.cardBottomRow}>
           <View style={styles.cardDateRow}>

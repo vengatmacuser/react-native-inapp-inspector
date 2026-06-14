@@ -9,7 +9,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import axios from 'axios';
 import NetworkInspector, {
@@ -574,6 +574,7 @@ function WebViewScreen({ navigation }: any) {
 }
 
 const Stack = createNativeStackNavigator();
+const navigationRef = createNavigationContainerRef();
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -582,7 +583,7 @@ function App() {
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <ErrorBoundary>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <Stack.Navigator
             screenOptions={{
               headerShown: false,
@@ -597,7 +598,7 @@ function App() {
           </Stack.Navigator>
         </NavigationContainer>
         {/* Render inspector globally exactly once at the root level */}
-        <NetworkInspector />
+        <NetworkInspector navigationRef={navigationRef} />
       </ErrorBoundary>
     </SafeAreaProvider>
   );

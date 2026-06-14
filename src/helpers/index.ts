@@ -76,6 +76,16 @@ export const getPath = (url: string): string => {
   }
 };
 
+export const getBaseUrl = (url: string): string => {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    const match = url.match(/^(https?:\/\/[^/]+)/);
+    return match ? match[1] : '';
+  }
+};
+
 export const getCurlCommand = (log: NetworkLog): string => {
   let cmd = `curl -X ${log.method} "${log.url}"`;
   if (log.requestHeaders) {

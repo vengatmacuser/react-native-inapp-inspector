@@ -672,10 +672,13 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   },
 
   methodBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    marginRight: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginRight: 6,
+    minWidth: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000000',
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.08,
@@ -684,8 +687,8 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   },
   methodBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 11,
-    letterSpacing: 0.6,
+    fontSize: 9.5,
+    letterSpacing: 0.4,
   },
 
   timelineTrack: {
