@@ -1,27 +1,23 @@
 // #5 — Persistence layer for the inspector's settings selections.
 //
-// Backed by @react-native-async-storage/async-storage when the host app has it
-// installed (most RN apps do), with a transparent in-memory fallback so this
-// library never crashes and never forces a new native dependency.
+// Backed by iOS Settings (NSUserDefaults) for iOS, or custom storage if passed (e.g. AsyncStorage/MMKV).
+// Contains an in-memory fallback for Android or Jest test environments.
 
-type AsyncStorageLike = {
-  getItem: (key: string) => Promise<string | null>;
-  setItem: (key: string, value: string) => Promise<void>;
-  removeItem: (key: string) => Promise<void>;
-};
-
-let storage: AsyncStorageLike | null = null;
-try {
-  // Optional dependency — resolved only if the host app already ships it.
-  const mod = require('@react-native-async-storage/async-storage');
-  storage = mod?.default ?? mod ?? null;
-  if (storage && typeof storage.getItem !== 'function') storage = null;
-} catch {
-  storage = null;
-}
+import { Platform, Settings } from 'react-native';
 
 // In-memory fallback (settings survive for the app session only).
 const memory = new Map<string, string>();
+
+export interface InspectorStorage {
+  getItem: (key: string) => string | null | Promise<string | null>;
+  setItem: (key: string, value: string) => void | Promise<void>;
+}
+
+let customStorage: InspectorStorage | null = null;
+
+export function setCustomStorage(storage: InspectorStorage | null) {
+  customStorage = storage;
+}
 
 const SETTINGS_KEY = 'rn-inapp-inspector.settings.v1';
 
@@ -43,9 +39,25 @@ export interface PersistedSettings {
 
 export async function loadSettings(): Promise<PersistedSettings> {
   try {
-    const raw = storage
-      ? await storage.getItem(SETTINGS_KEY)
-      : memory.get(SETTINGS_KEY) ?? null;
+    if (customStorage) {
+      const raw = await customStorage.getItem(SETTINGS_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    }
+
+    if (Platform.OS === 'ios') {
+      const raw = Settings.get(SETTINGS_KEY);
+      if (!raw) return {};
+      if (typeof raw === 'string') {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      }
+      return raw && typeof raw === 'object' ? raw : {};
+    }
+
+    // Android/fallback: memory
+    const raw = memory.get(SETTINGS_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? parsed : {};
@@ -54,35 +66,50 @@ export async function loadSettings(): Promise<PersistedSettings> {
   }
 }
 
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
-
-/** Debounced save so rapid toggling doesn't hammer storage. */
 export function saveSettings(settings: PersistedSettings): void {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    try {
-      const raw = JSON.stringify(settings);
-      if (storage) {
-        await storage.setItem(SETTINGS_KEY, raw);
-      } else {
-        memory.set(SETTINGS_KEY, raw);
-      }
-    } catch {
-      // Persistence is best-effort — never crash the host app over it.
-    }
-  }, 250);
-}
-
-export async function clearPersistedSettings(): Promise<void> {
   try {
-    if (storage) {
-      await storage.removeItem(SETTINGS_KEY);
-    } else {
-      memory.delete(SETTINGS_KEY);
+    const raw = JSON.stringify(settings);
+
+    if (customStorage) {
+      customStorage.setItem(SETTINGS_KEY, raw);
+      return;
     }
+
+    if (Platform.OS === 'ios') {
+      Settings.set({ [SETTINGS_KEY]: raw });
+      return;
+    }
+
+    // Android/fallback: memory
+    memory.set(SETTINGS_KEY, raw);
   } catch {
     // ignore
   }
 }
 
-export const isPersistentStorageAvailable = () => storage != null;
+export async function clearPersistedSettings(): Promise<void> {
+  try {
+    if (customStorage) {
+      if (typeof (customStorage as any).removeItem === 'function') {
+        await (customStorage as any).removeItem(SETTINGS_KEY);
+      } else {
+        await customStorage.setItem(SETTINGS_KEY, '');
+      }
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      Settings.set({ [SETTINGS_KEY]: null });
+      return;
+    }
+
+    memory.delete(SETTINGS_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export const isPersistentStorageAvailable = () => {
+  return customStorage !== null || Platform.OS === 'ios';
+};
+

@@ -64,7 +64,12 @@ import {
   getSize,
 } from './helpers';
 // #5 — settings persistence
-import {loadSettings, saveSettings} from './helpers/settingsStore';
+import {
+  loadSettings,
+  saveSettings,
+  setCustomStorage,
+  isPersistentStorageAvailable,
+} from './helpers/settingsStore';
 
 // Assets
 import {
@@ -253,6 +258,11 @@ const NavigationTracker = ({onStateChange}: NavigationTrackerProps): null => {
 
 interface NetworkInspectorProps {
   enabled?: boolean;
+  storage?: {
+    getItem: (key: string) => string | null | Promise<string | null>;
+    setItem: (key: string, value: string) => void | Promise<void>;
+    removeItem?: (key: string) => void | Promise<void>;
+  };
 }
 
 const animateNextLayout = () => {
@@ -261,7 +271,11 @@ const animateNextLayout = () => {
 
 const NetworkInspector = ({
   enabled = true,
+  storage,
 }: NetworkInspectorProps): React.JSX.Element => {
+  // Set custom storage synchronously during render phase
+  setCustomStorage(storage || null);
+
   const [isDark, setIsDark] = useState(false);
   const [reduxState, setReduxState] = useState<any>(null);
   // Action timeline + per-reducer last action are kept in component state so the
@@ -2419,6 +2433,57 @@ const NetworkInspector = ({
                     />
                   </TouchableScale>
                 </View>
+              </View>
+            </View>
+
+            {/* Storage Status */}
+            <View
+              style={{
+                backgroundColor: isPersistentStorageAvailable()
+                  ? 'rgba(74,222,128,0.08)'
+                  : 'rgba(234,179,8,0.08)',
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: isPersistentStorageAvailable()
+                  ? 'rgba(74,222,128,0.2)'
+                  : 'rgba(234,179,8,0.2)',
+                padding: 12,
+                marginTop: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}>
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: isPersistentStorageAvailable() ? '#22C55E' : '#EAB308',
+                }}
+              />
+              <View style={{flex: 1}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 12,
+                    color: isPersistentStorageAvailable() ? '#15803D' : '#854D0E',
+                  }}>
+                  {isPersistentStorageAvailable()
+                    ? `Storage: Persistent (${storage ? 'Custom' : 'iOS Settings'})`
+                    : 'Storage: Temporary (In-Memory)'}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 10.5,
+                    color: isPersistentStorageAvailable() ? '#166534' : '#854D0E',
+                    marginTop: 2,
+                    opacity: 0.8,
+                  }}>
+                  {isPersistentStorageAvailable()
+                    ? 'Your settings are saved across app restarts.'
+                    : 'Settings reset when closed. To persist settings, pass a storage object to <NetworkInspector storage={...} />.'}
+                </Text>
               </View>
             </View>
           </ScrollView>

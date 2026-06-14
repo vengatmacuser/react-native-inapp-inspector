@@ -105,6 +105,22 @@ You can disable the overlay without removing it from your tree:
 
 ---
 
+## Settings Persistence
+
+By default, the inspector preserves configuration preferences (such as dark mode, default landing tab, and module visibilities):
+- **iOS:** Settings are persisted automatically using React Native's built-in `Settings` module (`NSUserDefaults`) with zero configuration or additional packages required.
+- **Android / Custom:** To persist settings on Android (or to use a custom storage mechanism on both platforms), pass a storage instance such as `@react-native-async-storage/async-storage` or `react-native-mmkv` to the `storage` prop:
+
+```tsx
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+<NetworkInspector storage={AsyncStorage} />
+```
+
+If no `storage` prop is passed, Android will fall back to an in-memory store (settings reset when the app is restarted).
+
+---
+
 ## Network Logging
 
 `setupNetworkLogger()` patches global `fetch`, the default axios instance, and future axios instances created with `axios.create()`.
