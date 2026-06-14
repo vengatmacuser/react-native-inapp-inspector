@@ -16,6 +16,10 @@
 
 A self-contained in-app debugging overlay for React Native. Inspect network traffic, console output, analytics events, Redux state, and WebView activity directly inside your app.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector Walkthrough" width="360" style="border-radius: 20px;" />
+</p>
+
 ---
 
 ## Features
