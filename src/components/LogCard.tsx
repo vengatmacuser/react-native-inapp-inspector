@@ -99,8 +99,8 @@ const LogCard = React.memo(function LogCard({
           <Text style={styles.serialNumber}>#{item.id + 1}</Text>
 
           <View
-            style={[styles.methodBadge, {backgroundColor: `${methodColor}15`}]}>
-            <Text style={[styles.methodBadgeText, {color: methodColor}]}>
+            style={[styles.methodBadge, {backgroundColor: methodColor}]}>
+            <Text style={[styles.methodBadgeText, {color: '#FFFFFF'}]}>
               {item.method}
             </Text>
           </View>

@@ -22,6 +22,7 @@ import {
   TouchableOpacity,
   UIManager,
   LogBox,
+  SafeAreaView,
 } from 'react-native';
 import Svg, {Circle, Path} from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
@@ -69,6 +70,7 @@ import {
   saveSettings,
   setCustomStorage,
   isPersistentStorageAvailable,
+  clearPersistedSettings,
 } from './helpers/settingsStore';
 
 // Assets
@@ -388,9 +390,9 @@ const NetworkInspector = ({
   const visibleConsoleLogs = useMemo(() => {
     const filtered = consoleLogs.filter(log => {
       const type = log.type;
-      if (type === 'info' && !showConsoleLevels.info) return false;
-      if (type === 'warn' && !showConsoleLevels.warn) return false;
-      if (type === 'error' && !showConsoleLevels.error) return false;
+      if (type === 'info' && !showConsoleLevels?.info) return false;
+      if (type === 'warn' && !showConsoleLevels?.warn) return false;
+      if (type === 'error' && !showConsoleLevels?.error) return false;
 
       const message = log.message || '';
       const allPrefixes = [
@@ -447,9 +449,9 @@ const NetworkInspector = ({
     insights: true,
     apis: true,
     logs: true,
-    analytics: true,
-    webview: true,
-    redux: true,
+    analytics: false,
+    webview: false,
+    redux: false,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -464,9 +466,37 @@ const NetworkInspector = ({
 
   // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
-  // #9 — when false (default), consecutive identical entries in the API and
-  // Console lists are collapsed into one row with a ×N counter.
   const [showDuplicateLogs, setShowDuplicateLogs] = useState<boolean>(false);
+
+  const resetToDefaults = async () => {
+    await clearPersistedSettings();
+    setIsDark(false);
+    toggleGlobalTheme(false);
+    setModalHeightPercent(90);
+    setTabVisibility({
+      insights: true,
+      apis: true,
+      logs: true,
+      analytics: false,
+      webview: false,
+      redux: false,
+    });
+    setDefaultTab('apis');
+    setMaxNetworkLogs(100);
+    setMaxConsoleLogs(200);
+    setShowConsoleLevels({
+      info: true,
+      warn: true,
+      error: true,
+    });
+    setWebViewCaptureCssJs(true);
+    setReduxAutoRefreshState(true);
+    setReduxExpandDepth(1);
+    setSlowRequestThreshold(1000);
+    setInsightsShowConsoleAlerts(true);
+    setShowDuplicateLogs(false);
+    Alert.alert('Settings Reset', 'All settings have been reset to default values.');
+  };
 
   // #5 — hydrate persisted settings once, then auto-save on any change.
   const settingsHydratedRef = useRef(false);
@@ -510,9 +540,9 @@ const NetworkInspector = ({
             insights: true,
             apis: true,
             logs: true,
-            analytics: true,
-            webview: true,
-            redux: true,
+            analytics: false,
+            webview: false,
+            redux: false,
           },
           ...(saved.tabVisibility || {}),
           apis: true,
@@ -873,7 +903,7 @@ const NetworkInspector = ({
   useEffect(() => {
     if (visible) {
       const target =
-        defaultTab === 'apis' || tabVisibility[defaultTab]
+        defaultTab === 'apis' || tabVisibility?.[defaultTab]
           ? defaultTab
           : 'apis';
       setActiveTab(target);
@@ -1696,7 +1726,8 @@ const NetworkInspector = ({
             start={{x: 0, y: 0}}
             end={{x: 1, y: 0}}
             style={styles.headerGradient}>
-            <View style={[styles.header, {paddingHorizontal: 16, gap: 12}]}>
+            <SafeAreaView style={{width: '100%'}}>
+              <View style={[styles.header, {paddingHorizontal: 16, gap: 12}]}>
               <TouchableScale
                 onPress={() => {
                   animateNextLayout();
@@ -1751,7 +1782,8 @@ const NetworkInspector = ({
                 </Text>
               </View>
             </View>
-          </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
 
           <ScrollView
             style={{flex: 1}}
@@ -1802,7 +1834,7 @@ const NetworkInspector = ({
               </View>
 
               {settingsTabs.map((tab, idx) => {
-                const isVisible = tab.key === 'apis' || tabVisibility[tab.key];
+                const isVisible = tab.key === 'apis' || tabVisibility?.[tab.key];
                 const isLast = idx === settingsTabs.length - 1;
                 const isLocked = tab.key === 'apis';
 
@@ -2298,22 +2330,17 @@ const NetworkInspector = ({
                     </View>
                   </View>
 
-                  {/* Segmented picker — only visible tabs are offered */}
+                  {/* Grid of Default Tab Cards */}
                   <View
                     style={{
                       flexDirection: 'row',
                       flexWrap: 'wrap',
-                      backgroundColor: AppColors.grayBackground,
-                      borderRadius: 8,
-                      padding: 2.5,
-                      marginTop: 10,
-                      borderWidth: 1,
-                      borderColor: AppColors.dividerColor,
-                      gap: 2,
+                      gap: 8,
+                      marginTop: 12,
                     }}>
                     {settingsTabs
                       .filter(
-                        tab => tab.key === 'apis' || tabVisibility[tab.key],
+                        tab => tab.key === 'apis' || tabVisibility?.[tab.key],
                       )
                       .map(tab => {
                         const isActive = defaultTab === tab.key;
@@ -2322,24 +2349,68 @@ const NetworkInspector = ({
                             key={tab.key}
                             onPress={() => setDefaultTab(tab.key)}
                             style={{
-                              paddingVertical: 6,
-                              paddingHorizontal: 10,
+                              flexDirection: 'row',
                               alignItems: 'center',
-                              borderRadius: 6,
-                              backgroundColor: isActive
-                                ? AppColors.purple
-                                : 'transparent',
+                              gap: 8,
+                              paddingVertical: 10,
+                              paddingHorizontal: 12,
+                              borderRadius: 10,
+                              borderWidth: 1.5,
+                              borderColor: isActive ? AppColors.purple : AppColors.grayBorderSecondary,
+                              backgroundColor: isActive ? 'rgba(104,75,155,0.06)' : AppColors.primaryLight,
+                              minWidth: '47%',
+                              flex: 1,
                             }}>
+                            <View
+                              style={{
+                                width: 22,
+                                height: 22,
+                                borderRadius: 6,
+                                backgroundColor: isActive ? AppColors.purple : AppColors.purpleShade50,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                              {tab.icon === 'insights' && (
+                                <InsightsIcon color={isActive ? '#FFFFFF' : AppColors.purple} size={11} />
+                              )}
+                              {tab.icon === 'apis' && (
+                                <SignalIcon color={isActive ? '#FFFFFF' : AppColors.purple} size={11} />
+                              )}
+                              {tab.icon === 'logs' && (
+                                <TerminalIcon color={isActive ? '#FFFFFF' : AppColors.purple} size={11} />
+                              )}
+                              {tab.icon === 'analytics' && (
+                                <AnalyticsIcon color={isActive ? '#FFFFFF' : AppColors.purple} size={11} />
+                              )}
+                              {tab.icon === 'webview' && (
+                                <GlobeIcon color={isActive ? '#FFFFFF' : AppColors.purple} size={11} />
+                              )}
+                              {tab.icon === 'redux' && (
+                                <TerminalIcon color={isActive ? '#FFFFFF' : AppColors.purple} size={11} />
+                              )}
+                            </View>
                             <Text
                               style={{
                                 fontFamily: AppFonts.interBold,
-                                fontSize: 11,
-                                color: isActive
-                                  ? '#FFFFFF'
-                                  : AppColors.grayText,
+                                fontSize: 13,
+                                color: isActive ? AppColors.purple : AppColors.primaryBlack,
+                                flex: 1,
                               }}>
-                              {tab.label}
+                                {tab.label}
                             </Text>
+                            {isActive && (
+                              <View
+                                style={{
+                                  width: 14,
+                                  height: 14,
+                                  borderRadius: 7,
+                                  backgroundColor: AppColors.purple,
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}>
+                                <CheckIcon size={8} color="#FFFFFF" />
+                              </View>
+                            )}
                           </TouchableScale>
                         );
                       })}
@@ -2433,6 +2504,85 @@ const NetworkInspector = ({
                     />
                   </TouchableScale>
                 </View>
+
+                {/* Divider */}
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: AppColors.dividerColor,
+                  }}
+                />
+
+                {/* Reset Settings */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                    gap: 12,
+                  }}>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 6,
+                        backgroundColor: 'rgba(239,68,68,0.08)',
+                        borderWidth: 1,
+                        borderColor: 'rgba(239,68,68,0.2)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <TrashIcon color={AppColors.errorColor} size={11} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        Reset Settings
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        Wipe custom configurations and load package defaults
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableScale
+                    onPress={resetToDefaults}
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 7,
+                      backgroundColor: 'rgba(255,46,87,0.08)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,46,87,0.2)',
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 11,
+                        color: AppColors.errorColor,
+                      }}>
+                      Reset
+                    </Text>
+                  </TouchableScale>
+                </View>
               </View>
             </View>
 
@@ -2495,82 +2645,6 @@ const NetworkInspector = ({
       animateNextLayout();
       setSettingsPage('main');
     };
-
-    const renderSubHeader = (
-      title: string,
-      icon?: React.ReactNode,
-      rightInfo?: string,
-    ) => (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
-          paddingBottom: 16,
-          borderBottomWidth: 1,
-          borderBottomColor: AppColors.dividerColor,
-          marginBottom: 16,
-        }}>
-        <TouchableScale
-          onPress={goBackToMain}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            backgroundColor: AppColors.purpleShade50,
-            borderWidth: 1,
-            borderColor: 'rgba(104,75,155,0.2)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          <WhiteBackNavigation color={AppColors.purple} size={16} />
-        </TouchableScale>
-        {icon && (
-          <View
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              backgroundColor: AppColors.purpleShade50,
-              borderWidth: 1,
-              borderColor: 'rgba(104,75,155,0.2)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            {icon}
-          </View>
-        )}
-        <Text
-          style={{
-            fontFamily: AppFonts.interBold,
-            fontSize: 18,
-            color: AppColors.primaryBlack,
-            flex: 1,
-          }}>
-          {title}
-        </Text>
-        {rightInfo ? (
-          <View
-            style={{
-              backgroundColor: 'rgba(104,75,155,0.08)',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 8,
-              borderWidth: 1,
-              borderColor: 'rgba(104,75,155,0.15)',
-            }}>
-            <Text
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 11,
-                color: AppColors.purple,
-              }}>
-              {rightInfo}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-    );
 
     // Helper: settings row with icon + label + optional description
     const renderSettingRow = (opts: {
@@ -2685,16 +2759,19 @@ const NetworkInspector = ({
       </View>
     );
 
+    let content: React.ReactNode = null;
+    let title = '';
+    let icon: React.ReactNode = null;
+    let rightInfo = '';
+
     if (settingsPage === 'apis') {
-      return (
+      title = 'APIs Settings';
+      icon = <SignalIcon color="#FFFFFF" size={16} />;
+      rightInfo = `Total: ${logs.length}`;
+      content = (
         <ScrollView
-          style={{flex: 1, backgroundColor: AppColors.grayBackground}}
+          style={{flex: 1}}
           contentContainerStyle={{padding: 16}}>
-          {renderSubHeader(
-            'APIs Settings',
-            <SignalIcon color={AppColors.purple} size={16} />,
-            `Total: ${logs.length}`,
-          )}
           <View
             style={{
               backgroundColor: AppColors.primaryLight,
@@ -2760,18 +2837,14 @@ const NetworkInspector = ({
           </View>
         </ScrollView>
       );
-    }
-
-    if (settingsPage === 'logs') {
-      return (
+    } else if (settingsPage === 'logs') {
+      title = 'Logs Settings';
+      icon = <TerminalIcon color="#FFFFFF" size={16} />;
+      rightInfo = `Total: ${consoleLogs.length}`;
+      content = (
         <ScrollView
-          style={{flex: 1, backgroundColor: AppColors.grayBackground}}
+          style={{flex: 1}}
           contentContainerStyle={{padding: 16}}>
-          {renderSubHeader(
-            'Logs Settings',
-            <TerminalIcon color={AppColors.purple} size={16} />,
-            `Total: ${consoleLogs.length}`,
-          )}
           <View
             style={{
               backgroundColor: AppColors.primaryLight,
@@ -2804,7 +2877,7 @@ const NetworkInspector = ({
               Log Levels
             </Text>
             {(['info', 'warn', 'error'] as const).map((level, li) => {
-              const isLvlActive = showConsoleLevels[level];
+              const isLvlActive = showConsoleLevels?.[level];
               const levelColor =
                 level === 'error'
                   ? AppColors.errorColor
@@ -2904,18 +2977,14 @@ const NetworkInspector = ({
           </View>
         </ScrollView>
       );
-    }
-
-    if (settingsPage === 'analytics') {
-      return (
+    } else if (settingsPage === 'analytics') {
+      title = 'Analytics Settings';
+      icon = <AnalyticsIcon color="#FFFFFF" size={16} />;
+      rightInfo = `Events: ${analyticsEvents.length}`;
+      content = (
         <ScrollView
-          style={{flex: 1, backgroundColor: AppColors.grayBackground}}
+          style={{flex: 1}}
           contentContainerStyle={{padding: 16}}>
-          {renderSubHeader(
-            'Analytics Settings',
-            <AnalyticsIcon color={AppColors.purple} size={16} />,
-            `Events: ${analyticsEvents.length}`,
-          )}
           <View
             style={{
               backgroundColor: AppColors.primaryLight,
@@ -2975,18 +3044,14 @@ const NetworkInspector = ({
           </View>
         </ScrollView>
       );
-    }
-
-    if (settingsPage === 'webview') {
-      return (
+    } else if (settingsPage === 'webview') {
+      title = 'WebView Settings';
+      icon = <GlobeIcon color="#FFFFFF" size={16} />;
+      rightInfo = `History: ${webViewNavHistory.length}`;
+      content = (
         <ScrollView
-          style={{flex: 1, backgroundColor: AppColors.grayBackground}}
+          style={{flex: 1}}
           contentContainerStyle={{padding: 16}}>
-          {renderSubHeader(
-            'WebView Settings',
-            <GlobeIcon color={AppColors.purple} size={16} />,
-            `History: ${webViewNavHistory.length}`,
-          )}
           <View
             style={{
               backgroundColor: AppColors.primaryLight,
@@ -3067,18 +3132,14 @@ const NetworkInspector = ({
           </View>
         </ScrollView>
       );
-    }
-
-    if (settingsPage === 'redux') {
-      return (
+    } else if (settingsPage === 'redux') {
+      title = 'Redux Settings';
+      icon = <TerminalIcon color="#FFFFFF" size={16} />;
+      rightInfo = `Reducers: ${Object.keys(reduxState || {}).length}`;
+      content = (
         <ScrollView
-          style={{flex: 1, backgroundColor: AppColors.grayBackground}}
+          style={{flex: 1}}
           contentContainerStyle={{padding: 16}}>
-          {renderSubHeader(
-            'Redux Settings',
-            <TerminalIcon color={AppColors.purple} size={16} />,
-            `Reducers: ${Object.keys(reduxState || {}).length}`,
-          )}
           <View
             style={{
               backgroundColor: AppColors.primaryLight,
@@ -3175,67 +3236,135 @@ const NetworkInspector = ({
           </View>
         </ScrollView>
       );
+    } else {
+      title = 'Insights Settings';
+      icon = <InsightsIcon color="#FFFFFF" size={16} />;
+      content = (
+        <ScrollView
+          style={{flex: 1}}
+          contentContainerStyle={{padding: 16}}>
+          <View
+            style={{
+              backgroundColor: AppColors.primaryLight,
+              padding: 16,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: AppColors.grayBorderSecondary,
+              gap: 4,
+            }}>
+            {renderSettingRow({
+              icon: <SignalIcon color={AppColors.purple} size={16} />,
+              label: 'Slow Latency Warning',
+              description: 'Alert threshold for slow API request duration',
+              picker: {
+                options: [500, 1000, 2000] as const,
+                selectedValue: slowRequestThreshold,
+                onSelect: setSlowRequestThreshold,
+              },
+            })}
+            <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
+            {renderSettingRow({
+              icon: <TerminalIcon color={AppColors.purple} size={16} />,
+              label: 'Show Console Alerts',
+              description: 'Flags critical warnings or crash events on dashboard',
+              isLast: true,
+              onPress: () => setInsightsShowConsoleAlerts(prev => !prev),
+              right: (
+                <View
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 6,
+                    borderWidth: 2,
+                    borderColor: insightsShowConsoleAlerts
+                      ? AppColors.purple
+                      : AppColors.grayTextWeak,
+                    backgroundColor: insightsShowConsoleAlerts
+                      ? 'rgba(104, 75, 155, 0.1)'
+                      : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {insightsShowConsoleAlerts && (
+                    <CheckIcon size={12} color={AppColors.purple} />
+                  )}
+                </View>
+              ),
+            })}
+          </View>
+        </ScrollView>
+      );
     }
 
-    // Default return page is Insights settings
     return (
-      <ScrollView
-        style={{flex: 1, backgroundColor: AppColors.grayBackground}}
-        contentContainerStyle={{padding: 16}}>
-        {renderSubHeader(
-          'Insights Settings',
-          <InsightsIcon color={AppColors.purple} size={16} />,
-        )}
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            padding: 16,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            gap: 4,
-          }}>
-          {renderSettingRow({
-            icon: <SignalIcon color={AppColors.purple} size={16} />,
-            label: 'Slow Latency Warning',
-            description: 'Alert threshold for slow API request duration',
-            picker: {
-              options: [500, 1000, 2000] as const,
-              selectedValue: slowRequestThreshold,
-              onSelect: setSlowRequestThreshold,
-            },
-          })}
-          <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
-          {renderSettingRow({
-            icon: <TerminalIcon color={AppColors.purple} size={16} />,
-            label: 'Show Console Alerts',
-            description: 'Flags critical warnings or crash events on dashboard',
-            isLast: true,
-            onPress: () => setInsightsShowConsoleAlerts(prev => !prev),
-            right: (
+      <View style={{flex: 1, backgroundColor: AppColors.grayBackground}}>
+        <LinearGradient
+          colors={[AppColors.purple, '#6B4EFF']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 0}}
+          style={styles.headerGradient}>
+          <SafeAreaView style={{width: '100%'}}>
+            <View style={[styles.header, {paddingHorizontal: 16, gap: 12}]}>
+            <TouchableScale
+              onPress={goBackToMain}
+              hitSlop={12}
+              style={{
+                padding: 8,
+                borderRadius: 10,
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.08)',
+              }}>
+              <WhiteBackNavigation color="#FFFFFF" size={16} />
+            </TouchableScale>
+            {icon && (
               <View
                 style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 6,
-                  borderWidth: 2,
-                  borderColor: insightsShowConsoleAlerts
-                    ? AppColors.purple
-                    : AppColors.grayTextWeak,
-                  backgroundColor: insightsShowConsoleAlerts
-                    ? 'rgba(104, 75, 155, 0.1)'
-                    : 'transparent',
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                {insightsShowConsoleAlerts && (
-                  <CheckIcon size={12} color={AppColors.purple} />
-                )}
+                {icon}
               </View>
-            ),
-          })}
-        </View>
-      </ScrollView>
+            )}
+            <View style={{flex: 1}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 17,
+                  color: '#FFFFFF',
+                }}>
+                {title}
+              </Text>
+            </View>
+            {rightInfo ? (
+              <View
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    color: '#FFFFFF',
+                  }}>
+                  {rightInfo}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+        {content}
+      </View>
     );
   };
 
@@ -3295,11 +3424,11 @@ const NetworkInspector = ({
     const totalSignals = apiTotal + logTotal + analyticsTotal + webviewTotal;
     const totalIssues = apiErrors + logErrors;
     const activeModules = [
-      tabVisibility.apis,
-      tabVisibility.logs,
-      tabVisibility.analytics,
-      tabVisibility.webview,
-      tabVisibility.redux,
+      tabVisibility?.apis,
+      tabVisibility?.logs,
+      tabVisibility?.analytics,
+      tabVisibility?.webview,
+      tabVisibility?.redux,
     ].filter(Boolean).length;
 
     // Composite health score: success rate penalised by error volume and slow requests.
@@ -3500,7 +3629,7 @@ const NetworkInspector = ({
         </View>
 
         {/* Module 1: APIs */}
-        {tabVisibility.apis && (
+        {tabVisibility?.apis && (
           <TouchableScale
             style={styles.dashboardModuleCard}
             onPress={() => switchActiveTab('apis')}>
@@ -3627,7 +3756,7 @@ const NetworkInspector = ({
             </View>
           </TouchableScale>
         )}
-        {tabVisibility.logs && (
+        {tabVisibility?.logs && (
           <TouchableScale
             style={styles.dashboardModuleCard}
             onPress={() => switchActiveTab('logs')}>
@@ -3675,7 +3804,7 @@ const NetworkInspector = ({
         )}
 
         {/* Module 3: Analytics */}
-        {tabVisibility.analytics && (
+        {tabVisibility?.analytics && (
           <TouchableScale
             style={styles.dashboardModuleCard}
             onPress={() => switchActiveTab('analytics')}>
@@ -3717,7 +3846,7 @@ const NetworkInspector = ({
         )}
 
         {/* Module 4: WebView */}
-        {tabVisibility.webview && (
+        {tabVisibility?.webview && (
           <TouchableScale
             style={styles.dashboardModuleCard}
             onPress={() => switchActiveTab('webview')}>
@@ -3757,7 +3886,7 @@ const NetworkInspector = ({
         )}
 
         {/* Module 5: Redux Store */}
-        {tabVisibility.redux && (
+        {tabVisibility?.redux && (
           <TouchableScale
             style={styles.dashboardModuleCard}
             onPress={() => switchActiveTab('redux')}>
@@ -4190,7 +4319,8 @@ const NetworkInspector = ({
                 <LinearGradient
                   colors={[AppColors.purple, '#6B4EFF']}
                   style={styles.headerGradient}>
-                  <View style={styles.header}>
+                  <SafeAreaView style={{width: '100%'}}>
+                    <View style={styles.header}>
                     <View
                       style={[
                         styles.headerLeft,
@@ -4612,7 +4742,8 @@ const NetworkInspector = ({
                       </TouchableScale>
                     </View>
                   </View>
-                </LinearGradient>
+                </SafeAreaView>
+              </LinearGradient>
 
                 {/* ─── Horizontal Scrollable Tab Bar inside Content ─── */}
                 {selected == null &&
@@ -4663,7 +4794,7 @@ const NetworkInspector = ({
                           },
                         ] as const
                       )
-                        .filter(tab => tabVisibility[tab.key])
+                        .filter(tab => tabVisibility?.[tab.key])
                         .map(tab => {
                           const isActive = activeTab === tab.key;
                           const iconColor = isActive
@@ -6920,21 +7051,17 @@ const NetworkInspector = ({
                                       style={[
                                         styles.methodBadge,
                                         {
-                                          backgroundColor: `${
+                                          backgroundColor:
                                             METHOD_COLORS[
                                               selected.method as Method
-                                            ] ?? METHOD_COLORS.ALL
-                                          }15`,
+                                            ] ?? METHOD_COLORS.ALL,
                                         },
                                       ]}>
                                       <Text
                                         style={[
                                           styles.methodBadgeText,
                                           {
-                                            color:
-                                              METHOD_COLORS[
-                                                selected.method as Method
-                                              ] ?? METHOD_COLORS.ALL,
+                                            color: '#FFFFFF',
                                           },
                                         ]}>
                                         {selected.method}
