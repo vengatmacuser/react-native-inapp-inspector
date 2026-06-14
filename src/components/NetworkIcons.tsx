@@ -960,3 +960,20 @@ export const TrendingUpIcon = ({
     </Svg>
   );
 };
+
+export const MotionIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M5 3l14 9-14 9V3z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};

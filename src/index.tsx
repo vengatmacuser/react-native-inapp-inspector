@@ -22,7 +22,6 @@ import {
   TouchableOpacity,
   UIManager,
   LogBox,
-  SafeAreaView,
 } from 'react-native';
 import Svg, {Circle, Path} from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
@@ -114,6 +113,7 @@ import {
   WarningTriangleIcon,
   ErrorCircleIcon,
   TrendingUpIcon,
+  MotionIcon,
 } from './components/NetworkIcons';
 
 import ErrorBoundary from './components/ErrorBoundary';
@@ -288,6 +288,8 @@ const NetworkInspector = ({
   >({});
   // Inspector panel height as a percentage of the screen (configurable in Settings).
   const [modalHeightPercent, setModalHeightPercent] = useState<number>(90);
+  const [modalAnimationType, setModalAnimationType] = useState<'slide' | 'fade' | 'none'>('slide');
+  const headerTopPadding = Platform.OS === 'ios' && modalHeightPercent >= 95 ? 44 : 0;
   const [expandedReducers, setExpandedReducers] = useState<
     Record<string, boolean>
   >({});
@@ -475,6 +477,7 @@ const NetworkInspector = ({
     setIsDark(false);
     toggleGlobalTheme(false);
     setModalHeightPercent(90);
+    setModalAnimationType('slide');
     setTabVisibility({
       insights: true,
       apis: true,
@@ -512,6 +515,8 @@ const NetworkInspector = ({
       }
       if (saved.modalHeightPercent != null)
         setModalHeightPercent(saved.modalHeightPercent);
+      if (saved.modalAnimationType)
+        setModalAnimationType(saved.modalAnimationType as 'slide' | 'fade' | 'none');
       if (saved.tabVisibility)
         setTabVisibility(prev => ({
           ...prev,
@@ -563,6 +568,7 @@ const NetworkInspector = ({
     saveSettings({
       isDark,
       modalHeightPercent,
+      modalAnimationType,
       tabVisibility,
       defaultTab,
       maxNetworkLogs,
@@ -578,6 +584,7 @@ const NetworkInspector = ({
   }, [
     isDark,
     modalHeightPercent,
+    modalAnimationType,
     tabVisibility,
     defaultTab,
     maxNetworkLogs,
@@ -1731,7 +1738,7 @@ const NetworkInspector = ({
             start={{x: 0, y: 0}}
             end={{x: 1, y: 0}}
             style={styles.headerGradient}>
-            <SafeAreaView style={{width: '100%'}}>
+            <View style={{paddingTop: headerTopPadding, width: '100%'}}>
               <View style={[styles.header, {paddingHorizontal: 16, gap: 12}]}>
               <TouchableScale
                 onPress={() => {
@@ -1787,7 +1794,7 @@ const NetworkInspector = ({
                 </Text>
               </View>
             </View>
-          </SafeAreaView>
+          </View>
         </LinearGradient>
 
           <ScrollView
@@ -2333,6 +2340,104 @@ const NetworkInspector = ({
                               color: isActive ? '#FFFFFF' : AppColors.grayText,
                             }}>
                             {opt}%
+                          </Text>
+                        </TouchableScale>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Divider */}
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: AppColors.dividerColor,
+                  }}
+                />
+
+                {/* Modal Animation */}
+                <View
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: 14,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 6,
+                        backgroundColor: AppColors.purpleShade50,
+                        borderWidth: 1,
+                        borderColor: 'rgba(104,75,155,0.2)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <MotionIcon color={AppColors.purple} size={11} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        Modal Animation
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        How the inspector panel enters and exits the screen
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Segmented picker */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      backgroundColor: AppColors.grayBackground,
+                      borderRadius: 8,
+                      padding: 2.5,
+                      marginTop: 10,
+                      borderWidth: 1,
+                      borderColor: AppColors.dividerColor,
+                    }}>
+                    {([
+                      {key: 'slide' as const, label: 'Slide Up'},
+                      {key: 'fade' as const, label: 'Fade'},
+                      {key: 'none' as const, label: 'None'},
+                    ]).map(opt => {
+                      const isActive = modalAnimationType === opt.key;
+                      return (
+                        <TouchableScale
+                          key={opt.key}
+                          onPress={() => setModalAnimationType(opt.key)}
+                          style={{
+                            flex: 1,
+                            paddingVertical: 6,
+                            alignItems: 'center',
+                            borderRadius: 6,
+                            backgroundColor: isActive
+                              ? AppColors.purple
+                              : 'transparent',
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 11,
+                              color: isActive ? '#FFFFFF' : AppColors.grayText,
+                            }}>
+                            {opt.label}
                           </Text>
                         </TouchableScale>
                       );
@@ -3368,7 +3473,7 @@ const NetworkInspector = ({
           start={{x: 0, y: 0}}
           end={{x: 1, y: 0}}
           style={styles.headerGradient}>
-          <SafeAreaView style={{width: '100%'}}>
+          <View style={{paddingTop: headerTopPadding, width: '100%'}}>
             <View style={[styles.header, {paddingHorizontal: 16, gap: 12}]}>
             <TouchableScale
               onPress={goBackToMain}
@@ -3426,7 +3531,7 @@ const NetworkInspector = ({
               </View>
             ) : null}
           </View>
-        </SafeAreaView>
+        </View>
       </LinearGradient>
         {content}
       </View>
@@ -4491,7 +4596,7 @@ const NetworkInspector = ({
         </TouchableScale>
       </Animated.View>
 
-      <Modal visible={visible} animationType="slide" transparent>
+      <Modal visible={visible} animationType={modalAnimationType} transparent>
         {visible && (
           <ErrorBoundary onClose={closeModal}>
             <View style={styles.modalBackdrop}>
@@ -4513,7 +4618,7 @@ const NetworkInspector = ({
                 <LinearGradient
                   colors={[AppColors.purple, '#6B4EFF']}
                   style={styles.headerGradient}>
-                  <SafeAreaView style={{width: '100%'}}>
+                  <View style={{paddingTop: headerTopPadding, width: '100%'}}>
                     <View style={styles.header}>
                     <View
                       style={[
@@ -4936,7 +5041,7 @@ const NetworkInspector = ({
                       </TouchableScale>
                     </View>
                   </View>
-                </SafeAreaView>
+                </View>
               </LinearGradient>
 
                 {/* ─── Horizontal Scrollable Tab Bar inside Content ─── */}
@@ -5127,13 +5232,31 @@ const NetworkInspector = ({
                               />
                             </TouchableScale>
                             <TouchableScale
-                              style={styles.toolbarBtn}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                paddingHorizontal: 10,
+                                paddingVertical: 5,
+                                borderRadius: 8,
+                                backgroundColor: 'rgba(255,46,87,0.06)',
+                                borderWidth: 1,
+                                borderColor: 'rgba(255,46,87,0.15)',
+                              }}
                               onPress={handleDelete}
-                              hitSlop={10}>
-                              <TrashIcon
-                                color={AppColors.grayTextStrong}
-                                size={18}
+                              hitSlop={6}>
+                              <WipeIcon
+                                color={AppColors.errorColor}
+                                size={13}
                               />
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 10.5,
+                                  color: AppColors.errorColor,
+                                }}>
+                                Clear
+                              </Text>
                             </TouchableScale>
                           </View>
                         )}
@@ -5505,20 +5628,33 @@ const NetworkInspector = ({
 
                               <View style={styles.toolbarRight}>
                                 <TouchableScale
-                                  style={styles.toolbarBtn}
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 5,
+                                    borderRadius: 8,
+                                    backgroundColor: 'rgba(255,46,87,0.06)',
+                                    borderWidth: 1,
+                                    borderColor: 'rgba(255,46,87,0.15)',
+                                  }}
                                   onPress={handleDelete}
-                                  hitSlop={10}>
-                                  <TrashIcon
-                                    color={AppColors.grayTextStrong}
-                                    size={18}
+                                  hitSlop={6}>
+                                  <WipeIcon
+                                    color={AppColors.errorColor}
+                                    size={13}
                                   />
-                                  {selectedLogs.size > 0 && (
-                                    <View style={styles.trashBadge}>
-                                      <Text style={styles.trashBadgeText}>
-                                        {selectedLogs.size}
-                                      </Text>
-                                    </View>
-                                  )}
+                                  <Text
+                                    style={{
+                                      fontFamily: AppFonts.interBold,
+                                      fontSize: 10.5,
+                                      color: AppColors.errorColor,
+                                    }}>
+                                    {selectedLogs.size > 0
+                                      ? `Delete (${selectedLogs.size})`
+                                      : 'Clear'}
+                                  </Text>
                                 </TouchableScale>
 
                                 <TouchableScale
@@ -5806,13 +5942,31 @@ const NetworkInspector = ({
                               />
                             </TouchableScale>
                             <TouchableScale
-                              style={styles.toolbarBtn}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                paddingHorizontal: 10,
+                                paddingVertical: 5,
+                                borderRadius: 8,
+                                backgroundColor: 'rgba(255,46,87,0.06)',
+                                borderWidth: 1,
+                                borderColor: 'rgba(255,46,87,0.15)',
+                              }}
                               onPress={handleDelete}
-                              hitSlop={10}>
-                              <TrashIcon
-                                color={AppColors.grayTextStrong}
-                                size={18}
+                              hitSlop={6}>
+                              <WipeIcon
+                                color={AppColors.errorColor}
+                                size={13}
                               />
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 10.5,
+                                  color: AppColors.errorColor,
+                                }}>
+                                Clear
+                              </Text>
                             </TouchableScale>
                           </View>
                         </View>

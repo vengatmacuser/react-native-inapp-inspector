@@ -24,6 +24,7 @@ const SETTINGS_KEY = 'rn-inapp-inspector.settings.v1';
 export interface PersistedSettings {
   isDark?: boolean;
   modalHeightPercent?: number;
+  modalAnimationType?: string;
   tabVisibility?: Record<string, boolean>;
   defaultTab?: string;
   maxNetworkLogs?: number;
