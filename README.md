@@ -300,11 +300,21 @@ npm run ios
 
 ---
 
-## Support
+## Contributing 🤝
 
-If you find this project useful, consider sponsoring its development:
+Contributions are welcome! Please check out our [Contributing Guidelines](CONTRIBUTING.md) to learn how to get started, set up the development environment, or request features.
 
-[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-@vengatmacuser-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/vengatmacuser)
+---
+
+## Support & Sponsoring 💖
+
+This library is a completely free, open-source utility maintained in the author's spare time. If this tool has saved you or your team hours of debugging, please consider supporting its continuous development.
+
+Sponsoring helps prioritize your bug fixes, maintain compatibility with new React Native versions, and support new features.
+
+👉 **[Sponsor @vengatmacuser on GitHub Sponsors](https://github.com/sponsors/vengatmacuser)**
+
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-@vengatmacuser-ea4aaa?logo=githubsponsors&logoColor=white&style=for-the-badge)](https://github.com/sponsors/vengatmacuser)
 
 ---
 
