@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {View, Pressable, Text, Animated, Linking} from 'react-native';
 
 // Constants
@@ -8,7 +8,7 @@ import {DURATION_FAST_MS, DURATION_SLOW_MS} from '../constants';
 import useAccordion from '../customHooks/useAccordion';
 
 // Helpers
-import {getDurationColor} from '../helpers';
+import {getDurationColor, handleOpenExternalLink} from '../helpers';
 
 // Assets
 import {
@@ -21,13 +21,24 @@ import {
   GlobeIcon,
 } from './NetworkIcons';
 
+// Components
+import TouchableScale from './TouchableScale';
+
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
+import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
 
-// Type Definition
-import {MetaAccordionProps} from '../types';
-import {AppFonts} from '../styles/AppFonts';
+export interface MetaAccordionProps {
+  status: number | null | undefined;
+  statusColor: string;
+  duration: number | null | undefined;
+  size: string;
+  triggeredAt: string;
+  method: string;
+  contentType?: string;
+  url: string;
+}
 
 const MetaAccordion = ({
   status,
@@ -39,8 +50,53 @@ const MetaAccordion = ({
   contentType,
   url,
 }: MetaAccordionProps) => {
+  const [urlExpanded, setUrlExpanded] = useState(false);
   const {toggleOpen, chevronStyle, bodyStyle} = useAccordion(true, 400, 390);
   const isFailed = status === 0 || status == null;
+
+  const renderFormattedUrl = (rawUrl: string) => {
+    if (!rawUrl) return '—';
+    try {
+      const doubleSlashIndex = rawUrl.indexOf('//');
+      let temp = rawUrl;
+      let protocol = '';
+      if (doubleSlashIndex !== -1) {
+        protocol = rawUrl.substring(0, doubleSlashIndex + 2);
+        temp = rawUrl.substring(doubleSlashIndex + 2);
+      }
+
+      const slashIndex = temp.indexOf('/');
+      let host = temp;
+      let pathAndSearch = '';
+      if (slashIndex !== -1) {
+        host = temp.substring(0, slashIndex);
+        pathAndSearch = temp.substring(slashIndex);
+      }
+
+      const queryIndex = pathAndSearch.indexOf('?');
+      let pathname = pathAndSearch;
+      let search = '';
+      if (queryIndex !== -1) {
+        pathname = pathAndSearch.substring(0, queryIndex);
+        search = pathAndSearch.substring(queryIndex);
+      }
+
+      return (
+        <Text style={{lineHeight: 16}}>
+          {protocol ? (
+            <Text style={{color: '#94A3B8', fontFamily: AppFonts.interRegular}}>{protocol}</Text>
+          ) : null}
+          <Text style={{color: AppColors.purple, fontFamily: AppFonts.interBold}}>{host}</Text>
+          <Text style={{color: '#334155', fontFamily: AppFonts.interMedium}}>{pathname}</Text>
+          {search ? (
+            <Text style={{color: '#0D9488', fontFamily: AppFonts.interRegular}}>{search}</Text>
+          ) : null}
+        </Text>
+      );
+    } catch {
+      return rawUrl;
+    }
+  };
 
   return (
     <View style={styles.metaContainer}>
@@ -177,34 +233,62 @@ const MetaAccordion = ({
           </View>
           <View style={styles.metaDivider} />
 
-          <View style={[styles.metaRow, {alignItems: 'flex-start'}]}>
-            <View style={styles.metaLabelRow}>
-              <GlobeIcon color={AppColors.grayTextWeak} size={14} />
-              <Text style={styles.metaLabel}>Full URL</Text>
+          <View style={[styles.metaRow, {alignItems: 'flex-start', flexDirection: 'column', gap: 6}]}>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', width: '100%', alignItems: 'center'}}>
+              <View style={styles.metaLabelRow}>
+                <GlobeIcon color={AppColors.grayTextWeak} size={14} />
+                <Text style={styles.metaLabel}>Full URL</Text>
+              </View>
+              
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                {url && url.length > 50 && (
+                  <TouchableScale onPress={() => setUrlExpanded(prev => !prev)} hitSlop={8}>
+                    <Text style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10.5,
+                      color: AppColors.purple,
+                    }}>
+                      {urlExpanded ? 'Show Less' : 'Show More'}
+                    </Text>
+                  </TouchableScale>
+                )}
+                
+                {url && (
+                  <TouchableScale onPress={() => handleOpenExternalLink(url)} hitSlop={8}>
+                    <Text style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10.5,
+                      color: AppColors.purple,
+                      textDecorationLine: 'underline',
+                    }}>
+                      Open
+                    </Text>
+                  </TouchableScale>
+                )}
+              </View>
             </View>
-            <Text
-              selectable={true}
-              numberOfLines={3}
-              ellipsizeMode="tail"
-              onPress={() => {
-                if (url) {
-                  Linking.openURL(url).catch(() => {});
-                }
-              }}
-              style={[
-                styles.metaValue,
-                {
-                  fontSize: 11.5,
-                  color: url ? AppColors.purple : AppColors.grayTextWeak,
-                  textDecorationLine: url ? 'underline' : 'none',
-                  fontFamily: AppFonts.interMedium,
-                  flex: 1,
-                  textAlign: 'right',
-                  lineHeight: 16,
-                },
-              ]}>
-              {url || '—'}
-            </Text>
+            
+            <View style={{
+              backgroundColor: '#F8FAFC',
+              borderRadius: 8,
+              padding: 8,
+              borderWidth: 1.5,
+              borderColor: '#E2E8F0',
+              width: '100%',
+              marginTop: 2,
+            }}>
+              <Text
+                selectable={true}
+                numberOfLines={urlExpanded ? undefined : 2}
+                ellipsizeMode="tail"
+                style={{
+                  fontSize: 11,
+                  textAlign: 'left',
+                  lineHeight: 16.5,
+                }}>
+                {renderFormattedUrl(url)}
+              </Text>
+            </View>
           </View>
         </View>
       </Animated.View>

@@ -15,6 +15,7 @@ import {
   HeadersIcon,
   DiffIcon,
   ChevronIcon,
+  SearchIcon,
 } from './NetworkIcons';
 
 // Stylesheet
@@ -31,6 +32,9 @@ const SectionHeader = ({
   showDiff,
   isDiffing,
   onToggleDiff,
+  showSearch,
+  isSearching,
+  onToggleSearch,
 }: SectionHeaderProps) => {
   const isOpen = expanded === undefined ? false : !!expanded;
   const chevronAnim = useRef(new Animated.Value(isOpen ? 1 : 0)).current;
@@ -63,6 +67,20 @@ const SectionHeader = ({
           <Text style={styles.sectionTitle}>{title}</Text>
         </Pressable>
         <View style={styles.sectionHeaderActions}>
+          {showSearch && (
+            <TouchableScale
+              onPress={onToggleSearch}
+              hitSlop={12}
+              style={[
+                styles.iconSquareBtn,
+                isSearching ? styles.iconSquareBtnActive : null,
+              ]}>
+              <SearchIcon
+                color={isSearching ? AppColors.skyBlue : AppColors.grayTextWeak}
+                size={14}
+              />
+            </TouchableScale>
+          )}
           {showDiff && (
             <TouchableScale
               onPress={onToggleDiff}

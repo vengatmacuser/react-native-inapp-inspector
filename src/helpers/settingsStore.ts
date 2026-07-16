@@ -114,3 +114,7 @@ export const isPersistentStorageAvailable = () => {
   return customStorage !== null || Platform.OS === 'ios';
 };
 
+export function getCustomStorage(): InspectorStorage | null {
+  return customStorage;
+}
+

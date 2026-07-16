@@ -333,6 +333,7 @@ const NetworkInspector = ({
     new Set(),
   );
   const [showNetworkMenu, setShowNetworkMenu] = useState(false);
+  const [showHeaderInfo, setShowHeaderInfo] = useState(false);
   const [showUiMenu, setShowUiMenu] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   // #7 — sort order for the Logs (console) tab
@@ -4689,18 +4690,19 @@ const NetworkInspector = ({
                       </TouchableScale>
 
                       {selected == null && selectedEvent == null ? (
-                        <View
+                        <TouchableScale
+                          onPress={() => setShowHeaderInfo(prev => !prev)}
                           style={{
                             flexDirection: 'row',
                             alignItems: 'center',
-                            gap: 14,
+                            gap: 10,
                             flex: 1,
                           }}>
                           <View
                             style={{
-                              width: 50,
-                              height: 50,
-                              borderRadius: 10,
+                              width: 38,
+                              height: 38,
+                              borderRadius: 19,
                               backgroundColor: 'rgba(255,255,255,0.13)',
                               borderWidth: 1.5,
                               borderColor: 'rgba(255,255,255,0.25)',
@@ -4711,17 +4713,13 @@ const NetworkInspector = ({
                               shadowRadius: 4,
                               shadowOffset: {width: 0, height: 2},
                             }}>
-                            <BrandSquareIcon size={45} />
+                            <BrandCircleIcon size={34} />
                           </View>
                           <View style={{gap: 2, flex: 1}}>
                             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                               <Text style={[styles.headerTitle]} numberOfLines={1}>
-                                {getAppName()}{' '}
-                                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 13, color: 'rgba(255,255,255,0.6)'}}>
-                                  (Inspector)
-                                </Text>
+                                {getAppName()}
                               </Text>
-                              {/* #1 — pulsing dot when a newer version is on NPM */}
                               {updateAvailable && (
                                 <Pressable
                                   hitSlop={10}
@@ -4760,112 +4758,144 @@ const NetworkInspector = ({
                                 </Pressable>
                               )}
                             </View>
-                            <Text
-                              style={{
-                                fontFamily: AppFonts.interRegular,
-                                fontSize: 10.5,
-                                color: 'rgba(255, 255, 255, 0.6)',
-                                marginTop: 1,
-                              }}
-                              selectable={true}
-                              numberOfLines={1}>
-                              {getBundleIdentifier()}
-                            </Text>
+
+                            {/* Bundle ID pill */}
                             <View
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                gap: 6,
-                                marginTop: 4,
+                                alignSelf: 'flex-start',
+                                backgroundColor: 'rgba(255,255,255,0.1)',
+                                borderRadius: 10,
+                                paddingHorizontal: 8,
+                                paddingVertical: 3,
+                                gap: 5,
+                                borderWidth: 1,
+                                borderColor: 'rgba(255,255,255,0.15)',
                               }}>
-                              {/* OS chip */}
                               <View
                                 style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  borderRadius: 6,
-                                  overflow: 'hidden',
-                                  borderWidth: 1,
-                                  borderColor: 'rgba(255,255,255,0.18)',
-                                }}>
-                                <View
-                                  style={{
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 2,
-                                    backgroundColor: 'rgba(255,255,255,0.28)',
-                                  }}>
-                                  <Text
-                                    style={{
-                                      fontFamily: AppFonts.interBold,
-                                      fontSize: 9,
-                                      color: '#FFFFFF',
-                                      letterSpacing: 0.3,
-                                    }}>
-                                    {Platform.OS === 'ios' ? 'iOS' : 'Android'}
-                                  </Text>
-                                </View>
-                                <View
-                                  style={{
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 2,
-                                    backgroundColor: 'rgba(255,255,255,0.12)',
-                                  }}>
-                                  <Text
-                                    style={{
-                                      fontFamily: AppFonts.interMedium,
-                                      fontSize: 9.5,
-                                      color: 'rgba(255,255,255,0.92)',
-                                    }}>
-                                    {String(Platform.Version)}
-                                  </Text>
-                                </View>
-                              </View>
-
-                              {/* npm chip */}
-                              <View
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: 3,
+                                  backgroundColor: '#4ADE80',
+                                }}
+                              />
+                              <Text
                                 style={{
-                                  flexDirection: 'row',
-                                  alignItems: 'center',
-                                  borderRadius: 6,
-                                  overflow: 'hidden',
-                                  borderWidth: 1,
-                                  borderColor: 'rgba(255,255,255,0.18)',
+                                  fontFamily: AppFonts.interMedium,
+                                  fontSize: 10,
+                                  color: 'rgba(255, 255, 255, 0.85)',
+                                  letterSpacing: 0.2,
+                                }}
+                                numberOfLines={1}>
+                                {getBundleIdentifier()}
+                              </Text>
+                              <Animated.View
+                                style={{
+                                  transform: [{rotate: showHeaderInfo ? '180deg' : '0deg'}],
+                                  marginLeft: 2,
                                 }}>
-                                <View
-                                  style={{
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 2,
-                                    backgroundColor: 'rgba(255,255,255,0.28)',
-                                  }}>
-                                  <Text
-                                    style={{
-                                      fontFamily: AppFonts.interBold,
-                                      fontSize: 9,
-                                      color: '#FFFFFF',
-                                      letterSpacing: 0.3,
-                                    }}>
-                                    npm
-                                  </Text>
-                                </View>
-                                <View
-                                  style={{
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 2,
-                                    backgroundColor: 'rgba(255,255,255,0.12)',
-                                  }}>
-                                  <Text
-                                    style={{
-                                      fontFamily: AppFonts.interMedium,
-                                      fontSize: 9.5,
-                                      color: 'rgba(255,255,255,0.92)',
-                                    }}>
-                                    v{LIB_VERSION}
-                                  </Text>
-                                </View>
-                              </View>
+                                <ChevronIcon color="rgba(255,255,255,0.6)" size={12} />
+                              </Animated.View>
                             </View>
+
+                            {/* Chips — shown only when expanded */}
+                            {showHeaderInfo && (
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 6,
+                                  marginTop: 4,
+                                }}>
+                                <View
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    borderRadius: 6,
+                                    overflow: 'hidden',
+                                    borderWidth: 1,
+                                    borderColor: 'rgba(255,255,255,0.18)',
+                                  }}>
+                                  <View
+                                    style={{
+                                      paddingHorizontal: 5,
+                                      paddingVertical: 2,
+                                      backgroundColor: 'rgba(255,255,255,0.28)',
+                                    }}>
+                                    <Text
+                                      style={{
+                                        fontFamily: AppFonts.interBold,
+                                        fontSize: 9,
+                                        color: '#FFFFFF',
+                                        letterSpacing: 0.3,
+                                      }}>
+                                      {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+                                    </Text>
+                                  </View>
+                                  <View
+                                    style={{
+                                      paddingHorizontal: 5,
+                                      paddingVertical: 2,
+                                      backgroundColor: 'rgba(255,255,255,0.12)',
+                                    }}>
+                                    <Text
+                                      style={{
+                                        fontFamily: AppFonts.interMedium,
+                                        fontSize: 9.5,
+                                        color: 'rgba(255,255,255,0.92)',
+                                      }}>
+                                      {String(Platform.Version)}
+                                    </Text>
+                                  </View>
+                                </View>
+
+                                <View
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    borderRadius: 6,
+                                    overflow: 'hidden',
+                                    borderWidth: 1,
+                                    borderColor: 'rgba(255,255,255,0.18)',
+                                  }}>
+                                  <View
+                                    style={{
+                                      paddingHorizontal: 5,
+                                      paddingVertical: 2,
+                                      backgroundColor: 'rgba(255,255,255,0.28)',
+                                    }}>
+                                    <Text
+                                      style={{
+                                        fontFamily: AppFonts.interBold,
+                                        fontSize: 9,
+                                        color: '#FFFFFF',
+                                        letterSpacing: 0.3,
+                                      }}>
+                                      npm
+                                    </Text>
+                                  </View>
+                                  <View
+                                    style={{
+                                      paddingHorizontal: 5,
+                                      paddingVertical: 2,
+                                      backgroundColor: 'rgba(255,255,255,0.12)',
+                                    }}>
+                                    <Text
+                                      style={{
+                                        fontFamily: AppFonts.interMedium,
+                                        fontSize: 9.5,
+                                        color: 'rgba(255,255,255,0.92)',
+                                      }}>
+                                      v{LIB_VERSION}
+                                    </Text>
+                                  </View>
+                                </View>
+                              </View>
+                            )}
                           </View>
-                        </View>
+                        </TouchableScale>
                       ) : null}
                     </View>
 

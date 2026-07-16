@@ -108,6 +108,9 @@ export interface SectionHeaderProps {
   showDiff?: boolean;
   isDiffing?: boolean;
   onToggleDiff?: () => void;
+  showSearch?: boolean;
+  isSearching?: boolean;
+  onToggleSearch?: () => void;
 }
 
 export interface TreeNodeProps {

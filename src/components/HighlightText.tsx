@@ -2,7 +2,7 @@ import React from 'react';
 import {Text, Linking} from 'react-native';
 
 // Helpers
-import {escapeRegex} from '../helpers';
+import {escapeRegex, handleOpenExternalLink} from '../helpers';
 
 const HighlightText = ({
   text,
@@ -53,7 +53,7 @@ const HighlightText = ({
                   textDecorationLine: 'underline',
                 }}
                 onPress={() => {
-                  Linking.openURL(part).catch(() => {});
+                  handleOpenExternalLink(part);
                 }}>
                 {part}
               </Text>

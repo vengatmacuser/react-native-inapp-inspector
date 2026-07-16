@@ -24,6 +24,8 @@ export interface ReduxHistoryEntry {
   payload: any;
   timestamp: string;
   affectedSlices: string[];
+  prevState?: any;
+  nextState?: any;
 }
 
 let actionHistory: ReduxHistoryEntry[] = [];
@@ -115,6 +117,8 @@ function recordAction(action: any, prevState: any, nextState: any) {
     payload,
     timestamp,
     affectedSlices,
+    prevState,
+    nextState,
   });
   if (actionHistory.length > MAX_HISTORY) {
     actionHistory.length = MAX_HISTORY;

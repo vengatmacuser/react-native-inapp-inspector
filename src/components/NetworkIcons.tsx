@@ -977,3 +977,22 @@ export const MotionIcon = ({
     </Svg>
   );
 };
+
+export const SortIcon = ({
+  ascending,
+  color = AppColors.purple,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 4l-6 6h12z"
+        fill={ascending ? color : AppColors.grayTextWeak}
+      />
+      <Path
+        d="M12 20l6-6H6z"
+        fill={!ascending ? color : AppColors.grayTextWeak}
+      />
+    </Svg>
+  );
+};

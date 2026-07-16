@@ -1,4 +1,4 @@
-import {Clipboard, Platform, ToastAndroid, Alert, NativeModules} from 'react-native';
+import {Clipboard, Platform, ToastAndroid, Alert, NativeModules, Linking} from 'react-native';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -348,4 +348,21 @@ export const getAppName = (): string => {
   }
 
   return 'App';
+};
+
+export const handleOpenExternalLink = (url: string): void => {
+  if (!url) return;
+  Alert.alert(
+    'Open Link',
+    `Do you want to open this link in your web browser?\n\n${url}`,
+    [
+      {text: 'Cancel', style: 'cancel'},
+      {
+        text: 'Open',
+        onPress: () => {
+          Linking.openURL(url).catch(() => {});
+        },
+      },
+    ]
+  );
 };
