@@ -188,41 +188,38 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                 <Text style={[cardStyles.chipText, {color: AppColors.grayText}]}>★ {userPropCount} props</Text>
               </View>
             )}
+
+            {(() => {
+              const items = event.params?.items;
+              if (Array.isArray(items) && items.length > 0) {
+                return (
+                  <View style={[cardStyles.chip, {backgroundColor: '#FEF3C7', borderColor: '#FDE68A'}]}>
+                    <Text style={[cardStyles.chipText, {color: '#D97706', fontFamily: AppFonts.interBold}]}>
+                      🛒 {items.length} {items.length === 1 ? 'item' : 'items'}
+                    </Text>
+                  </View>
+                );
+              }
+              return null;
+            })()}
+
+            {(() => {
+              const val = event.params?.value ?? event.params?.price;
+              const currency = event.params?.currency ?? '';
+              const isPrimitive = typeof val === 'string' || typeof val === 'number';
+              if (isPrimitive) {
+                const currencyStr = typeof currency === 'string' || typeof currency === 'number' ? String(currency) : '';
+                return (
+                  <View style={[cardStyles.chip, {backgroundColor: '#ECFDF5', borderColor: '#A7F3D0'}]}>
+                    <Text style={[cardStyles.chipText, {color: '#059669', fontFamily: AppFonts.interBold}]}>
+                      💰 {String(val)} {currencyStr}
+                    </Text>
+                  </View>
+                );
+              }
+              return null;
+            })()}
           </View>
-
-          {/* Inline Mini Graph for E-commerce Items */}
-          {(() => {
-            const items = event.params?.items;
-            if (!Array.isArray(items) || items.length === 0) return null;
-
-            const prices = items
-              .map((item: any) => parseFloat(item.price || item.value))
-              .filter(p => !isNaN(p));
-
-            if (prices.length === 0) return null;
-            const max = Math.max(...prices);
-            if (max === 0) return null;
-
-            return (
-              <View style={cardStyles.miniGraphWrapper}>
-                {prices.map((val, idx) => {
-                  const hPct = (val / max) * 100;
-                  return (
-                    <View
-                      key={idx}
-                      style={[
-                        cardStyles.miniGraphBar,
-                        {
-                          height: `${Math.max(15, hPct)}%`,
-                          backgroundColor: color,
-                        },
-                      ]}
-                    />
-                  );
-                })}
-              </View>
-            );
-          })()}
         </View>
       </TouchableScale>
     </View>

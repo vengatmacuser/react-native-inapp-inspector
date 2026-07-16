@@ -1,5 +1,5 @@
 import React, {useRef} from 'react';
-import {Animated, Pressable, StyleSheet} from 'react-native';
+import {Animated, Pressable, StyleSheet, Platform} from 'react-native';
 
 const TouchableScale = ({
   onPress,
@@ -14,6 +14,21 @@ const TouchableScale = ({
   hitSlop?: any;
   disabled?: boolean;
 }) => {
+  if (Platform.OS === 'android') {
+    return (
+      <Pressable
+        disabled={disabled}
+        onPress={onPress}
+        hitSlop={hitSlop}
+        style={({pressed}) => [
+          style,
+          {opacity: pressed ? 0.75 : 1},
+        ]}>
+        {children}
+      </Pressable>
+    );
+  }
+
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 

@@ -1,4 +1,4 @@
-import {Clipboard, Platform, ToastAndroid, Alert} from 'react-native';
+import {Clipboard, Platform, ToastAndroid, Alert, NativeModules} from 'react-native';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -254,4 +254,98 @@ export const formatDateTimeToAnalytics = (ts: number): string => {
     minute: '2-digit',
     second: '2-digit',
   });
+};
+
+export const getBundleIdentifier = (): string => {
+  const RNDeviceInfo = NativeModules.RNDeviceInfo;
+  if (RNDeviceInfo && typeof RNDeviceInfo.bundleId === 'string') {
+    return RNDeviceInfo.bundleId;
+  }
+  if (RNDeviceInfo && typeof RNDeviceInfo.getBundleId === 'function') {
+    try {
+      const res = RNDeviceInfo.getBundleId();
+      if (typeof res === 'string') return res;
+    } catch (e) {}
+  }
+
+  const ExponentConstants = NativeModules.ExponentConstants;
+  if (ExponentConstants && ExponentConstants.manifest) {
+    const manifest = ExponentConstants.manifest;
+    if (manifest.ios && manifest.ios.bundleIdentifier) {
+      return manifest.ios.bundleIdentifier;
+    }
+    if (manifest.android && manifest.android.package) {
+      return manifest.android.package;
+    }
+  }
+
+  const ExpoApplication = NativeModules.ExpoApplication;
+  if (ExpoApplication && typeof ExpoApplication.applicationId === 'string') {
+    return ExpoApplication.applicationId;
+  }
+
+  const SourceCode = NativeModules.SourceCode;
+  if (SourceCode && typeof SourceCode.scriptURL === 'string') {
+    const url = SourceCode.scriptURL;
+    if (url.includes('assets/')) {
+      try {
+        const match = url.match(/assets\/([^/?#]+)/);
+        if (match && match[1]) {
+          return match[1];
+        }
+      } catch (e) {}
+    }
+  }
+
+  return 'org.reactjs.native.example';
+};
+
+export const getAppName = (): string => {
+  // Try iOS via PlatformConstants
+  const constants = NativeModules.PlatformConstants;
+  if (constants && typeof constants.interfaceIdiom === 'string') {
+    // On iOS, try to get display name from the main bundle
+    const SettingsManager = NativeModules.SettingsManager;
+    if (SettingsManager && SettingsManager.settings) {
+      const appName = SettingsManager.settings.AppleLocale
+        ? undefined
+        : undefined;
+      // Fallback: try to parse from SourceCode
+    }
+  }
+
+  // Try react-native-device-info
+  const RNDeviceInfo = NativeModules.RNDeviceInfo;
+  if (RNDeviceInfo && typeof RNDeviceInfo.appName === 'string') {
+    return RNDeviceInfo.appName;
+  }
+
+  // Try Expo
+  const ExpoApplication = NativeModules.ExpoApplication;
+  if (ExpoApplication && typeof ExpoApplication.applicationName === 'string') {
+    return ExpoApplication.applicationName;
+  }
+
+  const ExponentConstants = NativeModules.ExponentConstants;
+  if (ExponentConstants && ExponentConstants.manifest) {
+    const manifest = ExponentConstants.manifest;
+    if (manifest.name) return manifest.name;
+  }
+
+  // Android: try to get from AndroidInfoModule
+  const AppInfo = NativeModules.AppInfo;
+  if (AppInfo && typeof AppInfo.appName === 'string') {
+    return AppInfo.appName;
+  }
+
+  // Fallback: derive from bundle ID (last segment, cleaned up)
+  const bundleId = getBundleIdentifier();
+  if (bundleId && bundleId !== 'org.reactjs.native.example') {
+    const parts = bundleId.split('.');
+    const last = parts[parts.length - 1];
+    // Capitalize first letter
+    return last ? last.charAt(0).toUpperCase() + last.slice(1) : 'App';
+  }
+
+  return 'App';
 };

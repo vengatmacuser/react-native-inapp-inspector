@@ -11,100 +11,8 @@ import {
 } from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
-import {ChevronIcon, CopyIcon, CheckIcon} from './NetworkIcons';
+import {ChevronIcon} from './NetworkIcons';
 import Svg, {Path} from 'react-native-svg';
-import AnimatedEntrance from './AnimatedEntrance';
-import {copyToClipboard} from '../helpers';
-
-// #15 — copy-to-clipboard control for a single dispatched action
-const ActionCopyButton = ({value}: {value: () => unknown}) => {
-  const [copied, setCopied] = useState(false);
-  return (
-    <Pressable
-      hitSlop={10}
-      onPress={() => {
-        copyToClipboard(value(), 'Action');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
-      }}
-      style={{
-        width: 26,
-        height: 26,
-        borderRadius: 7,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: copied
-          ? `${AppColors.greenColor}1A`
-          : AppColors.grayBackground,
-        borderWidth: 1,
-        borderColor: AppColors.dividerColor,
-      }}>
-      {copied ? (
-        <CheckIcon color={AppColors.greenColor} size={13} />
-      ) : (
-        <CopyIcon color={AppColors.grayTextWeak} size={13} />
-      )}
-    </Pressable>
-  );
-};
-
-// #15 — derive the redux module / folder name from an action type.
-// Supports RTK slice convention ("booking/setDate" -> "Booking") and
-// falls back to the first affected slice.
-const getActionModule = (
-  type: string,
-  affectedSlices: string[],
-): string | null => {
-  if (type && type.includes('/')) {
-    const prefix = type.split('/')[0];
-    if (prefix) return prefix.charAt(0).toUpperCase() + prefix.slice(1);
-  }
-  if (affectedSlices && affectedSlices.length > 0) {
-    const s = affectedSlices[0];
-    return s.charAt(0).toUpperCase() + s.slice(1);
-  }
-  return null;
-};
-
-// Custom icons
-const DatabaseIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2C6.5 2 2 4.2 2 7v10c0 2.8 4.5 5 10 5s10-2.2 10-5V7c0-2.8-4.5-5-10-5z"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12c0 2.8 4.5 5 10 5s10-2.2 10-5"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 7c0 2.8 4.5 5 10 5s10-2.2 10-5"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const BoltIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-      fill={color}
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
 
 const FolderIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -118,9 +26,6 @@ const FolderIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => (
   </Svg>
 );
 
-// Exported icons so the Redux tab's section headers and sub-tab buttons can
-// render real vector icons instead of emoji (which fail to render on some
-// Android/font setups).
 export const ReduxStoreIcon = ({
   color = AppColors.grayTextWeak,
   size = 12,
@@ -136,77 +41,10 @@ export const ReduxStoreIcon = ({
   </Svg>
 );
 
-export const ReduxBoltIcon = ({
-  color = AppColors.grayTextWeak,
-  size = 12,
-}: any) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-      fill={color}
-      stroke={color}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-// Action Timeline — a history/clock icon reads as "sequence over time".
-export const ReduxTimelineIcon = ({
-  color = AppColors.grayTextWeak,
-  size = 12,
-}: any) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M3 3v5h5"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M3.05 13A9 9 0 1 0 6 5.3L3 8"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 7v5l3 2"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-// Store Tree — a node hierarchy icon reads as "nested tree structure".
-export const ReduxTreeIcon = ({
-  color = AppColors.grayTextWeak,
-  size = 12,
-}: any) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M9 4h6v4H9zM3 16h6v4H3zm12 0h6v4h-6z"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 8v4M6 16v-2h12v2"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
 const animateTreeLayout = () => {
-  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  if (Platform.OS === 'ios') {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }
 };
 
 const AnimatedChevron = ({
@@ -247,9 +85,14 @@ interface ReduxValueNodeProps {
   value: any;
   level: number;
   search?: string;
+  lastAction?: {
+    type: string;
+    payload: any;
+    timestamp: string;
+  } | null;
 }
 
-const ReduxValueNode = ({name, value, level, search}: ReduxValueNodeProps) => {
+const ReduxValueNode = ({name, value, level, search, lastAction}: ReduxValueNodeProps) => {
   const [expanded, setExpanded] = useState(level < 1);
   const isObject = typeof value === 'object' && value !== null;
   const isArray = Array.isArray(value);
@@ -281,7 +124,6 @@ const ReduxValueNode = ({name, value, level, search}: ReduxValueNodeProps) => {
         ? 'undefined'
         : String(value);
 
-    // Pick different colors for primitives
     let valColor = '#0D9488'; // String
     if (value === null || value === undefined) {
       valColor = AppColors.grayTextWeak;
@@ -294,15 +136,24 @@ const ReduxValueNode = ({name, value, level, search}: ReduxValueNodeProps) => {
     return (
       <View style={[reduxValueStyles.treeRow, {paddingLeft: 12}]}>
         <View style={reduxValueStyles.treeLeafConnector} />
-        <Text style={reduxValueStyles.keyText} selectable={true}>
-          {nameStr}
-          <Text style={reduxValueStyles.colonText}>: </Text>
-          <Text
-            style={[reduxValueStyles.valText, {color: valColor}]}
-            selectable={true}>
-            {valStr}
+        <View style={{flexDirection: 'row', alignItems: 'center', flex: 1, flexWrap: 'wrap', gap: 6}}>
+          <Text style={reduxValueStyles.keyText} selectable={true}>
+            {nameStr}
+            <Text style={reduxValueStyles.colonText}>: </Text>
+            <Text
+              style={[reduxValueStyles.valText, {color: valColor}]}
+              selectable={true}>
+              {valStr}
+            </Text>
           </Text>
-        </Text>
+          {lastAction && (
+            <View style={styles.actionTypeBadge}>
+              <Text style={styles.actionTypeText} numberOfLines={1}>
+                {lastAction.type}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
     );
   }
@@ -327,11 +178,20 @@ const ReduxValueNode = ({name, value, level, search}: ReduxValueNodeProps) => {
           size={10}
           style={reduxValueStyles.chevronWrap}
         />
-        <Text style={reduxValueStyles.keyText} selectable={true}>
-          {nameStr}
-          <Text style={reduxValueStyles.colonText}>: </Text>
-          <Text style={reduxValueStyles.summaryText}>{summaryText}</Text>
-        </Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', flex: 1, flexWrap: 'wrap', gap: 6}}>
+          <Text style={reduxValueStyles.keyText} selectable={true}>
+            {nameStr}
+            <Text style={reduxValueStyles.colonText}>: </Text>
+            <Text style={reduxValueStyles.summaryText}>{summaryText}</Text>
+          </Text>
+          {lastAction && (
+            <View style={styles.actionTypeBadge}>
+              <Text style={styles.actionTypeText} numberOfLines={1}>
+                {lastAction.type}
+              </Text>
+            </View>
+          )}
+        </View>
       </Pressable>
       {expanded && (
         <View style={reduxValueStyles.treeChildrenContainer}>
@@ -414,7 +274,7 @@ export const ReduxTreeView = ({
           <Text style={styles.storeTitle}>Redux Store</Text>
         </View>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{reducers.length} Reducers</Text>
+          <Text style={styles.badgeText}>{reducers.length} Slices</Text>
         </View>
       </Pressable>
 
@@ -432,7 +292,7 @@ export const ReduxTreeView = ({
                 <View
                   style={[
                     styles.reducerVerticalLine,
-                    isLastReducer && {bottom: '50%'},
+                    isLastReducer && !isExpanded && {bottom: '50%'},
                   ]}
                 />
 
@@ -450,273 +310,44 @@ export const ReduxTreeView = ({
                   <View style={styles.iconWrap}>
                     <FolderIcon color={AppColors.purple} size={11} />
                   </View>
-                  <Text style={styles.reducerText}>{reducerKey}</Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center', flex: 1, flexWrap: 'wrap', gap: 6}}>
+                    <Text style={styles.reducerText}>{reducerKey}</Text>
+                    {lastAction && (
+                      <View style={styles.actionTypeBadge}>
+                        <Text style={styles.actionTypeText} numberOfLines={1}>
+                          {lastAction.type}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
                 </Pressable>
 
                 {isExpanded && (
                   <View style={styles.reducerChildren}>
                     {/* Vertical line connecting children */}
                     <View style={styles.childrenVerticalLine} />
-
-                    {/* Node 1: Last Action */}
-                    <View style={styles.childItem}>
-                      <View style={styles.childHorizontalLine} />
-                      <View
-                        style={[styles.iconWrap, {backgroundColor: '#FDF2F8'}]}>
-                        <BoltIcon color="#DB2777" size={11} />
-                      </View>
-                      <View style={{flex: 1}}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: 6,
-                          }}>
-                          <Text style={styles.childLabel}>Last Action:</Text>
-                          {lastAction ? (
-                            <View style={styles.actionTypeBadge}>
-                              <Text style={styles.actionTypeText}>
-                                {lastAction.type}
-                              </Text>
-                            </View>
-                          ) : (
-                            <Text style={styles.noActionText}>
-                              None dispatched
-                            </Text>
-                          )}
-                        </View>
-                        {lastAction && (
-                          <Text style={styles.timestampText}>
-                            Dispatched: {lastAction.timestamp}
-                          </Text>
-                        )}
-                        {lastAction && lastAction.payload !== null && (
-                          <View style={{marginTop: 6}}>
-                            <ReduxValueNode
-                              name="payload"
-                              value={lastAction.payload}
-                              level={0}
-                              search={search}
-                            />
-                          </View>
-                        )}
-                      </View>
-                    </View>
-
-                    {/* Node 2: State Data */}
-                    <View style={styles.childItem}>
-                      <View
-                        style={[styles.childHorizontalLine, {bottom: '50%'}]}
-                      />
-                      <View
-                        style={[styles.iconWrap, {backgroundColor: '#ECFDF5'}]}>
-                        <DatabaseIcon color="#059669" size={11} />
-                      </View>
-                      <View style={{flex: 1}}>
-                        <Text style={styles.childLabel}>State Slice Data</Text>
-                        <View style={{marginTop: 6}}>
-                          <ReduxValueNode
-                            name="state"
-                            value={sliceData}
-                            level={0}
-                            search={search}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-      )}
-    </View>
-  );
-};
-
-export const ReduxActionTimeline = ({
-  history,
-  onClear,
-  search,
-}: {
-  history: Array<{
-    id: number;
-    type: string;
-    payload: any;
-    timestamp: string;
-    affectedSlices: string[];
-  }>;
-  onClear: () => void;
-  search?: string;
-}) => {
-  const [expandedActionId, setExpandedActionId] = useState<number | null>(null);
-
-  const toggleExpand = (id: number) => {
-    animateTreeLayout();
-    setExpandedActionId(prev => (prev === id ? null : id));
-  };
-
-  const filteredHistory = history.filter(action => {
-    if (!search) return true;
-    const s = search.toLowerCase();
-    if (action.type.toLowerCase().includes(s)) return true;
-    if (action.affectedSlices.some(slice => slice.toLowerCase().includes(s)))
-      return true;
-    if (action.payload && typeof action.payload === 'object') {
-      return JSON.stringify(action.payload).toLowerCase().includes(s);
-    }
-    return false;
-  });
-
-  return (
-    <View style={timelineStyles.container}>
-      <View style={timelineStyles.headerRow}>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-          <ReduxBoltIcon color={AppColors.purple} size={15} />
-          <Text style={timelineStyles.headerTitle}>
-            Dispatched Actions ({filteredHistory.length})
-          </Text>
-        </View>
-        {history.length > 0 && (
-          <Pressable onPress={onClear} style={timelineStyles.clearBtn}>
-            <Text style={timelineStyles.clearBtnText}>Clear Log</Text>
-          </Pressable>
-        )}
-      </View>
-
-      {filteredHistory.length === 0 ? (
-        <View style={timelineStyles.emptyContainer}>
-          <Text style={timelineStyles.emptyText}>
-            {history.length === 0
-              ? 'No actions dispatched yet.\nDispatch actions in your application to see the timeline.'
-              : 'No matching actions found.'}
-          </Text>
-        </View>
-      ) : (
-        <View style={timelineStyles.listContainer}>
-          {filteredHistory.map((item, index) => {
-            const isLast = index === filteredHistory.length - 1;
-            const isExpanded = expandedActionId === item.id;
-
-            return (
-              <AnimatedEntrance
-                key={item.id}
-                index={index}
-                distance={8}
-                style={timelineStyles.timelineItem}>
-                {/* Visual Line */}
-                <View
-                  style={[
-                    timelineStyles.verticalLine,
-                    isLast && {bottom: '50%'},
-                  ]}
-                />
-                <View style={timelineStyles.circleIndicator}>
-                  <View style={timelineStyles.circleInner} />
-                </View>
-
-                {/* Card */}
-                <Pressable
-                  onPress={() => toggleExpand(item.id)}
-                  style={[
-                    timelineStyles.card,
-                    isExpanded && {
-                      borderColor: AppColors.purple,
-                      backgroundColor: AppColors.purpleShade50,
-                    },
-                  ]}>
-                  <View style={timelineStyles.cardHeader}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                        flex: 1,
-                      }}>
-                      {(() => {
-                        const moduleName = getActionModule(
-                          item.type,
-                          item.affectedSlices,
-                        );
-                        return moduleName ? (
-                          <View
-                            style={{
-                              paddingHorizontal: 7,
-                              paddingVertical: 2,
-                              borderRadius: 6,
-                              backgroundColor: `${AppColors.purple}14`,
-                              borderWidth: 1,
-                              borderColor: `${AppColors.purple}33`,
-                            }}>
-                            <Text
-                              style={{
-                                fontFamily: AppFonts.interBold,
-                                fontSize: 9.5,
-                                color: AppColors.purple,
-                                letterSpacing: 0.2,
-                              }}>
-                              {moduleName}
-                            </Text>
-                          </View>
-                        ) : null;
-                      })()}
-                      <View style={timelineStyles.typeBadge}>
-                        <Text style={timelineStyles.typeText}>{item.type}</Text>
-                      </View>
-                    </View>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 8,
-                      }}>
-                      <Text style={timelineStyles.timestamp}>
-                        {item.timestamp}
-                      </Text>
-                      <ActionCopyButton
-                        value={() => ({
-                          type: item.type,
-                          payload: item.payload,
-                        })}
-                      />
-                    </View>
-                  </View>
-
-                  {item.affectedSlices.length > 0 && (
-                    <View style={timelineStyles.slicesRow}>
-                      <Text style={timelineStyles.slicesLabel}>Affected:</Text>
-                      {item.affectedSlices.map(slice => (
-                        <View key={slice} style={timelineStyles.slicePill}>
-                          <Text style={timelineStyles.sliceText}>{slice}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  {isExpanded && (
-                    <View style={timelineStyles.payloadContainer}>
-                      <Text style={timelineStyles.payloadTitle}>Payload</Text>
-                      {item.payload !== null &&
-                      typeof item.payload === 'object' ? (
+                    {typeof sliceData === 'object' && sliceData !== null ? (
+                      Object.keys(sliceData).map(k => (
                         <ReduxValueNode
-                          name="action.payload"
-                          value={item.payload}
+                          key={k}
+                          name={k}
+                          value={sliceData[k]}
                           level={0}
                           search={search}
                         />
-                      ) : (
-                        <Text style={timelineStyles.primitivePayload}>
-                          {item.payload === null
-                            ? 'null'
-                            : String(item.payload)}
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                </Pressable>
-              </AnimatedEntrance>
+                      ))
+                    ) : (
+                      <ReduxValueNode
+                        name={reducerKey}
+                        value={sliceData}
+                        level={0}
+                        search={search}
+                        lastAction={lastAction}
+                      />
+                    )}
+                  </View>
+                )}
+              </View>
             );
           })}
         </View>
@@ -774,159 +405,6 @@ const reduxValueStyles = StyleSheet.create({
     fontFamily: AppFonts.interRegular,
     fontSize: 11,
     color: AppColors.grayTextWeak,
-  },
-});
-
-const timelineStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  headerTitle: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 14,
-    color: AppColors.primaryBlack,
-  },
-  clearBtn: {
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
-    borderColor: 'rgba(239, 68, 68, 0.2)',
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  clearBtnText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 10,
-    color: '#EF4444',
-  },
-  emptyContainer: {
-    paddingVertical: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontFamily: AppFonts.interRegular,
-    fontSize: 12,
-    color: AppColors.grayTextWeak,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  listContainer: {
-    paddingLeft: 12,
-  },
-  timelineItem: {
-    position: 'relative',
-    paddingLeft: 20,
-    marginBottom: 12,
-  },
-  verticalLine: {
-    position: 'absolute',
-    left: 4,
-    top: 0,
-    bottom: -12,
-    width: 1,
-    backgroundColor: AppColors.dividerColor,
-  },
-  circleIndicator: {
-    position: 'absolute',
-    left: 0,
-    top: 10,
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
-    backgroundColor: AppColors.purpleShade50,
-    borderWidth: 1,
-    borderColor: AppColors.purple,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circleInner: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: AppColors.purple,
-  },
-  card: {
-    backgroundColor: AppColors.primaryLight,
-    borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
-    borderRadius: 8,
-    padding: 10,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  typeBadge: {
-    backgroundColor: 'rgba(104,75,155,0.08)',
-    borderColor: 'rgba(104,75,155,0.18)',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
-    flexShrink: 1,
-  },
-  typeText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 11,
-    color: AppColors.purple,
-  },
-  timestamp: {
-    fontFamily: AppFonts.interRegular,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-  },
-  slicesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginTop: 6,
-  },
-  slicesLabel: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-    marginRight: 2,
-  },
-  slicePill: {
-    backgroundColor: AppColors.grayBackground,
-    borderColor: AppColors.dividerColor,
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  sliceText: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 9,
-    color: AppColors.grayText,
-  },
-  payloadContainer: {
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.dividerColor,
-    paddingTop: 8,
-  },
-  payloadTitle: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  primitivePayload: {
-    fontFamily: AppFonts.interRegular,
-    fontSize: 11,
-    color: AppColors.grayTextStrong,
   },
 });
 
@@ -1024,27 +502,6 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: AppColors.dividerColor,
   },
-  childItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    position: 'relative',
-    paddingLeft: 12,
-  },
-  childHorizontalLine: {
-    position: 'absolute',
-    left: -12,
-    top: 10,
-    width: 12,
-    height: 1,
-    backgroundColor: AppColors.dividerColor,
-  },
-  childLabel: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 11.5,
-    color: AppColors.grayText,
-    marginTop: 2,
-  },
   actionTypeBadge: {
     backgroundColor: '#FCE7F3',
     borderColor: '#FBCFE8',
@@ -1052,21 +509,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
+    alignSelf: 'flex-start',
   },
   actionTypeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 10.5,
+    fontSize: 10,
     color: '#BE185D',
-  },
-  noActionText: {
-    fontFamily: AppFonts.interRegular,
-    fontSize: 11,
-    color: AppColors.grayTextWeak,
-  },
-  timestampText: {
-    fontFamily: AppFonts.interRegular,
-    fontSize: 9.5,
-    color: AppColors.grayTextWeak,
-    marginTop: 2,
   },
 });

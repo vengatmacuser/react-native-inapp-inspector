@@ -275,7 +275,9 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   }, [chevronAnim, expanded]);
 
   const toggleExpanded = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    if (Platform.OS === 'ios') {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
     setExpanded(prev => !prev);
   };
 
