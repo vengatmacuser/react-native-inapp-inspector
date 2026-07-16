@@ -14,6 +14,8 @@ import TouchableScale from './TouchableScale';
 // Utils
 import {AppFonts} from '../styles/AppFonts';
 
+import {copyToClipboard, getSize} from '../helpers';
+
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
 
@@ -31,6 +33,26 @@ const AnalyticsDetail = ({
   const params = event.params ?? {};
   const userProperties = event.userProperties ?? {};
   const upCount = Object.keys(userProperties).length;
+
+  const jsonData = {
+    name: event.name,
+    params: params,
+    ...(upCount > 0 ? {userProperties} : {}),
+  };
+
+  const isObject = typeof jsonData === 'object' && jsonData !== null;
+  const isArray = Array.isArray(jsonData);
+  let typeLabel: string = typeof jsonData;
+  let countLabel = '';
+  if (jsonData === null) {
+    typeLabel = 'null';
+  } else if (isArray) {
+    typeLabel = 'array';
+    countLabel = `${jsonData.length} items`;
+  } else if (isObject) {
+    typeLabel = 'object';
+    countLabel = `${Object.keys(jsonData).length} keys`;
+  }
 
   return (
     <ScrollView
@@ -52,43 +74,73 @@ const AnalyticsDetail = ({
           borderBottomColor: AppColors.grayBorderSecondary,
           backgroundColor: AppColors.primaryLight,
         }}>
-        <TouchableScale
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            backgroundColor: AppColors.grayBackground,
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 8,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-          }}
-          onPress={() => {
-            const nextDepth = expandDepth === 99 ? 1 : 99;
-            setExpandDepth(nextDepth);
-            setTreeKey(prev => prev + 1);
-          }}>
-          <Text
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+          <TouchableScale
             style={{
-              fontFamily: AppFonts.interBold,
-              fontSize: 12,
-              color: AppColors.purple,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: AppColors.grayBackground,
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: AppColors.grayBorderSecondary,
+            }}
+            onPress={() => {
+              const nextDepth = expandDepth === 99 ? 1 : 99;
+              setExpandDepth(nextDepth);
+              setTreeKey(prev => prev + 1);
             }}>
-            {expandDepth === 99 ? 'Collapse All' : 'Expand All'}
-          </Text>
-        </TouchableScale>
+            <Text
+              style={{
+                fontFamily: AppFonts.interBold,
+                fontSize: 12,
+                color: AppColors.purple,
+              }}>
+              {expandDepth === 99 ? 'Collapse All' : 'Expand All'}
+            </Text>
+          </TouchableScale>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: AppColors.grayBackground,
+              borderRadius: 6,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: AppColors.grayBorderSecondary,
+            }}>
+            <View style={{paddingHorizontal: 6, paddingVertical: 4, backgroundColor: AppColors.purple + '18'}}>
+              <Text style={{fontFamily: AppFonts.interBold, fontSize: 9, color: AppColors.purple, letterSpacing: 0.3}}>
+                {typeLabel.toUpperCase()}
+              </Text>
+            </View>
+            {countLabel ? (
+              <View style={{paddingHorizontal: 6, paddingVertical: 4}}>
+                <Text style={{fontFamily: AppFonts.interMedium, fontSize: 9, color: AppColors.grayText}}>
+                  {countLabel}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          <View
+            style={{
+              backgroundColor: AppColors.grayBackground,
+              borderRadius: 6,
+              paddingHorizontal: 6,
+              paddingVertical: 4,
+              borderWidth: 1,
+              borderColor: AppColors.grayBorderSecondary,
+            }}>
+            <Text style={{fontFamily: AppFonts.interMedium, fontSize: 9, color: AppColors.grayText}}>
+              {getSize(jsonData)}
+            </Text>
+          </View>
+        </View>
 
         <CopyButton
-          value={JSON.stringify(
-            {
-              name: event.name,
-              params: params,
-              ...(upCount > 0 ? {userProperties} : {}),
-            },
-            null,
-            2,
-          )}
+          value={JSON.stringify(jsonData, null, 2)}
           label="Copy JSON"
         />
       </View>
@@ -105,16 +157,9 @@ const AnalyticsDetail = ({
         ]}>
         <JsonViewer
           key={treeKey}
-          data={{
-            name: event.name,
-            params: params,
-            ...(upCount > 0
-              ? {
-                  userProperties: userProperties,
-                }
-              : {}),
-          }}
+          data={jsonData}
           defaultExpandDepth={expandDepth}
+          fullHeight
         />
       </View>
     </ScrollView>
@@ -129,8 +174,8 @@ const detailStyles = StyleSheet.create({
   },
   jsonBlockContainer: {
     marginHorizontal: 16,
-    marginTop: 8,
-    padding: 12,
+    marginTop: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderRadius: 12,
   },

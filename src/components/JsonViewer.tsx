@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {ScrollView, View, Text, StyleSheet, Platform} from 'react-native';
+import Svg, {Path, Rect} from 'react-native-svg';
 
 // Components
 import TreeNode from './TreeNode';
@@ -13,6 +14,37 @@ import {copyToClipboard, getSize} from '../helpers';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
+
+// ── Tab Icons ────────────────────────────────────────────────────────────────
+
+const PrettyIcon = ({color = '#94A3B8', size = 12}: {color?: string; size?: number}) => (
+  <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+    <Path
+      d="M5 3C3.9 3 3 3.9 3 5v1.5c0 .8-.7 1.5-1.5 1.5S0 7.3 0 6.5V5c0-2.8 2.2-5 5-5 .6 0 1 .4 1 1s-.4 1-1 1zm6 0c-1.1 0-2 .9-2 2v1.5c0 .8-.7 1.5-1.5 1.5S6 9.3 6 8.5V5c0-2.8 2.2-5 5-5 .6 0 1 .4 1 1s-.4 1-1 1z"
+      fill={color}
+      opacity={0.9}
+    />
+    <Path d="M3 11v1.5c0 .8.7 1.5 1.5 1.5S6 13.3 6 12.5V11H3zm7 0v1.5c0 .8.7 1.5 1.5 1.5S13 13.3 13 12.5V11H10z" fill={color} opacity={0.6} />
+  </Svg>
+);
+
+const RawIcon = ({color = '#94A3B8', size = 12}: {color?: string; size?: number}) => (
+  <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+    <Rect x="1" y="2" width="10" height="1.5" rx="0.75" fill={color} opacity={0.9} />
+    <Rect x="1" y="5.5" width="14" height="1.5" rx="0.75" fill={color} opacity={0.6} />
+    <Rect x="1" y="9" width="8" height="1.5" rx="0.75" fill={color} opacity={0.45} />
+    <Rect x="1" y="12.5" width="12" height="1.5" rx="0.75" fill={color} opacity={0.3} />
+  </Svg>
+);
+
+const TableIcon = ({color = '#94A3B8', size = 12}: {color?: string; size?: number}) => (
+  <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+    <Rect x="1" y="1" width="14" height="14" rx="2" stroke={color} strokeWidth={1.2} opacity={0.7} />
+    <Path d="M1 5.5h14M1 10h14M5.5 1v14M10.5 1v14" stroke={color} strokeWidth={0.8} opacity={0.5} />
+  </Svg>
+);
+
+// ── JsonViewer Component ─────────────────────────────────────────────────────
 
 const JsonViewer = ({
   data,
@@ -126,43 +158,36 @@ const JsonViewer = ({
       <View style={localStyles.toolbar}>
         {/* Left Segmented Control */}
         <View style={localStyles.segmentedControl}>
-          {(['pretty', 'raw', 'table'] as const).map((t) => (
+          {([
+            {key: 'pretty', label: 'Pretty', icon: PrettyIcon},
+            {key: 'raw', label: 'Raw', icon: RawIcon},
+            {key: 'table', label: 'Table', icon: TableIcon},
+          ] as const).map(({key, label, icon: Icon}) => (
             <TouchableScale
-              key={t}
-              onPress={() => setMode(t)}
+              key={key}
+              onPress={() => setMode(key)}
               style={[
                 localStyles.segButton,
-                mode === t && localStyles.segButtonActive,
+                mode === key && localStyles.segButtonActive,
               ]}>
+              <Icon color={mode === key ? AppColors.purple : '#94A3B8'} size={12} />
               <Text
                 style={[
                   localStyles.segText,
-                  mode === t && localStyles.segTextActive,
+                  mode === key && localStyles.segTextActive,
                 ]}>
-                {t.toUpperCase()}
+                {label}
               </Text>
             </TouchableScale>
           ))}
         </View>
 
-        {/* Right Info Badges & Copy button */}
-        <View style={localStyles.rightActions}>
-          <View style={localStyles.badge}>
-            <Text style={localStyles.badgeText}>
-              {typeLabel.toUpperCase()} {countLabel ? `(${countLabel})` : ''}
-            </Text>
-          </View>
-          <View style={localStyles.badge}>
-            <Text style={localStyles.badgeText}>{getSize(data)}</Text>
-          </View>
-          <TouchableScale onPress={handleCopy} style={localStyles.copyButton} hitSlop={8}>
-            <CopyIcon color={AppColors.purple} size={13} />
-          </TouchableScale>
-        </View>
+        {/* Right Actions — badges & copy removed (caller provides header) */}
+
       </View>
 
       {/* ── Main View Content Area (Royal Monospace Theme) ── */}
-      <View style={[localStyles.contentWrapper, fullHeight && {flex: 1, maxHeight: undefined}]}>
+      <View style={[localStyles.contentWrapper, {backgroundColor: '#F8F9FB'}, fullHeight && {flex: 1, maxHeight: undefined}]}>
         {mode === 'pretty' && (
           wrap ? (
             fullHeight ? (
@@ -174,13 +199,8 @@ const JsonViewer = ({
             )
           ) : (
             fullHeight ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={true}
-                style={styles.codeBlockScroll}>
-                <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
-                  <View style={styles.codeBlock}>{tree}</View>
-                </ScrollView>
+              <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
+                <View style={styles.codeBlock}>{tree}</View>
               </ScrollView>
             ) : (
               <ScrollView
@@ -256,6 +276,9 @@ const localStyles = StyleSheet.create({
     padding: 2,
   },
   segButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 6,

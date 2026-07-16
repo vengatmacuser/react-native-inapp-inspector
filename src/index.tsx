@@ -4758,8 +4758,6 @@ const NetworkInspector = ({
                                 </Pressable>
                               )}
                             </View>
-
-                            {/* Bundle ID pill */}
                             <View
                               style={{
                                 flexDirection: 'row',
@@ -4799,8 +4797,6 @@ const NetworkInspector = ({
                                 <ChevronIcon color="rgba(255,255,255,0.6)" size={12} />
                               </Animated.View>
                             </View>
-
-                            {/* Chips — shown only when expanded */}
                             {showHeaderInfo && (
                               <View
                                 style={{
@@ -4850,7 +4846,6 @@ const NetworkInspector = ({
                                     </Text>
                                   </View>
                                 </View>
-
                                 <View
                                   style={{
                                     flexDirection: 'row',
