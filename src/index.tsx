@@ -1229,11 +1229,7 @@ const NetworkInspector = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (activeTab !== 'analytics') {
-      setIsAnalyticsLayoutReady(false);
-    }
-  }, [activeTab]);
+
 
   useEffect(() => {
     setReqExpanded(undefined);
