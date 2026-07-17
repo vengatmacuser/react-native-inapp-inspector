@@ -451,10 +451,10 @@ const NetworkInspector = ({
   const [tabVisibility, setTabVisibility] = useState<
     Record<ActiveTab, boolean>
   >({
-    insights: true,
+    insights: false,
     apis: true,
     logs: true,
-    analytics: false,
+    analytics: true,
     webview: false,
     redux: false,
   });
@@ -480,10 +480,10 @@ const NetworkInspector = ({
     setModalHeightPercent(90);
     setModalAnimationType('slide');
     setTabVisibility({
-      insights: true,
+      insights: false,
       apis: true,
       logs: true,
-      analytics: false,
+      analytics: true,
       webview: false,
       redux: false,
     });
@@ -545,10 +545,10 @@ const NetworkInspector = ({
         const dt = saved.defaultTab as ActiveTab;
         const vis = {
           ...{
-            insights: true,
+            insights: false,
             apis: true,
             logs: true,
-            analytics: false,
+            analytics: true,
             webview: false,
             redux: false,
           },
@@ -660,7 +660,6 @@ const NetworkInspector = ({
   };
 
   const switchActiveTab = useCallback((key: ActiveTab) => {
-    animateNextLayout();
     setActiveTab(key);
   }, []);
 
@@ -718,10 +717,8 @@ const NetworkInspector = ({
   );
   const [analyticsSearch, setAnalyticsSearch] = useState('');
   const [hideScreenView, setHideScreenView] = useState(true);
-  const [analyticsSubTab, setAnalyticsSubTab] = useState<
-    'ga_events' | 'top_events'
-  >('ga_events');
-  const [topEventsExpanded, setTopEventsExpanded] = useState(true);
+  const [isAnalyticsLayoutReady, setIsAnalyticsLayoutReady] = useState(false);
+
   const [newEventIds, setNewEventIds] = useState<Set<number>>(new Set());
   const prevEventIdsRef = useRef<Set<number>>(new Set());
 
@@ -1128,6 +1125,12 @@ const NetworkInspector = ({
       unsubscribeRedux();
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'analytics') {
+      setIsAnalyticsLayoutReady(false);
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     setReqExpanded(undefined);
@@ -1548,14 +1551,7 @@ const NetworkInspector = ({
     };
   }, [visibleConsoleLogs, logSearch]);
 
-  const topEventsArray = useMemo(() => {
-    const freq: Record<string, number> = {};
-    filteredAnalyticsEvents.forEach(e => {
-      if (e.name === 'screen_view') return;
-      freq[e.name] = (freq[e.name] || 0) + 1;
-    });
-    return Object.entries(freq).sort((a, b) => b[1] - a[1]);
-  }, [filteredAnalyticsEvents]);
+
 
   function closeModal() {
     animateNextLayout();
@@ -5247,7 +5243,7 @@ const NetworkInspector = ({
                       <View
                         style={[
                           styles.toolbarRow,
-                          {marginTop: 12, marginBottom: 4},
+                          {marginTop: 12, marginBottom: 8},
                         ]}>
                         <View style={styles.searchContainer}>
                           <SearchIcon
@@ -5275,160 +5271,35 @@ const NetworkInspector = ({
                             </Pressable>
                           )}
                         </View>
-                        {analyticsSubTab === 'ga_events' && (
-                          <View style={styles.toolbarRight}>
-                            <TouchableScale
+                        <View style={styles.toolbarRight}>
+                          <TouchableScale
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 4,
+                              paddingHorizontal: 10,
+                              paddingVertical: 5,
+                              borderRadius: 8,
+                              backgroundColor: 'rgba(255,46,87,0.06)',
+                              borderWidth: 1,
+                              borderColor: 'rgba(255,46,87,0.15)',
+                            }}
+                            onPress={handleDelete}
+                            hitSlop={6}>
+                            <WipeIcon
+                              color={AppColors.errorColor}
+                              size={13}
+                            />
+                            <Text
                               style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 4,
-                                paddingHorizontal: 10,
-                                paddingVertical: 5,
-                                borderRadius: 8,
-                                backgroundColor: 'rgba(255,46,87,0.06)',
-                                borderWidth: 1,
-                                borderColor: 'rgba(255,46,87,0.15)',
-                              }}
-                              onPress={handleDelete}
-                              hitSlop={6}>
-                              <WipeIcon
-                                color={AppColors.errorColor}
-                                size={13}
-                              />
-                              <Text
-                                style={{
-                                  fontFamily: AppFonts.interBold,
-                                  fontSize: 10.5,
-                                  color: AppColors.errorColor,
-                                }}>
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 10.5,
+                                color: AppColors.errorColor,
+                              }}>
                                 Clear
-                              </Text>
-                            </TouchableScale>
-                          </View>
-                        )}
-                      </View>
-
-                      {/* ─── Secondary Tab Bar for Analytics ──────────────────────── */}
-                      <View
-                        style={{
-                          marginHorizontal: 16,
-                          marginTop: 4,
-                          marginBottom: 8,
-                          backgroundColor: AppColors.grayBackground,
-                          borderRadius: 8,
-                          padding: 4,
-                          flexDirection: 'row',
-                          borderWidth: 1,
-                          borderColor: AppColors.grayBorderSecondary,
-                        }}>
-                        <Pressable
-                          style={[
-                            {
-                              flex: 1,
-                              paddingVertical: 8,
-                              borderRadius: 6,
-                              alignItems: 'center',
-                            },
-                            analyticsSubTab === 'ga_events' && {
-                              backgroundColor: AppColors.primaryLight,
-                              shadowColor: '#000',
-                              shadowOpacity: 0.1,
-                              shadowRadius: 3,
-                              shadowOffset: {width: 0, height: 1},
-                              elevation: 2,
-                            },
-                          ]}
-                          onPress={() => {
-                            animateNextLayout();
-                            setAnalyticsSubTab('ga_events');
-                          }}>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 6,
-                            }}>
-                            {/* #7 */}
-                            <AnalyticsIcon
-                              size={13}
-                              color={
-                                analyticsSubTab === 'ga_events'
-                                  ? AppColors.purple
-                                  : AppColors.grayTextStrong
-                              }
-                            />
-                            <Text
-                              style={[
-                                {
-                                  fontFamily: AppFonts.interMedium,
-                                  fontSize: 13,
-                                  color: AppColors.grayTextStrong,
-                                },
-                                analyticsSubTab === 'ga_events' && {
-                                  fontFamily: AppFonts.interBold,
-                                  color: AppColors.purple,
-                                },
-                              ]}>
-                              GA Events (
-                              {analyticsSearch
-                                ? filteredAnalyticsEvents.length
-                                : analyticsEvents.length}
-                              )
                             </Text>
-                          </View>
-                        </Pressable>
-                        <Pressable
-                          style={[
-                            {
-                              flex: 1,
-                              paddingVertical: 8,
-                              borderRadius: 6,
-                              alignItems: 'center',
-                            },
-                            analyticsSubTab === 'top_events' && {
-                              backgroundColor: AppColors.primaryLight,
-                              shadowColor: '#000',
-                              shadowOpacity: 0.1,
-                              shadowRadius: 3,
-                              shadowOffset: {width: 0, height: 1},
-                              elevation: 2,
-                            },
-                          ]}
-                          onPress={() => {
-                            animateNextLayout();
-                            setAnalyticsSubTab('top_events');
-                          }}>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 6,
-                            }}>
-                            {/* #7 */}
-                            <TrendingUpIcon
-                              size={13}
-                              color={
-                                analyticsSubTab === 'top_events'
-                                  ? AppColors.purple
-                                  : AppColors.grayTextStrong
-                              }
-                            />
-                            <Text
-                              style={[
-                                {
-                                  fontFamily: AppFonts.interMedium,
-                                  fontSize: 13,
-                                  color: AppColors.grayTextStrong,
-                                },
-                                analyticsSubTab === 'top_events' && {
-                                  fontFamily: AppFonts.interBold,
-                                  color: AppColors.purple,
-                                },
-                              ]}>
-                              Top Events ({topEventsArray.length})
-                            </Text>
-                          </View>
-                        </Pressable>
+                          </TouchableScale>
+                        </View>
                       </View>
                     </View>
                   )}
@@ -5442,95 +5313,15 @@ const NetworkInspector = ({
                       {renderInsightsDashboard()}
                     </ScrollView>
                   ) : activeTab === 'analytics' ? (
-                    <View style={{flex: 1}}>
+                    <View
+                      style={{flex: 1}}
+                      onLayout={() => setIsAnalyticsLayoutReady(true)}>
                       {selectedEvent != null ? (
                         <AnalyticsDetail event={selectedEvent} />
-                      ) : analyticsSubTab === 'top_events' ? (
-                        <FlatList
-                          data={topEventsArray}
-                          keyExtractor={item => item[0]}
-                          contentContainerStyle={[
-                            styles.listContent,
-                            {paddingHorizontal: 16, paddingTop: 12},
-                          ]}
-                          renderItem={({item: [name, count], index}) => {
-                            const maxCount = topEventsArray[0]?.[1] || 1;
-                            const pct = Math.max(6, (count / maxCount) * 100);
-                            const color = getEventColor(name);
-                            return (
-                              <AnimatedEntrance
-                                index={index}
-                                distance={8}
-                                style={[
-                                  styles.analyticsTopEventsCard,
-                                  {marginBottom: 6, paddingVertical: 10, paddingHorizontal: 12},
-                                ]}>
-                                <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-                                  <Text
-                                    style={{
-                                      fontFamily: AppFonts.interBold,
-                                      fontSize: 11,
-                                      color: color,
-                                      width: 18,
-                                      textAlign: 'center',
-                                    }}>
-                                    {index + 1}
-                                  </Text>
-                                  <View style={{flex: 1, gap: 4}}>
-                                    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-                                      <Text
-                                        style={{
-                                          fontFamily: AppFonts.interMedium,
-                                          fontSize: 12.5,
-                                          color: AppColors.primaryBlack,
-                                          flex: 1,
-                                        }}
-                                        numberOfLines={1}>
-                                        {name}
-                                      </Text>
-                                      <Text
-                                        style={{
-                                          fontFamily: AppFonts.interBold,
-                                          fontSize: 12,
-                                          color: color,
-                                          marginLeft: 8,
-                                        }}>
-                                        {count}
-                                      </Text>
-                                    </View>
-                                    <View style={{height: 3, backgroundColor: AppColors.grayBackground, borderRadius: 2, overflow: 'hidden'}}>
-                                      <LinearGradient
-                                        colors={[color, `${color}88`]}
-                                        start={{x: 0, y: 0}}
-                                        end={{x: 1, y: 0}}
-                                        style={{
-                                          height: '100%',
-                                          borderRadius: 2,
-                                          width: `${pct}%`,
-                                        }}
-                                      />
-                                    </View>
-                                  </View>
-                                </View>
-                              </AnimatedEntrance>
-                            );
-                          }}
-                          ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                              <View style={styles.emptyIconWrap}>
-                                <EmptyRadarIcon
-                                  color={AppColors.purple}
-                                  size={32}
-                                />
-                              </View>
-                              <Text style={styles.emptyTitle}>No Top Events</Text>
-                            </View>
-                          }
-                        />
-                      ) : (
+                      ) : isAnalyticsLayoutReady ? (
                         <FlatList
                           data={filteredAnalyticsEvents}
-                          keyExtractor={item => item.id.toString()}
+                          keyExtractor={(item, index) => item?.id?.toString() ?? index.toString()}
                           renderItem={({item, index}) => {
                             const prev = filteredAnalyticsEvents[index + 1];
                             const next = filteredAnalyticsEvents[index - 1];
@@ -5544,47 +5335,49 @@ const NetworkInspector = ({
                             const showTimestamp =
                               index === 0 || thisMin !== nextMin;
                             return (
-                              <AnimatedEntrance index={index} distance={8}>
-                                <AnalyticsEventCard
-                                  event={item}
-                                  onPress={() => {
-                                    animateNextLayout();
-                                    setSelectedEvent(item);
-                                  }}
-                                  isNew={newEventIds.has(item.id)}
-                                  searchStr={analyticsSearch}
-                                  isFirst={index === 0}
-                                  isLast={
-                                    index === filteredAnalyticsEvents.length - 1
-                                  }
-                                  msSincePrev={msSincePrev}
-                                  showTimestamp={showTimestamp}
-                                  computedScreenName={(() => {
-                                    let screenName =
-                                      item.screenName ||
-                                      item.screenClass ||
-                                      item.pageTitle ||
-                                      item.pageLocation ||
-                                      item.params?.firebase_screen ||
-                                      item.params?.screen_name ||
-                                      item.params?.firebase_screen_class ||
-                                      item.params?.screen_class;
-                                    const routeInfo = logRouteMapRef.current.get(
-                                      item.id + 1000000,
-                                    );
-                                    if (!screenName) {
-                                      if (
-                                        routeInfo &&
-                                        routeInfo.path !== 'Navigators'
-                                      ) {
-                                        const parts = routeInfo.path.split(' ➔ ');
-                                        screenName = parts[parts.length - 1];
-                                      }
+                              <AnalyticsEventCard
+                                event={item}
+                                onPress={() => {
+                                  animateNextLayout();
+                                  setSelectedEvent(item);
+                                }}
+                                isNew={newEventIds.has(item.id)}
+                                searchStr={analyticsSearch}
+                                isFirst={index === 0}
+                                isLast={
+                                  index === filteredAnalyticsEvents.length - 1
+                                }
+                                msSincePrev={msSincePrev}
+                                showTimestamp={showTimestamp}
+                                computedScreenName={(() => {
+                                  if (!item) return '';
+                                  const rawScreenName =
+                                    item.screenName ||
+                                    item.screenClass ||
+                                    item.pageTitle ||
+                                    item.pageLocation ||
+                                    item.params?.firebase_screen ||
+                                    item.params?.screen_name ||
+                                    item.params?.firebase_screen_class ||
+                                    item.params?.screen_class;
+                                  let screenName = typeof rawScreenName === 'string'
+                                    ? rawScreenName
+                                    : (rawScreenName ? JSON.stringify(rawScreenName) : '');
+                                  const routeInfo = logRouteMapRef.current.get(
+                                    item.id + 1000000,
+                                  );
+                                  if (!screenName) {
+                                    if (
+                                      routeInfo &&
+                                      routeInfo.path !== 'Navigators'
+                                    ) {
+                                      const parts = routeInfo.path.split(' ➔ ');
+                                      screenName = parts[parts.length - 1];
                                     }
-                                    return screenName;
-                                  })()}
-                                />
-                              </AnimatedEntrance>
+                                  }
+                                  return screenName;
+                                })()}
+                              />
                             );
                           }}
                           initialNumToRender={20}
@@ -5619,7 +5412,7 @@ const NetworkInspector = ({
                           ]}
                           keyboardShouldPersistTaps="handled"
                         />
-                      )}
+                      ) : null}
                     </View>
                   ) : activeTab === 'apis' && selected == null ? (
                     <View style={{flex: 1}}>
@@ -6347,7 +6140,7 @@ const NetworkInspector = ({
 
                       <FlatList
                         data={filteredConsoleLogs}
-                        keyExtractor={item => item.id.toString()}
+                        keyExtractor={(item, index) => item?.id?.toString() ?? index.toString()}
                         ListHeaderComponent={(() => {
                           const total = visibleConsoleLogs.length;
                           const filtered = filteredConsoleLogs.length;

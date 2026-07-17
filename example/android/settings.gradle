@@ -1,6 +1,25 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+
+def findNodeBinDir() {
+    def nvmDir = System.getenv("NVM_DIR") ?: (System.getProperty("user.home") + "/.nvm")
+    def nvmVersionsDir = new File(nvmDir, "versions/node")
+    if (nvmVersionsDir.exists()) {
+        def versions = nvmVersionsDir.listFiles()?.findAll { it.isDirectory() }?.sort { it.name }?.reverse()
+        for (v in versions) {
+            def candidate = new File(v, "bin/node")
+            if (candidate.exists() && candidate.canExecute()) {
+                return new File(v, "bin").absolutePath
+            }
+        }
+    }
+    return null
+}
+
+def nodeBinDir = findNodeBinDir()
+def npxPath = nodeBinDir ? nodeBinDir + "/npx" : "npx"
+
+extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand([npxPath, "@react-native-community/cli", "config"]) }
 rootProject.name = 'example'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')

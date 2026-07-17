@@ -1,3 +1,30 @@
+import java.net.NetworkInterface
+import java.net.Inet4Address
+
+def getLocalIpAddress() {
+    def ip = "10.0.2.2"
+    try {
+        def interfaces = NetworkInterface.getNetworkInterfaces()
+        while (interfaces.hasMoreElements()) {
+            def iface = interfaces.nextElement()
+            if (iface.isLoopback() || !iface.isUp()) continue
+            def addresses = iface.getInetAddresses()
+            while (addresses.hasMoreElements()) {
+                def addr = addresses.nextElement()
+                if (addr instanceof Inet4Address) {
+                    def host = addr.getHostAddress()
+                    if (host.startsWith("192.168.") || host.startsWith("10.") || host.startsWith("172.")) {
+                        return host
+                    }
+                }
+            }
+        }
+    } catch (Exception e) {
+        // ignore
+    }
+    return ip
+}
+
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
@@ -25,7 +52,7 @@ react {
 
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
-    // nodeExecutableAndArgs = ["node"]
+    nodeExecutableAndArgs = [rootProject.ext.has("NODE_EXECUTABLE") ? rootProject.ext.get("NODE_EXECUTABLE") : "node"]
     //
     //   The command to run when bundling. By default is 'bundle'
     // bundleCommand = "ram-bundle"
@@ -84,6 +111,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        resValue "string", "developer_ip_address", getLocalIpAddress()
     }
     signingConfigs {
         debug {

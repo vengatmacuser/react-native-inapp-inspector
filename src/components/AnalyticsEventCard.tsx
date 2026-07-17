@@ -20,9 +20,10 @@ const EVENT_PALETTE = [
 ];
 
 export function getEventColor(name: string): string {
+  const safeName = typeof name === 'string' ? name : String(name || '');
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  for (let i = 0; i < safeName.length; i++) {
+    hash = (hash * 31 + safeName.charCodeAt(i)) | 0;
   }
   return EVENT_PALETTE[Math.abs(hash) % EVENT_PALETTE.length];
 }
@@ -158,24 +159,28 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
         {/* Bottom Row: Metadata Chips & Sparkline */}
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.chipsRow}>
-            {computedScreenName ||
-            event.screenName ||
-            event.params?.firebase_screen ||
-            event.params?.screen_name ||
-            event.params?.firebase_screen_class ? (
-              <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
-                <View
-                  style={[cardStyles.screenDot, {backgroundColor: color}]}
-                />
-                <Text style={[cardStyles.chipText, {color: AppColors.grayText}]} numberOfLines={1}>
-                  {computedScreenName ||
-                    event.screenName ||
-                    event.params?.firebase_screen ||
-                    event.params?.screen_name ||
-                    event.params?.firebase_screen_class}
-                </Text>
-              </View>
-            ) : null}
+            {(() => {
+              const rawScreenName =
+                computedScreenName ||
+                event.screenName ||
+                event.params?.firebase_screen ||
+                event.params?.screen_name ||
+                event.params?.firebase_screen_class;
+              if (!rawScreenName) return null;
+              const screenNameStr = typeof rawScreenName === 'object'
+                ? JSON.stringify(rawScreenName)
+                : String(rawScreenName);
+              return (
+                <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
+                  <View
+                    style={[cardStyles.screenDot, {backgroundColor: color}]}
+                  />
+                  <Text style={[cardStyles.chipText, {color: AppColors.grayText}]} numberOfLines={1}>
+                    {screenNameStr}
+                  </Text>
+                </View>
+              );
+            })()}
 
             <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
               <Text style={[cardStyles.chipText, {color: AppColors.grayText}]}>
