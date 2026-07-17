@@ -141,6 +141,10 @@ import {
   subscribeAnalyticsEvents,
   clearAnalyticsEvents,
   autoSetupAnalyticsLogger,
+  getCurrentUserProperties,
+  getCurrentUserId,
+  getDefaultEventParameters,
+  getCollectionEnabled,
 } from './customHooks/analyticsLogger';
 import AnalyticsEventCard, {
   getEventColor,
@@ -718,6 +722,7 @@ const NetworkInspector = ({
   const [analyticsSearch, setAnalyticsSearch] = useState('');
   const [hideScreenView, setHideScreenView] = useState(true);
   const [isAnalyticsLayoutReady, setIsAnalyticsLayoutReady] = useState(false);
+  const [analyticsHeaderExpanded, setAnalyticsHeaderExpanded] = useState(false);
 
   const [newEventIds, setNewEventIds] = useState<Set<number>>(new Set());
   const prevEventIdsRef = useRef<Set<number>>(new Set());
@@ -941,6 +946,104 @@ const NetworkInspector = ({
       }).start();
     }
   }, [newLogIds]);
+
+  const renderAnalyticsHeader = () => {
+    const userId = getCurrentUserId();
+    const userProperties = getCurrentUserProperties();
+    const defaultParams = getDefaultEventParameters();
+    const isTrackingEnabled = getCollectionEnabled();
+
+    const hasUserProps = Object.keys(userProperties).length > 0;
+    const hasDefaultParams = Object.keys(defaultParams).length > 0;
+    const totalEvents = filteredAnalyticsEvents.length;
+
+    return (
+      <View style={styles.analyticsHeaderCard}>
+        <View style={[styles.analyticsHeaderTop, !analyticsHeaderExpanded && {marginBottom: 0}]}>
+          <View style={{flex: 1}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <Text style={styles.analyticsHeaderTitle}>Session Info</Text>
+              <View style={[
+                styles.statusDot, 
+                {backgroundColor: isTrackingEnabled ? AppColors.greenColor : AppColors.errorColor}
+              ]} />
+              <Text style={styles.statusText}>
+                {isTrackingEnabled ? 'Active' : 'Paused'}
+              </Text>
+            </View>
+            <Text style={styles.analyticsHeaderSubtitle} numberOfLines={1}>
+              {userId ? `User ID: ${userId}` : 'Anonymous Session'}
+            </Text>
+          </View>
+          
+          <TouchableOpacity
+            style={styles.analyticsHeaderToggle}
+            activeOpacity={0.7}
+            onPress={() => {
+              animateNextLayout();
+              setAnalyticsHeaderExpanded(!analyticsHeaderExpanded);
+            }}>
+            <Text style={styles.analyticsHeaderToggleText}>
+              {analyticsHeaderExpanded ? 'Collapse' : 'Expand'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {analyticsHeaderExpanded && (
+          <>
+            {/* Stats Row */}
+            <View style={styles.analyticsStatsRow}>
+              <View style={styles.analyticsStatBox}>
+                <Text style={styles.analyticsStatValue}>{totalEvents}</Text>
+                <Text style={styles.analyticsStatLabel}>Events</Text>
+              </View>
+              <View style={styles.analyticsStatBox}>
+                <Text style={styles.analyticsStatValue}>
+                  {Object.keys(userProperties).length}
+                </Text>
+                <Text style={styles.analyticsStatLabel}>User Props</Text>
+              </View>
+              <View style={styles.analyticsStatBox}>
+                <Text style={styles.analyticsStatValue}>
+                  {Object.keys(defaultParams).length}
+                </Text>
+                <Text style={styles.analyticsStatLabel}>Defaults</Text>
+              </View>
+            </View>
+
+            {/* Details Section */}
+            {(hasUserProps || hasDefaultParams) && (
+              <View style={styles.analyticsHeaderDetails}>
+                {hasUserProps && (
+                  <View style={{marginBottom: 10}}>
+                    <Text style={styles.detailsGroupTitle}>Active User Properties</Text>
+                    {Object.entries(userProperties).map(([k, v]) => (
+                      <View key={k} style={styles.detailsRow}>
+                        <Text style={styles.detailsKey} selectable={true}>{k}</Text>
+                        <Text style={styles.detailsValue} selectable={true}>{String(v)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {hasDefaultParams && (
+                  <View>
+                    <Text style={styles.detailsGroupTitle}>Default Event Parameters</Text>
+                    {Object.entries(defaultParams).map(([k, v]) => (
+                      <View key={k} style={styles.detailsRow}>
+                        <Text style={styles.detailsKey} selectable={true}>{k}</Text>
+                        <Text style={styles.detailsValue} selectable={true}>{String(v)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </>
+        )}
+      </View>
+    );
+  };
 
   // #6 — every time the inspector is opened, land on the chosen default tab.
   useEffect(() => {
@@ -4600,16 +4703,10 @@ const NetworkInspector = ({
           {(logs.length > 0 || analyticsEvents.length > 0) && (
             <Animated.View
               style={[
-                styles.fabBadge,
-                hasErrors ? styles.fabBadgeError : styles.fabBadgeNormal,
-                {transform: [{scale: badgeAnim}]},
-              ]}>
-              <Text style={styles.fabBadgeText}>
-                {logs.length + analyticsEvents.length > 99
-                  ? '99+'
-                  : logs.length + analyticsEvents.length}
-              </Text>
-            </Animated.View>
+                styles.fabGreenDot,
+                {transform: [{scale: unreadPulseAnim}]},
+              ]}
+            />
           )}
         </TouchableScale>
       </Animated.View>
@@ -4890,136 +4987,138 @@ const NetworkInspector = ({
                       ) : null}
                     </View>
 
-                    <View style={styles.headerCenter}>
-                      {selected != null ? (
-                        <View style={styles.headerDetailCenter}>
-                          <View style={styles.headerDetailRow}>
-                            <View
-                              style={[
-                                styles.headerMethodBadge,
-                                {
-                                  backgroundColor:
-                                    METHOD_COLORS[selected.method as Method] ??
-                                    AppColors.grayText,
-                                },
-                              ]}>
-                              <Text style={styles.headerMethodText}>
-                                {selected.method}
+                    {(selected != null || selectedEvent != null) && (
+                      <View style={styles.headerCenter}>
+                        {selected != null ? (
+                          <View style={styles.headerDetailCenter}>
+                            <View style={styles.headerDetailRow}>
+                              <View
+                                style={[
+                                  styles.headerMethodBadge,
+                                  {
+                                    backgroundColor:
+                                      METHOD_COLORS[selected.method as Method] ??
+                                      AppColors.grayText,
+                                  },
+                                ]}>
+                                <Text style={styles.headerMethodText}>
+                                  {selected.method}
+                                </Text>
+                              </View>
+                              <Text
+                                style={styles.headerDetailTitle}
+                                numberOfLines={1}
+                                ellipsizeMode="middle">
+                                {detailTitle}
                               </Text>
                             </View>
-                            <Text
-                              style={styles.headerDetailTitle}
-                              numberOfLines={1}
-                              ellipsizeMode="middle">
-                              {detailTitle}
-                            </Text>
+                            <View style={styles.headerDetailSubRow}>
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 5,
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 3,
+                                  borderRadius: 20,
+                                  backgroundColor: `${getStatusColor(
+                                    selected.status,
+                                  )}26`,
+                                  borderWidth: 1,
+                                  borderColor: `${getStatusColor(
+                                    selected.status,
+                                  )}55`,
+                                }}>
+                                <View
+                                  style={[
+                                    styles.headerStatusDot,
+                                    {
+                                      backgroundColor: getStatusColor(
+                                        selected.status,
+                                      ),
+                                    },
+                                  ]}
+                                />
+                                <Text
+                                  style={[
+                                    styles.headerSubTitle,
+                                    {fontFamily: AppFonts.interBold},
+                                  ]}>
+                                  {selected.status === 0
+                                    ? 'Failed'
+                                    : selected.status ?? 'Pending'}
+                                </Text>
+                              </View>
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                  paddingHorizontal: 8,
+                                  paddingVertical: 3,
+                                  borderRadius: 20,
+                                  backgroundColor: 'rgba(255,255,255,0.16)',
+                                }}>
+                                <ClockIcon color="#FFFFFF" size={11} />
+                                <Text style={styles.headerSubTitle}>
+                                  {selected.duration != null
+                                    ? `${selected.duration}ms`
+                                    : '—'}
+                                </Text>
+                              </View>
+                            </View>
                           </View>
-                          <View style={styles.headerDetailSubRow}>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 5,
-                                paddingHorizontal: 8,
-                                paddingVertical: 3,
-                                borderRadius: 20,
-                                backgroundColor: `${getStatusColor(
-                                  selected.status,
-                                )}26`,
-                                borderWidth: 1,
-                                borderColor: `${getStatusColor(
-                                  selected.status,
-                                )}55`,
-                              }}>
+                        ) : selectedEvent != null ? (
+                          <View style={styles.headerDetailCenter}>
+                            <View style={styles.headerDetailRow}>
+                              <View
+                                style={[
+                                  styles.headerMethodBadge,
+                                  {
+                                    backgroundColor:
+                                      selectedEvent.source === 'firebase'
+                                        ? 'rgba(224,123,26,0.3)'
+                                        : 'rgba(124,92,191,0.3)',
+                                  },
+                                ]}>
+                                <Text style={styles.headerMethodText}>
+                                  {selectedEvent.source === 'firebase'
+                                    ? 'FB'
+                                    : 'MAN'}
+                                </Text>
+                              </View>
+                              <Text
+                                style={styles.headerDetailTitle}
+                                numberOfLines={1}
+                                ellipsizeMode="middle">
+                                {selectedEvent.name}
+                              </Text>
+                            </View>
+                            <View style={styles.headerDetailSubRow}>
                               <View
                                 style={[
                                   styles.headerStatusDot,
                                   {
-                                    backgroundColor: getStatusColor(
-                                      selected.status,
-                                    ),
+                                    backgroundColor:
+                                      selectedEvent.source === 'firebase'
+                                        ? '#E07B1A'
+                                        : AppColors.purple,
                                   },
                                 ]}
                               />
-                              <Text
-                                style={[
-                                  styles.headerSubTitle,
-                                  {fontFamily: AppFonts.interBold},
-                                ]}>
-                                {selected.status === 0
-                                  ? 'Failed'
-                                  : selected.status ?? 'Pending'}
-                              </Text>
-                            </View>
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 4,
-                                paddingHorizontal: 8,
-                                paddingVertical: 3,
-                                borderRadius: 20,
-                                backgroundColor: 'rgba(255,255,255,0.16)',
-                              }}>
-                              <ClockIcon color="#FFFFFF" size={11} />
                               <Text style={styles.headerSubTitle}>
-                                {selected.duration != null
-                                  ? `${selected.duration}ms`
-                                  : '—'}
+                                {Object.keys(selectedEvent.params).length} param
+                                {Object.keys(selectedEvent.params).length !== 1
+                                  ? 's'
+                                  : ''}
+                                {' · '}
+                                {selectedEvent.source}
                               </Text>
                             </View>
                           </View>
-                        </View>
-                      ) : selectedEvent != null ? (
-                        <View style={styles.headerDetailCenter}>
-                          <View style={styles.headerDetailRow}>
-                            <View
-                              style={[
-                                styles.headerMethodBadge,
-                                {
-                                  backgroundColor:
-                                    selectedEvent.source === 'firebase'
-                                      ? 'rgba(224,123,26,0.3)'
-                                      : 'rgba(124,92,191,0.3)',
-                                },
-                              ]}>
-                              <Text style={styles.headerMethodText}>
-                                {selectedEvent.source === 'firebase'
-                                  ? 'FB'
-                                  : 'MAN'}
-                              </Text>
-                            </View>
-                            <Text
-                              style={styles.headerDetailTitle}
-                              numberOfLines={1}
-                              ellipsizeMode="middle">
-                              {selectedEvent.name}
-                            </Text>
-                          </View>
-                          <View style={styles.headerDetailSubRow}>
-                            <View
-                              style={[
-                                styles.headerStatusDot,
-                                {
-                                  backgroundColor:
-                                    selectedEvent.source === 'firebase'
-                                      ? '#E07B1A'
-                                      : AppColors.purple,
-                                },
-                              ]}
-                            />
-                            <Text style={styles.headerSubTitle}>
-                              {Object.keys(selectedEvent.params).length} param
-                              {Object.keys(selectedEvent.params).length !== 1
-                                ? 's'
-                                : ''}
-                              {' · '}
-                              {selectedEvent.source}
-                            </Text>
-                          </View>
-                        </View>
-                      ) : null}
-                    </View>
+                        ) : null}
+                      </View>
+                    )}
 
                     <View
                       style={[
@@ -5273,31 +5372,19 @@ const NetworkInspector = ({
                         </View>
                         <View style={styles.toolbarRight}>
                           <TouchableScale
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 4,
-                              paddingHorizontal: 10,
-                              paddingVertical: 5,
-                              borderRadius: 8,
-                              backgroundColor: 'rgba(255,46,87,0.06)',
-                              borderWidth: 1,
-                              borderColor: 'rgba(255,46,87,0.15)',
-                            }}
+                            style={[
+                              styles.toolbarBtn,
+                              {
+                                borderColor: 'rgba(255,46,87,0.22)',
+                                backgroundColor: 'rgba(255,46,87,0.06)',
+                              },
+                            ]}
                             onPress={handleDelete}
                             hitSlop={6}>
                             <WipeIcon
                               color={AppColors.errorColor}
-                              size={13}
+                              size={15}
                             />
-                            <Text
-                              style={{
-                                fontFamily: AppFonts.interBold,
-                                fontSize: 10.5,
-                                color: AppColors.errorColor,
-                              }}>
-                                Clear
-                            </Text>
                           </TouchableScale>
                         </View>
                       </View>
@@ -5322,6 +5409,7 @@ const NetworkInspector = ({
                         <FlatList
                           data={filteredAnalyticsEvents}
                           keyExtractor={(item, index) => item?.id?.toString() ?? index.toString()}
+                          ListHeaderComponent={renderAnalyticsHeader}
                           renderItem={({item, index}) => {
                             const prev = filteredAnalyticsEvents[index + 1];
                             const next = filteredAnalyticsEvents[index - 1];
@@ -5457,33 +5545,26 @@ const NetworkInspector = ({
 
                               <View style={styles.toolbarRight}>
                                 <TouchableScale
-                                  style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    gap: 4,
-                                    paddingHorizontal: 10,
-                                    paddingVertical: 5,
-                                    borderRadius: 8,
-                                    backgroundColor: 'rgba(255,46,87,0.06)',
-                                    borderWidth: 1,
-                                    borderColor: 'rgba(255,46,87,0.15)',
-                                  }}
+                                  style={[
+                                    styles.toolbarBtn,
+                                    {
+                                      borderColor: 'rgba(255,46,87,0.22)',
+                                      backgroundColor: 'rgba(255,46,87,0.06)',
+                                    },
+                                  ]}
                                   onPress={handleDelete}
                                   hitSlop={6}>
                                   <WipeIcon
                                     color={AppColors.errorColor}
-                                    size={13}
+                                    size={15}
                                   />
-                                  <Text
-                                    style={{
-                                      fontFamily: AppFonts.interBold,
-                                      fontSize: 10.5,
-                                      color: AppColors.errorColor,
-                                    }}>
-                                    {selectedLogs.size > 0
-                                      ? `Delete (${selectedLogs.size})`
-                                      : 'Clear'}
-                                  </Text>
+                                  {selectedLogs.size > 0 && (
+                                    <View style={styles.trashBadge}>
+                                      <Text style={styles.trashBadgeText}>
+                                        {selectedLogs.size}
+                                      </Text>
+                                    </View>
+                                  )}
                                 </TouchableScale>
 
                                 <TouchableScale
@@ -5771,31 +5852,19 @@ const NetworkInspector = ({
                               />
                             </TouchableScale>
                             <TouchableScale
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: 4,
-                                paddingHorizontal: 10,
-                                paddingVertical: 5,
-                                borderRadius: 8,
-                                backgroundColor: 'rgba(255,46,87,0.06)',
-                                borderWidth: 1,
-                                borderColor: 'rgba(255,46,87,0.15)',
-                              }}
+                              style={[
+                                styles.toolbarBtn,
+                                {
+                                  borderColor: 'rgba(255,46,87,0.22)',
+                                  backgroundColor: 'rgba(255,46,87,0.06)',
+                                },
+                              ]}
                               onPress={handleDelete}
                               hitSlop={6}>
                               <WipeIcon
                                 color={AppColors.errorColor}
-                                size={13}
+                                size={15}
                               />
-                              <Text
-                                style={{
-                                  fontFamily: AppFonts.interBold,
-                                  fontSize: 10.5,
-                                  color: AppColors.errorColor,
-                                }}>
-                                Clear
-                              </Text>
                             </TouchableScale>
                           </View>
                         </View>
@@ -7801,6 +7870,10 @@ export {
   logAnalyticsEvent,
   subscribeAnalyticsEvents,
   clearAnalyticsEvents,
+  getCurrentUserProperties,
+  getCurrentUserId,
+  getDefaultEventParameters,
+  getCollectionEnabled,
 } from './customHooks/analyticsLogger';
 
 export {

@@ -32,6 +32,8 @@ let counter = 0;
 // Running snapshot of user properties set so far — attached to every event
 let currentUserProperties: Record<string, any> = {};
 let currentUserId: string | undefined;
+let currentDefaultEventParameters: Record<string, any> = {};
+let isCollectionEnabled = true;
 
 // ─── Core helpers ─────────────────────────────────────────────────────────────
 
@@ -64,6 +66,11 @@ export const clearAnalyticsEvents = () => {
 };
 
 export const getAnalyticsEvents = () => [...events];
+
+export const getCurrentUserProperties = () => ({...currentUserProperties});
+export const getCurrentUserId = () => currentUserId;
+export const getDefaultEventParameters = () => ({...currentDefaultEventParameters});
+export const getCollectionEnabled = () => isCollectionEnabled;
 
 // ─── Manual logging (escape hatch, rarely needed) ────────────────────────────
 
@@ -188,8 +195,47 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
   const originalSetUserId = analyticsInstance.setUserId.bind(analyticsInstance);
   analyticsInstance.setUserId = async (id: string | null) => {
     currentUserId = id ?? undefined;
+    notify();
     return originalSetUserId(id);
   };
+
+  // ── setDefaultEventParameters ──────────────────────────────────────────────
+  if (typeof analyticsInstance.setDefaultEventParameters === 'function') {
+    const originalSetDefaultEventParameters =
+      analyticsInstance.setDefaultEventParameters.bind(analyticsInstance);
+    analyticsInstance.setDefaultEventParameters = async (
+      params: Record<string, any> | null,
+    ) => {
+      currentDefaultEventParameters = params ?? {};
+      notify();
+      return originalSetDefaultEventParameters(params);
+    };
+  }
+
+  // ── setAnalyticsCollectionEnabled ───────────────────────────────────────────
+  if (typeof analyticsInstance.setAnalyticsCollectionEnabled === 'function') {
+    const originalSetAnalyticsCollectionEnabled =
+      analyticsInstance.setAnalyticsCollectionEnabled.bind(analyticsInstance);
+    analyticsInstance.setAnalyticsCollectionEnabled = async (enabled: boolean) => {
+      isCollectionEnabled = enabled;
+      notify();
+      return originalSetAnalyticsCollectionEnabled(enabled);
+    };
+  }
+
+  // ── resetAnalyticsData ──────────────────────────────────────────────────────
+  if (typeof analyticsInstance.resetAnalyticsData === 'function') {
+    const originalResetAnalyticsData =
+      analyticsInstance.resetAnalyticsData.bind(analyticsInstance);
+    analyticsInstance.resetAnalyticsData = async () => {
+      clearAnalyticsEvents();
+      currentUserProperties = {};
+      currentUserId = undefined;
+      currentDefaultEventParameters = {};
+      notify();
+      return originalResetAnalyticsData();
+    };
+  }
 };
 
 export const autoSetupAnalyticsLogger = (): boolean => {

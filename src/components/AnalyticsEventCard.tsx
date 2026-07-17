@@ -48,6 +48,68 @@ function formatGap(ms: number): string {
   return rem > 0 ? `+${m}m ${rem}s` : `+${m}m`;
 }
 
+function getEventCategory(name: string): string {
+  if (!name) return 'Custom';
+  const lowercaseName = name.toLowerCase();
+  
+  if (lowercaseName === 'screen_view' || lowercaseName === 'page_view') {
+    return 'Page View';
+  }
+  
+  // Ecommerce events
+  const ecommerceEvents = [
+    'purchase', 'add_to_cart', 'begin_checkout', 'view_item', 
+    'select_item', 'remove_from_cart', 'view_cart', 
+    'add_shipping_info', 'add_payment_info', 'refund',
+    'view_item_list', 'select_promotion', 'view_promotion'
+  ];
+  if (ecommerceEvents.includes(lowercaseName)) {
+    return 'Ecommerce';
+  }
+  
+  // Firebase System Auto-events
+  const systemEvents = [
+    'first_open', 'session_start', 'user_engagement', 
+    'app_clear_data', 'app_exception', 'app_update', 'os_update',
+    'notification_receive', 'notification_open', 'notification_dismiss',
+    'screen_active', 'screen_inactive'
+  ];
+  if (systemEvents.includes(lowercaseName) || lowercaseName.startsWith('firebase_') || lowercaseName.startsWith('_')) {
+    return 'System';
+  }
+  
+  return 'Custom';
+}
+
+function getCategoryColors(category: string) {
+  switch (category) {
+    case 'Page View':
+      return {
+        bg: '#E3F2FD',
+        border: '#BBDEFB',
+        text: '#1976D2',
+      };
+    case 'Ecommerce':
+      return {
+        bg: '#E8F5E9',
+        border: '#C8E6C9',
+        text: '#2E7D32',
+      };
+    case 'System':
+      return {
+        bg: '#F5F5F5',
+        border: '#E0E0E0',
+        text: '#616161',
+      };
+    default:
+      return {
+        bg: '#F3E5F5',
+        border: '#E1BEE7',
+        text: '#7B1FA2',
+      };
+  }
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface AnalyticsEventCardProps {
@@ -131,6 +193,22 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                 highlightStyle={cardStyles.highlight}
               />
             </View>
+
+            {(() => {
+              const category = getEventCategory(event.name);
+              const tagColors = getCategoryColors(category);
+              return (
+                <View
+                  style={[
+                    cardStyles.categoryBadge,
+                    {backgroundColor: tagColors.bg, borderColor: tagColors.border},
+                  ]}>
+                  <Text style={[cardStyles.categoryText, {color: tagColors.text}]}>
+                    {category}
+                  </Text>
+                </View>
+              );
+            })()}
 
             {event.count !== undefined ? (
               <View
@@ -333,6 +411,18 @@ const cardStyles = StyleSheet.create({
     fontFamily: AppFonts.interBold,
     fontSize: 9,
     color: '#E11D48',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  categoryBadge: {
+    borderWidth: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  categoryText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
