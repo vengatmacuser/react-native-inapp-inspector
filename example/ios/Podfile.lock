@@ -1473,7 +1473,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-webview (13.16.1):
+  - react-native-webview (14.0.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2259,7 +2259,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: ab33a818d339f5a1da308893c11b487be66121a8
   React-mutationobservernativemodule: a42d1626651ccd7d0dc02a56e69d4ec77c248893
   react-native-safe-area-context: fb5c8ee9f6dd62ef710611b3d370c501f42a4ac0
-  react-native-webview: 2da09bdea1aeb6c46e27dd94632e21059cade6c1
+  react-native-webview: fa32202d241bd953cb7aa323f266a43ff86dfac9
   React-NativeModulesApple: deba264b03bd79c6bd61014fa30e40321b5e443a
   React-networking: 35e6070b084f435429f85c5db40b4d5b38652fe9
   React-oscompat: 64a0c7ef5441855dc6e2a6afe8ba8f92aa05075e
@@ -2300,4 +2300,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 3aa3b5f5253be927d355cf1499f60c53140eb9a3
 
-COCOAPODS: 1.16.2
+COCOAPODS: 1.17.0
