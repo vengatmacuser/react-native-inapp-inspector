@@ -79,7 +79,7 @@ const valueContainsTerm = (val: any, term: string): boolean => {
   );
 };
 
-export const ReduxTreeView = ({
+export const ReduxTreeView = React.memo(({
   state,
   actionHistory = [],
   lastActionMap = {},
@@ -968,7 +968,7 @@ export const ReduxTreeView = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

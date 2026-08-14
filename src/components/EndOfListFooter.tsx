@@ -10,7 +10,7 @@ interface EndOfListFooterProps {
   message?: string;
 }
 
-export const EndOfListFooter: React.FC<EndOfListFooterProps> = ({
+export const EndOfListFooter: React.FC<EndOfListFooterProps> = React.memo(({
   count,
   label,
   message = "You've reached the end of the list",
@@ -34,7 +34,7 @@ export const EndOfListFooter: React.FC<EndOfListFooterProps> = ({
       <View style={styles.dividerLine} />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

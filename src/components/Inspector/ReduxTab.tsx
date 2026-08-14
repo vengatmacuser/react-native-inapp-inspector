@@ -13,7 +13,7 @@ import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {TerminalIcon, ClearIcon} from '../NetworkIcons';
 
-const ReduxTab = () => {
+const ReduxTab = React.memo(() => {
   const {
     reduxState,
     reduxLastActionMap,
@@ -106,6 +106,6 @@ const ReduxTab = () => {
       </View>
     </ScrollView>
   );
-};
+});
 
 export default ReduxTab;

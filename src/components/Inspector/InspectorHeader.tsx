@@ -31,7 +31,7 @@ import {
   ClockIcon,
 } from '../NetworkIcons';
 
-const InspectorHeader = () => {
+const InspectorHeader = React.memo(() => {
   const {
     modalHeightPercent,
     selected,
@@ -590,6 +590,6 @@ const InspectorHeader = () => {
       </View>
     </LinearGradient>
   );
-};
+});
 
 export default InspectorHeader;

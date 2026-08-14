@@ -44,7 +44,7 @@ import {
   SizeIcon,
 } from '../NetworkIcons';
 
-const NetworkDetail = () => {
+const NetworkDetail = React.memo(() => {
   const {t} = useTranslation();
   const {
     selected,
@@ -672,6 +672,6 @@ const NetworkDetail = () => {
       </ScrollView>
     </View>
   );
-};
+});
 
 export default NetworkDetail;

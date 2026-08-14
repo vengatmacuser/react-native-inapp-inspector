@@ -48,7 +48,7 @@ const STATUS_META: Record<
   Failed: {color: AppColors.errorColor, Icon: CircleXIcon},
 };
 
-const FilterChip = ({
+const FilterChip = React.memo(({
   label,
   color,
   Icon,
@@ -98,24 +98,29 @@ const FilterChip = ({
           />
         ) : (
           Icon && (
-            <View style={styles.filterChipIcon}>
-              <Icon color={iconColor} size={13} />
-            </View>
+            <Icon
+              color={iconColor}
+              size={13}
+            />
           )
         )}
         <Text
+          numberOfLines={1}
           style={[
             styles.statusFilterText,
-            active && {color, fontFamily: AppFonts.interBold},
+            active && {
+              color,
+              fontFamily: AppFonts.interBold,
+            },
           ]}>
           {label}
         </Text>
       </View>
     </TouchableScale>
   );
-};
+});
 
-const NetworkTab = () => {
+const NetworkTab = React.memo(() => {
   const {
     groupedData,
     search,
@@ -476,6 +481,6 @@ const NetworkTab = () => {
       </TouchableScale>
     </View>
   );
-};
+});
 
 export default NetworkTab;

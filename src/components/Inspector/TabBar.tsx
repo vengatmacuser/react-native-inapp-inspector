@@ -10,7 +10,7 @@ import {
   AnalyticsIcon,
 } from '../NetworkIcons';
 
-const TabBar = () => {
+const TabBar = React.memo(() => {
   const {
     activeTab,
     switchActiveTab,
@@ -133,6 +133,6 @@ const TabBar = () => {
       </ScrollView>
     </View>
   );
-};
+});
 
 export default TabBar;

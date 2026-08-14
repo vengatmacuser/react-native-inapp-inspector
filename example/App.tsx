@@ -458,6 +458,39 @@ function HomeScreen({ navigation }: any) {
               Trigger Log, Warn & Error Logs
             </Text>
           </TouchableOpacity>
+
+          <View style={[styles.btnRow, {marginTop: 8}]}>
+            <TouchableOpacity
+              style={[styles.gridBtn, { borderColor: '#8B5CF6' }]}
+              onPress={() => {
+                console.log(
+                  'Multi-argument payload inspection:',
+                  { userId: 101, username: 'venkatesh', role: 'Lead Architect' },
+                  ['permissions.read', 'permissions.write', 'permissions.admin'],
+                  { device: 'iPhone 15 Pro', os: 'iOS 18.0', battery: '92%' },
+                );
+              }}
+            >
+              <Text style={[styles.btnText, { color: '#8B5CF6' }]}>
+                Multi-Arg Log
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.gridBtn, { borderColor: '#EF4444' }]}
+              onPress={() => {
+                try {
+                  throw new TypeError('Cannot read properties of undefined (reading "authToken")');
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+            >
+              <Text style={[styles.btnText, { color: '#EF4444' }]}>
+                Error Stack Log
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.panelCard}>
@@ -517,8 +550,31 @@ function HomeScreen({ navigation }: any) {
 
         <View style={styles.panelCard}>
           <Text style={styles.panelHeader}>⚙️ REDUX & STATE ACTIONS</Text>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={[styles.gridBtn, { borderColor: '#10B981' }]}
+              onPress={handleToggleSidebar}
+            >
+              <Text style={[styles.btnText, { color: '#10B981' }]}>
+                Toggle Sidebar
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.gridBtn, { borderColor: '#06B6D4' }]}
+              onPress={() => {
+                mockStore.dispatch({
+                  type: 'SET_THEME',
+                  payload: mockStore.getState().settings.theme === 'dark' ? 'light' : 'dark',
+                });
+              }}
+            >
+              <Text style={[styles.btnText, { color: '#06B6D4' }]}>
+                Toggle Theme
+              </Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
-            style={[styles.fullWidthBtn, { backgroundColor: '#8B5CF6' }]}
+            style={[styles.fullWidthBtn, { backgroundColor: '#8B5CF6', marginTop: 8 }]}
             onPress={handleToggleSidebar}
           >
             <Text style={styles.fullWidthBtnText}>

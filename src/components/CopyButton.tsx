@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useCallback} from 'react';
 
 // Components
 import TouchableScale from './TouchableScale';
@@ -16,15 +16,15 @@ import styles from '../styles';
 // Type Definition
 import {CopyButtonProps} from '../types';
 
-const CopyButton = ({value, label, iconType = 'copy'}: CopyButtonProps) => {
+const CopyButton = React.memo(({value, label, iconType = 'copy'}: CopyButtonProps) => {
   const [copied, setCopied] = useState<boolean>(false);
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     const resolvedValue = typeof value === 'function' ? (value as Function)() : value;
     copyToClipboard(resolvedValue, label);
     setCopied(true);
     setTimeout(() => setCopied(false), 1200);
-  };
+  }, [value, label]);
 
   const containerStyle = [
     styles.iconSquareBtn,
@@ -47,6 +47,6 @@ const CopyButton = ({value, label, iconType = 'copy'}: CopyButtonProps) => {
       )}
     </TouchableScale>
   );
-};
+});
 
 export default CopyButton;

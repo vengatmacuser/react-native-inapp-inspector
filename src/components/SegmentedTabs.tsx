@@ -16,7 +16,7 @@ interface SegmentedTabsProps {
   style?: ViewStyle | ViewStyle[];
 }
 
-const SegmentedTabs = ({tabs, activeKey, onChange, style}: SegmentedTabsProps) => (
+const SegmentedTabs = React.memo(({tabs, activeKey, onChange, style}: SegmentedTabsProps) => (
   <View
     style={[
       {
@@ -66,6 +66,6 @@ const SegmentedTabs = ({tabs, activeKey, onChange, style}: SegmentedTabsProps) =
       );
     })}
   </View>
-);
+));
 
 export default SegmentedTabs;

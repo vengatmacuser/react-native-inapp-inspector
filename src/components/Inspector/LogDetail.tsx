@@ -52,7 +52,7 @@ const getRelativeTime = (timestamp: number): string => {
   return `${days}d ago`;
 };
 
-const LogDetail = () => {
+const LogDetail = React.memo(() => {
   const {t} = useTranslation();
   const {selectedLog} = useInspector();
   const [activeTab, setActiveTab] = useState<DetailSubTab>('output');
@@ -1219,7 +1219,7 @@ const LogDetail = () => {
       </ScrollView>
     </View>
   );
-};
+});
 
 const detailStyles = StyleSheet.create({
   metaDot: {

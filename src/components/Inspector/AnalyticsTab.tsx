@@ -27,18 +27,12 @@ import {
   HeaderPauseIcon,
 } from '../NetworkIcons';
 
-const AnalyticsHeader = () => {
+const AnalyticsHeader = React.memo(() => {
   const {
     filteredAnalyticsEvents,
     analyticsHeaderExpanded,
     setAnalyticsHeaderExpanded,
   } = useInspector();
-
-  const keyExtractor = useCallback(
-    (item: any, index: number) => item?.id?.toString() ?? index.toString(),
-    [],
-  );
-
 
   const userId = getCurrentUserId();
   const userProperties = getCurrentUserProperties();
@@ -135,14 +129,14 @@ const AnalyticsHeader = () => {
       )}
     </View>
   );
-};
+});
 
-const AnalyticsTab = () => {
+const AnalyticsTab = React.memo(() => {
   const {
+    filteredAnalyticsEvents,
     analyticsSearch,
     setAnalyticsSearch,
     handleDelete,
-    filteredAnalyticsEvents,
     selectedEvent,
     setSelectedEvent,
     newEventIds,
@@ -152,71 +146,72 @@ const AnalyticsTab = () => {
     isAnalyticsPaused,
     setIsAnalyticsPaused,
   } = useInspector();
-  const renderItem = useCallback(
-    ({item, index}: {item: any; index: number}) => {
-const prev = filteredAnalyticsEvents[index + 1];
-              const next = filteredAnalyticsEvents[index - 1];
-              const msSincePrev = prev
-                ? item.timestamp - prev.timestamp
-                : undefined;
-              const thisMin = Math.floor(item.timestamp / 60000);
-              const nextMin = next
-                ? Math.floor(next.timestamp / 60000)
-                : -1;
-              const showTimestamp =
-                index === 0 || thisMin !== nextMin;
-              return (
-                <AnalyticsEventCard
-                  event={item}
-                  onPress={() => {
-                    animateNextLayout();
-                    setSelectedEvent(item);
-                  }}
-                  isNew={newEventIds.has(item.id)}
-                  searchStr={analyticsSearch}
-                  isFirst={index === 0}
-                  isLast={
-                    index === filteredAnalyticsEvents.length - 1
-                  }
-                  msSincePrev={msSincePrev}
-                  showTimestamp={showTimestamp}
-                  computedScreenName={(() => {
-                    if (!item) return '';
-                    const rawScreenName =
-                      item.screenName ||
-                      item.screenClass ||
-                      item.pageTitle ||
-                      item.pageLocation ||
-                      item.params?.firebase_screen ||
-                      item.params?.screen_name ||
-                      item.params?.firebase_screen_class ||
-                      item.params?.screen_class;
-                    let screenName = typeof rawScreenName === 'string'
-                      ? rawScreenName
-                      : (rawScreenName ? JSON.stringify(rawScreenName) : '');
-                    const routeInfo = logRouteMapRef.current.get(
-                      item.id + 1000000,
-                    );
-                    if (!screenName) {
-                      if (
-                        routeInfo &&
-                        routeInfo.path !== 'Navigators'
-                      ) {
-                        const parts = routeInfo.path.split(' ➔ ');
-                        screenName = parts[parts.length - 1];
-                      }
-                    }
-                    return screenName;
-                  })()}
-                />
-              );
-    },
-    [filteredAnalyticsEvents, analyticsSearch, newEventIds, setSelectedEvent],
-  );
 
   const keyExtractor = useCallback(
     (item: any, index: number) => item?.id?.toString() ?? index.toString(),
     [],
+  );
+
+  const renderItem = useCallback(
+    ({item, index}: {item: any; index: number}) => {
+      const prev = filteredAnalyticsEvents[index + 1];
+      const next = filteredAnalyticsEvents[index - 1];
+      const msSincePrev = prev
+        ? item.timestamp - prev.timestamp
+        : undefined;
+      const thisMin = Math.floor(item.timestamp / 60000);
+      const nextMin = next
+        ? Math.floor(next.timestamp / 60000)
+        : -1;
+      const showTimestamp =
+        index === 0 || thisMin !== nextMin;
+      return (
+        <AnalyticsEventCard
+          event={item}
+          onPress={() => {
+            animateNextLayout();
+            setSelectedEvent(item);
+          }}
+          isNew={newEventIds.has(item.id)}
+          searchStr={analyticsSearch}
+          isFirst={index === 0}
+          isLast={
+            index === filteredAnalyticsEvents.length - 1
+          }
+          msSincePrev={msSincePrev}
+          showTimestamp={showTimestamp}
+          computedScreenName={(() => {
+            if (!item) return '';
+            const rawScreenName =
+              item.screenName ||
+              item.screenClass ||
+              item.pageTitle ||
+              item.pageLocation ||
+              item.params?.firebase_screen ||
+              item.params?.screen_name ||
+              item.params?.firebase_screen_class ||
+              item.params?.screen_class;
+            let screenName = typeof rawScreenName === 'string'
+              ? rawScreenName
+              : (rawScreenName ? JSON.stringify(rawScreenName) : '');
+            const routeInfo = logRouteMapRef.current.get(
+              item.id + 1000000,
+            );
+            if (!screenName) {
+              if (
+                routeInfo &&
+                routeInfo.path !== 'Navigators'
+              ) {
+                const parts = routeInfo.path.split(' ➔ ');
+                screenName = parts[parts.length - 1];
+              }
+            }
+            return screenName;
+          })()}
+        />
+      );
+    },
+    [filteredAnalyticsEvents, analyticsSearch, newEventIds, setSelectedEvent, logRouteMapRef],
   );
 
 
@@ -350,6 +345,6 @@ const prev = filteredAnalyticsEvents[index + 1];
       </View>
     </>
   );
-};
+});
 
 export default AnalyticsTab;

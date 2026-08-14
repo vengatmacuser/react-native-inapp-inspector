@@ -31,7 +31,7 @@ import {
   HeaderPauseIcon,
 } from '../NetworkIcons';
 
-const ConsoleTab = () => {
+const ConsoleTab = React.memo(() => {
   const {t} = useTranslation();
   const {
     logSearch,
@@ -62,48 +62,45 @@ const ConsoleTab = () => {
     [],
   );
 
-  const listHeader = useMemo(
-    () => (() => {
-      const total = visibleConsoleLogs.length;
-      const filtered = filteredConsoleLogs.length;
-      const isAllSelected =
-        logFilters.has('all') ||
-        !Array.from(logFilters).some(f => f !== 'all');
-      if (isAllSelected) {
-        return (
-          <Text
-            style={[
-              styles.resultCount,
-              {marginBottom: 4, marginTop: 12},
-            ]}>
-            Showing ({filtered}/{total}) logs showing
-          </Text>
-        );
-      } else {
-        const activeFilterNames = Array.from(logFilters)
-          .filter(f => f !== 'all')
-          .map(f => {
-            if (f === 'user-log') return 'User Log';
-            if (f === 'analytics') return 'Analytics';
-            return (
-              (f as string).charAt(0).toUpperCase() +
-              (f as string).slice(1)
-            );
-          });
-        return (
-          <Text
-            style={[
-              styles.resultCount,
-              {marginBottom: 4, marginTop: 12},
-            ]}>
-            Filtering with {activeFilterNames.join(', ')} (
-            {filtered}/{total}) logs is showing
-          </Text>
-        );
-      }
-    })(),
-    [visibleConsoleLogs, filteredConsoleLogs, logFilters],
-  );
+  const listHeader = useMemo(() => {
+    const total = visibleConsoleLogs.length;
+    const filtered = filteredConsoleLogs.length;
+    const isAllSelected =
+      logFilters.has('all') ||
+      !Array.from(logFilters).some(f => f !== 'all');
+    if (isAllSelected) {
+      return (
+        <Text
+          style={[
+            styles.resultCount,
+            {marginBottom: 4, marginTop: 12},
+          ]}>
+          Showing ({filtered}/{total}) logs showing
+        </Text>
+      );
+    } else {
+      const activeFilterNames = Array.from(logFilters)
+        .filter(f => f !== 'all')
+        .map(f => {
+          if (f === 'user-log') return 'User Log';
+          if (f === 'analytics') return 'Analytics';
+          return (
+            (f as string).charAt(0).toUpperCase() +
+            (f as string).slice(1)
+          );
+        });
+      return (
+        <Text
+          style={[
+            styles.resultCount,
+            {marginBottom: 4, marginTop: 12},
+          ]}>
+          Filtering with {activeFilterNames.join(', ')} (
+          {filtered}/{total}) logs is showing
+        </Text>
+      );
+    }
+  }, [visibleConsoleLogs.length, filteredConsoleLogs.length, logFilters]);
 
   return (
     <View style={{flex: 1}}>
@@ -568,6 +565,6 @@ const ConsoleTab = () => {
       />
     </View>
   );
-};
+});
 
 export default ConsoleTab;

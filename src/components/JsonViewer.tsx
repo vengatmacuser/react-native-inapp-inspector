@@ -15,7 +15,7 @@ import styles from '../styles';
 
 // ── JsonViewer Component ─────────────────────────────────────────────────────
 
-const JsonViewer = ({
+const JsonViewer = React.memo(({
   data,
   search,
   forceOpen,
@@ -259,7 +259,7 @@ const JsonViewer = ({
       </View>
     </View>
   );
-};
+});
 
 const localStyles = StyleSheet.create({
   container: {
