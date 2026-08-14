@@ -33,6 +33,8 @@ import {
   CheckIcon,
   TrashIcon,
   WhiteBackNavigation,
+  PackageIcon,
+  ReduxIcon,
 } from '../NetworkIcons';
 
 const SettingsPanel = () => {
@@ -75,6 +77,7 @@ const SettingsPanel = () => {
     setReduxState,
   } = useInspector();
 
+  const isPersistent = isPersistentStorageAvailable();
   const headerTopPadding =
     Platform.OS === 'ios' && modalHeightPercent >= 95 ? 44 : 0;
 
@@ -84,6 +87,7 @@ const SettingsPanel = () => {
       {key: 'logs', label: 'Logs', icon: 'logs'},
       {key: 'analytics', label: 'Analytics', icon: 'analytics'},
       {key: 'redux', label: 'Redux', icon: 'redux'},
+      {key: 'bundle', label: 'Bundle', icon: 'bundle'},
     ] as const;
 
     return (
@@ -343,7 +347,17 @@ const SettingsPanel = () => {
                           />
                         )}
                         {tab.icon === 'redux' && (
-                          <TerminalIcon
+                          <ReduxIcon
+                            color={
+                              isLocked
+                                ? AppColors.grayTextWeak
+                                : AppColors.purple
+                            }
+                            size={11}
+                          />
+                        )}
+                        {tab.icon === 'bundle' && (
+                          <PackageIcon
                             color={
                               isLocked
                                 ? AppColors.grayTextWeak
@@ -885,7 +899,10 @@ const SettingsPanel = () => {
                               <AnalyticsIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
                             )}
                             {tab.icon === 'redux' && (
-                              <TerminalIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
+                              <ReduxIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
+                            )}
+                            {tab.icon === 'bundle' && (
+                              <PackageIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
                             )}
                           </View>
                           <Text

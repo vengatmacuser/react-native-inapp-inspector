@@ -67,9 +67,8 @@ const LogCard = React.memo(function LogCard({
 
   const path = getPath(item.url);
   const baseUrl = getBaseUrl(item.url) || item.url;
-  const cleanHost = baseUrl.replace(/^https?:\/\//, '');
   const slug = path && path !== '/' ? path : item.url;
-  const showSlug = slug !== cleanHost;
+  const showSlug = slug !== baseUrl && slug !== item.url;
   const triggeredAt = formatDateTime(item.startTime);
   const isJson = item.url.split('?')[0].toLowerCase().endsWith('.json');
 
@@ -84,7 +83,7 @@ const LogCard = React.memo(function LogCard({
         },
       ]}>
       <View style={styles.cardBody}>
-        {/* Row 1: Header (Checkbox, Serial, Method Badge, Base URL / Host, Status Pill) */}
+        {/* Row 1: Header (Checkbox, Serial, Method Badge, Base URL / Host with HTTPS, Status Pill) */}
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardHeaderLeft}>
             <Pressable
@@ -117,7 +116,7 @@ const LogCard = React.memo(function LogCard({
             </View>
 
             <HighlightText
-              text={cleanHost || item.url}
+              text={baseUrl || item.url}
               search={searchStr}
               style={styles.cardHostText}
               highlightStyle={styles.highlight}

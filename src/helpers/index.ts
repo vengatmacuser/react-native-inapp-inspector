@@ -527,10 +527,14 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
   }
 
   // Clean file name (remove query strings, packager urls, and parent paths)
-  let cleanPath = fullPath.split('?')[0].split('&')[0].replace(/[)]+$/, '');
+  let cleanPath = fullPath
+    .split('?')[0]
+    .split('&')[0]
+    .replace(/[)]+$/, '')
+    .replace(/\/\/+$/, '');
   // Remove protocol prefixes
   cleanPath = cleanPath.replace(/^(?:https?:\/\/[^\/]+\/|file:\/\/\/|webpack:\/\/\/?)/, '');
-  const fileName = cleanPath.split('/').pop() || cleanPath;
+  const fileName = cleanPath.split('/').filter(Boolean).pop() || cleanPath;
 
   // Determine file extension (.tsx, .jsx, .ts, .js)
   const extMatch = fileName.match(/\.([a-z0-9]+)$/i);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import {
   Alert,
   Animated,
@@ -11,17 +11,14 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import {useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
-import BrandSquareIcon from '../BrandSquareIcon';
+import AppHeaderLogo from '../AppHeaderLogo';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {METHOD_COLORS} from '../../constants';
 import {LIB_VERSION} from '../../constants';
 import {Method} from '../../types';
-import {getStatusColor} from '../../helpers';
-import {getAppName} from '../../helpers';
-import {getBundleIdentifier} from '../../helpers';
-import {formatTime} from '../../helpers';
+import {getStatusColor, getAppName, getBundleIdentifier, formatTime, getSize} from '../../helpers';
 import {
   WhiteBackNavigation,
   TrashIcon,
@@ -34,12 +31,19 @@ import {
 const InspectorHeader = React.memo(() => {
   const {
     modalHeightPercent,
+    appIcon,
     selected,
     setSelected,
     selectedEvent,
     setSelectedEvent,
     selectedLog,
     setSelectedLog,
+    selectedReduxSlice,
+    setSelectedReduxSlice,
+    selectedReduxAction,
+    setSelectedReduxAction,
+    reduxState,
+    reduxLastActionMap,
     showHeaderInfo,
     setShowHeaderInfo,
     updateAvailable,
@@ -51,7 +55,54 @@ const InspectorHeader = React.memo(() => {
     setSettingsPage,
     closeModal,
     detailTitle,
+    activeTab,
+    environment,
   } = useInspector();
+
+  const envConfig = useMemo(() => {
+    const rawEnv = (environment || (__DEV__ ? 'DEV' : 'PROD')).trim();
+    const clean = rawEnv.toUpperCase();
+
+    if (clean === 'DEV' || clean.includes('DEV') || clean === 'LOCAL') {
+      return {
+        label: rawEnv,
+        bg: 'rgba(16, 185, 129, 0.25)', // emerald
+        border: 'rgba(110, 231, 183, 0.55)',
+        text: '#A7F3D0',
+      };
+    }
+    if (clean === 'UAT' || clean === 'QA' || clean === 'TEST') {
+      return {
+        label: rawEnv,
+        bg: 'rgba(245, 158, 11, 0.28)', // amber
+        border: 'rgba(252, 211, 77, 0.6)',
+        text: '#FDE68A',
+      };
+    }
+    if (clean === 'PREPROD' || clean === 'STAGE' || clean === 'STAGING') {
+      return {
+        label: rawEnv,
+        bg: 'rgba(139, 92, 246, 0.28)', // purple
+        border: 'rgba(196, 181, 253, 0.6)',
+        text: '#DDD6FE',
+      };
+    }
+    // PROD / Live
+    return {
+      label: rawEnv,
+      bg: 'rgba(244, 63, 94, 0.25)', // rose
+      border: 'rgba(253, 164, 175, 0.55)',
+      text: '#FECDD3',
+    };
+  }, [environment]);
+
+  const isDetailView =
+    (activeTab === 'apis' && selected != null) ||
+    (activeTab === 'analytics' && selectedEvent != null) ||
+    (activeTab === 'logs' && selectedLog != null) ||
+    (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null));
+
+  const isAnySelected = isDetailView;
 
   const headerTopPadding =
     Platform.OS === 'ios' && modalHeightPercent >= 95 ? 44 : 0;
@@ -69,12 +120,7 @@ const InspectorHeader = React.memo(() => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 16,
-                flex:
-                  selected == null &&
-                  selectedEvent == null &&
-                  selectedLog == null
-                    ? 5
-                    : 1,
+                flex: !isDetailView ? 5 : 1,
               },
             ]}>
             <TouchableScale
@@ -83,6 +129,8 @@ const InspectorHeader = React.memo(() => {
                   setSelected(null);
                   setSelectedEvent(null);
                   setSelectedLog(null);
+                  setSelectedReduxSlice(null);
+                  setSelectedReduxAction(null);
                 });
               }}
               hitSlop={15}
@@ -97,9 +145,7 @@ const InspectorHeader = React.memo(() => {
                   borderWidth: 1,
                   borderColor: `${AppColors.white}4D`,
                 },
-                selected == null &&
-                  selectedEvent == null &&
-                  selectedLog == null && {display: 'none'},
+                !isAnySelected && {display: 'none'},
               ]}>
               {/* Soft outer glow to fake a blurred circle */}
               <View
@@ -114,9 +160,7 @@ const InspectorHeader = React.memo(() => {
               <WhiteBackNavigation />
             </TouchableScale>
 
-            {selected == null &&
-            selectedEvent == null &&
-            selectedLog == null ? (
+            {!isAnySelected ? (
               <TouchableScale
                 onPress={() => setShowHeaderInfo(prev => !prev)}
                 style={{
@@ -125,29 +169,28 @@ const InspectorHeader = React.memo(() => {
                   gap: 10,
                   flex: 1,
                 }}>
-                <View
-                  style={{
-                    width: 46,
-                    height: 46,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: `${AppColors.white}21`,
-                    borderWidth: 1.5,
-                    borderColor: `${AppColors.white}40`,
-                    shadowColor: AppColors.black,
-                    shadowOpacity: 0.15,
-                    shadowRadius: 4,
-                    shadowOffset: {width: 0, height: 2},
-                    flexShrink: 0,
-                  }}>
-                  <BrandSquareIcon size={42} />
-                </View>
+                <AppHeaderLogo size={46} customIcon={appIcon} />
                 <View style={{gap: 2, flex: 1}}>
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
                     <Text style={[styles.headerTitle]} numberOfLines={1}>
                       {getAppName()}
                     </Text>
+                    <View
+                      style={[
+                        styles.envBadge,
+                        {
+                          backgroundColor: envConfig.bg,
+                          borderColor: envConfig.border,
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          styles.envBadgeText,
+                          {color: envConfig.text},
+                        ]}>
+                        {envConfig.label}
+                      </Text>
+                    </View>
                     {updateAvailable && (
                       <Pressable
                         hitSlop={10}
@@ -322,11 +365,9 @@ const InspectorHeader = React.memo(() => {
             ) : null}
           </View>
 
-          {(selected != null ||
-            selectedEvent != null ||
-            selectedLog != null) && (
+          {isDetailView && (
             <View style={styles.headerCenter}>
-              {selected != null ? (
+              {activeTab === 'apis' && selected != null ? (
                 <View style={styles.headerDetailCenter}>
                   <View style={styles.headerDetailRow}>
                     <View
@@ -405,7 +446,7 @@ const InspectorHeader = React.memo(() => {
                     </View>
                   </View>
                 </View>
-              ) : selectedEvent != null ? (
+              ) : activeTab === 'analytics' && selectedEvent != null ? (
                 <View style={styles.headerDetailCenter}>
                   <View style={styles.headerDetailRow}>
                     <View
@@ -453,7 +494,7 @@ const InspectorHeader = React.memo(() => {
                     </Text>
                   </View>
                 </View>
-              ) : selectedLog != null ? (
+              ) : activeTab === 'logs' && selectedLog != null ? (
                 <View style={styles.headerDetailCenter}>
                   <View style={styles.headerDetailRow}>
                     <View
@@ -493,11 +534,110 @@ const InspectorHeader = React.memo(() => {
                         borderRadius: 20,
                         backgroundColor: `${AppColors.white}29`,
                       }}>
-                      <ClockIcon color={AppColors.white} size={11} />
-                      <Text style={styles.headerSubTitle}>
-                        {formatTime(selectedLog.timestamp)}
+                        <ClockIcon color={AppColors.white} size={11} />
+                        <Text style={styles.headerSubTitle}>
+                          {formatTime(selectedLog.timestamp)}
+                        </Text>
+                    </View>
+                  </View>
+                </View>
+              ) : activeTab === 'redux' && selectedReduxSlice != null ? (
+                (() => {
+                  const sliceData = reduxState?.[selectedReduxSlice];
+                  const keyCount =
+                    sliceData && typeof sliceData === 'object'
+                      ? Object.keys(sliceData).length
+                      : typeof sliceData !== 'undefined'
+                      ? 1
+                      : 0;
+                  const sliceSize = getSize(sliceData);
+                  const lastAction = reduxLastActionMap[selectedReduxSlice];
+
+                  return (
+                    <View style={styles.headerDetailCenter}>
+                      <View style={styles.headerDetailRow}>
+                        <View
+                          style={[
+                            styles.headerMethodBadge,
+                            {
+                              backgroundColor: `${AppColors.purple}4D`,
+                            },
+                          ]}>
+                          <Text style={styles.headerMethodText}>
+                            SLICE
+                          </Text>
+                        </View>
+                        <Text
+                          style={styles.headerDetailTitle}
+                          numberOfLines={1}
+                          ellipsizeMode="middle">
+                          {selectedReduxSlice}
+                        </Text>
+                      </View>
+                      <View style={styles.headerDetailSubRow}>
+                        <View
+                          style={[
+                            styles.headerStatusDot,
+                            {backgroundColor: AppColors.liveGreen},
+                          ]}
+                        />
+                        <Text style={styles.headerSubTitle}>
+                          Live
+                        </Text>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
+                        <Text style={styles.headerSubTitle}>
+                          {keyCount} keys
+                        </Text>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
+                        <Text style={styles.headerSubTitle}>
+                          {sliceSize}
+                        </Text>
+                        {lastAction?.timestamp && (
+                          <>
+                            <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
+                            <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+                              <ClockIcon color={AppColors.white} size={10} />
+                              <Text style={styles.headerSubTitle}>
+                                {lastAction.timestamp}
+                              </Text>
+                            </View>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })()
+              ) : activeTab === 'redux' && selectedReduxAction != null ? (
+                <View style={styles.headerDetailCenter}>
+                  <View style={styles.headerDetailRow}>
+                    <View
+                      style={[
+                        styles.headerMethodBadge,
+                        {
+                          backgroundColor: `${AppColors.brandPurple}4D`,
+                        },
+                      ]}>
+                      <Text style={styles.headerMethodText}>
+                        ACTION
                       </Text>
                     </View>
+                    <Text
+                      style={styles.headerDetailTitle}
+                      numberOfLines={1}
+                      ellipsizeMode="middle">
+                      {selectedReduxAction.type}
+                    </Text>
+                  </View>
+                  <View style={styles.headerDetailSubRow}>
+                    <View
+                      style={[
+                        styles.headerStatusDot,
+                        {backgroundColor: AppColors.purple},
+                      ]}
+                    />
+                    <Text style={styles.headerSubTitle}>
+                      {selectedReduxAction.timestamp || 'Dispatched'}
+                    </Text>
                   </View>
                 </View>
               ) : null}
@@ -507,16 +647,12 @@ const InspectorHeader = React.memo(() => {
           <View
             style={[
               styles.headerRight,
-              selected == null &&
-                selectedEvent == null &&
-                selectedLog == null && {
-                  flexShrink: 0,
-                  minWidth: 116,
-                },
+              !isAnySelected && {
+                flexShrink: 0,
+                minWidth: 116,
+              },
             ]}>
-            {selected == null &&
-              selectedEvent == null &&
-              selectedLog == null && (
+            {!isAnySelected && (
               <TouchableScale
                 onPress={() => {
                   Alert.alert(

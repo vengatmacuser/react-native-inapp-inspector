@@ -76,6 +76,7 @@ export interface ReduxHistoryEntry {
   type: string;
   payload: any;
   timestamp: string;
+  updatedAt?: number;
   affectedSlices: string[];
   prevState?: any;
   nextState?: any;
@@ -110,6 +111,8 @@ export interface NetworkInspectorProps {
   isEnabled?: boolean;
   storage?: InspectorStorage;
   navigationRef?: any;
+  appIcon?: any;
+  environment?: 'DEV' | 'UAT' | 'PrePROD' | 'PROD' | 'QA' | 'Staging' | string;
 }
 
 export interface NavigationTrackerProps {
@@ -123,6 +126,8 @@ export interface InspectorContextValue {
   closeModal: () => void;
   isReady: boolean;
   isEnabled: boolean;
+  appIcon?: any;
+  environment?: string;
   modalHeightPercent: number;
   setModalHeightPercent: React.Dispatch<React.SetStateAction<number>>;
   modalAnimationType: 'slide' | 'fade' | 'none';
@@ -243,6 +248,12 @@ export interface InspectorContextValue {
   reduxLastActionMap: Record<string, any>;
   reduxSearch: string;
   setReduxSearch: React.Dispatch<React.SetStateAction<string>>;
+  selectedReduxSlice: string | null;
+  setSelectedReduxSlice: React.Dispatch<React.SetStateAction<string | null>>;
+  selectedReduxAction: any | null;
+  setSelectedReduxAction: React.Dispatch<React.SetStateAction<any | null>>;
+  reduxActiveSubTab: 'state' | 'timeline';
+  setReduxActiveSubTab: React.Dispatch<React.SetStateAction<'state' | 'timeline'>>;
 
   // ─── Settings ──────────────────────────────────────────────────────────────
   settingsActiveSubTab: SettingsSubTab;

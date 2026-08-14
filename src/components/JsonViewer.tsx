@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {ScrollView, View, Text, StyleSheet} from 'react-native';
+import {ScrollView, View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import {useTranslation} from 'react-i18next';
 
 // Components
@@ -12,6 +12,80 @@ import {PrettyIcon, RawIcon, TableIcon} from './NetworkIcons';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
+
+// ── Table Row Component with 3-Line Clamp & Show More/Less ───────────────────
+
+const JsonTableRow = React.memo(({
+  itemKey,
+  val,
+  search,
+}: {
+  itemKey: string;
+  val: any;
+  search?: string;
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const isObject = val !== null && typeof val === 'object';
+
+  let rawStr = '';
+  if (val === null) {
+    rawStr = 'null';
+  } else if (val === undefined) {
+    rawStr = 'undefined';
+  } else if (isObject) {
+    try {
+      rawStr = JSON.stringify(val, null, 2);
+    } catch {
+      rawStr = String(val);
+    }
+  } else {
+    rawStr = String(val);
+  }
+
+  const isMultiline = rawStr.includes('\n') || rawStr.length > 90;
+
+  return (
+    <View style={localStyles.tableRow}>
+      <View style={{flex: 2, paddingRight: 8}}>
+        <HighlightText
+          text={itemKey}
+          search={search}
+          style={localStyles.tableCellKey}
+          highlightStyle={localStyles.highlight}
+        />
+        {isObject && (
+          <Text style={localStyles.tableTypeBadge}>
+            {Array.isArray(val) ? `Array(${val.length})` : 'Object'}
+          </Text>
+        )}
+      </View>
+
+      <View style={{flex: 3}}>
+        <HighlightText
+          text={rawStr}
+          search={search}
+          style={[
+            localStyles.tableCellValue,
+            isObject && localStyles.tableCellRawCode,
+          ]}
+          highlightStyle={localStyles.highlight}
+          numberOfLines={expanded ? undefined : 3}
+          selectable={true}
+        />
+        {isMultiline && (
+          <TouchableOpacity
+            onPress={() => setExpanded(prev => !prev)}
+            hitSlop={6}
+            style={localStyles.showMoreBtn}>
+            <Text style={localStyles.showMoreText}>
+              {expanded ? 'Show less ▲' : 'Show more ▼'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+});
 
 // ── JsonViewer Component ─────────────────────────────────────────────────────
 
@@ -39,7 +113,16 @@ const JsonViewer = React.memo(({
   hideTabs?: boolean;
 }) => {
   const {t} = useTranslation();
-  const [mode, setMode] = useState<'pretty' | 'raw' | 'table'>(externalMode || 'pretty');
+  const [internalMode, setInternalMode] = useState<'pretty' | 'raw' | 'table'>('pretty');
+  const mode = externalMode ?? internalMode;
+
+  const setMode = (newMode: 'pretty' | 'raw' | 'table') => {
+    if (onModeChange) {
+      onModeChange(newMode);
+    } else {
+      setInternalMode(newMode);
+    }
+  };
 
   const rawText = React.useMemo(() => {
     if (typeof data === 'string') {
@@ -54,13 +137,9 @@ const JsonViewer = React.memo(({
 
   useEffect(() => {
     if (externalMode) {
-      setMode(externalMode);
+      setInternalMode(externalMode);
     }
   }, [externalMode]);
-
-  useEffect(() => {
-    onModeChange?.(mode);
-  }, [mode, onModeChange]);
 
   const contentWrapperStyle = [
     localStyles.contentWrapper,
@@ -75,7 +154,10 @@ const JsonViewer = React.memo(({
 
   // Determine type and size details
   const isObject = typeof data === 'object' && data !== null;
-  const isEmpty = isObject && Object.keys(data as object).length === 0;
+  const isEmpty =
+    data === null ||
+    data === undefined ||
+    (isObject && Object.keys(data as object).length === 0);
 
   // Render Table view (Key-Value flat table for root keys)
   const renderTableMode = () => {
@@ -103,28 +185,14 @@ const JsonViewer = React.memo(({
           <Text style={[localStyles.tableHeaderCell, {flex: 2}]}>{t('network.jsonViewer.key')}</Text>
           <Text style={[localStyles.tableHeaderCell, {flex: 3}]}>{t('network.jsonViewer.value')}</Text>
         </View>
-        {keys.map((key) => {
-          const val = (data as any)[key];
-          let displayVal = '';
-          if (val === null) {
-            displayVal = 'null';
-          } else if (val === undefined) {
-            displayVal = 'undefined';
-          } else if (typeof val === 'object') {
-            displayVal = Array.isArray(val) ? `[Array(${val.length})]` : '{Object}';
-          } else {
-            displayVal = String(val);
-          }
-
-          return (
-            <View key={key} style={localStyles.tableRow}>
-              <Text style={[localStyles.tableCellKey, {flex: 2}]}>{key}</Text>
-              <Text style={[localStyles.tableCellValue, {flex: 3}]} numberOfLines={2}>
-                {displayVal}
-              </Text>
-            </View>
-          );
-        })}
+        {keys.map((key) => (
+          <JsonTableRow
+            key={key}
+            itemKey={key}
+            val={(data as any)[key]}
+            search={search}
+          />
+        ))}
       </View>
     );
   };
@@ -333,11 +401,36 @@ const localStyles = StyleSheet.create({
     fontSize: 12.5,
     color: AppColors.purple,
   },
+  tableTypeBadge: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 9.5,
+    color: AppColors.slate400,
+    marginTop: 2,
+  },
   tableCellValue: {
     fontFamily: AppFonts.interRegular,
-    fontSize: 12.5,
+    fontSize: 12,
     color: AppColors.primaryBlack,
-    lineHeight: 18,
+    lineHeight: 17,
+  },
+  tableCellRawCode: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 11.5,
+    color: AppColors.slate700,
+    backgroundColor: `${AppColors.slate100}80`,
+    padding: 6,
+    borderRadius: 6,
+  },
+  showMoreBtn: {
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  showMoreText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 11,
+    color: AppColors.purple,
   },
   emptyTable: {
     padding: 24,
@@ -348,6 +441,11 @@ const localStyles = StyleSheet.create({
     fontFamily: AppFonts.interMedium,
     fontSize: 12.5,
     color: AppColors.slate400,
+  },
+  highlight: {
+    backgroundColor: '#FEF08A',
+    color: '#854D0E',
+    fontFamily: AppFonts.interBold,
   },
 });
 

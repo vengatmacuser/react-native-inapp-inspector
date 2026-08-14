@@ -91,6 +91,8 @@ const NetworkInspector = ({
   isEnabled = true,
   storage,
   navigationRef,
+  appIcon,
+  environment,
 }: NetworkInspectorProps): React.JSX.Element => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
@@ -114,6 +116,9 @@ const NetworkInspector = ({
   const [search, setSearch] = useState('');
   const [detailSearch, setDetailSearch] = useState('');
   const [reduxSearch, setReduxSearch] = useState('');
+  const [selectedReduxSlice, setSelectedReduxSlice] = useState<string | null>(null);
+  const [selectedReduxAction, setSelectedReduxAction] = useState<any | null>(null);
+  const [reduxActiveSubTab, setReduxActiveSubTab] = useState<'state' | 'timeline'>('state');
 
   const [apiDetailActiveTab, setApiDetailActiveTab] = useState<
     'metadata' | 'headers' | 'request' | 'response'
@@ -257,6 +262,7 @@ const NetworkInspector = ({
     logs: true,
     analytics: true,
     redux: false,
+    bundle: true,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -279,6 +285,7 @@ const NetworkInspector = ({
       logs: true,
       analytics: true,
       redux: false,
+      bundle: true,
     });
     setDefaultTab('apis');
     setMaxNetworkLogs(100);
@@ -333,6 +340,7 @@ const NetworkInspector = ({
             logs: true,
             analytics: true,
             redux: false,
+            bundle: true,
           },
           ...(saved.tabVisibility || {}),
           apis: true,
@@ -1318,6 +1326,8 @@ const NetworkInspector = ({
     closeModal,
     isReady,
     isEnabled,
+    appIcon,
+    environment,
     modalHeightPercent,
     setModalHeightPercent,
     modalAnimationType,
@@ -1434,6 +1444,12 @@ const NetworkInspector = ({
     reduxLastActionMap,
     reduxSearch,
     setReduxSearch,
+    selectedReduxSlice,
+    setSelectedReduxSlice,
+    selectedReduxAction,
+    setSelectedReduxAction,
+    reduxActiveSubTab,
+    setReduxActiveSubTab,
 
     // ─── Settings ───────────────────────────────────────────────────────
     settingsActiveSubTab,

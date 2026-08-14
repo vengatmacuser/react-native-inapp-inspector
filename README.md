@@ -31,6 +31,7 @@ A self-contained, developer-first in-app debugging overlay for React Native. Ins
 | ⏸️ **Live Stream Pause / Resume** | Freeze incoming network requests, console logs, and analytics streams on the fly to inspect active traffic without list jumping. |
 | 📊 **Analytics Tracker** | Tracks manual events and auto-patches `@react-native-firebase/analytics` calls (`logEvent`, `logScreenView`, `setUserProperties`, and `setUserId`). |
 | 🔄 **Redux State & Actions** | Connects to Redux / Redux Toolkit. Inspect dispatched actions with deep state diffs, payload breakdown, slice state trees, and `redux-persist` metadata. |
+| 📦 **Bundle Visualizer** | In-app JavaScript bundle size breakdown, Hermes engine bytecode metrics, visual package treemap, and integrated `react-native-bundle-visualizer` CLI. |
 | 🪟 **Rich JSON Viewer** | Explore data in **Pretty**, **Raw**, and **Table** modes with full-text search highlighting and uniform typography. |
 | 🛡️ **Error Boundary** | Built-in `ErrorBoundary` to gracefully catch and inspect React render crashes. |
 
@@ -243,6 +244,18 @@ const App = () => {
   );
 };
 ```
+
+---
+
+## 📦 Application Bundle Size & Asset Inspector
+
+The inspector includes a dedicated **Bundle** tab (placed right after Redux) with **5 specialized sub-tabs** to inspect and optimize bundle assets:
+
+1. 📊 **Overview & Treemap**: Real-time stacked visual ratio bar, total bundle size (`MB`), Hermes Bytecode engine detection, and category weight cards.
+2. 📁 **Files Explorer**: Searchable file-by-file footprint breakdown (`PNG`, `TSX`, `JS`, `TTF`, `JSON`) with lines, resolution, and optimization status.
+3. 📦 **Packages**: Node modules footprint audit (`react-native`, `@react-navigation`, `axios`, `react-native-svg`), version tags, and direct vs. transitive dependency analysis.
+4. 🖼️ **Media Auditor**: Dedicated asset compression analysis for images and custom fonts with potential WebP savings calculators.
+5. ⚡ **Optimizer Checklist**: Actionable best-practice tips for Hermes engine, selective path imports (tree-shaking), font subsetting, and screen lazy-loading.
 
 ---
 

@@ -69,6 +69,19 @@ const symbolicateStack = async (
   return null;
 };
 
+const isLoggerInternal = (line: string): boolean => {
+  const l = line.toLowerCase();
+  return (
+    l.includes('getstackdetails') ||
+    l.includes('addlog') ||
+    l.includes('consolelogger') ||
+    l.includes('setupconsolelogger') ||
+    l.includes('formatargs') ||
+    l.includes('react-native-inapp-inspector') ||
+    l.trim() === 'error'
+  );
+};
+
 const getStackDetails = (
   args?: any[],
 ): {caller: string; stack?: string; errorStack?: string; stackToUse?: string} => {
@@ -100,13 +113,7 @@ const getStackDetails = (
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      if (
-        !line ||
-        line.includes('consoleLogger') ||
-        line.includes('setupConsoleLogger') ||
-        line.includes('react-native-inapp-inspector') ||
-        line.trim() === 'Error'
-      ) {
+      if (!line || isLoggerInternal(line)) {
         continue;
       }
 
@@ -128,14 +135,7 @@ const getStackDetails = (
       }
     }
 
-    const cleanedStack = lines
-      .filter(
-        l =>
-          !l.includes('consoleLogger') &&
-          !l.includes('setupConsoleLogger'),
-      )
-      .join('\n');
-
+    const cleanedStack = lines.filter(l => !isLoggerInternal(l)).join('\n');
     const caller = userCaller || fallbackCaller || 'Unknown';
     return {caller, stack: cleanedStack || stackToUse, errorStack, stackToUse};
   } catch (e) {
@@ -192,6 +192,38 @@ const addLog = (
     logs.unshift(newLog);
     logs = logs.slice(0, MAX_LOGS);
     notify();
+
+    // Asynchronously symbolicate stack trace via Metro in development
+    if (newLog.stack && typeof __DEV__ !== 'undefined' && __DEV__) {
+      symbolicateStack(newLog.stack)
+        .then(symbolicatedFrames => {
+          if (symbolicatedFrames && symbolicatedFrames.length > 0) {
+            const validFrames = symbolicatedFrames.filter(
+              f =>
+                f.file &&
+                !f.file.includes('react-native/Libraries') &&
+                !f.file.includes('node_modules') &&
+                !isLoggerInternal(f.file) &&
+                !isLoggerInternal(f.methodName || ''),
+            );
+            const topFrame = validFrames[0] || symbolicatedFrames[0];
+            if (topFrame) {
+              const cleanMethod = topFrame.methodName || 'anonymous';
+              const cleanFile = topFrame.file.split('/').pop() || topFrame.file;
+              newLog.caller = `${cleanMethod} (${cleanFile}:${topFrame.lineNumber || 1}:${topFrame.column || 1})`;
+            }
+            newLog.stack = symbolicatedFrames
+              .filter(f => !isLoggerInternal(f.file || '') && !isLoggerInternal(f.methodName || ''))
+              .map(
+                f =>
+                  `    at ${f.methodName || 'anonymous'} (${f.file}:${f.lineNumber || 1}:${f.column || 1})`,
+              )
+              .join('\n');
+            notify();
+          }
+        })
+        .catch(() => {});
+    }
 
     // Asynchronously symbolicate stack trace using Metro in DEV mode
     if (stackToUse && typeof __DEV__ !== 'undefined' && __DEV__) {

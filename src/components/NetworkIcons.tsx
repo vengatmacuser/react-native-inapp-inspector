@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, {Circle, Line, Path, Rect} from 'react-native-svg';
+import Svg, {Circle, Ellipse, Line, Path, Rect} from 'react-native-svg';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -1091,3 +1091,142 @@ export const TableIcon = ({
     </Svg>
   );
 };
+
+export const PackageIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M16.5 9.4 7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 .86 1.52l8.95 5.16a1.78 1.78 0 0 0 1.78 0l8.95-5.16a1.78 1.78 0 0 0 .86-1.52V5.79a1.78 1.78 0 0 0-2.5-1.55L16.5 9.4z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3.29 7 12 12.01 20.71 7M12 22.08V12"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const ForwardChevronIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 18l6-6-6-6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const BundleIcon = PackageIcon;
+
+export const LiveStateIcon = ({
+  color = AppColors.purple,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3v3M12 18v3M3 12h3M18 12h3"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <Circle cx="12" cy="12" r="3.5" stroke={color} strokeWidth="1.8" fill={`${color}22`} />
+      <Circle cx="12" cy="12" r="1.5" fill={color} />
+    </Svg>
+  );
+};
+
+export const TimelineIcon = ({
+  color = AppColors.purple,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
+      <Path
+        d="M12 7.5v4.5l3 2"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const StorageIcon = ({
+  color = AppColors.purple,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Ellipse cx="12" cy="6" rx="8" ry="2.8" stroke={color} strokeWidth="1.8" />
+      <Path
+        d="M20 12c0 1.55-3.58 2.8-8 2.8s-8-1.25-8-2.8"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M4 6v12c0 1.55 3.58 2.8 8 2.8s8-1.25 8-2.8V6"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const MetadataIcon = ({
+  color = AppColors.purple,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
+      <Path
+        d="M12 16v-4M12 8.2h.01"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const ReduxIcon = ({
+  color = AppColors.purple,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="4" stroke={color} strokeWidth="1.8" />
+      <Path
+        d="M12 3a9 9 0 0 1 9 9M12 21a9 9 0 0 1-9-9"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Circle cx="21" cy="12" r="1.5" fill={color} />
+      <Circle cx="3" cy="12" r="1.5" fill={color} />
+    </Svg>
+  );
+};
+

@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {Animated, ViewStyle} from 'react-native';
+import {Animated, Platform, View, ViewStyle} from 'react-native';
 
 interface AnimatedEntranceProps {
   children: React.ReactNode;
@@ -18,6 +18,10 @@ const AnimatedEntrance = React.memo(function AnimatedEntrance({
   index = 0,
   style,
 }: AnimatedEntranceProps) {
+  if (Platform.OS === 'android') {
+    return <View style={style}>{children}</View>;
+  }
+
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

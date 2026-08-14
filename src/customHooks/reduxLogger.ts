@@ -88,7 +88,8 @@ function recordAction(action: any, prevState: any, nextState: any) {
     action && typeof action === 'object' && action.payload !== undefined
       ? action.payload
       : null;
-  const timestamp = new Date().toLocaleTimeString();
+  const now = Date.now();
+  const timestamp = new Date(now).toLocaleTimeString();
 
   const affectedSlices: string[] = [];
   if (
@@ -99,7 +100,7 @@ function recordAction(action: any, prevState: any, nextState: any) {
   ) {
     Object.keys(nextState).forEach(key => {
       if (prevState[key] !== nextState[key]) {
-        lastActionForReducer[key] = {type, payload, timestamp};
+        lastActionForReducer[key] = {type, payload, timestamp, updatedAt: now};
         affectedSlices.push(key);
       }
     });
@@ -110,6 +111,7 @@ function recordAction(action: any, prevState: any, nextState: any) {
     type,
     payload,
     timestamp,
+    updatedAt: now,
     affectedSlices,
     prevState,
     nextState,

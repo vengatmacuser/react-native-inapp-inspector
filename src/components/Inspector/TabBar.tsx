@@ -8,6 +8,8 @@ import {
   SignalIcon,
   TerminalIcon,
   AnalyticsIcon,
+  PackageIcon,
+  ReduxIcon,
 } from '../NetworkIcons';
 
 const TabBar = React.memo(() => {
@@ -55,6 +57,12 @@ const TabBar = React.memo(() => {
               count: 0,
               icon: 'redux',
             },
+            {
+              key: 'bundle',
+              label: 'Bundle',
+              count: 0,
+              icon: 'bundle',
+            },
           ] as const
         )
           .filter(tab => tabVisibility?.[tab.key])
@@ -74,11 +82,7 @@ const TabBar = React.memo(() => {
             return (
               <TouchableScale
                 key={tab.key}
-                onPress={() => {
-                  requestAnimationFrame(() => {
-                    switchActiveTab(tab.key);
-                  });
-                }}
+                onPress={() => switchActiveTab(tab.key)}
                 style={[
                   styles.contentTabButton,
                   isActive && styles.contentTabButtonActive,
@@ -99,7 +103,10 @@ const TabBar = React.memo(() => {
                     <AnalyticsIcon color={iconColor} size={14} />
                   )}
                   {tab.icon === 'redux' && (
-                    <TerminalIcon color={iconColor} size={14} />
+                    <ReduxIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'bundle' && (
+                    <PackageIcon color={iconColor} size={14} />
                   )}
                   <Text
                     numberOfLines={1}

@@ -741,7 +741,11 @@ function App() {
           </Stack.Navigator>
         </NavigationContainer>
         {/* Render inspector globally exactly once at the root level */}
-        <NetworkInspector navigationRef={navigationRef} />
+        <NetworkInspector
+          navigationRef={navigationRef}
+          appIcon={require('./assets/app_icon.png')}
+          environment="DEV"
+        />
       </ErrorBoundary>
     </SafeAreaProvider>
   );

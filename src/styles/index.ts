@@ -34,6 +34,20 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     letterSpacing: 0.3,
     paddingBottom: 4,
   },
+  envBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  envBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    letterSpacing: 0.5,
+  },
   headerDetailCenter: {
     alignItems: 'center',
     justifyContent: 'center',
