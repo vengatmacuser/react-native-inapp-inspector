@@ -23,9 +23,7 @@
   },
   "files": [
     "dist",
-    "fonts",
-    "example",
-    "assets"
+    "README.md"
   ],
   "scripts": {
     "prebuild": "node scripts/gen-version.js",
