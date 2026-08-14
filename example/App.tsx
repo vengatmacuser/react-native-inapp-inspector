@@ -13,7 +13,6 @@ import { NavigationContainer, createNavigationContainerRef } from '@react-naviga
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import axios from 'axios';
 import NetworkInspector, {
-  WebView,
   ErrorBoundary,
   connectReduxStore,
   setupNetworkLogger,
@@ -22,6 +21,7 @@ import NetworkInspector, {
   logAnalyticsEvent,
   subscribeAnalyticsEvents,
 } from 'react-native-inapp-inspector';
+import {WebView} from 'react-native-webview';
 
 // ⚡ Call BEFORE any component renders so axios.create() is already patched
 setupNetworkLogger();
@@ -239,6 +239,71 @@ function HomeScreen({ navigation }: any) {
     console.error('[App] Simulated error! Critical DB connection timeout.');
   };
 
+  const triggerSampleAll = () => {
+    // Fire every sample action at once (with a few random extras)
+    const randomConsoleMessages = [
+      '[Sample] Fetching latest feed...',
+      '[Sample] Cache refreshed for user session',
+      '[Sample] Push notification permission granted',
+      '[Sample] Background sync completed',
+    ];
+    const randomAnalyticsEvents = [
+      'screen_view',
+      'button_tapped',
+      'list_scrolled',
+      'session_started',
+    ];
+
+    console.log(
+      `[Sample] Firing sample-all at ${new Date().toLocaleTimeString()}`,
+    );
+    console.warn('[Sample] Randomized warning: throttled API response');
+    console.error('[Sample] Randomized error: timeout on retry attempt #3');
+    console.log(
+      randomConsoleMessages[
+        Math.floor(Math.random() * randomConsoleMessages.length)
+      ],
+    );
+
+    triggerAxiosGet();
+    triggerAxiosPost();
+    triggerAxiosPut();
+    triggerAxiosPatch();
+    triggerAxiosDelete();
+    triggerNetworkRequest();
+    triggerFailedNetworkRequest();
+
+    logAnalyticsEvent(
+      randomAnalyticsEvents[
+        Math.floor(Math.random() * randomAnalyticsEvents.length)
+      ],
+      {
+        sample_batch: 'all',
+        triggered_at: new Date().toISOString(),
+        random_value: Math.floor(Math.random() * 1000),
+      },
+    );
+    logAnalyticsEvent('item_purchase', {
+      item_id: 'prod_999',
+      item_name: 'Premium Debug Kit',
+      price: 29.99,
+      currency: 'USD',
+    });
+
+    mockStore.dispatch({type: 'TOGGLE_SIDEBAR'});
+    mockStore.dispatch({type: 'UPDATE_USER_TIME'});
+
+    // Random extra fetch to spice up the flood
+    fetch(
+      `https://jsonplaceholder.typicode.com/posts/${Math.floor(
+        Math.random() * 8 + 1,
+      )}`,
+    )
+      .then(r => r.json())
+      .then(d => console.log('[Sample] Random fetch completed:', d.title))
+      .catch(e => console.error('[Sample] Random fetch failed:', e));
+  };
+
   const handleToggleSidebar = () => {
     mockStore.dispatch({ type: 'TOGGLE_SIDEBAR' });
     mockStore.dispatch({ type: 'UPDATE_USER_TIME' });
@@ -284,6 +349,28 @@ function HomeScreen({ navigation }: any) {
               <Text style={styles.statLbl}>Sidebar</Text>
             </View>
           </View>
+        </View>
+
+        {/* Trigger Sample All Logs */}
+        <View
+          style={[
+            styles.panelCard,
+            { borderColor: '#22D3EE', marginBottom: 20 },
+          ]}>
+          <Text style={[styles.panelHeader, { color: '#22D3EE' }]}>
+            🎲 SAMPLE ALL LOGS
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.fullWidthBtn,
+              { backgroundColor: '#0891B2' },
+            ]}
+            onPress={triggerSampleAll}
+          >
+            <Text style={styles.fullWidthBtnText}>
+              Trigger Sample All Logs At Once
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Action Panel Grid */}

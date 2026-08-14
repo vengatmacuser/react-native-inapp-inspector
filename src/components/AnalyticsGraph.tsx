@@ -12,17 +12,12 @@ import Svg, {
 } from 'react-native-svg';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
-import {AnalyticsEvent} from '../types';
-
-interface Props {
-  event: AnalyticsEvent;
-  accentColor: string;
-}
+import {AnalyticsGraphProps} from '../types';
 
 const BAR_HEIGHT = 24;
 const PADDING_Y = 12;
 
-const AnalyticsGraph = ({event, accentColor}: Props) => {
+const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
   const params = event.params || {};
 
   // 1. Check for E-commerce items array
@@ -78,7 +73,7 @@ const AnalyticsGraph = ({event, accentColor}: Props) => {
   const typeData = [
     {label: 'Strings', value: paramTypes.string, color: AppColors.purple},
     {label: 'Numbers', value: paramTypes.number, color: AppColors.skyBlue},
-    {label: 'Booleans', value: paramTypes.boolean, color: '#F59E0B'}, // Amber
+    {label: 'Booleans', value: paramTypes.boolean, color: AppColors.amber500}, // Amber
     {label: 'Objects', value: paramTypes.object, color: AppColors.greenColor},
   ].filter(d => d.value > 0);
 
@@ -146,7 +141,7 @@ const AnalyticsGraph = ({event, accentColor}: Props) => {
               label: item.item_name || item.item_id || `Item ${i + 1}`,
               value: item.price,
             }))}
-            accentColor={AppColors.successGreen || '#22C55E'}
+            accentColor={AppColors.successGreen}
             maxBarWidth={maxBarWidth}
             isGradient={false}
           />
@@ -294,7 +289,7 @@ const GaugeChart = ({
         paddingTop: 6,
         paddingBottom: 6,
       }}>
-      {data.map((d, i) => {
+      {data.map(d => {
         const fillPct = Math.min(Math.abs(d.value) / maxVal, 1);
         const strokeDashoffset = Math.max(
           circumference - fillPct * circumference,
@@ -308,7 +303,7 @@ const GaugeChart = ({
                 cx="30"
                 cy="30"
                 r={radius}
-                stroke="#F3F4F6"
+                stroke={AppColors.grayBorderSecondary}
                 strokeWidth={stroke}
                 fill="none"
               />
@@ -406,12 +401,12 @@ const CalendarChart = ({
               style={{
                 width: 58,
                 height: 62,
-                backgroundColor: '#FFFFFF',
+                backgroundColor: AppColors.white,
                 borderRadius: 8,
                 borderWidth: 1,
                 borderColor: AppColors.grayBorderSecondary,
                 overflow: 'hidden',
-                shadowColor: '#000',
+                shadowColor: AppColors.black,
                 shadowOpacity: 0.05,
                 shadowRadius: 4,
                 shadowOffset: {width: 0, height: 2},
@@ -429,7 +424,7 @@ const CalendarChart = ({
                   style={{
                     fontFamily: AppFonts.interBold,
                     fontSize: 9,
-                    color: '#FFF',
+                    color: AppColors.white,
                     textTransform: 'uppercase',
                     letterSpacing: 0.5,
                   }}>
@@ -442,7 +437,7 @@ const CalendarChart = ({
                   flex: 1,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  backgroundColor: '#FAFAFA',
+                  backgroundColor: AppColors.grayBackground,
                 }}>
                 <Text
                   style={{

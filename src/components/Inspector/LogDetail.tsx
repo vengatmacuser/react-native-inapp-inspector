@@ -1,0 +1,1237 @@
+import React, {useMemo, useState} from 'react';
+import {useTranslation} from 'react-i18next';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import {useInspector} from './InspectorContext';
+import HighlightText from '../HighlightText';
+import JsonViewer from '../JsonViewer';
+import CopyButton from '../CopyButton';
+import SegmentedTabs from '../SegmentedTabs';
+import {
+  ClearIcon,
+  SearchIcon,
+  PrettyIcon,
+  RawIcon,
+  TableIcon,
+  HeadersIcon,
+  LayersIcon,
+  TerminalIcon,
+  RequestIcon,
+  InfoCircleIcon,
+} from '../NetworkIcons';
+import {AppColors} from '../../styles/AppColors';
+import {AppFonts} from '../../styles/AppFonts';
+import styles from '../../styles';
+import {
+  getJsonContent,
+  getSize,
+  formatDateTime,
+  parseStackLine,
+  ParsedStackFrame,
+} from '../../helpers';
+
+type DetailSubTab = 'output' | 'arguments' | 'stack' | 'metadata';
+
+const getRelativeTime = (timestamp: number): string => {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return `${seconds}s ago`;
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
+};
+
+const LogDetail = () => {
+  const {t} = useTranslation();
+  const {selectedLog} = useInspector();
+  const [activeTab, setActiveTab] = useState<DetailSubTab>('output');
+  const [detailSearch, setDetailSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'pretty' | 'raw' | 'table'>('pretty');
+
+  const jsonContent = useMemo(
+    () => (selectedLog ? getJsonContent(selectedLog.message) : null),
+    [selectedLog],
+  );
+
+  const [stackViewMode, setStackViewMode] = useState<'structured' | 'raw'>('structured');
+  const [stackSource, setStackSource] = useState<'caller' | 'error'>('caller');
+
+  const activeStackString = useMemo(() => {
+    if (!selectedLog) return '';
+    if (stackSource === 'error' && selectedLog.errorStack) {
+      return selectedLog.errorStack;
+    }
+    return selectedLog.stack || selectedLog.caller || '';
+  }, [selectedLog, stackSource]);
+
+  const originFrame: ParsedStackFrame | null = useMemo(() => {
+    if (!selectedLog) return null;
+    if (selectedLog.caller && selectedLog.caller !== 'Unknown') {
+      return parseStackLine(selectedLog.caller, true);
+    }
+    if (selectedLog.stack) {
+      const firstLine = selectedLog.stack
+        .split('\n')
+        .find(l => l.trim().length > 0);
+      if (firstLine) return parseStackLine(firstLine, true);
+    }
+    return null;
+  }, [selectedLog]);
+
+  const parsedStackFrames: ParsedStackFrame[] = useMemo(() => {
+    if (!activeStackString) return [];
+    return activeStackString
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+      .map((line, idx) => parseStackLine(line, idx === 0));
+  }, [activeStackString]);
+
+  if (!selectedLog) return null;
+
+  const isDark = AppColors.primaryLight !== AppColors.white;
+  const getTypeColors = () => {
+    if (selectedLog.type === 'error') {
+      return {
+        border: AppColors.errorColor,
+        badgeBg: `${AppColors.errorColor}15`,
+        badgeText: AppColors.errorColor,
+        label: 'ERROR',
+      };
+    }
+    if (selectedLog.type === 'warn') {
+      return {
+        border: AppColors.lightOrange,
+        badgeBg: `${AppColors.lightOrange}15`,
+        badgeText: AppColors.darkOrange || AppColors.lightOrange,
+        label: 'WARN',
+      };
+    }
+    return {
+      border: AppColors.purple,
+      badgeBg: `${AppColors.purple}15`,
+      badgeText: AppColors.purple,
+      label: 'INFO',
+    };
+  };
+
+  const typeColors = getTypeColors();
+  const hasMultipleArgs =
+    selectedLog.rawArgs != null && selectedLog.rawArgs.length > 1;
+  const hasStack = Boolean(
+    selectedLog.stack && selectedLog.stack.trim().length > 0,
+  );
+
+  const subTabs = [
+    {
+      key: 'output',
+      label: 'Output',
+      icon: (isActive: boolean) => (
+        <TerminalIcon
+          color={isActive ? AppColors.white : AppColors.grayTextWeak}
+          size={12}
+        />
+      ),
+    },
+    ...(hasMultipleArgs
+      ? [
+          {
+            key: 'arguments',
+            label: `Args (${selectedLog.rawArgs?.length})`,
+            icon: (isActive: boolean) => (
+              <RequestIcon
+                color={isActive ? AppColors.white : AppColors.grayTextWeak}
+                size={12}
+              />
+            ),
+          },
+        ]
+      : []),
+    ...(hasStack
+      ? [
+          {
+            key: 'stack',
+            label: 'Stack Trace',
+            icon: (isActive: boolean) => (
+              <LayersIcon
+                color={isActive ? AppColors.white : AppColors.grayTextWeak}
+                size={12}
+              />
+            ),
+          },
+        ]
+      : []),
+    {
+      key: 'metadata',
+      label: 'Metadata',
+      icon: (isActive: boolean) => (
+        <InfoCircleIcon
+          color={isActive ? AppColors.white : AppColors.grayTextWeak}
+          size={12}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <View style={{flex: 1}}>
+      {/* Enhanced details header bar */}
+      <View style={styles.detailInfoBar}>
+        <View style={{flexDirection: 'column', gap: 10}}>
+          {/* Top Row: Type badge, method, content pill & Copy button */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+                flex: 1,
+                flexWrap: 'wrap',
+              }}>
+              {/* Type Badge */}
+              <View
+                style={[
+                  styles.typeChip,
+                  {
+                    backgroundColor: typeColors.badgeBg,
+                    borderWidth: 1,
+                    borderColor: `${typeColors.border}40`,
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                  },
+                ]}>
+                <View
+                  style={[
+                    styles.typeDot,
+                    {backgroundColor: typeColors.badgeText},
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.typeChipText,
+                    {color: typeColors.badgeText, fontSize: 10},
+                  ]}>
+                  {typeColors.label}
+                </Text>
+              </View>
+
+              {/* Method chip */}
+              <View
+                style={[
+                  styles.metaChip,
+                  {
+                    backgroundColor: `${AppColors.brandPurple}12`,
+                    borderColor: `${AppColors.brandPurple}30`,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.metaChipText,
+                    {color: AppColors.brandPurple, fontSize: 10},
+                  ]}>
+                  console.
+                  {selectedLog.sourceMethod || selectedLog.type || 'log'}
+                </Text>
+              </View>
+
+              {/* JSON content type chip */}
+              {jsonContent && (
+                <View
+                  style={[
+                    styles.metaChip,
+                    {
+                      backgroundColor: `${AppColors.teal600}12`,
+                      borderColor: `${AppColors.teal600}2B`,
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.metaChipText,
+                      {color: AppColors.teal600, fontSize: 10},
+                    ]}>
+                    {Array.isArray(jsonContent.data)
+                      ? `Array[${jsonContent.data.length}]`
+                      : `Object{${Object.keys(jsonContent.data).length}}`}
+                  </Text>
+                </View>
+              )}
+
+              {/* Duplicate count chip */}
+              {selectedLog.duplicateCount != null &&
+                selectedLog.duplicateCount > 1 && (
+                  <View
+                    style={[
+                      styles.metaChip,
+                      {
+                        backgroundColor: `${AppColors.purple}1A`,
+                        borderColor: `${AppColors.purple}3D`,
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        styles.metaChipText,
+                        {color: AppColors.purple, fontWeight: '700'},
+                      ]}>
+                      {t('console.duplicates', {
+                        count: selectedLog.duplicateCount,
+                      })}
+                    </Text>
+                  </View>
+                )}
+            </View>
+
+            {/* Quick Copy button */}
+            <CopyButton
+              value={selectedLog.message}
+              label={t('console.logMessage')}
+            />
+          </View>
+
+          {/* Caller & Trace origin info */}
+          <View style={{gap: 4}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
+              {originFrame?.fileExt && originFrame.fileExt !== 'other' && (
+                <View
+                  style={{
+                    backgroundColor:
+                      originFrame.fileExt === 'tsx' || originFrame.fileExt === 'ts'
+                        ? AppColors.brandPurple
+                        : AppColors.teal600,
+                    borderRadius: 4,
+                    paddingHorizontal: 5,
+                    paddingVertical: 1.5,
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 9.5,
+                      color: AppColors.white,
+                      letterSpacing: 0.5,
+                    }}>
+                    {originFrame.fileExt.toUpperCase()}
+                  </Text>
+                </View>
+              )}
+
+              <Text
+                selectable
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 13,
+                  color: AppColors.primaryBlack,
+                  lineHeight: 18,
+                }}
+                numberOfLines={1}>
+                {originFrame?.functionName && originFrame.functionName !== '<anonymous>'
+                  ? `${originFrame.functionName}()`
+                  : originFrame?.fileName || t('console.consoleLog')}
+              </Text>
+
+              {originFrame?.fileName && (
+                <View
+                  style={[
+                    styles.metaChip,
+                    {
+                      backgroundColor: `${AppColors.brandPurple}12`,
+                      borderColor: `${AppColors.brandPurple}30`,
+                      paddingHorizontal: 7,
+                      paddingVertical: 2,
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.metaChipText,
+                      {color: AppColors.brandPurple, fontSize: 10, fontFamily: AppFonts.interBold},
+                    ]}>
+                    📄 {originFrame.fileName}
+                    {originFrame.lineNumber ? `:${originFrame.lineNumber}` : ''}
+                    {originFrame.columnNumber ? `:${originFrame.columnNumber}` : ''}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Enhanced metadata metrics row */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                flexWrap: 'wrap',
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 10,
+                  color: AppColors.grayTextWeak,
+                }}>
+                #{selectedLog.id + 1}
+              </Text>
+              <Text style={detailStyles.metaDot}>•</Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 10,
+                  color: AppColors.grayTextWeak,
+                }}>
+                {formatDateTime(selectedLog.timestamp)} ({getRelativeTime(selectedLog.timestamp)})
+              </Text>
+              <Text style={detailStyles.metaDot}>•</Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 10,
+                  color: AppColors.grayTextWeak,
+                }}>
+                {getSize(selectedLog.message)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Sub-tabs header */}
+      <View style={detailStyles.tabsHeaderWrap}>
+        <SegmentedTabs
+          tabs={subTabs}
+          activeKey={activeTab}
+          onChange={key => setActiveTab(key as DetailSubTab)}
+        />
+      </View>
+
+      {/* Search row (only for output/arguments/stack tabs) */}
+      {activeTab !== 'metadata' && (
+        <View style={{paddingHorizontal: 12, paddingTop: 6, paddingBottom: 4}}>
+          <View style={[styles.detailSearchRow, {marginBottom: 0}]}>
+            <View
+              style={[
+                styles.detailSearchBox,
+                {
+                  backgroundColor: isDark
+                    ? `${AppColors.brandPurple}10`
+                    : AppColors.purpleShade50,
+                  borderWidth: 1,
+                  borderColor: AppColors.dividerColor,
+                },
+              ]}>
+              <SearchIcon color={AppColors.grayTextWeak} size={15} />
+              <TextInput
+                placeholder="Search in log details..."
+                placeholderTextColor={AppColors.grayTextWeak}
+                value={detailSearch}
+                onChangeText={setDetailSearch}
+                style={styles.detailSearchInput}
+                autoCorrect={false}
+                autoCapitalize="none"
+              />
+              {detailSearch.length > 0 && (
+                <Pressable
+                  onPress={() => setDetailSearch('')}
+                  hitSlop={10}
+                  style={{padding: 6}}>
+                  <ClearIcon color={AppColors.grayTextWeak} size={13} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Tab Content Container */}
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{
+          paddingHorizontal: 12,
+          paddingTop: 6,
+          paddingBottom: 28,
+          flexGrow: 1,
+        }}
+        showsVerticalScrollIndicator={true}
+        keyboardShouldPersistTaps="handled">
+        {/* Tab 1: Output / Message */}
+        {activeTab === 'output' && (
+          <View
+            style={[
+              styles.sectionContainer,
+              {
+                backgroundColor: isDark
+                  ? `${AppColors.purple}12`
+                  : AppColors.purpleShade50,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                borderRadius: 12,
+                overflow: 'hidden',
+                flex: 1,
+              },
+            ]}>
+            {/* Section Header with View Modes */}
+            <View
+              style={{
+                flexDirection: 'column',
+                gap: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                borderBottomWidth: 1,
+                borderBottomColor: AppColors.dividerColor,
+                backgroundColor: isDark
+                  ? AppColors.primaryLight
+                  : AppColors.grayBackground,
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11.5,
+                    color: AppColors.purple,
+                    letterSpacing: 0.4,
+                    textTransform: 'uppercase',
+                  }}>
+                  {jsonContent
+                    ? t('console.jsonTitle')
+                    : t('console.messageTitle')}
+                </Text>
+                <CopyButton
+                  value={selectedLog.message}
+                  label={t('console.logMessage')}
+                />
+              </View>
+
+              {jsonContent && (
+                <SegmentedTabs
+                  tabs={[
+                    {
+                      key: 'pretty',
+                      label: t('network.jsonViewer.pretty'),
+                      icon: (isActive: boolean) => (
+                        <PrettyIcon
+                          color={
+                            isActive
+                              ? AppColors.white
+                              : AppColors.grayTextWeak
+                          }
+                          size={12}
+                        />
+                      ),
+                    },
+                    {
+                      key: 'raw',
+                      label: t('network.jsonViewer.raw'),
+                      icon: (isActive: boolean) => (
+                        <RawIcon
+                          color={
+                            isActive
+                              ? AppColors.white
+                              : AppColors.grayTextWeak
+                          }
+                          size={12}
+                        />
+                      ),
+                    },
+                    {
+                      key: 'table',
+                      label: t('network.jsonViewer.table'),
+                      icon: (isActive: boolean) => (
+                        <TableIcon
+                          color={
+                            isActive
+                              ? AppColors.white
+                              : AppColors.grayTextWeak
+                          }
+                          size={12}
+                        />
+                      ),
+                    },
+                  ]}
+                  activeKey={viewMode}
+                  onChange={key =>
+                    setViewMode(key as 'pretty' | 'raw' | 'table')
+                  }
+                />
+              )}
+            </View>
+
+            {/* Content Body */}
+            <View style={{padding: 12, flex: 1}}>
+              {jsonContent ? (
+                <>
+                  {jsonContent.header ? (
+                    <View
+                      style={{
+                        backgroundColor: AppColors.primaryLight,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: AppColors.dividerColor,
+                        padding: 10,
+                        marginBottom: 8,
+                      }}>
+                      <Text
+                        selectable
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 12,
+                          color: AppColors.primaryBlack,
+                          lineHeight: 17,
+                        }}>
+                        {jsonContent.header}
+                      </Text>
+                    </View>
+                  ) : null}
+                  <JsonViewer
+                    data={jsonContent.data}
+                    search={detailSearch}
+                    wrap
+                    forceOpen
+                    hideTabs
+                    fullHeight
+                    mode={viewMode}
+                    defaultExpandDepth={
+                      jsonContent.data &&
+                      typeof jsonContent.data === 'object' &&
+                      Object.keys(jsonContent.data).length > 10
+                        ? 1
+                        : 2
+                    }
+                  />
+                </>
+              ) : (
+                <View
+                  style={{
+                    backgroundColor: AppColors.primaryLight,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: AppColors.dividerColor,
+                    padding: 10,
+                  }}>
+                  <HighlightText
+                    text={selectedLog.message}
+                    search={detailSearch}
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 12,
+                      color: AppColors.primaryBlack,
+                      lineHeight: 18,
+                    }}
+                    highlightStyle={{
+                      backgroundColor: AppColors.yellowHighlight,
+                      color: AppColors.primaryBlack,
+                      borderRadius: 3,
+                      paddingHorizontal: 2,
+                    }}
+                    detectLinks={true}
+                  />
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Tab 2: Individual Arguments */}
+        {activeTab === 'arguments' && selectedLog.rawArgs && (
+          <View style={{gap: 10}}>
+            {selectedLog.rawArgs.map((arg, idx) => {
+              const argType =
+                arg === null
+                  ? 'null'
+                  : Array.isArray(arg)
+                  ? `Array[${arg.length}]`
+                  : typeof arg === 'object'
+                  ? `Object{${Object.keys(arg).length}}`
+                  : typeof arg;
+              const isObj =
+                arg != null &&
+                (typeof arg === 'object' || Array.isArray(arg));
+              const argStr = isObj
+                ? JSON.stringify(arg, null, 2)
+                : String(arg);
+
+              return (
+                <View
+                  key={idx}
+                  style={[
+                    styles.sectionContainer,
+                    {
+                      backgroundColor: AppColors.primaryLight,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: AppColors.dividerColor,
+                      overflow: 'hidden',
+                    },
+                  ]}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      backgroundColor: AppColors.grayBackground,
+                      borderBottomWidth: 1,
+                      borderBottomColor: AppColors.dividerColor,
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 11,
+                          color: AppColors.purple,
+                        }}>
+                        Arg #{idx + 1}
+                      </Text>
+                      <View
+                        style={[
+                          styles.metaChip,
+                          {
+                            backgroundColor: `${AppColors.teal600}12`,
+                            borderColor: `${AppColors.teal600}2B`,
+                            paddingHorizontal: 5,
+                            paddingVertical: 1.5,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.metaChipText,
+                            {color: AppColors.teal600, fontSize: 9},
+                          ]}>
+                          {argType}
+                        </Text>
+                      </View>
+                    </View>
+                    <CopyButton value={argStr} label={`Arg #${idx + 1}`} />
+                  </View>
+
+                  <View style={{padding: 10}}>
+                    {isObj ? (
+                      <JsonViewer
+                        data={arg}
+                        search={detailSearch}
+                        wrap
+                        forceOpen
+                        hideTabs
+                        defaultExpandDepth={2}
+                      />
+                    ) : (
+                      <HighlightText
+                        text={argStr}
+                        search={detailSearch}
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 12,
+                          color: AppColors.primaryBlack,
+                          lineHeight: 17,
+                        }}
+                        highlightStyle={{
+                          backgroundColor: AppColors.yellowHighlight,
+                          color: AppColors.primaryBlack,
+                        }}
+                      />
+                    )}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Tab 3: Call Stack Trace */}
+        {activeTab === 'stack' && (
+          <View
+            style={[
+              styles.sectionContainer,
+              {
+                backgroundColor: isDark
+                  ? `${AppColors.purple}12`
+                  : AppColors.purpleShade50,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                borderRadius: 12,
+                overflow: 'hidden',
+              },
+            ]}>
+            {/* Section Header with Mode Switch */}
+            <View
+              style={{
+                flexDirection: 'column',
+                gap: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                borderBottomWidth: 1,
+                borderBottomColor: AppColors.dividerColor,
+                backgroundColor: isDark
+                  ? AppColors.primaryLight
+                  : AppColors.grayBackground,
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11.5,
+                    color: AppColors.purple,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.4,
+                  }}>
+                  {stackSource === 'error' ? 'Error Exception Stack' : 'Call Stack'} ({parsedStackFrames.length} frames)
+                </Text>
+                <CopyButton
+                  value={activeStackString}
+                  label="Full Stack Trace"
+                />
+              </View>
+
+              {/* Source Switcher if Error Stack exists */}
+              {selectedLog.errorStack && (
+                <SegmentedTabs
+                  tabs={[
+                    {
+                      key: 'caller',
+                      label: 'Call Origin Stack',
+                    },
+                    {
+                      key: 'error',
+                      label: 'Error Thrown Stack',
+                    },
+                  ]}
+                  activeKey={stackSource}
+                  onChange={key => setStackSource(key as 'caller' | 'error')}
+                />
+              )}
+
+              {/* Structured vs Raw View Mode Tabs */}
+              <SegmentedTabs
+                tabs={[
+                  {
+                    key: 'structured',
+                    label: 'Structured Cards',
+                    icon: (isActive: boolean) => (
+                      <LayersIcon
+                        color={isActive ? AppColors.white : AppColors.grayTextWeak}
+                        size={12}
+                      />
+                    ),
+                  },
+                  {
+                    key: 'raw',
+                    label: 'Raw Trace',
+                    icon: (isActive: boolean) => (
+                      <RawIcon
+                        color={isActive ? AppColors.white : AppColors.grayTextWeak}
+                        size={12}
+                      />
+                    ),
+                  },
+                ]}
+                activeKey={stackViewMode}
+                onChange={key => setStackViewMode(key as 'structured' | 'raw')}
+              />
+            </View>
+
+            {/* Stack Content: Structured Cards or Raw Full Trace */}
+            {stackViewMode === 'structured' ? (
+              <View style={{padding: 12, gap: 10}}>
+                {parsedStackFrames.length > 0 ? (
+                  parsedStackFrames.map((frame, frameIdx) => {
+                    const isTopFrame = frameIdx === 0;
+
+                    return (
+                      <View
+                        key={frameIdx}
+                        style={{
+                          backgroundColor: isTopFrame
+                            ? `${AppColors.brandPurple}0A`
+                            : AppColors.primaryLight,
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: isTopFrame
+                            ? `${AppColors.brandPurple}30`
+                            : AppColors.dividerColor,
+                          padding: 10,
+                          gap: 5,
+                        }}>
+                        {/* Frame Header Row */}
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 6,
+                          }}>
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1}}>
+                            <View
+                              style={{
+                                backgroundColor: isTopFrame
+                                  ? AppColors.brandPurple
+                                  : AppColors.grayBorderSecondary,
+                                borderRadius: 4,
+                                paddingHorizontal: 5,
+                                paddingVertical: 1.5,
+                              }}>
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 9,
+                                  color: isTopFrame
+                                    ? AppColors.white
+                                    : AppColors.grayTextStrong,
+                                }}>
+                                #{frameIdx + 1}
+                                {isTopFrame ? ' ORIGIN' : ''}
+                              </Text>
+                            </View>
+
+                            <HighlightText
+                              text={frame.functionName !== '<anonymous>' ? `${frame.functionName}()` : '<anonymous>'}
+                              search={detailSearch}
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 12,
+                                color: isTopFrame
+                                  ? AppColors.primaryBlack
+                                  : AppColors.grayTextStrong,
+                              }}
+                              highlightStyle={{
+                                backgroundColor: AppColors.yellowHighlight,
+                                color: AppColors.primaryBlack,
+                              }}
+                            />
+                          </View>
+
+                          {frame.lineNumber && (
+                            <View
+                              style={{
+                                backgroundColor: `${AppColors.teal600}15`,
+                                borderColor: `${AppColors.teal600}30`,
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                paddingHorizontal: 6,
+                                paddingVertical: 1.5,
+                              }}>
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 9.5,
+                                  color: AppColors.teal600,
+                                }}>
+                                L{frame.lineNumber}
+                                {frame.columnNumber ? `:C${frame.columnNumber}` : ''}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        {/* File Path Row */}
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
+                          {frame.fileExt && frame.fileExt !== 'other' && (
+                            <View
+                              style={{
+                                backgroundColor:
+                                  frame.fileExt === 'tsx' || frame.fileExt === 'ts'
+                                    ? `${AppColors.brandPurple}18`
+                                    : `${AppColors.teal600}18`,
+                                borderRadius: 3,
+                                paddingHorizontal: 4,
+                                paddingVertical: 1,
+                              }}>
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 8.5,
+                                  color:
+                                    frame.fileExt === 'tsx' || frame.fileExt === 'ts'
+                                      ? AppColors.brandPurple
+                                      : AppColors.teal600,
+                                }}>
+                                {frame.fileExt.toUpperCase()}
+                              </Text>
+                            </View>
+                          )}
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interMedium,
+                              fontSize: 10.5,
+                              color: isTopFrame
+                                ? AppColors.brandPurple
+                                : AppColors.grayTextWeak,
+                            }}>
+                            📄 {frame.fileName}
+                          </Text>
+                        </View>
+
+                        {/* Full path */}
+                        {frame.fullPath && frame.fullPath !== frame.fileName && (
+                          <Text
+                            selectable
+                            style={{
+                              fontFamily: AppFonts.interRegular,
+                              fontSize: 9.5,
+                              color: AppColors.grayTextWeak,
+                              lineHeight: 14,
+                            }}
+                            numberOfLines={2}>
+                            {frame.fullPath}
+                          </Text>
+                        )}
+                      </View>
+                    );
+                  })
+                ) : (
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayTextWeak,
+                      textAlign: 'center',
+                      paddingVertical: 16,
+                    }}>
+                    No call stack trace available for this log.
+                  </Text>
+                )}
+              </View>
+            ) : (
+              /* Raw Full Trace Monospace Block */
+              <View
+                style={{
+                  backgroundColor: AppColors.primaryLight,
+                  padding: 12,
+                }}>
+                {activeStackString.split('\n').filter(l => l.trim().length > 0).map((line, lineIdx) => (
+                  <View
+                    key={lineIdx}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'flex-start',
+                      paddingVertical: 2,
+                    }}>
+                    <Text
+                      style={{
+                        width: 28,
+                        textAlign: 'right',
+                        paddingRight: 8,
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 11,
+                        color: AppColors.grayTextWeak,
+                        lineHeight: 17,
+                      }}>
+                      {lineIdx + 1}
+                    </Text>
+                    <HighlightText
+                      text={line.trim()}
+                      search={detailSearch}
+                      style={{
+                        flex: 1,
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 12,
+                        color: AppColors.primaryBlack,
+                        lineHeight: 17,
+                      }}
+                      highlightStyle={{
+                        backgroundColor: AppColors.yellowHighlight,
+                        color: AppColors.primaryBlack,
+                      }}
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Tab 4: Structured Metadata */}
+        {activeTab === 'metadata' && (
+          <View
+            style={[
+              styles.sectionContainer,
+              {
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                overflow: 'hidden',
+              },
+            ]}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingHorizontal: 12,
+                paddingVertical: 9,
+                backgroundColor: AppColors.grayBackground,
+                borderBottomWidth: 1,
+                borderBottomColor: AppColors.dividerColor,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11.5,
+                  color: AppColors.purple,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.4,
+                }}>
+                Log Properties
+              </Text>
+              <CopyButton
+                value={JSON.stringify(
+                  {
+                    id: selectedLog.id + 1,
+                    type: selectedLog.type,
+                    sourceMethod: selectedLog.sourceMethod || 'log',
+                    timestamp: selectedLog.timestamp,
+                    dateTime: formatDateTime(selectedLog.timestamp),
+                    caller: selectedLog.caller,
+                    triggerFile: originFrame?.fileName,
+                    triggerLine: originFrame?.lineNumber,
+                    triggerFunction: originFrame?.functionName,
+                    charCount: selectedLog.message.length,
+                    size: getSize(selectedLog.message),
+                    duplicates: selectedLog.duplicateCount || 1,
+                  },
+                  null,
+                  2,
+                )}
+                label="Metadata JSON"
+              />
+            </View>
+
+            <View style={{paddingHorizontal: 12, paddingVertical: 4}}>
+              {[
+                {label: 'Log ID', value: `#${selectedLog.id + 1}`},
+                {label: 'Level', value: selectedLog.type.toUpperCase()},
+                {
+                  label: 'Source Method',
+                  value: `console.${selectedLog.sourceMethod || selectedLog.type || 'log'}`,
+                },
+                {
+                  label: 'Triggered At',
+                  value: `${formatDateTime(selectedLog.timestamp)} (${getRelativeTime(selectedLog.timestamp)})`,
+                },
+                {label: 'Timestamp (ms)', value: String(selectedLog.timestamp)},
+                {
+                  label: 'Trigger File',
+                  value: originFrame?.fileName || 'Unknown',
+                },
+                ...(originFrame?.lineNumber
+                  ? [
+                      {
+                        label: 'Trigger Location',
+                        value: `Line ${originFrame.lineNumber}, Col ${originFrame.columnNumber || 0}`,
+                      },
+                    ]
+                  : []),
+                ...(originFrame?.functionName && originFrame.functionName !== '<anonymous>'
+                  ? [
+                      {
+                        label: 'Trigger Function',
+                        value: `${originFrame.functionName}()`,
+                      },
+                    ]
+                  : []),
+                {
+                  label: 'Full Location',
+                  value: selectedLog.caller || 'Unknown',
+                },
+                {
+                  label: 'Character Length',
+                  value: `${selectedLog.message.length} chars`,
+                },
+                {
+                  label: 'Approx. Size',
+                  value: getSize(selectedLog.message),
+                },
+                {
+                  label: 'Duplicate Count',
+                  value: String(selectedLog.duplicateCount || 1),
+                },
+                ...(hasMultipleArgs
+                  ? [
+                      {
+                        label: 'Arguments Count',
+                        value: `${selectedLog.rawArgs?.length} arguments`,
+                      },
+                    ]
+                  : []),
+              ].map((row, rIdx, arr) => (
+                <View
+                  key={rIdx}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 8,
+                    borderBottomWidth: rIdx < arr.length - 1 ? 1 : 0,
+                    borderBottomColor: AppColors.grayBorderSecondary,
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interMedium,
+                      fontSize: 11.5,
+                      color: AppColors.grayTextWeak,
+                    }}>
+                    {row.label}
+                  </Text>
+                  <Text
+                    selectable
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                      maxWidth: '60%',
+                      textAlign: 'right',
+                    }}
+                    numberOfLines={2}>
+                    {row.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+};
+
+const detailStyles = StyleSheet.create({
+  metaDot: {
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+    opacity: 0.7,
+  },
+  tabsHeaderWrap: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+});
+
+export default LogDetail;

@@ -362,6 +362,50 @@ export const CheckIcon = ({color = AppColors.greenColor, size = 14}: any) => {
   );
 };
 
+export const CircleCheckIcon = ({color = AppColors.greenColor, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+      <Path
+        d="M8.5 12.5l2.5 2.5 5-5.5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const CircleXIcon = ({color = AppColors.errorColor, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+      <Path
+        d="M9.5 9.5l5 5M14.5 9.5l-5 5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const CircleAlertIcon = ({color = AppColors.warningIconGold, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+      <Path
+        d="M12 7.5v5.5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <Circle cx="12" cy="16.5" r="1.1" fill={color} />
+    </Svg>
+  );
+};
+
 export const FailIcon = ({color = AppColors.errorColor, size = 10}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -563,7 +607,7 @@ export const DownloadIcon = ({
   );
 };
 
-export const CloseWhite = ({color = '#FFFFFF', size = 20}: any) => {
+export const CloseWhite = ({color = AppColors.white, size = 20}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -577,7 +621,7 @@ export const CloseWhite = ({color = '#FFFFFF', size = 20}: any) => {
   );
 };
 
-export const WhiteBackNavigation = ({color = '#FFFFFF', size = 20}: any) => {
+export const WhiteBackNavigation = ({color = AppColors.white, size = 20}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -625,7 +669,7 @@ export const InsightsIcon = ({
   );
 };
 
-export const DebugIcon = ({color = '#FFFFFF', size = 18}: any) => {
+export const DebugIcon = ({color = AppColors.white, size = 18}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {/* Hammer: diagonal from bottom-left to top-right */}
@@ -671,7 +715,7 @@ export const DebugIcon = ({color = '#FFFFFF', size = 18}: any) => {
   );
 };
 
-export const SunIcon = ({color = '#FFFFFF', size = 16}: any) => {
+export const SunIcon = ({color = AppColors.white, size = 16}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="5" stroke={color} strokeWidth="2" />
@@ -685,7 +729,7 @@ export const SunIcon = ({color = '#FFFFFF', size = 16}: any) => {
   );
 };
 
-export const MoonIcon = ({color = '#FFFFFF', size = 16}: any) => {
+export const MoonIcon = ({color = AppColors.white, size = 16}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -812,7 +856,7 @@ export const FolderIcon = ({
 };
 
 // #3 — Broom/sweep "wipe" icon used by the header Clear-Everything button.
-export const WipeIcon = ({color = '#FFFFFF', size = 16}: any) => {
+export const WipeIcon = ({color = AppColors.white, size = 16}: any) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {/* Handle */}
@@ -993,6 +1037,57 @@ export const SortIcon = ({
         d="M12 20l6-6H6z"
         fill={!ascending ? color : AppColors.grayTextWeak}
       />
+    </Svg>
+  );
+};
+
+export const PrettyIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const RawIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line x1="21" y1="6" x2="3" y2="6" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="21" y1="12" x2="3" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <Line x1="17" y1="18" x2="3" y2="18" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const TableIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="3" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
+      <Rect x="14" y="3" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
+      <Rect x="14" y="14" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
+      <Rect x="3" y="14" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
     </Svg>
   );
 };

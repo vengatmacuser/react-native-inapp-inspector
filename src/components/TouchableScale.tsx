@@ -1,7 +1,7 @@
 import React, {useRef} from 'react';
 import {Animated, Pressable, StyleSheet, Platform} from 'react-native';
 
-const TouchableScale = ({
+const TouchableScale = React.memo(function TouchableScale({
   onPress,
   style,
   children,
@@ -13,7 +13,7 @@ const TouchableScale = ({
   children?: React.ReactNode;
   hitSlop?: any;
   disabled?: boolean;
-}) => {
+}) {
   if (Platform.OS === 'android') {
     return (
       <Pressable
@@ -74,6 +74,6 @@ const TouchableScale = ({
       </Animated.View>
     </Pressable>
   );
-};
+});
 
 export default TouchableScale;

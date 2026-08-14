@@ -1,6 +1,5 @@
-import React, {useEffect, useRef, useState, useMemo} from 'react';
+import React, {useEffect, useState, useMemo} from 'react';
 import {
-  Animated,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -31,12 +30,13 @@ import {
   RequestIcon,
   DiffIcon,
   SortIcon,
-  WipeIcon,
   CalendarIcon,
 } from './NetworkIcons';
 import JsonViewer from './JsonViewer';
 import DiffViewer from './DiffViewer';
 import TouchableScale from './TouchableScale';
+import SegmentedTabs from './SegmentedTabs';
+import CopyButton from './CopyButton';
 import {copyToClipboard, getSize} from '../helpers';
 import {getCustomStorage} from '../helpers/settingsStore';
 
@@ -109,7 +109,7 @@ export const ReduxTreeView = ({
   onSelectActionId?: (id: number | null) => void;
 }) => {
   const [activeTab, setActiveTab] = useState<'state' | 'timeline'>('state');
-  const [actionSubTab, setActionSubTab] = useState<'payload' | 'diff' | 'state'>('payload');
+  const [actionSubTab, setActionSubTab] = useState<'payload' | 'diff' | 'state' | 'metadata'>('payload');
 
   // local fallbacks if props are not provided
   const [localSliceKey, setLocalSliceKey] = useState<string | null>(null);
@@ -140,7 +140,7 @@ export const ReduxTreeView = ({
   const [actionSortAsc, setActionSortAsc] = useState<boolean>(false);
 
   // Persistence-related states for State Slice details
-  const [sliceDetailTab, setSliceDetailTab] = useState<'live' | 'persisted'>('live');
+  const [sliceDetailTab, setSliceDetailTab] = useState<'live' | 'persisted' | 'metadata'>('live');
   const [isPersisted, setIsPersisted] = useState<boolean>(false);
   const [persistedData, setPersistedData] = useState<any>(null);
 
@@ -335,20 +335,44 @@ export const ReduxTreeView = ({
         ? Object.keys(sliceData).length
         : 1;
 
+    const sliceTabs = [
+      {key: 'live', label: 'Live State'},
+      ...(isPersisted
+        ? [{key: 'persisted', label: `Persisted (${getSize(persistedData)})`}]
+        : []),
+      {key: 'metadata', label: 'Metadata'},
+    ];
+
     return (
       <View style={{flex: 1}}>
-        {/* Non-scrollable header */}
-        <View style={{paddingHorizontal: 6, paddingTop: 4}}>
-          <View style={styles.apiLikeInfoBar}>
-            <View style={styles.apiBadgeRow}>
+        {/* Detail info header bar */}
+        <View style={styles.apiLikeInfoBar}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 8,
+            }}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
               <View style={[styles.apiMethodBadge, {backgroundColor: AppColors.purple}]}>
                 <Text style={styles.apiMethodBadgeText}>REDUX</Text>
               </View>
-              <View style={[styles.apiMethodBadge, {backgroundColor: AppColors.purpleShade50, borderWidth: 1, borderColor: AppColors.purple + '30'}]}>
-                <Text style={[styles.apiMethodBadgeText, {color: AppColors.purple}]}>SLICE</Text>
+              <View
+                style={[
+                  styles.apiMethodBadge,
+                  {
+                    backgroundColor: `${AppColors.brandPurple}18`,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.brandPurple}40`,
+                  },
+                ]}>
+                <Text style={[styles.apiMethodBadgeText, {color: AppColors.brandPurple}]}>
+                  SLICE
+                </Text>
               </View>
               {isPersisted && (
-                <View style={[styles.apiMethodBadge, {backgroundColor: '#10B981'}]}>
+                <View style={[styles.apiMethodBadge, {backgroundColor: AppColors.emerald500}]}>
                   <Text style={styles.apiMethodBadgeText}>PERSISTED</Text>
                 </View>
               )}
@@ -356,136 +380,174 @@ export const ReduxTreeView = ({
                 <Text style={styles.apiChipText}>{getSize(sliceData)}</Text>
               </View>
               <View style={styles.apiChip}>
-                <Text style={styles.apiChipText}>{fieldsCount} {fieldsCount === 1 ? 'field' : 'fields'}</Text>
+                <Text style={styles.apiChipText}>
+                  {fieldsCount} {fieldsCount === 1 ? 'field' : 'fields'}
+                </Text>
               </View>
             </View>
 
-            <Text style={styles.apiTitleText} selectable={true}>{activeSliceKey}</Text>
+            <CopyButton
+              value={JSON.stringify(sliceDetailTab === 'live' ? sliceData : persistedData, null, 2)}
+              label={`Slice '${activeSliceKey}'`}
+            />
+          </View>
 
-            <View style={styles.apiMetaRow}>
-              <ClockIcon color={AppColors.grayTextWeak} size={10} />
-              <Text style={styles.apiMetaText}>
-                Last updated: {lastActionMap[activeSliceKey] ? lastActionMap[activeSliceKey].timestamp : 'Initial'}
-              </Text>
-            </View>
+          <Text style={styles.apiTitleText} selectable={true}>
+            {activeSliceKey}
+          </Text>
+
+          <View style={styles.apiMetaRow}>
+            <ClockIcon color={AppColors.grayTextWeak} size={11} />
+            <Text style={styles.apiMetaText}>
+              Last updated: {lastActionMap[activeSliceKey] ? lastActionMap[activeSliceKey].timestamp : 'Initial'}
+            </Text>
           </View>
         </View>
 
-        {/* Segment Control */}
-        <View
-          style={{
-            flexDirection: 'row',
-            backgroundColor: AppColors.grayBackground,
-            borderRadius: 10,
-            padding: 3,
-            marginHorizontal: 6,
-            marginBottom: 10,
-            marginTop: 6,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-          }}>
-          {(isPersisted ? (['live', 'persisted'] as const) : (['live'] as const)).map(tab => {
-            const isActive = sliceDetailTab === tab;
-            const getLabel = () => {
-              if (tab === 'live') return 'Live State';
-              return `Persisted (${getSize(persistedData)})`;
-            };
-            const getIcon = () => {
-              const iconColor = isActive ? '#FFFFFF' : AppColors.grayText;
-              if (tab === 'live') return <LayersIcon color={iconColor} size={11} />;
-              return <CalendarIcon color={iconColor} size={11} />;
-            };
-
-            return (
-              <Pressable
-                key={tab}
-                onPress={() => {
-                  animateLayout();
-                  setSliceDetailTab(tab);
-                }}
-                style={{
-                  flex: 1,
-                  paddingVertical: 6,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 8,
-                  backgroundColor: isActive ? AppColors.purple : 'transparent',
-                  gap: 4,
-                }}>
-                {getIcon()}
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: isActive ? '#FFFFFF' : AppColors.grayText,
-                  }}>
-                  {getLabel()}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Scrollable Tab Content */}
-        <View style={{flex: 1, paddingHorizontal: 6}}>
-          {/* Back button + controls */}
-          <View style={styles.contentDetailSubHeader}>
+        {/* Back button row + sub-tabs */}
+        <View style={{paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4}}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 8,
+            }}>
             <TouchableScale onPress={handleGoBackSlice} style={styles.backBtn} hitSlop={12}>
-              <BackChevronIcon color={AppColors.purple} size={11} />
+              <BackChevronIcon color={AppColors.purple} size={12} />
               <Text style={styles.backBtnText}>State Slices</Text>
             </TouchableScale>
 
-            <View style={styles.detailHeaderActions}>
-              {isPersisted && sliceDetailTab === 'persisted' && (
-                <TouchableScale
-                  onPress={handleClearPersistence}
-                  style={[styles.detailHeaderBtn, {marginRight: 8}]}
-                  hitSlop={8}>
-                  <TrashIcon color={AppColors.errorColor} size={14} />
-                </TouchableScale>
-              )}
-
+            {isPersisted && sliceDetailTab === 'persisted' && (
               <TouchableScale
-                onPress={() => {
-                  animateLayout();
-                  setSliceForceOpen(prev => (prev === true ? false : prev === false ? undefined : true));
-                }}
-                style={styles.detailHeaderBtn}
+                onPress={handleClearPersistence}
+                style={[styles.detailHeaderBtn, {borderColor: `${AppColors.errorColor}40`}]}
                 hitSlop={8}>
-                <ExpandCollapseIcon
-                  expanded={sliceForceOpen !== false}
-                  color={AppColors.purple}
-                  size={14}
-                />
+                <TrashIcon color={AppColors.errorColor} size={14} />
               </TouchableScale>
-
-              <TouchableScale
-                onPress={() => {
-                  const dataToCopy = sliceDetailTab === 'live' ? sliceData : persistedData;
-                  copyToClipboard(dataToCopy, `Redux Slice '${activeSliceKey}' (${sliceDetailTab})`);
-                }}
-                style={styles.detailHeaderBtn}
-                hitSlop={8}>
-                <CopyIcon color={AppColors.purple} size={14} />
-              </TouchableScale>
-            </View>
+            )}
           </View>
 
-          <ScrollView
-            style={{flex: 1}}
-            contentContainerStyle={{paddingBottom: 24}}
-            showsVerticalScrollIndicator={true}>
-            <View style={{padding: 12}}>
-              <JsonViewer
-                data={sliceDetailTab === 'live' ? sliceData : (persistedData ?? 'No persisted data')}
-                search={search}
-                forceOpen={sliceForceOpen !== undefined ? sliceForceOpen : (isSearching ? true : undefined)}
-                fullHeight={true}
-              />
-            </View>
-          </ScrollView>
+          <SegmentedTabs
+            tabs={sliceTabs}
+            activeKey={sliceDetailTab}
+            onChange={key => {
+              animateLayout();
+              setSliceDetailTab(key as 'live' | 'persisted' | 'metadata');
+            }}
+          />
         </View>
+
+        {/* Search row (for live/persisted tabs) */}
+        {sliceDetailTab !== 'metadata' && (
+          <View style={{paddingHorizontal: 12, paddingTop: 4, paddingBottom: 4}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: AppColors.purpleShade50,
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                height: 36,
+              }}>
+              <SearchIcon color={AppColors.grayTextWeak} size={15} />
+              <TextInput
+                placeholder="Search in slice keys or values..."
+                placeholderTextColor={AppColors.grayTextWeak}
+                value={search}
+                onChangeText={onSearchChange}
+                style={{
+                  flex: 1,
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 12,
+                  color: AppColors.grayTextStrong,
+                  paddingHorizontal: 8,
+                  paddingVertical: 0,
+                }}
+                autoCorrect={false}
+                autoCapitalize="none"
+              />
+              {search.length > 0 && (
+                <Pressable onPress={() => onSearchChange?.('')} hitSlop={10}>
+                  <ClearIcon color={AppColors.grayTextWeak} size={13} />
+                </Pressable>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Scrollable Tab Content */}
+        <ScrollView
+          style={{flex: 1}}
+          contentContainerStyle={{paddingHorizontal: 12, paddingTop: 6, paddingBottom: 28, flexGrow: 1}}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled">
+          {sliceDetailTab === 'metadata' ? (
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                overflow: 'hidden',
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+              }}>
+              {[
+                {label: 'Slice Name', value: activeSliceKey},
+                {label: 'Fields Count', value: `${fieldsCount} root keys`},
+                {label: 'State Size', value: getSize(sliceData)},
+                {
+                  label: 'Persistence',
+                  value: isPersisted ? `Persisted (${getSize(persistedData)})` : 'Not Persisted',
+                },
+                {
+                  label: 'Last Dispatched Action',
+                  value: lastActionMap[activeSliceKey] ? lastActionMap[activeSliceKey].type : 'None',
+                },
+                {
+                  label: 'Last Updated At',
+                  value: lastActionMap[activeSliceKey] ? lastActionMap[activeSliceKey].timestamp : 'Initial',
+                },
+              ].map((row, rIdx) => (
+                <View
+                  key={rIdx}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 9,
+                    borderBottomWidth: rIdx < 5 ? 1 : 0,
+                    borderBottomColor: AppColors.grayBorderSecondary,
+                  }}>
+                  <Text style={{fontFamily: AppFonts.interMedium, fontSize: 11.5, color: AppColors.grayTextWeak}}>
+                    {row.label}
+                  </Text>
+                  <Text
+                    selectable
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                      maxWidth: '60%',
+                      textAlign: 'right',
+                    }}>
+                    {row.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <JsonViewer
+              data={sliceDetailTab === 'live' ? sliceData : (persistedData ?? 'No persisted data')}
+              search={search}
+              forceOpen={sliceForceOpen !== undefined ? sliceForceOpen : (isSearching ? true : undefined)}
+              fullHeight={true}
+            />
+          )}
+        </ScrollView>
       </View>
     );
   }
@@ -494,16 +556,29 @@ export const ReduxTreeView = ({
   if (activeTab === 'timeline' && selectedAction !== null) {
     const affectedSlices = selectedAction.affectedSlices || [];
 
+    const actionTabs = [
+      {key: 'payload', label: 'Payload'},
+      {key: 'diff', label: 'Diff Changes'},
+      {key: 'state', label: 'Snapshot'},
+      {key: 'metadata', label: 'Metadata'},
+    ];
+
     return (
       <View style={{flex: 1}}>
-        {/* Non-scrollable header */}
-        <View style={{paddingHorizontal: 6, paddingTop: 4}}>
-          <View style={styles.apiLikeInfoBar}>
-            <View style={styles.apiBadgeRow}>
+        {/* Detail info header bar */}
+        <View style={styles.apiLikeInfoBar}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 8,
+            }}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
               <View style={[styles.apiMethodBadge, {backgroundColor: AppColors.purple}]}>
                 <Text style={styles.apiMethodBadgeText}>REDUX</Text>
               </View>
-              <View style={[styles.apiMethodBadge, {backgroundColor: '#F59E0B'}]}>
+              <View style={[styles.apiMethodBadge, {backgroundColor: AppColors.amber500}]}>
                 <Text style={styles.apiMethodBadgeText}>ACTION</Text>
               </View>
               <View style={styles.apiChip}>
@@ -514,158 +589,150 @@ export const ReduxTreeView = ({
               </View>
             </View>
 
-            <Text style={styles.apiTitleText} selectable={true}>{selectedAction.type}</Text>
-
-            <View style={styles.apiMetaRow}>
-              <ClockIcon color={AppColors.grayTextWeak} size={10} />
-              <Text style={styles.apiMetaText}>Dispatched: {selectedAction.timestamp}</Text>
-            </View>
+            <CopyButton
+              value={JSON.stringify(
+                actionSubTab === 'payload'
+                  ? selectedAction.payload
+                  : actionSubTab === 'diff'
+                  ? {prev: selectedAction.prevState, next: selectedAction.nextState}
+                  : selectedAction.nextState,
+                null,
+                2,
+              )}
+              label={actionSubTab === 'payload' ? 'Action Payload' : 'State Snapshot'}
+            />
           </View>
+
+          <Text style={styles.apiTitleText} selectable={true}>
+            {selectedAction.type}
+          </Text>
+
+          <View style={styles.apiMetaRow}>
+            <ClockIcon color={AppColors.grayTextWeak} size={11} />
+            <Text style={styles.apiMetaText}>
+              Dispatched: {selectedAction.timestamp}
+            </Text>
+          </View>
+
+          {/* Affected Slices Tags list */}
+          {affectedSlices.length > 0 && (
+            <View style={[styles.detailAffectedTags, {marginTop: 6, paddingHorizontal: 0, paddingBottom: 0}]}>
+              <Text style={styles.affectedTagsLabel}>AFFECTED SLICES:</Text>
+              <View style={styles.detailTagsList}>
+                {affectedSlices.map(slice => (
+                  <View key={slice} style={styles.sliceTag}>
+                    <Text style={styles.sliceTagText}>{slice}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
 
-        {/* Affected Slices Tags list */}
-        {affectedSlices.length > 0 && (
-          <View style={styles.detailAffectedTags}>
-            <Text style={styles.affectedTagsLabel}>AFFECTED SLICES:</Text>
-            <View style={styles.detailTagsList}>
-              {affectedSlices.map(slice => (
-                <View key={slice} style={styles.sliceTag}>
-                  <Text style={styles.sliceTagText}>{slice}</Text>
-                </View>
-              ))}
-            </View>
+        {/* Back button row + sub-tabs */}
+        <View style={{paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4}}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 8,
+            }}>
+            <TouchableScale onPress={handleGoBackAction} style={styles.backBtn} hitSlop={12}>
+              <BackChevronIcon color={AppColors.purple} size={12} />
+              <Text style={styles.backBtnText}>Actions Timeline</Text>
+            </TouchableScale>
           </View>
-        )}
 
-        {/* Segment Control */}
-        <View
-          style={{
-            flexDirection: 'row',
-            backgroundColor: AppColors.grayBackground,
-            borderRadius: 10,
-            padding: 3,
-            marginHorizontal: 6,
-            marginBottom: 10,
-            marginTop: 6,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-          }}>
-          {(['payload', 'diff', 'state'] as const).map(tab => {
-            const isActive = actionSubTab === tab;
-            const getLabel = () => {
-              if (tab === 'payload') return 'Payload';
-              if (tab === 'diff') return 'Diff Changes';
-              return 'Snapshot';
-            };
-            const getIcon = () => {
-              const iconColor = isActive ? '#FFFFFF' : AppColors.grayText;
-              if (tab === 'payload') return <RequestIcon color={iconColor} size={11} />;
-              if (tab === 'diff') return <DiffIcon color={iconColor} size={11} />;
-              return <LayersIcon color={iconColor} size={11} />;
-            };
-
-            return (
-              <Pressable
-                key={tab}
-                onPress={() => {
-                  animateLayout();
-                  setActionSubTab(tab);
-                }}
-                style={{
-                  flex: 1,
-                  paddingVertical: 6,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 8,
-                  backgroundColor: isActive ? AppColors.purple : 'transparent',
-                  gap: 4,
-                }}>
-                {getIcon()}
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: isActive ? '#FFFFFF' : AppColors.grayText,
-                  }}>
-                  {getLabel()}
-                </Text>
-              </Pressable>
-            );
-          })}
+          <SegmentedTabs
+            tabs={actionTabs}
+            activeKey={actionSubTab}
+            onChange={key => {
+              animateLayout();
+              setActionSubTab(key as 'payload' | 'diff' | 'state' | 'metadata');
+            }}
+          />
         </View>
 
         {/* Scrollable Tab Content */}
-        <View style={{flex: 1, paddingHorizontal: 6}}>
-          {/* Back button + controls */}
-          <View style={styles.contentDetailSubHeader}>
-            <TouchableScale onPress={handleGoBackAction} style={styles.backBtn} hitSlop={12}>
-              <BackChevronIcon color={AppColors.purple} size={11} />
-              <Text style={styles.backBtnText}>Actions</Text>
-            </TouchableScale>
+        <ScrollView
+          style={{flex: 1}}
+          contentContainerStyle={{paddingHorizontal: 12, paddingTop: 6, paddingBottom: 28, flexGrow: 1}}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled">
+          {actionSubTab === 'payload' && (
+            <JsonViewer
+              data={selectedAction.payload ?? 'No payload data'}
+              wrap
+              forceOpen={actionForceOpen !== undefined ? actionForceOpen : undefined}
+              fullHeight={true}
+            />
+          )}
 
-            {(actionSubTab === 'payload' || actionSubTab === 'state') && (
-              <View style={styles.detailHeaderActions}>
-                <TouchableScale
-                  onPress={() => {
-                    animateLayout();
-                    setActionForceOpen(prev => (prev === true ? false : prev === false ? undefined : true));
-                  }}
-                  style={styles.detailHeaderBtn}
-                  hitSlop={8}>
-                  <ExpandCollapseIcon
-                    expanded={actionForceOpen !== false}
-                    color={AppColors.purple}
-                    size={14}
-                  />
-                </TouchableScale>
+          {actionSubTab === 'diff' && (
+            <DiffViewer oldData={selectedAction.prevState} newData={selectedAction.nextState} />
+          )}
 
-                <TouchableScale
-                  onPress={() => {
-                    const dataToCopy = actionSubTab === 'payload' ? selectedAction.payload : selectedAction.nextState;
-                    copyToClipboard(dataToCopy, actionSubTab === 'payload' ? 'Action payload' : 'State snapshot');
-                  }}
-                  style={styles.detailHeaderBtn}
-                  hitSlop={8}>
-                  <CopyIcon color={AppColors.purple} size={14} />
-                </TouchableScale>
-              </View>
-            )}
-          </View>
+          {actionSubTab === 'state' && (
+            <JsonViewer
+              data={selectedAction.nextState}
+              wrap
+              forceOpen={actionForceOpen !== undefined ? actionForceOpen : undefined}
+              fullHeight={true}
+            />
+          )}
 
-          <ScrollView
-            style={{flex: 1}}
-            contentContainerStyle={{paddingBottom: 24}}
-            showsVerticalScrollIndicator={true}>
-            {actionSubTab === 'payload' && (
-              <View style={{padding: 12}}>
-                <JsonViewer
-                  data={selectedAction.payload ?? 'No payload data'}
-                  wrap
-                  forceOpen={actionForceOpen !== undefined ? actionForceOpen : undefined}
-                  fullHeight={true}
-                />
-              </View>
-            )}
-
-            {actionSubTab === 'diff' && (
-              <View style={{padding: 12}}>
-                <DiffViewer oldData={selectedAction.prevState} newData={selectedAction.nextState} />
-              </View>
-            )}
-
-            {actionSubTab === 'state' && (
-              <View style={{padding: 12}}>
-                <JsonViewer
-                  data={selectedAction.nextState}
-                  wrap
-                  forceOpen={actionForceOpen !== undefined ? actionForceOpen : undefined}
-                  fullHeight={true}
-                />
-              </View>
-            )}
-          </ScrollView>
-        </View>
+          {actionSubTab === 'metadata' && (
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                overflow: 'hidden',
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+              }}>
+              {[
+                {label: 'Action Type', value: selectedAction.type},
+                {label: 'Action ID', value: `#${selectedAction.id}`},
+                {label: 'Dispatched At', value: selectedAction.timestamp},
+                {label: 'Payload Size', value: getSize(selectedAction.payload)},
+                {label: 'Snapshot Size', value: getSize(selectedAction.nextState)},
+                {
+                  label: 'Affected Slices',
+                  value: affectedSlices.length > 0 ? affectedSlices.join(', ') : 'None',
+                },
+              ].map((row, rIdx) => (
+                <View
+                  key={rIdx}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 9,
+                    borderBottomWidth: rIdx < 5 ? 1 : 0,
+                    borderBottomColor: AppColors.grayBorderSecondary,
+                  }}>
+                  <Text style={{fontFamily: AppFonts.interMedium, fontSize: 11.5, color: AppColors.grayTextWeak}}>
+                    {row.label}
+                  </Text>
+                  <Text
+                    selectable
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                      maxWidth: '60%',
+                      textAlign: 'right',
+                    }}>
+                    {row.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </ScrollView>
       </View>
     );
   }
@@ -858,7 +925,7 @@ export const ReduxTreeView = ({
               </Text>
             </View>
           ) : (
-            filteredActionHistory.map((action, index) => {
+            filteredActionHistory.map(action => {
               const id = action.id;
               const affectedSlices = action.affectedSlices || [];
 
@@ -1315,7 +1382,7 @@ const styles = StyleSheet.create({
     color: AppColors.grayText,
   },
   subTabPillTextActive: {
-    color: '#FFFFFF',
+    color: AppColors.white,
     fontFamily: AppFonts.interBold,
   },
   detailScrollContent: {
@@ -1365,16 +1432,16 @@ const styles = StyleSheet.create({
   apiMethodBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
-    color: '#FFFFFF',
+    color: AppColors.white,
     letterSpacing: 0.5,
   },
   apiChip: {
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 4,
-    backgroundColor: 'rgba(104,75,155,0.06)',
+    backgroundColor: `${AppColors.purple}0F`,
     borderWidth: 1,
-    borderColor: 'rgba(104,75,155,0.15)',
+    borderColor: `${AppColors.purple}26`,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -56,6 +56,8 @@
   },
   "dependencies": {
     "@react-navigation/native": "^6.1.9",
+    "i18next": "^26.3.6",
+    "react-i18next": "^17.0.11",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-svg": "^15.14.0"
   },

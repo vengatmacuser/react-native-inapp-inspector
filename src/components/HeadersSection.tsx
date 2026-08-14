@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {View, Pressable, Text, Animated} from 'react-native';
 
 // Components
@@ -101,6 +102,7 @@ const HeadersSection = ({
   search,
   resetKey,
 }: HeadersSectionProps) => {
+  const {t} = useTranslation();
   const {toggleOpen, forceOpen, chevronStyle, bodyStyle} = useAccordion(
     false,
     2400,
@@ -163,8 +165,8 @@ const HeadersSection = ({
 
       <Animated.View style={bodyStyle}>
         <View style={styles.htColHeadRow}>
-          <Text style={[styles.htColHead, {width: '30%'}]}>KEY</Text>
-          <Text style={[styles.htColHead, {flex: 1}]}>VALUE</Text>
+          <Text style={[styles.htColHead, {width: '30%'}]}>{t('network.jsonViewer.key')}</Text>
+          <Text style={[styles.htColHead, {flex: 1}]}>{t('network.jsonViewer.value')}</Text>
         </View>
 
         {filtered.length > 0 ? (
@@ -179,7 +181,7 @@ const HeadersSection = ({
           ))
         ) : (
           <View style={styles.htEmpty}>
-            <Text style={styles.htEmptyText}>No matching headers</Text>
+            <Text style={styles.htEmptyText}>{t('network.noMatchingHeaders')}</Text>
           </View>
         )}
       </Animated.View>

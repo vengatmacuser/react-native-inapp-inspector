@@ -22,8 +22,10 @@ const TreeNode = React.memo(function TreeNode({
   forceOpen,
   defaultExpandDepth,
 }: TreeNodeProps) {
-  const [localOpen, setLocalOpen] = useState(level < (defaultExpandDepth ?? 1));
-  const open = forceOpen !== undefined ? forceOpen : localOpen;
+  const [localOpen, setLocalOpen] = useState(
+    forceOpen || level < (defaultExpandDepth ?? 1),
+  );
+  const open = localOpen;
 
   const isObject = typeof data === 'object' && data !== null;
   const isArray = Array.isArray(data);

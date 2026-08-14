@@ -14,7 +14,7 @@ import TouchableScale from './TouchableScale';
 // Utils
 import {AppFonts} from '../styles/AppFonts';
 
-import {copyToClipboard, getSize} from '../helpers';
+import {getSize} from '../helpers';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';

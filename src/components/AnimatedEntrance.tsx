@@ -10,14 +10,14 @@ interface AnimatedEntranceProps {
   style?: ViewStyle | ViewStyle[];
 }
 
-const AnimatedEntrance = ({
+const AnimatedEntrance = React.memo(function AnimatedEntrance({
   children,
   delay = 0,
   distance = 10,
   duration = 220,
   index = 0,
   style,
-}: AnimatedEntranceProps) => {
+}: AnimatedEntranceProps) {
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -55,6 +55,6 @@ const AnimatedEntrance = ({
       {children}
     </Animated.View>
   );
-};
+});
 
 export default AnimatedEntrance;

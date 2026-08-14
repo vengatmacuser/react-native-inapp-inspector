@@ -1,3 +1,4 @@
+import {useTranslation} from 'react-i18next';
 import React, {useMemo} from 'react';
 import {View, Text, ScrollView} from 'react-native';
 
@@ -18,13 +19,14 @@ const DiffViewer = React.memo(
     newData: any;
     forceOpen?: boolean;
   }) => {
+    const {t} = useTranslation();
     const diffs = useMemo(() => getDiff(oldData, newData), [oldData, newData]);
 
     if (forceOpen === false) {
       return (
         <View style={styles.codeBlock}>
           <Text style={[styles.codeText, {color: AppColors.grayTextWeak}]}>
-            {'{ Diff hidden }'}
+            {t('network.diffHidden')}
           </Text>
         </View>
       );
@@ -33,7 +35,7 @@ const DiffViewer = React.memo(
     if (diffs.length === 0) {
       return (
         <View style={styles.codeBlock}>
-          <Text style={styles.codeText}>No differences from previous API.</Text>
+          <Text style={styles.codeText}>{t('network.noDiff')}</Text>
         </View>
       );
     }

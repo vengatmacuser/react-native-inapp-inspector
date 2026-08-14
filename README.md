@@ -14,7 +14,7 @@
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/badge/platform-iOS%20%7C%20Android-blue" alt="platform" /></a>
 </p>
 
-A self-contained in-app debugging overlay for React Native. Inspect network traffic, console output, analytics events, Redux state, and WebView activity directly inside your app.
+A self-contained in-app debugging overlay for React Native. Inspect network traffic, console output, analytics events, and Redux state directly inside your app.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector Walkthrough" width="360" style="border-radius: 20px;" />
@@ -27,11 +27,9 @@ A self-contained in-app debugging overlay for React Native. Inspect network traf
 | Feature            | Description                                                                                                                                                                 |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Network inspector  | Captures `fetch` and axios `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` calls with URL, method, status, headers, body, response, duration, caller, cURL, and fetch snippets. |
-| Insights dashboard | Shows request totals, status breakdowns, latency, payload size, slow requests, and recent activity charts.                                                                  |
 | Console logger     | Captures `console.log`, `console.info`, `console.warn`, and `console.error` with source method and caller details.                                                          |
 | Analytics tracker  | Captures manual analytics events and patched `@react-native-firebase/analytics` calls including `logEvent`, `logScreenView`, user properties, and user id.                  |
 | Redux inspector    | Connects to a Redux store, displays the live state tree, tracks dispatched actions, affected slices, and action history.                                                    |
-| WebView inspector  | Provides an instrumented `WebView` with console capture, navigation history, HTML/CSS/JS snapshots, and optional loading overlay.                                           |
 | Error boundary     | Exports an `ErrorBoundary` for catching React errors and wrapping the inspector safely.                                                                                     |
 
 ---
@@ -54,10 +52,10 @@ yarn add -D react-native-inapp-inspector axios
 
 The package has React and React Native as peer dependencies. It depends on `@react-navigation/native`, `react-native-linear-gradient`, and `react-native-svg`. The current network logger imports `axios` for axios interception, so install `axios` even if most of your requests use `fetch`.
 
-Install optional integrations when you use WebView or Firebase Analytics capture:
+Install optional integrations when you use Firebase Analytics capture:
 
 ```bash
-npm install react-native-webview @react-native-firebase/analytics
+npm install @react-native-firebase/analytics
 ```
 
 For iOS, install pods after adding native dependencies:
@@ -105,6 +103,12 @@ You can disable the overlay without removing it from your tree:
 
 ```tsx
 <NetworkInspector enabled={false} />
+```
+
+Use `isEnabled` (defaults to `true`) to fully hide the floating launcher button:
+
+```tsx
+<NetworkInspector isEnabled={false} />
 ```
 
 ---
@@ -249,26 +253,6 @@ The Redux tab shows the latest state tree, recent dispatches, payloads, and chan
 
 ---
 
-## WebView Inspection
-
-Use the exported `WebView` as a drop-in wrapper around `react-native-webview`.
-
-```tsx
-import {WebView} from 'react-native-inapp-inspector';
-
-<WebView source={{uri: 'https://example.com'}} />;
-```
-
-The wrapper forwards your props and ref, preserves your `onMessage`, `onNavigationStateChange`, `onLoadStart`, and `onLoadEnd` handlers, and injects scripts for WebView console logs, navigation history, and source snapshots.
-
-Disable the loading overlay with `showLoader={false}`:
-
-```tsx
-<WebView source={{uri: 'https://example.com'}} showLoader={false} />
-```
-
----
-
 ## Error Boundary
 
 ```tsx
@@ -303,15 +287,6 @@ import {ErrorBoundary} from 'react-native-inapp-inspector';
 | `subscribeReduxState(callback)`                     | function          | Subscribes to Redux state updates and returns an unsubscribe function.     |
 | `getActionHistory()`                                | function          | Returns the recent dispatched Redux actions.                               |
 | `clearActionHistory()`                              | function          | Clears the Redux action history.                                           |
-| `WebView`                                           | component         | Instrumented WebView wrapper.                                              |
-| `getWebViewLogs()`                                  | function          | Returns captured WebView console logs.                                     |
-| `getWebViewNavHistory()`                            | function          | Returns captured WebView navigation history.                               |
-| `getWebViewHtml()`                                  | function          | Returns the latest captured WebView HTML.                                  |
-| `getWebViewCss()`                                   | function          | Returns the latest captured WebView CSS.                                   |
-| `getWebViewJs()`                                    | function          | Returns the latest captured WebView JavaScript.                            |
-| `getWebViewHtmlUrl()`                               | function          | Returns the URL for the latest captured WebView source snapshot.           |
-| `clearWebViewData()`                                | function          | Clears captured WebView logs, navigation, and source data.                 |
-| `subscribeWebView(callback)`                        | function          | Subscribes to WebView data changes and returns an unsubscribe function.    |
 | `ErrorBoundary`                                     | component         | React error boundary component.                                            |
 
 ---

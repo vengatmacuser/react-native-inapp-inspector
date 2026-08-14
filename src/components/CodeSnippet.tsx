@@ -6,12 +6,7 @@ import CopyButton from './CopyButton';
 import TouchableScale from './TouchableScale';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
-
-interface CodeSnippetProps {
-  code: string;
-  language: 'html' | 'css' | 'javascript';
-  search?: string;
-}
+import {CodeSnippetProps} from '../types';
 
 const escapeRegExp = (string: string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -251,13 +246,13 @@ const getStyleForType = (type: string) => {
   }
 };
 
-const ArrowUpIcon = ({color = '#64748B', size = 16}: {color?: string; size?: number}) => (
+const ArrowUpIcon = ({color = AppColors.slate500, size = 16}: {color?: string; size?: number}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path d="M18 15l-6-6-6 6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const ArrowDownIcon = ({color = '#64748B', size = 16}: {color?: string; size?: number}) => (
+const ArrowDownIcon = ({color = AppColors.slate500, size = 16}: {color?: string; size?: number}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path d="M6 9l6 6 6-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
@@ -550,15 +545,15 @@ const CodeSnippet: React.FC<CodeSnippetProps> = ({
   );
 };
 
-const monoFont = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+const monoFont = AppFonts.interRegular;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.slate50,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.slate200,
     overflow: 'hidden',
   },
   searchRow: {
@@ -571,10 +566,10 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.slate200,
     paddingHorizontal: 8,
     height: 32,
   },
@@ -582,16 +577,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: AppFonts.interRegular,
     fontSize: 12,
-    color: '#0F172A',
+    color: AppColors.slate900,
     marginLeft: 6,
     paddingVertical: 0,
   },
   matchCountText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 10,
-    color: '#64748B',
+    color: AppColors.slate500,
     marginHorizontal: 6,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.slate100,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -602,10 +597,10 @@ const styles = StyleSheet.create({
   navArrowsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.slate200,
     height: 32,
     paddingHorizontal: 2,
   },
@@ -622,31 +617,31 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   activeMatchRow: {
-    backgroundColor: 'rgba(234, 179, 8, 0.22)',
+    backgroundColor: `${AppColors.amber600}38`,
     borderLeftWidth: 4,
-    borderLeftColor: '#EAB308',
+    borderLeftColor: AppColors.amber600,
   },
   gutter: {
     width: 40,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.slate100,
     borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
+    borderRightColor: AppColors.slate200,
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     paddingRight: 6,
     paddingTop: 1,
   },
   activeMatchGutter: {
-    backgroundColor: 'rgba(234, 179, 8, 0.35)',
-    borderRightColor: 'rgba(234, 179, 8, 0.5)',
+    backgroundColor: `${AppColors.amber600}59`,
+    borderRightColor: `${AppColors.amber600}80`,
   },
   lineNumber: {
     fontFamily: monoFont,
     fontSize: 9,
-    color: '#94A3B8',
+    color: AppColors.slate400,
   },
   activeMatchLineNumber: {
-    color: '#854D0E',
+    color: AppColors.amber800,
     fontWeight: 'bold',
   },
   codeLine: {
@@ -658,71 +653,71 @@ const styles = StyleSheet.create({
   codeLineText: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#334155',
+    color: AppColors.slate700,
     flexWrap: 'wrap',
   },
   plain: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#334155',
+    color: AppColors.slate700,
   },
   comment: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#64748B',
+    color: AppColors.slate500,
     fontStyle: 'italic',
   },
   string: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#D97706',
+    color: AppColors.amber700,
   },
   keyword: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#7C3AED',
+    color: AppColors.violet600,
     fontWeight: 'bold',
   },
   builtin: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#0D9488',
+    color: AppColors.teal600,
   },
   number: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#2563EB',
+    color: AppColors.blue600,
   },
   tag: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#4F46E5',
+    color: AppColors.indigo600,
     fontWeight: 'bold',
   },
   attribute: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#0D9488',
+    color: AppColors.teal600,
   },
   selector: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#7C3AED',
+    color: AppColors.violet600,
     fontWeight: 'bold',
   },
   property: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#0D9488',
+    color: AppColors.teal600,
   },
   value: {
     fontFamily: monoFont,
     fontSize: 10.5,
-    color: '#EA580C',
+    color: AppColors.orange600,
   },
   highlight: {
-    backgroundColor: '#FDE047',
-    color: '#000000',
+    backgroundColor: AppColors.highlightYellow,
+    color: AppColors.black,
   },
 });
 

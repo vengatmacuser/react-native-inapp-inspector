@@ -1,4 +1,3 @@
-import "./webViewLogger";
 import axios from "axios";
 
 type NetworkLog = {

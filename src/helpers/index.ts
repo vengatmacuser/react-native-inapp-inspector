@@ -7,7 +7,7 @@ import {AppColors} from '../styles/AppColors';
 import {DOMAIN_COLORS, DURATION_FAST_MS, DURATION_SLOW_MS} from '../constants';
 
 // Type Definition
-import {NetworkLog, RouteInfo, DiffResult} from '../types';
+import {NetworkLog, RouteInfo, DiffResult, JsonContent} from '../types';
 
 export const getDomainColor = (domain: string): string => {
   if (!domain) return DOMAIN_COLORS[0];
@@ -54,11 +54,48 @@ export const getSize = (data: unknown): string => {
   }
 };
 
+// Try loading community clipboard or native clipboard modules with graceful fallbacks
+const getClipboardModule = () => {
+  try {
+    // @ts-ignore
+    const community = require('@react-native-clipboard/clipboard');
+    if (community?.default?.setString) return community.default;
+    if (community?.setString) return community;
+  } catch {}
+
+  try {
+    // @ts-ignore
+    const oldCommunity = require('@react-native-community/clipboard');
+    if (oldCommunity?.default?.setString) return oldCommunity.default;
+    if (oldCommunity?.setString) return oldCommunity;
+  } catch {}
+
+  try {
+    if (NativeModules?.RNCClipboard?.setString) return NativeModules.RNCClipboard;
+  } catch {}
+
+  return Clipboard;
+};
+
 export const copyToClipboard = (value: unknown, label: string): void => {
   const resolved = typeof value === 'function' ? (value as Function)() : value;
   const text =
     typeof resolved === 'string' ? resolved : JSON.stringify(resolved, null, 2);
-  Clipboard.setString(text ?? '');
+  const textToCopy = text ?? '';
+
+  try {
+    const cb = getClipboardModule();
+    if (cb && typeof cb.setString === 'function') {
+      cb.setString(textToCopy);
+    } else {
+      Clipboard.setString(textToCopy);
+    }
+  } catch {
+    try {
+      Clipboard.setString(textToCopy);
+    } catch {}
+  }
+
   if (Platform.OS === 'android') {
     ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
   } else {
@@ -304,14 +341,7 @@ export const getAppName = (): string => {
   // Try iOS via PlatformConstants
   const constants = NativeModules.PlatformConstants;
   if (constants && typeof constants.interfaceIdiom === 'string') {
-    // On iOS, try to get display name from the main bundle
-    const SettingsManager = NativeModules.SettingsManager;
-    if (SettingsManager && SettingsManager.settings) {
-      const appName = SettingsManager.settings.AppleLocale
-        ? undefined
-        : undefined;
-      // Fallback: try to parse from SourceCode
-    }
+    // Fallback: try to parse from SourceCode
   }
 
   // Try react-native-device-info
@@ -352,17 +382,180 @@ export const getAppName = (): string => {
 
 export const handleOpenExternalLink = (url: string): void => {
   if (!url) return;
+  const openUrl = formatDisplayUrl(url);
   Alert.alert(
     'Open Link',
-    `Do you want to open this link in your web browser?\n\n${url}`,
+    `Do you want to open this link in your web browser?\n\n${openUrl}`,
     [
       {text: 'Cancel', style: 'cancel'},
       {
         text: 'Open',
         onPress: () => {
-          Linking.openURL(url).catch(() => {});
+          Linking.openURL(openUrl).catch(() => {});
         },
       },
     ]
   );
 };
+
+/** Formats a timestamp as HH:MM:SS (no milliseconds). */
+export const formatTimeShort = (ts: number): string => {
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+};
+
+/** Formats a timestamp as HH:MM:SS.mmm (with milliseconds). */
+export const formatTime = (ts: number): string => {
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  const ms = String(d.getMilliseconds()).padStart(3, '0');
+  return `${hh}:${mm}:${ss}.${ms}`;
+};
+
+/** Formats a relative gap like "+2s" / "+1m 5s" / "+350ms". */
+export const formatGap = (ms: number): string => {
+  if (ms < 1000) return `+${ms}ms`;
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `+${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return rem > 0 ? `+${m}m ${rem}s` : `+${m}m`;
+};
+
+/** Finds the first JSON object/array embedded anywhere in a log message. */
+export const getJsonContent = (message: string): JsonContent | null => {
+  if (!message) return null;
+
+  const indices: number[] = [];
+  for (let i = 0; i < message.length; i++) {
+    if (message[i] === '{' || message[i] === '[') {
+      indices.push(i);
+    }
+  }
+
+  for (const index of indices) {
+    const candidate = message.substring(index).trim();
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed !== null && typeof parsed === 'object') {
+        const header = message.substring(0, index).trim();
+        return {header, data: parsed};
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  return null;
+};
+
+/** Pretty-prints JSON data showing 3-4 lines with trailing "..." */
+export const getJsonPreviewText = (data: any, maxLines = 4): {text: string; hasMore: boolean} => {
+  try {
+    const formatted = JSON.stringify(data, null, 2);
+    const lines = formatted.split('\n');
+    if (lines.length > maxLines) {
+      return {
+        text: lines.slice(0, maxLines).join('\n') + '\n...',
+        hasMore: true,
+      };
+    }
+    return {
+      text: formatted,
+      hasMore: false,
+    };
+  } catch (e) {
+    return {
+      text: String(data),
+      hasMore: false,
+    };
+  }
+};
+
+export interface ParsedStackFrame {
+  raw: string;
+  functionName: string;
+  fileName: string;
+  fullPath: string;
+  fileExt?: 'tsx' | 'jsx' | 'ts' | 'js' | 'other';
+  isUserCode?: boolean;
+  lineNumber?: string;
+  columnNumber?: string;
+  isOrigin?: boolean;
+}
+
+/** Parses a stack trace line to extract function name, file name, extension (.tsx/.jsx/.ts), line, and column numbers */
+export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFrame => {
+  let line = rawLine.trim().replace(/^at /, '');
+
+  // Format: func@file:line:col (JSC / Hermes format)
+  if (line.includes('@')) {
+    const atIndex = line.indexOf('@');
+    const funcPart = line.substring(0, atIndex).trim();
+    const pathPart = line.substring(atIndex + 1).trim();
+    line = funcPart ? `${funcPart} (${pathPart})` : pathPart;
+  }
+
+  // Check for "func (path:line:col)" or "path:line:col"
+  const parenMatch = line.match(/^(.*?)\s*\((.*?)\)$/);
+  let functionName = '<anonymous>';
+  let locationPart = line;
+
+  if (parenMatch) {
+    functionName = parenMatch[1].trim() || '<anonymous>';
+    locationPart = parenMatch[2].trim();
+  }
+
+  // Remove "address at " prefix if present in Hermes
+  locationPart = locationPart.replace(/^address at /, '');
+
+  // Extract file, line, and col from locationPart (e.g. "path/to/file.tsx:42:15" or "http://...:42:15")
+  const locMatch = locationPart.match(/^(.*?):(\d+):(\d+)$/);
+  let fullPath = locationPart;
+  let lineNumber: string | undefined;
+  let columnNumber: string | undefined;
+
+  if (locMatch) {
+    fullPath = locMatch[1];
+    lineNumber = locMatch[2];
+    columnNumber = locMatch[3];
+  }
+
+  // Clean file name (remove query strings, packager urls, and parent paths)
+  let cleanPath = fullPath.split('?')[0].split('&')[0].replace(/[)]+$/, '');
+  // Remove protocol prefixes
+  cleanPath = cleanPath.replace(/^(?:https?:\/\/[^\/]+\/|file:\/\/\/|webpack:\/\/\/?)/, '');
+  const fileName = cleanPath.split('/').pop() || cleanPath;
+
+  // Determine file extension (.tsx, .jsx, .ts, .js)
+  const extMatch = fileName.match(/\.([a-z0-9]+)$/i);
+  const ext = extMatch ? extMatch[1].toLowerCase() : '';
+  const fileExt: 'tsx' | 'jsx' | 'ts' | 'js' | 'other' =
+    ext === 'tsx' || ext === 'jsx' || ext === 'ts' || ext === 'js'
+      ? (ext as 'tsx' | 'jsx' | 'ts' | 'js')
+      : 'other';
+
+  const isUserCode =
+    !cleanPath.includes('node_modules') &&
+    !cleanPath.includes('react-native/') &&
+    !cleanPath.includes('react-native-inapp-inspector') &&
+    (fileExt === 'tsx' || fileExt === 'jsx' || fileExt === 'ts' || fileExt === 'js');
+
+  return {
+    raw: rawLine,
+    functionName,
+    fileName,
+    fullPath: cleanPath,
+    fileExt,
+    isUserCode,
+    lineNumber,
+    columnNumber,
+    isOrigin,
+  };
+};
+

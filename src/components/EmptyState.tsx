@@ -12,7 +12,7 @@ import {EmptyRadarIcon} from './NetworkIcons';
 import {AppColors} from '../styles/AppColors';
 import styles from '../styles';
 
-const EmptyState = ({isSearch}: {isSearch?: boolean}) => {
+const EmptyState = React.memo(function EmptyState({isSearch}: {isSearch?: boolean}) {
   const iconPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -68,6 +68,6 @@ const EmptyState = ({isSearch}: {isSearch?: boolean}) => {
       )}
     </AnimatedEntrance>
   );
-};
+});
 
 export default EmptyState;

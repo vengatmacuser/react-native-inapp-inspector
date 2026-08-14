@@ -59,92 +59,139 @@ const DomainHeader = ({
 
   const visibleStats = ['success', 'failed', 'loading'];
 
+  const total = stats.success + stats.failed + stats.loading;
+  const pctSuccess =
+    total > 0 ? Math.round((stats.success / total) * 100) : 0;
+  const pctFailed =
+    total > 0 ? Math.round((stats.failed / total) * 100) : 0;
+  const pctLoading =
+    total > 0 ? Math.round((stats.loading / total) * 100) : 0;
+
   return (
     <Pressable
-      style={[styles.domainHeaderRow, !isFirst && styles.domainHeaderSeparator]}
+      style={styles.domainHeaderCard}
       onPress={() => onToggleCollapse(pageName)}>
-      <View style={styles.domainHeaderLeft}>
-        <Animated.View style={{transform: [{rotate: chevronRotate}]}}>
-          <ChevronIcon color={AppColors.grayTextWeak} size={14} />
-        </Animated.View>
-        <ScreenIcon color={color} size={16} />
-        <View style={{flex: 1, marginLeft: 6, justifyContent: 'center'}}>
-          <Text
-            style={[styles.domainHeaderText, {color, marginLeft: 0}]}
-            numberOfLines={1}>
-            {pageName}
-          </Text>
-          <View style={styles.domainSubRow}>
-            <Text style={styles.domainTimestamp}>
+      <View style={styles.domainHeaderTopRow}>
+        <View style={styles.domainHeaderLeft}>
+          <Animated.View style={{transform: [{rotate: chevronRotate}]}}>
+            <ChevronIcon color={AppColors.grayTextWeak} size={13} />
+          </Animated.View>
+          <View style={[styles.domainIconWrap, {backgroundColor: `${color}18`}]}>
+            <ScreenIcon color={color} size={14} />
+          </View>
+          <View style={{flex: 1, justifyContent: 'center'}}>
+            <Text
+              style={styles.domainTitleText}
+              numberOfLines={1}>
+              {pageName}
+            </Text>
+            <Text style={styles.domainSummaryText} numberOfLines={1}>
               {formatDateTime(timestamp)}
             </Text>
           </View>
         </View>
-      </View>
 
-      <View style={styles.domainStatsGroup}>
-        {visibleStats.map((type, index) => {
-          const isLast = index === visibleStats.length - 1;
-          const isActive = activeFilters.has(type as LocalFilter);
+        <View style={styles.domainStatsGroup}>
+          {visibleStats.map(type => {
+            const isActive = activeFilters.has(type as LocalFilter);
 
-          let IconComponent;
-          let activeColor = '';
-          let count = 0;
-          let bgStyle = {};
+            let IconComponent;
+            let activeColor = '';
+            let count = 0;
 
-          if (type === 'success') {
-            IconComponent = CheckIcon;
-            activeColor = AppColors.greenColor;
-            count = stats.success;
-            bgStyle = {
-              backgroundColor: isActive
-                ? `${AppColors.greenColor}15`
-                : 'transparent',
-            };
-          } else if (type === 'failed') {
-            IconComponent = FailIcon;
-            activeColor = AppColors.errorColor;
-            count = stats.failed;
-            bgStyle = {
-              backgroundColor: isActive
-                ? `${AppColors.errorColor}15`
-                : 'transparent',
-            };
-          } else {
-            IconComponent = ClockIcon;
-            activeColor = AppColors.darkOrange;
-            count = stats.loading;
-            bgStyle = {
-              backgroundColor: isActive
-                ? `${AppColors.darkOrange}15`
-                : 'transparent',
-            };
-          }
+            if (type === 'success') {
+              IconComponent = CheckIcon;
+              activeColor = AppColors.greenColor;
+              count = stats.success;
+            } else if (type === 'failed') {
+              IconComponent = FailIcon;
+              activeColor = AppColors.errorColor;
+              count = stats.failed;
+            } else {
+              IconComponent = ClockIcon;
+              activeColor = AppColors.darkOrange;
+              count = stats.loading;
+            }
 
-          return (
-            <Pressable
-              key={type}
-              onPress={() => onToggleFilter(pageName, type as LocalFilter)}
-              style={[
-                styles.groupBtnItem,
-                bgStyle,
-                !isLast && styles.groupBtnBorderRight,
-              ]}>
-              <IconComponent
-                color={isActive ? activeColor : AppColors.grayTextWeak}
-                size={type === 'failed' ? 8 : 10}
-              />
-              <Text
+            return (
+              <Pressable
+                key={type}
+                onPress={() => onToggleFilter(pageName, type as LocalFilter)}
+                hitSlop={6}
                 style={[
-                  styles.domainStatText,
-                  {color: isActive ? activeColor : AppColors.grayTextWeak},
+                  styles.domainStatPill,
+                  isActive && {
+                    borderColor: `${activeColor}40`,
+                    backgroundColor: `${activeColor}12`,
+                  },
                 ]}>
-                {count}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <View
+                  style={[
+                    styles.filterCheckbox,
+                    {marginRight: 0, width: 11, height: 11, borderRadius: 2.5},
+                    isActive && [
+                      styles.filterCheckboxActive,
+                      {backgroundColor: activeColor},
+                    ],
+                  ]}>
+                  {isActive && (
+                    <CheckIcon color={AppColors.white} size={7} />
+                  )}
+                </View>
+                <IconComponent
+                  color={isActive ? activeColor : AppColors.grayTextWeak}
+                  size={type === 'failed' ? 8 : 10}
+                />
+                <Text
+                  style={[
+                    styles.domainStatText,
+                    {color: isActive ? activeColor : AppColors.grayTextWeak},
+                  ]}>
+                  {count}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
+
+      {total > 0 && (
+        <View style={styles.domainProgressTrack}>
+          {pctSuccess > 0 && (
+            <View
+              style={[
+                styles.domainProgressSegment,
+                {
+                  width: `${pctSuccess}%`,
+                  backgroundColor: AppColors.greenColor,
+                },
+              ]}
+            />
+          )}
+          {pctFailed > 0 && (
+            <View
+              style={[
+                styles.domainProgressSegment,
+                {
+                  width: `${pctFailed}%`,
+                  backgroundColor: AppColors.errorColor,
+                },
+              ]}
+            />
+          )}
+          {pctLoading > 0 && (
+            <View
+              style={[
+                styles.domainProgressSegment,
+                {
+                  width: `${pctLoading}%`,
+                  backgroundColor: AppColors.darkOrange,
+                },
+              ]}
+            />
+          )}
+        </View>
+      )}
     </Pressable>
   );
 };

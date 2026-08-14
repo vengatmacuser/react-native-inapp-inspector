@@ -4,14 +4,12 @@
 // Contains an in-memory fallback for Android or Jest test environments.
 
 import { Platform, Settings } from 'react-native';
+import {InspectorStorage, PersistedSettings} from '../types';
+
+export {InspectorStorage, PersistedSettings};
 
 // In-memory fallback (settings survive for the app session only).
 const memory = new Map<string, string>();
-
-export interface InspectorStorage {
-  getItem: (key: string) => string | null | Promise<string | null>;
-  setItem: (key: string, value: string) => void | Promise<void>;
-}
 
 let customStorage: InspectorStorage | null = null;
 
@@ -20,23 +18,6 @@ export function setCustomStorage(storage: InspectorStorage | null) {
 }
 
 const SETTINGS_KEY = 'rn-inapp-inspector.settings.v1';
-
-export interface PersistedSettings {
-  isDark?: boolean;
-  modalHeightPercent?: number;
-  modalAnimationType?: string;
-  tabVisibility?: Record<string, boolean>;
-  defaultTab?: string;
-  maxNetworkLogs?: number;
-  maxConsoleLogs?: number;
-  showConsoleLevels?: {info: boolean; warn: boolean; error: boolean};
-  webViewCaptureCssJs?: boolean;
-  reduxAutoRefresh?: boolean;
-  reduxExpandDepth?: number;
-  slowRequestThreshold?: number;
-  insightsShowConsoleAlerts?: boolean;
-  showDuplicateLogs?: boolean;
-}
 
 export async function loadSettings(): Promise<PersistedSettings> {
   try {

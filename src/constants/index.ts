@@ -24,18 +24,7 @@ export const METHOD_COLORS: Record<Method, string> = {
   DELETE: AppColors.errorColor,
 };
 
-export const DOMAIN_COLORS = [
-  '#1a5276',
-  '#8e44ad',
-  '#1e8449',
-  '#c0392b',
-  '#d35400',
-  '#d68910',
-  '#16a085',
-  '#27ae60',
-  '#2c3e50',
-  '#c2185b',
-];
+export const DOMAIN_COLORS: string[] = AppColors.domainColors;
 
 export const DURATION_FAST_MS = 200;
 export const DURATION_SLOW_MS = 800;

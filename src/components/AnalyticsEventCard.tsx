@@ -2,21 +2,22 @@ import React, {useEffect, useRef} from 'react';
 import {Animated, StyleSheet, Text, View} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
-import {AnalyticsEvent} from '../types';
+import {AnalyticsEventCardProps} from '../types';
+import {formatGap, formatTime} from '../helpers';
 import HighlightText from './HighlightText';
 import TouchableScale from './TouchableScale';
 
 // ─── Palette (Google Analytics colours) ───────────────────────────────────────
 
 const EVENT_PALETTE = [
-  '#4285F4', // blue
-  '#34A853', // green
-  '#9C27B0', // purple
-  '#00897B', // teal
-  '#E53935', // red
-  '#F57C00', // orange
-  '#1565C0', // dark blue
-  '#2E7D32', // dark green
+  AppColors.googleBlue, // blue
+  AppColors.googleGreen, // green
+  AppColors.googlePurple, // purple
+  AppColors.googleTeal, // teal
+  AppColors.googleRed, // red
+  AppColors.googleOrange, // orange
+  AppColors.blue700, // dark blue
+  AppColors.materialGreen, // dark green
 ];
 
 export function getEventColor(name: string): string {
@@ -29,24 +30,6 @@ export function getEventColor(name: string): string {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatTime(ts: number): string {
-  const d = new Date(ts);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  const ms = String(d.getMilliseconds()).padStart(3, '0');
-  return `${hh}:${mm}:${ss}.${ms}`;
-}
-
-function formatGap(ms: number): string {
-  if (ms < 1000) return `+${ms}ms`;
-  const s = Math.round(ms / 1000);
-  if (s < 60) return `+${s}s`;
-  const m = Math.floor(s / 60);
-  const rem = s % 60;
-  return rem > 0 ? `+${m}m ${rem}s` : `+${m}m`;
-}
 
 function getEventCategory(name: string): string {
   if (!name) return 'Custom';
@@ -85,43 +68,29 @@ function getCategoryColors(category: string) {
   switch (category) {
     case 'Page View':
       return {
-        bg: '#E3F2FD',
-        border: '#BBDEFB',
-        text: '#1976D2',
+        bg: AppColors.blueBg,
+        border: AppColors.blueBorder,
+        text: AppColors.blue800,
       };
     case 'Ecommerce':
       return {
-        bg: '#E8F5E9',
-        border: '#C8E6C9',
-        text: '#2E7D32',
+        bg: AppColors.greenBg,
+        border: AppColors.greenBorder,
+        text: AppColors.materialGreen,
       };
     case 'System':
       return {
-        bg: '#F5F5F5',
-        border: '#E0E0E0',
-        text: '#616161',
+        bg: AppColors.greyBg,
+        border: AppColors.greyBorder,
+        text: AppColors.grey600,
       };
     default:
       return {
-        bg: '#F3E5F5',
-        border: '#E1BEE7',
-        text: '#7B1FA2',
+        bg: AppColors.purpleBg,
+        border: AppColors.purpleBorder,
+        text: AppColors.purpleText,
       };
   }
-}
-
-// ─── Props ────────────────────────────────────────────────────────────────────
-
-export interface AnalyticsEventCardProps {
-  event: AnalyticsEvent & {count?: number};
-  onPress: () => void;
-  isNew?: boolean;
-  searchStr?: string;
-  isFirst: boolean;
-  isLast: boolean;
-  msSincePrev?: number;
-  showTimestamp?: boolean;
-  computedScreenName?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -276,8 +245,8 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
               const items = event.params?.items;
               if (Array.isArray(items) && items.length > 0) {
                 return (
-                  <View style={[cardStyles.chip, {backgroundColor: '#FEF3C7', borderColor: '#FDE68A'}]}>
-                    <Text style={[cardStyles.chipText, {color: '#D97706', fontFamily: AppFonts.interBold}]}>
+                  <View style={[cardStyles.chip, {backgroundColor: AppColors.amberBg, borderColor: AppColors.amberBorder}]}>
+                    <Text style={[cardStyles.chipText, {color: AppColors.amber700, fontFamily: AppFonts.interBold}]}>
                       🛒 {items.length} {items.length === 1 ? 'item' : 'items'}
                     </Text>
                   </View>
@@ -293,8 +262,8 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
               if (isPrimitive) {
                 const currencyStr = typeof currency === 'string' || typeof currency === 'number' ? String(currency) : '';
                 return (
-                  <View style={[cardStyles.chip, {backgroundColor: '#ECFDF5', borderColor: '#A7F3D0'}]}>
-                    <Text style={[cardStyles.chipText, {color: '#059669', fontFamily: AppFonts.interBold}]}>
+                  <View style={[cardStyles.chip, {backgroundColor: AppColors.emeraldBg, borderColor: AppColors.emeraldBorder}]}>
+                    <Text style={[cardStyles.chipText, {color: AppColors.emerald600, fontFamily: AppFonts.interBold}]}>
                       💰 {String(val)} {currencyStr}
                     </Text>
                   </View>
@@ -327,12 +296,12 @@ const cardStyles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   modernCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: AppColors.dividerColor,
     padding: 8,
-    shadowColor: '#000',
+    shadowColor: AppColors.black,
     shadowOpacity: 0.03,
     shadowRadius: 3,
     shadowOffset: {width: 0, height: 1},
@@ -362,7 +331,7 @@ const cardStyles = StyleSheet.create({
     color: AppColors.grayTextWeak,
   },
   highlight: {
-    backgroundColor: '#FFE44D',
+    backgroundColor: AppColors.yellowHighlight,
     color: AppColors.primaryBlack,
     borderRadius: 2,
   },
@@ -400,8 +369,8 @@ const cardStyles = StyleSheet.create({
     marginRight: 4,
   },
   duplicateBadge: {
-    backgroundColor: '#FFE4E6',
-    borderColor: '#FCC2D7',
+    backgroundColor: AppColors.roseBg,
+    borderColor: AppColors.roseBorder,
     borderWidth: 1,
     paddingHorizontal: 5,
     paddingVertical: 2,
@@ -410,7 +379,7 @@ const cardStyles = StyleSheet.create({
   duplicateText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9,
-    color: '#E11D48',
+    color: AppColors.rose600,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

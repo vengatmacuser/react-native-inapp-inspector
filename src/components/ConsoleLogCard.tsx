@@ -1,90 +1,24 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
-  Animated,
-  LayoutAnimation,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
-  UIManager,
   View,
 } from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
-import {ConsoleLog} from '../types';
+import {ConsoleLogCardProps} from '../types';
+import {
+  formatTime,
+  getJsonContent,
+  getJsonPreviewText,
+  parseStackLine,
+} from '../helpers';
 import HighlightText from './HighlightText';
 import CopyButton from './CopyButton';
 import {ChevronIcon} from './NetworkIcons';
-import JsonViewer from './JsonViewer';
-import {WebViewLog} from '../customHooks/webViewLogger';
-
-interface ConsoleLogCardProps {
-  item: ConsoleLog | WebViewLog;
-  searchStr?: string;
-  isWebView?: boolean;
-}
-
-const formatTime = (ts: number): string => {
-  const d = new Date(ts);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  const ms = String(d.getMilliseconds()).padStart(3, '0');
-  return `${hh}:${mm}:${ss}.${ms}`;
-};
-
-interface JsonContent {
-  header: string;
-  data: any;
-}
-
-const getJsonContent = (message: string): JsonContent | null => {
-  if (!message) return null;
-
-  const indices: number[] = [];
-  for (let i = 0; i < message.length; i++) {
-    if (message[i] === '{' || message[i] === '[') {
-      indices.push(i);
-    }
-  }
-
-  for (const index of indices) {
-    const candidate = message.substring(index).trim();
-    try {
-      const parsed = JSON.parse(candidate);
-      if (parsed !== null && typeof parsed === 'object') {
-        const header = message.substring(0, index).trim();
-        return {header, data: parsed};
-      }
-    } catch (e) {
-      // Ignore
-    }
-  }
-
-  return null;
-};
-
-const getJsonPreviewText = (data: any): {text: string; hasMore: boolean} => {
-  try {
-    const formatted = JSON.stringify(data, null, 2);
-    const lines = formatted.split('\n');
-    if (lines.length > 3) {
-      return {
-        text: lines.slice(0, 3).join('\n') + '\n...',
-        hasMore: true,
-      };
-    }
-    return {
-      text: formatted,
-      hasMore: false,
-    };
-  } catch (e) {
-    return {
-      text: String(data),
-      hasMore: false,
-    };
-  }
-};
+import {useInspector} from './Inspector/InspectorContext';
 
 const getLogMessageWithBadges = (
   message: string,
@@ -106,52 +40,45 @@ const getLogMessageWithBadges = (
         .replace(/[\[\]]/g, '')
         .trim()
         .toUpperCase();
-      if (cleanTag === 'API') return '#0284C7';
-      if (cleanTag === 'TEST') return '#16A34A';
-      if (cleanTag === 'APP') return '#4F46E5';
-      if (cleanTag === 'DETAILS') return '#7C3AED';
-      if (cleanTag === 'WEBVIEW') return '#EA580C';
-      if (cleanTag === 'MOCK REDUX' || cleanTag === 'REDUX') return '#DB2777';
-
-      let hash = 0;
-      for (let i = 0; i < cleanTag.length; i++) {
-        hash = cleanTag.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const colors = [
-        '#0891B2',
-        '#0D9488',
-        '#2563EB',
-        '#D97706',
-        '#E11D48',
-        '#8B5CF6',
-      ];
-      return colors[Math.abs(hash) % colors.length];
+      if (cleanTag === 'API') return AppColors.sky600;
+      if (cleanTag === 'TEST') return AppColors.green600;
+      if (cleanTag === 'APP') return AppColors.indigo600;
+      if (cleanTag === 'WARN') return AppColors.darkOrange || AppColors.lightOrange;
+      if (cleanTag === 'ERROR') return AppColors.errorColor;
+      return AppColors.slate600;
     };
 
     return (
-      <Text style={textStyle} numberOfLines={numberOfLines}>
-        {tags.map((tag, idx) => {
-          const color = getTagColor(tag);
-          return (
-            <Text
-              key={idx}
-              style={{
-                fontWeight: 'bold',
-                color: color,
-                fontFamily: AppFonts.interBold,
-              }}>
-              {tag}{' '}
-            </Text>
-          );
-        })}
+      <View style={{flexDirection: 'column', gap: 6}}>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 4}}>
+          {tags.map((tag, i) => {
+            const color = getTagColor(tag);
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.prefixTag,
+                  {
+                    backgroundColor: `${color}15`,
+                    borderColor: `${color}35`,
+                  },
+                ]}>
+                <Text style={[styles.prefixTagText, {color}]}>
+                  {tag.replace(/[\[\]]/g, '')}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
         <HighlightText
           text={remainingText}
           search={searchStr}
           style={textStyle}
           highlightStyle={highlightStyle}
+          numberOfLines={numberOfLines}
           detectLinks={true}
         />
-      </Text>
+      </View>
     );
   }
 
@@ -170,55 +97,27 @@ const getLogMessageWithBadges = (
 export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   item,
   searchStr = '',
-  isWebView = false,
 }: ConsoleLogCardProps) {
-  const [expanded, setExpanded] = useState(false);
-  const chevronAnim = useRef(new Animated.Value(0)).current;
+  const {setSelectedLog} = useInspector();
+  const {t} = useTranslation();
   const jsonContent = getJsonContent(item.message);
   const isAnalyticsError = item.message
     .toLowerCase()
     .includes('[analytics error]');
-  const isUserLog = !isWebView && (item as ConsoleLog).sourceMethod === 'log';
-  const caller = 'caller' in item ? item.caller : undefined;
+  const isUserLog = item.sourceMethod === 'log';
+  const parsedCaller = item.caller && item.caller !== 'Unknown'
+    ? parseStackLine(item.caller, true)
+    : null;
 
   const getLogColors = () => {
-    const isDark = AppColors.primaryLight !== '#FFFFFF';
-    if (isWebView) {
-      const label = item.type.toUpperCase();
-      switch (item.type) {
-        case 'error':
-          return {
-            border: AppColors.errorColor,
-            badgeBg: `${AppColors.errorColor}15`,
-            badgeText: AppColors.errorColor,
-            label,
-            cardBg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FFF5F6',
-          };
-        case 'warn':
-          return {
-            border: AppColors.lightOrange,
-            badgeBg: `${AppColors.lightOrange}15`,
-            badgeText: AppColors.darkOrange || AppColors.lightOrange,
-            label,
-            cardBg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFDF6',
-          };
-        default:
-          return {
-            border: '#475569',
-            badgeBg: isDark ? '#374151' : '#F1F5F9',
-            badgeText: isDark ? '#9CA3AF' : '#475569',
-            label,
-            cardBg: isDark ? '#1E1E24' : '#F8FAFC',
-          };
-      }
-    }
+    const isDark = AppColors.primaryLight !== AppColors.white;
     if (isAnalyticsError) {
       return {
         border: AppColors.skyBlue,
         badgeBg: `${AppColors.skyBlue}15`,
         badgeText: AppColors.skyBlue,
         label: 'ERROR',
-        cardBg: isDark ? 'rgba(96, 165, 250, 0.15)' : '#E6F2FF',
+        cardBg: isDark ? `${AppColors.skyBlue}26` : AppColors.blueTintBg,
       };
     }
     switch (item.type) {
@@ -228,7 +127,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           badgeBg: `${AppColors.errorColor}15`,
           badgeText: AppColors.errorColor,
           label: 'ERROR',
-          cardBg: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FFF5F6',
+          cardBg: isDark ? `${AppColors.errorColor}26` : AppColors.errorCardBg,
         };
       case 'warn':
         return {
@@ -236,16 +135,16 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           badgeBg: `${AppColors.lightOrange}15`,
           badgeText: AppColors.darkOrange || AppColors.lightOrange,
           label: 'WARN',
-          cardBg: isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFDF6',
+          cardBg: isDark ? `${AppColors.amber500}26` : AppColors.warnCardBg,
         };
       default:
         if (isUserLog) {
           return {
-            border: '#475569',
-            badgeBg: isDark ? '#374151' : '#E2E8F0',
-            badgeText: isDark ? '#D1D5DB' : '#334155',
+            border: AppColors.slate600,
+            badgeBg: isDark ? AppColors.gray700 : AppColors.slate200,
+            badgeText: isDark ? AppColors.gray300 : AppColors.slate700,
             label: 'INFO',
-            cardBg: isDark ? '#1E1E24' : '#F1F5F9',
+            cardBg: isDark ? AppColors.primaryLight : AppColors.slate100,
           };
         }
         return {
@@ -253,344 +152,217 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           badgeBg: `${AppColors.purple}15`,
           badgeText: AppColors.purple,
           label: 'INFO',
-          cardBg: isDark ? 'rgba(167, 139, 250, 0.12)' : '#F9F5FF',
+          cardBg: isDark ? `${AppColors.purple}1F` : AppColors.purpleShade50,
         };
     }
   };
 
   const colors = getLogColors();
 
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      UIManager.setLayoutAnimationEnabledExperimental?.(true);
-    }
-  }, []);
+  const jsonPreview = jsonContent
+    ? getJsonPreviewText(jsonContent.data)
+    : null;
 
-  useEffect(() => {
-    Animated.timing(chevronAnim, {
-      toValue: expanded ? 1 : 0,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
-  }, [chevronAnim, expanded]);
-
-  const toggleExpanded = () => {
-    if (Platform.OS === 'ios') {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    }
-    setExpanded(prev => !prev);
+  const openDetail = () => {
+    setSelectedLog(item);
   };
-
-  const chevronRotate = chevronAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
-
-  // Show limited lines unless expanded
-  const numLines = expanded ? undefined : 5;
-  const hasLongMessage = jsonContent
-    ? getJsonPreviewText(jsonContent.data).hasMore ||
-      jsonContent.header.length > 120 ||
-      jsonContent.header.includes('\n')
-    : item.message.length > 120 || item.message.includes('\n');
 
   return (
     <View style={styles.container}>
-      <View
-        style={[
+      <Pressable
+        onPress={openDetail}
+        style={({pressed}) => [
           styles.card,
           {
-            borderLeftWidth: 4,
             borderLeftColor: colors.border,
             backgroundColor: colors.cardBg,
-            borderColor: AppColors.grayBorderSecondary,
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingRight: 4,
           },
+          pressed && styles.cardPressed,
         ]}>
-        {/* Left Content Area */}
-        <Pressable onPress={toggleExpanded} style={{flex: 1, paddingRight: 6}}>
-          <View style={styles.cardHeader}>
-            <View style={styles.headerLeft}>
-              <CopyButton value={item.message} label="Log message" />
-              <View style={[styles.badge, {backgroundColor: colors.badgeBg}]}>
-                <Text style={[styles.badgeText, {color: colors.badgeText}]}>
-                  {colors.label}
-                </Text>
-              </View>
+        <View style={styles.cardHeader}>
+          <View style={styles.headerLeft}>
+            <View style={[styles.typeChip, {backgroundColor: colors.badgeBg}]}>
+              <View
+                style={[styles.typeDot, {backgroundColor: colors.badgeText}]}
+              />
+              <Text style={[styles.typeChipText, {color: colors.badgeText}]}>
+                {colors.label}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.metaChip,
+                {
+                  backgroundColor: `${AppColors.brandPurple}12`,
+                  borderColor: `${AppColors.brandPurple}30`,
+                },
+              ]}>
+              <Text
+                style={[styles.metaChipText, {color: AppColors.brandPurple}]}>
+                console.
+                {('sourceMethod' in item ? item.sourceMethod : undefined) ||
+                  item.type ||
+                  'log'}
+              </Text>
+            </View>
+            {jsonContent && (
               <View
                 style={[
-                  styles.badge,
+                  styles.metaChip,
                   {
-                    backgroundColor: 'rgba(107, 78, 255, 0.08)',
-                    borderColor: 'rgba(107, 78, 255, 0.2)',
-                    borderWidth: 1,
+                    backgroundColor: `${AppColors.teal600}12`,
+                    borderColor: `${AppColors.teal600}2B`,
                   },
                 ]}>
-                <Text style={[styles.badgeText, {color: '#6B4EFF'}]}>
-                  console.
-                  {('sourceMethod' in item ? item.sourceMethod : undefined) ||
-                    item.type ||
-                    'log'}
+                <Text
+                  style={[styles.metaChipText, {color: AppColors.teal600}]}>
+                  {Array.isArray(jsonContent.data)
+                    ? `Array[${jsonContent.data.length}]`
+                    : `Object{${Object.keys(jsonContent.data).length}}`}
                 </Text>
               </View>
-              {jsonContent && (
+            )}
+            {'duplicateCount' in item &&
+              item.duplicateCount != null &&
+              item.duplicateCount > 1 && (
                 <View
                   style={[
-                    styles.badge,
+                    styles.metaChip,
                     {
-                      backgroundColor: 'rgba(13, 148, 136, 0.08)',
-                      borderColor: 'rgba(13, 148, 136, 0.18)',
-                      borderWidth: 1,
-                    },
-                  ]}>
-                  <Text style={[styles.badgeText, {color: '#0D9488'}]}>
-                    {Array.isArray(jsonContent.data)
-                      ? `Array[${jsonContent.data.length}]`
-                      : `Object{${Object.keys(jsonContent.data).length}}`}
-                  </Text>
-                </View>
-              )}
-              {/* #9 — collapsed duplicate counter */}
-              {'duplicateCount' in item &&
-                item.duplicateCount != null &&
-                item.duplicateCount > 1 && (
-                  <View
-                    style={[
-                      styles.badge,
-                      {
-                        backgroundColor: 'rgba(104, 75, 155, 0.1)',
-                        borderColor: 'rgba(104, 75, 155, 0.25)',
-                        borderWidth: 1,
-                      },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.badgeText,
-                        {color: AppColors.purple, fontWeight: '700'},
-                      ]}>
-                      ×{item.duplicateCount}
-                    </Text>
-                  </View>
-                )}
-              {isAnalyticsError && (
-                <View
-                  style={[
-                    styles.badge,
-                    {backgroundColor: `${AppColors.skyBlue}15`},
-                  ]}>
-                  <Text style={[styles.badgeText, {color: AppColors.skyBlue}]}>
-                    Analytics
-                  </Text>
-                </View>
-              )}
-              {isUserLog && (
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: AppColors.grayBackground,
-                      borderColor: AppColors.grayBorderSecondary,
-                      borderWidth: 1,
+                      backgroundColor: `${AppColors.purple}1A`,
+                      borderColor: `${AppColors.purple}3D`,
                     },
                   ]}>
                   <Text
-                    style={[
-                      styles.badgeText,
-                      {color: AppColors.grayTextStrong},
-                    ]}>
-                    user-log
+                    style={[styles.metaChipText, {color: AppColors.purple}]}>
+                    ×{item.duplicateCount}
                   </Text>
                 </View>
               )}
-              {isWebView && (
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: AppColors.grayBackground,
-                      borderColor: AppColors.grayBorderSecondary,
-                      borderWidth: 1,
-                    },
-                  ]}>
-                  <Text style={[styles.badgeText, {color: AppColors.grayText}]}>
-                    webview
-                  </Text>
-                </View>
-              )}
-              <Text
-                style={[styles.serialNumber, {color: AppColors.grayTextWeak}]}>
-                #{item.id + 1}
-              </Text>
-              <Text style={[styles.timestamp, {color: AppColors.grayTextWeak}]}>
-                {formatTime(item.timestamp)}
-              </Text>
-            </View>
-
-            {caller && caller !== 'Unknown' && (
-              <Text
-                style={[
-                  styles.callerText,
-                  {color: AppColors.grayTextWeak, marginRight: 4},
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="middle">
-                {caller.split('/').pop() || caller}
-              </Text>
-            )}
           </View>
 
-          <View
-            style={[
-              styles.cardBody,
-              {
-                backgroundColor: AppColors.primaryLight,
-                borderColor: AppColors.dividerColor,
-              },
-            ]}>
-            {jsonContent ? (
-              <>
-                {jsonContent.header ? (
-                  <Pressable onPress={toggleExpanded}>
-                    {getLogMessageWithBadges(
-                      jsonContent.header,
-                      searchStr,
-                      [styles.messageText, {color: AppColors.primaryBlack}],
-                      styles.highlight,
-                      numLines,
-                    )}
-                  </Pressable>
-                ) : null}
-                {expanded ? (
-                  <View
-                    style={[
-                      styles.jsonContainer,
-                      {
-                        backgroundColor: AppColors.grayBackground,
-                        borderColor: AppColors.dividerColor,
-                      },
-                    ]}>
-                    <JsonViewer
-                      data={jsonContent.data}
-                      search={searchStr}
-                      forceOpen={expanded}
-                    />
-                  </View>
-                ) : (
-                  <Pressable
-                    onPress={toggleExpanded}
-                    style={[
-                      styles.jsonPreviewContainer,
-                      {
-                        backgroundColor: AppColors.grayBackground,
-                        borderColor: AppColors.dividerColor,
-                      },
-                    ]}>
-                    <HighlightText
-                      text={getJsonPreviewText(jsonContent.data).text}
-                      search={searchStr}
-                      style={[
-                        styles.jsonPreviewText,
-                        {color: AppColors.primaryBlack},
-                      ]}
-                      highlightStyle={styles.highlight}
-                      detectLinks={true}
-                    />
-                  </Pressable>
-                )}
-              </>
-            ) : (
-              <Pressable onPress={toggleExpanded}>
-                {getLogMessageWithBadges(
-                  item.message,
+          <View style={styles.headerRight}>
+            <CopyButton value={item.message} label={t('console.logMessage')} />
+            <ChevronIcon color={AppColors.grayTextWeak} size={14} />
+          </View>
+        </View>
+
+        <View style={styles.cardBody}>
+          {jsonContent ? (
+            <>
+              {jsonContent.header ? (
+                getLogMessageWithBadges(
+                  jsonContent.header,
                   searchStr,
                   [styles.messageText, {color: AppColors.primaryBlack}],
                   styles.highlight,
-                  numLines,
-                )}
-              </Pressable>
-            )}
-            {hasLongMessage && (
-              <Pressable
-                onPress={toggleExpanded}
-                style={styles.seeMoreBtn}
-                hitSlop={8}>
-                <Text style={styles.seeMoreText}>
-                  {expanded ? 'See Less' : 'See More'}
-                </Text>
-              </Pressable>
+                  2,
+                )
+              ) : null}
+              {jsonPreview && (
+                <View style={styles.jsonPreviewContainer}>
+                  <HighlightText
+                    text={jsonPreview.text}
+                    search={searchStr}
+                    style={[
+                      styles.jsonPreviewText,
+                      {color: AppColors.primaryBlack},
+                    ]}
+                    highlightStyle={styles.highlight}
+                    detectLinks={false}
+                    numberOfLines={5}
+                  />
+                </View>
+              )}
+            </>
+          ) : (
+            getLogMessageWithBadges(
+              item.message,
+              searchStr,
+              [styles.messageText, {color: AppColors.primaryBlack}],
+              styles.highlight,
+              3,
+            )
+          )}
+        </View>
+
+        <View style={styles.cardFooter}>
+          <View style={styles.footerLeft}>
+            <Text style={styles.footerText}>#{item.id + 1}</Text>
+            <View style={styles.footerDot} />
+            <Text style={styles.footerText}>{formatTime(item.timestamp)}</Text>
+            {parsedCaller && (
+              <>
+                <View style={styles.footerDot} />
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, maxWidth: 170}}>
+                  {parsedCaller.fileExt && parsedCaller.fileExt !== 'other' && (
+                    <View
+                      style={{
+                        backgroundColor:
+                          parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
+                            ? `${AppColors.brandPurple}18`
+                            : `${AppColors.teal600}18`,
+                        borderRadius: 3,
+                        paddingHorizontal: 3.5,
+                        paddingVertical: 1,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 8.5,
+                          color:
+                            parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
+                              ? AppColors.brandPurple
+                              : AppColors.teal600,
+                        }}>
+                        {parsedCaller.fileExt.toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                  <Text
+                    style={[styles.footerText, styles.footerCaller]}
+                    numberOfLines={1}
+                    ellipsizeMode="middle">
+                    {parsedCaller.fileName}
+                    {parsedCaller.lineNumber ? `:${parsedCaller.lineNumber}` : ''}
+                  </Text>
+                </View>
+              </>
             )}
           </View>
 
-          {expanded && (
-            <View
-              style={[
-                styles.cardFooter,
-                {borderTopColor: AppColors.dividerColor, gap: 6},
-              ]}>
+          <View style={styles.footerRight}>
+            {isAnalyticsError && (
               <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interRegular,
-                    fontSize: 10.5,
-                    color: AppColors.grayTextWeak,
-                  }}>
-                  Length: {item.message.length} chars • Size:{' '}
+                style={[
+                  styles.footerBadge,
                   {
-                    encodeURIComponent(item.message).replace(
-                      /%[0-9A-F]{2}/g,
-                      'a',
-                    ).length
-                  }{' '}
-                  bytes
+                    backgroundColor: `${AppColors.skyBlue}15`,
+                    borderColor: `${AppColors.skyBlue}30`,
+                  },
+                ]}>
+                <Text style={[styles.footerBadgeText, {color: AppColors.skyBlue}]}>
+                  {t('console.analyticsBadge')}
                 </Text>
               </View>
-              {caller && caller !== 'Unknown' && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: 4,
-                  }}>
-                  <Text
-                    style={[
-                      styles.fullCallerText,
-                      {color: AppColors.grayText, flex: 1, marginRight: 8},
-                    ]}
-                    numberOfLines={2}>
-                    Caller: {caller}
-                  </Text>
-                  <CopyButton value={caller} label="Caller stack frame" />
-                </View>
-              )}
-            </View>
-          )}
-        </Pressable>
-
-        {/* Right Isolated Chevron Area */}
-        <Pressable
-          onPress={toggleExpanded}
-          style={{
-            width: 28,
-            alignItems: 'center',
-            justifyContent: 'center',
-            alignSelf: expanded ? 'flex-start' : 'center',
-            marginTop: expanded ? 8 : 0,
-            height: expanded ? 32 : undefined,
-          }}
-          hitSlop={12}>
-          <Animated.View style={{transform: [{rotate: chevronRotate}]}}>
-            <ChevronIcon size={16} color={AppColors.grayTextWeak} />
-          </Animated.View>
-        </Pressable>
-      </View>
+            )}
+            {isUserLog && (
+              <View
+                style={[
+                  styles.footerBadge,
+                  {
+                    backgroundColor: `${AppColors.slate600}12`,
+                    borderColor: `${AppColors.slate600}26`,
+                  },
+                ]}>
+                <Text style={[styles.footerBadgeText, {color: AppColors.grayTextStrong}]}>
+                  {t('console.userLogBadge')}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Pressable>
     </View>
   );
 });
@@ -598,28 +370,32 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
   card: {
     alignSelf: 'stretch',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
-    padding: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    shadowOffset: {width: 0, height: 1},
-    elevation: 1,
-    overflow: 'hidden',
+    borderColor: AppColors.grayBorderSecondary,
+    borderLeftWidth: 3.5,
+    padding: 12,
+    backgroundColor: AppColors.primaryLight,
+    shadowColor: AppColors.black,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    shadowOffset: {width: 0, height: 2},
+    elevation: 2,
+  },
+  cardPressed: {
+    opacity: 0.85,
+    transform: [{scale: 0.99}],
   },
   cardHeader: {
-    alignSelf: 'stretch',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
+    gap: 8,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -628,93 +404,127 @@ const styles = StyleSheet.create({
     gap: 6,
     flex: 1,
   },
-  badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 4,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
-  badgeText: {
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+  },
+  typeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  typeChipText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 9,
+    fontSize: 9.5,
     letterSpacing: 0.5,
   },
-  timestamp: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 11,
-    color: AppColors.grayTextWeak,
-  },
-  serialNumber: {
-    fontFamily: AppFonts.interBold,
-    color: AppColors.grayTextWeak,
-    fontSize: 11,
-  },
-  callerText: {
-    fontFamily: AppFonts.interRegular,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-    maxWidth: '50%',
-  },
-  cardBody: {
-    marginTop: 6,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+  metaChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#EBECEF',
+  },
+  metaChipText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    letterSpacing: 0.2,
+  },
+  cardBody: {
+    backgroundColor: AppColors.primaryLight,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
   },
   messageText: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 12,
+    fontFamily: AppFonts.interMedium,
+    fontSize: 12.5,
     color: AppColors.primaryBlack,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   highlight: {
-    backgroundColor: '#FFE44D',
+    backgroundColor: AppColors.yellowHighlight,
     color: AppColors.primaryBlack,
     borderRadius: 2,
   },
-  jsonContainer: {
-    marginTop: 4,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 6,
-  },
   jsonPreviewContainer: {
-    marginTop: 4,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
+    marginTop: 6,
+    backgroundColor: AppColors.grayBackground,
+    borderRadius: 7,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 6,
+    borderColor: AppColors.grayBorderSecondary,
+    padding: 8,
   },
   jsonPreviewText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: AppFonts.interRegular,
     fontSize: 11,
     color: AppColors.primaryBlack,
-    lineHeight: 15,
+    lineHeight: 16,
   },
   cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.dividerColor,
+    gap: 6,
   },
-  fullCallerText: {
+  footerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  footerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  footerDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: AppColors.grayTextWeak,
+    opacity: 0.6,
+  },
+  footerText: {
     fontFamily: AppFonts.interRegular,
     fontSize: 10,
-    color: AppColors.grayText,
+    color: AppColors.grayTextWeak,
+    letterSpacing: 0.1,
   },
-  seeMoreBtn: {
-    marginTop: 6,
-    alignSelf: 'flex-start',
+  footerCaller: {
+    flexShrink: 1,
   },
-  seeMoreText: {
+  footerBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 5,
+    borderWidth: 1,
+  },
+  footerBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 11,
-    color: AppColors.purple,
-    textDecorationLine: 'underline',
+    fontSize: 9,
+  },
+  prefixTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  prefixTagText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    letterSpacing: 0.3,
   },
 });

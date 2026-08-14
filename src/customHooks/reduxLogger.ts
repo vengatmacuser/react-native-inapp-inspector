@@ -12,21 +12,15 @@
 //      dispatch reference at store-creation time) still update the state tree
 //      and per-reducer "last action" consistently.
 
+import {ReduxHistoryEntry} from '../types';
+
+export {ReduxHistoryEntry};
+
 let currentReduxState: any = null;
 const listeners = new Set<() => void>();
 let globalReduxAutoRefresh = true;
 
 let lastActionForReducer: Record<string, any> = {};
-
-export interface ReduxHistoryEntry {
-  id: number;
-  type: string;
-  payload: any;
-  timestamp: string;
-  affectedSlices: string[];
-  prevState?: any;
-  nextState?: any;
-}
 
 let actionHistory: ReduxHistoryEntry[] = [];
 

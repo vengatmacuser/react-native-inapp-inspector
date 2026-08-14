@@ -10,13 +10,15 @@ import {
   getPath,
   getBaseUrl,
   formatDateTime,
+  getSize,
 } from '../helpers';
-import {CalendarIcon, ClockIcon} from './NetworkIcons';
+import {CalendarIcon, ClockIcon, SizeIcon} from './NetworkIcons';
 import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
 import {LogCardProps} from '../types';
 import HighlightText from './HighlightText';
 import TouchableScale from './TouchableScale';
+import {useTranslation} from 'react-i18next';
 
 const LogCard = React.memo(function LogCard({
   item,
@@ -28,6 +30,7 @@ const LogCard = React.memo(function LogCard({
   onToggleSelect,
   searchStr,
 }: LogCardProps) {
+  const {t} = useTranslation();
   const methodColor = METHOD_COLORS[item.method as Method] ?? METHOD_COLORS.ALL;
 
   const isFailed =
@@ -64,7 +67,9 @@ const LogCard = React.memo(function LogCard({
 
   const path = getPath(item.url);
   const baseUrl = getBaseUrl(item.url) || item.url;
-  const showPathRow = baseUrl !== item.url && path !== '/';
+  const cleanHost = baseUrl.replace(/^https?:\/\//, '');
+  const slug = path && path !== '/' ? path : item.url;
+  const showSlug = slug !== cleanHost;
   const triggeredAt = formatDateTime(item.startTime);
   const isJson = item.url.split('?')[0].toLowerCase().endsWith('.json');
 
@@ -74,113 +79,170 @@ const LogCard = React.memo(function LogCard({
       style={[
         styles.card,
         {
-          borderLeftWidth: 4,
+          borderLeftWidth: 3.5,
           borderLeftColor: cardStatusColor,
         },
       ]}>
       <View style={styles.cardBody}>
-        <View style={styles.cardTopRow}>
-          <Pressable
-            onPress={() => onToggleSelect(item.id)}
-            hitSlop={12}
-            style={[
-              styles.smallCheckbox,
-              isSelected && styles.smallCheckboxChecked,
-            ]}>
-            {isSelected && (
-              <Svg width={9} height={9} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M20 6L9 17l-5-5"
-                  stroke="#FFF"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            )}
-          </Pressable>
+        {/* Row 1: Header (Checkbox, Serial, Method Badge, Base URL / Host, Status Pill) */}
+        <View style={styles.cardHeaderRow}>
+          <View style={styles.cardHeaderLeft}>
+            <Pressable
+              onPress={() => onToggleSelect(item.id)}
+              hitSlop={12}
+              style={[
+                styles.smallCheckbox,
+                isSelected && styles.smallCheckboxChecked,
+              ]}>
+              {isSelected && (
+                <Svg width={9} height={9} viewBox="0 0 24 24" fill="none">
+                  <Path
+                    d="M20 6L9 17l-5-5"
+                    stroke={AppColors.white}
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
+              )}
+            </Pressable>
 
-          <Text style={styles.serialNumber}>#{item.id + 1}</Text>
+            <Text style={styles.serialNumber}>#{item.id + 1}</Text>
 
-          <View
-            style={[styles.methodBadge, {backgroundColor: methodColor}]}>
-            <Text style={[styles.methodBadgeText, {color: '#FFFFFF'}]}>
-              {item.method}
-            </Text>
+            <View
+              style={[styles.methodBadge, {backgroundColor: methodColor}]}>
+              <Text style={[styles.methodBadgeText, {color: AppColors.white}]}>
+                {item.method}
+              </Text>
+            </View>
+
+            <HighlightText
+              text={cleanHost || item.url}
+              search={searchStr}
+              style={styles.cardHostText}
+              highlightStyle={styles.highlight}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            />
           </View>
 
-          <HighlightText
-            text={baseUrl}
-            search={searchStr}
-            style={styles.urlPathText}
-            highlightStyle={styles.highlight}
-            numberOfLines={0}
-            detectLinks={true}
-          />
-
-          {isJson && (
-            <View
+          <View
+            style={[
+              styles.statusPill,
+              {
+                backgroundColor: isFailed
+                  ? `${AppColors.errorColor}15`
+                  : isLoading
+                  ? `${AppColors.darkOrange}15`
+                  : `${statusColor}15`,
+                borderColor: isFailed
+                  ? `${AppColors.errorColor}30`
+                  : isLoading
+                  ? `${AppColors.darkOrange}30`
+                  : `${statusColor}30`,
+              },
+            ]}>
+            <Text
               style={[
-                styles.chip,
+                styles.statusPillText,
                 {
-                  backgroundColor: `${AppColors.darkOrange}15`,
-                  borderColor: `${AppColors.darkOrange}30`,
-                  marginLeft: 6,
+                  color: isFailed
+                    ? AppColors.errorColor
+                    : isLoading
+                    ? AppColors.darkOrange
+                    : statusColor,
                 },
               ]}>
-              <Text style={[styles.chipText, {color: AppColors.darkOrange}]}>
-                .json
-              </Text>
-            </View>
-          )}
-
-          {/* #9 — collapsed duplicate counter */}
-          {item.duplicateCount != null && item.duplicateCount > 1 && (
-            <View
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: `${AppColors.purple}15`,
-                  borderColor: `${AppColors.purple}30`,
-                  marginLeft: 6,
-                },
-              ]}>
-              <Text
-                style={[
-                  styles.chipText,
-                  {color: AppColors.purple, fontWeight: '700'},
-                ]}>
-                ×{item.duplicateCount}
-              </Text>
-            </View>
-          )}
+              {isLoading
+                ? '...'
+                : isFailed
+                ? (item.status ? `${item.status}` : t('network.statusFailed'))
+                : item.status}
+            </Text>
+          </View>
         </View>
 
-        {showPathRow && (
-          <View style={{flexDirection: 'row', alignItems: 'flex-start', marginTop: 3, marginBottom: 5, paddingLeft: 30, gap: 6}}>
-            <Text style={{color: AppColors.grayTextWeak, fontSize: 9, fontFamily: AppFonts.interBold, letterSpacing: 0.5, marginTop: 2.5}}>PATH</Text>
-            <HighlightText
-              text={path}
-              search={searchStr}
-              style={{
-                fontFamily: AppFonts.Sfprotext || 'System',
-                fontSize: 12,
-                color: AppColors.grayText,
-                flex: 1,
-              }}
-              highlightStyle={styles.highlight}
-              numberOfLines={0}
-            />
+        {/* Row 2: Improved Slug Capsule Container */}
+        {showSlug && (
+          <View style={styles.cardSlugBox}>
+            <View style={styles.slugLeft}>
+              <Text style={styles.slugTag}>PATH</Text>
+              <HighlightText
+                text={slug}
+                search={searchStr}
+                style={styles.slugText}
+                highlightStyle={styles.highlight}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              />
+            </View>
+
+            <View style={styles.slugRight}>
+              {isJson && (
+                <View
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: `${AppColors.darkOrange}12`,
+                      borderColor: `${AppColors.darkOrange}28`,
+                    },
+                  ]}>
+                  <Text style={[styles.chipText, {color: AppColors.darkOrange}]}>
+                    .json
+                  </Text>
+                </View>
+              )}
+
+              {item.duplicateCount != null && item.duplicateCount > 1 && (
+                <View
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: `${AppColors.purple}12`,
+                      borderColor: `${AppColors.purple}28`,
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      {color: AppColors.purple, fontWeight: '700'},
+                    ]}>
+                    ×{item.duplicateCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         )}
 
-        <View style={styles.cardBottomRow}>
+        {/* Row 3: Footer (Timestamp on Left, Response Size & Duration on Right) */}
+        <View style={styles.cardFooterRow}>
           <View style={styles.cardDateRow}>
-            <CalendarIcon color={AppColors.grayTextWeak} size={11} />
+            <CalendarIcon color={AppColors.grayTextWeak} size={10} />
             <Text style={styles.cardDateText}>{triggeredAt}</Text>
           </View>
 
-          <View style={styles.cardMetaRow}>
+          <View style={styles.cardFooterRight}>
+            {item.response != null && (
+              <View
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: `${AppColors.purple}12`,
+                    borderColor: `${AppColors.purple}2E`,
+                  },
+                ]}>
+                <SizeIcon color={AppColors.purple} size={9} />
+                <Text
+                  style={[
+                    styles.chipText,
+                    {color: AppColors.purple, fontSize: 9.5},
+                  ]}>
+                  {getSize(item.response)}
+                </Text>
+              </View>
+            )}
+
             {item.duration != null && !isFailed && (
               <View
                 style={[
@@ -190,47 +252,13 @@ const LogCard = React.memo(function LogCard({
                     borderColor: `${durationColor}30`,
                   },
                 ]}>
-                <ClockIcon color={durationColor} size={10} />
-                <Text style={[styles.chipText, {color: durationColor}]}>
+                <ClockIcon color={durationColor} size={9} />
+                <Text style={[styles.chipText, {color: durationColor, fontSize: 9.5}]}>
                   {item.duration}ms
                 </Text>
               </View>
             )}
-
-            <View
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: isFailed
-                    ? `${AppColors.errorColor}15`
-                    : `${statusColor}15`,
-                  borderColor: isFailed
-                    ? `${AppColors.errorColor}30`
-                    : `${statusColor}30`,
-                },
-              ]}>
-              <Text
-                style={[
-                  styles.chipText,
-                  {color: isFailed ? AppColors.errorColor : statusColor},
-                ]}>
-                {isFailed ? 'Failed' : item.status}
-              </Text>
-            </View>
           </View>
-        </View>
-
-        <View style={styles.timelineTrack}>
-          <View
-            style={[
-              styles.timelineBar,
-              {
-                left: `${Math.max(0, leftPercent)}%`,
-                width: `${Math.min(100, widthPercent)}%`,
-                backgroundColor: methodColor,
-              },
-            ]}
-          />
         </View>
       </View>
       <Animated.View

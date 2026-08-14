@@ -4,16 +4,15 @@ import {Text, Linking} from 'react-native';
 // Helpers
 import {escapeRegex, handleOpenExternalLink} from '../helpers';
 
-const HighlightText = ({
+const HighlightText = React.memo(function HighlightText({
   text,
   search,
   style,
   highlightStyle,
   detectLinks,
+  numberOfLines,
   ...rest
-}: any) => {
-  const hasNumberOfLines = 'numberOfLines' in rest;
-  const numLines = hasNumberOfLines ? rest.numberOfLines : 1;
+}: any) {
 
   // Regex to detect absolute URLs
   const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -42,7 +41,7 @@ const HighlightText = ({
   if (detectLinks && text) {
     const parts = text.split(URL_REGEX);
     return (
-      <Text style={style} numberOfLines={numLines} {...rest}>
+      <Text style={style} numberOfLines={numberOfLines} {...rest}>
         {parts.map((part: string, i: number) => {
           if (part.match(URL_REGEX)) {
             return (
@@ -67,7 +66,7 @@ const HighlightText = ({
 
   if (!search)
     return (
-      <Text style={style} numberOfLines={numLines} {...rest}>
+      <Text style={style} numberOfLines={numberOfLines} {...rest}>
         {text}
       </Text>
     );
@@ -76,7 +75,7 @@ const HighlightText = ({
   const parts = text.split(regex);
 
   return (
-    <Text style={style} numberOfLines={numLines} {...rest}>
+    <Text style={style} numberOfLines={numberOfLines} {...rest}>
       {parts.map((part: any, i: number) =>
         part.toLowerCase() === search.toLowerCase() ? (
           <Text key={i} style={highlightStyle}>
@@ -88,6 +87,6 @@ const HighlightText = ({
       )}
     </Text>
   );
-};
+});
 
 export default HighlightText;

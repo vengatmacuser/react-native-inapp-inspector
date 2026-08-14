@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {View, Pressable, Text, Animated, Linking} from 'react-native';
+import {useTranslation} from 'react-i18next';
+import {View, Pressable, Text, Animated} from 'react-native';
 
 // Constants
 import {DURATION_FAST_MS, DURATION_SLOW_MS} from '../constants';
@@ -9,6 +10,9 @@ import useAccordion from '../customHooks/useAccordion';
 
 // Helpers
 import {getDurationColor, handleOpenExternalLink} from '../helpers';
+
+// Types
+import {MetaAccordionProps} from '../types';
 
 // Assets
 import {
@@ -29,17 +33,6 @@ import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
 
-export interface MetaAccordionProps {
-  status: number | null | undefined;
-  statusColor: string;
-  duration: number | null | undefined;
-  size: string;
-  triggeredAt: string;
-  method: string;
-  contentType?: string;
-  url: string;
-}
-
 const MetaAccordion = ({
   status,
   statusColor,
@@ -50,8 +43,9 @@ const MetaAccordion = ({
   contentType,
   url,
 }: MetaAccordionProps) => {
+  const {t} = useTranslation();
   const [urlExpanded, setUrlExpanded] = useState(false);
-  const {toggleOpen, chevronStyle, bodyStyle} = useAccordion(true, 400, 390);
+  const {toggleOpen, chevronStyle, bodyStyle} = useAccordion(true, 800, 390);
   const isFailed = status === 0 || status == null;
 
   const renderFormattedUrl = (rawUrl: string) => {
@@ -84,12 +78,12 @@ const MetaAccordion = ({
       return (
         <Text style={{lineHeight: 16}}>
           {protocol ? (
-            <Text style={{color: '#94A3B8', fontFamily: AppFonts.interRegular}}>{protocol}</Text>
+            <Text style={{color: AppColors.slate400, fontFamily: AppFonts.interRegular}}>{protocol}</Text>
           ) : null}
           <Text style={{color: AppColors.purple, fontFamily: AppFonts.interBold}}>{host}</Text>
-          <Text style={{color: '#334155', fontFamily: AppFonts.interMedium}}>{pathname}</Text>
+          <Text style={{color: AppColors.slate700, fontFamily: AppFonts.interMedium}}>{pathname}</Text>
           {search ? (
-            <Text style={{color: '#0D9488', fontFamily: AppFonts.interRegular}}>{search}</Text>
+            <Text style={{color: AppColors.teal600, fontFamily: AppFonts.interRegular}}>{search}</Text>
           ) : null}
         </Text>
       );
@@ -114,7 +108,7 @@ const MetaAccordion = ({
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <CalendarIcon color={AppColors.grayTextWeak} size={14} />
-              <Text style={styles.metaLabel}>Triggered At</Text>
+              <Text style={styles.metaLabel}>{t('network.triggeredAt')}</Text>
             </View>
             <Text
               style={[
@@ -129,14 +123,14 @@ const MetaAccordion = ({
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <TerminalIcon color={AppColors.grayTextWeak} size={14} />
-              <Text style={styles.metaLabel}>Method</Text>
+              <Text style={styles.metaLabel}>{t('network.methodHeader')}</Text>
             </View>
             <View
               style={[
                 styles.statusChip,
                 {
-                  borderColor: 'rgba(107, 78, 255, 0.25)',
-                  backgroundColor: 'rgba(107, 78, 255, 0.08)',
+                  borderColor: `${AppColors.brandPurple}40`,
+                  backgroundColor: `${AppColors.brandPurple}14`,
                 },
               ]}>
               <Text
@@ -153,7 +147,7 @@ const MetaAccordion = ({
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <StatusIcon color={AppColors.grayTextWeak} />
-              <Text style={styles.metaLabel}>Status</Text>
+              <Text style={styles.metaLabel}>{t('network.statusHeader')}</Text>
             </View>
             <View
               style={[
@@ -172,7 +166,7 @@ const MetaAccordion = ({
                   styles.statusText,
                   {color: isFailed ? AppColors.errorColor : statusColor},
                 ]}>
-                {isFailed ? 'Failed (Network Error)' : String(status)}
+                {isFailed ? t('network.failedNetworkError') : String(status)}
               </Text>
             </View>
           </View>
@@ -181,7 +175,7 @@ const MetaAccordion = ({
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <GlobeIcon color={AppColors.grayTextWeak} size={14} />
-              <Text style={styles.metaLabel}>Content Type</Text>
+              <Text style={styles.metaLabel}>{t('network.contentType')}</Text>
             </View>
             <Text style={styles.metaValue}>
               {contentType || 'application/json'}
@@ -192,7 +186,7 @@ const MetaAccordion = ({
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <ClockIcon color={AppColors.grayTextWeak} size={14} />
-              <Text style={styles.metaLabel}>Duration</Text>
+              <Text style={styles.metaLabel}>{t('network.durationHeader')}</Text>
             </View>
             <View style={styles.metaValueRow}>
               {duration != null && !isFailed && (
@@ -210,10 +204,10 @@ const MetaAccordion = ({
                       {color: getDurationColor(duration)},
                     ]}>
                     {duration < DURATION_FAST_MS
-                      ? 'Fast'
+                      ? t('network.perf.fast')
                       : duration < DURATION_SLOW_MS
-                      ? 'Moderate'
-                      : 'Slow'}
+                      ? t('network.perf.moderate')
+                      : t('network.perf.slow')}
                   </Text>
                 </View>
               )}
@@ -227,7 +221,7 @@ const MetaAccordion = ({
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
               <SizeIcon color={AppColors.grayTextWeak} />
-              <Text style={styles.metaLabel}>Size</Text>
+              <Text style={styles.metaLabel}>{t('network.sizeHeader')}</Text>
             </View>
             <Text style={styles.metaValue}>{size}</Text>
           </View>
@@ -237,7 +231,7 @@ const MetaAccordion = ({
             <View style={{flexDirection: 'row', justifyContent: 'space-between', width: '100%', alignItems: 'center'}}>
               <View style={styles.metaLabelRow}>
                 <GlobeIcon color={AppColors.grayTextWeak} size={14} />
-                <Text style={styles.metaLabel}>Full URL</Text>
+                <Text style={styles.metaLabel}>{t('network.fullUrl')}</Text>
               </View>
               
               <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
@@ -248,7 +242,7 @@ const MetaAccordion = ({
                       fontSize: 10.5,
                       color: AppColors.purple,
                     }}>
-                      {urlExpanded ? 'Show Less' : 'Show More'}
+                      {urlExpanded ? t('network.showLess') : t('network.showMore')}
                     </Text>
                   </TouchableScale>
                 )}
@@ -261,7 +255,7 @@ const MetaAccordion = ({
                       color: AppColors.purple,
                       textDecorationLine: 'underline',
                     }}>
-                      Open
+                      {t('network.open')}
                     </Text>
                   </TouchableScale>
                 )}
@@ -269,11 +263,11 @@ const MetaAccordion = ({
             </View>
             
             <View style={{
-              backgroundColor: '#F8FAFC',
+              backgroundColor: AppColors.slate50,
               borderRadius: 8,
               padding: 8,
               borderWidth: 1.5,
-              borderColor: '#E2E8F0',
+              borderColor: AppColors.slate200,
               width: '100%',
               marginTop: 2,
             }}>
