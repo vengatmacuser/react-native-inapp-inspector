@@ -1230,3 +1230,32 @@ export const ReduxIcon = ({
   );
 };
 
+export const PerformanceIcon = ({
+  color = AppColors.purple,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3v2M5.636 5.636l1.414 1.414M18.364 5.636l-1.414 1.414M3 12h2M19 12h2"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M12 19a7 7 0 1 0-7-7c0 1.93.784 3.68 2.05 4.95"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M12 12l3.5-3.5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <Circle cx="12" cy="12" r="1.5" fill={color} />
+    </Svg>
+  );
+};
+

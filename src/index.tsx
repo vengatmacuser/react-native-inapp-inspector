@@ -262,7 +262,8 @@ const NetworkInspector = ({
     logs: true,
     analytics: true,
     redux: false,
-    bundle: true,
+    bundle: false,
+    performance: false,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -285,7 +286,8 @@ const NetworkInspector = ({
       logs: true,
       analytics: true,
       redux: false,
-      bundle: true,
+      bundle: false,
+      performance: false,
     });
     setDefaultTab('apis');
     setMaxNetworkLogs(100);
@@ -340,7 +342,8 @@ const NetworkInspector = ({
             logs: true,
             analytics: true,
             redux: false,
-            bundle: true,
+            bundle: false,
+            performance: false,
           },
           ...(saved.tabVisibility || {}),
           apis: true,

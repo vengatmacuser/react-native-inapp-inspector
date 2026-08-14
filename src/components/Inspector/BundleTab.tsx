@@ -2,6 +2,7 @@ import React, {useState, useMemo, useCallback} from 'react';
 import {
   FlatList,
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -74,6 +75,11 @@ export interface BundlePackageItem {
   color: string;
   description: string;
   logoUri?: string;
+  latestVersion?: string;
+  isDeprecated?: boolean;
+  deprecationReason?: string;
+  lastActive?: string;
+  npmUrl?: string;
 }
 
 // ─── High-Fidelity Vector Package & NPM Logos ────────────────────────────────
@@ -895,6 +901,7 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     id: 'pkg-1',
     name: 'react-native',
     version: '0.85.3',
+    latestVersion: '0.85.3',
     sizeKb: 680,
     percentage: 38.5,
     type: 'direct',
@@ -902,11 +909,15 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#38BDF8',
     description: 'React Native runtime, Fabric UI engine, Native Bridge, and Turbomodules.',
     logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png',
+    lastActive: '3 days ago',
+    npmUrl: 'https://www.npmjs.com/package/react-native',
+    isDeprecated: false,
   },
   {
     id: 'pkg-2',
     name: '@react-navigation/native-stack',
     version: '^7.16.0',
+    latestVersion: '7.16.0',
     sizeKb: 245,
     percentage: 13.9,
     type: 'direct',
@@ -914,11 +925,15 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#818CF8',
     description: 'Native screen router, UIViewController / Fragment animations and transitions.',
     logoUri: 'https://reactnavigation.org/img/spiro.svg',
+    lastActive: '1 week ago',
+    npmUrl: 'https://www.npmjs.com/package/@react-navigation/native-stack',
+    isDeprecated: false,
   },
   {
     id: 'pkg-3',
     name: 'react',
     version: '19.2.3',
+    latestVersion: '19.2.3',
     sizeKb: 185,
     percentage: 10.5,
     type: 'direct',
@@ -926,11 +941,15 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#06B6D4',
     description: 'React core virtual DOM reconciler, hooks engine, and JSX runtime.',
     logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png',
+    lastActive: '5 days ago',
+    npmUrl: 'https://www.npmjs.com/package/react',
+    isDeprecated: false,
   },
   {
     id: 'pkg-4',
     name: 'react-native-svg',
     version: '^15.15.5',
+    latestVersion: '15.16.0',
     sizeKb: 140,
     percentage: 7.9,
     type: 'direct',
@@ -938,11 +957,15 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#F472B6',
     description: 'Scalable Vector Graphics XML parser and native canvas path rasterizer.',
     logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/SVG_logo.svg/512px-SVG_logo.svg.png',
+    lastActive: '2 days ago',
+    npmUrl: 'https://www.npmjs.com/package/react-native-svg',
+    isDeprecated: false,
   },
   {
     id: 'pkg-5',
     name: 'react-native-screens',
     version: '^4.25.2',
+    latestVersion: '4.25.2',
     sizeKb: 110,
     percentage: 6.2,
     type: 'transitive',
@@ -950,11 +973,15 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#A78BFA',
     description: 'Native navigation container primitives for iOS and Android memory management.',
     logoUri: 'https://reactnavigation.org/img/spiro.svg',
+    lastActive: '2 weeks ago',
+    npmUrl: 'https://www.npmjs.com/package/react-native-screens',
+    isDeprecated: false,
   },
   {
     id: 'pkg-6',
     name: 'axios',
     version: '^1.17.0',
+    latestVersion: '1.18.0',
     sizeKb: 88,
     percentage: 5.0,
     type: 'direct',
@@ -962,11 +989,15 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#F59E0B',
     description: 'HTTP client, request/response interceptors, and adapter pipelines.',
     logoUri: 'https://axios-http.com/assets/logo.svg',
+    lastActive: '4 days ago',
+    npmUrl: 'https://www.npmjs.com/package/axios',
+    isDeprecated: false,
   },
   {
     id: 'pkg-7',
     name: 'react-native-linear-gradient',
     version: '^2.8.3',
+    latestVersion: '2.8.3',
     sizeKb: 45,
     percentage: 2.5,
     type: 'direct',
@@ -974,11 +1005,16 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#FB7185',
     description: 'Hardware accelerated native gradient drawing shaders.',
     logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png',
+    lastActive: '2 years ago',
+    npmUrl: 'https://www.npmjs.com/package/react-native-linear-gradient',
+    isDeprecated: true,
+    deprecationReason: 'Package maintenance is in transition. Consider expo-linear-gradient or @react-native-community/linear-gradient for Fabric support.',
   },
   {
     id: 'pkg-8',
     name: 'i18next & react-i18next',
     version: '^26.3.6',
+    latestVersion: '26.3.6',
     sizeKb: 62,
     percentage: 3.5,
     type: 'direct',
@@ -986,6 +1022,9 @@ const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
     color: '#10B981',
     description: 'Internationalization framework, language interpolator, and locale switcher.',
     logoUri: 'https://raw.githubusercontent.com/i18next/i18next/master/assets/i18next-logo.png',
+    lastActive: '6 days ago',
+    npmUrl: 'https://www.npmjs.com/package/i18next',
+    isDeprecated: false,
   },
 ];
 
@@ -1775,81 +1814,128 @@ const BundleTab = React.memo(() => {
               Showing {filteredPackages.length} dependencies
             </Text>
 
-            {filteredPackages.map((pkg, index) => (
-              <View key={pkg.id} style={bundleStyles.fileCard}>
-                {/* Header Row: #s.no + Logo + Package Name + Version Pill + Size & Copy */}
-                <View style={bundleStyles.fileCardTop}>
-                  <View style={bundleStyles.sNoBadge}>
-                    <Text style={bundleStyles.sNoText}>#{index + 1}</Text>
-                  </View>
+            {filteredPackages.map((pkg, index) => {
+              const cleanInstalledVersion = pkg.version.replace(/^\^/, '');
+              const hasUpdate = pkg.latestVersion && pkg.latestVersion !== cleanInstalledVersion;
 
-                  <PackageLogoRenderer
-                    name={pkg.name}
-                    color={pkg.color}
-                    size={28}
-                  />
+              return (
+                <View key={pkg.id} style={[bundleStyles.fileCard, pkg.isDeprecated && {borderColor: '#FECDD3', backgroundColor: '#FFFDFD'}]}>
+                  {/* Header Row: #s.no + Logo + Package Name + Version Pill + Update/Deprecated Badges + Size & Copy */}
+                  <View style={bundleStyles.fileCardTop}>
+                    <View style={bundleStyles.sNoBadge}>
+                      <Text style={bundleStyles.sNoText}>#{index + 1}</Text>
+                    </View>
 
-                  <View style={{flex: 1, paddingHorizontal: 4}}>
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
-                      <HighlightText
-                        text={pkg.name}
-                        search={search}
-                        style={bundleStyles.fileName}
-                        highlightStyle={bundleStyles.searchHighlight}
-                      />
-                      <View style={bundleStyles.versionPill}>
-                        <Text style={bundleStyles.versionPillText}>
-                          v{pkg.version.replace(/^\^/, '')}
-                        </Text>
+                    <PackageLogoRenderer
+                      name={pkg.name}
+                      color={pkg.color}
+                      size={28}
+                    />
+
+                    <View style={{flex: 1, paddingHorizontal: 4}}>
+                      <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
+                        <HighlightText
+                          text={pkg.name}
+                          search={search}
+                          style={bundleStyles.fileName}
+                          highlightStyle={bundleStyles.searchHighlight}
+                        />
+                        <View style={bundleStyles.versionPill}>
+                          <Text style={bundleStyles.versionPillText}>
+                            v{cleanInstalledVersion}
+                          </Text>
+                        </View>
+
+                        {pkg.isDeprecated ? (
+                          <View style={bundleStyles.deprecatedBadge}>
+                            <Text style={bundleStyles.deprecatedBadgeText}>⚠️ DEPRECATED</Text>
+                          </View>
+                        ) : hasUpdate ? (
+                          <View style={bundleStyles.updateBadge}>
+                            <Text style={bundleStyles.updateBadgeText}>⚡ Update: v{pkg.latestVersion}</Text>
+                          </View>
+                        ) : (
+                          <View style={[bundleStyles.updateBadge, {backgroundColor: '#F3F4F6', borderColor: '#E5E7EB'}]}>
+                            <Text style={[bundleStyles.updateBadgeText, {color: '#4B5563'}]}>✨ Up to date</Text>
+                          </View>
+                        )}
                       </View>
                     </View>
+
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                      <View style={bundleStyles.fileSizeBox}>
+                        <Text style={bundleStyles.fileSizeKb}>{pkg.sizeKb} KB</Text>
+                        <Text style={bundleStyles.filePercent}>{pkg.percentage}%</Text>
+                      </View>
+                      <CopyButton
+                        value={() => pkg}
+                        label="Package Details JSON"
+                      />
+                    </View>
                   </View>
 
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                    <View style={bundleStyles.fileSizeBox}>
-                      <Text style={bundleStyles.fileSizeKb}>{pkg.sizeKb} KB</Text>
-                      <Text style={bundleStyles.filePercent}>{pkg.percentage}%</Text>
+                  {/* Subtitle Row: Category Chip + Description */}
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, marginBottom: 2}}>
+                    <View style={[bundleStyles.pkgBadge, {backgroundColor: `${pkg.color}1F`, borderColor: `${pkg.color}4D`}]}>
+                      <Text style={[bundleStyles.pkgBadgeText, {color: pkg.color}]}>
+                        {pkg.category.toUpperCase()}
+                      </Text>
                     </View>
-                    <CopyButton
-                      value={() => pkg}
-                      label="Package Details JSON"
+                    <Text style={[bundleStyles.filePath, {flex: 1, marginTop: 0}]} numberOfLines={1}>
+                      {pkg.description}
+                    </Text>
+                  </View>
+
+                  {/* Deprecation Warning Banner if deprecated */}
+                  {pkg.isDeprecated && pkg.deprecationReason && (
+                    <View style={bundleStyles.deprecationBox}>
+                      <Text style={bundleStyles.deprecationText}>
+                        ⚠️ {pkg.deprecationReason}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={bundleStyles.fileProgressTrack}>
+                    <View
+                      style={[
+                        bundleStyles.fileProgressBar,
+                        {width: `${pkg.percentage * 2}%`, backgroundColor: pkg.isDeprecated ? '#EF4444' : pkg.color},
+                      ]}
                     />
                   </View>
-                </View>
 
-                {/* Subtitle Row: Category Chip + Description */}
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, marginBottom: 2}}>
-                  <View style={[bundleStyles.pkgBadge, {backgroundColor: `${pkg.color}1F`, borderColor: `${pkg.color}4D`}]}>
-                    <Text style={[bundleStyles.pkgBadgeText, {color: pkg.color}]}>
-                      {pkg.category.toUpperCase()}
-                    </Text>
+                  {/* Footer Row: Type Tag + Last Active + NPM Link Button */}
+                  <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 3}}>
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      <View style={bundleStyles.typeTag}>
+                        <Text style={bundleStyles.typeTagText}>
+                          {pkg.type === 'direct' ? '📦 Direct' : '🔗 Transitive'}
+                        </Text>
+                      </View>
+                      {pkg.lastActive && (
+                        <Text style={bundleStyles.lastActiveText}>
+                          🕒 {pkg.lastActive}
+                        </Text>
+                      )}
+                    </View>
+
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                      <Text style={bundleStyles.fileMetaText}>
+                        ~{pkg.sizeKb} KB minified
+                      </Text>
+                      <TouchableScale
+                        onPress={() => {
+                          const url = pkg.npmUrl || `https://www.npmjs.com/package/${pkg.name}`;
+                          Linking.openURL(url).catch(() => {});
+                        }}
+                        style={bundleStyles.npmLinkBtn}>
+                        <Text style={bundleStyles.npmLinkText}>npm ↗</Text>
+                      </TouchableScale>
+                    </View>
                   </View>
-                  <Text style={[bundleStyles.filePath, {flex: 1, marginTop: 0}]} numberOfLines={1}>
-                    {pkg.description}
-                  </Text>
                 </View>
-
-                <View style={bundleStyles.fileProgressTrack}>
-                  <View
-                    style={[
-                      bundleStyles.fileProgressBar,
-                      {width: `${pkg.percentage * 2}%`, backgroundColor: pkg.color},
-                    ]}
-                  />
-                </View>
-
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2}}>
-                  <View style={bundleStyles.typeTag}>
-                    <Text style={bundleStyles.typeTagText}>
-                      {pkg.type === 'direct' ? '📦 Direct Dependency' : '🔗 Transitive Peer'}
-                    </Text>
-                  </View>
-                  <Text style={bundleStyles.fileMetaText}>
-                    ~{pkg.sizeKb} KB minified
-                  </Text>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </ScrollView>
 
           {/* Sticky Total Package Size Footer */}
@@ -2605,6 +2691,69 @@ const bundleStyles = StyleSheet.create({
     fontFamily: AppFonts.interMedium,
     fontSize: 9.5,
     color: AppColors.grayText,
+  },
+  npmLinkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+    backgroundColor: '#CB383714',
+    borderWidth: 1,
+    borderColor: '#CB383733',
+  },
+  npmLinkText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    color: '#CB3837',
+  },
+  deprecatedBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  deprecatedBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9,
+    color: '#DC2626',
+    letterSpacing: 0.3,
+  },
+  updateBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  updateBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9,
+    color: '#047857',
+  },
+  lastActiveText: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+  },
+  deprecationBox: {
+    backgroundColor: '#FFF1F2',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+    marginTop: 3,
+  },
+  deprecationText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10.5,
+    color: '#BE123C',
+    lineHeight: 14,
   },
   unusedBadge: {
     paddingHorizontal: 6,

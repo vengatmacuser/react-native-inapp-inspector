@@ -1,7 +1,7 @@
 // ─── Enum-like union types ────────────────────────────────────────────────────
 // The codebase treats these as string enums (used for tab keys, filters, etc.).
 
-export type ActiveTab = 'apis' | 'analytics' | 'logs' | 'redux' | 'bundle';
+export type ActiveTab = 'apis' | 'analytics' | 'logs' | 'redux' | 'bundle' | 'performance';
 
 export type Method = 'ALL' | 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type StatusFilter = 'ALL' | '2xx' | '3xx' | '4xx' | '5xx' | 'Failed';
@@ -18,6 +18,7 @@ export type SettingsPage =
   | 'analytics'
   | 'redux'
   | 'bundle'
+  | 'performance'
   | null;
 
 export type SettingsSubTab = 'module' | 'ui';

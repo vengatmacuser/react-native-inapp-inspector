@@ -22,6 +22,7 @@ import AnalyticsDetail from '../AnalyticsDetail';
 import ReduxTab from './ReduxTab';
 import ReduxDetail from './ReduxDetail';
 import BundleTab from './BundleTab';
+import PerformanceTab from './PerformanceTab';
 import SettingsPanel from './SettingsPanel';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
@@ -140,6 +141,13 @@ const MainScreen = () => {
                         display: activeTab === 'bundle' ? 'flex' : 'none',
                       }}>
                       {mountedTabs.bundle && <BundleTab />}
+                    </View>
+                    <View
+                      style={{
+                        flex: 1,
+                        display: activeTab === 'performance' ? 'flex' : 'none',
+                      }}>
+                      {mountedTabs.performance && <PerformanceTab />}
                     </View>
                   </>
                 )

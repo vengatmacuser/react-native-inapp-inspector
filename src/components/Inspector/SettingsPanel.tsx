@@ -35,6 +35,7 @@ import {
   WhiteBackNavigation,
   PackageIcon,
   ReduxIcon,
+  PerformanceIcon,
 } from '../NetworkIcons';
 
 const SettingsPanel = () => {
@@ -88,6 +89,7 @@ const SettingsPanel = () => {
       {key: 'analytics', label: 'Analytics', icon: 'analytics'},
       {key: 'redux', label: 'Redux', icon: 'redux'},
       {key: 'bundle', label: 'Bundle', icon: 'bundle'},
+      {key: 'performance', label: 'Performance', icon: 'performance'},
     ] as const;
 
     return (
@@ -358,6 +360,16 @@ const SettingsPanel = () => {
                         )}
                         {tab.icon === 'bundle' && (
                           <PackageIcon
+                            color={
+                              isLocked
+                                ? AppColors.grayTextWeak
+                                : AppColors.purple
+                            }
+                            size={11}
+                          />
+                        )}
+                        {tab.icon === 'performance' && (
+                          <PerformanceIcon
                             color={
                               isLocked
                                 ? AppColors.grayTextWeak
@@ -903,6 +915,9 @@ const SettingsPanel = () => {
                             )}
                             {tab.icon === 'bundle' && (
                               <PackageIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
+                            )}
+                            {tab.icon === 'performance' && (
+                              <PerformanceIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
                             )}
                           </View>
                           <Text

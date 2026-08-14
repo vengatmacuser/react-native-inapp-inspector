@@ -10,6 +10,7 @@ import {
   AnalyticsIcon,
   PackageIcon,
   ReduxIcon,
+  PerformanceIcon,
 } from '../NetworkIcons';
 
 const TabBar = React.memo(() => {
@@ -63,6 +64,12 @@ const TabBar = React.memo(() => {
               count: 0,
               icon: 'bundle',
             },
+            {
+              key: 'performance',
+              label: 'Performance',
+              count: 0,
+              icon: 'performance',
+            },
           ] as const
         )
           .filter(tab => tabVisibility?.[tab.key])
@@ -107,6 +114,9 @@ const TabBar = React.memo(() => {
                   )}
                   {tab.icon === 'bundle' && (
                     <PackageIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'performance' && (
+                    <PerformanceIcon color={iconColor} size={14} />
                   )}
                   <Text
                     numberOfLines={1}
