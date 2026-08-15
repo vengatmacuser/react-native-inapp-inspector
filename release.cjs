@@ -19,6 +19,7 @@
  *   -n, --dry-run        print the plan, execute nothing destructive
  *       --no-push        skip `git push`
  *       --no-release     skip the GitHub release
+ *       --local-publish  publish directly from local machine (default: false, delegated to GitHub Actions)
  *       --no-publish     skip `npm publish`
  *       --access <a>     pass --access to npm publish (public|restricted)
  *       --tag <t>        publish under an npm dist-tag (e.g. next, beta)
@@ -148,7 +149,7 @@ const FLAGS = {
   dryRun: false,
   push: true,
   release: true,
-  publish: true,
+  publish: false, // delegated to GitHub Actions CI/CD on tag push
   access: null,
   distTag: null,
 };
@@ -161,6 +162,7 @@ let BUMP = null;
     else if (t === '-n' || t === '--dry-run') FLAGS.dryRun = true;
     else if (t === '--no-push') FLAGS.push = false;
     else if (t === '--no-release') FLAGS.release = false;
+    else if (t === '--local-publish' || t === '--publish') FLAGS.publish = true;
     else if (t === '--no-publish') FLAGS.publish = false;
     else if (t === '--access') FLAGS.access = a[++i];
     else if (t === '--tag') FLAGS.distTag = a[++i];
@@ -304,7 +306,14 @@ async function main() {
       ['Commits since', String(commits.length)],
       ['Push to GitHub', FLAGS.push ? C.green('yes') : C.gray('skipped')],
       ['GitHub release', FLAGS.release ? C.green('yes') : C.gray('skipped')],
-      ['Publish to npm', FLAGS.publish ? C.green('yes') : C.gray('skipped')],
+      [
+        'Publish to npm',
+        FLAGS.publish
+          ? C.green('yes (local)')
+          : FLAGS.push
+          ? C.cyan('via GitHub Actions CI/CD')
+          : C.gray('skipped'),
+      ],
       [
         'Mode',
         FLAGS.dryRun
@@ -412,7 +421,14 @@ async function main() {
         FLAGS.release ? C.blue(releaseUrl || '—') : C.gray('skipped'),
       ],
       ['npm dist-tag', FLAGS.distTag || 'latest'],
-      ['npm package', FLAGS.publish ? C.blue(npmUrl) : C.gray('skipped')],
+      [
+        'npm package',
+        FLAGS.publish
+          ? C.blue(npmUrl)
+          : FLAGS.push
+          ? C.cyan('publishing via GitHub Actions (with provenance)')
+          : C.gray('skipped'),
+      ],
     ],
   });
   log('');
@@ -421,7 +437,12 @@ async function main() {
       ? `${ICON.info} ${C.yellow('Dry run complete — no changes were made.')}`
       : `${ICON.ok} ${C.green(C.bold('Done.'))} ${C.cyan(name)}@${C.green(
           newVersion,
-        )} is live.`,
+        )} released.` +
+        (FLAGS.publish
+          ? ' Live on npm.'
+          : FLAGS.push
+          ? ' GitHub Actions CI/CD will publish to npm with provenance.'
+          : ''),
   );
   log('');
 }
