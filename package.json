@@ -1,13 +1,14 @@
 {
   "name": "react-native-inapp-inspector",
   "version": "1.1.20",
-  "description": "A self-contained network, console, analytics, and webview inspector for React Native applications.",
+  "description": "The zero-config, all-in-one in-app debugger for React Native & Expo. Inspect Network (fetch/axios), Console logs, Stack Traces, Redux State, Firebase Analytics, and JS Bundle size directly on device.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vengatmacuser/react-native-inapp-inspector.git"
   },
   "bugs": {
-    "url": "https://github.com/vengatmacuser/react-native-inapp-inspector/issues"
+    "url": "https://github.com/vengatmacuser/react-native-inapp-inspector/issues",
+    "email": "vengatmacuser@gmail.com"
   },
   "homepage": "https://github.com/vengatmacuser/react-native-inapp-inspector#readme",
   "main": "dist/commonjs/index.js",
@@ -35,11 +36,32 @@
   },
   "keywords": [
     "react-native",
+    "react-native-inapp-inspector",
     "network-logger",
     "network-inspector",
+    "react-native-network-logger",
+    "flipper-alternative",
+    "chucker",
+    "chucker-react-native",
+    "in-app-inspector",
+    "in-app-debugger",
+    "react-native-debugger",
+    "react-native-devtools",
+    "devtools",
+    "expo",
+    "expo-network-logger",
+    "http-logger",
+    "api-inspector",
+    "console-logger",
+    "redux-inspector",
+    "redux-logger",
     "analytics-logger",
-    "webview-logger",
-    "debug-tool"
+    "bundle-visualizer",
+    "hermes",
+    "zero-config",
+    "debug-tool",
+    "ios",
+    "android"
   ],
   "author": "Vengateswaran Balakrishnan",
   "contributors": [

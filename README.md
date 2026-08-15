@@ -10,15 +10,36 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/v/react-native-inapp-inspector?color=6366f1&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/dm/react-native-inapp-inspector?color=3b82f6&label=downloads" alt="npm downloads" /></a>
+  <a href="https://bundlephobia.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/bundlephobia/minzip/react-native-inapp-inspector?color=10b981&label=minzipped" alt="bundle size" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license" /></a>
-  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/badge/platform-iOS%20%7C%20Android-blue" alt="platform" /></a>
+  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Expo-blue" alt="platform" /></a>
+  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/badge/TypeScript-Ready-3178c6" alt="TypeScript" /></a>
 </p>
 
-A self-contained, developer-first in-app debugging overlay for React Native. Inspect network traffic, console logs, stack traces, analytics events, and Redux state directly on your device or simulator with zero external dependencies.
+The **zero-config, all-in-one in-app debugging overlay for React Native & Expo**. Inspect network traffic (fetch/Axios), console logs with Metro symbolicated stack traces, Redux state diffs, Firebase Analytics events, and JavaScript bundle size directly on your device or simulator with zero native setup.
+
+> 🚀 **The modern, lightweight alternative to Flipper and Chucker** — works standalone on device, in test builds, and across standalone APKs/IPAs without desktop companion apps, cables, or open debugger ports.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector Walkthrough" width="360" style="border-radius: 20px;" />
 </p>
+
+---
+
+## ⚡ Why Choose `react-native-inapp-inspector`?
+
+| Capability | **react-native-inapp-inspector** | react-native-network-logger | Flipper / RN Debugger |
+| :--- | :---: | :---: | :---: |
+| **Zero Native Setup / No Cables** | ✅ | ✅ | ❌ (Requires desktop app/cables) |
+| **Network Inspector (Fetch & Axios)** | ✅ | ✅ | ✅ |
+| **cURL & Fetch Snippet Export** | ✅ | ❌ | ⚠️ |
+| **Console Logger + Stack Traces** | ✅ (Metro Symbolicated) | ❌ | ✅ |
+| **Redux State & Action Diffs** | ✅ | ❌ | ⚠️ |
+| **Firebase Analytics Tracker** | ✅ | ❌ | ❌ |
+| **JS Bundle Size & Hermes Analyzer** | ✅ | ❌ | ❌ |
+| **Live Traffic Stream Freeze** | ✅ | ❌ | ❌ |
+| **Expo & Bare React Native** | ✅ | ✅ | ⚠️ |
 
 ---
 
@@ -45,24 +66,27 @@ A self-contained, developer-first in-app debugging overlay for React Native. Ins
 
 ## 📦 Installation
 
+### Bare React Native
 ```bash
 npm install --save-dev react-native-inapp-inspector axios
-```
-
-```bash
+# or
 yarn add -D react-native-inapp-inspector axios
 ```
 
-### Peer & Native Dependencies
-
-The package has React and React Native as peer dependencies. It depends on `@react-navigation/native`, `react-native-linear-gradient`, and `react-native-svg`.
-
-*(Optional)* If you use `@react-native-clipboard/clipboard` in your project, the inspector automatically detects and utilizes native clipboard bridges for seamless emulator-to-host copying.
-
 ```bash
-# iOS Pods installation
+# iOS Pods
 cd ios && pod install
 ```
+
+### Expo Projects
+```bash
+npx expo install react-native-inapp-inspector react-native-svg react-native-linear-gradient
+```
+
+### Dependencies
+The package requires React (`>=18.0.0`) and React Native (`>=0.60.0`) as peer dependencies and utilizes `@react-navigation/native`, `react-native-linear-gradient`, and `react-native-svg`.
+
+*(Optional)* If you use `@react-native-clipboard/clipboard` in your project, the inspector automatically detects and utilizes native clipboard bridges for seamless emulator-to-host copying.
 
 ---
 
