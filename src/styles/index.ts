@@ -1320,7 +1320,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     justifyContent: 'flex-end',
   },
   modalBackdropPressable: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
   },
   modalContentCard: {
     height: '90%',

@@ -12,13 +12,6 @@
     "strictNullChecks": false,
     "moduleResolution": "node",
     "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
-    "paths": {
-      "*": ["./example/node_modules/*"]
-    },
-    "typeRoots": [
-      "./example/node_modules/@types"
-    ],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
