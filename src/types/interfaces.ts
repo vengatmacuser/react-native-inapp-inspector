@@ -109,6 +109,7 @@ export interface PersistedSettings {
 export interface NetworkInspectorProps {
   enabled?: boolean;
   isEnabled?: boolean;
+  forceEnable?: boolean;
   storage?: InspectorStorage;
   navigationRef?: any;
   appIcon?: any;

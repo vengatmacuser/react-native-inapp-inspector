@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import {useInspector} from './InspectorContext';
-import {useTranslation} from 'react-i18next';
+import {useTranslation} from '../../i18n';
 import TouchableScale from '../TouchableScale';
 import AnimatedEntrance from '../AnimatedEntrance';
 import {ConsoleLogCard} from '../ConsoleLogCard';

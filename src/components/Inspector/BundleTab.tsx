@@ -11,7 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import {useTranslation} from 'react-i18next';
+import {useTranslation} from '../../i18n';
 import TouchableScale from '../TouchableScale';
 import CopyButton from '../CopyButton';
 import HighlightText from '../HighlightText';

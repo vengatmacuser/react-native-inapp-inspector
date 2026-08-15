@@ -1,4 +1,4 @@
-import {useTranslation} from 'react-i18next';
+import {useTranslation} from '../i18n';
 import React, {useMemo} from 'react';
 import {View, Text, ScrollView} from 'react-native';
 

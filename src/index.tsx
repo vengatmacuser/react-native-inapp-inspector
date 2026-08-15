@@ -11,8 +11,7 @@ import {
 import {NavigationContext} from '@react-navigation/native';
 
 // i18n
-import {I18nextProvider} from 'react-i18next';
-import i18n from './i18n';
+import {I18nextProvider, i18n} from './i18n';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
@@ -1484,7 +1483,13 @@ const NetworkInspector = ({
   );
 };
 
-const NetworkInspectorWrapper = (props: any) => {
+const NetworkInspectorWrapper = (props: NetworkInspectorProps) => {
+  // If running in production release build and not explicitly force-enabled (e.g. for QA builds),
+  // return null immediately for 0-overhead production stubbing.
+  if (typeof __DEV__ !== 'undefined' && !__DEV__ && !props?.forceEnable) {
+    return null;
+  }
+
   return (
     <I18nextProvider i18n={i18n}>
       <ErrorBoundary fallbackType="inline">

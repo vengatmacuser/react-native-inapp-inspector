@@ -18,7 +18,7 @@ import styles from '../styles';
 import {LogCardProps} from '../types';
 import HighlightText from './HighlightText';
 import TouchableScale from './TouchableScale';
-import {useTranslation} from 'react-i18next';
+import {useTranslation} from '../i18n';
 
 const LogCard = React.memo(function LogCard({
   item,

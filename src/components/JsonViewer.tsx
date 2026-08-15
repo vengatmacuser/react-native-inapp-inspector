@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {ScrollView, View, Text, StyleSheet, TouchableOpacity} from 'react-native';
-import {useTranslation} from 'react-i18next';
+import {useTranslation} from '../i18n';
 
 // Components
 import TreeNode from './TreeNode';
