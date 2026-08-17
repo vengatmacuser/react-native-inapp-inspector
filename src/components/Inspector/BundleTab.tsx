@@ -1172,6 +1172,23 @@ const BundleTab = React.memo(() => {
             </View>
           </View>
 
+          {/* Live analysis unavailable warning */}
+          {analysis && !analysis.isLive && (
+            <View style={bundleStyles.liveWarningCard}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1}}>
+                <CircleAlertIcon color={AppColors.amber700} size={16} />
+                <View style={{flex: 1}}>
+                  <Text style={bundleStyles.liveWarningTitle}>
+                    {t('bundle.liveAnalysisUnavailable')}
+                  </Text>
+                  <Text style={bundleStyles.liveWarningDesc}>
+                    {t('bundle.liveAnalysisUnavailableSub')}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Development Bundle Split-Up (derived from the real running bundle) */}
           {analysis && (
             <View style={bundleStyles.sectionCard}>
@@ -2835,6 +2852,28 @@ const bundleStyles = StyleSheet.create({
     backgroundColor: AppColors.errorCardBg,
     borderWidth: 1,
     borderColor: AppColors.errorBorder,
+  },
+  liveWarningCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.amber100,
+    borderWidth: 1,
+    borderColor: AppColors.amber200,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+  },
+  liveWarningTitle: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 12,
+    color: AppColors.amber800Warm,
+    marginBottom: 2,
+  },
+  liveWarningDesc: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 10.5,
+    lineHeight: 14,
+    color: AppColors.amber800Warm,
   },
   adviceBadge: {
     paddingHorizontal: 8,

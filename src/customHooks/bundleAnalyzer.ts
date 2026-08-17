@@ -9,7 +9,7 @@ import {AppColors} from '../styles/AppColors';
 // 4. Computing real Development and Production Binary (.ipa / .aab / .apk) sizes.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import {NativeModules, Platform} from 'react-native';
+import {NativeModules, Platform, TurboModuleRegistry} from 'react-native';
 
 export type FileTypeCategory = 'image' | 'typescript' | 'javascript' | 'font' | 'json';
 
@@ -109,14 +109,84 @@ let cachedAnalysis: HostBundleAnalysisResult | null = null;
 let isAnalyzing = false;
 const subscribers: ((result: HostBundleAnalysisResult) => void)[] = [];
 
+const getSourceCodeModule = (): any => {
+  try {
+    const legacy = NativeModules?.SourceCode;
+    if (legacy && typeof legacy.scriptURL === 'string' && legacy.scriptURL.length > 0) {
+      return legacy;
+    }
+  } catch {}
+  try {
+    const turbo: any = TurboModuleRegistry?.get?.('SourceCode');
+    const constants = turbo?.getConstants?.();
+    const scriptURL = turbo?.scriptURL || constants?.scriptURL;
+    if (typeof scriptURL === 'string' && scriptURL.length > 0) {
+      return {scriptURL};
+    }
+  } catch {}
+  return null;
+};
+
 export const getHostScriptURL = (): string => {
-  const SourceCode = NativeModules?.SourceCode;
-  if (SourceCode && typeof SourceCode.scriptURL === 'string' && SourceCode.scriptURL.length > 0) {
-    return SourceCode.scriptURL;
+  // 1. NativeModules.SourceCode (bridged) or SourceCode TurboModule (bridgeless / new arch)
+  const scriptURL = getSourceCodeModule()?.scriptURL;
+  if (typeof scriptURL === 'string' && scriptURL.length > 0) {
+    return scriptURL;
   }
-  return Platform.OS === 'ios'
-    ? 'http://localhost:8081/index.bundle?platform=ios&dev=true'
-    : 'http://10.0.2.2:8081/index.bundle?platform=android&dev=true';
+  // 2. Android legacy: PlatformConstants.serverHost -> "localhost:8082"
+  try {
+    const serverHost = NativeModules?.PlatformConstants?.serverHost;
+    if (typeof serverHost === 'string' && serverHost.length > 0) {
+      return `http://${serverHost}/index.bundle?platform=${Platform.OS}&dev=true`;
+    }
+  } catch {}
+  return '';
+};
+
+const DEV_SERVER_PORTS = [8081, 8082, 8083, 8084, 8090, 8080, 19000];
+
+const buildProbeUrls = (scriptURL: string): string[] => {
+  const urls: string[] = [];
+  if (typeof scriptURL === 'string' && scriptURL.startsWith('http')) {
+    urls.push(scriptURL);
+  }
+  const portMatch = typeof scriptURL === 'string' ? scriptURL.match(/:(\d{2,5})/) : null;
+  const ports = portMatch ? [parseInt(portMatch[1], 10)] : DEV_SERVER_PORTS;
+  const hosts =
+    Platform.OS === 'android'
+      ? ['localhost', '127.0.0.1', '10.0.2.2']
+      : ['localhost', '127.0.0.1'];
+  for (const host of hosts) {
+    for (const port of ports) {
+      urls.push(`http://${host}:${port}/index.bundle?platform=${Platform.OS}&dev=true`);
+    }
+  }
+  return Array.from(new Set(urls));
+};
+
+const fetchWithTimeout = async (
+  url: string,
+  timeoutMs: number,
+): Promise<{ok: boolean; text?: string; bytes?: number}> => {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {signal: controller.signal});
+      if (!res.ok) return {ok: false};
+      const contentLength = res.headers.get('content-length');
+      const text = await res.text();
+      return {
+        ok: true,
+        text,
+        bytes: contentLength ? parseInt(contentLength, 10) || text.length : text.length,
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch {
+    return {ok: false};
+  }
 };
 
 /**
@@ -126,6 +196,7 @@ export const parseBundleSource = (
   bundleText: string,
   totalBytes: number,
   scriptURL: string,
+  isLive = true,
 ): HostBundleAnalysisResult => {
   const isHermes = Boolean((globalThis as any).HermesInternal);
   const totalDevMb = Number((totalBytes / (1024 * 1024)).toFixed(2));
@@ -594,7 +665,7 @@ export const parseBundleSource = (
   ];
 
   return {
-    isLive: true,
+    isLive,
     scriptURL,
     totalDevBytes: totalBytes,
     totalDevMb,
@@ -670,32 +741,31 @@ export const analyzeHostAppBundle = async (): Promise<HostBundleAnalysisResult> 
   isAnalyzing = true;
   const scriptURL = getHostScriptURL();
 
-  try {
-    if (scriptURL && scriptURL.startsWith('http')) {
-      // 1. Try HEAD request first for fast content-length
-      const headRes = await fetch(scriptURL, {method: 'HEAD'});
-      const cl = headRes.headers.get('content-length');
-      let byteLength = cl ? parseInt(cl, 10) : 0;
-
-      // 2. Fetch partial text to discover real modules
-      const getRes = await fetch(scriptURL);
-      const bundleText = await getRes.text();
-      byteLength = byteLength || bundleText.length;
-
-      const result = parseBundleSource(bundleText, byteLength, scriptURL);
-      cachedAnalysis = result;
-      isAnalyzing = false;
-      subscribers.forEach(cb => cb(result));
-      subscribers.length = 0;
-      return result;
+  // Probe candidate dev-server URLs until one serves the JS bundle
+  let fetched: {text: string; bytes: number} | null = null;
+  let fetchedUrl = '';
+  for (const url of buildProbeUrls(scriptURL)) {
+    const probe = await fetchWithTimeout(url, 3000);
+    if (probe.ok && probe.text && probe.text.length > 0) {
+      fetched = {text: probe.text, bytes: probe.bytes ?? probe.text.length};
+      fetchedUrl = url;
+      break;
     }
-  } catch (err) {
-    // If fetch failed (e.g. standalone production build or offline)
   }
 
-  // Fallback to runtime memory estimation
+  if (fetched) {
+    const result = parseBundleSource(fetched.text, fetched.bytes, fetchedUrl);
+    cachedAnalysis = result;
+    isAnalyzing = false;
+    subscribers.forEach(cb => cb(result));
+    subscribers.length = 0;
+    return result;
+  }
+
+  // Fallback: could not reach a Metro dev server (release build, offline, or
+  // custom dev-server host). Return estimated values so the UI never crashes.
   const fallbackBytes = 6840000; // ~6.8MB standard RN dev bundle
-  const result = parseBundleSource('', fallbackBytes, scriptURL);
+  const result = parseBundleSource('', fallbackBytes, scriptURL || 'unknown', false);
   cachedAnalysis = result;
   isAnalyzing = false;
   subscribers.forEach(cb => cb(result));

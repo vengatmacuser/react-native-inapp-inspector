@@ -355,6 +355,8 @@
     "heroTitle": "Bundle & Asset Architecture",
     "heroSubtitle": "Real-time size breakdown across all assets, code, and dependencies",
     "heroSubtitleLive": "Live analysis of {{scriptUrl}}",
+    "liveAnalysisUnavailable": "Live bundle analysis unavailable",
+    "liveAnalysisUnavailableSub": "Could not reach the Metro dev server, so values are estimates. Make sure the app runs in development via `npx react-native start` and the Inspector can reach your Metro port (8081, 8082, ...).",
     "bundleOverviewJson": "Bundle Overview JSON",
     "devBundleSize": "DEV BUNDLE SIZE",
     "devBundleHint": "{{kb}} KB • {{modules}} modules",
