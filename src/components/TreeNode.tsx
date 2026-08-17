@@ -5,7 +5,7 @@ import {Text, View, Image, Animated, Pressable} from 'react-native';
 import {escapeRegex} from '../helpers';
 
 // Assets
-import {ChevronIcon} from './NetworkIcons';
+import {ChevronIcon, DocIcon} from './NetworkIcons';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -82,7 +82,7 @@ const TreeNode = React.memo(function TreeNode({
             />
           ) : (
             <View style={styles.filePreviewDoc}>
-              <Text style={{fontSize: 20}}>📄</Text>
+              <DocIcon color={AppColors.grayTextWeak} size={20} />
             </View>
           )}
           <View style={{flex: 1}}>

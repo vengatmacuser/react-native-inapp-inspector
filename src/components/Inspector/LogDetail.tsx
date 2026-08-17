@@ -24,6 +24,7 @@ import {
   TerminalIcon,
   RequestIcon,
   InfoCircleIcon,
+  DocIcon,
 } from '../NetworkIcons';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -355,15 +356,18 @@ const LogDetail = React.memo(() => {
                       paddingVertical: 2,
                     },
                   ]}>
-                  <Text
-                    style={[
-                      styles.metaChipText,
-                      {color: AppColors.brandPurple, fontSize: 10, fontFamily: AppFonts.interBold},
-                    ]}>
-                    📄 {originFrame.fileName}
-                    {originFrame.lineNumber ? `:${originFrame.lineNumber}` : ''}
-                    {originFrame.columnNumber ? `:${originFrame.columnNumber}` : ''}
-                  </Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+                    <DocIcon color={AppColors.brandPurple} size={10} />
+                    <Text
+                      style={[
+                        styles.metaChipText,
+                        {color: AppColors.brandPurple, fontSize: 10, fontFamily: AppFonts.interBold},
+                      ]}>
+                      {originFrame.fileName}
+                      {originFrame.lineNumber ? `:${originFrame.lineNumber}` : ''}
+                      {originFrame.columnNumber ? `:${originFrame.columnNumber}` : ''}
+                    </Text>
+                  </View>
                 </View>
               )}
             </View>
@@ -975,6 +979,8 @@ const LogDetail = React.memo(() => {
                               </Text>
                             </View>
                           )}
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+                          <DocIcon color={isTopFrame ? AppColors.brandPurple : AppColors.grayTextWeak} size={10} />
                           <Text
                             style={{
                               fontFamily: AppFonts.interMedium,
@@ -983,8 +989,9 @@ const LogDetail = React.memo(() => {
                                 ? AppColors.brandPurple
                                 : AppColors.grayTextWeak,
                             }}>
-                            📄 {frame.fileName}
+                            {frame.fileName}
                           </Text>
+                        </View>
                         </View>
 
                         {/* Full path */}

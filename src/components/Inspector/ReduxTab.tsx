@@ -26,6 +26,8 @@ import {
   ClockIcon,
   ForwardChevronIcon,
   SortArrowIcon,
+  BoltIcon,
+  TextAaIcon,
 } from '../NetworkIcons';
 
 interface ReduxSliceItem {
@@ -273,9 +275,16 @@ const ReduxTab = React.memo(() => {
           <Text style={reduxTabStyles.resultCount}>
             Showing {filteredSlices.length} of {sliceItems.length} state slices
           </Text>
-          <Text style={reduxTabStyles.sortLabel}>
-            {sortMode === 'latest' ? '⚡ Newest Updates First' : '🔤 Alphabetical (A-Z)'}
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+            {sortMode === 'latest' ? (
+              <BoltIcon color={AppColors.brandPurple} size={11} />
+            ) : (
+              <TextAaIcon color={AppColors.brandPurple} size={11} />
+            )}
+            <Text style={reduxTabStyles.sortLabel}>
+              {sortMode === 'latest' ? 'Newest Updates First' : 'Alphabetical (A-Z)'}
+            </Text>
+          </View>
         </View>
       </View>
 

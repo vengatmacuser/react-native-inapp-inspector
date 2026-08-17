@@ -1259,3 +1259,185 @@ export const PerformanceIcon = ({
   );
 };
 
+// ─── App-wide Vector Icons (emoji-free, render on every device) ─────────────
+
+export const BoltIcon = ({color = AppColors.amber500, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M13 2 4.5 13.5 H10.5 L9 22 19.5 9.5 H13.5 Z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const BanIcon = ({color = AppColors.errorColor, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
+      <Path d="M5.5 5.5 18.5 18.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const FolderOpenIcon = ({color = AppColors.amber500, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8.4 11 10 5.5a2 2 0 0 1 1.9-1.5h3.7a1.5 1.5 0 0 1 1.4 2L15.5 11"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M6.7 20.4 4.3 12.9A1.6 1.6 0 0 1 5.8 11h14.6a1.6 1.6 0 0 1 1.6 1.9l-2.4 7.5a2 2 0 0 1-2 1.4H8.7a2 2 0 0 1-2-1.4Z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const DocIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <Path d="M14 2v4a2 2 0 0 0 2 2h4" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
+      <Path d="M8 13h8 M8 17h8" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const LightbulbIcon = ({color = AppColors.amber500, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path d="M9 18h6" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path d="M10 22h4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const SparkleIcon = ({color = AppColors.amber500, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M11.1 3.9c.2-.6 1-.6 1.2 0l1.2 4.2 4.2 1.2c.6.2.6 1 0 1.2l-4.2 1.2-1.2 4.2c-.2.6-1 .6-1.2 0l-1.2-4.2-4.2-1.2c-.6-.2-.6-1 0-1.2l4.2-1.2Z"
+        fill={color}
+      />
+      <Path d="M18.5 3.5v4 M16.5 5.5h4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const MapIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 5.5 9 3.5l6 2 6-2v15l-6 2-6-2-6 2Z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <Path d="M9 3.5v15M15 5.5v15" stroke={color} strokeWidth="1.8" />
+      <Circle cx="12" cy="11" r="1.9" stroke={color} strokeWidth="1.6" />
+    </Svg>
+  );
+};
+
+export const AtomIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Ellipse cx="12" cy="12" rx="9" ry="3.8" stroke={color} strokeWidth="1.6" />
+      <Ellipse
+        cx="12"
+        cy="12"
+        rx="9"
+        ry="3.8"
+        stroke={color}
+        strokeWidth="1.6"
+        transform="rotate(60 12 12)"
+      />
+      <Ellipse
+        cx="12"
+        cy="12"
+        rx="9"
+        ry="3.8"
+        stroke={color}
+        strokeWidth="1.6"
+        transform="rotate(120 12 12)"
+      />
+      <Circle cx="12" cy="12" r="1.6" fill={color} />
+    </Svg>
+  );
+};
+
+export const BrainIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9.5 2a2.5 2.5 0 0 0-2.5 2.5v.5a2.5 2.5 0 0 0-3 3.17A2.5 2.5 0 0 0 2 10.5c0 .76.34 1.44.88 1.9A2.5 2.5 0 0 0 2 15.5c0 .76.34 1.44.88 1.9A2.5 2.5 0 0 0 5 19.75c0 .75.5 1.5 1.25 1.75A2.5 2.5 0 0 0 8.5 23h.25a2.5 2.5 0 0 0 2.5-2.5V4a2.5 2.5 0 0 0-1.75-2ZM14.5 2a2.5 2.5 0 0 1 2.5 2.5v.5a2.5 2.5 0 0 1 3 3.17A2.5 2.5 0 0 1 22 10.5c0 .76-.34 1.44-.88 1.9a2.5 2.5 0 0 1 .88 1.9c0 .76-.34 1.44-.88 1.9A2.5 2.5 0 0 1 19 19.75c0 .75-.5 1.5-1.25 1.75A2.5 2.5 0 0 1 15.5 23h-.25a2.5 2.5 0 0 1-2.5-2.5V4a2.5 2.5 0 0 1 1.75-2Z"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const TextAaIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M4 19 7.5 7 11 19" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
+      <Path d="M5.5 15h4" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Path d="M16 19l1.7-6.6 1.7 6.6" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
+      <Path d="M16.9 15.8h1.6" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const CartIcon = ({color = AppColors.amber500, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="9.5" cy="20" r="1.3" stroke={color} strokeWidth="1.8" />
+      <Circle cx="18.5" cy="20" r="1.3" stroke={color} strokeWidth="1.8" />
+      <Path
+        d="M3 3.5h1.8a1 1 0 0 1 .97.75l3.1 9.75a1.5 1.5 0 0 0 1.44 1.1h9.2a1 1 0 0 0 .95-.7l2.5-7.5a.8.8 0 0 0-.75-1.05H7"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const MoneyIcon = ({color = AppColors.emerald500, size = 14}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
+      <Path
+        d="M12 7v10M14.5 9.5c-.6-1-1.5-1.5-2.5-1.5-1.5 0-2.5.9-2.5 2s1 1.8 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1 0-1.9-.5-2.5-1.5"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+

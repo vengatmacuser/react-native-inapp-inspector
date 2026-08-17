@@ -13,6 +13,7 @@ import {
 import {useTranslation} from '../i18n';
 import HighlightText from './HighlightText';
 import TouchableScale from './TouchableScale';
+import {CartIcon, MoneyIcon} from './NetworkIcons';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -222,6 +223,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                         borderColor: AppColors.amberBorder,
                       },
                     ]}>
+                    <CartIcon color={AppColors.amber700} size={12} />
                     <Text
                       style={[
                         cardStyles.chipText,
@@ -230,7 +232,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      🛒 {items.length}{' '}
+                      {items.length}{' '}
                       {items.length === 1
                         ? t('analytics.item')
                         : t('analytics.items')}
@@ -260,6 +262,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                         borderColor: AppColors.emeraldBorder,
                       },
                     ]}>
+                    <MoneyIcon color={AppColors.emerald600} size={12} />
                     <Text
                       style={[
                         cardStyles.chipText,
@@ -268,7 +271,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      💰 {String(val)} {currencyStr}
+                      {String(val)} {currencyStr}
                     </Text>
                   </View>
                 );

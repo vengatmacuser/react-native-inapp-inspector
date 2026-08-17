@@ -4,6 +4,7 @@ import { AppColors } from '../styles/AppColors';
 import { AppFonts } from '../styles/AppFonts';
 import { copyToClipboard } from '../helpers';
 import {ErrorBoundaryProps, ErrorBoundaryState} from '../types';
+import {WarningTriangleIcon, CopyIcon} from './NetworkIcons';
 
 function parseStackTrace(stack: string) {
   if (!stack) return null;
@@ -82,7 +83,10 @@ ${error.stack}`;
       if (isInline) {
         return (
           <View style={styles.inlineContainer}>
-            <Text style={styles.inlineTitle}>⚠️ Inspector Crash</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <WarningTriangleIcon color={AppColors.redErrorText} size={14} />
+              <Text style={styles.inlineTitle}>Inspector Crash</Text>
+            </View>
             <TouchableOpacity style={styles.inlineResetBtn} onPress={this.handleReset}>
               <Text style={styles.inlineResetText}>Reload</Text>
             </TouchableOpacity>
@@ -97,7 +101,9 @@ ${error.stack}`;
       return (
         <View style={styles.container}>
           <View style={styles.card}>
-            <Text style={styles.emoji}>⚠️</Text>
+            <View style={{ marginBottom: 12, alignItems: 'center' }}>
+            <WarningTriangleIcon color={AppColors.amber500} size={44} />
+          </View>
             <Text style={styles.title}>Something went wrong</Text>
             
             <View style={{
@@ -110,13 +116,19 @@ ${error.stack}`;
               marginBottom: 12,
               gap: 4
             }}>
+              <View style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                backgroundColor: isNativeCrash ? AppColors.errorColor : AppColors.amber500,
+              }} />
               <Text style={{
                 fontSize: 10,
                 fontWeight: 'bold',
                 color: isNativeCrash ? AppColors.errorColor : AppColors.amber500,
                 fontFamily: AppFonts.interBold || 'System'
               }}>
-                {isNativeCrash ? '🔴 NATIVE CRASH' : '🟡 JAVASCRIPT CRASH'}
+                {isNativeCrash ? 'NATIVE CRASH' : 'JAVASCRIPT CRASH'}
               </Text>
             </View>
 
@@ -170,8 +182,9 @@ ${error.stack}`;
                 }}
                 onPress={this.handleCopyTrace}
               >
+                <CopyIcon color={AppColors.white} size={14} />
                 <Text style={{ color: AppColors.white, fontSize: 12, fontWeight: 'bold', fontFamily: AppFonts.interBold || 'System' }}>
-                  📋 Copy Crash Traceback
+                  Copy Crash Traceback
                 </Text>
               </TouchableOpacity>
             </View>
@@ -218,10 +231,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 8,
-  },
-  emoji: {
-    fontSize: 40,
-    marginBottom: 12,
   },
   title: {
     fontFamily: AppFonts.interBold || 'System',

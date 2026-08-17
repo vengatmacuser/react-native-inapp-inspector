@@ -15,7 +15,18 @@ import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
 import {getRuntimeDiagnostics} from '../../helpers';
-import {SearchIcon, CircleXIcon, PerformanceIcon} from '../NetworkIcons';
+import {
+  SearchIcon,
+  CircleXIcon,
+  PerformanceIcon,
+  BoltIcon,
+  LightbulbIcon,
+  WarningTriangleIcon,
+  MapIcon,
+  AtomIcon,
+  BrainIcon,
+  GlobeIcon,
+} from '../NetworkIcons';
 
 export interface PerformanceEvent {
   id: string;
@@ -338,35 +349,35 @@ const PerformanceTab = React.memo(() => {
           contentContainerStyle={{gap: 6, paddingHorizontal: 12, paddingVertical: 4}}>
           {(
             [
-              {key: 'ALL', label: t('performance.allLogs'), icon: '⚡', count: events.length},
+              {key: 'ALL', label: t('performance.allLogs'), Icon: BoltIcon, count: events.length},
               {
                 key: 'JANKY',
                 label: t('performance.jankySlow'),
-                icon: '⚠️',
+                Icon: WarningTriangleIcon,
                 count: events.filter(e => e.severity === 'warning' || e.severity === 'critical').length,
               },
               {
                 key: 'NAVIGATION',
                 label: t('performance.navigation'),
-                icon: '🗺️',
+                Icon: MapIcon,
                 count: events.filter(e => e.category === 'navigation').length,
               },
               {
                 key: 'RENDER',
                 label: t('performance.components'),
-                icon: '⚛️',
+                Icon: AtomIcon,
                 count: events.filter(e => e.category === 'render').length,
               },
               {
                 key: 'MEMORY',
                 label: t('performance.memoryGc'),
-                icon: '🧠',
+                Icon: BrainIcon,
                 count: events.filter(e => e.category === 'memory').length,
               },
               {
                 key: 'IO',
                 label: t('performance.networkIo'),
-                icon: '🌐',
+                Icon: GlobeIcon,
                 count: events.filter(e => e.category === 'io' || e.category === 'bridge').length,
               },
             ] as const
@@ -380,7 +391,7 @@ const PerformanceTab = React.memo(() => {
                   perfStyles.filterPill,
                   isActive && perfStyles.filterPillActive,
                 ]}>
-                <Text style={perfStyles.filterPillIcon}>{tab.icon}</Text>
+                <tab.Icon color={isActive ? AppColors.white : AppColors.grayTextStrong} size={12} />
                 <Text
                   style={[
                     perfStyles.filterPillText,
@@ -597,7 +608,7 @@ const PerformanceTab = React.memo(() => {
 
         {filteredEvents.length === 0 ? (
           <View style={perfStyles.emptyCard}>
-            <Text style={{fontSize: 28}}>⚡</Text>
+            <BoltIcon color={AppColors.amber500} size={30} />
             <Text style={perfStyles.emptyTitle}>{t('performance.emptyTitle')}</Text>
             <Text style={perfStyles.emptySub}>
               {t('performance.emptySubtitle')}
@@ -717,7 +728,10 @@ const PerformanceTab = React.memo(() => {
                     {/* Actionable Optimization Tip */}
                     {event.advice && (
                       <View style={perfStyles.adviceCard}>
-                        <Text style={perfStyles.adviceHeading}>💡 {t('performance.optimizationTip')}</Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                          <LightbulbIcon color={AppColors.purpleShade700} size={12} />
+                          <Text style={perfStyles.adviceHeading}>{t('performance.optimizationTip')}</Text>
+                        </View>
                         <Text style={perfStyles.adviceBodyText}>{event.advice}</Text>
                       </View>
                     )}
@@ -816,9 +830,6 @@ const perfStyles = StyleSheet.create({
   filterPillActive: {
     backgroundColor: AppColors.brandPurple,
     borderColor: AppColors.brandPurple,
-  },
-  filterPillIcon: {
-    fontSize: 11,
   },
   filterPillText: {
     fontFamily: AppFonts.interMedium,

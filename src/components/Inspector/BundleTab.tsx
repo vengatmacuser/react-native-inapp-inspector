@@ -31,6 +31,14 @@ import {
   LiveStateIcon,
   StorageIcon,
   MetadataIcon,
+  FolderIcon,
+  FolderOpenIcon,
+  TrashIcon,
+  LightbulbIcon,
+  SparkleIcon,
+  ClockIcon,
+  BoltIcon,
+  BanIcon,
 } from '../NetworkIcons';
 
 import Svg, {
@@ -308,6 +316,140 @@ const PackageLogoRenderer: React.FC<{
   );
 };
 
+// ─── Vector Category Icons (font-independent, render everywhere) ────────────
+
+export type BundleIconType =
+  | 'source'
+  | 'deps'
+  | 'media'
+  | 'overhead'
+  | 'image'
+  | 'typescript'
+  | 'javascript'
+  | 'font'
+  | 'json'
+  | 'folder'
+  | 'ban'
+  | 'bolt';
+
+const BundleCategoryIcon: React.FC<{
+  type: BundleIconType;
+  size?: number;
+  color?: string;
+}> = ({type, size = 16, color = AppColors.purple}) => {
+  const stroke = {stroke: color, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const};
+  const renderGlyph = () => {
+    switch (type) {
+      case 'folder':
+        return (
+          <G>
+            <Path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+              {...stroke}
+            />
+          </G>
+        );
+      case 'ban':
+        return (
+          <G>
+            <Circle cx="12" cy="12" r="8.5" {...stroke} />
+            <Path d="M5.5 5.5 18.5 18.5" {...stroke} />
+          </G>
+        );
+      case 'bolt':
+        return (
+          <G>
+            <Path d="M13 2 4.5 13.5 H10.5 L9 22 19.5 9.5 H13.5 Z" {...stroke} />
+          </G>
+        );
+      case 'source':
+        return (
+          <G>
+            <Path d="M8.5 7 L4 12 L8.5 17" {...stroke} />
+            <Path d="M15.5 7 L20 12 L15.5 17" {...stroke} />
+            <Path d="M13.5 4.5 L10.5 19.5" {...stroke} />
+          </G>
+        );
+      case 'deps':
+        return (
+          <G>
+            <Rect x="4" y="4" width="16" height="16" rx="2.5" {...stroke} />
+            <Path d="M4 9.5 H20" {...stroke} />
+            <Path d="M9.5 9.5 V20" {...stroke} />
+          </G>
+        );
+      case 'media':
+      case 'image':
+        return (
+          <G>
+            <Rect x="3.5" y="4.5" width="17" height="15" rx="2" {...stroke} />
+            <Circle cx="9" cy="10" r="1.5" {...stroke} />
+            <Path d="M3.5 17.5 L9.5 12.5 L14 16.5 L17 13.5 L20.5 17.5" {...stroke} />
+          </G>
+        );
+      case 'overhead':
+        return (
+          <G>
+            <Circle cx="12" cy="12" r="3.2" {...stroke} />
+            <Path
+              d="M12 2.5 V5.5 M12 18.5 V21.5 M2.5 12 H5.5 M18.5 12 H21.5 M5.3 5.3 L7.4 7.4 M16.6 16.6 L18.7 18.7 M18.7 5.3 L16.6 7.4 M7.4 16.6 L5.3 18.7"
+              {...stroke}
+            />
+          </G>
+        );
+      case 'typescript':
+        return (
+          <G>
+            <Path d="M6.5 3.5 H14 L18.5 8 V20.5 H6.5 Z" {...stroke} />
+            <Path d="M14 3.5 V8 H18.5" {...stroke} />
+            <Path d="M9.5 13.5 H15 M12 13.5 V16.5 M9.5 16.5 H13" {...stroke} />
+          </G>
+        );
+      case 'javascript':
+        return (
+          <G>
+            <Path
+              d="M9.5 3.5 C7.5 3.5 7.5 6.5 7.5 9 C7.5 11 6.5 12 5 12 C6.5 12 7.5 13 7.5 15 C7.5 17.5 7.5 20.5 9.5 20.5"
+              {...stroke}
+            />
+            <Path
+              d="M14.5 3.5 C16.5 3.5 16.5 6.5 16.5 9 C16.5 11 17.5 12 19 12 C17.5 12 16.5 13 16.5 15 C16.5 17.5 16.5 20.5 14.5 20.5"
+              {...stroke}
+            />
+          </G>
+        );
+      case 'font':
+        return (
+          <G>
+            <Path d="M8 19 L12 5.5 L16 19" {...stroke} />
+            <Path d="M9.4 14.5 H14.6" {...stroke} />
+          </G>
+        );
+      case 'json':
+        return (
+          <G>
+            <Path
+              d="M9 3.5 C7 3.5 7 6 7 8.5 C7 10.5 6 11.5 5 12 C6 12.5 7 13.5 7 15.5 C7 18 7 20.5 9 20.5"
+              {...stroke}
+            />
+            <Circle cx="12" cy="12" r="1.1" fill={color} />
+            <Path
+              d="M15 3.5 C17 3.5 17 6 17 8.5 C17 10.5 18 11.5 19 12 C18 12.5 17 13.5 17 15.5 C17 18 17 20.5 15 20.5"
+              {...stroke}
+            />
+          </G>
+        );
+      default:
+        return null;
+    }
+  };
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {renderGlyph()}
+    </Svg>
+  );
+};
+
 // ─── Media File Thumbnail Component ──────────────────────────────────────────
 
 const MediaPreviewThumbnail: React.FC<{file: BundleFileItem}> = ({file}) => {
@@ -504,7 +646,11 @@ const BundleTreeNodeView: React.FC<{
                 {isCollapsed ? '▶' : '▼'}
               </Text>
             </View>
-            <Text style={{fontSize: 16}}>{isCollapsed ? '📁' : '📂'}</Text>
+            {isCollapsed ? (
+              <FolderIcon color={AppColors.amber500} size={16} />
+            ) : (
+              <FolderOpenIcon color={AppColors.amber500} size={16} />
+            )}
             <HighlightText
               text={node.name + '/'}
               search={search}
@@ -621,16 +767,24 @@ const BundleTreeNodeView: React.FC<{
             isUnused && bundleStyles.adviceUnused,
             {marginLeft: 26, marginTop: 4},
           ]}>
-          <Text
-            style={[
-              bundleStyles.adviceText,
-              file.status === 'warning' && {color: AppColors.amber800Warm},
-              file.status === 'optimal' && {color: AppColors.emerald700},
-              isUnused && {color: AppColors.red600},
-            ]}>
-            {isUnused ? '🗑️ ' : file.status === 'warning' ? '💡 ' : '✨ '}
-            {file.advice}
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'flex-start', gap: 5}}>
+            {isUnused ? (
+              <TrashIcon color={AppColors.red600} size={12} />
+            ) : file.status === 'warning' ? (
+              <LightbulbIcon color={AppColors.amber800Warm} size={12} />
+            ) : (
+              <SparkleIcon color={AppColors.emerald700} size={12} />
+            )}
+            <Text
+              style={[
+                bundleStyles.adviceText,
+                file.status === 'warning' && {color: AppColors.amber800Warm},
+                file.status === 'optimal' && {color: AppColors.emerald700},
+                isUnused && {color: AppColors.red600},
+              ]}>
+              {file.advice}
+            </Text>
+          </View>
         </View>
       )}
     </View>
@@ -640,14 +794,14 @@ const BundleTreeNodeView: React.FC<{
 
 
 const CATEGORY_TABS = [
-  {key: 'ALL', labelKey: 'bundle.catAll', icon: '📁'},
-  {key: 'UNUSED', labelKey: 'bundle.catUnused', icon: '🚫'},
-  {key: 'CONSUMED', labelKey: 'bundle.catConsumed', icon: '⚡'},
-  {key: 'image', labelKey: 'bundle.catImages', icon: '🖼️'},
-  {key: 'typescript', labelKey: 'bundle.catTypescript', icon: '📜'},
-  {key: 'javascript', labelKey: 'bundle.catJavascript', icon: '⚙️'},
-  {key: 'font', labelKey: 'bundle.catFonts', icon: '🔤'},
-  {key: 'json', labelKey: 'bundle.catJson', icon: '📄'},
+  {key: 'ALL', labelKey: 'bundle.catAll', iconType: 'folder' as const},
+  {key: 'UNUSED', labelKey: 'bundle.catUnused', iconType: 'ban' as const},
+  {key: 'CONSUMED', labelKey: 'bundle.catConsumed', iconType: 'bolt' as const},
+  {key: 'image', labelKey: 'bundle.catImages', iconType: 'image' as const},
+  {key: 'typescript', labelKey: 'bundle.catTypescript', iconType: 'typescript' as const},
+  {key: 'javascript', labelKey: 'bundle.catJavascript', iconType: 'javascript' as const},
+  {key: 'font', labelKey: 'bundle.catFonts', iconType: 'font' as const},
+  {key: 'json', labelKey: 'bundle.catJson', iconType: 'json' as const},
 ];
 
 const CATEGORY_COLORS: Record<FileTypeCategory, {label: string; color: string; bg: string}> = {
@@ -1040,21 +1194,25 @@ const BundleTab = React.memo(() => {
 
               {[
                 {
+                  iconType: 'source' as const,
                   label: t('bundle.splitAppSource'),
                   color: AppColors.sky500,
                   ...analysis.splitUp.appSource,
                 },
                 {
+                  iconType: 'deps' as const,
                   label: t('bundle.splitNodeModules'),
                   color: AppColors.indigo500,
                   ...analysis.splitUp.nodeModules,
                 },
                 {
+                  iconType: 'media' as const,
                   label: t('bundle.splitAssetsMedia'),
                   color: AppColors.pink500,
                   ...analysis.splitUp.assetsMedia,
                 },
                 {
+                  iconType: 'overhead' as const,
                   label: t('bundle.splitMetroOverhead'),
                   color: AppColors.amber500,
                   ...analysis.splitUp.metroDevOverhead,
@@ -1062,7 +1220,7 @@ const BundleTab = React.memo(() => {
               ].map((part, idx) => (
                 <View key={idx} style={bundleStyles.catRowCard}>
                   <View style={bundleStyles.catRowTop}>
-                    <Text style={bundleStyles.catRowIcon}>{['📦', '🧩', '🖼️', '⚙️'][idx]}</Text>
+                    <BundleCategoryIcon type={part.iconType} size={18} color={part.color} />
                     <View style={{flex: 1}}>
                       <Text style={bundleStyles.catRowTitle}>{part.label}</Text>
                       <Text style={bundleStyles.catRowDesc}>
@@ -1146,7 +1304,7 @@ const BundleTab = React.memo(() => {
             {/* Legend Grid */}
             <View style={bundleStyles.legendGrid}>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.pink500}]} />
+                <BundleCategoryIcon type="image" size={13} color={AppColors.pink500} />
                 <Text style={bundleStyles.legendText}>
                   {t('bundle.legendImages')}{' '}
                   <Text style={bundleStyles.legendVal}>
@@ -1155,7 +1313,7 @@ const BundleTab = React.memo(() => {
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.sky500}]} />
+                <BundleCategoryIcon type="typescript" size={13} color={AppColors.sky500} />
                 <Text style={bundleStyles.legendText}>
                   {t('bundle.legendTs')}{' '}
                   <Text style={bundleStyles.legendVal}>
@@ -1164,7 +1322,7 @@ const BundleTab = React.memo(() => {
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.indigo500}]} />
+                <BundleCategoryIcon type="javascript" size={13} color={AppColors.indigo500} />
                 <Text style={bundleStyles.legendText}>
                   {t('bundle.legendJs')}{' '}
                   <Text style={bundleStyles.legendVal}>
@@ -1173,7 +1331,7 @@ const BundleTab = React.memo(() => {
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.purple500}]} />
+                <BundleCategoryIcon type="font" size={13} color={AppColors.purple500} />
                 <Text style={bundleStyles.legendText}>
                   {t('bundle.legendFonts')}{' '}
                   <Text style={bundleStyles.legendVal}>
@@ -1182,7 +1340,7 @@ const BundleTab = React.memo(() => {
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.emerald500}]} />
+                <BundleCategoryIcon type="json" size={13} color={AppColors.emerald500} />
                 <Text style={bundleStyles.legendText}>
                   {t('bundle.legendJson')}{' '}
                   <Text style={bundleStyles.legendVal}>
@@ -1215,7 +1373,7 @@ const BundleTab = React.memo(() => {
             
             {[
               {
-                icon: '🖼️',
+                iconType: 'image' as const,
                 title: t('bundle.catImagesTitle'),
                 count: summary.images.count,
                 size: t('bundle.fileSizeKb', {size: summary.images.kb}),
@@ -1224,7 +1382,7 @@ const BundleTab = React.memo(() => {
                 desc: t('bundle.catImagesDesc'),
               },
               {
-                icon: '⚙️',
+                iconType: 'javascript' as const,
                 title: t('bundle.catJsTitle'),
                 count: summary.js.count,
                 size: t('bundle.fileSizeKb', {size: summary.js.kb}),
@@ -1233,7 +1391,7 @@ const BundleTab = React.memo(() => {
                 desc: t('bundle.catJsDesc'),
               },
               {
-                icon: '🔤',
+                iconType: 'font' as const,
                 title: t('bundle.catFontsTitle'),
                 count: summary.fonts.count,
                 size: t('bundle.fileSizeKb', {size: summary.fonts.kb}),
@@ -1246,7 +1404,7 @@ const BundleTab = React.memo(() => {
                     .join(', ') || t('bundle.catFontsDesc'),
               },
               {
-                icon: '📜',
+                iconType: 'typescript' as const,
                 title: t('bundle.catTsTitle'),
                 count: summary.ts.count,
                 size: t('bundle.fileSizeKb', {size: summary.ts.kb}),
@@ -1255,7 +1413,7 @@ const BundleTab = React.memo(() => {
                 desc: t('bundle.catTsDesc'),
               },
               {
-                icon: '📄',
+                iconType: 'json' as const,
                 title: t('bundle.catJsonTitle'),
                 count: summary.json.count,
                 size: t('bundle.fileSizeKb', {size: summary.json.kb}),
@@ -1266,7 +1424,7 @@ const BundleTab = React.memo(() => {
             ].map((cat, cIdx) => (
               <View key={cIdx} style={bundleStyles.catRowCard}>
                 <View style={bundleStyles.catRowTop}>
-                  <Text style={bundleStyles.catRowIcon}>{cat.icon}</Text>
+                  <BundleCategoryIcon type={cat.iconType} size={18} color={cat.color} />
                   <View style={{flex: 1}}>
                     <Text style={bundleStyles.catRowTitle}>{cat.title}</Text>
                     <Text style={bundleStyles.catRowDesc}>
@@ -1373,7 +1531,11 @@ const BundleTab = React.memo(() => {
                       tab.key === 'UNUSED' && isActive && {backgroundColor: AppColors.red500, borderColor: AppColors.red600},
                       tab.key === 'CONSUMED' && isActive && {backgroundColor: AppColors.emerald600, borderColor: AppColors.emerald700},
                     ]}>
-                    <Text style={bundleStyles.catPillIcon}>{tab.icon}</Text>
+                    <BundleCategoryIcon
+                      type={tab.iconType}
+                      size={12}
+                      color={isActive ? AppColors.white : AppColors.grayTextStrong}
+                    />
                     <Text
                       style={[
                         bundleStyles.catPillText,
@@ -1542,15 +1704,23 @@ const BundleTab = React.memo(() => {
                           file.status === 'optimal' && bundleStyles.adviceOptimal,
                           isUnused && bundleStyles.adviceUnused,
                         ]}>
+                          <View style={{flexDirection: 'row', alignItems: 'flex-start', gap: 5}}>
+                          {isUnused ? (
+                            <TrashIcon color={AppColors.red600} size={12} />
+                          ) : file.status === 'warning' ? (
+                            <LightbulbIcon color={AppColors.amber800Warm} size={12} />
+                          ) : (
+                            <SparkleIcon color={AppColors.emerald700} size={12} />
+                          )}
                           <Text style={[
                             bundleStyles.adviceText,
                             file.status === 'warning' && {color: AppColors.amber800Warm},
                             file.status === 'optimal' && {color: AppColors.emerald700},
                             isUnused && {color: AppColors.red600},
                           ]}>
-                            {isUnused ? '🗑️ ' : file.status === 'warning' ? '💡 ' : '✨ '}
                             {file.advice}
                           </Text>
+                        </View>
                         </View>
                       )}
                     </View>
@@ -1712,9 +1882,12 @@ const BundleTab = React.memo(() => {
                   {/* Deprecation Warning Banner if deprecated */}
                   {pkg.isDeprecated && pkg.deprecationReason && (
                     <View style={bundleStyles.deprecationBox}>
-                      <Text style={bundleStyles.deprecationText}>
-                        ⚠️ {pkg.deprecationReason}
-                      </Text>
+                      <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                        <CircleAlertIcon color={AppColors.errorColor} size={12} />
+                        <Text style={bundleStyles.deprecationText}>
+                          {pkg.deprecationReason}
+                        </Text>
+                      </View>
                     </View>
                   )}
 
@@ -1736,9 +1909,12 @@ const BundleTab = React.memo(() => {
                         </Text>
                       </View>
                       {pkg.lastActive && (
-                        <Text style={bundleStyles.lastActiveText}>
-                          🕒 {pkg.lastActive}
-                        </Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                          <ClockIcon color={AppColors.grayTextWeak} size={11} />
+                          <Text style={bundleStyles.lastActiveText}>
+                            {pkg.lastActive}
+                          </Text>
+                        </View>
                       )}
                     </View>
 
@@ -1852,14 +2028,20 @@ const BundleTab = React.memo(() => {
                       file.status === 'warning' && bundleStyles.adviceWarning,
                       file.status === 'optimal' && bundleStyles.adviceOptimal,
                     ]}>
-                      <Text style={[
-                        bundleStyles.adviceText,
-                        file.status === 'warning' && {color: AppColors.amber800Warm},
-                        file.status === 'optimal' && {color: AppColors.emerald700},
-                      ]}>
-                        {file.status === 'warning' ? '💡 ' : '✨ '}
-                        {file.advice}
-                      </Text>
+                      <View style={{flexDirection: 'row', alignItems: 'flex-start', gap: 5}}>
+                        {file.status === 'warning' ? (
+                          <LightbulbIcon color={AppColors.amber800Warm} size={12} />
+                        ) : (
+                          <SparkleIcon color={AppColors.emerald700} size={12} />
+                        )}
+                        <Text style={[
+                          bundleStyles.adviceText,
+                          file.status === 'warning' && {color: AppColors.amber800Warm},
+                          file.status === 'optimal' && {color: AppColors.emerald700},
+                        ]}>
+                          {file.advice}
+                        </Text>
+                      </View>
                     </View>
                   )}
                 </View>
@@ -1914,12 +2096,16 @@ const BundleTab = React.memo(() => {
 
             {[
               {
+                iconType: 'image' as const,
+                iconColor: AppColors.pink500,
                 title: t('bundle.optTip1Title'),
                 desc: t('bundle.optTip1Desc'),
                 badge: t('bundle.highImpact'),
                 badgeColor: AppColors.pink500,
               },
               {
+                iconType: 'bolt' as const,
+                iconColor: isHermes ? AppColors.emerald500 : AppColors.amber500,
                 title: t('bundle.optTip2Title'),
                 desc: isHermes
                   ? t('bundle.optTip2DescActive')
@@ -1928,18 +2114,24 @@ const BundleTab = React.memo(() => {
                 badgeColor: isHermes ? AppColors.emerald500 : AppColors.amber500,
               },
               {
+                iconType: 'font' as const,
+                iconColor: AppColors.purple500,
                 title: t('bundle.optTip3Title'),
                 desc: t('bundle.optTip3Desc'),
                 badge: t('bundle.mediumImpact'),
                 badgeColor: AppColors.purple500,
               },
               {
+                iconType: 'source' as const,
+                iconColor: AppColors.sky500,
                 title: t('bundle.optTip4Title'),
                 desc: t('bundle.optTip4Desc'),
                 badge: t('bundle.bestPractice'),
                 badgeColor: AppColors.sky500,
               },
               {
+                iconType: 'overhead' as const,
+                iconColor: AppColors.indigo500,
                 title: t('bundle.optTip5Title'),
                 desc: t('bundle.optTip5Desc'),
                 badge: t('bundle.bestPractice'),
@@ -1952,6 +2144,7 @@ const BundleTab = React.memo(() => {
                     <View style={bundleStyles.sNoBadge}>
                       <Text style={bundleStyles.sNoText}>#{tIdx + 1}</Text>
                     </View>
+                    <BundleCategoryIcon type={tip.iconType} size={14} color={tip.iconColor} />
                     <Text style={bundleStyles.tipTitle}>{tip.title}</Text>
                   </View>
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
@@ -2158,11 +2351,6 @@ const bundleStyles = StyleSheet.create({
     gap: 5,
     minWidth: '45%',
   },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
   legendText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 11,
@@ -2185,9 +2373,6 @@ const bundleStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 8,
-  },
-  catRowIcon: {
-    fontSize: 16,
   },
   catRowTitle: {
     fontFamily: AppFonts.interBold,
@@ -2263,9 +2448,6 @@ const bundleStyles = StyleSheet.create({
   catPillActive: {
     backgroundColor: AppColors.brandPurple,
     borderColor: AppColors.brandPurple,
-  },
-  catPillIcon: {
-    fontSize: 11,
   },
   catPillText: {
     fontFamily: AppFonts.interMedium,
