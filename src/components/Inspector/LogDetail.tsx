@@ -350,8 +350,8 @@ const LogDetail = React.memo(() => {
                   fontSize: 13,
                   color: AppColors.primaryBlack,
                   lineHeight: 18,
-                }}
-                numberOfLines={1}>
+                  flexShrink: 1,
+                }}>
                 {originFrame?.functionName && originFrame.functionName !== '<anonymous>'
                   ? `${originFrame.functionName}()`
                   : originFrame?.fileName || t('console.consoleLog')}
@@ -368,12 +368,12 @@ const LogDetail = React.memo(() => {
                       paddingVertical: 2,
                     },
                   ]}>
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 3, flexWrap: 'wrap', flexShrink: 1}}>
                     <DocIcon color={AppColors.brandPurple} size={10} />
                     <Text
                       style={[
                         styles.metaChipText,
-                        {color: AppColors.brandPurple, fontSize: 10, fontFamily: AppFonts.interBold},
+                        {color: AppColors.brandPurple, fontSize: 10, fontFamily: AppFonts.interBold, flexShrink: 1},
                       ]}>
                       {originFrame.fileName}
                       {originFrame.lineNumber ? `:${originFrame.lineNumber}` : ''}

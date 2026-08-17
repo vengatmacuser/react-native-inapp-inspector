@@ -1,4 +1,5 @@
 import axios from "axios";
+import {setupGlobalCrashHandler} from "./crashHandler";
 
 type NetworkLog = {
   id: number;
@@ -274,6 +275,10 @@ export const setupNetworkLogger = () => {
   } catch (_e) {
     // Axios not available — fetch-only mode
   }
+
+  try {
+    setupGlobalCrashHandler();
+  } catch {}
 
   (globalThis as any).__NETWORK_LOGGER_INITIALIZED__ = true;
 };

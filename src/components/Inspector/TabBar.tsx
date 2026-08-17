@@ -11,6 +11,7 @@ import {
   PackageIcon,
   ReduxIcon,
   PerformanceIcon,
+  CrashIcon,
 } from '../NetworkIcons';
 
 const TabBar = React.memo(() => {
@@ -21,8 +22,10 @@ const TabBar = React.memo(() => {
     logs,
     consoleLogs,
     analyticsEvents,
+    crashRecords,
     lastReadApisCount,
     lastReadLogsCount,
+    lastReadCrashesCount,
     unreadPulseAnim,
   } = useInspector();
 
@@ -70,6 +73,12 @@ const TabBar = React.memo(() => {
               count: 0,
               icon: 'performance',
             },
+            {
+              key: 'crash',
+              label: 'Crash',
+              count: crashRecords?.length || 0,
+              icon: 'crash',
+            },
           ] as const
         )
           .filter(tab => tabVisibility?.[tab.key])
@@ -77,6 +86,8 @@ const TabBar = React.memo(() => {
             const isActive = activeTab === tab.key;
             const iconColor = isActive
               ? AppColors.white
+              : tab.key === 'crash' && tab.count > 0
+              ? AppColors.errorColor
               : AppColors.grayText;
             const countLabel =
               tab.count > 9 ? '9+' : String(tab.count);
@@ -86,6 +97,9 @@ const TabBar = React.memo(() => {
             const hasUnreadLogs =
               activeTab !== 'logs' &&
               consoleLogs.length > lastReadLogsCount;
+            const hasUnreadCrashes =
+              activeTab !== 'crash' &&
+              (crashRecords?.length || 0) > (lastReadCrashesCount || 0);
             return (
               <TouchableScale
                 key={tab.key}
@@ -118,6 +132,9 @@ const TabBar = React.memo(() => {
                   {tab.icon === 'performance' && (
                     <PerformanceIcon color={iconColor} size={14} />
                   )}
+                  {tab.icon === 'crash' && (
+                    <CrashIcon color={iconColor} size={14} />
+                  )}
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
@@ -130,7 +147,8 @@ const TabBar = React.memo(() => {
                     {tab.count > 0 ? `(${countLabel})` : ''}
                   </Text>
                   {((tab.key === 'apis' && hasUnreadApis) ||
-                    (tab.key === 'logs' && hasUnreadLogs)) && (
+                    (tab.key === 'logs' && hasUnreadLogs) ||
+                    (tab.key === 'crash' && hasUnreadCrashes)) && (
                     <Animated.View
                       style={{
                         width: 6,

@@ -50,8 +50,22 @@ import {
   setupConsoleLogger,
   clearConsoleLogs,
   subscribeConsoleLogs,
+  getConsoleLogs,
 } from './customHooks/consoleLogger';
 import {IGNORED_LOG_PREFIXES} from './customHooks/logFilters';
+
+// Crash Protection
+import {
+  setupGlobalCrashHandler,
+  subscribeCrashEvents,
+  emitCrashEvent,
+  getCrashRecords,
+  clearCrashRecords,
+  simulateTestCrash,
+  exportCrashReport,
+  parseCrashStackTrace,
+  setMaxCrashLogsLimit,
+} from './customHooks/crashHandler';
 
 import {
   subscribeAnalyticsEvents,
@@ -81,6 +95,9 @@ import {
   AnalyticsEvent,
   AnalyticsFilters,
   NetworkInspectorProps,
+  CrashRecord,
+  ParsedStackFrame,
+  CrashBreadcrumb,
 } from './types';
 import {LIB_VERSION} from './constants';
 
@@ -182,6 +199,18 @@ const NetworkInspector = ({
 
   const [lastReadLogsCount, setLastReadLogsCount] = useState(0);
   const [lastReadApisCount, setLastReadApisCount] = useState(0);
+  const [lastReadCrashesCount, setLastReadCrashesCount] = useState(0);
+
+  // ─── Crash state ───────────────────────────────────────────────────────────
+  const [crashRecords, setCrashRecords] = useState<CrashRecord[]>(() =>
+    getCrashRecords(),
+  );
+  const [selectedCrash, setSelectedCrash] = useState<CrashRecord | null>(null);
+  const [maxCrashLogs, setMaxCrashLogs] = useState<number>(100);
+
+  useEffect(() => {
+    setMaxCrashLogsLimit(maxCrashLogs);
+  }, [maxCrashLogs]);
 
   useEffect(() => {
     if (visible) {
@@ -190,6 +219,9 @@ const NetworkInspector = ({
       }
       if (activeTab === 'logs') {
         setLastReadLogsCount(consoleLogs.length);
+      }
+      if (activeTab === 'crash') {
+        setLastReadCrashesCount(crashRecords.length);
       }
     }
   }, [visible]);
@@ -205,6 +237,12 @@ const NetworkInspector = ({
       setLastReadLogsCount(consoleLogs.length);
     }
   }, [activeTab, consoleLogs.length]);
+
+  useEffect(() => {
+    if (activeTab === 'crash') {
+      setLastReadCrashesCount(crashRecords.length);
+    }
+  }, [activeTab, crashRecords.length]);
 
   const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(200);
   const [showConsoleLevels, setShowConsoleLevels] = useState<{
@@ -265,6 +303,7 @@ const NetworkInspector = ({
     redux: false,
     bundle: false,
     performance: false,
+    crash: true,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -289,8 +328,10 @@ const NetworkInspector = ({
       redux: false,
       bundle: false,
       performance: false,
+      crash: true,
     });
     setDefaultTab('apis');
+    setMaxCrashLogs(100);
     setMaxNetworkLogs(100);
     setMaxConsoleLogs(200);
     setShowConsoleLevels({
@@ -323,6 +364,10 @@ const NetworkInspector = ({
           ...prev,
           ...(saved.tabVisibility as Record<ActiveTab, boolean>),
           apis: true, // APIs is always required
+          crash:
+            (saved.tabVisibility as any).crash !== undefined
+              ? (saved.tabVisibility as any).crash
+              : true,
         }));
       if (saved.defaultTab) setDefaultTab(saved.defaultTab as ActiveTab);
       if (saved.maxNetworkLogs != null) setMaxNetworkLogs(saved.maxNetworkLogs);
@@ -345,6 +390,7 @@ const NetworkInspector = ({
             redux: false,
             bundle: false,
             performance: false,
+            crash: true,
           },
           ...(saved.tabVisibility || {}),
           apis: true,
@@ -750,6 +796,24 @@ const NetworkInspector = ({
     clearNetworkLogs();
     setupConsoleLogger();
     autoSetupAnalyticsLogger();
+    setupGlobalCrashHandler();
+
+    const unsubscribeCrash = subscribeCrashEvents(crashInfo => {
+      if (crashInfo.message === '__CLEARED__') {
+        setCrashRecords([]);
+        setSelectedCrash(null);
+        return;
+      }
+      const updated = getCrashRecords();
+      setCrashRecords(updated);
+    });
+
+    // Sync crashes recorded before this subscription ran (e.g. a render crash
+    // during the very first commit, which fires before effects are mounted).
+    const pendingCrashes = getCrashRecords();
+    if (pendingCrashes.length > 0) {
+      setCrashRecords(pendingCrashes);
+    }
 
     let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -868,6 +932,7 @@ const NetworkInspector = ({
       unsubscribeConsole();
       clearTimeout(consoleTimeoutId);
       unsubscribeRedux();
+      unsubscribeCrash();
     };
   }, []);
 
@@ -1446,6 +1511,25 @@ const NetworkInspector = ({
       );
       return;
     }
+    if (activeTab === 'crash') {
+      Alert.alert(
+        'Clear Crash History',
+        'Are you sure you want to clear all intercepted crash records?',
+        [
+          {text: 'Cancel', style: 'cancel'},
+          {
+            text: 'Clear All',
+            onPress: () => {
+              clearCrashRecords();
+              setCrashRecords([]);
+              setSelectedCrash(null);
+            },
+            style: 'destructive',
+          },
+        ],
+      );
+      return;
+    }
     // Default: APIs tab. Only clears NETWORK logs — never touches the other tabs.
     if (selectedLogs.size > 0) {
       setLogs(prev => prev.filter(l => !selectedLogs.has(l.id)));
@@ -1640,6 +1724,20 @@ const NetworkInspector = ({
     reduxActiveSubTab,
     setReduxActiveSubTab,
 
+    // ─── Crash ───────────────────────────────────────────────────────────
+    crashRecords,
+    setCrashRecords,
+    selectedCrash,
+    setSelectedCrash,
+    lastReadCrashesCount,
+    maxCrashLogs,
+    setMaxCrashLogs,
+    clearAllCrashes: () => {
+      clearCrashRecords();
+      setCrashRecords([]);
+      setSelectedCrash(null);
+    },
+
     // ─── Settings ───────────────────────────────────────────────────────
     settingsActiveSubTab,
     setSettingsActiveSubTab,
@@ -1713,6 +1811,26 @@ export {
   getCollectionEnabled,
 } from './customHooks/analyticsLogger';
 
+export {
+  setupGlobalCrashHandler,
+  subscribeCrashEvents,
+  emitCrashEvent,
+  getCrashRecords,
+  clearCrashRecords,
+  simulateTestCrash,
+  exportCrashReport,
+  parseCrashStackTrace,
+  recordCustomCrash,
+  addCrashBreadcrumb,
+  recordNavigationBreadcrumb,
+  recordNetworkBreadcrumb,
+  recordReduxBreadcrumb,
+  recordUserActionBreadcrumb,
+  computeCrashFingerprint,
+  type CrashEventPayload,
+} from './customHooks/crashHandler';
+
+export {default as CrashTab} from './components/Inspector/CrashTab';
 export {default as ErrorBoundary} from './components/ErrorBoundary';
 
 export {
@@ -1763,4 +1881,9 @@ export {
   DiffResultType,
   BundleSubTab,
   PerformanceSubTab,
+  CrashType,
+  CrashExportFormat,
+  CrashDetailSubTab,
+  CrashFilterType,
+  BreadcrumbType,
 } from './types';

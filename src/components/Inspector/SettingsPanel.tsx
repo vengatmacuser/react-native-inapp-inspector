@@ -20,6 +20,9 @@ import {clearNetworkLogs} from '../../customHooks/networkLogger';
 import {clearConsoleLogs} from '../../customHooks/consoleLogger';
 import {clearAnalyticsEvents} from '../../customHooks/analyticsLogger';
 import {
+  clearCrashRecords,
+} from '../../customHooks/crashHandler';
+import {
   SignalIcon,
   TerminalIcon,
   AnalyticsIcon,
@@ -36,6 +39,8 @@ import {
   PackageIcon,
   ReduxIcon,
   PerformanceIcon,
+  CrashIcon,
+  ShieldAlertIcon,
 } from '../NetworkIcons';
 
 const SettingsPanel = () => {
@@ -76,6 +81,9 @@ const SettingsPanel = () => {
     setSelected,
     setSelectedEvent,
     setReduxState,
+    crashRecords,
+    maxCrashLogs,
+    setMaxCrashLogs,
   } = useInspector();
 
   const isPersistent = isPersistentStorageAvailable();
@@ -90,6 +98,7 @@ const SettingsPanel = () => {
       {key: 'redux', label: 'Redux', icon: 'redux'},
       {key: 'bundle', label: 'Bundle', icon: 'bundle'},
       {key: 'performance', label: 'Performance', icon: 'performance'},
+      {key: 'crash', label: 'Crash', icon: 'crash'},
     ] as const;
 
     return (
@@ -370,6 +379,16 @@ const SettingsPanel = () => {
                         )}
                         {tab.icon === 'performance' && (
                           <PerformanceIcon
+                            color={
+                              isLocked
+                                ? AppColors.grayTextWeak
+                                : AppColors.purple
+                            }
+                            size={11}
+                          />
+                        )}
+                        {tab.icon === 'crash' && (
+                          <CrashIcon
                             color={
                               isLocked
                                 ? AppColors.grayTextWeak
@@ -918,6 +937,9 @@ const SettingsPanel = () => {
                             )}
                             {tab.icon === 'performance' && (
                               <PerformanceIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
+                            )}
+                            {tab.icon === 'crash' && (
+                              <CrashIcon color={isActive ? AppColors.white : AppColors.purple} size={11} />
                             )}
                           </View>
                           <Text
@@ -1760,6 +1782,104 @@ const SettingsPanel = () => {
             onPress: () => {
               setReduxState(null);
               Alert.alert('Success', 'Redux state snapshot cleared.');
+            },
+            right: (
+              <View
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 7,
+                  backgroundColor: `${AppColors.errorColor}14`,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.errorColor}33`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    color: AppColors.errorColor,
+                  }}>
+                  Clear
+                </Text>
+              </View>
+            ),
+          })}
+        </View>
+      </ScrollView>
+    );
+  } else if (settingsPage === 'crash') {
+    title = 'Crash Settings';
+    icon = <CrashIcon color={AppColors.white} size={16} />;
+    rightInfo = `Total: ${crashRecords?.length || 0}`;
+    content = (
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{padding: 16}}>
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 4,
+          }}>
+          {renderSettingRow({
+            icon: <LayersIcon color={AppColors.purple} size={16} />,
+            label: 'Max Crash Logs',
+            description: 'How many crash records to preserve in history',
+            picker: {
+              options: [25, 50, 100, 200] as const,
+              selectedValue: (maxCrashLogs as 25 | 50 | 100 | 200) || 100,
+              onSelect: val => setMaxCrashLogs(val),
+            },
+          })}
+          <View
+            style={{height: 1, backgroundColor: AppColors.dividerColor}}
+          />
+          {renderSettingRow({
+            icon: <ShieldAlertIcon color={AppColors.greenColor} size={16} />,
+            label: 'Global Crash Guard',
+            description: 'Intercepts native, JS, and render errors directly',
+            isLast: true,
+            right: (
+              <View
+                style={{
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                  backgroundColor: `${AppColors.greenColor}1F`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    color: AppColors.greenColor,
+                  }}>
+                  PROTECTED
+                </Text>
+              </View>
+            ),
+          })}
+        </View>
+
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            padding: 16,
+            marginTop: 12,
+          }}>
+          {renderSettingRow({
+            icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+            label: 'Clear Crash History',
+            description: `${crashRecords?.length || 0} crash logs stored`,
+            isLast: true,
+            onPress: () => {
+              clearCrashRecords();
+              Alert.alert('Success', 'Crash logs cleared.');
             },
             right: (
               <View

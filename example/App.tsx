@@ -40,13 +40,13 @@ function App() {
             <Stack.Screen name="Details" component={DetailsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
-        {/* Render inspector globally exactly once at the root level */}
-        <NetworkInspector
-          navigationRef={navigationRef}
-          appIcon={require('./assets/app_icon.png')}
-          environment="DEV"
-        />
       </ErrorBoundary>
+      {/* Render inspector globally outside inner component ErrorBoundary */}
+      <NetworkInspector
+        navigationRef={navigationRef}
+        appIcon={require('./assets/app_icon.png')}
+        environment="DEV"
+      />
     </SafeAreaProvider>
   );
 }

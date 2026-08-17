@@ -9,6 +9,7 @@ export const ActiveTab = {
   Redux: 'redux',
   Bundle: 'bundle',
   Performance: 'performance',
+  Crash: 'crash',
 } as const;
 export type ActiveTab = (typeof ActiveTab)[keyof typeof ActiveTab];
 
@@ -61,6 +62,7 @@ export const SettingsPage = {
   Redux: 'redux',
   Bundle: 'bundle',
   Performance: 'performance',
+  Crash: 'crash',
 } as const;
 export type SettingsPage =
   | (typeof SettingsPage)[keyof typeof SettingsPage]
@@ -142,3 +144,51 @@ export const PerformanceSubTab = {
 } as const;
 export type PerformanceSubTab =
   (typeof PerformanceSubTab)[keyof typeof PerformanceSubTab];
+
+export const CrashType = {
+  Native: 'native',
+  Js: 'js',
+  Promise: 'promise',
+  Render: 'render',
+  Custom: 'custom',
+} as const;
+export type CrashType = (typeof CrashType)[keyof typeof CrashType];
+
+export const CrashExportFormat = {
+  Text: 'text',
+  Markdown: 'markdown',
+  Json: 'json',
+} as const;
+export type CrashExportFormat =
+  (typeof CrashExportFormat)[keyof typeof CrashExportFormat];
+
+export const CrashDetailSubTab = {
+  Stack: 'stack',
+  Diagnostics: 'diagnostics',
+  Breadcrumbs: 'breadcrumbs',
+  Raw: 'raw',
+} as const;
+export type CrashDetailSubTab =
+  (typeof CrashDetailSubTab)[keyof typeof CrashDetailSubTab];
+
+export const CrashFilterType = {
+  All: 'all',
+  Fatal: 'fatal',
+  Js: 'js',
+  Promise: 'promise',
+  Render: 'render',
+  Native: 'native',
+} as const;
+export type CrashFilterType =
+  (typeof CrashFilterType)[keyof typeof CrashFilterType];
+
+export const BreadcrumbType = {
+  Navigation: 'navigation',
+  Network: 'network',
+  Redux: 'redux',
+  Console: 'console',
+  User: 'user',
+  System: 'system',
+} as const;
+export type BreadcrumbType =
+  (typeof BreadcrumbType)[keyof typeof BreadcrumbType];

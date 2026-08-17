@@ -8,80 +8,204 @@ import {
   Linking,
   Dimensions,
 } from 'react-native';
-import Svg, {
-  Path,
-  Circle,
-  Rect,
-  Ellipse,
-  Line,
-} from 'react-native-svg';
+import Svg, { Path, Circle, Rect, Ellipse, Line } from 'react-native-svg';
 import axios from 'axios';
 import {
   subscribeNetworkLogs,
   subscribeConsoleLogs,
   logAnalyticsEvent,
   subscribeAnalyticsEvents,
+  simulateTestCrash,
 } from 'react-native-inapp-inspector';
 import { mockStore } from '../store/mockStore';
-import { BuggyComponent } from '../components/BuggyComponent';
 import { styles } from '../styles/appStyles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ─── Crisp SVG Vector Icons ───────────────────────────────────────────────────
 
-const SvgBolt = ({ color = '#FFFFFF', size = 14 }: { color?: string; size?: number }) => (
+const SvgBolt = ({
+  color = '#FFFFFF',
+  size = 14,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path
+      d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );
 
-const SvgPackage = ({ color = '#64748B', size = 14 }: { color?: string; size?: number }) => (
+const SvgPackage = ({
+  color = '#64748B',
+  size = 14,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M16.5 9.4L7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 2.5 1.55L16.5 14.6" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
-    <Path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <Path
+      d="M16.5 9.4L7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 2.5 1.55L16.5 14.6"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <Path
+      d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );
 
-const SvgGitHub = ({ color = '#64748B', size = 14 }: { color?: string; size?: number }) => (
+const SvgGitHub = ({
+  color = '#64748B',
+  size = 14,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <Path
+      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );
 
-const SvgGlobe = ({ color = '#0284C7', size = 14 }: { color?: string; size?: number }) => (
+const SvgGlobe = ({
+  color = '#0284C7',
+  size = 14,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
-    <Path d="M12 2C8 7 8 17 12 22M12 2c4 5 4 15 0 20M2 12h20" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path
+      d="M12 2C8 7 8 17 12 22M12 2c4 5 4 15 0 20M2 12h20"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
   </Svg>
 );
 
-const SvgTerminal = ({ color = '#4F46E5', size = 14 }: { color?: string; size?: number }) => (
+const SvgTerminal = ({
+  color = '#4F46E5',
+  size = 14,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M4 17l6-6-6-6M12 19h8" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path
+      d="M4 17l6-6-6-6M12 19h8"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );
 
-const SvgAnalytics = ({ color = '#0D9488', size = 14 }: { color?: string; size?: number }) => (
+const SvgAnalytics = ({
+  color = '#0D9488',
+  size = 14,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M18 20V10M12 20V4M6 20v-6" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    <Path
+      d="M18 20V10M12 20V4M6 20v-6"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );
 
-const SvgAtom = ({ color = '#7C3AED', size = 14 }: { color?: string; size?: number }) => (
+const SvgAtom = ({
+  color = '#7C3AED',
+  size = 14,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx="12" cy="12" r="2" fill={color} />
-    <Ellipse cx="12" cy="12" rx="9.5" ry="3.8" stroke={color} strokeWidth="1.6" transform="rotate(30 12 12)" />
-    <Ellipse cx="12" cy="12" rx="9.5" ry="3.8" stroke={color} strokeWidth="1.6" transform="rotate(90 12 12)" />
-    <Ellipse cx="12" cy="12" rx="9.5" ry="3.8" stroke={color} strokeWidth="1.6" transform="rotate(150 12 12)" />
+    <Ellipse
+      cx="12"
+      cy="12"
+      rx="9.5"
+      ry="3.8"
+      stroke={color}
+      strokeWidth="1.6"
+      transform="rotate(30 12 12)"
+    />
+    <Ellipse
+      cx="12"
+      cy="12"
+      rx="9.5"
+      ry="3.8"
+      stroke={color}
+      strokeWidth="1.6"
+      transform="rotate(90 12 12)"
+    />
+    <Ellipse
+      cx="12"
+      cy="12"
+      rx="9.5"
+      ry="3.8"
+      stroke={color}
+      strokeWidth="1.6"
+      transform="rotate(150 12 12)"
+    />
   </Svg>
 );
 
-const SvgExternalLink = ({ color = '#FFFFFF', size = 12 }: { color?: string; size?: number }) => (
+const SvgExternalLink = ({
+  color = '#FFFFFF',
+  size = 12,
+}: {
+  color?: string;
+  size?: number;
+}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M15 3h6v6M10 14L21 3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path
+      d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M15 3h6v6M10 14L21 3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </Svg>
 );
 
@@ -154,15 +278,21 @@ const ActivityGraphicsCard = ({
   const chartHeight = 70;
 
   const totalEvents = apiCount + logCount + analyticsCount;
-  const apiPct = totalEvents > 0 ? Math.round((apiCount / totalEvents) * 100) : 33;
-  const logPct = totalEvents > 0 ? Math.round((logCount / totalEvents) * 100) : 45;
-  const analyticsPct = totalEvents > 0 ? Math.max(0, 100 - apiPct - logPct) : 22;
+  const apiPct =
+    totalEvents > 0 ? Math.round((apiCount / totalEvents) * 100) : 33;
+  const logPct =
+    totalEvents > 0 ? Math.round((logCount / totalEvents) * 100) : 45;
+  const analyticsPct =
+    totalEvents > 0 ? Math.max(0, 100 - apiPct - logPct) : 22;
 
   // 10 chronological time bars (-18s to NOW)
   const barData = useMemo(() => {
-    const raw = history.length >= 10 ? history.slice(-10) : [2, 4, 3, 7, 5, 8, 12, 9, 14, 18];
+    const raw =
+      history.length >= 10
+        ? history.slice(-10)
+        : [2, 4, 3, 7, 5, 8, 12, 9, 14, 18];
     const maxVal = Math.max(...raw, 15);
-    return raw.map((val) => ({
+    return raw.map(val => ({
       val,
       height: Math.max(6, (val / maxVal) * (chartHeight - 20)),
     }));
@@ -200,9 +330,16 @@ const ActivityGraphicsCard = ({
         }}
       >
         {/* Top rate indicator */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 4,
+          }}
+        >
           <Text style={{ fontSize: 10, fontWeight: '700', color: '#64748B' }}>
-            Throughput: <Text style={{ color: '#4F46E5' }}>{totalEvents} Total Events</Text>
+            Throughput:{' '}
+            <Text style={{ color: '#4F46E5' }}>{totalEvents} Total Events</Text>
           </Text>
           <Text style={{ fontSize: 10, fontWeight: '700', color: '#16A34A' }}>
             ⚡ Live Activity Stream
@@ -212,8 +349,23 @@ const ActivityGraphicsCard = ({
         {/* SVG Time-Series Histogram */}
         <Svg width={chartWidth} height={chartHeight}>
           {/* Subtle Grid Guidelines */}
-          <Line x1="0" y1={chartHeight - 16} x2={chartWidth} y2={chartHeight - 16} stroke="#E2E8F0" strokeWidth="1" />
-          <Line x1="0" y1={(chartHeight - 16) / 2} x2={chartWidth} y2={(chartHeight - 16) / 2} stroke="#E2E8F0" strokeWidth="1" strokeDasharray="3,3" />
+          <Line
+            x1="0"
+            y1={chartHeight - 16}
+            x2={chartWidth}
+            y2={chartHeight - 16}
+            stroke="#E2E8F0"
+            strokeWidth="1"
+          />
+          <Line
+            x1="0"
+            y1={(chartHeight - 16) / 2}
+            x2={chartWidth}
+            y2={(chartHeight - 16) / 2}
+            stroke="#E2E8F0"
+            strokeWidth="1"
+            strokeDasharray="3,3"
+          />
 
           {/* Time Bars */}
           {barData.map((bar, i) => {
@@ -247,17 +399,38 @@ const ActivityGraphicsCard = ({
             borderTopColor: '#E2E8F0',
           }}
         >
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-18s</Text>
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-12s</Text>
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-6s</Text>
-          <Text style={{ fontSize: 9, color: '#4F46E5', fontWeight: '800' }}>NOW ●</Text>
+          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>
+            -18s
+          </Text>
+          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>
+            -12s
+          </Text>
+          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>
+            -6s
+          </Text>
+          <Text style={{ fontSize: 9, color: '#4F46E5', fontWeight: '800' }}>
+            NOW ●
+          </Text>
         </View>
       </View>
 
       {/* Proportional Category Distribution Bar */}
       <View style={{ gap: 6 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#0F172A', textTransform: 'uppercase' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 10.5,
+              fontWeight: '800',
+              color: '#0F172A',
+              textTransform: 'uppercase',
+            }}
+          >
             Event Breakdown
           </Text>
           <Text style={{ fontSize: 10, color: '#64748B', fontWeight: '600' }}>
@@ -274,9 +447,18 @@ const ActivityGraphicsCard = ({
             backgroundColor: '#E2E8F0',
           }}
         >
-          <View style={{ flex: Math.max(5, apiPct), backgroundColor: '#4F46E5' }} />
-          <View style={{ flex: Math.max(5, logPct), backgroundColor: '#F59E0B' }} />
-          <View style={{ flex: Math.max(5, analyticsPct), backgroundColor: '#0D9488' }} />
+          <View
+            style={{ flex: Math.max(5, apiPct), backgroundColor: '#4F46E5' }}
+          />
+          <View
+            style={{ flex: Math.max(5, logPct), backgroundColor: '#F59E0B' }}
+          />
+          <View
+            style={{
+              flex: Math.max(5, analyticsPct),
+              backgroundColor: '#0D9488',
+            }}
+          />
         </View>
 
         {/* Legend Ratio Breakdown */}
@@ -289,28 +471,56 @@ const ActivityGraphicsCard = ({
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#4F46E5' }} />
+            <View
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: 3.5,
+                backgroundColor: '#4F46E5',
+              }}
+            />
             <Text style={{ fontSize: 10, fontWeight: '700', color: '#4F46E5' }}>
               APIs {apiPct}%
             </Text>
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#F59E0B' }} />
+            <View
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: 3.5,
+                backgroundColor: '#F59E0B',
+              }}
+            />
             <Text style={{ fontSize: 10, fontWeight: '700', color: '#D97706' }}>
               Logs {logPct}%
             </Text>
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#0D9488' }} />
+            <View
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: 3.5,
+                backgroundColor: '#0D9488',
+              }}
+            />
             <Text style={{ fontSize: 10, fontWeight: '700', color: '#0D9488' }}>
               Events {analyticsPct}%
             </Text>
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: '#7C3AED' }} />
+            <View
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: 3.5,
+                backgroundColor: '#7C3AED',
+              }}
+            />
             <Text style={{ fontSize: 10, fontWeight: '700', color: '#7C3AED' }}>
               {sidebarOpen ? 'Open' : 'Closed'}
             </Text>
@@ -329,7 +539,9 @@ const ActivityGraphicsCard = ({
           <Text style={styles.statLbl}>Logs</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={[styles.statVal, { color: '#0D9488' }]}>{analyticsCount}</Text>
+          <Text style={[styles.statVal, { color: '#0D9488' }]}>
+            {analyticsCount}
+          </Text>
           <Text style={styles.statLbl}>Events</Text>
         </View>
         <View style={styles.statBox}>
@@ -344,14 +556,17 @@ const ActivityGraphicsCard = ({
 };
 
 export function HomeScreen({ navigation }: any) {
-  const [activeTab, setActiveTab] = useState<'tests' | 'npm' | 'github'>('tests');
-  const [activeCrash, setActiveCrash] = useState<'none' | 'js' | 'native'>('none');
+  const [activeTab, setActiveTab] = useState<'tests' | 'npm' | 'github'>(
+    'tests',
+  );
   const [apiCount, setApiCount] = useState(0);
   const [logCount, setLogCount] = useState(0);
   const [analyticsCount, setAnalyticsCount] = useState(0);
   const [reduxState, setReduxState] = useState(mockStore.getState());
   const [lastActionStatus, setLastActionStatus] = useState<string | null>(null);
-  const [activityHistory, setActivityHistory] = useState<number[]>([3, 5, 8, 4, 12, 16, 9, 15, 20, 24]);
+  const [activityHistory, setActivityHistory] = useState<number[]>([
+    3, 5, 8, 4, 12, 16, 9, 15, 20, 24,
+  ]);
 
   const notifyAction = (name: string) => {
     setLastActionStatus(name);
@@ -366,15 +581,24 @@ export function HomeScreen({ navigation }: any) {
     // Subscribe to logs to display live dashboard counters
     const unsubNet = subscribeNetworkLogs(logs => {
       setApiCount(logs.length);
-      setActivityHistory(prev => [...prev.slice(-9), Math.max(2, logs.length % 20 + 2)]);
+      setActivityHistory(prev => [
+        ...prev.slice(-9),
+        Math.max(2, (logs.length % 20) + 2),
+      ]);
     });
     const unsubConsole = subscribeConsoleLogs(logs => {
       setLogCount(logs.length);
-      setActivityHistory(prev => [...prev.slice(-9), Math.max(2, logs.length % 20 + 3)]);
+      setActivityHistory(prev => [
+        ...prev.slice(-9),
+        Math.max(2, (logs.length % 20) + 3),
+      ]);
     });
     const unsubAnalytics = subscribeAnalyticsEvents(events => {
       setAnalyticsCount(events.length);
-      setActivityHistory(prev => [...prev.slice(-9), Math.max(2, events.length % 20 + 1)]);
+      setActivityHistory(prev => [
+        ...prev.slice(-9),
+        Math.max(2, (events.length % 20) + 1),
+      ]);
     });
     const unsubRedux = mockStore.subscribe(() =>
       setReduxState(mockStore.getState()),
@@ -496,8 +720,6 @@ export function HomeScreen({ navigation }: any) {
     console.log(
       '[App] Manual log triggered at ' + new Date().toLocaleTimeString(),
     );
-    console.warn('[App] Simulated warning. Please check the API config.');
-    console.error('[App] Simulated error! Critical DB connection timeout.');
   };
 
   const triggerSampleAll = () => {
@@ -571,7 +793,9 @@ export function HomeScreen({ navigation }: any) {
   };
 
   const openUrl = (url: string) => {
-    Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
+    Linking.openURL(url).catch(err =>
+      console.error('Failed to open URL:', err),
+    );
   };
 
   return (
@@ -584,42 +808,78 @@ export function HomeScreen({ navigation }: any) {
         <View style={styles.headerHero}>
           <View style={styles.headerBadgeContainer}>
             <SvgBolt color="#4F46E5" size={12} />
-            <Text style={[styles.headerBadge, { marginLeft: 4 }]}>react-native-inapp-inspector</Text>
+            <Text style={[styles.headerBadge, { marginLeft: 4 }]}>
+              react-native-inapp-inspector
+            </Text>
           </View>
           <Text style={styles.headerTitle}>Playground Workbench</Text>
           <Text style={styles.headerSubtitle}>
-            Interactive testing suite, NPM package specs, and open-source documentation.
+            Interactive testing suite, NPM package specs, and open-source
+            documentation.
           </Text>
         </View>
 
         {/* Multi-Tab Navigation Switcher with crisp SVG icons */}
         <View style={styles.tabBarContainer}>
           <Pressable
-            style={[styles.tabItem, activeTab === 'tests' && styles.tabItemActive]}
+            style={[
+              styles.tabItem,
+              activeTab === 'tests' && styles.tabItemActive,
+            ]}
             onPress={() => setActiveTab('tests')}
           >
-            <SvgBolt color={activeTab === 'tests' ? '#FFFFFF' : '#64748B'} size={13} />
-            <Text style={[styles.tabText, activeTab === 'tests' && styles.tabTextActive]}>
+            <SvgBolt
+              color={activeTab === 'tests' ? '#FFFFFF' : '#64748B'}
+              size={13}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'tests' && styles.tabTextActive,
+              ]}
+            >
               Tests
             </Text>
           </Pressable>
 
           <Pressable
-            style={[styles.tabItem, activeTab === 'npm' && styles.tabItemActive]}
+            style={[
+              styles.tabItem,
+              activeTab === 'npm' && styles.tabItemActive,
+            ]}
             onPress={() => setActiveTab('npm')}
           >
-            <SvgPackage color={activeTab === 'npm' ? '#FFFFFF' : '#64748B'} size={13} />
-            <Text style={[styles.tabText, activeTab === 'npm' && styles.tabTextActive]}>
+            <SvgPackage
+              color={activeTab === 'npm' ? '#FFFFFF' : '#64748B'}
+              size={13}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'npm' && styles.tabTextActive,
+              ]}
+            >
               NPM
             </Text>
           </Pressable>
 
           <Pressable
-            style={[styles.tabItem, activeTab === 'github' && styles.tabItemActive]}
+            style={[
+              styles.tabItem,
+              activeTab === 'github' && styles.tabItemActive,
+            ]}
             onPress={() => setActiveTab('github')}
           >
-            <SvgGitHub color={activeTab === 'github' ? '#FFFFFF' : '#64748B'} size={13} />
-            <Text style={[styles.tabText, activeTab === 'github' && styles.tabTextActive]}>
+            <SvgGitHub
+              color={activeTab === 'github' ? '#FFFFFF' : '#64748B'}
+              size={13}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'github' && styles.tabTextActive,
+              ]}
+            >
               GitHub
             </Text>
           </Pressable>
@@ -641,9 +901,13 @@ export function HomeScreen({ navigation }: any) {
             {/* API & Network Tests */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
                   <SvgGlobe color="#0284C7" size={14} />
-                  <Text style={styles.panelHeader}>Standard Fetch Requests</Text>
+                  <Text style={styles.panelHeader}>
+                    Standard Fetch Requests
+                  </Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>HTTP / REST</Text>
               </View>
@@ -666,9 +930,13 @@ export function HomeScreen({ navigation }: any) {
             {/* Axios Interception */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
                   <SvgBolt color="#059669" size={14} />
-                  <Text style={styles.panelHeader}>Axios Auto-Interception</Text>
+                  <Text style={styles.panelHeader}>
+                    Axios Auto-Interception
+                  </Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>AXIOS METHODS</Text>
               </View>
@@ -713,9 +981,13 @@ export function HomeScreen({ navigation }: any) {
             {/* Console & Stack Traces */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
                   <SvgTerminal color="#4F46E5" size={14} />
-                  <Text style={styles.panelHeader}>Console Logs & Stack Traces</Text>
+                  <Text style={styles.panelHeader}>
+                    Console Logs & Stack Traces
+                  </Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>CALL STACK</Text>
               </View>
@@ -734,9 +1006,21 @@ export function HomeScreen({ navigation }: any) {
                     notifyAction('Multi-Arg Logged');
                     console.log(
                       'Multi-argument payload inspection:',
-                      { userId: 101, username: 'venkatesh', role: 'Lead Architect' },
-                      ['permissions.read', 'permissions.write', 'permissions.admin'],
-                      { device: 'iPhone 15 Pro', os: 'iOS 18.0', battery: '92%' },
+                      {
+                        userId: 101,
+                        username: 'venkatesh',
+                        role: 'Lead Architect',
+                      },
+                      [
+                        'permissions.read',
+                        'permissions.write',
+                        'permissions.admin',
+                      ],
+                      {
+                        device: 'iPhone 15 Pro',
+                        os: 'iOS 18.0',
+                        battery: '92%',
+                      },
                     );
                   }}
                   color="#7C3AED"
@@ -763,7 +1047,9 @@ export function HomeScreen({ navigation }: any) {
             {/* Analytics Events */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
                   <SvgAnalytics color="#0D9488" size={14} />
                   <Text style={styles.panelHeader}>Analytics & GA4 Events</Text>
                 </View>
@@ -823,9 +1109,13 @@ export function HomeScreen({ navigation }: any) {
             {/* Redux State Actions */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
                   <SvgAtom color="#7C3AED" size={14} />
-                  <Text style={styles.panelHeader}>Redux Store & Time-Travel</Text>
+                  <Text style={styles.panelHeader}>
+                    Redux Store & Time-Travel
+                  </Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>STATE TIMELINE</Text>
               </View>
@@ -877,26 +1167,31 @@ export function HomeScreen({ navigation }: any) {
               />
             </View>
 
-            {/* Crash Boundary Simulation */}
+            {/* Crash Exception Simulation */}
             <View style={[styles.panelCard, { borderColor: '#FECDD3' }]}>
               <View style={styles.panelHeaderRow}>
                 <Text style={[styles.panelHeader, { color: '#E11D48' }]}>
-                  Crash Boundary Simulation
+                  Exception Simulation
                 </Text>
-                <Text style={[styles.panelHeaderBadge, { backgroundColor: '#FFE4E6', color: '#BE123C' }]}>
-                  ERROR BOUNDARY
+                <Text
+                  style={[
+                    styles.panelHeaderBadge,
+                    { backgroundColor: '#FFE4E6', color: '#BE123C' },
+                  ]}
+                >
+                  CRASH TESTING
                 </Text>
               </View>
               <View style={styles.btnRow}>
                 <TactileButton
-                  label="Simulate JS Crash"
-                  onPress={() => setActiveCrash('js')}
+                  label="Simulate JS Exception"
+                  onPress={() => simulateTestCrash('js')}
                   color="#E11D48"
                   bgColor="#FFF1F2"
                 />
                 <TactileButton
-                  label="Simulate Native Crash"
-                  onPress={() => setActiveCrash('native')}
+                  label="Simulate Native Exception"
+                  onPress={() => simulateTestCrash('native')}
                   color="#DC2626"
                   bgColor="#FEF2F2"
                 />
@@ -910,24 +1205,35 @@ export function HomeScreen({ navigation }: any) {
           <>
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
                   <SvgPackage color="#0F172A" size={15} />
                   <Text style={styles.panelHeader}>NPM Package Specs</Text>
                 </View>
-                <Text style={[styles.panelHeaderBadge, { backgroundColor: '#DCFCE7', color: '#16A34A' }]}>
+                <Text
+                  style={[
+                    styles.panelHeaderBadge,
+                    { backgroundColor: '#DCFCE7', color: '#16A34A' },
+                  ]}
+                >
                   PUBLISHED • v1.1.24
                 </Text>
               </View>
 
               {/* Install Code Snippet */}
               <View style={styles.codeSnippet}>
-                <Text style={styles.codeText}>npm i react-native-inapp-inspector</Text>
+                <Text style={styles.codeText}>
+                  npm i react-native-inapp-inspector
+                </Text>
               </View>
 
               <View style={{ gap: 2 }}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Package Name</Text>
-                  <Text style={styles.infoValue}>react-native-inapp-inspector</Text>
+                  <Text style={styles.infoValue}>
+                    react-native-inapp-inspector
+                  </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Latest Version</Text>
@@ -935,15 +1241,21 @@ export function HomeScreen({ navigation }: any) {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Unpacked Size</Text>
-                  <Text style={styles.infoValue}>~165 KB ({'< 45 KB gzipped'})</Text>
+                  <Text style={styles.infoValue}>
+                    ~165 KB ({'< 45 KB gzipped'})
+                  </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Native Compilation</Text>
-                  <Text style={[styles.infoValue, { color: '#16A34A' }]}>Zero (Pure JS / TS)</Text>
+                  <Text style={[styles.infoValue, { color: '#16A34A' }]}>
+                    Zero (Pure JS / TS)
+                  </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Module Formats</Text>
-                  <Text style={styles.infoValue}>CommonJS + ESM + TypeScript</Text>
+                  <Text style={styles.infoValue}>
+                    CommonJS + ESM + TypeScript
+                  </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>License</Text>
@@ -953,7 +1265,11 @@ export function HomeScreen({ navigation }: any) {
 
               <TactileButton
                 label="View Package on NPM Registry"
-                onPress={() => openUrl('https://www.npmjs.com/package/react-native-inapp-inspector')}
+                onPress={() =>
+                  openUrl(
+                    'https://www.npmjs.com/package/react-native-inapp-inspector',
+                  )
+                }
                 color="#CC3534"
                 bgColor="#CC3534"
                 icon={<SvgExternalLink color="#FFFFFF" size={13} />}
@@ -967,20 +1283,49 @@ export function HomeScreen({ navigation }: any) {
                 <Text style={styles.panelHeaderBadge}>ALL-IN-ONE</Text>
               </View>
               <View style={{ gap: 6 }}>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Network Inspector:</Text> Auto-intercepts Axios, Fetch, and XMLHttpRequest with cURL copy and headers.
+                <Text
+                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
+                >
+                  •{' '}
+                  <Text style={{ fontWeight: '700' }}>Network Inspector:</Text>{' '}
+                  Auto-intercepts Axios, Fetch, and XMLHttpRequest with cURL
+                  copy and headers.
                 </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Console & Stack Trace:</Text> Symbolicated source line and column coordinates directly from Metro.
+                <Text
+                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
+                >
+                  •{' '}
+                  <Text style={{ fontWeight: '700' }}>
+                    Console & Stack Trace:
+                  </Text>{' '}
+                  Symbolicated source line and column coordinates directly from
+                  Metro.
                 </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Redux Time-Travel:</Text> Dispatched action timeline, slice diff viewer, and state inspection.
+                <Text
+                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
+                >
+                  •{' '}
+                  <Text style={{ fontWeight: '700' }}>Redux Time-Travel:</Text>{' '}
+                  Dispatched action timeline, slice diff viewer, and state
+                  inspection.
                 </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Firebase & GA4 Analytics:</Text> Automatic screen and ecommerce event category detection.
+                <Text
+                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
+                >
+                  •{' '}
+                  <Text style={{ fontWeight: '700' }}>
+                    Firebase & GA4 Analytics:
+                  </Text>{' '}
+                  Automatic screen and ecommerce event category detection.
                 </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Bundle & Performance Analyzer:</Text> Real-time FPS monitor and JS asset ratio treemaps.
+                <Text
+                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
+                >
+                  •{' '}
+                  <Text style={{ fontWeight: '700' }}>
+                    Bundle & Performance Analyzer:
+                  </Text>{' '}
+                  Real-time FPS monitor and JS asset ratio treemaps.
                 </Text>
               </View>
             </View>
@@ -992,11 +1337,18 @@ export function HomeScreen({ navigation }: any) {
           <>
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                >
                   <SvgGitHub color="#0F172A" size={15} />
                   <Text style={styles.panelHeader}>Open Source Repository</Text>
                 </View>
-                <Text style={[styles.panelHeaderBadge, { backgroundColor: '#EEF2FF', color: '#4F46E5' }]}>
+                <Text
+                  style={[
+                    styles.panelHeaderBadge,
+                    { backgroundColor: '#EEF2FF', color: '#4F46E5' },
+                  ]}
+                >
                   GITHUB
                 </Text>
               </View>
@@ -1004,26 +1356,38 @@ export function HomeScreen({ navigation }: any) {
               <View style={{ gap: 2 }}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Repository</Text>
-                  <Text style={styles.infoValue}>vengatmacuser/react-native-inapp-inspector</Text>
+                  <Text style={styles.infoValue}>
+                    vengatmacuser/react-native-inapp-inspector
+                  </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Author / Creator</Text>
-                  <Text style={styles.infoValue}>Vengateswaran Balakrishnan</Text>
+                  <Text style={styles.infoValue}>
+                    Vengateswaran Balakrishnan
+                  </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Platform Support</Text>
-                  <Text style={styles.infoValue}>iOS, Android, Expo, RN 0.60+</Text>
+                  <Text style={styles.infoValue}>
+                    iOS, Android, Expo, RN 0.60+
+                  </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Documentation</Text>
-                  <Text style={[styles.infoValue, { color: '#4F46E5' }]}>Interactive Showcase</Text>
+                  <Text style={[styles.infoValue, { color: '#4F46E5' }]}>
+                    Interactive Showcase
+                  </Text>
                 </View>
               </View>
 
               <View style={{ gap: 8, marginTop: 4 }}>
                 <TactileButton
                   label="Star & View on GitHub"
-                  onPress={() => openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector')}
+                  onPress={() =>
+                    openUrl(
+                      'https://github.com/vengatmacuser/react-native-inapp-inspector',
+                    )
+                  }
                   color="#24292F"
                   bgColor="#24292F"
                   icon={<SvgExternalLink color="#FFFFFF" size={13} />}
@@ -1031,7 +1395,11 @@ export function HomeScreen({ navigation }: any) {
                 />
                 <TactileButton
                   label="Report Issue / Request Feature"
-                  onPress={() => openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector/issues')}
+                  onPress={() =>
+                    openUrl(
+                      'https://github.com/vengatmacuser/react-native-inapp-inspector/issues',
+                    )
+                  }
                   color="#0284C7"
                   bgColor="#0284C7"
                   icon={<SvgExternalLink color="#FFFFFF" size={13} />}
@@ -1039,7 +1407,9 @@ export function HomeScreen({ navigation }: any) {
                 />
                 <TactileButton
                   label="Sponsor on GitHub ❤️"
-                  onPress={() => openUrl('https://github.com/sponsors/vengatmacuser')}
+                  onPress={() =>
+                    openUrl('https://github.com/sponsors/vengatmacuser')
+                  }
                   color="#DB2777"
                   bgColor="#DB2777"
                   icon={<SvgExternalLink color="#FFFFFF" size={13} />}
@@ -1082,8 +1452,6 @@ export function HomeScreen({ navigation }: any) {
           </Text>
         </Pressable>
       </View>
-
-      {activeCrash !== 'none' && <BuggyComponent type={activeCrash} />}
     </SafeAreaView>
   );
 }

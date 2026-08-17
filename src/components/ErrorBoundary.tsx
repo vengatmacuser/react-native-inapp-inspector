@@ -5,6 +5,8 @@ import { AppFonts } from '../styles/AppFonts';
 import { copyToClipboard } from '../helpers';
 import {ErrorBoundaryProps, ErrorBoundaryState} from '../types';
 import {WarningTriangleIcon, CopyIcon} from './NetworkIcons';
+import {handleInterceptedCrash} from '../customHooks/crashHandler';
+import {CrashType} from '../types/enums';
 
 function parseStackTrace(stack: string) {
   if (!stack) return null;
@@ -52,7 +54,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('InAppInspector ErrorBoundary caught a crash:', error, errorInfo);
+    try {
+      const stack = error?.stack || errorInfo?.componentStack;
+      handleInterceptedCrash(
+        error,
+        stack,
+        false,
+        CrashType.Render,
+        errorInfo?.componentStack,
+      );
+    } catch {}
   }
 
   private handleReset = () => {
@@ -78,133 +89,8 @@ ${error.stack}`;
 
   public render() {
     if (this.state.hasError) {
-      const isInline = this.props.fallbackType === 'inline';
-
-      if (isInline) {
-        return (
-          <View style={styles.inlineContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <WarningTriangleIcon color={AppColors.redErrorText} size={14} />
-              <Text style={styles.inlineTitle}>Inspector Crash</Text>
-            </View>
-            <TouchableOpacity style={styles.inlineResetBtn} onPress={this.handleReset}>
-              <Text style={styles.inlineResetText}>Reload</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      }
-
-      const error = this.state.error;
-      const isNativeCrash = error ? (error.message.includes('Native') || error.message.includes('native') || error.message.includes('Swift') || error.message.includes('Java')) : false;
-      const parsed = error && error.stack ? parseStackTrace(error.stack) : null;
-
-      return (
-        <View style={styles.container}>
-          <View style={styles.card}>
-            <View style={{ marginBottom: 12, alignItems: 'center' }}>
-            <WarningTriangleIcon color={AppColors.amber500} size={44} />
-          </View>
-            <Text style={styles.title}>Something went wrong</Text>
-            
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: isNativeCrash ? `${AppColors.errorColor}1A` : `${AppColors.amber500}1A`,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 20,
-              marginBottom: 12,
-              gap: 4
-            }}>
-              <View style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: isNativeCrash ? AppColors.errorColor : AppColors.amber500,
-              }} />
-              <Text style={{
-                fontSize: 10,
-                fontWeight: 'bold',
-                color: isNativeCrash ? AppColors.errorColor : AppColors.amber500,
-                fontFamily: AppFonts.interBold || 'System'
-              }}>
-                {isNativeCrash ? 'NATIVE CRASH' : 'JAVASCRIPT CRASH'}
-              </Text>
-            </View>
-
-            <Text style={styles.subtitle}>
-              The In-App Inspector or active view encountered an error. Traceback details are parsed below:
-            </Text>
-
-            {parsed && (
-              <View style={{
-                backgroundColor: AppColors.slate100,
-                borderRadius: 8,
-                padding: 10,
-                width: '100%',
-                marginBottom: 10,
-                borderWidth: 1,
-                borderColor: AppColors.slate200,
-                gap: 4
-              }}>
-                <Text style={{ fontSize: 11, color: AppColors.slate600, fontFamily: AppFonts.interMedium }} numberOfLines={1}>
-                  <Text style={{ fontWeight: 'bold' }}>Method:</Text> {parsed.method}
-                </Text>
-                <Text style={{ fontSize: 11, color: AppColors.slate600, fontFamily: AppFonts.interMedium }} numberOfLines={1}>
-                  <Text style={{ fontWeight: 'bold' }}>File:</Text> {parsed.file}
-                </Text>
-                <Text style={{ fontSize: 11, color: AppColors.slate600, fontFamily: AppFonts.interMedium }}>
-                  <Text style={{ fontWeight: 'bold' }}>Line:</Text> {parsed.line}  <Text style={{ fontWeight: 'bold' }}>Col:</Text> {parsed.column}
-                </Text>
-              </View>
-            )}
-
-            {error && (
-              <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.code}>
-                  {error.message}
-                  {'\n\n'}
-                  {error.stack}
-                </Text>
-              </ScrollView>
-            )}
-
-            <View style={{ width: '100%', gap: 8, marginBottom: 12 }}>
-              <TouchableOpacity
-                style={{
-                  backgroundColor: AppColors.slate900,
-                  height: 38,
-                  borderRadius: 8,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexDirection: 'row',
-                  gap: 6
-                }}
-                onPress={this.handleCopyTrace}
-              >
-                <CopyIcon color={AppColors.white} size={14} />
-                <Text style={{ color: AppColors.white, fontSize: 12, fontWeight: 'bold', fontFamily: AppFonts.interBold || 'System' }}>
-                  Copy Crash Traceback
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.btnRow}>
-              <TouchableOpacity style={styles.resetBtn} onPress={this.handleReset}>
-                <Text style={styles.resetBtnText}>Retry / Reload</Text>
-              </TouchableOpacity>
-              
-              {this.props.onClose && (
-                <TouchableOpacity style={styles.closeBtn} onPress={this.props.onClose}>
-                  <Text style={styles.closeBtnText}>Close Inspector</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        </View>
-      );
+      return null;
     }
-
     return this.props.children;
   }
 }

@@ -1693,3 +1693,232 @@ export const UserCheckIcon = ({
   );
 };
 
+export const CrashIcon = ({
+  color = AppColors.errorColor,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      {/* Bug / Crash Hybrid Icon */}
+      <Path
+        d="M12 2v3M4.93 4.93l2.12 2.12M19.07 4.93l-2.12 2.12M9 10h6M8 14h8M9 18h6"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M12 8a6 6 0 0 1 6 6v3a6 6 0 0 1-12 0v-3a6 6 0 0 1 6-6z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3 13h3M18 13h3M4 19l2.5-1.5M20 19l-2.5-1.5M4 9l2.5 1.5M20 9l-2.5 1.5"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const ShieldAlertIcon = ({
+  color = AppColors.errorColor,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Line
+        x1="12"
+        y1="8"
+        x2="12"
+        y2="12"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <Circle cx="12" cy="16" r="1" fill={color} />
+    </Svg>
+  );
+};
+
+
+
+export const SkullIcon = ({
+  color = AppColors.errorColor,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+      <Circle cx="9" cy="11" r="1.6" fill={color} />
+      <Circle cx="15" cy="11" r="1.6" fill={color} />
+      <Path
+        d="M8 16c1.2 1 3.2 1.2 4 1.2.8 0 2.8-.2 4-1.2"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Line x1="12" y1="16" x2="12" y2="18" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const ChipIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="7" y="7" width="10" height="10" rx="2" stroke={color} strokeWidth="1.8" />
+      <Rect x="10" y="10" width="4" height="4" fill={color} />
+      <Line x1="9" y1="3" x2="9" y2="7" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="15" y1="3" x2="15" y2="7" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="9" y1="17" x2="9" y2="21" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="15" y1="17" x2="15" y2="21" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="3" y1="9" x2="7" y2="9" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="3" y1="15" x2="7" y2="15" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="17" y1="9" x2="21" y2="9" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+      <Line x1="17" y1="15" x2="21" y2="15" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const LayoutIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x="3" y="3" width="18" height="18" rx="2" stroke={color} strokeWidth="1.8" />
+      <Line x1="3" y1="9" x2="21" y2="9" stroke={color} strokeWidth="1.8" />
+      <Line x1="9" y1="9" x2="9" y2="21" stroke={color} strokeWidth="1.8" />
+      <Rect x="12" y="12" width="6" height="6" fill={color} />
+    </Svg>
+  );
+};
+
+export const StackTraceIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 6h16M4 10h11M4 14h16M4 18h9"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M7.5 12.5 4 14l3.5 1.5"
+        stroke={color}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const DiagnosticsIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 12h3l2-5 3 9 2-6 1.5 2H21"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Line x1="4" y1="19" x2="20" y2="19" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+export const TrailIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="5" cy="18" r="2" fill={color} />
+      <Circle cx="12" cy="12" r="2" fill={color} />
+      <Circle cx="19" cy="6" r="2" fill={color} />
+      <Path
+        d="M6.5 16.5 10.5 13.5M13.5 10.5 17.5 7.5"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+};
+
+export const RawJsonIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8 3c-2 1-3 2.5-3 5 0 2-1 3.5-2 4 1 .5 2 2 2 4 0 2.5 1 4 3 5M16 3c2 1 3 2.5 3 5 0 2 1 3.5 2 4-1 .5-2 2-2 4 0 2.5-1 4-3 5"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const AppFramesIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 6h16M4 10h11M4 14h16M4 18h9"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M18 12.5l2 2 3-3.5"
+        stroke="#059669"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
+export const AllFramesIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: any) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 4h16M4 8h16M4 12h16M4 16h16M4 20h10"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Rect x="16" y="16" width="4" height="4" rx="1" fill={color} />
+    </Svg>
+  );
+};

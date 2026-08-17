@@ -60,6 +60,8 @@ const InspectorHeader = React.memo(() => {
     detailTitle,
     activeTab,
     environment,
+    selectedCrash,
+    setSelectedCrash,
   } = useInspector();
 
   const envConfig = useMemo(() => {
@@ -103,7 +105,8 @@ const InspectorHeader = React.memo(() => {
     (activeTab === 'apis' && selected != null) ||
     (activeTab === 'analytics' && selectedEvent != null) ||
     (activeTab === 'logs' && selectedLog != null) ||
-    (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null));
+    (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null)) ||
+    (activeTab === 'crash' && selectedCrash != null);
 
   const isAnySelected = isDetailView;
 
@@ -122,8 +125,9 @@ const InspectorHeader = React.memo(() => {
               {
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 16,
-                flex: !isDetailView ? 5 : 1,
+                gap: 12,
+                flex: !isDetailView ? 1 : 0,
+                minWidth: 0,
               },
             ]}>
             <TouchableScale
@@ -134,6 +138,7 @@ const InspectorHeader = React.memo(() => {
                   setSelectedLog(null);
                   setSelectedReduxSlice(null);
                   setSelectedReduxAction(null);
+                  setSelectedCrash(null);
                 });
               }}
               hitSlop={15}
@@ -655,6 +660,53 @@ const InspectorHeader = React.memo(() => {
                     </Text>
                   </View>
                 </View>
+              ) : activeTab === 'crash' && selectedCrash != null ? (
+                <View style={styles.headerDetailCenter}>
+                  <View style={styles.headerDetailRow}>
+                    <View
+                      style={[
+                        styles.headerMethodBadge,
+                        {
+                          backgroundColor: selectedCrash.isFatal
+                            ? '#DC2626'
+                            : '#D97706',
+                        },
+                      ]}>
+                      <Text style={styles.headerMethodText}>
+                        {selectedCrash.isFatal ? 'FATAL' : selectedCrash.type.toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text
+                      style={styles.headerDetailTitle}
+                      numberOfLines={1}
+                      ellipsizeMode="middle">
+                      {selectedCrash.name || selectedCrash.message}
+                    </Text>
+                  </View>
+                  <View style={styles.headerDetailSubRow}>
+                    <View
+                      style={[
+                        styles.headerStatusDot,
+                        {
+                          backgroundColor: selectedCrash.isFatal
+                            ? '#DC2626'
+                            : '#F59E0B',
+                        },
+                      ]}
+                    />
+                    <Text style={styles.headerSubTitle}>
+                      {selectedCrash.timeStr || new Date(selectedCrash.timestamp).toLocaleTimeString()}
+                    </Text>
+                    {selectedCrash.deviceInfo?.platform && (
+                      <>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
+                        <Text style={styles.headerSubTitle}>
+                          {selectedCrash.deviceInfo.platform.toUpperCase()}
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                </View>
               ) : null}
             </View>
           )}
@@ -662,9 +714,12 @@ const InspectorHeader = React.memo(() => {
           <View
             style={[
               styles.headerRight,
-              !isAnySelected && {
+              {
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
                 flexShrink: 0,
-                minWidth: 116,
+                gap: 8,
               },
             ]}>
             {!isAnySelected && (
@@ -672,7 +727,7 @@ const InspectorHeader = React.memo(() => {
                 onPress={() => {
                   Alert.alert(
                     'Clear Everything',
-                    'This clears all tabs — APIs, Logs, Analytics and Redux timeline. Continue?',
+                    'This clears all tabs — APIs, Logs, Analytics, Redux timeline and Crash history. Continue?',
                     [
                       {text: 'Cancel', style: 'cancel'},
                       {
@@ -684,13 +739,7 @@ const InspectorHeader = React.memo(() => {
                   );
                 }}
                 hitSlop={15}
-                style={[
-                  styles.closeButtonSquare,
-                  {
-                    marginRight: 8,
-                    backgroundColor: `${AppColors.white}26`,
-                  },
-                ]}>
+                style={styles.closeButtonSquare}>
                 <Animated.View
                   style={{
                     transform: [
@@ -713,19 +762,11 @@ const InspectorHeader = React.memo(() => {
               </TouchableScale>
             )}
 
-            {selected == null &&
-              selectedEvent == null &&
-              selectedLog == null && (
+            {!isAnySelected && (
               <TouchableScale
                 onPress={() => setSettingsPage('main')}
                 hitSlop={15}
-                style={[
-                  styles.closeButtonSquare,
-                  {
-                    marginRight: 8,
-                    backgroundColor: `${AppColors.white}26`,
-                  },
-                ]}>
+                style={styles.closeButtonSquare}>
                 <SettingsIcon color={AppColors.white} size={16} />
               </TouchableScale>
             )}

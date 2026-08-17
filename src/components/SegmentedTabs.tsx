@@ -61,7 +61,10 @@ const SegmentedTabs = React.memo(({tabs, activeKey, onChange, style}: SegmentedT
           ]}>
           {tab.icon ? tab.icon(isActive) : null}
           <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
             style={{
+              flexShrink: 1,
               fontFamily: AppFonts.interBold,
               fontSize: 10.5,
               color: isActive

@@ -24,6 +24,8 @@ import ReduxTab from './ReduxTab';
 import ReduxDetail from './ReduxDetail';
 import BundleTab from './BundleTab';
 import PerformanceTab from './PerformanceTab';
+import CrashTab from './CrashTab';
+import CrashDetail from './CrashDetail';
 import SettingsPanel from './SettingsPanel';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
@@ -40,6 +42,7 @@ const MainScreen = () => {
     selectedLog,
     selectedReduxSlice,
     selectedReduxAction,
+    selectedCrash,
     settingsPage,
     activeTab,
     isReady,
@@ -64,7 +67,8 @@ const MainScreen = () => {
     (activeTab === 'apis' && selected != null) ||
     (activeTab === 'analytics' && selectedEvent != null) ||
     (activeTab === 'logs' && selectedLog != null) ||
-    (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null));
+    (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null)) ||
+    (activeTab === 'crash' && selectedCrash != null);
 
   return (
     <>
@@ -105,6 +109,8 @@ const MainScreen = () => {
                     <LogDetail />
                   ) : activeTab === 'redux' ? (
                     <ReduxDetail />
+                  ) : activeTab === 'crash' && selectedCrash != null ? (
+                    <CrashDetail />
                   ) : null
                 ) : (
                   <>
@@ -149,6 +155,13 @@ const MainScreen = () => {
                         display: activeTab === 'performance' ? 'flex' : 'none',
                       }}>
                       {mountedTabs.performance && <PerformanceTab />}
+                    </View>
+                    <View
+                      style={{
+                        flex: 1,
+                        display: activeTab === 'crash' ? 'flex' : 'none',
+                      }}>
+                      {mountedTabs.crash && <CrashTab />}
                     </View>
                   </>
                 )

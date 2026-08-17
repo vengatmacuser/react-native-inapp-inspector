@@ -1,6 +1,7 @@
 import {NativeModules} from 'react-native';
 import {ConsoleLog} from '../types';
 import {IGNORED_LOG_PREFIXES} from './logFilters';
+import {setupGlobalCrashHandler} from './crashHandler';
 
 let logs: ConsoleLog[] = [];
 let listeners: ((logs: ConsoleLog[]) => void)[] = [];
@@ -333,6 +334,57 @@ const addLog = (
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+export const addLogFromCrash = (
+  error: any,
+  message: string,
+  stack?: string,
+  isFatal?: boolean,
+): ConsoleLog => {
+  const {caller, errorStack} = getStackDetails([error]);
+  const newLog: ConsoleLog = {
+    id: counter++,
+    type: 'error',
+    message: message || (error?.message ?? 'Runtime Crash'),
+    timestamp: Date.now(),
+    caller:
+      caller !== 'Unknown'
+        ? caller
+        : isFatal
+        ? 'Fatal Crash'
+        : 'Unhandled Exception',
+    stack: stack || error?.stack || errorStack,
+    errorStack: stack || error?.stack,
+    rawArgs: [error],
+    sourceMethod: 'error',
+  };
+  logs.unshift(newLog);
+  logs = logs.slice(0, MAX_LOGS);
+  notify();
+
+  const stackToSym = stack || error?.stack || errorStack;
+  if (stackToSym && typeof __DEV__ !== 'undefined' && __DEV__) {
+    symbolicateStack(stackToSym)
+      .then(symFrames => {
+        if (symFrames && Array.isArray(symFrames) && symFrames.length > 0) {
+          const symLines = symFrames.map(
+            f =>
+              `at ${f.methodName || '<anonymous>'} (${(f.file || '').replace(
+                /^webpack:\/\/\/?/,
+                '',
+              )}:${f.lineNumber ?? 0}:${f.column ?? 0})`,
+          );
+          const target = logs.find(l => l.id === newLog.id);
+          if (target) {
+            target.stack = symLines.join('\n');
+            notify();
+          }
+        }
+      })
+      .catch(() => {});
+  }
+  return newLog;
+};
+
 export const subscribeConsoleLogs = (
   callback: (logs: ConsoleLog[]) => void,
 ) => {
@@ -389,8 +441,24 @@ export const setupConsoleLogger = () => {
     try {
       addLog('error', args, 'error');
     } catch {}
-    originalConsole.error(...args);
+
+    const firstArg = args && args[0];
+    const isRenderError =
+      typeof firstArg === 'string' &&
+      (firstArg.includes('The above error occurred in') ||
+        firstArg.includes('Render Error') ||
+        firstArg.includes('ReferenceError') ||
+        firstArg.includes('TypeError'));
+
+    // Suppress console.error if it's a React render crash to prevent RedBox dialog
+    if (!isRenderError) {
+      originalConsole.error(...args);
+    }
   };
+
+  try {
+    setupGlobalCrashHandler();
+  } catch {}
 
   (globalThis as any).__CONSOLE_LOGGER_INITIALIZED__ = true;
 };

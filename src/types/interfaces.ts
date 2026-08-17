@@ -3,6 +3,8 @@ import {ViewStyle} from 'react-native';
 import {Animated, PanResponderInstance} from 'react-native';
 import type {
   ActiveTab,
+  BreadcrumbType,
+  CrashType,
   GroupedListItem,
   LocalFilter,
   LogFilter,
@@ -13,7 +15,50 @@ import type {
   StatusFilter,
 } from './index';
 
-// ─── Analytics ────────────────────────────────────────────────────────────────
+export interface ParsedStackFrame {
+  method: string;
+  file: string;
+  lineNumber: number;
+  column: number;
+  raw?: string;
+  isAppCode?: boolean;
+}
+
+export interface CrashBreadcrumb {
+  type: BreadcrumbType;
+  message: string;
+  timestamp: number;
+  data?: any;
+}
+
+export interface CrashRecord {
+  id: string;
+  error?: Error | any;
+  isFatal: boolean;
+  type: CrashType;
+  message: string;
+  name?: string;
+  stack?: string;
+  parsedStack?: ParsedStackFrame[];
+  componentStack?: string;
+  timestamp: number;
+  dateStr: string;
+  timeStr: string;
+  deviceInfo?: {
+    platform: string;
+    osVersion?: string;
+    rnVersion?: string;
+    isHermes?: boolean;
+    isFabric?: boolean;
+    appState?: string;
+  };
+  memoryInfo?: {
+    usedJSHeapSize?: number;
+    totalJSHeapSize?: number;
+  };
+  breadcrumbs?: CrashBreadcrumb[];
+  logId?: number;
+}
 
 export interface ConsoleLog {
   id: number;
@@ -275,6 +320,16 @@ export interface InspectorContextValue {
   setSelectedReduxAction: React.Dispatch<React.SetStateAction<any | null>>;
   reduxActiveSubTab: 'state' | 'timeline';
   setReduxActiveSubTab: React.Dispatch<React.SetStateAction<'state' | 'timeline'>>;
+
+  // ─── Crash ─────────────────────────────────────────────────────────────────
+  crashRecords: CrashRecord[];
+  setCrashRecords: React.Dispatch<React.SetStateAction<CrashRecord[]>>;
+  selectedCrash: CrashRecord | null;
+  setSelectedCrash: React.Dispatch<React.SetStateAction<CrashRecord | null>>;
+  lastReadCrashesCount: number;
+  maxCrashLogs: number;
+  setMaxCrashLogs: React.Dispatch<React.SetStateAction<number>>;
+  clearAllCrashes: () => void;
 
   // ─── Settings ──────────────────────────────────────────────────────────────
   settingsActiveSubTab: SettingsSubTab;

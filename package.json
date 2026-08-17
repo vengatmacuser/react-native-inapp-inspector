@@ -24,7 +24,10 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "android",
+    "ios",
+    "react-native-inapp-inspector.podspec"
   ],
   "scripts": {
     "prebuild": "node scripts/gen-version.js",
