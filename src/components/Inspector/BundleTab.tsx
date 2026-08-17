@@ -1,9 +1,8 @@
-import React, {useState, useMemo, useCallback} from 'react';
+import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {
-  FlatList,
+  ActivityIndicator,
   Image,
   Linking,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,7 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import {useTranslation} from '../../i18n';
+import {useTranslation, t} from '../../i18n';
 import TouchableScale from '../TouchableScale';
 import CopyButton from '../CopyButton';
 import HighlightText from '../HighlightText';
@@ -44,6 +43,11 @@ import Svg, {
   LinearGradient,
   Stop,
 } from 'react-native-svg';
+import {
+  analyzeHostAppBundle,
+  getCachedBundleAnalysis,
+  HostBundleAnalysisResult,
+} from '../../customHooks/bundleAnalyzer';
 
 export type BundleSubTab = 'overview' | 'files' | 'packages' | 'media' | 'optimizer';
 
@@ -103,16 +107,16 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: '#20232A'},
+          {width: size, height: size, backgroundColor: AppColors.npmDark},
         ]}>
         <Svg width={size - 6} height={size - 6} viewBox="0 0 100 100" fill="none">
-          <Circle cx="50" cy="50" r="9" fill="#61DAFB" />
+          <Circle cx="50" cy="50" r="9" fill={AppColors.reactCyan} />
           <Ellipse
             cx="50"
             cy="50"
             rx="42"
             ry="16"
-            stroke="#61DAFB"
+            stroke={AppColors.reactCyan}
             strokeWidth="6"
           />
           <Ellipse
@@ -120,7 +124,7 @@ const PackageLogoRenderer: React.FC<{
             cy="50"
             rx="42"
             ry="16"
-            stroke="#61DAFB"
+            stroke={AppColors.reactCyan}
             strokeWidth="6"
             transform="rotate(60 50 50)"
           />
@@ -129,7 +133,7 @@ const PackageLogoRenderer: React.FC<{
             cy="50"
             rx="42"
             ry="16"
-            stroke="#61DAFB"
+            stroke={AppColors.reactCyan}
             strokeWidth="6"
             transform="rotate(120 50 50)"
           />
@@ -144,12 +148,12 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: '#5B44E0'},
+          {width: size, height: size, backgroundColor: AppColors.hermesPurple},
         ]}>
         <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
-          <Circle cx="50" cy="50" r="38" stroke="#FFFFFF" strokeWidth="8" />
-          <Path d="M50 20 L68 50 L50 80 L32 50 Z" fill="#61DAFB" />
-          <Circle cx="50" cy="50" r="6" fill="#FFFFFF" />
+          <Circle cx="50" cy="50" r="38" stroke={AppColors.white} strokeWidth="8" />
+          <Path d="M50 20 L68 50 L50 80 L32 50 Z" fill={AppColors.reactCyan} />
+          <Circle cx="50" cy="50" r="6" fill={AppColors.white} />
         </Svg>
       </View>
     );
@@ -161,23 +165,23 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: '#F472B6'},
+          {width: size, height: size, backgroundColor: AppColors.pink400},
         ]}>
         <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
           <Path
             d="M20 75 C35 25, 65 25, 80 75"
-            stroke="#FFFFFF"
+            stroke={AppColors.white}
             strokeWidth="10"
             strokeLinecap="round"
           />
-          <Circle cx="20" cy="75" r="8" fill="#FFFFFF" />
-          <Circle cx="80" cy="75" r="8" fill="#FFFFFF" />
+          <Circle cx="20" cy="75" r="8" fill={AppColors.white} />
+          <Circle cx="80" cy="75" r="8" fill={AppColors.white} />
           <Circle
             cx="50"
             cy="38"
             r="7"
             fill="#FCE7F3"
-            stroke="#FFFFFF"
+            stroke={AppColors.white}
             strokeWidth="3"
           />
         </Svg>
@@ -191,17 +195,17 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: '#5A29E4'},
+          {width: size, height: size, backgroundColor: AppColors.expoViolet},
         ]}>
         <Svg width={size - 6} height={size - 6} viewBox="0 0 100 100" fill="none">
           <Path
             d="M22 75 L50 20 L78 75 M33 58 L67 58"
-            stroke="#FFFFFF"
+            stroke={AppColors.white}
             strokeWidth="12"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <Circle cx="50" cy="20" r="7" fill="#61DAFB" />
+          <Circle cx="50" cy="20" r="7" fill={AppColors.reactCyan} />
         </Svg>
       </View>
     );
@@ -213,13 +217,13 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: '#001A72'},
+          {width: size, height: size, backgroundColor: AppColors.reanimatedNavy},
         ]}>
         <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
-          <Path d="M50 15 L88 35 L50 55 L12 35 Z" fill="#38BDF8" />
+          <Path d="M50 15 L88 35 L50 55 L12 35 Z" fill={AppColors.sky400} />
           <Path
             d="M12 50 L50 70 L88 50"
-            stroke="#FFFFFF"
+            stroke={AppColors.white}
             strokeWidth="8"
             strokeLinecap="round"
           />
@@ -240,7 +244,7 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: '#FB7185'},
+          {width: size, height: size, backgroundColor: AppColors.rose600},
         ]}>
         <Svg width={size - 4} height={size - 4} viewBox="0 0 100 100" fill="none">
           <Defs>
@@ -268,19 +272,19 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: '#059669'},
+          {width: size, height: size, backgroundColor: AppColors.emerald600},
         ]}>
         <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
-          <Circle cx="50" cy="50" r="38" stroke="#FFFFFF" strokeWidth="8" />
+          <Circle cx="50" cy="50" r="38" stroke={AppColors.white} strokeWidth="8" />
           <Ellipse
             cx="50"
             cy="50"
             rx="18"
             ry="38"
-            stroke="#FFFFFF"
+            stroke={AppColors.white}
             strokeWidth="6"
           />
-          <Path d="M14 50 L86 50" stroke="#FFFFFF" strokeWidth="7" />
+          <Path d="M14 50 L86 50" stroke={AppColors.white} strokeWidth="7" />
         </Svg>
       </View>
     );
@@ -291,13 +295,13 @@ const PackageLogoRenderer: React.FC<{
     <View
       style={[
         bundleStyles.pkgLogoWrap,
-        {width: size, height: size, backgroundColor: '#CB3837'},
+        {width: size, height: size, backgroundColor: AppColors.npmRed},
       ]}>
       <Svg width={size - 4} height={size - 4} viewBox="0 0 100 100" fill="none">
-        <Rect width="100" height="100" rx="14" fill="#CB3837" />
+        <Rect width="100" height="100" rx="14" fill={AppColors.npmRed} />
         <Path
           d="M18 24 H82 V76 H50 V40 H38 V76 H18 Z"
-          fill="#FFFFFF"
+          fill={AppColors.white}
         />
       </Svg>
     </View>
@@ -316,10 +320,10 @@ const MediaPreviewThumbnail: React.FC<{file: BundleFileItem}> = ({file}) => {
         style={[
           bundleStyles.mediaThumbWrap,
           {
-            backgroundColor: '#FFF1F2',
+            backgroundColor: AppColors.errorCardBg,
             alignItems: 'center',
             justifyContent: 'center',
-            borderColor: '#FECDD3',
+            borderColor: AppColors.errorBorder,
           },
         ]}>
         <Svg width={22} height={22} viewBox="0 0 100 100" fill="none">
@@ -331,26 +335,26 @@ const MediaPreviewThumbnail: React.FC<{file: BundleFileItem}> = ({file}) => {
               x2="100"
               y2="100"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#F43F5E" />
-              <Stop offset="1" stopColor="#FB7185" />
+              <Stop offset="0" stopColor={AppColors.rose500} />
+              <Stop offset="1" stopColor={AppColors.rose600} />
             </LinearGradient>
           </Defs>
           <Circle cx="50" cy="50" r="44" fill="url(#svgGradThumb)" />
           {/* Vector bezier path pen graphic */}
           <Path
             d="M25 70 C35 30, 65 30, 75 70"
-            stroke="#FFFFFF"
+            stroke={AppColors.white}
             strokeWidth="8"
             strokeLinecap="round"
           />
-          <Circle cx="25" cy="70" r="7" fill="#FFFFFF" />
-          <Circle cx="75" cy="70" r="7" fill="#FFFFFF" />
+          <Circle cx="25" cy="70" r="7" fill={AppColors.white} />
+          <Circle cx="75" cy="70" r="7" fill={AppColors.white} />
           <Circle
             cx="50"
             cy="40"
             r="6"
             fill="#FFE4E6"
-            stroke="#FFFFFF"
+            stroke={AppColors.white}
             strokeWidth="2"
           />
         </Svg>
@@ -509,7 +513,7 @@ const BundleTreeNodeView: React.FC<{
             />
             <View style={bundleStyles.treeCountBadge}>
               <Text style={bundleStyles.treeCountBadgeText}>
-                {node.fileCount} {node.fileCount === 1 ? 'file' : 'files'}
+                {node.fileCount} {node.fileCount === 1 ? t('bundle.file') : t('bundle.files')}
               </Text>
             </View>
           </View>
@@ -517,8 +521,8 @@ const BundleTreeNodeView: React.FC<{
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
             <Text style={bundleStyles.treeFolderSize}>
               {node.sizeKb >= 1024
-                ? `${(node.sizeKb / 1024).toFixed(2)} MB`
-                : `${node.sizeKb} KB`}
+                ? t('bundle.fileSizeMb', {size: (node.sizeKb / 1024).toFixed(2)})
+                : t('bundle.fileSizeKb', {size: node.sizeKb})}
             </Text>
             <CopyButton
               value={() => ({
@@ -526,7 +530,7 @@ const BundleTreeNodeView: React.FC<{
                 sizeKb: node.sizeKb,
                 fileCount: node.fileCount,
               })}
-              label={`Copy ${node.name} Info`}
+              label={t('bundle.copyFileInfo', {name: node.name})}
             />
           </View>
         </TouchableScale>
@@ -579,11 +583,11 @@ const BundleTreeNodeView: React.FC<{
             />
             {isUnused ? (
               <View style={bundleStyles.unusedBadge}>
-                <Text style={bundleStyles.unusedBadgeText}>🚫 Not Consumed</Text>
+                <Text style={bundleStyles.unusedBadgeText}>{t('bundle.notConsumed')}</Text>
               </View>
             ) : (
               <View style={bundleStyles.consumedBadge}>
-                <Text style={bundleStyles.consumedBadgeText}>⚡ Consumed</Text>
+                <Text style={bundleStyles.consumedBadgeText}>{t('bundle.consumed')}</Text>
               </View>
             )}
           </View>
@@ -594,16 +598,16 @@ const BundleTreeNodeView: React.FC<{
 
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
           <View style={bundleStyles.fileSizeBox}>
-            <Text style={[bundleStyles.fileSizeKb, isUnused && {color: '#B45309'}]}>
+            <Text style={[bundleStyles.fileSizeKb, isUnused && {color: AppColors.amber800Warm}]}>
               {file.sizeKb >= 1024
-                ? `${(file.sizeKb / 1024).toFixed(2)} MB`
-                : `${file.sizeKb} KB`}
+                ? t('bundle.fileSizeMb', {size: (file.sizeKb / 1024).toFixed(2)})
+                : t('bundle.fileSizeKb', {size: file.sizeKb})}
             </Text>
             <Text style={bundleStyles.filePercent}>{pctOfTotal}%</Text>
           </View>
           <CopyButton
             value={() => file}
-            label="File Details JSON"
+            label={t('bundle.fileDetailsJson')}
           />
         </View>
       </View>
@@ -620,9 +624,9 @@ const BundleTreeNodeView: React.FC<{
           <Text
             style={[
               bundleStyles.adviceText,
-              file.status === 'warning' && {color: '#B45309'},
-              file.status === 'optimal' && {color: '#047857'},
-              isUnused && {color: '#DC2626'},
+              file.status === 'warning' && {color: AppColors.amber800Warm},
+              file.status === 'optimal' && {color: AppColors.emerald700},
+              isUnused && {color: AppColors.red600},
             ]}>
             {isUnused ? '🗑️ ' : file.status === 'warning' ? '💡 ' : '✨ '}
             {file.advice}
@@ -633,418 +637,25 @@ const BundleTreeNodeView: React.FC<{
   );
 };
 
-// ─── Sample Bundle Files Data ────────────────────────────────────────────────
 
-const BUNDLE_FILES_DATA: BundleFileItem[] = [
-  // ── Images & Media ──
-  {
-    id: 'img-1',
-    name: 'banner_dark.png',
-    path: 'assets/images/banner_dark.png',
-    ext: 'PNG',
-    category: 'image',
-    sizeKb: 460,
-    meta: '1200×630px @2x • Raster Image',
-    color: '#EC4899',
-    status: 'warning',
-    advice: 'Convert to .webp to save ~65% (160 KB)',
-    previewUri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=200&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'img-2',
-    name: 'banner_light.svg',
-    path: 'assets/images/banner_light.svg',
-    ext: 'SVG',
-    category: 'image',
-    sizeKb: 34,
-    meta: 'Scalable Vector Graphic',
-    color: '#F43F5E',
-    status: 'optimal',
-    advice: 'Optimal vector format for sharp rendering',
-    previewUri: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=200&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'img-3',
-    name: 'logo_hero@3x.png',
-    path: 'assets/brand/logo_hero@3x.png',
-    ext: 'PNG',
-    category: 'image',
-    sizeKb: 285,
-    meta: '768×768px @3x Retina Asset',
-    color: '#EC4899',
-    status: 'warning',
-    advice: 'High density PNG. Consider tintable SVG vector',
-    previewUri: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=200&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'img-4',
-    name: 'avatar_placeholder.webp',
-    path: 'assets/placeholders/avatar_placeholder.webp',
-    ext: 'WEBP',
-    category: 'image',
-    sizeKb: 28,
-    meta: '256×256px Lossy WebP',
-    color: '#F472B6',
-    status: 'warning',
-    advice: 'Unused in bundle: 0 active imports detected (28 KB unused)',
-    previewUri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-    isConsumed: false,
-  },
-  {
-    id: 'img-5',
-    name: 'walkthrough_thumb.jpg',
-    path: 'assets/previews/walkthrough_thumb.jpg',
-    ext: 'JPG',
-    category: 'image',
-    sizeKb: 175,
-    meta: '1080×600px Progressive JPEG',
-    color: '#FB7185',
-    status: 'warning',
-    advice: 'Dead asset: 0 component references (175 KB unused)',
-    previewUri: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&auto=format&fit=crop&q=80',
-    isConsumed: false,
-  },
-
-  // ── TypeScript & JSX ──
-  {
-    id: 'ts-1',
-    name: 'LogDetail.tsx',
-    path: 'src/components/Inspector/LogDetail.tsx',
-    ext: 'TSX',
-    category: 'typescript',
-    sizeKb: 44,
-    meta: '1,238 lines • React Component',
-    color: '#38BDF8',
-    status: 'optimal',
-    advice: 'Clean React.memo and useCallback optimization',
-  },
-  {
-    id: 'ts-2',
-    name: 'ReduxDetail.tsx',
-    path: 'src/components/Inspector/ReduxDetail.tsx',
-    ext: 'TSX',
-    category: 'typescript',
-    sizeKb: 38,
-    meta: '680 lines • Slice state tree & action timeline',
-    color: '#38BDF8',
-    status: 'optimal',
-    advice: 'Multi-tab subview with live state diffing',
-  },
-  {
-    id: 'ts-3',
-    name: 'NetworkTab.tsx',
-    path: 'src/components/Inspector/NetworkTab.tsx',
-    ext: 'TSX',
-    category: 'typescript',
-    sizeKb: 15,
-    meta: '486 lines • Network request virtualization list',
-    color: '#0EA5E9',
-    status: 'optimal',
-    advice: 'FlatList windowSize=7 tuned for 60fps',
-  },
-  {
-    id: 'ts-4',
-    name: 'SettingsPanel.tsx',
-    path: 'src/components/Inspector/SettingsPanel.tsx',
-    ext: 'TSX',
-    category: 'typescript',
-    sizeKb: 65,
-    meta: '1,845 lines • Preferences & storage manager',
-    color: '#38BDF8',
-    status: 'info',
-    advice: 'Self-contained settings subviews',
-  },
-  {
-    id: 'ts-5',
-    name: 'consoleLogger.ts',
-    path: 'src/customHooks/consoleLogger.ts',
-    ext: 'TS',
-    category: 'typescript',
-    sizeKb: 12,
-    meta: '360 lines • Metro symbolication bridge',
-    color: '#0284C7',
-    status: 'optimal',
-    advice: 'Zero-overhead in-memory stack capture',
-  },
-  {
-    id: 'ts-6',
-    name: 'App.tsx (Playground)',
-    path: 'example/App.tsx',
-    ext: 'TSX',
-    category: 'typescript',
-    sizeKb: 25,
-    meta: '820 lines • Interactive test scenarios',
-    color: '#38BDF8',
-    status: 'optimal',
-    advice: 'Sample harness for logs, APIs, and Redux',
-  },
-
-  // ── JavaScript & Node Modules ──
-  {
-    id: 'js-1',
-    name: 'react-native/Libraries/Renderer',
-    path: 'node_modules/react-native/Libraries/Renderer/implementations/ReactNativeRenderer-prod.js',
-    ext: 'JS',
-    category: 'javascript',
-    sizeKb: 480,
-    meta: 'Fabric & Paper UI reconciler bundle',
-    color: '#6366F1',
-    status: 'optimal',
-    advice: 'AOT compiled with Hermes Bytecode',
-  },
-  {
-    id: 'js-2',
-    name: '@react-navigation/native-stack',
-    path: 'node_modules/@react-navigation/native-stack/lib/module/index.js',
-    ext: 'JS',
-    category: 'javascript',
-    sizeKb: 195,
-    meta: 'Native screen animation & transition engine',
-    color: '#818CF8',
-    status: 'optimal',
-    advice: 'Optimized modular ES bundle',
-  },
-  {
-    id: 'js-3',
-    name: 'axios/dist/esm/axios.js',
-    path: 'node_modules/axios/dist/esm/axios.js',
-    ext: 'JS',
-    category: 'javascript',
-    sizeKb: 88,
-    meta: 'HTTP client core with interceptors',
-    color: '#F59E0B',
-    status: 'optimal',
-    advice: 'Standard lightweight network adapter',
-  },
-  {
-    id: 'js-4',
-    name: 'react-native-svg',
-    path: 'node_modules/react-native-svg/lib/module/index.js',
-    ext: 'JS',
-    category: 'javascript',
-    sizeKb: 140,
-    meta: 'Native SVG drawing and vector paths',
-    color: '#4F46E5',
-    status: 'optimal',
-    advice: 'Native Fabric/Paper vector bridge',
-  },
-
-  // ── Fonts & Typography ──
-  {
-    id: 'font-1',
-    name: 'Inter-Bold.ttf',
-    path: 'fonts/Inter-Bold.ttf',
-    ext: 'TTF',
-    category: 'font',
-    sizeKb: 165,
-    meta: 'Custom UI Font • Full Latin Charset (480 glyphs)',
-    color: '#8B5CF6',
-    status: 'info',
-    advice: 'High readability modern typography',
-  },
-  {
-    id: 'font-2',
-    name: 'Inter-Regular.ttf',
-    path: 'fonts/Inter-Regular.ttf',
-    ext: 'TTF',
-    category: 'font',
-    sizeKb: 160,
-    meta: 'Custom Body Font • 400 Weight (480 glyphs)',
-    color: '#8B5CF6',
-    status: 'info',
-    advice: 'Applied across inspector UI cards and text',
-  },
-  {
-    id: 'font-3',
-    name: 'JetBrainsMono-Regular.ttf',
-    path: 'fonts/JetBrainsMono-Regular.ttf',
-    ext: 'TTF',
-    category: 'font',
-    sizeKb: 95,
-    meta: 'Monospace Code Font • Raw / Table / Stack Traces',
-    color: '#A855F7',
-    status: 'optimal',
-    advice: 'Crisp font for code snippets and stack traces',
-  },
-
-  // ── JSON & Localizations ──
-  {
-    id: 'json-1',
-    name: 'en.json (i18n Translations)',
-    path: 'src/i18n/locales/en.json',
-    ext: 'JSON',
-    category: 'json',
-    sizeKb: 18,
-    meta: '124 localization translation keys',
-    color: '#10B981',
-    status: 'optimal',
-    advice: 'Static JSON locale dictionary',
-  },
-  {
-    id: 'json-2',
-    name: 'package.json',
-    path: 'package.json',
-    ext: 'JSON',
-    category: 'json',
-    sizeKb: 3,
-    meta: 'Manifest & peer dependencies config',
-    color: '#059669',
-    status: 'optimal',
-    advice: 'Stripped during production bundle export',
-  },
-];
-
-// ─── Packages / Node Modules Breakdown Data ──────────────────────────────────
-
-const BUNDLE_PACKAGES_DATA: BundlePackageItem[] = [
-  {
-    id: 'pkg-1',
-    name: 'react-native',
-    version: '0.85.3',
-    latestVersion: '0.85.3',
-    sizeKb: 680,
-    percentage: 38.5,
-    type: 'direct',
-    category: 'core',
-    color: '#38BDF8',
-    description: 'React Native runtime, Fabric UI engine, Native Bridge, and Turbomodules.',
-    logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png',
-    lastActive: '3 days ago',
-    npmUrl: 'https://www.npmjs.com/package/react-native',
-    isDeprecated: false,
-  },
-  {
-    id: 'pkg-2',
-    name: '@react-navigation/native-stack',
-    version: '^7.16.0',
-    latestVersion: '7.16.0',
-    sizeKb: 245,
-    percentage: 13.9,
-    type: 'direct',
-    category: 'navigation',
-    color: '#818CF8',
-    description: 'Native screen router, UIViewController / Fragment animations and transitions.',
-    logoUri: 'https://reactnavigation.org/img/spiro.svg',
-    lastActive: '1 week ago',
-    npmUrl: 'https://www.npmjs.com/package/@react-navigation/native-stack',
-    isDeprecated: false,
-  },
-  {
-    id: 'pkg-3',
-    name: 'react',
-    version: '19.2.3',
-    latestVersion: '19.2.3',
-    sizeKb: 185,
-    percentage: 10.5,
-    type: 'direct',
-    category: 'core',
-    color: '#06B6D4',
-    description: 'React core virtual DOM reconciler, hooks engine, and JSX runtime.',
-    logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png',
-    lastActive: '5 days ago',
-    npmUrl: 'https://www.npmjs.com/package/react',
-    isDeprecated: false,
-  },
-  {
-    id: 'pkg-4',
-    name: 'react-native-svg',
-    version: '^15.15.5',
-    latestVersion: '15.16.0',
-    sizeKb: 140,
-    percentage: 7.9,
-    type: 'direct',
-    category: 'ui',
-    color: '#F472B6',
-    description: 'Scalable Vector Graphics XML parser and native canvas path rasterizer.',
-    logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/SVG_logo.svg/512px-SVG_logo.svg.png',
-    lastActive: '2 days ago',
-    npmUrl: 'https://www.npmjs.com/package/react-native-svg',
-    isDeprecated: false,
-  },
-  {
-    id: 'pkg-5',
-    name: 'react-native-screens',
-    version: '^4.25.2',
-    latestVersion: '4.25.2',
-    sizeKb: 110,
-    percentage: 6.2,
-    type: 'transitive',
-    category: 'navigation',
-    color: '#A78BFA',
-    description: 'Native navigation container primitives for iOS and Android memory management.',
-    logoUri: 'https://reactnavigation.org/img/spiro.svg',
-    lastActive: '2 weeks ago',
-    npmUrl: 'https://www.npmjs.com/package/react-native-screens',
-    isDeprecated: false,
-  },
-  {
-    id: 'pkg-6',
-    name: 'axios',
-    version: '^1.17.0',
-    latestVersion: '1.18.0',
-    sizeKb: 88,
-    percentage: 5.0,
-    type: 'direct',
-    category: 'network',
-    color: '#F59E0B',
-    description: 'HTTP client, request/response interceptors, and adapter pipelines.',
-    logoUri: 'https://axios-http.com/assets/logo.svg',
-    lastActive: '4 days ago',
-    npmUrl: 'https://www.npmjs.com/package/axios',
-    isDeprecated: false,
-  },
-  {
-    id: 'pkg-7',
-    name: 'react-native-linear-gradient',
-    version: '^2.8.3',
-    latestVersion: '2.8.3',
-    sizeKb: 45,
-    percentage: 2.5,
-    type: 'direct',
-    category: 'ui',
-    color: '#FB7185',
-    description: 'Hardware accelerated native gradient drawing shaders.',
-    logoUri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png',
-    lastActive: '2 years ago',
-    npmUrl: 'https://www.npmjs.com/package/react-native-linear-gradient',
-    isDeprecated: true,
-    deprecationReason: 'Package maintenance is in transition. Consider expo-linear-gradient or @react-native-community/linear-gradient for Fabric support.',
-  },
-  {
-    id: 'pkg-8',
-    name: 'i18next & react-i18next',
-    version: '^26.3.6',
-    latestVersion: '26.3.6',
-    sizeKb: 62,
-    percentage: 3.5,
-    type: 'direct',
-    category: 'utils',
-    color: '#10B981',
-    description: 'Internationalization framework, language interpolator, and locale switcher.',
-    logoUri: 'https://raw.githubusercontent.com/i18next/i18next/master/assets/i18next-logo.png',
-    lastActive: '6 days ago',
-    npmUrl: 'https://www.npmjs.com/package/i18next',
-    isDeprecated: false,
-  },
-];
 
 const CATEGORY_TABS = [
-  {key: 'ALL', label: 'All Files', icon: '📁'},
-  {key: 'UNUSED', label: 'Not Consumed (Dead)', icon: '🚫'},
-  {key: 'CONSUMED', label: 'In-Use / Active', icon: '⚡'},
-  {key: 'image', label: 'Images & Media', icon: '🖼️'},
-  {key: 'typescript', label: 'TypeScript / TSX', icon: '📜'},
-  {key: 'javascript', label: 'JS & Node Modules', icon: '⚙️'},
-  {key: 'font', label: 'Fonts & Glyphs', icon: '🔤'},
-  {key: 'json', label: 'JSON & Data', icon: '📄'},
+  {key: 'ALL', labelKey: 'bundle.catAll', icon: '📁'},
+  {key: 'UNUSED', labelKey: 'bundle.catUnused', icon: '🚫'},
+  {key: 'CONSUMED', labelKey: 'bundle.catConsumed', icon: '⚡'},
+  {key: 'image', labelKey: 'bundle.catImages', icon: '🖼️'},
+  {key: 'typescript', labelKey: 'bundle.catTypescript', icon: '📜'},
+  {key: 'javascript', labelKey: 'bundle.catJavascript', icon: '⚙️'},
+  {key: 'font', labelKey: 'bundle.catFonts', icon: '🔤'},
+  {key: 'json', labelKey: 'bundle.catJson', icon: '📄'},
 ];
 
 const CATEGORY_COLORS: Record<FileTypeCategory, {label: string; color: string; bg: string}> = {
-  image: {label: 'Images & Media', color: '#EC4899', bg: '#FCE7F3'},
-  typescript: {label: 'TypeScript', color: '#0EA5E9', bg: '#E0F2FE'},
-  javascript: {label: 'JavaScript', color: '#6366F1', bg: '#EEF2FF'},
-  font: {label: 'Fonts', color: '#8B5CF6', bg: '#F3E8FF'},
-  json: {label: 'JSON / Data', color: '#10B981', bg: '#D1FAE5'},
+  image: {label: 'Images & Media', color: AppColors.pink500, bg: AppColors.pink100},
+  typescript: {label: 'TypeScript', color: AppColors.sky500, bg: AppColors.sky100},
+  javascript: {label: 'JavaScript', color: AppColors.indigo500, bg: AppColors.indigo50},
+  font: {label: 'Fonts', color: AppColors.purple500, bg: AppColors.purple100},
+  json: {label: 'JSON / Data', color: AppColors.emerald500, bg: AppColors.emerald100},
 };
 
 const BundleTab = React.memo(() => {
@@ -1053,8 +664,37 @@ const BundleTab = React.memo(() => {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
+  // ─── Live Host App Bundle Analysis (fetched from Metro / runtime) ─────────
+  const [analysis, setAnalysis] = useState<HostBundleAnalysisResult | null>(() =>
+    getCachedBundleAnalysis(),
+  );
+  const [isAnalyzing, setIsAnalyzing] = useState(!getCachedBundleAnalysis());
+
+  useEffect(() => {
+    let mounted = true;
+    analyzeHostAppBundle().then(result => {
+      if (mounted) {
+        setAnalysis(result);
+        setIsAnalyzing(false);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Check if Hermes is running
   const isHermes = Boolean((global as any).HermesInternal);
+
+  // Dynamic files & packages derived from the analyzed host bundle
+  const bundleFiles: BundleFileItem[] = useMemo(
+    () => (analysis ? analysis.files : []),
+    [analysis],
+  );
+  const bundlePackages: BundlePackageItem[] = useMemo(
+    () => (analysis ? analysis.packages : []),
+    [analysis],
+  );
 
   // Group summary calculations
   const summary = useMemo(() => {
@@ -1069,7 +709,7 @@ const BundleTab = React.memo(() => {
     let fontsCount = 0;
     let jsonCount = 0;
 
-    BUNDLE_FILES_DATA.forEach(f => {
+    bundleFiles.forEach(f => {
       if (f.category === 'image') {
         imagesKb += f.sizeKb;
         imagesCount++;
@@ -1093,38 +733,38 @@ const BundleTab = React.memo(() => {
     return {
       totalKb,
       totalMb: (totalKb / 1024).toFixed(2),
-      totalCount: BUNDLE_FILES_DATA.length,
+      totalCount: bundleFiles.length,
       images: {
         count: imagesCount,
         kb: imagesKb,
-        pct: Number(((imagesKb / totalKb) * 100).toFixed(1)),
+        pct: totalKb ? Number(((imagesKb / totalKb) * 100).toFixed(1)) : 0,
       },
       ts: {
         count: tsCount,
         kb: tsKb,
-        pct: Number(((tsKb / totalKb) * 100).toFixed(1)),
+        pct: totalKb ? Number(((tsKb / totalKb) * 100).toFixed(1)) : 0,
       },
       js: {
         count: jsCount,
         kb: jsKb,
-        pct: Number(((jsKb / totalKb) * 100).toFixed(1)),
+        pct: totalKb ? Number(((jsKb / totalKb) * 100).toFixed(1)) : 0,
       },
       fonts: {
         count: fontsCount,
         kb: fontsKb,
-        pct: Number(((fontsKb / totalKb) * 100).toFixed(1)),
+        pct: totalKb ? Number(((fontsKb / totalKb) * 100).toFixed(1)) : 0,
       },
       json: {
         count: jsonCount,
         kb: jsonKb,
-        pct: Number(((jsonKb / totalKb) * 100).toFixed(1)),
+        pct: totalKb ? Number(((jsonKb / totalKb) * 100).toFixed(1)) : 0,
       },
     };
-  }, []);
+  }, [bundleFiles]);
 
   // Filtered files
   const filteredFiles = useMemo(() => {
-    return BUNDLE_FILES_DATA.filter(file => {
+    return bundleFiles.filter(file => {
       const matchSearch =
         !search ||
         file.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -1141,7 +781,7 @@ const BundleTab = React.memo(() => {
           : file.category === activeCategory;
       return matchSearch && matchCategory;
     });
-  }, [search, activeCategory]);
+  }, [search, activeCategory, bundleFiles]);
 
   const filteredTotalKb = useMemo(() => {
     return filteredFiles.reduce((acc, f) => acc + f.sizeKb, 0);
@@ -1182,15 +822,15 @@ const BundleTab = React.memo(() => {
 
   // Filtered Packages
   const filteredPackages = useMemo(() => {
-    if (!search) return BUNDLE_PACKAGES_DATA;
+    if (!search) return bundlePackages;
     const q = search.toLowerCase();
-    return BUNDLE_PACKAGES_DATA.filter(
+    return bundlePackages.filter(
       pkg =>
         pkg.name.toLowerCase().includes(q) ||
         pkg.description.toLowerCase().includes(q) ||
         pkg.category.toLowerCase().includes(q),
     );
-  }, [search]);
+  }, [search, bundlePackages]);
 
   const packagesTotalKb = useMemo(() => {
     return filteredPackages.reduce((acc, p) => acc + p.sizeKb, 0);
@@ -1198,10 +838,8 @@ const BundleTab = React.memo(() => {
 
   // Media files (Images + Fonts)
   const mediaFiles = useMemo(() => {
-    return BUNDLE_FILES_DATA.filter(
-      f => f.category === 'image' || f.category === 'font',
-    );
-  }, []);
+    return bundleFiles.filter(f => f.category === 'image' || f.category === 'font');
+  }, [bundleFiles]);
 
   const mediaTotalKb = useMemo(() => {
     return mediaFiles.reduce((acc, m) => acc + m.sizeKb, 0);
@@ -1210,35 +848,35 @@ const BundleTab = React.memo(() => {
   const subTabs = [
     {
       key: 'overview',
-      label: 'Overview',
+      label: t('bundle.tabOverview'),
       icon: (isActive: boolean) => (
         <LiveStateIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
       ),
     },
     {
       key: 'files',
-      label: `Files (${BUNDLE_FILES_DATA.length})`,
+      label: t('bundle.tabFiles', {count: bundleFiles.length}),
       icon: (isActive: boolean) => (
         <LayersIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
       ),
     },
     {
       key: 'packages',
-      label: `Packages (${BUNDLE_PACKAGES_DATA.length})`,
+      label: t('bundle.tabPackages', {count: bundlePackages.length}),
       icon: (isActive: boolean) => (
         <PackageIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
       ),
     },
     {
       key: 'media',
-      label: `Media (${mediaFiles.length})`,
+      label: t('bundle.tabMedia', {count: mediaFiles.length}),
       icon: (isActive: boolean) => (
         <StorageIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
       ),
     },
     {
       key: 'optimizer',
-      label: 'Optimizer',
+      label: t('bundle.tabOptimizer'),
       icon: (isActive: boolean) => (
         <MetadataIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
       ),
@@ -1277,10 +915,23 @@ const BundleTab = React.memo(() => {
         </ScrollView>
       </View>
 
+      {/* ─── Live Bundle Analysis Loading State ─── */}
+      {isAnalyzing && (
+        <View style={bundleStyles.analyzingContainer}>
+          <ActivityIndicator size="small" color={AppColors.brandPurple} />
+          <Text style={bundleStyles.analyzingText}>
+            {t('bundle.analyzingTitle')}
+          </Text>
+          <Text style={bundleStyles.analyzingHint}>
+            {t('bundle.analyzingHint')}
+          </Text>
+        </View>
+      )}
+
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 1. TAB: OVERVIEW & TREEMAP ───────────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'overview' && (
+      {activeSubTab === 'overview' && !isAnalyzing && (
         <ScrollView
           style={{flex: 1}}
           contentContainerStyle={bundleStyles.contentContainer}
@@ -1293,45 +944,62 @@ const BundleTab = React.memo(() => {
                 <PackageIcon color={AppColors.brandPurple} size={24} />
               </View>
               <View style={{flex: 1}}>
-                <Text style={bundleStyles.heroTitle}>Bundle & Asset Architecture</Text>
+                <Text style={bundleStyles.heroTitle}>{t('bundle.heroTitle')}</Text>
                 <Text style={bundleStyles.heroSubtitle}>
-                  Real-time size breakdown across all assets, code, and dependencies
+                  {analysis?.isLive
+                    ? t('bundle.heroSubtitleLive', {scriptUrl: analysis.scriptURL})
+                    : t('bundle.heroSubtitle')}
                 </Text>
               </View>
               <CopyButton
-                value={() => summary}
-                label="Bundle Overview JSON"
+                value={() => ({...summary, bundle: analysis})}
+                label={t('bundle.bundleOverviewJson')}
               />
             </View>
 
             {/* 4-Stat Metric Grid */}
             <View style={bundleStyles.metricsGrid}>
               <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>TOTAL BUNDLE ASSETS</Text>
-                <Text style={bundleStyles.metricValue}>~{summary.totalMb} MB</Text>
-                <Text style={bundleStyles.metricHint}>{BUNDLE_FILES_DATA.length} Tracked files</Text>
-              </View>
-
-              <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>IMAGES & MEDIA</Text>
-                <Text style={[bundleStyles.metricValue, {color: '#EC4899'}]}>
-                  {summary.images.kb} KB
-                </Text>
-                <Text style={bundleStyles.metricHint}>{summary.images.pct}% of package</Text>
-              </View>
-
-              <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>TS / JS SOURCE</Text>
-                <Text style={[bundleStyles.metricValue, {color: '#0EA5E9'}]}>
-                  {summary.ts.kb + summary.js.kb} KB
+                <Text style={bundleStyles.metricLabel}>{t('bundle.devBundleSize')}</Text>
+                <Text style={bundleStyles.metricValue}>
+                  {t('bundle.mbValue', {
+                    size: analysis ? analysis.totalDevMb : summary.totalMb,
+                  })}
                 </Text>
                 <Text style={bundleStyles.metricHint}>
-                  {(summary.ts.pct + summary.js.pct).toFixed(1)}% of package
+                  {analysis
+                    ? t('bundle.devBundleHint', {
+                        kb: analysis.totalDevKb,
+                        modules: analysis.moduleCount,
+                      })
+                    : t('bundle.trackedFilesHint', {count: bundleFiles.length})}
                 </Text>
               </View>
 
               <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>JS ENGINE</Text>
+                <Text style={bundleStyles.metricLabel}>{t('bundle.imagesMedia')}</Text>
+                <Text style={[bundleStyles.metricValue, {color: AppColors.pink500}]}>
+                  {t('bundle.fileSizeKb', {size: summary.images.kb})}
+                </Text>
+                <Text style={bundleStyles.metricHint}>
+                  {t('bundle.pctOfTrackedAssets', {pct: summary.images.pct})}
+                </Text>
+              </View>
+
+              <View style={bundleStyles.metricBox}>
+                <Text style={bundleStyles.metricLabel}>{t('bundle.tsJsSource')}</Text>
+                <Text style={[bundleStyles.metricValue, {color: AppColors.sky500}]}>
+                  {t('bundle.fileSizeKb', {size: summary.ts.kb + summary.js.kb})}
+                </Text>
+                <Text style={bundleStyles.metricHint}>
+                  {t('bundle.pctOfTrackedAssets', {
+                    pct: (summary.ts.pct + summary.js.pct).toFixed(1),
+                  })}
+                </Text>
+              </View>
+
+              <View style={bundleStyles.metricBox}>
+                <Text style={bundleStyles.metricLabel}>{t('bundle.jsEngine')}</Text>
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2}}>
                   <View
                     style={[
@@ -1343,17 +1011,114 @@ const BundleTab = React.memo(() => {
                     {isHermes ? 'Hermes' : 'JSC'}
                   </Text>
                 </View>
-                <Text style={bundleStyles.metricHint}>{isHermes ? 'Bytecode AOT' : 'Standard'}</Text>
+                <Text style={bundleStyles.metricHint}>
+                  {isHermes ? t('bundle.bytecodeAot') : t('bundle.standard')}
+                </Text>
               </View>
             </View>
           </View>
+
+          {/* Development Bundle Split-Up (derived from the real running bundle) */}
+          {analysis && (
+            <View style={bundleStyles.sectionCard}>
+              <View style={bundleStyles.sectionHeaderRow}>
+                <View>
+                  <Text style={bundleStyles.sectionTitle}>{t('bundle.splitUpTitle')}</Text>
+                  <Text style={bundleStyles.sectionSub}>
+                    {t('bundle.splitUpSub', {
+                      mb: analysis.totalDevMb,
+                      files: analysis.filesCount,
+                      packages: analysis.packageCount,
+                    })}
+                  </Text>
+                </View>
+                <CopyButton
+                  value={() => analysis.splitUp}
+                  label={t('bundle.splitUpJson')}
+                />
+              </View>
+
+              {[
+                {
+                  label: t('bundle.splitAppSource'),
+                  color: AppColors.sky500,
+                  ...analysis.splitUp.appSource,
+                },
+                {
+                  label: t('bundle.splitNodeModules'),
+                  color: AppColors.indigo500,
+                  ...analysis.splitUp.nodeModules,
+                },
+                {
+                  label: t('bundle.splitAssetsMedia'),
+                  color: AppColors.pink500,
+                  ...analysis.splitUp.assetsMedia,
+                },
+                {
+                  label: t('bundle.splitMetroOverhead'),
+                  color: AppColors.amber500,
+                  ...analysis.splitUp.metroDevOverhead,
+                },
+              ].map((part, idx) => (
+                <View key={idx} style={bundleStyles.catRowCard}>
+                  <View style={bundleStyles.catRowTop}>
+                    <Text style={bundleStyles.catRowIcon}>{['📦', '🧩', '🖼️', '⚙️'][idx]}</Text>
+                    <View style={{flex: 1}}>
+                      <Text style={bundleStyles.catRowTitle}>{part.label}</Text>
+                      <Text style={bundleStyles.catRowDesc}>
+                        {t('bundle.splitSize', {kb: part.kb, mb: part.mb})}
+                      </Text>
+                    </View>
+                    <View style={{alignItems: 'flex-end'}}>
+                      <Text style={bundleStyles.catRowSize}>{part.pct}%</Text>
+                    </View>
+                  </View>
+                  <View style={bundleStyles.catProgressTrack}>
+                    <View
+                      style={[
+                        bundleStyles.catProgressBar,
+                        {width: `${part.pct}%`, backgroundColor: part.color},
+                      ]}
+                    />
+                  </View>
+                </View>
+              ))}
+
+              {/* Production Binary Footprint */}
+              <View style={bundleStyles.totalSummaryCard}>
+                <View style={bundleStyles.totalSummaryRow}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    <PackageIcon color={AppColors.purple} size={16} />
+                    <Text style={bundleStyles.totalSummaryLabel}>
+                      {t('bundle.productionFootprint')}
+                    </Text>
+                  </View>
+                  <Text style={bundleStyles.totalSummaryValue}>
+                    {t('bundle.productionValue', {
+                      ios: analysis.production.ios.totalInstallMb,
+                      android: analysis.production.android.totalInstallMb,
+                    })}
+                  </Text>
+                </View>
+                <Text style={bundleStyles.totalSummaryFormula}>
+                  {t('bundle.productionDownload', {
+                    ios: analysis.production.ios.totalDownloadMb,
+                    aab: analysis.production.androidAab.totalDownloadMb,
+                    apk: analysis.production.androidApk.totalDownloadMb,
+                  })}
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* Visual Type Distribution Ratio Bar */}
           <View style={bundleStyles.sectionCard}>
             <View style={bundleStyles.sectionHeaderRow}>
               <View>
-                <Text style={bundleStyles.sectionTitle}>Asset & File Type Ratio Treemap</Text>
-                <Text style={bundleStyles.sectionSub}>Total ~{summary.totalMb} MB</Text>
+                <Text style={bundleStyles.sectionTitle}>{t('bundle.treemapTitle')}</Text>
+                <Text style={bundleStyles.sectionSub}>
+                  {t('bundle.treemapSub', {mb: summary.totalMb})}
+                </Text>
               </View>
               <CopyButton
                 value={() => ({
@@ -1365,49 +1130,64 @@ const BundleTab = React.memo(() => {
                   fonts: summary.fonts,
                   json: summary.json,
                 })}
-                label="Ratio Treemap JSON"
+                label={t('bundle.treemapJson')}
               />
             </View>
 
             {/* Stacked Colored Bar */}
             <View style={bundleStyles.treemapBar}>
-              <View style={{flex: summary.images.pct, backgroundColor: '#EC4899', height: 16}} />
-              <View style={{flex: summary.ts.pct, backgroundColor: '#0EA5E9', height: 16}} />
-              <View style={{flex: summary.js.pct, backgroundColor: '#6366F1', height: 16}} />
-              <View style={{flex: summary.fonts.pct, backgroundColor: '#8B5CF6', height: 16}} />
-              <View style={{flex: summary.json.pct, backgroundColor: '#10B981', height: 16}} />
+              <View style={{flex: summary.images.pct, backgroundColor: AppColors.pink500, height: 16}} />
+              <View style={{flex: summary.ts.pct, backgroundColor: AppColors.sky500, height: 16}} />
+              <View style={{flex: summary.js.pct, backgroundColor: AppColors.indigo500, height: 16}} />
+              <View style={{flex: summary.fonts.pct, backgroundColor: AppColors.purple500, height: 16}} />
+              <View style={{flex: summary.json.pct, backgroundColor: AppColors.emerald500, height: 16}} />
             </View>
 
             {/* Legend Grid */}
             <View style={bundleStyles.legendGrid}>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: '#EC4899'}]} />
+                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.pink500}]} />
                 <Text style={bundleStyles.legendText}>
-                  🖼️ Images: <Text style={bundleStyles.legendVal}>{summary.images.kb} KB ({summary.images.pct}%)</Text>
+                  {t('bundle.legendImages')}{' '}
+                  <Text style={bundleStyles.legendVal}>
+                    {t('bundle.legendValue', {kb: summary.images.kb, pct: summary.images.pct})}
+                  </Text>
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: '#0EA5E9'}]} />
+                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.sky500}]} />
                 <Text style={bundleStyles.legendText}>
-                  📜 TS/TSX: <Text style={bundleStyles.legendVal}>{summary.ts.kb} KB ({summary.ts.pct}%)</Text>
+                  {t('bundle.legendTs')}{' '}
+                  <Text style={bundleStyles.legendVal}>
+                    {t('bundle.legendValue', {kb: summary.ts.kb, pct: summary.ts.pct})}
+                  </Text>
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: '#6366F1'}]} />
+                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.indigo500}]} />
                 <Text style={bundleStyles.legendText}>
-                  ⚙️ JS Libs: <Text style={bundleStyles.legendVal}>{summary.js.kb} KB ({summary.js.pct}%)</Text>
+                  {t('bundle.legendJs')}{' '}
+                  <Text style={bundleStyles.legendVal}>
+                    {t('bundle.legendValue', {kb: summary.js.kb, pct: summary.js.pct})}
+                  </Text>
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: '#8B5CF6'}]} />
+                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.purple500}]} />
                 <Text style={bundleStyles.legendText}>
-                  🔤 Fonts: <Text style={bundleStyles.legendVal}>{summary.fonts.kb} KB ({summary.fonts.pct}%)</Text>
+                  {t('bundle.legendFonts')}{' '}
+                  <Text style={bundleStyles.legendVal}>
+                    {t('bundle.legendValue', {kb: summary.fonts.kb, pct: summary.fonts.pct})}
+                  </Text>
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <View style={[bundleStyles.legendDot, {backgroundColor: '#10B981'}]} />
+                <View style={[bundleStyles.legendDot, {backgroundColor: AppColors.emerald500}]} />
                 <Text style={bundleStyles.legendText}>
-                  📄 JSON: <Text style={bundleStyles.legendVal}>{summary.json.kb} KB ({summary.json.pct}%)</Text>
+                  {t('bundle.legendJson')}{' '}
+                  <Text style={bundleStyles.legendVal}>
+                    {t('bundle.legendValue', {kb: summary.json.kb, pct: summary.json.pct})}
+                  </Text>
                 </Text>
               </View>
             </View>
@@ -1416,7 +1196,7 @@ const BundleTab = React.memo(() => {
           {/* Detailed Category Footprint Cards */}
           <View style={bundleStyles.sectionCard}>
             <View style={bundleStyles.sectionHeaderRow}>
-              <Text style={bundleStyles.sectionTitle}>Category Breakdown</Text>
+              <Text style={bundleStyles.sectionTitle}>{t('bundle.categoryBreakdown')}</Text>
               <CopyButton
                 value={() => ({
                   totalAssets: summary.totalCount,
@@ -1429,55 +1209,59 @@ const BundleTab = React.memo(() => {
                     json: summary.json,
                   },
                 })}
-                label="Categories Breakdown JSON"
+                label={t('bundle.categoriesJson')}
               />
             </View>
             
             {[
               {
                 icon: '🖼️',
-                title: 'Images & Media Assets',
+                title: t('bundle.catImagesTitle'),
                 count: summary.images.count,
-                size: `${summary.images.kb} KB`,
+                size: t('bundle.fileSizeKb', {size: summary.images.kb}),
                 pct: summary.images.pct,
-                color: '#EC4899',
-                desc: 'PNG, WebP, SVG, and JPG assets in bundle',
+                color: AppColors.pink500,
+                desc: t('bundle.catImagesDesc'),
               },
               {
                 icon: '⚙️',
-                title: 'Compiled Node Modules & JS',
+                title: t('bundle.catJsTitle'),
                 count: summary.js.count,
-                size: `${summary.js.kb} KB`,
+                size: t('bundle.fileSizeKb', {size: summary.js.kb}),
                 pct: summary.js.pct,
-                color: '#6366F1',
-                desc: 'Third-party dependencies and native bridges',
+                color: AppColors.indigo500,
+                desc: t('bundle.catJsDesc'),
               },
               {
                 icon: '🔤',
-                title: 'Custom Fonts & Vector Glyphs',
+                title: t('bundle.catFontsTitle'),
                 count: summary.fonts.count,
-                size: `${summary.fonts.kb} KB`,
+                size: t('bundle.fileSizeKb', {size: summary.fonts.kb}),
                 pct: summary.fonts.pct,
-                color: '#8B5CF6',
-                desc: 'Inter, JetBrainsMono, and UI typography fonts',
+                color: AppColors.purple500,
+                desc:
+                  bundleFiles
+                    .filter(f => f.category === 'font')
+                    .map(f => f.name)
+                    .join(', ') || t('bundle.catFontsDesc'),
               },
               {
                 icon: '📜',
-                title: 'TypeScript & JSX Components',
+                title: t('bundle.catTsTitle'),
                 count: summary.ts.count,
-                size: `${summary.ts.kb} KB`,
+                size: t('bundle.fileSizeKb', {size: summary.ts.kb}),
                 pct: summary.ts.pct,
-                color: '#0EA5E9',
-                desc: 'App screen components, hooks, and business logic',
+                color: AppColors.sky500,
+                desc: t('bundle.catTsDesc'),
               },
               {
                 icon: '📄',
-                title: 'JSON Data & Localizations',
+                title: t('bundle.catJsonTitle'),
                 count: summary.json.count,
-                size: `${summary.json.kb} KB`,
+                size: t('bundle.fileSizeKb', {size: summary.json.kb}),
                 pct: summary.json.pct,
-                color: '#10B981',
-                desc: 'i18n translation dictionaries and static configs',
+                color: AppColors.emerald500,
+                desc: t('bundle.catJsonDesc'),
               },
             ].map((cat, cIdx) => (
               <View key={cIdx} style={bundleStyles.catRowCard}>
@@ -1485,7 +1269,9 @@ const BundleTab = React.memo(() => {
                   <Text style={bundleStyles.catRowIcon}>{cat.icon}</Text>
                   <View style={{flex: 1}}>
                     <Text style={bundleStyles.catRowTitle}>{cat.title}</Text>
-                    <Text style={bundleStyles.catRowDesc}>{cat.count} items • {cat.desc}</Text>
+                    <Text style={bundleStyles.catRowDesc}>
+                      {t('bundle.catRowSub', {count: cat.count, desc: cat.desc})}
+                    </Text>
                   </View>
                   <View style={{alignItems: 'flex-end'}}>
                     <Text style={bundleStyles.catRowSize}>{cat.size}</Text>
@@ -1508,14 +1294,24 @@ const BundleTab = React.memo(() => {
               <View style={bundleStyles.totalSummaryRow}>
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                   <PackageIcon color={AppColors.purple} size={16} />
-                  <Text style={bundleStyles.totalSummaryLabel}>TOTAL BUNDLE ASSETS</Text>
+                  <Text style={bundleStyles.totalSummaryLabel}>
+                    {t('bundle.totalBundleAssets')}
+                  </Text>
                 </View>
                 <Text style={bundleStyles.totalSummaryValue}>
-                  {summary.totalKb} KB (~{summary.totalMb} MB)
+                  {t('bundle.totalBundleValue', {kb: summary.totalKb, mb: summary.totalMb})}
                 </Text>
               </View>
               <Text style={bundleStyles.totalSummaryFormula}>
-                Sum: {summary.images.kb} KB + {summary.js.kb} KB + {summary.fonts.kb} KB + {summary.ts.kb} KB + {summary.json.kb} KB = {summary.totalKb} KB ({summary.totalCount} items • 100%)
+                {t('bundle.totalFormula', {
+                  images: summary.images.kb,
+                  js: summary.js.kb,
+                  fonts: summary.fonts.kb,
+                  ts: summary.ts.kb,
+                  json: summary.json.kb,
+                  total: summary.totalKb,
+                  count: summary.totalCount,
+                })}
               </Text>
             </View>
           </View>
@@ -1525,14 +1321,14 @@ const BundleTab = React.memo(() => {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 2. TAB: FILES BREAKDOWN ─────────────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'files' && (
+      {activeSubTab === 'files' && !isAnalyzing && (
         <View style={{flex: 1}}>
           {/* Search & Category Filter */}
           <View style={bundleStyles.filterContainer}>
             <View style={bundleStyles.searchRow}>
               <SearchIcon color={AppColors.grayTextWeak} size={15} />
               <TextInput
-                placeholder="Search by file name (.png, .tsx, .ttf, path)..."
+                placeholder={t('bundle.searchFilesPlaceholder')}
                 placeholderTextColor={AppColors.grayTextWeak}
                 value={search}
                 onChangeText={setSearch}
@@ -1547,7 +1343,7 @@ const BundleTab = React.memo(() => {
               )}
               <CopyButton
                 value={() => filteredFiles}
-                label="Filtered Files JSON"
+                label={t('bundle.filteredFilesJson')}
               />
             </View>
 
@@ -1560,12 +1356,12 @@ const BundleTab = React.memo(() => {
                 const isActive = activeCategory === tab.key;
                 const count =
                   tab.key === 'ALL'
-                    ? BUNDLE_FILES_DATA.length
+                    ? bundleFiles.length
                     : tab.key === 'UNUSED'
-                    ? BUNDLE_FILES_DATA.filter(f => f.isConsumed === false).length
+                    ? bundleFiles.filter(f => f.isConsumed === false).length
                     : tab.key === 'CONSUMED'
-                    ? BUNDLE_FILES_DATA.filter(f => f.isConsumed !== false).length
-                    : BUNDLE_FILES_DATA.filter(f => f.category === tab.key).length;
+                    ? bundleFiles.filter(f => f.isConsumed !== false).length
+                    : bundleFiles.filter(f => f.category === tab.key).length;
 
                 return (
                   <TouchableScale
@@ -1574,8 +1370,8 @@ const BundleTab = React.memo(() => {
                     style={[
                       bundleStyles.catPill,
                       isActive && bundleStyles.catPillActive,
-                      tab.key === 'UNUSED' && isActive && {backgroundColor: '#EF4444', borderColor: '#DC2626'},
-                      tab.key === 'CONSUMED' && isActive && {backgroundColor: '#059669', borderColor: '#047857'},
+                      tab.key === 'UNUSED' && isActive && {backgroundColor: AppColors.red500, borderColor: AppColors.red600},
+                      tab.key === 'CONSUMED' && isActive && {backgroundColor: AppColors.emerald600, borderColor: AppColors.emerald700},
                     ]}>
                     <Text style={bundleStyles.catPillIcon}>{tab.icon}</Text>
                     <Text
@@ -1583,7 +1379,7 @@ const BundleTab = React.memo(() => {
                         bundleStyles.catPillText,
                         isActive && bundleStyles.catPillTextActive,
                       ]}>
-                      {tab.label} ({count})
+                      {t(tab.labelKey)} ({count})
                     </Text>
                   </TouchableScale>
                 );
@@ -1611,7 +1407,7 @@ const BundleTab = React.memo(() => {
                       bundleStyles.viewModeBtnText,
                       filesViewMode === 'tree' && bundleStyles.viewModeBtnTextActive,
                     ]}>
-                    🌳 Tree View
+                    {t('bundle.treeView')}
                   </Text>
                 </TouchableScale>
                 <TouchableScale
@@ -1625,7 +1421,7 @@ const BundleTab = React.memo(() => {
                       bundleStyles.viewModeBtnText,
                       filesViewMode === 'list' && bundleStyles.viewModeBtnTextActive,
                     ]}>
-                    📄 Flat List
+                    {t('bundle.flatList')}
                   </Text>
                 </TouchableScale>
               </View>
@@ -1633,16 +1429,19 @@ const BundleTab = React.memo(() => {
               {filesViewMode === 'tree' ? (
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
                   <TouchableScale onPress={expandAllFolders}>
-                    <Text style={bundleStyles.treeActionLink}>Expand</Text>
+                    <Text style={bundleStyles.treeActionLink}>{t('bundle.expand')}</Text>
                   </TouchableScale>
                   <Text style={{color: AppColors.grayTextWeak, fontSize: 11}}>•</Text>
                   <TouchableScale onPress={collapseAllFolders}>
-                    <Text style={bundleStyles.treeActionLink}>Collapse</Text>
+                    <Text style={bundleStyles.treeActionLink}>{t('bundle.collapse')}</Text>
                   </TouchableScale>
                 </View>
               ) : (
                 <Text style={bundleStyles.listHeaderCount}>
-                  Showing {filteredFiles.length} of {BUNDLE_FILES_DATA.length} files
+                  {t('bundle.showingFilesOf', {
+                    shown: filteredFiles.length,
+                    total: bundleFiles.length,
+                  })}
                 </Text>
               )}
             </View>
@@ -1689,11 +1488,11 @@ const BundleTab = React.memo(() => {
                           />
                           {isUnused ? (
                             <View style={bundleStyles.unusedBadge}>
-                              <Text style={bundleStyles.unusedBadgeText}>🚫 Not Consumed</Text>
+                              <Text style={bundleStyles.unusedBadgeText}>{t('bundle.notConsumed')}</Text>
                             </View>
                           ) : (
                             <View style={bundleStyles.consumedBadge}>
-                              <Text style={bundleStyles.consumedBadgeText}>⚡ Consumed</Text>
+                              <Text style={bundleStyles.consumedBadgeText}>{t('bundle.consumed')}</Text>
                             </View>
                           )}
                         </View>
@@ -1708,16 +1507,16 @@ const BundleTab = React.memo(() => {
 
                       <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                         <View style={bundleStyles.fileSizeBox}>
-                          <Text style={[bundleStyles.fileSizeKb, isUnused && {color: '#B45309'}]}>
+                          <Text style={[bundleStyles.fileSizeKb, isUnused && {color: AppColors.amber800Warm}]}>
                             {file.sizeKb >= 1024
-                              ? `${(file.sizeKb / 1024).toFixed(2)} MB`
-                              : `${file.sizeKb} KB`}
+                              ? t('bundle.fileSizeMb', {size: (file.sizeKb / 1024).toFixed(2)})
+                              : t('bundle.fileSizeKb', {size: file.sizeKb})}
                           </Text>
                           <Text style={bundleStyles.filePercent}>{pctOfTotal}%</Text>
                         </View>
                         <CopyButton
                           value={() => file}
-                          label="File Details JSON"
+                          label={t('bundle.fileDetailsJson')}
                         />
                       </View>
                     </View>
@@ -1728,7 +1527,7 @@ const BundleTab = React.memo(() => {
                           bundleStyles.fileProgressBar,
                           {
                             width: `${Math.min(100, Math.max(4, Number(pctOfTotal) * 4))}%`,
-                            backgroundColor: isUnused ? '#EF4444' : categoryMeta.color,
+                            backgroundColor: isUnused ? AppColors.red500 : categoryMeta.color,
                           },
                         ]}
                       />
@@ -1745,9 +1544,9 @@ const BundleTab = React.memo(() => {
                         ]}>
                           <Text style={[
                             bundleStyles.adviceText,
-                            file.status === 'warning' && {color: '#B45309'},
-                            file.status === 'optimal' && {color: '#047857'},
-                            isUnused && {color: '#DC2626'},
+                            file.status === 'warning' && {color: AppColors.amber800Warm},
+                            file.status === 'optimal' && {color: AppColors.emerald700},
+                            isUnused && {color: AppColors.red600},
                           ]}>
                             {isUnused ? '🗑️ ' : file.status === 'warning' ? '💡 ' : '✨ '}
                             {file.advice}
@@ -1766,11 +1565,17 @@ const BundleTab = React.memo(() => {
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
               <LayersIcon color={AppColors.purple} size={14} />
               <Text style={bundleStyles.footerTitle}>
-                {filteredFiles.length} of {summary.totalCount} Files
+                {t('bundle.filesOf', {
+                  count: filteredFiles.length,
+                  total: summary.totalCount,
+                })}
               </Text>
             </View>
             <Text style={bundleStyles.footerSizeVal}>
-              {filteredTotalKb} KB ({ (filteredTotalKb / 1024).toFixed(2) } MB)
+              {t('bundle.kbMbValue', {
+                kb: filteredTotalKb,
+                mb: (filteredTotalKb / 1024).toFixed(2),
+              })}
             </Text>
           </View>
         </View>
@@ -1779,7 +1584,7 @@ const BundleTab = React.memo(() => {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 3. TAB: PACKAGES & NODE_MODULES ─────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'packages' && (
+      {activeSubTab === 'packages' && !isAnalyzing && (
         <View style={{flex: 1}}>
           <ScrollView
             style={{flex: 1}}
@@ -1790,7 +1595,7 @@ const BundleTab = React.memo(() => {
               <View style={bundleStyles.searchRow}>
                 <SearchIcon color={AppColors.grayTextWeak} size={15} />
                 <TextInput
-                  placeholder="Search package (react-native, axios, navigation)..."
+                  placeholder={t('bundle.searchPackagesPlaceholder')}
                   placeholderTextColor={AppColors.grayTextWeak}
                   value={search}
                   onChangeText={setSearch}
@@ -1805,21 +1610,23 @@ const BundleTab = React.memo(() => {
                 )}
                 <CopyButton
                   value={() => filteredPackages}
-                  label="Dependencies JSON"
+                  label={t('bundle.dependenciesJson')}
                 />
               </View>
             </View>
 
             <Text style={bundleStyles.listHeaderCount}>
-              Showing {filteredPackages.length} dependencies
+              {t('bundle.showingDependencies', {count: filteredPackages.length})}
             </Text>
 
             {filteredPackages.map((pkg, index) => {
-              const cleanInstalledVersion = pkg.version.replace(/^\^/, '');
-              const hasUpdate = pkg.latestVersion && pkg.latestVersion !== cleanInstalledVersion;
+              const cleanInstalledVersion = pkg.version ? pkg.version.replace(/^\^/, '') : '';
+              const hasUpdate =
+                !!pkg.latestVersion && !!cleanInstalledVersion &&
+                pkg.latestVersion !== cleanInstalledVersion;
 
               return (
-                <View key={pkg.id} style={[bundleStyles.fileCard, pkg.isDeprecated && {borderColor: '#FECDD3', backgroundColor: '#FFFDFD'}]}>
+                <View key={pkg.id} style={[bundleStyles.fileCard, pkg.isDeprecated && {borderColor: AppColors.errorBorder, backgroundColor: '#FFFDFD'}]}>
                   {/* Header Row: #s.no + Logo + Package Name + Version Pill + Update/Deprecated Badges + Size & Copy */}
                   <View style={bundleStyles.fileCardTop}>
                     <View style={bundleStyles.sNoBadge}>
@@ -1842,21 +1649,35 @@ const BundleTab = React.memo(() => {
                         />
                         <View style={bundleStyles.versionPill}>
                           <Text style={bundleStyles.versionPillText}>
-                            v{cleanInstalledVersion}
+                            {cleanInstalledVersion
+                              ? t('bundle.versionPrefix', {version: cleanInstalledVersion})
+                              : t('bundle.bundled')}
                           </Text>
                         </View>
 
                         {pkg.isDeprecated ? (
                           <View style={bundleStyles.deprecatedBadge}>
-                            <Text style={bundleStyles.deprecatedBadgeText}>⚠️ DEPRECATED</Text>
+                            <Text style={bundleStyles.deprecatedBadgeText}>
+                              {t('bundle.deprecated')}
+                            </Text>
                           </View>
                         ) : hasUpdate ? (
                           <View style={bundleStyles.updateBadge}>
-                            <Text style={bundleStyles.updateBadgeText}>⚡ Update: v{pkg.latestVersion}</Text>
+                            <Text style={bundleStyles.updateBadgeText}>
+                              {t('bundle.updateAvailable', {version: pkg.latestVersion})}
+                            </Text>
+                          </View>
+                        ) : cleanInstalledVersion ? (
+                          <View style={[bundleStyles.updateBadge, {backgroundColor: AppColors.gray100, borderColor: AppColors.gray200}]}>
+                            <Text style={[bundleStyles.updateBadgeText, {color: AppColors.gray600}]}>
+                              {t('bundle.upToDate')}
+                            </Text>
                           </View>
                         ) : (
-                          <View style={[bundleStyles.updateBadge, {backgroundColor: '#F3F4F6', borderColor: '#E5E7EB'}]}>
-                            <Text style={[bundleStyles.updateBadgeText, {color: '#4B5563'}]}>✨ Up to date</Text>
+                          <View style={[bundleStyles.updateBadge, {backgroundColor: AppColors.gray100, borderColor: AppColors.gray200}]}>
+                            <Text style={[bundleStyles.updateBadgeText, {color: AppColors.gray600}]}>
+                              {t('bundle.bundledBadge')}
+                            </Text>
                           </View>
                         )}
                       </View>
@@ -1864,12 +1685,14 @@ const BundleTab = React.memo(() => {
 
                     <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                       <View style={bundleStyles.fileSizeBox}>
-                        <Text style={bundleStyles.fileSizeKb}>{pkg.sizeKb} KB</Text>
+                        <Text style={bundleStyles.fileSizeKb}>
+                          {t('bundle.fileSizeKb', {size: pkg.sizeKb})}
+                        </Text>
                         <Text style={bundleStyles.filePercent}>{pkg.percentage}%</Text>
                       </View>
                       <CopyButton
                         value={() => pkg}
-                        label="Package Details JSON"
+                        label={t('bundle.packageDetailsJson')}
                       />
                     </View>
                   </View>
@@ -1899,7 +1722,7 @@ const BundleTab = React.memo(() => {
                     <View
                       style={[
                         bundleStyles.fileProgressBar,
-                        {width: `${pkg.percentage * 2}%`, backgroundColor: pkg.isDeprecated ? '#EF4444' : pkg.color},
+                        {width: `${pkg.percentage * 2}%`, backgroundColor: pkg.isDeprecated ? AppColors.red500 : pkg.color},
                       ]}
                     />
                   </View>
@@ -1909,7 +1732,7 @@ const BundleTab = React.memo(() => {
                     <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
                       <View style={bundleStyles.typeTag}>
                         <Text style={bundleStyles.typeTagText}>
-                          {pkg.type === 'direct' ? '📦 Direct' : '🔗 Transitive'}
+                          {pkg.type === 'direct' ? t('bundle.direct') : t('bundle.transitive')}
                         </Text>
                       </View>
                       {pkg.lastActive && (
@@ -1921,7 +1744,7 @@ const BundleTab = React.memo(() => {
 
                     <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
                       <Text style={bundleStyles.fileMetaText}>
-                        ~{pkg.sizeKb} KB minified
+                        {t('bundle.minified', {size: pkg.sizeKb})}
                       </Text>
                       <TouchableScale
                         onPress={() => {
@@ -1929,7 +1752,7 @@ const BundleTab = React.memo(() => {
                           Linking.openURL(url).catch(() => {});
                         }}
                         style={bundleStyles.npmLinkBtn}>
-                        <Text style={bundleStyles.npmLinkText}>npm ↗</Text>
+                        <Text style={bundleStyles.npmLinkText}>{t('bundle.npmLink')}</Text>
                       </TouchableScale>
                     </View>
                   </View>
@@ -1943,11 +1766,14 @@ const BundleTab = React.memo(() => {
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
               <PackageIcon color={AppColors.purple} size={14} />
               <Text style={bundleStyles.footerTitle}>
-                {filteredPackages.length} Dependencies
+                {t('bundle.dependenciesCount', {count: filteredPackages.length})}
               </Text>
             </View>
             <Text style={bundleStyles.footerSizeVal}>
-              {packagesTotalKb} KB ({ (packagesTotalKb / 1024).toFixed(2) } MB)
+              {t('bundle.kbMbValue', {
+                kb: packagesTotalKb,
+                mb: (packagesTotalKb / 1024).toFixed(2),
+              })}
             </Text>
           </View>
         </View>
@@ -1956,7 +1782,7 @@ const BundleTab = React.memo(() => {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 4. TAB: MEDIA & ASSET AUDITOR ───────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'media' && (
+      {activeSubTab === 'media' && !isAnalyzing && (
         <View style={{flex: 1}}>
           <ScrollView
             style={{flex: 1}}
@@ -1967,20 +1793,28 @@ const BundleTab = React.memo(() => {
               <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8}}>
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                   <StorageIcon color={AppColors.purple} size={18} />
-                  <Text style={bundleStyles.tipsHeading}>Media Compression Auditor</Text>
+                  <Text style={bundleStyles.tipsHeading}>{t('bundle.mediaAuditorTitle')}</Text>
                 </View>
                 <CopyButton
                   value={() => mediaFiles}
-                  label="Media Assets JSON"
+                  label={t('bundle.mediaAssetsJson')}
                 />
               </View>
               <Text style={bundleStyles.tipDesc}>
-                Images & Fonts constitute <Text style={{fontFamily: AppFonts.interBold, color: AppColors.purple}}>{summary.images.pct + summary.fonts.pct}%</Text> of total assets (~{summary.images.kb + summary.fonts.kb} KB). Converting PNGs to WebP and font subsetting can reduce size by up to <Text style={{fontFamily: AppFonts.interBold, color: '#047857'}}>540 KB</Text>.
+                {t('bundle.mediaAuditorPrefix')}{' '}
+                <Text style={{fontFamily: AppFonts.interBold, color: AppColors.purple}}>
+                  {summary.images.pct + summary.fonts.pct}%
+                </Text>{' '}
+                {t('bundle.mediaAuditorMid', {kb: summary.images.kb + summary.fonts.kb})}{' '}
+                <Text style={{fontFamily: AppFonts.interBold, color: AppColors.emerald700}}>
+                  {t('bundle.mediaSavings', {size: 540})}
+                </Text>{' '}
+                {t('bundle.mediaAuditorSuffix')}
               </Text>
             </View>
 
             <Text style={bundleStyles.listHeaderCount}>
-              Media Assets & Fonts ({mediaFiles.length} items)
+              {t('bundle.mediaAssetsList', {count: mediaFiles.length})}
             </Text>
 
             {mediaFiles.map((file, index) => (
@@ -1999,11 +1833,13 @@ const BundleTab = React.memo(() => {
 
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                     <View style={bundleStyles.fileSizeBox}>
-                      <Text style={bundleStyles.fileSizeKb}>{file.sizeKb} KB</Text>
+                      <Text style={bundleStyles.fileSizeKb}>
+                        {t('bundle.fileSizeKb', {size: file.sizeKb})}
+                      </Text>
                     </View>
                     <CopyButton
                       value={() => file}
-                      label="Media Item JSON"
+                      label={t('bundle.mediaItemJson')}
                     />
                   </View>
                 </View>
@@ -2018,8 +1854,8 @@ const BundleTab = React.memo(() => {
                     ]}>
                       <Text style={[
                         bundleStyles.adviceText,
-                        file.status === 'warning' && {color: '#B45309'},
-                        file.status === 'optimal' && {color: '#047857'},
+                        file.status === 'warning' && {color: AppColors.amber800Warm},
+                        file.status === 'optimal' && {color: AppColors.emerald700},
                       ]}>
                         {file.status === 'warning' ? '💡 ' : '✨ '}
                         {file.advice}
@@ -2036,11 +1872,14 @@ const BundleTab = React.memo(() => {
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
               <StorageIcon color={AppColors.purple} size={14} />
               <Text style={bundleStyles.footerTitle}>
-                {mediaFiles.length} Media & Fonts
+                {t('bundle.mediaAndFonts', {count: mediaFiles.length})}
               </Text>
             </View>
             <Text style={bundleStyles.footerSizeVal}>
-              {mediaTotalKb} KB ({ (mediaTotalKb / 1024).toFixed(2) } MB)
+              {t('bundle.kbMbValue', {
+                kb: mediaTotalKb,
+                mb: (mediaTotalKb / 1024).toFixed(2),
+              })}
             </Text>
           </View>
         </View>
@@ -2059,52 +1898,52 @@ const BundleTab = React.memo(() => {
             <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12}}>
               <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                 <CircleAlertIcon color={AppColors.purple} size={18} />
-                <Text style={bundleStyles.tipsHeading}>React Native Bundle Optimization Checklist</Text>
+                <Text style={bundleStyles.tipsHeading}>{t('bundle.optimizerTitle')}</Text>
               </View>
               <CopyButton
                 value={() => [
-                  'Convert Heavy PNGs to WebP / SVGs (High Impact)',
-                  `Enable Hermes Bytecode Engine (${isHermes ? 'Active' : 'Action Required'})`,
-                  'Font Subsetting & Weight Pruning (Medium Impact)',
-                  'Selective Path Imports Tree-shaking (Best Practice)',
-                  'Screen Lazy-Loading (Best Practice)',
+                  t('bundle.optTip1Title'),
+                  `${t('bundle.optTip2Title')} (${isHermes ? t('bundle.active') : t('bundle.actionRequired')})`,
+                  t('bundle.optTip3Title'),
+                  t('bundle.optTip4Title'),
+                  t('bundle.optTip5Title'),
                 ]}
-                label="Optimization Checklist"
+                label={t('bundle.optimizationChecklist')}
               />
             </View>
 
             {[
               {
-                title: '🖼️ Convert Heavy PNGs to WebP / SVGs',
-                desc: 'Images account for >40% of final app download size. Converting 2x/3x raster PNGs to WebP saves 60-70% size with no visible fidelity loss.',
-                badge: 'High Impact',
-                badgeColor: '#EC4899',
+                title: t('bundle.optTip1Title'),
+                desc: t('bundle.optTip1Desc'),
+                badge: t('bundle.highImpact'),
+                badgeColor: AppColors.pink500,
               },
               {
-                title: '📜 Enable Hermes Bytecode Engine',
+                title: t('bundle.optTip2Title'),
                 desc: isHermes
-                  ? '✅ Hermes is active! JavaScript is compiled into optimized bytecode Ahead-Of-Time.'
-                  : '⚠️ Hermes is disabled. Enable hermes in your app config for ~40% smaller payload and instant TTI startup.',
-                badge: isHermes ? 'Active' : 'Action Required',
-                badgeColor: isHermes ? '#10B981' : '#F59E0B',
+                  ? t('bundle.optTip2DescActive')
+                  : t('bundle.optTip2DescInactive'),
+                badge: isHermes ? t('bundle.active') : t('bundle.actionRequired'),
+                badgeColor: isHermes ? AppColors.emerald500 : AppColors.amber500,
               },
               {
-                title: '🔤 Font Subsetting & Weight Pruning',
-                desc: 'Include only the font weights you actively use (e.g. Regular & Bold). Remove unused glyph ranges to save 100KB+ per font file.',
-                badge: 'Medium Impact',
-                badgeColor: '#8B5CF6',
+                title: t('bundle.optTip3Title'),
+                desc: t('bundle.optTip3Desc'),
+                badge: t('bundle.mediumImpact'),
+                badgeColor: AppColors.purple500,
               },
               {
-                title: '🌲 Selective Path Imports (Tree-shaking)',
-                desc: 'Import from specific subpaths (e.g. lodash/get or specific vector icon sets) instead of importing large monolithic packages.',
-                badge: 'Best Practice',
-                badgeColor: '#0EA5E9',
+                title: t('bundle.optTip4Title'),
+                desc: t('bundle.optTip4Desc'),
+                badge: t('bundle.bestPractice'),
+                badgeColor: AppColors.sky500,
               },
               {
-                title: '⚡ Screen Lazy-Loading',
-                desc: 'Lazy load secondary screens and heavy modal sheets using dynamic imports and InteractionManager to reduce initial bundle evaluation.',
-                badge: 'Best Practice',
-                badgeColor: '#6366F1',
+                title: t('bundle.optTip5Title'),
+                desc: t('bundle.optTip5Desc'),
+                badge: t('bundle.bestPractice'),
+                badgeColor: AppColors.indigo500,
               },
             ].map((tip, tIdx) => (
               <View key={tIdx} style={bundleStyles.tipItem}>
@@ -2123,7 +1962,7 @@ const BundleTab = React.memo(() => {
                     </View>
                     <CopyButton
                       value={() => tip}
-                      label="Tip Details"
+                      label={t('bundle.tipDetails')}
                     />
                   </View>
                 </View>
@@ -2143,6 +1982,23 @@ const bundleStyles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.dividerColor,
+  },
+  analyzingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 24,
+  },
+  analyzingText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 13,
+    color: AppColors.primaryBlack,
+  },
+  analyzingHint: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 11,
+    color: AppColors.grayTextWeak,
   },
   subTabsScroll: {
     paddingHorizontal: 12,
@@ -2699,41 +2555,41 @@ const bundleStyles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 5,
-    backgroundColor: '#CB383714',
+    backgroundColor: AppColors.npmRedTint,
     borderWidth: 1,
-    borderColor: '#CB383733',
+    borderColor: AppColors.npmRedBorder,
   },
   npmLinkText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
-    color: '#CB3837',
+    color: AppColors.npmRed,
   },
   deprecatedBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 4,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: AppColors.red100,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: AppColors.errorBorder,
   },
   deprecatedBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9,
-    color: '#DC2626',
+    color: AppColors.red600,
     letterSpacing: 0.3,
   },
   updateBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 4,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.green100,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: AppColors.greenBorder,
   },
   updateBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9,
-    color: '#047857',
+    color: AppColors.emerald700,
   },
   lastActiveText: {
     fontFamily: AppFonts.interRegular,
@@ -2741,45 +2597,45 @@ const bundleStyles = StyleSheet.create({
     color: AppColors.grayTextWeak,
   },
   deprecationBox: {
-    backgroundColor: '#FFF1F2',
+    backgroundColor: AppColors.errorCardBg,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderWidth: 1,
-    borderColor: '#FECDD3',
+    borderColor: AppColors.errorBorder,
     marginTop: 3,
   },
   deprecationText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 10.5,
-    color: '#BE123C',
+    color: AppColors.rose700,
     lineHeight: 14,
   },
   unusedBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 4,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: AppColors.red100,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: AppColors.errorBorder,
   },
   unusedBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
-    color: '#DC2626',
+    color: AppColors.red600,
   },
   consumedBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1.5,
     borderRadius: 4,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.green100,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: AppColors.greenBorder,
   },
   consumedBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
-    color: '#059669',
+    color: AppColors.emerald600,
   },
   treeFolderChevronWrap: {
     width: 18,
@@ -2790,13 +2646,13 @@ const bundleStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   treeFileCardUnused: {
-    borderColor: '#FECACA',
-    backgroundColor: '#FFFBFB',
+    borderColor: AppColors.errorBorder,
+    backgroundColor: AppColors.red50,
   },
   adviceUnused: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: AppColors.errorCardBg,
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: AppColors.errorBorder,
   },
   adviceBadge: {
     paddingHorizontal: 8,
@@ -2805,14 +2661,14 @@ const bundleStyles = StyleSheet.create({
     marginTop: 2,
   },
   adviceWarning: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: AppColors.amber100,
     borderWidth: 1,
-    borderColor: '#FDE68A',
+    borderColor: AppColors.amber200,
   },
   adviceOptimal: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: AppColors.green100,
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: AppColors.greenBorder,
   },
   adviceText: {
     fontFamily: AppFonts.interMedium,
@@ -2830,21 +2686,21 @@ const bundleStyles = StyleSheet.create({
     fontSize: 9,
   },
   searchHighlight: {
-    backgroundColor: '#FEF08A',
-    color: '#854D0E',
+    backgroundColor: AppColors.yellow200,
+    color: AppColors.yellow800,
     fontFamily: AppFonts.interBold,
   },
   tipsCard: {
-    backgroundColor: '#FAF5FF',
+    backgroundColor: AppColors.purple50,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: AppColors.purple200,
   },
   tipsHeading: {
     fontFamily: AppFonts.interBold,
     fontSize: 13.5,
-    color: '#6B21A8',
+    color: AppColors.purple800,
   },
   totalSummaryCard: {
     marginTop: 10,
@@ -2908,17 +2764,17 @@ const bundleStyles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: AppColors.purple200,
   },
   tipTitle: {
     fontFamily: AppFonts.interBold,
     fontSize: 12,
-    color: '#581C87',
+    color: AppColors.purple900,
   },
   tipDesc: {
     fontFamily: AppFonts.interRegular,
     fontSize: 11,
-    color: '#6B7280',
+    color: AppColors.gray500,
     lineHeight: 16,
     marginTop: 4,
   },

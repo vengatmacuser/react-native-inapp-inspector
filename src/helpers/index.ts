@@ -563,3 +563,128 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
   };
 };
 
+// ─── Analytics Helpers ────────────────────────────────────────────────────────
+
+export const ANALYTICS_EVENT_PALETTE = [
+  AppColors.googleBlue,
+  AppColors.googleGreen,
+  AppColors.googlePurple,
+  AppColors.googleTeal,
+  AppColors.googleRed,
+  AppColors.googleOrange,
+  AppColors.blue700,
+  AppColors.materialGreen,
+];
+
+export const getEventColor = (name: string): string => {
+  const safeName = typeof name === 'string' ? name : String(name || '');
+  let hash = 0;
+  for (let i = 0; i < safeName.length; i++) {
+    hash = (hash * 31 + safeName.charCodeAt(i)) | 0;
+  }
+  return ANALYTICS_EVENT_PALETTE[Math.abs(hash) % ANALYTICS_EVENT_PALETTE.length];
+};
+
+export const getEventCategory = (name: string): 'page_view' | 'ecommerce' | 'system' | 'custom' => {
+  if (!name) return 'custom';
+  const lowercaseName = name.toLowerCase();
+
+  if (lowercaseName === 'screen_view' || lowercaseName === 'page_view') {
+    return 'page_view';
+  }
+
+  // Ecommerce events
+  const ecommerceEvents = [
+    'purchase', 'add_to_cart', 'begin_checkout', 'view_item',
+    'select_item', 'remove_from_cart', 'view_cart',
+    'add_shipping_info', 'add_payment_info', 'refund',
+    'view_item_list', 'select_promotion', 'view_promotion'
+  ];
+  if (ecommerceEvents.includes(lowercaseName)) {
+    return 'ecommerce';
+  }
+
+  // Firebase System Auto-events
+  const systemEvents = [
+    'first_open', 'session_start', 'user_engagement',
+    'app_clear_data', 'app_exception', 'app_update', 'os_update',
+    'notification_receive', 'notification_open', 'notification_dismiss',
+    'screen_active', 'screen_inactive'
+  ];
+  if (systemEvents.includes(lowercaseName) || lowercaseName.startsWith('firebase_') || lowercaseName.startsWith('_')) {
+    return 'system';
+  }
+
+  return 'custom';
+};
+
+export const getCategoryColors = (category: string) => {
+  switch (category) {
+    case 'page_view':
+    case 'Page View':
+      return {
+        bg: AppColors.blueBg,
+        border: AppColors.blueBorder,
+        text: AppColors.blue800,
+      };
+    case 'ecommerce':
+    case 'Ecommerce':
+      return {
+        bg: AppColors.greenBg,
+        border: AppColors.greenBorder,
+        text: AppColors.materialGreen,
+      };
+    case 'system':
+    case 'System':
+      return {
+        bg: AppColors.greyBg,
+        border: AppColors.greyBorder,
+        text: AppColors.grey600,
+      };
+    default:
+      return {
+        bg: AppColors.purpleBg,
+        border: AppColors.purpleBorder,
+        text: AppColors.purpleText,
+      };
+  }
+};
+
+export interface RuntimeDiagnostics {
+  engineType: 'hermes' | 'v8' | 'jsc';
+  archType: 'fabric' | 'paper';
+  usedHeapMb: number;
+  totalAllocMb: number;
+}
+
+export const getRuntimeDiagnostics = (): RuntimeDiagnostics => {
+  const isHermes = typeof (global as any).HermesInternal !== 'undefined';
+  const isV8 = typeof (global as any)._v8runtime !== 'undefined';
+  const engineType: 'hermes' | 'v8' | 'jsc' = isHermes ? 'hermes' : isV8 ? 'v8' : 'jsc';
+
+  const isFabric =
+    typeof (global as any).nativeFabricUIManager !== 'undefined' ||
+    Boolean((global as any).__turboModuleProxy);
+  const archType: 'fabric' | 'paper' = isFabric ? 'fabric' : 'paper';
+
+  let usedHeapMb = 32.4;
+  let totalAllocMb = 64.0;
+
+  try {
+    const hermesStats = (global as any).HermesInternal?.getInstrumentedStats?.();
+    if (hermesStats?.js_heap_size) {
+      usedHeapMb = Number((hermesStats.js_heap_size / (1024 * 1024)).toFixed(1));
+      totalAllocMb = Number(((hermesStats.js_allocated_bytes || hermesStats.js_heap_size * 1.6) / (1024 * 1024)).toFixed(1));
+    } else if ((global as any).performance?.memory?.usedJSHeapSize) {
+      usedHeapMb = Number(((global as any).performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1));
+      totalAllocMb = Number(((global as any).performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1));
+    }
+  } catch {}
+
+  return {
+    engineType,
+    archType,
+    usedHeapMb,
+    totalAllocMb,
+  };
+};

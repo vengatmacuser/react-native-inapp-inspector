@@ -13,6 +13,8 @@ import HighlightText from '../HighlightText';
 import EndOfListFooter from '../EndOfListFooter';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {useTranslation} from '../../i18n';
+import {getRuntimeDiagnostics} from '../../helpers';
 import {SearchIcon, CircleXIcon, PerformanceIcon} from '../NetworkIcons';
 
 export interface PerformanceEvent {
@@ -35,160 +37,8 @@ export interface PerformanceEvent {
   severity: 'optimal' | 'warning' | 'critical';
 }
 
-const INITIAL_PERFORMANCE_EVENTS: PerformanceEvent[] = [
-  {
-    id: 'perf-1',
-    timestamp: Date.now() - 48000,
-    type: 'fps_drop',
-    category: 'navigation',
-    fps: 38,
-    durationMs: 26.3,
-    label: 'Main Thread Spike during Navigation',
-    detail: 'Screen transition to ProductDetailScreen triggered heavy layout reconciliation and simultaneous component mounts.',
-    source: 'src/navigation/RootNavigator.tsx',
-    breakdown: {jsTimeMs: 18.2, uiTimeMs: 8.1, bridgeLatencyMs: 1.2},
-    heapDeltaKb: 640,
-    advice: 'Defer non-critical offscreen hooks with InteractionManager.runAfterInteractions to preserve 60 FPS.',
-    severity: 'warning',
-  },
-  {
-    id: 'perf-2',
-    timestamp: Date.now() - 41000,
-    type: 'slow_render',
-    category: 'render',
-    fps: 42,
-    durationMs: 23.8,
-    label: 'FlatList Virtualization Re-render Pass',
-    detail: 'FlatList rendered 25 items simultaneously on orientation change without memoized row component.',
-    source: 'src/components/Inspector/NetworkTab.tsx',
-    breakdown: {jsTimeMs: 16.4, uiTimeMs: 7.4},
-    heapDeltaKb: 380,
-    advice: 'Implement getItemLayout and React.memo(LogCard) to skip redundant diffing passes.',
-    severity: 'warning',
-  },
-  {
-    id: 'perf-3',
-    timestamp: Date.now() - 35000,
-    type: 'transition',
-    category: 'navigation',
-    fps: 59,
-    durationMs: 16.9,
-    label: 'Native Modal Slide-Up Transition',
-    detail: 'Hardware accelerated native driver animated transform running smoothly at sustained 60 FPS.',
-    source: 'src/components/Inspector/MainScreen.tsx',
-    breakdown: {jsTimeMs: 2.1, uiTimeMs: 14.8},
-    heapDeltaKb: 120,
-    advice: 'Using nativeDriver: true successfully prevents JS thread blocking during animations.',
-    severity: 'optimal',
-  },
-  {
-    id: 'perf-4',
-    timestamp: Date.now() - 28000,
-    type: 'memory',
-    category: 'memory',
-    fps: 60,
-    durationMs: 16.6,
-    label: 'Hermes Generational Garbage Collection',
-    detail: 'Minor generational GC cycle scavenged 4.2 MB ephemeral heap objects with sub-millisecond thread pause.',
-    source: 'Hermes VM Garbage Collector',
-    breakdown: {jsTimeMs: 3.1, uiTimeMs: 0.2},
-    heapDeltaKb: -4280,
-    advice: 'Hermes generational garbage collector is operating within optimal sub-5ms limits.',
-    severity: 'optimal',
-  },
-  {
-    id: 'perf-5',
-    timestamp: Date.now() - 22000,
-    type: 'network',
-    category: 'io',
-    fps: 48,
-    durationMs: 20.8,
-    label: 'Large JSON Payload Deserialization',
-    detail: '50-item API response parse overhead in network adapter (185 KB JSON raw string).',
-    source: 'src/customHooks/networkLogger.ts',
-    breakdown: {jsTimeMs: 15.6, uiTimeMs: 5.2, bridgeLatencyMs: 2.1},
-    heapDeltaKb: 890,
-    advice: 'Consider paginating API payloads or streaming responses if payload size exceeds 250 KB.',
-    severity: 'warning',
-  },
-  {
-    id: 'perf-6',
-    timestamp: Date.now() - 17000,
-    type: 'slow_render',
-    category: 'render',
-    fps: 52,
-    durationMs: 19.2,
-    label: 'Image Bitmap Decode & Rasterization',
-    detail: 'Retina raster decode for banner_dark.png (1200×630px raster buffer allocation).',
-    source: 'src/components/Inspector/BundleTab.tsx',
-    breakdown: {jsTimeMs: 3.4, uiTimeMs: 15.8},
-    heapDeltaKb: 1450,
-    advice: 'Downscale asset dimensions or convert to WebP to reduce decode latency by ~65%.',
-    severity: 'warning',
-  },
-  {
-    id: 'perf-7',
-    timestamp: Date.now() - 12000,
-    type: 'bridge',
-    category: 'bridge',
-    fps: 60,
-    durationMs: 16.6,
-    label: 'Native TurboModule JSI Invocation',
-    detail: 'AsyncStorage / MMKV preferences transaction read across 32 configuration keys.',
-    source: 'src/helpers/settingsStore.ts',
-    breakdown: {jsTimeMs: 1.8, uiTimeMs: 0.8, bridgeLatencyMs: 0.4},
-    heapDeltaKb: 45,
-    advice: 'Direct C++ JSI Turbomodule bindings completely bypass legacy JSON bridge serialization overhead.',
-    severity: 'optimal',
-  },
-  {
-    id: 'perf-8',
-    timestamp: Date.now() - 8000,
-    type: 'slow_render',
-    category: 'render',
-    fps: 60,
-    durationMs: 16.6,
-    label: 'Redux Action State Tree Diffing',
-    detail: 'Redux dispatch pass evaluated 6 reducer slices and emitted state notification in 4.8ms.',
-    source: 'src/components/Inspector/ReduxTab.tsx',
-    breakdown: {jsTimeMs: 4.8, uiTimeMs: 1.2},
-    heapDeltaKb: 180,
-    advice: 'State tree immutability preserved. Memoized selectors prevented redundant component renders.',
-    severity: 'optimal',
-  },
-  {
-    id: 'perf-9',
-    timestamp: Date.now() - 4000,
-    type: 'touch',
-    category: 'render',
-    fps: 60,
-    durationMs: 16.6,
-    label: 'Touch-to-Render Event Latency',
-    detail: 'Gesture responder dispatched tap event to TabBar button with immediate 60 FPS response.',
-    source: 'src/components/Inspector/TabBar.tsx',
-    breakdown: {jsTimeMs: 4.2, uiTimeMs: 2.1},
-    heapDeltaKb: 30,
-    advice: 'Touch responder latency is well within standard 16.67ms frame budget.',
-    severity: 'optimal',
-  },
-  {
-    id: 'perf-10',
-    timestamp: Date.now() - 1500,
-    type: 'transition',
-    category: 'render',
-    fps: 60,
-    durationMs: 16.6,
-    label: 'C++ Yoga Flexbox Layout Pass',
-    detail: 'Inspector UI multi-tab card layout recalculation and font metrics pass in C++ Yoga engine.',
-    source: 'Yoga Flexbox Layout Engine',
-    breakdown: {jsTimeMs: 2.8, uiTimeMs: 3.4},
-    heapDeltaKb: 65,
-    advice: 'Flexbox layout constraints are cached and computed efficiently with zero reflow penalties.',
-    severity: 'optimal',
-  },
-];
-
 const PerformanceTab = React.memo(() => {
+  const {t} = useTranslation();
   // ─── Real-Time FPS Tracking ────────────────────────────────────────────────
   const [isRecording, setIsRecording] = useState(true);
   const [currentFps, setCurrentFps] = useState(60);
@@ -217,7 +67,7 @@ const PerformanceTab = React.memo(() => {
   ]);
 
   // Performance Log Events
-  const [events, setEvents] = useState<PerformanceEvent[]>(INITIAL_PERFORMANCE_EVENTS);
+  const [events, setEvents] = useState<PerformanceEvent[]>([]);
   const [filterCategory, setFilterCategory] = useState<'ALL' | 'JANKY' | 'NAVIGATION' | 'RENDER' | 'MEMORY' | 'IO'>('ALL');
   const [search, setSearch] = useState('');
 
@@ -272,21 +122,22 @@ const PerformanceTab = React.memo(() => {
 
         // Trigger log if noticeable frame drop
         if (measuredFps < 50) {
+          const durationStr = (1000 / measuredFps).toFixed(1);
           const newEvent: PerformanceEvent = {
             id: `drop-${Date.now()}`,
             timestamp: Date.now(),
             type: 'fps_drop',
             category: 'render',
             fps: measuredFps,
-            durationMs: Number((1000 / measuredFps).toFixed(1)),
-            label: `Live Frame Rate Dip (${measuredFps} FPS)`,
-            detail: `Main thread frame duration extended to ${(1000 / measuredFps).toFixed(1)}ms during view update.`,
-            source: 'React Native UI Thread',
+            durationMs: Number(durationStr),
+            label: t('performance.liveFpsDip', {fps: measuredFps}),
+            detail: t('performance.liveFpsDipDetail', {duration: durationStr}),
+            source: t('performance.uiRenderThread'),
             breakdown: {
               jsTimeMs: Number(((1000 / measuredFps) * 0.65).toFixed(1)),
               uiTimeMs: Number(((1000 / measuredFps) * 0.35).toFixed(1)),
             },
-            advice: 'Heavy JavaScript execution during frame pass delayed display presentation.',
+            advice: t('performance.liveFpsDipAdvice'),
             severity: measuredFps < 30 ? 'critical' : 'warning',
           };
           setEvents(prev => [newEvent, ...prev.slice(0, 49)]);
@@ -337,10 +188,81 @@ const PerformanceTab = React.memo(() => {
 
   // Overall Performance Score
   const performanceScore = useMemo(() => {
-    if (avgFps >= 58) return {score: '98/100', grade: 'Excellent (60 FPS)', color: '#059669', bg: '#DCFCE7'};
-    if (avgFps >= 50) return {score: '84/100', grade: 'Good (Minor Janks)', color: '#D97706', bg: '#FEF3C7'};
-    return {score: '58/100', grade: 'Needs Optimization', color: '#DC2626', bg: '#FEE2E2'};
-  }, [avgFps]);
+    if (avgFps >= 58) {
+      return {
+        score: '98/100',
+        grade: t('performance.excellent'),
+        color: AppColors.emerald600,
+        bg: AppColors.greenBg,
+      };
+    }
+    if (avgFps >= 50) {
+      return {
+        score: '84/100',
+        grade: t('performance.good'),
+        color: AppColors.firebaseOrange,
+        bg: AppColors.amberBg,
+      };
+    }
+    return {
+      score: '58/100',
+      grade: t('performance.needsOptimization'),
+      color: AppColors.errorColor,
+      bg: AppColors.errorCardBg,
+    };
+  }, [avgFps, t]);
+
+  // ─── Dynamic Runtime Environment & Engine Diagnostics ──────────────────────
+  const runtimeDiagnostics = useMemo(() => {
+    const raw = getRuntimeDiagnostics();
+
+    const engineNameMap: Record<string, string> = {
+      hermes: t('performance.hermesAot'),
+      v8: t('performance.v8Jit'),
+      jsc: t('performance.jscEngine'),
+    };
+    const engineSubMap: Record<string, string> = {
+      hermes: t('performance.bytecodeCompiled'),
+      v8: t('performance.jitEngine'),
+      jsc: t('performance.webkitEngine'),
+    };
+    const archNameMap: Record<string, string> = {
+      fabric: t('performance.fabricJsi'),
+      paper: t('performance.paperBridge'),
+    };
+    const archSubMap: Record<string, string> = {
+      fabric: t('performance.directCppBindings'),
+      paper: t('performance.asyncJsonBridge'),
+    };
+
+    return {
+      jsEngineName: engineNameMap[raw.engineType],
+      jsEngineSub: engineSubMap[raw.engineType],
+      uiArchName: archNameMap[raw.archType],
+      uiArchSub: archSubMap[raw.archType],
+      usedHeapMb: raw.usedHeapMb,
+      totalAllocMb: raw.totalAllocMb,
+    };
+  }, [t]);
+
+  // ─── Dynamic 16.67ms Frame Budget Utilization ─────────────────────────────
+  const frameBudgetStats = useMemo(() => {
+    const frameDuration = avgFps > 0 ? 1000 / avgFps : 16.67;
+    const jsTime = Number(Math.max(1.0, Math.min(frameDuration * 0.45, 2.0 + jsLagMs)).toFixed(1));
+    const layoutTime = Number(Math.max(1.0, frameDuration * 0.2).toFixed(1));
+    const renderTime = Number(Math.max(1.0, frameDuration * 0.25).toFixed(1));
+    const totalUsed = jsTime + layoutTime + renderTime;
+    const freeTime = Math.max(0, Number((16.67 - totalUsed).toFixed(1)));
+    const headroomPercent = Math.max(0, Math.min(100, Math.round((freeTime / 16.67) * 100)));
+
+    return {
+      jsTime,
+      layoutTime,
+      renderTime,
+      freeTime,
+      headroomPercent,
+    };
+  }, [avgFps, jsLagMs]);
 
   const clearEvents = () => {
     setEvents([]);
@@ -353,7 +275,7 @@ const PerformanceTab = React.memo(() => {
         <View style={perfStyles.searchBox}>
           <SearchIcon color={AppColors.grayTextWeak} size={15} />
           <TextInput
-            placeholder="Search performance logs, hooks, FPS drops..."
+            placeholder={t('performance.searchPlaceholder')}
             placeholderTextColor={AppColors.grayTextWeak}
             value={search}
             onChangeText={setSearch}
@@ -378,15 +300,15 @@ const PerformanceTab = React.memo(() => {
             <View
               style={[
                 perfStyles.recordDot,
-                {backgroundColor: isRecording ? '#10B981' : '#F59E0B'},
+                {backgroundColor: isRecording ? AppColors.emerald500 : AppColors.amber500},
               ]}
             />
             <Text
               style={[
                 perfStyles.recordBtnText,
-                {color: isRecording ? '#047857' : '#B45309'},
+                {color: isRecording ? AppColors.emerald600 : AppColors.amber700},
               ]}>
-              {isRecording ? 'Live' : 'Paused'}
+              {isRecording ? t('performance.live') : t('redux.paused')}
             </Text>
           </TouchableScale>
 
@@ -399,11 +321,11 @@ const PerformanceTab = React.memo(() => {
               jankyFrameCount,
               jsLagMs,
               platform: Platform.OS,
-              engine: 'Hermes Bytecode AOT',
+              engine: runtimeDiagnostics.jsEngineName,
               totalEvents: events.length,
               events,
             })}
-            label="Copy Perf JSON"
+            label={t('common.copyJson')}
           />
         </View>
       </View>
@@ -416,34 +338,34 @@ const PerformanceTab = React.memo(() => {
           contentContainerStyle={{gap: 6, paddingHorizontal: 12, paddingVertical: 4}}>
           {(
             [
-              {key: 'ALL', label: 'All Logs', icon: '⚡', count: events.length},
+              {key: 'ALL', label: t('performance.allLogs'), icon: '⚡', count: events.length},
               {
                 key: 'JANKY',
-                label: 'Janky / Slow',
+                label: t('performance.jankySlow'),
                 icon: '⚠️',
                 count: events.filter(e => e.severity === 'warning' || e.severity === 'critical').length,
               },
               {
                 key: 'NAVIGATION',
-                label: 'Navigation',
+                label: t('performance.navigation'),
                 icon: '🗺️',
                 count: events.filter(e => e.category === 'navigation').length,
               },
               {
                 key: 'RENDER',
-                label: 'Components',
+                label: t('performance.components'),
                 icon: '⚛️',
                 count: events.filter(e => e.category === 'render').length,
               },
               {
                 key: 'MEMORY',
-                label: 'Memory & GC',
+                label: t('performance.memoryGc'),
                 icon: '🧠',
                 count: events.filter(e => e.category === 'memory').length,
               },
               {
                 key: 'IO',
-                label: 'Network & I/O',
+                label: t('performance.networkIo'),
                 icon: '🌐',
                 count: events.filter(e => e.category === 'io' || e.category === 'bridge').length,
               },
@@ -481,7 +403,7 @@ const PerformanceTab = React.memo(() => {
           <View style={perfStyles.metricCardHeader}>
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
               <PerformanceIcon color={AppColors.purple} size={18} />
-              <Text style={perfStyles.metricCardTitle}>Real-Time Frame Rate (FPS)</Text>
+              <Text style={perfStyles.metricCardTitle}>{t('performance.liveFps')}</Text>
             </View>
             <View
               style={[
@@ -507,36 +429,36 @@ const PerformanceTab = React.memo(() => {
                   {
                     color:
                       currentFps >= 55
-                        ? '#059669'
+                        ? AppColors.emerald600
                         : currentFps >= 40
-                        ? '#D97706'
-                        : '#DC2626',
+                        ? AppColors.firebaseOrange
+                        : AppColors.errorColor,
                   },
                 ]}>
                 {currentFps}
               </Text>
-              <Text style={perfStyles.fpsUnit}>FPS</Text>
+              <Text style={perfStyles.fpsUnit}>{t('performance.fpsUnit')}</Text>
             </View>
 
             <View style={perfStyles.fpsStatsGrid}>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>Avg FPS</Text>
+                <Text style={perfStyles.statLabel}>{t('performance.avgFrameTime')}</Text>
                 <Text style={perfStyles.statValue}>{avgFps}</Text>
               </View>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>Min FPS</Text>
-                <Text style={[perfStyles.statValue, minFps < 50 && {color: '#D97706'}]}>
+                <Text style={perfStyles.statLabel}>{t('performance.peakTime')}</Text>
+                <Text style={[perfStyles.statValue, minFps < 50 && {color: AppColors.firebaseOrange}]}>
                   {minFps}
                 </Text>
               </View>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>JS Lag</Text>
-                <Text style={[perfStyles.statValue, jsLagMs > 5 && {color: '#D97706'}]}>
+                <Text style={perfStyles.statLabel}>{t('performance.jsLag')}</Text>
+                <Text style={[perfStyles.statValue, jsLagMs > 5 && {color: AppColors.firebaseOrange}]}>
                   {jsLagMs}ms
                 </Text>
               </View>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>Jank Rate</Text>
+                <Text style={perfStyles.statLabel}>{t('performance.jankRate')}</Text>
                 <Text style={perfStyles.statValue}>
                   {totalFrames > 0
                     ? `${((jankyFrameCount / Math.max(1, totalFrames / 60)) * 100).toFixed(0)}%`
@@ -558,7 +480,7 @@ const PerformanceTab = React.memo(() => {
                       perfStyles.sparklineBar,
                       {
                         height: barHeight,
-                        backgroundColor: isLow ? '#EF4444' : '#10B981',
+                        backgroundColor: isLow ? AppColors.errorColor : AppColors.emerald500,
                       },
                     ]}
                   />
@@ -567,43 +489,74 @@ const PerformanceTab = React.memo(() => {
             })}
           </View>
           <View style={perfStyles.sparklineFooter}>
-            <Text style={perfStyles.sparklineFooterText}>Last 20s live timeline</Text>
-            <Text style={perfStyles.sparklineFooterTarget}>60 FPS Target (16.67ms/frame)</Text>
+            <Text style={perfStyles.sparklineFooterText}>{t('performance.realtimeWindow')}</Text>
+            <Text style={perfStyles.sparklineFooterTarget}>{t('performance.fpsTarget')}</Text>
           </View>
         </View>
 
         {/* ── 2. FRAME BUDGET BREAKDOWN CARD ── */}
         <View style={perfStyles.budgetCard}>
           <View style={perfStyles.budgetHeader}>
-            <Text style={perfStyles.budgetTitle}>16.67ms Frame Budget Utilization</Text>
-            <Text style={perfStyles.budgetHeadroom}>~4.3ms Headroom (26%)</Text>
+            <Text style={perfStyles.budgetTitle}>{t('performance.budgetUsage')}</Text>
+            <Text style={perfStyles.budgetHeadroom}>
+              {t('performance.budgetHeadroom', {
+                time: frameBudgetStats.freeTime,
+                percent: frameBudgetStats.headroomPercent,
+              })}
+            </Text>
           </View>
 
           {/* Multi-colored segmented frame budget bar */}
           <View style={perfStyles.budgetBarContainer}>
-            <View style={[perfStyles.budgetBarSegment, {flex: 4.8, backgroundColor: '#38BDF8'}]} />
-            <View style={[perfStyles.budgetBarSegment, {flex: 2.8, backgroundColor: '#818CF8'}]} />
-            <View style={[perfStyles.budgetBarSegment, {flex: 4.8, backgroundColor: '#F472B6'}]} />
-            <View style={[perfStyles.budgetBarSegment, {flex: 4.3, backgroundColor: '#34D399'}]} />
+            <View
+              style={[
+                perfStyles.budgetBarSegment,
+                {flex: Math.max(0.5, frameBudgetStats.jsTime), backgroundColor: AppColors.sky400},
+              ]}
+            />
+            <View
+              style={[
+                perfStyles.budgetBarSegment,
+                {flex: Math.max(0.5, frameBudgetStats.layoutTime), backgroundColor: AppColors.indigo500},
+              ]}
+            />
+            <View
+              style={[
+                perfStyles.budgetBarSegment,
+                {flex: Math.max(0.5, frameBudgetStats.renderTime), backgroundColor: AppColors.pink400},
+              ]}
+            />
+            <View
+              style={[
+                perfStyles.budgetBarSegment,
+                {flex: Math.max(0.5, frameBudgetStats.freeTime), backgroundColor: AppColors.emerald400},
+              ]}
+            />
           </View>
 
           <View style={perfStyles.budgetLegendGrid}>
             <View style={perfStyles.legendItem}>
-              <View style={[perfStyles.legendDot, {backgroundColor: '#38BDF8'}]} />
-              <Text style={perfStyles.legendText}>JS Exec: 4.8ms</Text>
+              <View style={[perfStyles.legendDot, {backgroundColor: AppColors.sky400}]} />
+              <Text style={perfStyles.legendText}>
+                {t('performance.jsExec', {time: frameBudgetStats.jsTime})}
+              </Text>
             </View>
             <View style={perfStyles.legendItem}>
-              <View style={[perfStyles.legendDot, {backgroundColor: '#818CF8'}]} />
-              <Text style={perfStyles.legendText}>Yoga Layout: 2.8ms</Text>
+              <View style={[perfStyles.legendDot, {backgroundColor: AppColors.indigo500}]} />
+              <Text style={perfStyles.legendText}>
+                {t('performance.yogaLayoutTime', {time: frameBudgetStats.layoutTime})}
+              </Text>
             </View>
             <View style={perfStyles.legendItem}>
-              <View style={[perfStyles.legendDot, {backgroundColor: '#F472B6'}]} />
-              <Text style={perfStyles.legendText}>UI Render: 4.8ms</Text>
+              <View style={[perfStyles.legendDot, {backgroundColor: AppColors.pink400}]} />
+              <Text style={perfStyles.legendText}>
+                {t('performance.uiRenderTime', {time: frameBudgetStats.renderTime})}
+              </Text>
             </View>
             <View style={perfStyles.legendItem}>
-              <View style={[perfStyles.legendDot, {backgroundColor: '#34D399'}]} />
-              <Text style={[perfStyles.legendText, {color: '#059669', fontFamily: AppFonts.interBold}]}>
-                Free: 4.3ms
+              <View style={[perfStyles.legendDot, {backgroundColor: AppColors.emerald400}]} />
+              <Text style={[perfStyles.legendText, {color: AppColors.emerald600, fontFamily: AppFonts.interBold}]}>
+                {t('performance.freeTime', {time: frameBudgetStats.freeTime})}
               </Text>
             </View>
           </View>
@@ -612,30 +565,32 @@ const PerformanceTab = React.memo(() => {
         {/* ── 3. RUNTIME ENGINE & MEMORY SUMMARY ── */}
         <View style={perfStyles.engineSummaryGrid}>
           <View style={perfStyles.engineSummaryCard}>
-            <Text style={perfStyles.engineSummaryLabel}>JS Engine</Text>
-            <Text style={perfStyles.engineSummaryValue}>Hermes (AOT)</Text>
-            <Text style={perfStyles.engineSummarySub}>Bytecode compiled</Text>
+            <Text style={perfStyles.engineSummaryLabel}>{t('performance.jsEngine')}</Text>
+            <Text style={perfStyles.engineSummaryValue}>{runtimeDiagnostics.jsEngineName}</Text>
+            <Text style={perfStyles.engineSummarySub}>{runtimeDiagnostics.jsEngineSub}</Text>
           </View>
           <View style={perfStyles.engineSummaryCard}>
-            <Text style={perfStyles.engineSummaryLabel}>UI Reconciler</Text>
-            <Text style={perfStyles.engineSummaryValue}>Fabric / JSI</Text>
-            <Text style={perfStyles.engineSummarySub}>Direct C++ bindings</Text>
+            <Text style={perfStyles.engineSummaryLabel}>{t('performance.uiRenderThread')}</Text>
+            <Text style={perfStyles.engineSummaryValue}>{runtimeDiagnostics.uiArchName}</Text>
+            <Text style={perfStyles.engineSummarySub}>{runtimeDiagnostics.uiArchSub}</Text>
           </View>
           <View style={perfStyles.engineSummaryCard}>
-            <Text style={perfStyles.engineSummaryLabel}>Memory Heap</Text>
-            <Text style={perfStyles.engineSummaryValue}>34.8 MB</Text>
-            <Text style={perfStyles.engineSummarySub}>64 MB allocated</Text>
+            <Text style={perfStyles.engineSummaryLabel}>{t('performance.tabMemory')}</Text>
+            <Text style={perfStyles.engineSummaryValue}>{runtimeDiagnostics.usedHeapMb} MB</Text>
+            <Text style={perfStyles.engineSummarySub}>
+              {t('performance.heapAllocatedSub', {allocated: runtimeDiagnostics.totalAllocMb})}
+            </Text>
           </View>
         </View>
 
         {/* ── 4. PERFORMANCE LOGS & DETAILED EVENTS ── */}
         <View style={perfStyles.logsHeaderRow}>
           <Text style={perfStyles.logsSectionHeading}>
-            Performance & Frame Events ({filteredEvents.length})
+            {t('performance.recordedEvents')} ({filteredEvents.length})
           </Text>
           {events.length > 0 && (
             <TouchableScale onPress={clearEvents}>
-              <Text style={perfStyles.clearLink}>Clear Logs</Text>
+              <Text style={perfStyles.clearLink}>{t('common.clear')}</Text>
             </TouchableScale>
           )}
         </View>
@@ -643,9 +598,9 @@ const PerformanceTab = React.memo(() => {
         {filteredEvents.length === 0 ? (
           <View style={perfStyles.emptyCard}>
             <Text style={{fontSize: 28}}>⚡</Text>
-            <Text style={perfStyles.emptyTitle}>No Performance Drops Detected</Text>
+            <Text style={perfStyles.emptyTitle}>{t('performance.emptyTitle')}</Text>
             <Text style={perfStyles.emptySub}>
-              All UI interactions, navigation screen transitions, and animations are running smoothly at 60 FPS.
+              {t('performance.emptySubtitle')}
             </Text>
           </View>
         ) : (
@@ -655,9 +610,9 @@ const PerformanceTab = React.memo(() => {
             const isCritical = event.severity === 'critical';
             const isExpanded = !!expandedEventIds[event.id];
 
-            const badgeBg = isOptimal ? '#DCFCE7' : isWarning ? '#FEF3C7' : '#FEE2E2';
-            const badgeBorder = isOptimal ? '#BBF7D0' : isWarning ? '#FDE68A' : '#FECACA';
-            const badgeColor = isOptimal ? '#047857' : isWarning ? '#B45309' : '#DC2626';
+            const badgeBg = isOptimal ? AppColors.greenBg : isWarning ? AppColors.amberBg : AppColors.errorCardBg;
+            const badgeBorder = isOptimal ? AppColors.greenBorder : isWarning ? AppColors.lightOrange : AppColors.errorBorder;
+            const badgeColor = isOptimal ? AppColors.emerald600 : isWarning ? AppColors.amber700 : AppColors.errorColor;
 
             return (
               <TouchableScale
@@ -665,7 +620,7 @@ const PerformanceTab = React.memo(() => {
                 onPress={() => toggleEventExpand(event.id)}
                 style={[
                   perfStyles.eventCard,
-                  isCritical && {borderColor: '#FECACA', backgroundColor: '#FFFBFB'},
+                  isCritical && {borderColor: AppColors.errorBorder, backgroundColor: AppColors.errorCardBg},
                 ]}>
                 <View style={perfStyles.eventTopRow}>
                   <View
@@ -686,14 +641,14 @@ const PerformanceTab = React.memo(() => {
                       highlightStyle={perfStyles.searchHighlight}
                     />
                     <Text style={perfStyles.eventMeta}>
-                      {event.durationMs}ms total • {new Date(event.timestamp).toLocaleTimeString()}
+                      {t('performance.msTotal', {duration: event.durationMs, time: new Date(event.timestamp).toLocaleTimeString()})}
                     </Text>
                   </View>
 
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                     <CopyButton
                       value={() => event}
-                      label="Event JSON"
+                      label={t('common.copyJson')}
                     />
                     <Text style={perfStyles.expandChevron}>
                       {isExpanded ? '▲' : '▼'}
@@ -714,7 +669,7 @@ const PerformanceTab = React.memo(() => {
                     {/* Source file / hook tag */}
                     {event.source && (
                       <View style={perfStyles.sourceRow}>
-                        <Text style={perfStyles.sourceTag}>SOURCE</Text>
+                        <Text style={perfStyles.sourceTag}>{t('common.source')}</Text>
                         <Text style={perfStyles.sourceText} numberOfLines={1}>
                           {event.source}
                         </Text>
@@ -725,20 +680,20 @@ const PerformanceTab = React.memo(() => {
                     {event.breakdown && (
                       <View style={perfStyles.breakdownGrid}>
                         <View style={perfStyles.breakdownCol}>
-                          <Text style={perfStyles.breakdownLabel}>JS Thread</Text>
+                          <Text style={perfStyles.breakdownLabel}>{t('performance.jsThread')}</Text>
                           <Text style={perfStyles.breakdownVal}>
                             {event.breakdown.jsTimeMs} ms
                           </Text>
                         </View>
                         <View style={perfStyles.breakdownCol}>
-                          <Text style={perfStyles.breakdownLabel}>UI Thread</Text>
+                          <Text style={perfStyles.breakdownLabel}>{t('performance.uiThread')}</Text>
                           <Text style={perfStyles.breakdownVal}>
                             {event.breakdown.uiTimeMs} ms
                           </Text>
                         </View>
                         {event.breakdown.bridgeLatencyMs != null && (
                           <View style={perfStyles.breakdownCol}>
-                            <Text style={perfStyles.breakdownLabel}>JSI Latency</Text>
+                            <Text style={perfStyles.breakdownLabel}>{t('performance.jsiLatency')}</Text>
                             <Text style={perfStyles.breakdownVal}>
                               {event.breakdown.bridgeLatencyMs} ms
                             </Text>
@@ -746,11 +701,11 @@ const PerformanceTab = React.memo(() => {
                         )}
                         {event.heapDeltaKb != null && (
                           <View style={perfStyles.breakdownCol}>
-                            <Text style={perfStyles.breakdownLabel}>Heap Impact</Text>
+                            <Text style={perfStyles.breakdownLabel}>{t('performance.heapImpact')}</Text>
                             <Text
                               style={[
                                 perfStyles.breakdownVal,
-                                {color: event.heapDeltaKb > 0 ? '#B45309' : '#059669'},
+                                {color: event.heapDeltaKb > 0 ? AppColors.amber700 : AppColors.emerald600},
                               ]}>
                               {event.heapDeltaKb > 0 ? `+${event.heapDeltaKb}` : event.heapDeltaKb} KB
                             </Text>
@@ -762,7 +717,7 @@ const PerformanceTab = React.memo(() => {
                     {/* Actionable Optimization Tip */}
                     {event.advice && (
                       <View style={perfStyles.adviceCard}>
-                        <Text style={perfStyles.adviceHeading}>💡 Optimization Tip:</Text>
+                        <Text style={perfStyles.adviceHeading}>💡 {t('performance.optimizationTip')}</Text>
                         <Text style={perfStyles.adviceBodyText}>{event.advice}</Text>
                       </View>
                     )}
@@ -775,7 +730,7 @@ const PerformanceTab = React.memo(() => {
 
         <EndOfListFooter
           count={filteredEvents.length}
-          label="performance events"
+          label={t('performance.recordedEvents')}
         />
       </ScrollView>
     </View>
@@ -826,12 +781,12 @@ const perfStyles = StyleSheet.create({
     borderWidth: 1,
   },
   recordBtnActive: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
+    backgroundColor: AppColors.greenBg,
+    borderColor: AppColors.greenBorder,
   },
   recordBtnPaused: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
+    backgroundColor: AppColors.amberBg,
+    borderColor: AppColors.lightOrange,
   },
   recordDot: {
     width: 6,
@@ -990,7 +945,7 @@ const perfStyles = StyleSheet.create({
   sparklineFooterTarget: {
     fontFamily: AppFonts.interMedium,
     fontSize: 10,
-    color: '#059669',
+    color: AppColors.emerald600,
   },
   budgetCard: {
     backgroundColor: AppColors.white,
@@ -1013,7 +968,7 @@ const perfStyles = StyleSheet.create({
   budgetHeadroom: {
     fontFamily: AppFonts.interBold,
     fontSize: 11,
-    color: '#059669',
+    color: AppColors.emerald600,
   },
   budgetBarContainer: {
     flexDirection: 'row',
@@ -1194,27 +1149,27 @@ const perfStyles = StyleSheet.create({
     marginTop: 1,
   },
   adviceCard: {
-    backgroundColor: '#FAF5FF',
+    backgroundColor: AppColors.purpleTintBg,
     borderRadius: 6,
     padding: 6,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: AppColors.purpleBorder,
   },
   adviceHeading: {
     fontFamily: AppFonts.interBold,
     fontSize: 10,
-    color: '#6B21A8',
+    color: AppColors.purpleShade700,
   },
   adviceBodyText: {
     fontFamily: AppFonts.interRegular,
     fontSize: 10.5,
-    color: '#7E22CE',
+    color: AppColors.purple,
     lineHeight: 14,
     marginTop: 1,
   },
   searchHighlight: {
-    backgroundColor: '#FEF08A',
-    color: '#854D0E',
+    backgroundColor: AppColors.yellowHighlight,
+    color: AppColors.amber800,
     fontFamily: AppFonts.interBold,
   },
   emptyCard: {

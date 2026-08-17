@@ -472,7 +472,7 @@ const reduxDetailStyles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: AppColors.emeraldBorder,
   },
   persistedChipText: {
     fontFamily: AppFonts.interBold,
@@ -643,7 +643,7 @@ const reduxDetailStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: AppColors.errorCardBg,
     borderWidth: 1,
     borderColor: '#FEE2E2',
     borderRadius: 8,

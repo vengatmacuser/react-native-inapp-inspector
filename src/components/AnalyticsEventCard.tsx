@@ -3,95 +3,16 @@ import {Animated, StyleSheet, Text, View} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import {AnalyticsEventCardProps} from '../types';
-import {formatGap, formatTime} from '../helpers';
+import {
+  formatGap,
+  formatTime,
+  getEventColor,
+  getEventCategory,
+  getCategoryColors,
+} from '../helpers';
+import {useTranslation} from '../i18n';
 import HighlightText from './HighlightText';
 import TouchableScale from './TouchableScale';
-
-// ─── Palette (Google Analytics colours) ───────────────────────────────────────
-
-const EVENT_PALETTE = [
-  AppColors.googleBlue, // blue
-  AppColors.googleGreen, // green
-  AppColors.googlePurple, // purple
-  AppColors.googleTeal, // teal
-  AppColors.googleRed, // red
-  AppColors.googleOrange, // orange
-  AppColors.blue700, // dark blue
-  AppColors.materialGreen, // dark green
-];
-
-export function getEventColor(name: string): string {
-  const safeName = typeof name === 'string' ? name : String(name || '');
-  let hash = 0;
-  for (let i = 0; i < safeName.length; i++) {
-    hash = (hash * 31 + safeName.charCodeAt(i)) | 0;
-  }
-  return EVENT_PALETTE[Math.abs(hash) % EVENT_PALETTE.length];
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getEventCategory(name: string): string {
-  if (!name) return 'Custom';
-  const lowercaseName = name.toLowerCase();
-  
-  if (lowercaseName === 'screen_view' || lowercaseName === 'page_view') {
-    return 'Page View';
-  }
-  
-  // Ecommerce events
-  const ecommerceEvents = [
-    'purchase', 'add_to_cart', 'begin_checkout', 'view_item', 
-    'select_item', 'remove_from_cart', 'view_cart', 
-    'add_shipping_info', 'add_payment_info', 'refund',
-    'view_item_list', 'select_promotion', 'view_promotion'
-  ];
-  if (ecommerceEvents.includes(lowercaseName)) {
-    return 'Ecommerce';
-  }
-  
-  // Firebase System Auto-events
-  const systemEvents = [
-    'first_open', 'session_start', 'user_engagement', 
-    'app_clear_data', 'app_exception', 'app_update', 'os_update',
-    'notification_receive', 'notification_open', 'notification_dismiss',
-    'screen_active', 'screen_inactive'
-  ];
-  if (systemEvents.includes(lowercaseName) || lowercaseName.startsWith('firebase_') || lowercaseName.startsWith('_')) {
-    return 'System';
-  }
-  
-  return 'Custom';
-}
-
-function getCategoryColors(category: string) {
-  switch (category) {
-    case 'Page View':
-      return {
-        bg: AppColors.blueBg,
-        border: AppColors.blueBorder,
-        text: AppColors.blue800,
-      };
-    case 'Ecommerce':
-      return {
-        bg: AppColors.greenBg,
-        border: AppColors.greenBorder,
-        text: AppColors.materialGreen,
-      };
-    case 'System':
-      return {
-        bg: AppColors.greyBg,
-        border: AppColors.greyBorder,
-        text: AppColors.grey600,
-      };
-    default:
-      return {
-        bg: AppColors.purpleBg,
-        border: AppColors.purpleBorder,
-        text: AppColors.purpleText,
-      };
-  }
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -103,6 +24,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
   msSincePrev,
   computedScreenName,
 }: AnalyticsEventCardProps) {
+  const {t} = useTranslation();
   const color = getEventColor(event.name);
   const paramCount = event.params ? Object.keys(event.params).length : 0;
   const userPropCount = event.userProperties
@@ -128,12 +50,22 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
       {/* ── Gap Indicator ─────────────────────────────────────────────────── */}
       {showGap && (
         <View style={cardStyles.gapContainer}>
-          <Text style={[cardStyles.gapText, {color: AppColors.grayTextWeak}]}>{formatGap(msSincePrev)}</Text>
+          <Text style={[cardStyles.gapText, {color: AppColors.grayTextWeak}]}>
+            {formatGap(msSincePrev)}
+          </Text>
         </View>
       )}
 
       {/* ── Main Card ─────────────────────────────────────────────────────── */}
-      <TouchableScale onPress={onPress} style={[cardStyles.modernCard, {backgroundColor: AppColors.primaryLight, borderColor: AppColors.grayBorderSecondary}]}>
+      <TouchableScale
+        onPress={onPress}
+        style={[
+          cardStyles.modernCard,
+          {
+            backgroundColor: AppColors.primaryLight,
+            borderColor: AppColors.grayBorderSecondary,
+          },
+        ]}>
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
@@ -164,16 +96,25 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
             </View>
 
             {(() => {
-              const category = getEventCategory(event.name);
-              const tagColors = getCategoryColors(category);
+              const catKey = getEventCategory(event.name);
+              const tagColors = getCategoryColors(catKey);
+              const categoryLabel =
+                catKey === 'page_view'
+                  ? t('analytics.pageViewCategory')
+                  : catKey === 'ecommerce'
+                  ? t('analytics.ecommerceCategory')
+                  : catKey === 'system'
+                  ? t('analytics.systemCategory')
+                  : t('analytics.customCategory');
               return (
                 <View
                   style={[
                     cardStyles.categoryBadge,
                     {backgroundColor: tagColors.bg, borderColor: tagColors.border},
                   ]}>
-                  <Text style={[cardStyles.categoryText, {color: tagColors.text}]}>
-                    {category}
+                  <Text
+                    style={[cardStyles.categoryText, {color: tagColors.text}]}>
+                    {categoryLabel}
                   </Text>
                 </View>
               );
@@ -193,7 +134,8 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                     cardStyles.duplicateText,
                     event.count === 1 && {color: AppColors.grayTextStrong},
                   ]}>
-                  {event.count}×{event.count > 1 ? ' Duplicate' : ''}
+                  {event.count}×
+                  {event.count > 1 ? ` ${t('analytics.duplicate')}` : ''}
                 </Text>
               </View>
             ) : null}
@@ -214,30 +156,57 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                 event.params?.screen_name ||
                 event.params?.firebase_screen_class;
               if (!rawScreenName) return null;
-              const screenNameStr = typeof rawScreenName === 'object'
-                ? JSON.stringify(rawScreenName)
-                : String(rawScreenName);
+              const screenNameStr =
+                typeof rawScreenName === 'object'
+                  ? JSON.stringify(rawScreenName)
+                  : String(rawScreenName);
               return (
-                <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
+                <View
+                  style={[
+                    cardStyles.chip,
+                    {
+                      backgroundColor: AppColors.grayBackground,
+                      borderColor: AppColors.grayBorderSecondary,
+                    },
+                  ]}>
                   <View
                     style={[cardStyles.screenDot, {backgroundColor: color}]}
                   />
-                  <Text style={[cardStyles.chipText, {color: AppColors.grayText}]} numberOfLines={1}>
+                  <Text
+                    style={[cardStyles.chipText, {color: AppColors.grayText}]}
+                    numberOfLines={1}>
                     {screenNameStr}
                   </Text>
                 </View>
               );
             })()}
 
-            <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
+            <View
+              style={[
+                cardStyles.chip,
+                {
+                  backgroundColor: AppColors.grayBackground,
+                  borderColor: AppColors.grayBorderSecondary,
+                },
+              ]}>
               <Text style={[cardStyles.chipText, {color: AppColors.grayText}]}>
-                {'{} '} {paramCount} params
+                {'{} '} {paramCount} {t('analytics.params')}
               </Text>
             </View>
 
             {userPropCount > 0 && (
-              <View style={[cardStyles.chip, {backgroundColor: AppColors.grayBackground, borderColor: AppColors.grayBorderSecondary}]}>
-                <Text style={[cardStyles.chipText, {color: AppColors.grayText}]}>★ {userPropCount} props</Text>
+              <View
+                style={[
+                  cardStyles.chip,
+                  {
+                    backgroundColor: AppColors.grayBackground,
+                    borderColor: AppColors.grayBorderSecondary,
+                  },
+                ]}>
+                <Text
+                  style={[cardStyles.chipText, {color: AppColors.grayText}]}>
+                  ★ {userPropCount} {t('analytics.props')}
+                </Text>
               </View>
             )}
 
@@ -245,9 +214,26 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
               const items = event.params?.items;
               if (Array.isArray(items) && items.length > 0) {
                 return (
-                  <View style={[cardStyles.chip, {backgroundColor: AppColors.amberBg, borderColor: AppColors.amberBorder}]}>
-                    <Text style={[cardStyles.chipText, {color: AppColors.amber700, fontFamily: AppFonts.interBold}]}>
-                      🛒 {items.length} {items.length === 1 ? 'item' : 'items'}
+                  <View
+                    style={[
+                      cardStyles.chip,
+                      {
+                        backgroundColor: AppColors.amberBg,
+                        borderColor: AppColors.amberBorder,
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        cardStyles.chipText,
+                        {
+                          color: AppColors.amber700,
+                          fontFamily: AppFonts.interBold,
+                        },
+                      ]}>
+                      🛒 {items.length}{' '}
+                      {items.length === 1
+                        ? t('analytics.item')
+                        : t('analytics.items')}
                     </Text>
                   </View>
                 );
@@ -258,12 +244,30 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
             {(() => {
               const val = event.params?.value ?? event.params?.price;
               const currency = event.params?.currency ?? '';
-              const isPrimitive = typeof val === 'string' || typeof val === 'number';
+              const isPrimitive =
+                typeof val === 'string' || typeof val === 'number';
               if (isPrimitive) {
-                const currencyStr = typeof currency === 'string' || typeof currency === 'number' ? String(currency) : '';
+                const currencyStr =
+                  typeof currency === 'string' || typeof currency === 'number'
+                    ? String(currency)
+                    : '';
                 return (
-                  <View style={[cardStyles.chip, {backgroundColor: AppColors.emeraldBg, borderColor: AppColors.emeraldBorder}]}>
-                    <Text style={[cardStyles.chipText, {color: AppColors.emerald600, fontFamily: AppFonts.interBold}]}>
+                  <View
+                    style={[
+                      cardStyles.chip,
+                      {
+                        backgroundColor: AppColors.emeraldBg,
+                        borderColor: AppColors.emeraldBorder,
+                      },
+                    ]}>
+                    <Text
+                      style={[
+                        cardStyles.chipText,
+                        {
+                          color: AppColors.emerald600,
+                          fontFamily: AppFonts.interBold,
+                        },
+                      ]}>
                       💰 {String(val)} {currencyStr}
                     </Text>
                   </View>

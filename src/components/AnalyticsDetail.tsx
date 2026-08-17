@@ -19,6 +19,8 @@ import {getSize} from '../helpers';
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
 
+import {useTranslation} from '../i18n';
+
 // Type Definition
 import {AnalyticsEvent} from '../types';
 
@@ -27,6 +29,7 @@ const AnalyticsDetail = ({
 }: {
   event: AnalyticsEvent;
 }): React.JSX.Element => {
+  const {t} = useTranslation();
   const [expandDepth, setExpandDepth] = useState(1);
   const [treeKey, setTreeKey] = useState(0);
 
@@ -48,7 +51,7 @@ const AnalyticsDetail = ({
     typeLabel = 'null';
   } else if (isArray) {
     typeLabel = 'array';
-    countLabel = `${jsonData.length} items`;
+    countLabel = `${jsonData.length} ${t('analytics.items')}`;
   } else if (isObject) {
     typeLabel = 'object';
     countLabel = `${Object.keys(jsonData).length} keys`;
@@ -98,7 +101,7 @@ const AnalyticsDetail = ({
                 fontSize: 12,
                 color: AppColors.purple,
               }}>
-              {expandDepth === 99 ? 'Collapse All' : 'Expand All'}
+              {expandDepth === 99 ? t('common.collapseAll') : t('common.expandAll')}
             </Text>
           </TouchableScale>
           <View
@@ -141,7 +144,7 @@ const AnalyticsDetail = ({
 
         <CopyButton
           value={JSON.stringify(jsonData, null, 2)}
-          label="Copy JSON"
+          label={t('common.copyJson')}
         />
       </View>
 
