@@ -32,3 +32,7 @@ coverage/
 
 # Internal developer docs (not published)
 developerReadme.md
+
+# Android build artifacts
+android/.gradle/
+android/build/
