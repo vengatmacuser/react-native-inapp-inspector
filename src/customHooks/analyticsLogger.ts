@@ -127,17 +127,19 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     name: string,
     params?: Record<string, any>,
   ) => {
-    addEvent({
-      id: counter++,
-      name,
-      params: params ?? {},
-      userProperties: {...currentUserProperties},
-      timestamp: Date.now(),
-      source: 'firebase',
-      userId: currentUserId ?? '',
-      screenName: '',
-      screenClass: '',
-    });
+    try {
+      addEvent({
+        id: counter++,
+        name,
+        params: params ?? {},
+        userProperties: {...currentUserProperties},
+        timestamp: Date.now(),
+        source: 'firebase',
+        userId: currentUserId ?? '',
+        screenName: '',
+        screenClass: '',
+      });
+    } catch {}
     return originalLogEvent(name, params);
   };
 
@@ -149,17 +151,19 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     screen_class?: string;
     [key: string]: any;
   }) => {
-    addEvent({
-      id: counter++,
-      name: 'screen_view',
-      params: params ?? {},
-      userProperties: {...currentUserProperties},
-      timestamp: Date.now(),
-      source: 'firebase',
-      screenName: params?.screen_name ?? '',
-      screenClass: params?.screen_class ?? '',
-      userId: currentUserId ?? '',
-    });
+    try {
+      addEvent({
+        id: counter++,
+        name: 'screen_view',
+        params: params ?? {},
+        userProperties: {...currentUserProperties},
+        timestamp: Date.now(),
+        source: 'firebase',
+        screenName: params?.screen_name ?? '',
+        screenClass: params?.screen_class ?? '',
+        userId: currentUserId ?? '',
+      });
+    } catch {}
     return originalLogScreenView(params);
   };
 
@@ -170,11 +174,13 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     name: string,
     value: string | null,
   ) => {
-    if (value === null) {
-      delete currentUserProperties[name];
-    } else {
-      currentUserProperties[name] = value;
-    }
+    try {
+      if (value === null) {
+        delete currentUserProperties[name];
+      } else {
+        currentUserProperties[name] = value;
+      }
+    } catch {}
     return originalSetUserProperty(name, value);
   };
 
@@ -184,18 +190,24 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
   analyticsInstance.setUserProperties = async (
     properties: Record<string, string | null>,
   ) => {
-    Object.entries(properties).forEach(([k, v]) => {
-      if (v === null) delete currentUserProperties[k];
-      else currentUserProperties[k] = v;
-    });
+    try {
+      if (properties && typeof properties === 'object') {
+        Object.entries(properties).forEach(([k, v]) => {
+          if (v === null) delete currentUserProperties[k];
+          else currentUserProperties[k] = v;
+        });
+      }
+    } catch {}
     return originalSetUserProperties(properties);
   };
 
   // ── setUserId ─────────────────────────────────────────────────────────────
   const originalSetUserId = analyticsInstance.setUserId.bind(analyticsInstance);
   analyticsInstance.setUserId = async (id: string | null) => {
-    currentUserId = id ?? undefined;
-    notify();
+    try {
+      currentUserId = id ?? undefined;
+      notify();
+    } catch {}
     return originalSetUserId(id);
   };
 
@@ -206,8 +218,10 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     analyticsInstance.setDefaultEventParameters = async (
       params: Record<string, any> | null,
     ) => {
-      currentDefaultEventParameters = params ?? {};
-      notify();
+      try {
+        currentDefaultEventParameters = params ?? {};
+        notify();
+      } catch {}
       return originalSetDefaultEventParameters(params);
     };
   }
@@ -217,8 +231,10 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     const originalSetAnalyticsCollectionEnabled =
       analyticsInstance.setAnalyticsCollectionEnabled.bind(analyticsInstance);
     analyticsInstance.setAnalyticsCollectionEnabled = async (enabled: boolean) => {
-      isCollectionEnabled = enabled;
-      notify();
+      try {
+        isCollectionEnabled = enabled;
+        notify();
+      } catch {}
       return originalSetAnalyticsCollectionEnabled(enabled);
     };
   }
@@ -228,11 +244,13 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     const originalResetAnalyticsData =
       analyticsInstance.resetAnalyticsData.bind(analyticsInstance);
     analyticsInstance.resetAnalyticsData = async () => {
-      clearAnalyticsEvents();
-      currentUserProperties = {};
-      currentUserId = undefined;
-      currentDefaultEventParameters = {};
-      notify();
+      try {
+        clearAnalyticsEvents();
+        currentUserProperties = {};
+        currentUserId = undefined;
+        currentDefaultEventParameters = {};
+        notify();
+      } catch {}
       return originalResetAnalyticsData();
     };
   }

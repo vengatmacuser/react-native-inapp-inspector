@@ -141,7 +141,7 @@ export const getEventCategory = (
   name: string,
   params?: Record<string, any>,
 ): GAEventCategory => {
-  if (!name) return 'custom';
+  if (!name || typeof name !== 'string') return 'custom';
   const cleanName = name.trim().toLowerCase();
 
   // 1. Run through registered dynamic plugins

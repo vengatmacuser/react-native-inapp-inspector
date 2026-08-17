@@ -183,67 +183,76 @@ export const setupNetworkLogger = () => {
 
       if (shouldIgnoreUrl(finalUrl)) return originalFetch(url, options);
 
-      const requestHeaders = normaliseHeaders(options?.headers);
-      const caller = getCallerFromStack(); // ✅ Capture call line
+      let caller = "Unknown";
+      let requestHeaders: Record<string, string> | undefined;
 
-      addOrUpdateLog({
-        id,
-        url: finalUrl,
-        method,
-        startTime: start,
-        caller,
-        request: method === "GET" ? undefined : parseRequestData(options?.body),
-        requestHeaders,
-      });
+      try {
+        requestHeaders = normaliseHeaders(options?.headers);
+        caller = getCallerFromStack(); // ✅ Capture call line
+
+        addOrUpdateLog({
+          id,
+          url: finalUrl,
+          method,
+          startTime: start,
+          caller,
+          request: method === "GET" ? undefined : parseRequestData(options?.body),
+          requestHeaders,
+        });
+      } catch {}
 
       try {
         const response = await originalFetch(url, options);
         const duration = Date.now() - start;
-        const responseHeaders = normaliseHeaders(response.headers);
 
-        let data: any = null;
-        const contentType =
-          responseHeaders?.["content-type"] ||
-          responseHeaders?.["Content-Type"] ||
-          "";
-        if (contentType.includes("image/")) {
-          data = "[Image Data]";
-        } else {
-          try {
-            const clone = response.clone();
-            const text = await clone.text();
+        try {
+          const responseHeaders = normaliseHeaders(response.headers);
+          let data: any = null;
+          const contentType =
+            responseHeaders?.["content-type"] ||
+            responseHeaders?.["Content-Type"] ||
+            "";
+          if (contentType.includes("image/")) {
+            data = "[Image Data]";
+          } else {
             try {
-              data = JSON.parse(text);
-            } catch {
-              data = text;
-            }
-          } catch {}
-        }
+              const clone = response.clone();
+              const text = await clone.text();
+              try {
+                data = JSON.parse(text);
+              } catch {
+                data = text;
+              }
+            } catch {}
+          }
 
-        addOrUpdateLog({
-          id,
-          url: finalUrl,
-          method,
-          status: response.status,
-          response: data,
-          duration,
-          startTime: start,
-          caller,
-          responseHeaders,
-        });
+          addOrUpdateLog({
+            id,
+            url: finalUrl,
+            method,
+            status: response.status,
+            response: data,
+            duration,
+            startTime: start,
+            caller,
+            responseHeaders,
+          });
+        } catch {}
 
         return response;
       } catch (error) {
-        addOrUpdateLog({
-          id,
-          url: finalUrl,
-          method,
-          status: 0,
-          startTime: start,
-          response: error,
-          caller,
-          duration: Date.now() - start,
-        });
+        try {
+          addOrUpdateLog({
+            id,
+            url: finalUrl,
+            method,
+            status: 0,
+            startTime: start,
+            response: error,
+            caller,
+            duration: Date.now() - start,
+          });
+        } catch {}
         throw error;
       }
     };

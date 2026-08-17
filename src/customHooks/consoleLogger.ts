@@ -362,25 +362,33 @@ export const setupConsoleLogger = () => {
 
   // Intercept console.log
   console.log = (...args: any[]) => {
-    addLog('info', args, 'log');
+    try {
+      addLog('info', args, 'log');
+    } catch {}
     originalConsole.log(...args);
   };
 
   // Intercept console.info
   console.info = (...args: any[]) => {
-    addLog('info', args, 'info');
+    try {
+      addLog('info', args, 'info');
+    } catch {}
     originalConsole.info(...args);
   };
 
   // Intercept console.warn
   console.warn = (...args: any[]) => {
-    addLog('warn', args, 'warn');
+    try {
+      addLog('warn', args, 'warn');
+    } catch {}
     originalConsole.warn(...args);
   };
 
   // Intercept console.error
   console.error = (...args: any[]) => {
-    addLog('error', args, 'error');
+    try {
+      addLog('error', args, 'error');
+    } catch {}
     originalConsole.error(...args);
   };
 
