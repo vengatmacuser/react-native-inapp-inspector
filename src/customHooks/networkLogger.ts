@@ -20,7 +20,16 @@ let counter = 0;
 
 const ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
-const IGNORED_URL_PATTERNS: RegExp[] = [/\/symbolicate(?:[/?#]|$)/];
+const IGNORED_URL_PATTERNS: RegExp[] = [
+  /\/symbolicate(?:[/?#]|$)/i,
+  /\/index\.bundle(?:\?|$)/i,
+  /\/hot(?:\?|$)/i,
+  /\/message(?:\?|$)/i,
+  /\/open-debugger(?:\?|$)/i,
+  /\/status(?:\?|$)/i,
+  /127\.0\.0\.1:(?:8081|8082|8083|19000|19001|19002|3000|8000)/i,
+  /localhost:(?:8081|8082|8083|19000|19001|19002|3000|8000)\/index\.bundle/i,
+];
 
 function shouldIgnoreUrl(url: string | undefined | null): boolean {
   if (!url) return false;

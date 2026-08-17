@@ -28,6 +28,7 @@ import {
   getNavigationInfo,
   deduplicateLogs,
   getDomainColor,
+  getEventCategory,
 } from './helpers';
 // #5 — settings persistence
 import {
@@ -78,6 +79,7 @@ import {
   ConsoleLog,
   Method,
   AnalyticsEvent,
+  AnalyticsFilters,
   NetworkInspectorProps,
 } from './types';
 import {LIB_VERSION} from './constants';
@@ -450,7 +452,57 @@ const NetworkInspector = ({
     null,
   );
   const [analyticsSearch, setAnalyticsSearch] = useState('');
-  const [hideScreenView] = useState(true);
+  const [analyticsFilters, setAnalyticsFilters] = useState<AnalyticsFilters>({
+    categories: new Set(['all']),
+    screens: new Set(),
+    sources: new Set(['all']),
+    userTypes: new Set(['all']),
+    timeWindow: 'all',
+    payloadComplexity: 'all',
+    hasRevenue: false,
+    hasItems: false,
+    hasUserProps: false,
+    hasParams: false,
+    onlyDuplicates: false,
+    onlyConversions: false,
+    sortBy: 'time_desc',
+  });
+
+  const isAnalyticsFilterApplied = useMemo(() => {
+    if (analyticsFilters.categories.size > 0 && !analyticsFilters.categories.has('all')) return true;
+    if (analyticsFilters.screens.size > 0) return true;
+    if (analyticsFilters.sources.size > 0 && !analyticsFilters.sources.has('all')) return true;
+    if (analyticsFilters.userTypes.size > 0 && !analyticsFilters.userTypes.has('all')) return true;
+    if (analyticsFilters.timeWindow !== 'all') return true;
+    if (analyticsFilters.payloadComplexity !== 'all') return true;
+    if (analyticsFilters.hasRevenue) return true;
+    if (analyticsFilters.hasItems) return true;
+    if (analyticsFilters.hasUserProps) return true;
+    if (analyticsFilters.hasParams) return true;
+    if (analyticsFilters.onlyDuplicates) return true;
+    if (analyticsFilters.onlyConversions) return true;
+    if (analyticsFilters.sortBy !== 'time_desc') return true;
+    return false;
+  }, [analyticsFilters]);
+
+  const resetAnalyticsFilters = useCallback(() => {
+    setAnalyticsFilters({
+      categories: new Set(['all']),
+      screens: new Set(),
+      sources: new Set(['all']),
+      userTypes: new Set(['all']),
+      timeWindow: 'all',
+      payloadComplexity: 'all',
+      hasRevenue: false,
+      hasItems: false,
+      hasUserProps: false,
+      hasParams: false,
+      onlyDuplicates: false,
+      onlyConversions: false,
+      sortBy: 'time_desc',
+    });
+  }, []);
+
   const [isAnalyticsLayoutReady, setIsAnalyticsLayoutReady] = useState(false);
   const [analyticsHeaderExpanded, setAnalyticsHeaderExpanded] = useState(false);
 
@@ -1046,20 +1098,131 @@ const NetworkInspector = ({
 
   const filteredAnalyticsEvents = useMemo(() => {
     let events = analyticsEvents;
-    if (hideScreenView) {
-      events = events.filter(e => e.name !== 'screen_view');
-    }
 
+    // Search query filter
     if (analyticsSearch) {
       const s = analyticsSearch.toLowerCase();
       events = events.filter(
         e =>
           e.name.toLowerCase().includes(s) ||
-          JSON.stringify(e.params).toLowerCase().includes(s) ||
+          JSON.stringify(e.params || {}).toLowerCase().includes(s) ||
+          (e.screenName ?? '').toLowerCase().includes(s) ||
           (e.pageTitle ?? '').toLowerCase().includes(s),
       );
     }
 
+    // Category filter
+    if (analyticsFilters.categories.size > 0 && !analyticsFilters.categories.has('all')) {
+      events = events.filter(e => {
+        const cat = getEventCategory(e.name);
+        return analyticsFilters.categories.has(cat);
+      });
+    }
+
+    // Time window filter
+    if (analyticsFilters.timeWindow !== 'all') {
+      const now = Date.now();
+      const cutoff =
+        analyticsFilters.timeWindow === '1m'
+          ? now - 60 * 1000
+          : analyticsFilters.timeWindow === '5m'
+          ? now - 5 * 60 * 1000
+          : analyticsFilters.timeWindow === '15m'
+          ? now - 15 * 60 * 1000
+          : now - 60 * 60 * 1000;
+      events = events.filter(e => e.timestamp >= cutoff);
+    }
+
+    // Source filter
+    if (analyticsFilters.sources.size > 0 && !analyticsFilters.sources.has('all')) {
+      events = events.filter(e => analyticsFilters.sources.has(e.source || 'manual'));
+    }
+
+    // User identification filter
+    if (analyticsFilters.userTypes.size > 0 && !analyticsFilters.userTypes.has('all')) {
+      events = events.filter(e => {
+        const isIdentified = Boolean(e.userId && e.userId.trim() !== '');
+        if (analyticsFilters.userTypes.has('identified') && isIdentified) return true;
+        if (analyticsFilters.userTypes.has('anonymous') && !isIdentified) return true;
+        return false;
+      });
+    }
+
+    // Payload complexity filter
+    if (analyticsFilters.payloadComplexity !== 'all') {
+      events = events.filter(e => {
+        const count = e.params ? Object.keys(e.params).length : 0;
+        if (analyticsFilters.payloadComplexity === 'none') return count === 0;
+        if (analyticsFilters.payloadComplexity === 'simple') return count >= 1 && count <= 5;
+        if (analyticsFilters.payloadComplexity === 'heavy') return count > 5;
+        return true;
+      });
+    }
+
+    // Conversion / Goal events filter
+    if (analyticsFilters.onlyConversions) {
+      const CONVERSION_PATTERNS = [
+        'purchase',
+        'item_purchase',
+        'ecommerce_purchase',
+        'sign_up',
+        'login',
+        'lead',
+        'generate_lead',
+        'tutorial_complete',
+        'add_payment_info',
+        'begin_checkout',
+        'spend_virtual_currency',
+      ];
+      events = events.filter(e =>
+        CONVERSION_PATTERNS.some(pat => e.name.toLowerCase().includes(pat)),
+      );
+    }
+
+    // Screen filter
+    if (analyticsFilters.screens.size > 0) {
+      events = events.filter(e => {
+        const scr =
+          e.screenName ||
+          e.params?.firebase_screen ||
+          e.params?.screen_name ||
+          e.params?.firebase_screen_class ||
+          e.screenClass ||
+          '';
+        return analyticsFilters.screens.has(scr);
+      });
+    }
+
+    // Has Revenue filter
+    if (analyticsFilters.hasRevenue) {
+      events = events.filter(e => {
+        const val = e.params?.value ?? e.params?.price;
+        return val !== undefined && val !== null && Number(val) > 0;
+      });
+    }
+
+    // Has Items filter
+    if (analyticsFilters.hasItems) {
+      events = events.filter(
+        e => Array.isArray(e.params?.items) && e.params.items.length > 0,
+      );
+    }
+
+    // Has User Props filter
+    if (analyticsFilters.hasUserProps) {
+      events = events.filter(
+        e => e.userProperties && Object.keys(e.userProperties).length > 0,
+      );
+    }
+
+    // Has Params filter
+    if (analyticsFilters.hasParams) {
+      events = events.filter(
+        e => e.params && Object.keys(e.params).length > 0,
+      );
+    }
+
+    // Deduplication
     const deduplicatedEvents: (AnalyticsEvent & {count?: number})[] = [];
     for (const e of events) {
       if (deduplicatedEvents.length === 0) {
@@ -1081,8 +1244,28 @@ const NetworkInspector = ({
       }
     }
 
-    return deduplicatedEvents;
-  }, [analyticsEvents, analyticsSearch, hideScreenView]);
+    let result = deduplicatedEvents;
+
+    // Only duplicates filter
+    if (analyticsFilters.onlyDuplicates) {
+      result = result.filter(e => (e.count || 1) > 1);
+    }
+
+    // Sorting
+    if (analyticsFilters.sortBy === 'time_asc') {
+      result = [...result].sort((a, b) => a.timestamp - b.timestamp);
+    } else if (analyticsFilters.sortBy === 'revenue_desc') {
+      result = [...result].sort((a, b) => {
+        const valA = Number(a.params?.value ?? a.params?.price ?? 0);
+        const valB = Number(b.params?.value ?? b.params?.price ?? 0);
+        return valB - valA;
+      });
+    } else if (analyticsFilters.sortBy === 'count_desc') {
+      result = [...result].sort((a, b) => (b.count || 1) - (a.count || 1));
+    }
+
+    return result;
+  }, [analyticsEvents, analyticsSearch, analyticsFilters]);
 
   const filteredConsoleLogs = useMemo(() => {
     let result = visibleConsoleLogs;
@@ -1432,6 +1615,10 @@ const NetworkInspector = ({
     filteredAnalyticsEvents,
     analyticsSearch,
     setAnalyticsSearch,
+    analyticsFilters,
+    setAnalyticsFilters,
+    isAnalyticsFilterApplied,
+    resetAnalyticsFilters,
     newEventIds,
     isAnalyticsLayoutReady,
     setIsAnalyticsLayoutReady,
@@ -1537,3 +1724,43 @@ export {
   clearActionHistory,
   getLastActionForReducer,
 } from './customHooks/reduxLogger';
+
+export {
+  getEventCategory,
+  registerGAPlugin,
+  type GAPlugin,
+} from './helpers/gaAnalyticsRegistry';
+
+export {
+  usePerformanceTracker,
+  logPerformanceEvent,
+  clearPerformanceEvents,
+  subscribePerformanceEvents,
+  getPerformanceEvents,
+} from './customHooks/performanceTracker';
+
+export {
+  InspectLog,
+  InspectTrackTime,
+  InspectCatch,
+  type InspectLogOptions,
+} from './decorators';
+
+export {
+  ActiveTab,
+  Method,
+  StatusFilter,
+  SortOrder,
+  LocalFilter,
+  ModalAnimationType,
+  SettingsPage,
+  SettingsSubTab,
+  LogFilter,
+  ConsoleLogType,
+  AnalyticsEventSource,
+  GAEventCategory,
+  StackFrameType,
+  DiffResultType,
+  BundleSubTab,
+  PerformanceSubTab,
+} from './types';

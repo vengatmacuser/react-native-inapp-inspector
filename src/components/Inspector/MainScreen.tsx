@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   StatusBar,
   StyleSheet,
@@ -67,7 +68,7 @@ const MainScreen = () => {
 
   return (
     <>
-      {isEnabled && <FabLauncher />}
+      {(Platform.OS === 'ios' || Platform.OS === 'android') && isEnabled && <FabLauncher />}
       <Modal visible={visible} animationType={modalAnimationType} transparent>
       {visible && (
         <ErrorBoundary onClose={closeModal}>

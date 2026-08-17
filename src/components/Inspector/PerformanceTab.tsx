@@ -27,6 +27,12 @@ import {
   BrainIcon,
   GlobeIcon,
 } from '../NetworkIcons';
+import {
+  INITIAL_EVENTS,
+  subscribePerformanceEvents,
+  logPerformanceEvent,
+  clearPerformanceEvents,
+} from '../../customHooks/performanceTracker';
 
 export interface PerformanceEvent {
   id: string;
@@ -77,10 +83,17 @@ const PerformanceTab = React.memo(() => {
     60, 59, 60, 60, 58, 60, 59, 60, 60, 60, 57, 60, 59, 60, 60, 58, 60, 60, 59, 60,
   ]);
 
-  // Performance Log Events
-  const [events, setEvents] = useState<PerformanceEvent[]>([]);
+  // Performance Log Events (Initialized with benchmark & diagnostics events)
+  const [events, setEvents] = useState<PerformanceEvent[]>(INITIAL_EVENTS);
   const [filterCategory, setFilterCategory] = useState<'ALL' | 'JANKY' | 'NAVIGATION' | 'RENDER' | 'MEMORY' | 'IO'>('ALL');
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const unsub = subscribePerformanceEvents(liveEvents => {
+      setEvents(liveEvents);
+    });
+    return unsub;
+  }, []);
 
   // ─── Live Frame Measurement Loop (1-Second Batch Interval) ────────────────
   const lastFrameTimeRef = useRef<number>(Date.now());
@@ -134,9 +147,7 @@ const PerformanceTab = React.memo(() => {
         // Trigger log if noticeable frame drop
         if (measuredFps < 50) {
           const durationStr = (1000 / measuredFps).toFixed(1);
-          const newEvent: PerformanceEvent = {
-            id: `drop-${Date.now()}`,
-            timestamp: Date.now(),
+          logPerformanceEvent({
             type: 'fps_drop',
             category: 'render',
             fps: measuredFps,
@@ -150,8 +161,7 @@ const PerformanceTab = React.memo(() => {
             },
             advice: t('performance.liveFpsDipAdvice'),
             severity: measuredFps < 30 ? 'critical' : 'warning',
-          };
-          setEvents(prev => [newEvent, ...prev.slice(0, 49)]);
+          });
         }
 
         frameCount = 0;
@@ -276,7 +286,7 @@ const PerformanceTab = React.memo(() => {
   }, [avgFps, jsLagMs]);
 
   const clearEvents = () => {
-    setEvents([]);
+    clearPerformanceEvents();
   };
 
   return (
@@ -341,12 +351,12 @@ const PerformanceTab = React.memo(() => {
         </View>
       </View>
 
-      {/* Filter Tabs */}
+      {/* ─── Frozen Interactive Filter Tabs Under Search Component ─── */}
       <View style={perfStyles.filterRow}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{gap: 6, paddingHorizontal: 12, paddingVertical: 4}}>
+          contentContainerStyle={perfStyles.filterScrollContent}>
           {(
             [
               {key: 'ALL', label: t('performance.allLogs'), Icon: BoltIcon, count: events.length},
@@ -815,6 +825,12 @@ const perfStyles = StyleSheet.create({
     backgroundColor: AppColors.white,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.dividerColor,
+    paddingVertical: 5,
+  },
+  filterScrollContent: {
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
   },
   filterPill: {
     flexDirection: 'row',

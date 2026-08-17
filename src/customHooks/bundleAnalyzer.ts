@@ -129,64 +129,398 @@ const getSourceCodeModule = (): any => {
 
 export const getHostScriptURL = (): string => {
   // 1. NativeModules.SourceCode (bridged) or SourceCode TurboModule (bridgeless / new arch)
-  const scriptURL = getSourceCodeModule()?.scriptURL;
-  if (typeof scriptURL === 'string' && scriptURL.length > 0) {
-    return scriptURL;
-  }
-  // 2. Android legacy: PlatformConstants.serverHost -> "localhost:8082"
   try {
-    const serverHost = NativeModules?.PlatformConstants?.serverHost;
-    if (typeof serverHost === 'string' && serverHost.length > 0) {
-      return `http://${serverHost}/index.bundle?platform=${Platform.OS}&dev=true`;
+    const scriptURL = getSourceCodeModule()?.scriptURL;
+    if (typeof scriptURL === 'string' && scriptURL.length > 0) {
+      return scriptURL;
     }
   } catch {}
+
+  // 2. Android legacy & new arch: PlatformConstants.serverHost, DevSettings, or AndroidConstants
+  try {
+    const serverHost =
+      NativeModules?.PlatformConstants?.serverHost ||
+      NativeModules?.AndroidConstants?.serverHost ||
+      NativeModules?.DevSettings?.serverHost ||
+      NativeModules?.DevSettings?.getConstants?.()?.serverHost;
+    if (typeof serverHost === 'string' && serverHost.length > 0) {
+      const formattedHost = serverHost.startsWith('http') ? serverHost : `http://${serverHost}`;
+      return `${formattedHost}/index.bundle?platform=${Platform.OS}&dev=true`;
+    }
+  } catch {}
+
+  // 3. Fallback to global dev config if defined
+  try {
+    const globalHost =
+      (globalThis as any)?.__DEV_SERVER_URL__ ||
+      (globalThis as any)?.__METRO_SERVER_HOST__;
+    if (typeof globalHost === 'string' && globalHost.length > 0) {
+      return globalHost.startsWith('http')
+        ? globalHost
+        : `http://${globalHost}/index.bundle?platform=${Platform.OS}&dev=true`;
+    }
+  } catch {}
+
   return '';
 };
 
-const DEV_SERVER_PORTS = [8081, 8082, 8083, 8084, 8090, 8080, 19000];
+// Expanded list of common Metro & dev server ports
+const DEV_SERVER_PORTS = [8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8089, 8090, 8080, 19000, 19001, 3000];
 
 const buildProbeUrls = (scriptURL: string): string[] => {
   const urls: string[] = [];
+  let extractedHost: string | null = null;
+  let extractedPort: number | null = null;
+
   if (typeof scriptURL === 'string' && scriptURL.startsWith('http')) {
     urls.push(scriptURL);
+    const urlMatch = scriptURL.match(/^https?:\/\/([^:/]+)(?::(\d+))?/);
+    if (urlMatch) {
+      extractedHost = urlMatch[1];
+      if (urlMatch[2]) {
+        extractedPort = parseInt(urlMatch[2], 10);
+      }
+    }
   }
-  const portMatch = typeof scriptURL === 'string' ? scriptURL.match(/:(\d{2,5})/) : null;
-  const ports = portMatch ? [parseInt(portMatch[1], 10)] : DEV_SERVER_PORTS;
+
+  // Prioritize dynamically extracted port first
+  const ports = extractedPort
+    ? Array.from(new Set([extractedPort, ...DEV_SERVER_PORTS]))
+    : DEV_SERVER_PORTS;
+
   const hosts =
     Platform.OS === 'android'
-      ? ['localhost', '127.0.0.1', '10.0.2.2']
+      ? ['localhost', '127.0.0.1', '10.0.2.2', '10.0.3.2']
       : ['localhost', '127.0.0.1'];
-  for (const host of hosts) {
-    for (const port of ports) {
+
+  if (extractedHost && !hosts.includes(extractedHost)) {
+    hosts.unshift(extractedHost);
+  }
+
+  for (const port of ports) {
+    for (const host of hosts) {
       urls.push(`http://${host}:${port}/index.bundle?platform=${Platform.OS}&dev=true`);
     }
   }
   return Array.from(new Set(urls));
 };
 
-const fetchWithTimeout = async (
-  url: string,
-  timeoutMs: number,
-): Promise<{ok: boolean; text?: string; bytes?: number}> => {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res = await fetch(url, {signal: controller.signal});
-      if (!res.ok) return {ok: false};
-      const contentLength = res.headers.get('content-length');
-      const text = await res.text();
-      return {
-        ok: true,
-        text,
-        bytes: contentLength ? parseInt(contentLength, 10) || text.length : text.length,
-      };
-    } finally {
-      clearTimeout(timer);
+const promiseAny = <T>(promises: Promise<T>[]): Promise<T> => {
+  return new Promise((resolve, reject) => {
+    let pendingCount = promises.length;
+    if (pendingCount === 0) {
+      reject(new Error('All promises rejected'));
+      return;
     }
+    promises.forEach(p => {
+      Promise.resolve(p)
+        .then(resolve)
+        .catch(() => {
+          pendingCount--;
+          if (pendingCount === 0) {
+            reject(new Error('All promises rejected'));
+          }
+        });
+    });
+  });
+};
+
+const probeCandidateUrlsInParallel = async (
+  urls: string[],
+  timeoutMs = 4000,
+): Promise<{text: string; bytes: number; url: string} | null> => {
+  if (urls.length === 0) return null;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  const fetchSingle = async (url: string): Promise<{text: string; bytes: number; url: string}> => {
+    const res = await fetch(url, {signal: controller.signal});
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const contentLength = res.headers.get('content-length');
+    const text = await res.text();
+    if (!text || text.length === 0) {
+      throw new Error('Empty response');
+    }
+    const bytes = contentLength ? parseInt(contentLength, 10) || text.length : text.length;
+    return {text, bytes, url};
+  };
+
+  try {
+    // Probe candidate dev servers concurrently — whichever responds first wins
+    const result = await promiseAny(urls.map(url => fetchSingle(url)));
+    controller.abort();
+    return result;
   } catch {
-    return {ok: false};
+    return null;
+  } finally {
+    clearTimeout(timer);
   }
+};
+
+// ─── Precise Metro __d Module Extraction ────────────────────────────────────
+// Extracts module definitions from Metro bundles. Supports both high-speed
+// tail regex parsing (handles bundles of any size) and structural scanning.
+
+interface ParsedBundleModule {
+  id: number;
+  deps: number[];
+  path: string;
+}
+
+const MAX_ARG_SCAN_LEN = 200000;
+
+const scanCallArguments = (text: string, openParenIndex: number): string[] | null => {
+  let depth = 0;
+  let bracketDepth = 0;
+  let quote: string | null = null;
+  const commas: number[] = [];
+  const end = Math.min(text.length, openParenIndex + MAX_ARG_SCAN_LEN);
+  for (let i = openParenIndex; i < end; i++) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === '\\') {
+        i++;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '(') {
+      depth++;
+      continue;
+    }
+    if (ch === ')') {
+      if (depth === 0) return null;
+      depth--;
+      if (depth === 0) {
+        if (commas.length === 0) return null;
+        const args: string[] = [];
+        let prev = openParenIndex + 1;
+        for (const c of commas) {
+          args.push(text.slice(prev, c));
+          prev = c + 1;
+        }
+        args.push(text.slice(prev, i));
+        return args;
+      }
+      continue;
+    }
+    if (ch === '[') {
+      bracketDepth++;
+      continue;
+    }
+    if (ch === ']') {
+      if (bracketDepth > 0) bracketDepth--;
+      continue;
+    }
+    if (ch === ',' && depth === 1 && bracketDepth === 0) commas.push(i);
+  }
+  return null;
+};
+
+// ─── Runtime Module & Define Tracking ────────────────────────────────────────
+// Captures modules registered via Metro's global __d and executed via __r.
+const executedModuleIds = new Set<number>();
+const runtimeModules = new Map<number, {id: number; path: string}>();
+
+export const trackRuntimeModuleExecution = () => {
+  try {
+    const g = globalThis as any;
+    const r = g.__r;
+    if (typeof r === 'function' && !r.__inspectorTracked) {
+      const tracked = function (this: any, moduleId: number, ...rest: any[]) {
+        executedModuleIds.add(Number(moduleId));
+        return r.call(this, moduleId, ...rest);
+      };
+      Object.defineProperty(tracked, '__inspectorTracked', {value: true, enumerable: false});
+      g.__r = tracked;
+    }
+  } catch {}
+};
+
+export const trackRuntimeDefine = () => {
+  try {
+    const g = globalThis as any;
+    const originalD = g.__d;
+    if (typeof originalD === 'function' && !originalD.__inspectorTracked) {
+      const trackedD = function (
+        factory: any,
+        moduleId: number,
+        dependencyMap?: any,
+        verboseName?: string,
+        ...rest: any[]
+      ) {
+        if (typeof verboseName === 'string' && verboseName.length > 0) {
+          runtimeModules.set(Number(moduleId), {id: Number(moduleId), path: verboseName});
+        }
+        return originalD.call(this, factory, moduleId, dependencyMap, verboseName, ...rest);
+      };
+      Object.defineProperty(trackedD, '__inspectorTracked', {value: true, enumerable: false});
+      g.__d = trackedD;
+    }
+  } catch {}
+};
+
+trackRuntimeModuleExecution();
+trackRuntimeDefine();
+
+const extractBundleModules = (bundleText: string): ParsedBundleModule[] => {
+  const modules: ParsedBundleModule[] = [];
+  const seenIds = new Set<number>();
+
+  if (bundleText && bundleText.length > 0) {
+    // Primary high-speed Metro tail regex: matches }, <id>, [<deps>], "<path>"
+    const tailRegex =
+      /\}\s*,\s*(\d+)\s*,\s*\[([\d,\s]*)\]\s*,\s*(?:"([^"\r\n]+)"|'([^'\r\n]+)')/g;
+    let match: RegExpExecArray | null;
+    while ((match = tailRegex.exec(bundleText)) !== null) {
+      const id = parseInt(match[1], 10);
+      const depsStr = match[2];
+      const path = match[3] || match[4] || '';
+      const deps: number[] = depsStr
+        ? depsStr
+            .split(',')
+            .map(s => parseInt(s.trim(), 10))
+            .filter(n => !isNaN(n))
+        : [];
+      if (!seenIds.has(id) && path.length > 0) {
+        seenIds.add(id);
+        modules.push({id, deps, path});
+      }
+    }
+
+    // Secondary fallback if tailRegex didn't find modules
+    if (modules.length === 0) {
+      const defineRe = /__d\s*\(/g;
+      let m: RegExpExecArray | null;
+      while ((m = defineRe.exec(bundleText)) !== null) {
+        const openParen = m.index + m[0].length - 1;
+        const args = scanCallArguments(bundleText, openParen);
+        if (!args || args.length < 4) continue;
+
+        const idMatch = args[1].trim().match(/^(\d+)$/);
+        if (!idMatch) continue;
+        const idNum = parseInt(idMatch[1], 10);
+        if (seenIds.has(idNum)) continue;
+
+        const depsMatch = args[2].match(/\[([^\]]*)\]/);
+        const deps: number[] = [];
+        if (depsMatch) {
+          const depRe = /\d+/g;
+          let d: RegExpExecArray | null;
+          while ((d = depRe.exec(depsMatch[1])) !== null) {
+            deps.push(parseInt(d[0], 10));
+          }
+        }
+
+        const pathRaw = args[3].trim();
+        const pathMatch = pathRaw.match(/^["']([^"']+)["']$/);
+        const path = pathMatch ? pathMatch[1] : pathRaw;
+        if (path.length === 0 || path.length > 500) continue;
+
+        seenIds.add(idNum);
+        modules.push({id: idNum, deps, path});
+      }
+    }
+  }
+
+  // Merge any runtime modules captured via global.__d
+  runtimeModules.forEach((item, id) => {
+    if (!seenIds.has(id)) {
+      seenIds.add(id);
+      modules.push({id, deps: [], path: item.path});
+    }
+  });
+
+  return modules;
+};
+
+const getStaticStartupModuleIds = (bundleText: string): Set<number> => {
+  const ids = new Set<number>();
+  const startupRe = /__r\s*\(\s*(\d+)\s*\)/g;
+  let m: RegExpExecArray | null;
+  while ((m = startupRe.exec(bundleText)) !== null) {
+    ids.add(parseInt(m[1], 10));
+  }
+  return ids;
+};
+
+const findCommonDirectoryPrefix = (paths: string[]): string => {
+  const absPaths = paths.filter(p => p.startsWith('/'));
+  if (absPaths.length === 0) return '';
+  if (absPaths.length === 1) {
+    const lastSlash = absPaths[0].lastIndexOf('/');
+    return lastSlash > 0 ? absPaths[0].slice(0, lastSlash + 1) : '';
+  }
+  const splitPaths = absPaths.map(p => p.split('/'));
+  let commonIndex = 0;
+  const first = splitPaths[0];
+  while (commonIndex < first.length - 1) {
+    const segment = first[commonIndex];
+    if (splitPaths.every(p => p[commonIndex] === segment)) {
+      commonIndex++;
+    } else {
+      break;
+    }
+  }
+  if (commonIndex === 0) return '';
+  return first.slice(0, commonIndex).join('/') + '/';
+};
+
+const isExternalPackage = (rawPath: string): {isPkg: boolean; pkgName?: string} => {
+  // 1. Standard node_modules
+  if (rawPath.includes('node_modules/')) {
+    const pkgMatch = rawPath.match(/node_modules\/(?:@([^/]+)\/([^/]+)|([^/]+))/);
+    if (pkgMatch) {
+      const pkgName = pkgMatch[1] && pkgMatch[2] ? `@${pkgMatch[1]}/${pkgMatch[2]}` : pkgMatch[3];
+      return {isPkg: true, pkgName};
+    }
+    return {isPkg: true};
+  }
+
+  // 2. React Native In-App Inspector (when linked or embedded)
+  if (rawPath.includes('react-native-inapp-inspector')) {
+    return {isPkg: true, pkgName: 'react-native-inapp-inspector'};
+  }
+
+  // 3. Yarn berry / pnpm virtual stores
+  if (rawPath.includes('.yarn/') || rawPath.includes('.pnpm/')) {
+    return {isPkg: true};
+  }
+
+  // 4. Compiled package dist / build folders outside project source
+  if (
+    rawPath.includes('/dist/esm/') ||
+    rawPath.includes('/dist/commonjs/') ||
+    rawPath.includes('/dist/cjs/') ||
+    rawPath.startsWith('dist/esm/') ||
+    rawPath.startsWith('dist/commonjs/') ||
+    rawPath.startsWith('dist/') ||
+    rawPath.includes('/react-native-inapp-inspector/dist/')
+  ) {
+    return {isPkg: true, pkgName: 'react-native-inapp-inspector'};
+  }
+
+  return {isPkg: false};
+};
+
+const isInternalModule = (rawPath: string): boolean => {
+  return (
+    rawPath.startsWith('<<') ||
+    rawPath.startsWith('[metro]') ||
+    rawPath.includes('metro-runtime') ||
+    rawPath.includes('polyfills/require.js') ||
+    rawPath.includes('prelude_commonjs') ||
+    rawPath.includes('Libraries/Core/InitializeCore.js') ||
+    rawPath.includes('@babel/runtime')
+  );
 };
 
 /**
@@ -202,84 +536,176 @@ export const parseBundleSource = (
   const totalDevMb = Number((totalBytes / (1024 * 1024)).toFixed(2));
   const totalDevKb = Math.round(totalBytes / 1024);
 
-  const discoveredPackagesMap = new Map<string, number>();
-  const discoveredFiles: HostBundleFileItem[] = [];
+  const modules = extractBundleModules(bundleText);
+  const startupIds = getStaticStartupModuleIds(bundleText);
 
-  // Match module declarations: __d(function(...), id, [...], "path/to/module.js") or comments
-  // In Metro: __d(function(...), 42, [1, 2], "node_modules/lodash/index.js")
-  const modulePathRegex = /(?:__d\s*\([^,]+,[^,]+,[^,]+,["']([^"']+)["']|\/\/\s*@metro-module-path\s+([^\n\r]+)|["']((?:node_modules|\.|\/|[a-zA-Z0-9_-]+)\/[^"']+\.[a-zA-Z0-9]+)["'])/g;
-  
-  let match: RegExpExecArray | null;
-  let fileIdx = 0;
-  const seenPaths = new Set<string>();
-
-  // Extract from text
-  while ((match = modulePathRegex.exec(bundleText)) !== null) {
-    const rawPath = match[1] || match[2] || match[3];
-    if (!rawPath || seenPaths.has(rawPath) || rawPath.length > 200) continue;
-    seenPaths.add(rawPath);
-
-    const isNodeModule = rawPath.includes('node_modules/');
-    if (isNodeModule) {
-      const pkgMatch = rawPath.match(/node_modules\/(?:@([^/]+)\/([^/]+)|([^/]+))/);
-      if (pkgMatch) {
-        const pkgName = pkgMatch[1] && pkgMatch[2] ? `@${pkgMatch[1]}/${pkgMatch[2]}` : pkgMatch[3];
-        if (pkgName && !pkgName.startsWith('.')) {
-          discoveredPackagesMap.set(pkgName, (discoveredPackagesMap.get(pkgName) || 0) + 1);
-        }
-      }
-    } else if (
-      rawPath.endsWith('.tsx') ||
-      rawPath.endsWith('.ts') ||
-      rawPath.endsWith('.jsx') ||
-      rawPath.endsWith('.js') ||
-      rawPath.endsWith('.json') ||
-      rawPath.endsWith('.png') ||
-      rawPath.endsWith('.jpg') ||
-      rawPath.endsWith('.svg') ||
-      rawPath.endsWith('.ttf')
-    ) {
-      const ext = rawPath.split('.').pop()?.toUpperCase() || 'JS';
-      const name = rawPath.split('/').pop() || rawPath;
-      
-      let category: FileTypeCategory = 'javascript';
-      let color = AppColors.indigo500;
-      if (ext === 'TSX' || ext === 'TS') {
-        category = 'typescript';
-        color = AppColors.sky500;
-      } else if (ext === 'PNG' || ext === 'JPG' || ext === 'SVG') {
-        category = 'image';
-        color = AppColors.pink500;
-      } else if (ext === 'TTF' || ext === 'OTF') {
-        category = 'font';
-        color = AppColors.purple500;
-      } else if (ext === 'JSON') {
-        category = 'json';
-        color = AppColors.emerald500;
-      }
-
-      // Approximate module size from total and count
-      const approxKb = Math.max(2, Math.round((totalDevKb * 0.15) / Math.max(seenPaths.size, 20)));
-
-      discoveredFiles.push({
-        id: `host-file-${fileIdx++}`,
-        name,
-        path: rawPath,
-        ext,
-        category,
-        sizeKb: approxKb,
-        meta: `Active Host App Module • ${category.toUpperCase()}`,
-        color,
-        status: 'optimal',
-        advice: 'Bundled into Host App Development Runtime',
-        isConsumed: true,
-      });
-    }
-
-    if (seenPaths.size >= 1200) break; // Limit parsing overhead
+  // Build module map for dependency graph traversal
+  const modMap = new Map<number, ParsedBundleModule>();
+  for (const mod of modules) {
+    modMap.set(mod.id, mod);
   }
 
-  // If no files matched via regex (e.g. minified or obfuscated bundle), synthesize from loaded modules
+  // Transitive Reachability: traverse the dependency graph starting from
+  // entrypoints (index.js, App.tsx, app.json, startupIds, executedModuleIds)
+  const consumedIds = new Set<number>();
+  const queue: number[] = [];
+
+  const markConsumed = (id: number) => {
+    if (!consumedIds.has(id)) {
+      consumedIds.add(id);
+      queue.push(id);
+    }
+  };
+
+  // Seed with root entrypoints and runtime executions
+  markConsumed(0);
+  startupIds.forEach(id => markConsumed(id));
+  executedModuleIds.forEach(id => markConsumed(id));
+
+  for (const mod of modules) {
+    const lower = mod.path.toLowerCase().replace(/\\/g, '/');
+    if (
+      lower.endsWith('/index.js') ||
+      lower.endsWith('/index.ts') ||
+      lower.endsWith('/index.tsx') ||
+      lower === 'index.js' ||
+      lower.endsWith('/app.tsx') ||
+      lower.endsWith('/app.js') ||
+      lower.endsWith('/app.jsx') ||
+      lower === 'app.tsx' ||
+      lower === 'app.js' ||
+      lower.endsWith('app.json')
+    ) {
+      markConsumed(mod.id);
+    }
+  }
+
+  // Transitive BFS dependency traversal
+  while (queue.length > 0) {
+    const currId = queue.shift()!;
+    const currMod = modMap.get(currId);
+    if (currMod && currMod.deps) {
+      for (const depId of currMod.deps) {
+        markConsumed(depId);
+      }
+    }
+  }
+
+  const discoveredPackagesMap = new Map<string, number>();
+  const rawProjectItems: {mod: ParsedBundleModule; rawPath: string}[] = [];
+
+  for (const mod of modules) {
+    const rawPath = mod.path.replace(/\\/g, '/'); // Normalize Windows backslashes
+
+    const {isPkg, pkgName} = isExternalPackage(rawPath);
+    if (isPkg) {
+      if (pkgName && !pkgName.startsWith('.')) {
+        discoveredPackagesMap.set(pkgName, (discoveredPackagesMap.get(pkgName) || 0) + 1);
+      }
+      continue;
+    }
+
+    // Filter out internal Metro polyfills / virtual modules
+    if (isInternalModule(rawPath)) {
+      continue;
+    }
+
+    rawProjectItems.push({mod, rawPath});
+  }
+
+  // Calculate common prefix for absolute paths to cleanly extract host app project files
+  const commonPrefix = findCommonDirectoryPrefix(rawProjectItems.map(item => item.rawPath));
+
+  const discoveredFiles: HostBundleFileItem[] = [];
+  let fileIdx = 0;
+
+  for (const {mod, rawPath} of rawProjectItems) {
+    let cleanPath = rawPath;
+    if (commonPrefix && cleanPath.startsWith(commonPrefix)) {
+      cleanPath = cleanPath.slice(commonPrefix.length);
+    }
+    // Clean leading ../ sequences, ./, and leading /
+    cleanPath = cleanPath.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '').replace(/^\/+/, '');
+    if (!cleanPath) cleanPath = rawPath.split('/').pop() || rawPath;
+
+    const isLocalFile =
+      cleanPath.endsWith('.tsx') ||
+      cleanPath.endsWith('.ts') ||
+      cleanPath.endsWith('.jsx') ||
+      cleanPath.endsWith('.js') ||
+      cleanPath.endsWith('.mjs') ||
+      cleanPath.endsWith('.cjs') ||
+      cleanPath.endsWith('.json') ||
+      cleanPath.endsWith('.png') ||
+      cleanPath.endsWith('.jpg') ||
+      cleanPath.endsWith('.jpeg') ||
+      cleanPath.endsWith('.gif') ||
+      cleanPath.endsWith('.webp') ||
+      cleanPath.endsWith('.svg') ||
+      cleanPath.endsWith('.bmp') ||
+      cleanPath.endsWith('.ico') ||
+      cleanPath.endsWith('.ttf') ||
+      cleanPath.endsWith('.otf') ||
+      cleanPath.endsWith('.woff') ||
+      cleanPath.endsWith('.woff2') ||
+      cleanPath.endsWith('.css') ||
+      cleanPath.endsWith('.scss') ||
+      cleanPath.endsWith('.html') ||
+      cleanPath.endsWith('.md') ||
+      cleanPath.endsWith('.graphql') ||
+      cleanPath.endsWith('.gql');
+    if (!isLocalFile) continue;
+
+    const ext = cleanPath.split('.').pop()?.toUpperCase() || 'JS';
+    const name = cleanPath.split('/').pop() || cleanPath;
+
+    let category: FileTypeCategory = 'javascript';
+    let color = AppColors.indigo500;
+    if (ext === 'TSX' || ext === 'TS') {
+      category = 'typescript';
+      color = AppColors.sky500;
+    } else if (
+      ext === 'PNG' ||
+      ext === 'JPG' ||
+      ext === 'JPEG' ||
+      ext === 'GIF' ||
+      ext === 'WEBP' ||
+      ext === 'SVG' ||
+      ext === 'BMP' ||
+      ext === 'ICO'
+    ) {
+      category = 'image';
+      color = AppColors.pink500;
+    } else if (ext === 'TTF' || ext === 'OTF' || ext === 'WOFF' || ext === 'WOFF2') {
+      category = 'font';
+      color = AppColors.purple500;
+    } else if (ext === 'JSON' || ext === 'CSS' || ext === 'SCSS' || ext === 'HTML' || ext === 'MD' || ext === 'GRAPHQL' || ext === 'GQL') {
+      category = 'json';
+      color = AppColors.emerald500;
+    }
+
+    // Approximate module size from total and module count
+    const approxKb = Math.max(2, Math.round((totalDevKb * 0.15) / Math.max(modules.length, 20)));
+
+    const isConsumed = consumedIds.has(mod.id);
+    discoveredFiles.push({
+      id: `host-file-${fileIdx++}`,
+      name,
+      path: cleanPath,
+      ext,
+      category,
+      sizeKb: approxKb,
+      meta: `Active Host App Module • ${category.toUpperCase()}`,
+      color,
+      status: isConsumed ? 'optimal' : 'warning',
+      advice: isConsumed
+        ? 'In-Use: Bundled and active in host application dependency tree'
+        : 'Not consumed: Defined in the bundle but not referenced in active execution tree',
+      isConsumed,
+    });
+  }
+
+  // If no modules could be parsed (e.g. Hermes bytecode / obfuscated bundle), synthesize from loaded modules
   if (discoveredFiles.length === 0) {
     discoveredFiles.push(
       {
@@ -501,7 +927,7 @@ export const parseBundleSource = (
   const iosComponents: HostBinaryComponentItem[] = [
     {
       id: 'ios-c1',
-      name: 'Dynamic Frameworks & Pods',
+      name: 'Frameworks & Dynamic Pods',
       category: 'frameworks',
       sizeMb: nativeFrameworksMb,
       pct: Number(((nativeFrameworksMb / iosInstallMb) * 100).toFixed(1)),
@@ -511,7 +937,7 @@ export const parseBundleSource = (
     },
     {
       id: 'ios-c2',
-      name: 'Native Mach-O Executable (ARM64)',
+      name: 'Mach-O Executable (ARM64)',
       category: 'native',
       sizeMb: nativeMachoMb,
       pct: Number(((nativeMachoMb / iosInstallMb) * 100).toFixed(1)),
@@ -521,7 +947,7 @@ export const parseBundleSource = (
     },
     {
       id: 'ios-c3',
-      name: 'Asset Catalog (Assets.car & Media)',
+      name: 'Asset Catalog (Assets.car)',
       category: 'assets',
       sizeMb: assetsCatalogMb,
       pct: Number(((assetsCatalogMb / iosInstallMb) * 100).toFixed(1)),
@@ -531,7 +957,7 @@ export const parseBundleSource = (
     },
     {
       id: 'ios-c4',
-      name: 'Hermes Bytecode (main.jsbundle / .hbc)',
+      name: 'Hermes Bytecode (main.jsbundle)',
       category: 'js',
       sizeMb: releaseJsMb,
       pct: Number(((releaseJsMb / iosInstallMb) * 100).toFixed(1)),
@@ -541,7 +967,7 @@ export const parseBundleSource = (
     },
     {
       id: 'ios-c5',
-      name: 'App Metadata & Code Signatures',
+      name: 'Metadata & Code Signatures',
       category: 'meta',
       sizeMb: metadataMb,
       pct: Number(((metadataMb / iosInstallMb) * 100).toFixed(1)),
@@ -554,7 +980,7 @@ export const parseBundleSource = (
   const androidComponents: HostBinaryComponentItem[] = [
     {
       id: 'and-c1',
-      name: 'Native C++ Shared Libraries (lib/arm64-v8a/)',
+      name: 'Native C++ Libraries (.so)',
       category: 'native',
       sizeMb: androidCppMb,
       pct: Number(((androidCppMb / androidInstallMb) * 100).toFixed(1)),
@@ -564,7 +990,7 @@ export const parseBundleSource = (
     },
     {
       id: 'and-c2',
-      name: 'Compiled DEX Bytecode (classes.dex)',
+      name: 'Compiled DEX (classes.dex)',
       category: 'frameworks',
       sizeMb: androidDexMb,
       pct: Number(((androidDexMb / androidInstallMb) * 100).toFixed(1)),
@@ -574,7 +1000,7 @@ export const parseBundleSource = (
     },
     {
       id: 'and-c3',
-      name: 'Android Resources & Drawables (res/)',
+      name: 'Android Resources (res/)',
       category: 'assets',
       sizeMb: androidResMb,
       pct: Number(((androidResMb / androidInstallMb) * 100).toFixed(1)),
@@ -584,7 +1010,7 @@ export const parseBundleSource = (
     },
     {
       id: 'and-c4',
-      name: 'Hermes Bytecode (index.android.bundle)',
+      name: 'Hermes Bytecode (Android)',
       category: 'js',
       sizeMb: releaseJsMb,
       pct: Number(((releaseJsMb / androidInstallMb) * 100).toFixed(1)),
@@ -594,7 +1020,7 @@ export const parseBundleSource = (
     },
     {
       id: 'and-c5',
-      name: 'Android Manifest & Signatures (META-INF/)',
+      name: 'Manifest & Signatures (META-INF)',
       category: 'meta',
       sizeMb: 2.6,
       pct: Number(((2.6 / androidInstallMb) * 100).toFixed(1)),
@@ -614,7 +1040,7 @@ export const parseBundleSource = (
   const androidApkComponents: HostBinaryComponentItem[] = [
     {
       id: 'apk-c1',
-      name: 'Multi-ABI Native C++ Libraries (arm64, v7a, x86_64)',
+      name: 'Multi-ABI C++ Libraries (.so)',
       category: 'native',
       sizeMb: androidMultiAbiCppMb,
       pct: Number(((androidMultiAbiCppMb / androidApkInstallMb) * 100).toFixed(1)),
@@ -634,7 +1060,7 @@ export const parseBundleSource = (
     },
     {
       id: 'apk-c3',
-      name: 'Android Resources & Assets (res/, assets/)',
+      name: 'Android Resources & Assets (res/)',
       category: 'assets',
       sizeMb: androidResMb,
       pct: Number(((androidResMb / androidApkInstallMb) * 100).toFixed(1)),
@@ -644,7 +1070,7 @@ export const parseBundleSource = (
     },
     {
       id: 'apk-c4',
-      name: 'Hermes Bytecode Bundle (index.android.bundle)',
+      name: 'Hermes Bytecode Bundle (Android)',
       category: 'js',
       sizeMb: releaseJsMb,
       pct: Number(((releaseJsMb / androidApkInstallMb) * 100).toFixed(1)),
@@ -654,7 +1080,7 @@ export const parseBundleSource = (
     },
     {
       id: 'apk-c5',
-      name: 'Android Manifest & v1/v2/v3 Signatures (META-INF/)',
+      name: 'Manifest & Signatures (META-INF)',
       category: 'meta',
       sizeMb: 3.2,
       pct: Number(((3.2 / androidApkInstallMb) * 100).toFixed(1)),
@@ -671,7 +1097,7 @@ export const parseBundleSource = (
     totalDevMb,
     totalDevKb,
     isHermes,
-    moduleCount: seenPaths.size || discoveredFiles.length + packagesList.length,
+    moduleCount: modules.length || discoveredFiles.length + packagesList.length,
     packageCount: packagesList.length,
     filesCount: discoveredFiles.length,
     splitUp: {
@@ -729,9 +1155,15 @@ export const parseBundleSource = (
 
 /**
  * Automatically fetch and analyze the real running bundle for the host app.
+ * Supports dynamic port detection (8081, 8082, 8083, etc.) and parallel dev server probing.
  */
-export const analyzeHostAppBundle = async (): Promise<HostBundleAnalysisResult> => {
-  if (cachedAnalysis) return cachedAnalysis;
+export const analyzeHostAppBundle = async (
+  forceRefresh = false,
+): Promise<HostBundleAnalysisResult> => {
+  if (forceRefresh) {
+    cachedAnalysis = null;
+  }
+  if (cachedAnalysis && !forceRefresh) return cachedAnalysis;
   if (isAnalyzing) {
     return new Promise(resolve => {
       subscribers.push(resolve);
@@ -740,21 +1172,13 @@ export const analyzeHostAppBundle = async (): Promise<HostBundleAnalysisResult> 
 
   isAnalyzing = true;
   const scriptURL = getHostScriptURL();
+  const probeUrls = buildProbeUrls(scriptURL);
 
-  // Probe candidate dev-server URLs until one serves the JS bundle
-  let fetched: {text: string; bytes: number} | null = null;
-  let fetchedUrl = '';
-  for (const url of buildProbeUrls(scriptURL)) {
-    const probe = await fetchWithTimeout(url, 3000);
-    if (probe.ok && probe.text && probe.text.length > 0) {
-      fetched = {text: probe.text, bytes: probe.bytes ?? probe.text.length};
-      fetchedUrl = url;
-      break;
-    }
-  }
+  // Probe all candidate dev-server ports and hosts in parallel for instant response
+  const fetched = await probeCandidateUrlsInParallel(probeUrls, 3500);
 
-  if (fetched) {
-    const result = parseBundleSource(fetched.text, fetched.bytes, fetchedUrl);
+  if (fetched && fetched.text && fetched.text.length > 0) {
+    const result = parseBundleSource(fetched.text, fetched.bytes, fetched.url);
     cachedAnalysis = result;
     isAnalyzing = false;
     subscribers.forEach(cb => cb(result));
@@ -771,6 +1195,10 @@ export const analyzeHostAppBundle = async (): Promise<HostBundleAnalysisResult> 
   subscribers.forEach(cb => cb(result));
   subscribers.length = 0;
   return result;
+};
+
+export const clearCachedBundleAnalysis = (): void => {
+  cachedAnalysis = null;
 };
 
 export const getCachedBundleAnalysis = (): HostBundleAnalysisResult | null => cachedAnalysis;

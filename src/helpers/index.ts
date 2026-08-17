@@ -1,4 +1,12 @@
-import {Clipboard, Platform, ToastAndroid, Alert, NativeModules, Linking} from 'react-native';
+import {
+  Clipboard,
+  Platform,
+  ToastAndroid,
+  Alert,
+  NativeModules,
+  Linking,
+  TurboModuleRegistry,
+} from 'react-native';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -7,7 +15,7 @@ import {AppColors} from '../styles/AppColors';
 import {DOMAIN_COLORS, DURATION_FAST_MS, DURATION_SLOW_MS} from '../constants';
 
 // Type Definition
-import {NetworkLog, RouteInfo, DiffResult, JsonContent} from '../types';
+import {NetworkLog, RouteInfo, DiffResult, JsonContent, StackFrameType} from '../types';
 
 export const getDomainColor = (domain: string): string => {
   if (!domain) return DOMAIN_COLORS[0];
@@ -54,27 +62,56 @@ export const getSize = (data: unknown): string => {
   }
 };
 
-// Try loading community clipboard or native clipboard modules with graceful fallbacks
+// Safely detect and load clipboard natively without static require() calls that Metro fails on
 const getClipboardModule = () => {
+  // 1. Check TurboModuleRegistry (TurboModules / New Architecture)
   try {
-    // @ts-ignore
-    const community = require('@react-native-clipboard/clipboard');
-    if (community?.default?.setString) return community.default;
-    if (community?.setString) return community;
+    const tmReg = (TurboModuleRegistry as any) || (globalThis as any).__turboModuleProxy;
+    if (tmReg?.get) {
+      const tm =
+        tmReg.get('RNCClipboard') ||
+        tmReg.get('NativeClipboard') ||
+        tmReg.get('ExpoClipboard');
+      if (
+        tm &&
+        (typeof tm.setString === 'function' ||
+          typeof tm.setStringAsync === 'function')
+      ) {
+        return tm;
+      }
+    }
   } catch {}
 
+  // 2. Check legacy NativeModules table (Bridge / Old Architecture)
   try {
-    // @ts-ignore
-    const oldCommunity = require('@react-native-community/clipboard');
-    if (oldCommunity?.default?.setString) return oldCommunity.default;
-    if (oldCommunity?.setString) return oldCommunity;
+    if (
+      NativeModules?.RNCClipboard &&
+      typeof NativeModules.RNCClipboard.setString === 'function'
+    ) {
+      return NativeModules.RNCClipboard;
+    }
+    if (
+      NativeModules?.ExpoClipboard &&
+      typeof NativeModules.ExpoClipboard.setStringAsync === 'function'
+    ) {
+      return NativeModules.ExpoClipboard;
+    }
+    if (
+      NativeModules?.Clipboard &&
+      typeof NativeModules.Clipboard.setString === 'function'
+    ) {
+      return NativeModules.Clipboard;
+    }
   } catch {}
 
+  // 3. Check legacy React Native core Clipboard
   try {
-    if (NativeModules?.RNCClipboard?.setString) return NativeModules.RNCClipboard;
+    if (Clipboard && typeof (Clipboard as any).setString === 'function') {
+      return Clipboard;
+    }
   } catch {}
 
-  return Clipboard;
+  return null;
 };
 
 export const copyToClipboard = (value: unknown, label: string): void => {
@@ -83,24 +120,35 @@ export const copyToClipboard = (value: unknown, label: string): void => {
     typeof resolved === 'string' ? resolved : JSON.stringify(resolved, null, 2);
   const textToCopy = text ?? '';
 
+  let copied = false;
   try {
     const cb = getClipboardModule();
-    if (cb && typeof cb.setString === 'function') {
-      cb.setString(textToCopy);
-    } else {
-      Clipboard.setString(textToCopy);
+    if (cb) {
+      if (typeof cb.setStringAsync === 'function') {
+        cb.setStringAsync(textToCopy);
+        copied = true;
+      } else if (typeof cb.setString === 'function') {
+        cb.setString(textToCopy);
+        copied = true;
+      }
     }
-  } catch {
+  } catch {}
+
+  if (!copied) {
     try {
-      Clipboard.setString(textToCopy);
+      if (typeof navigator !== 'undefined' && (navigator as any)?.clipboard?.writeText) {
+        (navigator as any).clipboard.writeText(textToCopy);
+        copied = true;
+      }
     } catch {}
   }
 
-  if (Platform.OS === 'android') {
-    ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
-  } else {
-    Alert.alert('Copied', `${label} copied to clipboard`, [{text: 'OK'}]);
-  }
+  // Visual toast feedback on Android if ToastAndroid exists
+  try {
+    if (Platform.OS === 'android' && ToastAndroid?.show) {
+      ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
+    }
+  } catch {}
 };
 
 export const getPath = (url: string): string => {
@@ -482,11 +530,14 @@ export interface ParsedStackFrame {
   functionName: string;
   fileName: string;
   fullPath: string;
-  fileExt?: 'tsx' | 'jsx' | 'ts' | 'js' | 'other';
-  isUserCode?: boolean;
+  fileExt: string;
+  frameType: StackFrameType | 'app' | 'dependency' | 'runtime' | 'native';
+  isUserCode: boolean;
+  isRuntimeNoise: boolean;
   lineNumber?: string;
   columnNumber?: string;
   isOrigin?: boolean;
+  copyableLocation: string;
 }
 
 /** Parses a stack trace line to extract function name, file name, extension (.tsx/.jsx/.ts), line, and column numbers */
@@ -509,6 +560,11 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
   if (parenMatch) {
     functionName = parenMatch[1].trim() || '<anonymous>';
     locationPart = parenMatch[2].trim();
+  }
+
+  // Clean Babel/Hermes artifacts in function names like ?anon_0_, _callee$, etc.
+  if (functionName.startsWith('?anon_') || functionName === '?') {
+    functionName = 'anonymous';
   }
 
   // Remove "address at " prefix if present in Hermes
@@ -544,22 +600,64 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
       ? (ext as 'tsx' | 'jsx' | 'ts' | 'js')
       : 'other';
 
+  const isNative = locationPart === 'native' || cleanPath === 'native';
+  const isInternalBytecode =
+    cleanPath.includes('InternalBytecode') ||
+    cleanPath.includes('metro-runtime') ||
+    cleanPath.includes('regenerator-runtime') ||
+    functionName === 'tryCallOne' ||
+    functionName === 'asyncGeneratorStep' ||
+    functionName === '_next' ||
+    (functionName === 'next' && isNative);
+
+  const isDependency =
+    cleanPath.includes('node_modules') ||
+    cleanPath.includes('react-native/Libraries') ||
+    (cleanPath.includes('react-native-inapp-inspector') && !cleanPath.includes('/example/'));
+
   const isUserCode =
-    !cleanPath.includes('node_modules') &&
-    !cleanPath.includes('react-native/') &&
-    !cleanPath.includes('react-native-inapp-inspector') &&
-    (fileExt === 'tsx' || fileExt === 'jsx' || fileExt === 'ts' || fileExt === 'js');
+    !isNative &&
+    !isInternalBytecode &&
+    !isDependency &&
+    (fileExt === 'tsx' || fileExt === 'jsx' || fileExt === 'ts' || fileExt === 'js' || !fileName.includes('.bundle'));
+
+  const frameType: 'app' | 'dependency' | 'runtime' | 'native' = isUserCode
+    ? 'app'
+    : isDependency
+    ? 'dependency'
+    : isNative
+    ? 'native'
+    : 'runtime';
+
+  const isRuntimeNoise = isInternalBytecode || isNative || functionName === 'asyncGeneratorStep' || functionName === '_next';
+
+  // Format clean relative project path
+  let relativePath = cleanPath;
+  if (relativePath.includes('/example/')) {
+    relativePath = relativePath.substring(relativePath.indexOf('/example/') + 9);
+  } else if (relativePath.includes('/src/')) {
+    relativePath = relativePath.substring(relativePath.indexOf('/src/') + 1);
+  } else if (relativePath.includes('/node_modules/')) {
+    relativePath = relativePath.substring(relativePath.indexOf('/node_modules/') + 14);
+  }
+
+  const copyableLocation = lineNumber
+    ? `${fileName}:${lineNumber}${columnNumber ? `:${columnNumber}` : ''}`
+    : fileName;
 
   return {
     raw: rawLine,
     functionName,
     fileName,
-    fullPath: cleanPath,
+    fullPath: relativePath,
     fileExt,
+    frameType,
     isUserCode,
+    isRuntimeNoise,
     lineNumber,
     columnNumber,
     isOrigin,
+    copyableLocation,
   };
 };
 
@@ -585,38 +683,12 @@ export const getEventColor = (name: string): string => {
   return ANALYTICS_EVENT_PALETTE[Math.abs(hash) % ANALYTICS_EVENT_PALETTE.length];
 };
 
-export const getEventCategory = (name: string): 'page_view' | 'ecommerce' | 'system' | 'custom' => {
-  if (!name) return 'custom';
-  const lowercaseName = name.toLowerCase();
-
-  if (lowercaseName === 'screen_view' || lowercaseName === 'page_view') {
-    return 'page_view';
-  }
-
-  // Ecommerce events
-  const ecommerceEvents = [
-    'purchase', 'add_to_cart', 'begin_checkout', 'view_item',
-    'select_item', 'remove_from_cart', 'view_cart',
-    'add_shipping_info', 'add_payment_info', 'refund',
-    'view_item_list', 'select_promotion', 'view_promotion'
-  ];
-  if (ecommerceEvents.includes(lowercaseName)) {
-    return 'ecommerce';
-  }
-
-  // Firebase System Auto-events
-  const systemEvents = [
-    'first_open', 'session_start', 'user_engagement',
-    'app_clear_data', 'app_exception', 'app_update', 'os_update',
-    'notification_receive', 'notification_open', 'notification_dismiss',
-    'screen_active', 'screen_inactive'
-  ];
-  if (systemEvents.includes(lowercaseName) || lowercaseName.startsWith('firebase_') || lowercaseName.startsWith('_')) {
-    return 'system';
-  }
-
-  return 'custom';
-};
+export {
+  getEventCategory,
+  registerGAPlugin,
+  type GAEventCategory,
+  type GAPlugin,
+} from './gaAnalyticsRegistry';
 
 export const getCategoryColors = (category: string) => {
   switch (category) {

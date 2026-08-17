@@ -35,36 +35,62 @@ const getLogMessageWithBadges = (
     const remainingText = message.substring(fullPrefix.length);
     const tags = fullPrefix.match(/\[[^\]]+\]/g) || [];
 
-    const getTagColor = (tag: string) => {
-      const cleanTag = tag
-        .replace(/[\[\]]/g, '')
-        .trim()
-        .toUpperCase();
-      if (cleanTag === 'API') return AppColors.sky600;
-      if (cleanTag === 'TEST') return AppColors.green600;
-      if (cleanTag === 'APP') return AppColors.indigo600;
-      if (cleanTag === 'WARN') return AppColors.darkOrange || AppColors.lightOrange;
-      if (cleanTag === 'ERROR') return AppColors.errorColor;
-      return AppColors.slate600;
+    const getTagDecorator = (tag: string) => {
+      const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
+      if (clean === 'AXIOS') {
+        return { color: '#059669', icon: '⚡', label: 'AXIOS' };
+      }
+      if (clean === 'API' || clean === 'FETCH' || clean === 'HTTP' || clean === 'NETWORK') {
+        return { color: '#0284C7', icon: '🌐', label: clean };
+      }
+      if (clean === 'SAMPLE' || clean === 'BATCH') {
+        return { color: '#4F46E5', icon: '🎲', label: clean };
+      }
+      if (clean === 'REDUX' || clean === 'STORE' || clean === 'STATE') {
+        return { color: '#7C3AED', icon: '⚛️', label: clean };
+      }
+      if (clean === 'ANALYTICS' || clean === 'FIREBASE' || clean === 'GA4' || clean === 'GA') {
+        return { color: '#0D9488', icon: '📊', label: clean };
+      }
+      if (clean === 'AUTH' || clean === 'TOKEN' || clean === 'SESSION') {
+        return { color: '#D97706', icon: '🔑', label: clean };
+      }
+      if (clean === 'APP') {
+        return { color: '#4F46E5', icon: '📱', label: 'APP' };
+      }
+      if (clean === 'TEST') {
+        return { color: '#10B981', icon: '🧪', label: 'TEST' };
+      }
+      if (clean === 'WARN' || clean === 'WARNING') {
+        return { color: '#D97706', icon: '⚠️', label: 'WARN' };
+      }
+      if (clean === 'ERROR' || clean === 'CRASH' || clean === 'BUG') {
+        return { color: '#DC2626', icon: '💥', label: 'ERROR' };
+      }
+      if (clean === 'PERF' || clean === 'RENDER') {
+        return { color: '#8B5CF6', icon: '⚡', label: clean };
+      }
+      return { color: AppColors.slate600, icon: '🏷️', label: clean };
     };
 
     return (
       <View style={{flexDirection: 'column', gap: 6}}>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 4}}>
+        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 5}}>
           {tags.map((tag, i) => {
-            const color = getTagColor(tag);
+            const dec = getTagDecorator(tag);
             return (
               <View
                 key={i}
                 style={[
                   styles.prefixTag,
                   {
-                    backgroundColor: `${color}15`,
-                    borderColor: `${color}35`,
+                    backgroundColor: `${dec.color}15`,
+                    borderColor: `${dec.color}35`,
                   },
                 ]}>
-                <Text style={[styles.prefixTagText, {color}]}>
-                  {tag.replace(/[\[\]]/g, '')}
+                <Text style={{fontSize: 9.5}}>{dec.icon}</Text>
+                <Text style={[styles.prefixTagText, {color: dec.color}]}>
+                  {dec.label}
                 </Text>
               </View>
             );
@@ -517,9 +543,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   prefixTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    paddingHorizontal: 6.5,
+    paddingVertical: 2,
+    borderRadius: 5,
     borderWidth: 1,
   },
   prefixTagText: {

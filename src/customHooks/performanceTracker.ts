@@ -234,7 +234,7 @@ const INITIAL_RENDER_PROFILES: ComponentRenderProfile[] = [
   },
 ];
 
-const INITIAL_EVENTS: PerformanceEvent[] = [
+export const INITIAL_EVENTS: PerformanceEvent[] = [
   {
     id: 'perf-1',
     timestamp: Date.now() - 48000,
@@ -629,3 +629,48 @@ export const usePerformanceTracker = () => {
     triggerGc,
   };
 };
+
+const globalPerformanceEvents: PerformanceEvent[] = [...INITIAL_EVENTS];
+const performanceListeners = new Set<(events: PerformanceEvent[]) => void>();
+
+export const logPerformanceEvent = (
+  event: Omit<PerformanceEvent, 'id' | 'timestamp'> & { id?: string; timestamp?: number },
+) => {
+  const fullEvent: PerformanceEvent = {
+    id: event.id || `perf-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    timestamp: event.timestamp || Date.now(),
+    ...event,
+  };
+  globalPerformanceEvents.unshift(fullEvent);
+  if (globalPerformanceEvents.length > 100) {
+    globalPerformanceEvents.pop();
+  }
+  performanceListeners.forEach(listener => {
+    try {
+      listener([...globalPerformanceEvents]);
+    } catch {}
+  });
+  return fullEvent;
+};
+
+export const clearPerformanceEvents = () => {
+  globalPerformanceEvents.length = 0;
+  performanceListeners.forEach(listener => {
+    try {
+      listener([]);
+    } catch {}
+  });
+};
+
+export const subscribePerformanceEvents = (
+  listener: (events: PerformanceEvent[]) => void,
+) => {
+  performanceListeners.add(listener);
+  listener([...globalPerformanceEvents]);
+  return () => {
+    performanceListeners.delete(listener);
+  };
+};
+
+export const getPerformanceEvents = () => [...globalPerformanceEvents];
+

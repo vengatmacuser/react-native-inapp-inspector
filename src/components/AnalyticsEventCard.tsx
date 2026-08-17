@@ -13,7 +13,14 @@ import {
 import {useTranslation} from '../i18n';
 import HighlightText from './HighlightText';
 import TouchableScale from './TouchableScale';
-import {CartIcon, MoneyIcon} from './NetworkIcons';
+import {
+  CartIcon,
+  MoneyIcon,
+  GlobeIcon,
+  BoltIcon,
+  SparkleIcon,
+  ClockIcon,
+} from './NetworkIcons';
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -32,6 +39,9 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
     ? Object.keys(event.userProperties).length
     : 0;
 
+  const catKey = getEventCategory(event.name);
+  const tagColors = getCategoryColors(catKey);
+
   // Flash animation for newly logged events
   const flashOpacity = useRef(new Animated.Value(isNew ? 1 : 0)).current;
   useEffect(() => {
@@ -46,14 +56,25 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
 
   const showGap = msSincePrev != null && msSincePrev >= 2000;
 
+  const categoryLabel =
+    catKey === 'page_view'
+      ? t('analytics.pageViewCategory')
+      : catKey === 'ecommerce'
+      ? t('analytics.ecommerceCategory')
+      : catKey === 'system'
+      ? t('analytics.systemCategory')
+      : t('analytics.customCategory');
+
   return (
     <View style={cardStyles.container}>
       {/* ── Gap Indicator ─────────────────────────────────────────────────── */}
       {showGap && (
         <View style={cardStyles.gapContainer}>
+          <View style={cardStyles.gapLine} />
           <Text style={[cardStyles.gapText, {color: AppColors.grayTextWeak}]}>
-            {formatGap(msSincePrev)}
+            +{formatGap(msSincePrev)}
           </Text>
+          <View style={cardStyles.gapLine} />
         </View>
       )}
 
@@ -63,8 +84,8 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
         style={[
           cardStyles.modernCard,
           {
-            backgroundColor: AppColors.primaryLight,
-            borderColor: AppColors.grayBorderSecondary,
+            borderLeftWidth: 3.5,
+            borderLeftColor: tagColors.text,
           },
         ]}>
         <Animated.View
@@ -80,48 +101,49 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
           ]}
         />
 
-        {/* Top Row: Event Name & Timestamp */}
+        {/* Top Row: Icon Badge, Event Name, Category Badge & Timestamp */}
         <View style={cardStyles.cardHeader}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 7, flex: 1}}>
+            {/* Category Icon Badge */}
             <View
               style={[
-                cardStyles.nameBadge,
-                {backgroundColor: `${color}1A`, borderColor: `${color}30`},
+                cardStyles.iconBadge,
+                {backgroundColor: tagColors.bg, borderColor: tagColors.border},
               ]}>
-              <HighlightText
-                text={event.name}
-                search={searchStr}
-                style={[cardStyles.eventName, {color: color}]}
-                highlightStyle={cardStyles.highlight}
-              />
+              {catKey === 'ecommerce' ? (
+                <CartIcon color={tagColors.text} size={12} />
+              ) : catKey === 'page_view' ? (
+                <GlobeIcon color={tagColors.text} size={12} />
+              ) : catKey === 'system' ? (
+                <BoltIcon color={tagColors.text} size={12} />
+              ) : (
+                <SparkleIcon color={tagColors.text} size={12} />
+              )}
             </View>
 
-            {(() => {
-              const catKey = getEventCategory(event.name);
-              const tagColors = getCategoryColors(catKey);
-              const categoryLabel =
-                catKey === 'page_view'
-                  ? t('analytics.pageViewCategory')
-                  : catKey === 'ecommerce'
-                  ? t('analytics.ecommerceCategory')
-                  : catKey === 'system'
-                  ? t('analytics.systemCategory')
-                  : t('analytics.customCategory');
-              return (
-                <View
-                  style={[
-                    cardStyles.categoryBadge,
-                    {backgroundColor: tagColors.bg, borderColor: tagColors.border},
-                  ]}>
-                  <Text
-                    style={[cardStyles.categoryText, {color: tagColors.text}]}>
-                    {categoryLabel}
-                  </Text>
-                </View>
-              );
-            })()}
+            {/* Event Name */}
+            <HighlightText
+              text={event.name}
+              search={searchStr}
+              style={[cardStyles.eventName, {color: AppColors.primaryBlack}]}
+              highlightStyle={cardStyles.highlight}
+              numberOfLines={1}
+            />
 
-            {event.count !== undefined ? (
+            {/* Category Pill Tag */}
+            <View
+              style={[
+                cardStyles.categoryBadge,
+                {backgroundColor: tagColors.bg, borderColor: tagColors.border},
+              ]}>
+              <Text
+                style={[cardStyles.categoryText, {color: tagColors.text}]}>
+                {categoryLabel}
+              </Text>
+            </View>
+
+            {/* Duplicate Multiplier */}
+            {event.count !== undefined && event.count > 0 ? (
               <View
                 style={[
                   cardStyles.duplicateBadge,
@@ -136,17 +158,21 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                     event.count === 1 && {color: AppColors.grayTextStrong},
                   ]}>
                   {event.count}×
-                  {event.count > 1 ? ` ${t('analytics.duplicate')}` : ''}
                 </Text>
               </View>
             ) : null}
           </View>
-          <Text style={[cardStyles.timestamp, {color: AppColors.grayTextWeak}]}>
-            {formatTime(event.timestamp)}
-          </Text>
+
+          {/* Timestamp */}
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+            <ClockIcon color={AppColors.grayTextWeak} size={10} />
+            <Text style={[cardStyles.timestamp, {color: AppColors.grayTextWeak}]}>
+              {formatTime(event.timestamp)}
+            </Text>
+          </View>
         </View>
 
-        {/* Bottom Row: Metadata Chips & Sparkline */}
+        {/* Bottom Row: Metadata Chips (Screen, Params, Value) */}
         <View style={cardStyles.cardBody}>
           <View style={cardStyles.chipsRow}>
             {(() => {
@@ -166,15 +192,15 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                   style={[
                     cardStyles.chip,
                     {
-                      backgroundColor: AppColors.grayBackground,
-                      borderColor: AppColors.grayBorderSecondary,
+                      backgroundColor: `${AppColors.amber500}12`,
+                      borderColor: `${AppColors.amber500}2E`,
                     },
                   ]}>
                   <View
-                    style={[cardStyles.screenDot, {backgroundColor: color}]}
+                    style={[cardStyles.screenDot, {backgroundColor: AppColors.amber500}]}
                   />
                   <Text
-                    style={[cardStyles.chipText, {color: AppColors.grayText}]}
+                    style={[cardStyles.chipText, {color: AppColors.amber700, fontFamily: AppFonts.interBold}]}
                     numberOfLines={1}>
                     {screenNameStr}
                   </Text>
@@ -200,12 +226,12 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                 style={[
                   cardStyles.chip,
                   {
-                    backgroundColor: AppColors.grayBackground,
-                    borderColor: AppColors.grayBorderSecondary,
+                    backgroundColor: `${AppColors.brandPurple}10`,
+                    borderColor: `${AppColors.brandPurple}25`,
                   },
                 ]}>
                 <Text
-                  style={[cardStyles.chipText, {color: AppColors.grayText}]}>
+                  style={[cardStyles.chipText, {color: AppColors.brandPurple, fontFamily: AppFonts.interBold}]}>
                   ★ {userPropCount} {t('analytics.props')}
                 </Text>
               </View>
@@ -223,7 +249,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                         borderColor: AppColors.amberBorder,
                       },
                     ]}>
-                    <CartIcon color={AppColors.amber700} size={12} />
+                    <CartIcon color={AppColors.amber700} size={11} />
                     <Text
                       style={[
                         cardStyles.chipText,
@@ -248,21 +274,21 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
               const currency = event.params?.currency ?? '';
               const isPrimitive =
                 typeof val === 'string' || typeof val === 'number';
-              if (isPrimitive) {
+              if (val != null && isPrimitive && String(val).trim() !== '') {
                 const currencyStr =
-                  typeof currency === 'string' || typeof currency === 'number'
-                    ? String(currency)
+                  typeof currency === 'string' && currency.trim() !== ''
+                    ? currency.toUpperCase()
                     : '';
                 return (
                   <View
                     style={[
                       cardStyles.chip,
                       {
-                        backgroundColor: AppColors.emeraldBg,
-                        borderColor: AppColors.emeraldBorder,
+                        backgroundColor: `${AppColors.emerald500}15`,
+                        borderColor: `${AppColors.emerald500}35`,
                       },
                     ]}>
-                    <MoneyIcon color={AppColors.emerald600} size={12} />
+                    <MoneyIcon color={AppColors.emerald600} size={11} />
                     <Text
                       style={[
                         cardStyles.chipText,
@@ -289,52 +315,63 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
 
 const cardStyles = StyleSheet.create({
   container: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 3,
   },
   gapContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 4,
+    justifyContent: 'center',
+    marginVertical: 6,
+    gap: 8,
+  },
+  gapLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: `${AppColors.dividerColor}`,
   },
   gapText: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 10,
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
     color: AppColors.grayTextWeak,
     letterSpacing: 0.5,
   },
   modernCard: {
     backgroundColor: AppColors.white,
-    borderRadius: 8,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
-    padding: 8,
+    padding: 10,
     shadowColor: AppColors.black,
     shadowOpacity: 0.03,
     shadowRadius: 3,
     shadowOffset: {width: 0, height: 1},
     elevation: 1,
     overflow: 'hidden',
+    gap: 8,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
   },
-  nameBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
+  iconBadge: {
+    width: 22,
+    height: 22,
     borderRadius: 6,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   eventName: {
     fontFamily: AppFonts.interBold,
-    fontSize: 12,
-    letterSpacing: 0.2,
+    fontSize: 13,
+    letterSpacing: 0.1,
+    color: AppColors.primaryBlack,
   },
   timestamp: {
     fontFamily: AppFonts.interMedium,
-    fontSize: 11,
+    fontSize: 10,
     color: AppColors.grayTextWeak,
   },
   highlight: {
@@ -344,25 +381,24 @@ const cardStyles = StyleSheet.create({
   },
   cardBody: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   chipsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
     flex: 1,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.grayBackground,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 5,
     borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
+    gap: 3.5,
   },
   chipText: {
     fontFamily: AppFonts.interMedium,
@@ -370,17 +406,16 @@ const cardStyles = StyleSheet.create({
     color: AppColors.grayText,
   },
   screenDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 4,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   duplicateBadge: {
     backgroundColor: AppColors.roseBg,
     borderColor: AppColors.roseBorder,
     borderWidth: 1,
     paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingVertical: 1.5,
     borderRadius: 4,
   },
   duplicateText: {
@@ -388,31 +423,18 @@ const cardStyles = StyleSheet.create({
     fontSize: 9,
     color: AppColors.rose600,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   categoryBadge: {
     borderWidth: 1,
     paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingVertical: 1.5,
     borderRadius: 4,
   },
   categoryText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 9,
+    fontSize: 8.5,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  miniGraphWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 18,
-    gap: 2,
-    marginLeft: 12,
-  },
-  miniGraphBar: {
-    width: 4,
-    borderRadius: 2,
-    opacity: 0.7,
+    letterSpacing: 0.4,
   },
 });
 

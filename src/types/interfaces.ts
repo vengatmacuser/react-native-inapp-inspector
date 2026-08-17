@@ -47,6 +47,22 @@ export interface AnalyticsEvent {
   pageLocation?: string;
 }
 
+export interface AnalyticsFilters {
+  categories: Set<string>;
+  screens: Set<string>;
+  sources: Set<string>;
+  userTypes: Set<string>;
+  timeWindow: 'all' | '1m' | '5m' | '15m' | '1h';
+  payloadComplexity: 'all' | 'none' | 'simple' | 'heavy';
+  hasRevenue: boolean;
+  hasItems: boolean;
+  hasUserProps: boolean;
+  hasParams: boolean;
+  onlyDuplicates: boolean;
+  onlyConversions: boolean;
+  sortBy: 'time_desc' | 'time_asc' | 'revenue_desc' | 'count_desc';
+}
+
 // ─── Network ──────────────────────────────────────────────────────────────────
 
 export interface NetworkLog {
@@ -235,6 +251,10 @@ export interface InspectorContextValue {
   filteredAnalyticsEvents: (AnalyticsEvent & {count?: number})[];
   analyticsSearch: string;
   setAnalyticsSearch: React.Dispatch<React.SetStateAction<string>>;
+  analyticsFilters: AnalyticsFilters;
+  setAnalyticsFilters: React.Dispatch<React.SetStateAction<AnalyticsFilters>>;
+  isAnalyticsFilterApplied: boolean;
+  resetAnalyticsFilters: () => void;
   newEventIds: Set<number>;
   isAnalyticsLayoutReady: boolean;
   setIsAnalyticsLayoutReady: React.Dispatch<React.SetStateAction<boolean>>;

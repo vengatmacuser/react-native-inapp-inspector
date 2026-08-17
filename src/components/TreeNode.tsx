@@ -30,6 +30,21 @@ const TreeNode = React.memo(function TreeNode({
   const isObject = typeof data === 'object' && data !== null;
   const isArray = Array.isArray(data);
 
+  // Declare all hooks at the top unconditionally (prevents "Rendered fewer hooks than expected" error)
+  const treeChevronAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
+  useEffect(() => {
+    Animated.timing(treeChevronAnim, {
+      toValue: open ? 1 : 0,
+      duration: 160,
+      useNativeDriver: true,
+    }).start();
+  }, [open]);
+
+  const treeChevronRotate = treeChevronAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
   function renderHighlighted(text: string): React.ReactNode[] {
     if (text === 'null' || text === 'undefined') {
       return [
@@ -114,19 +129,6 @@ const TreeNode = React.memo(function TreeNode({
     : Object.entries(data as Record<string, unknown>);
 
   const countLabel = isArray ? `[${entries.length}]` : `{${entries.length}}`;
-
-  const treeChevronAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
-  useEffect(() => {
-    Animated.timing(treeChevronAnim, {
-      toValue: open ? 1 : 0,
-      duration: 160,
-      useNativeDriver: true,
-    }).start();
-  }, [open]);
-  const treeChevronRotate = treeChevronAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
 
   return (
     <View style={indentStyle}>

@@ -26,6 +26,9 @@ import {
   CloseWhite,
   ChevronIcon,
   ClockIcon,
+  AppleIcon,
+  AndroidIcon,
+  PackageBoxIcon,
 } from '../NetworkIcons';
 
 const InspectorHeader = React.memo(() => {
@@ -287,10 +290,18 @@ const InspectorHeader = React.memo(() => {
                         }}>
                         <View
                           style={{
-                            paddingHorizontal: 5,
-                            paddingVertical: 2,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 3.5,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2.5,
                             backgroundColor: `${AppColors.white}47`,
                           }}>
+                          {Platform.OS === 'ios' ? (
+                            <AppleIcon color={AppColors.white} size={10} />
+                          ) : (
+                            <AndroidIcon color={AppColors.white} size={10} />
+                          )}
                           <Text
                             style={{
                               fontFamily: AppFonts.interBold,
@@ -304,7 +315,7 @@ const InspectorHeader = React.memo(() => {
                         <View
                           style={{
                             paddingHorizontal: 5,
-                            paddingVertical: 2,
+                            paddingVertical: 2.5,
                             backgroundColor: `${AppColors.white}1F`,
                           }}>
                           <Text
@@ -328,10 +339,14 @@ const InspectorHeader = React.memo(() => {
                         }}>
                         <View
                           style={{
-                            paddingHorizontal: 5,
-                            paddingVertical: 2,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 3.5,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2.5,
                             backgroundColor: `${AppColors.white}47`,
                           }}>
+                          <PackageBoxIcon color={AppColors.white} size={10} />
                           <Text
                             style={{
                               fontFamily: AppFonts.interBold,

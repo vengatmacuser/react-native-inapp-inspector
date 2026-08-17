@@ -1,3 +1,4 @@
+import {NativeModules} from 'react-native';
 import {ConsoleLog} from '../types';
 import {IGNORED_LOG_PREFIXES} from './logFilters';
 
@@ -27,14 +28,36 @@ const formatArgs = (args: any[]): string => {
     .join(' ');
 };
 
-// ─── Symbolication Helper for React Native Metro ────────────────────────────
+// ─── Dynamic Symbolication Helper for React Native Metro ────────────────────
+
+const getMetroSymbolicateUrl = (): string => {
+  try {
+    const scriptURL = (NativeModules.SourceCode as any)?.scriptURL;
+    if (typeof scriptURL === 'string') {
+      const match = scriptURL.match(/^(https?:\/\/[^\/]+)/);
+      if (match) {
+        return `${match[1]}/symbolicate`;
+      }
+    }
+  } catch {}
+  return 'http://localhost:8081/symbolicate';
+};
+
+interface MetroSymbolicatedFrame {
+  file: string;
+  lineNumber?: number;
+  column?: number;
+  methodName?: string;
+  collapse?: boolean;
+}
 
 const symbolicateStack = async (
   stackString: string,
-): Promise<{file: string; lineNumber?: number; column?: number; methodName: string}[] | null> => {
-  if (typeof __DEV__ === 'undefined' || !__DEV__) return null;
+): Promise<MetroSymbolicatedFrame[] | null> => {
+  if (typeof __DEV__ === 'undefined' || !__DEV__ || !stackString) return null;
+  
+  // 1. Try React Native built-in symbolicateStackTrace if available
   try {
-    // 1. Try React Native's built-in symbolicateStackTrace if available
     let symModule: any = null;
     try {
       // @ts-ignore
@@ -44,24 +67,67 @@ const symbolicateStack = async (
     const symFn = symModule?.default || symModule;
     if (typeof symFn === 'function') {
       const res = await symFn(stackString);
-      if (res && Array.isArray(res.stack)) {
+      if (res && Array.isArray(res.stack) && res.stack.length > 0) {
         return res.stack;
       }
     }
   } catch {}
 
+  // 2. Direct HTTP symbolication to dynamic Metro packager endpoint
   try {
-    // 2. Direct HTTP symbolication to Metro packager endpoint
-    const metroUrl = 'http://localhost:8081/symbolicate';
-    const response = await fetch(metroUrl, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({stack: stackString}),
-    });
-    if (response.ok) {
-      const json = await response.json();
-      if (json && Array.isArray(json.stack)) {
-        return json.stack;
+    const metroUrl = getMetroSymbolicateUrl();
+    const scriptURL = (NativeModules.SourceCode as any)?.scriptURL || 'http://localhost:8081/index.bundle?platform=ios&dev=true';
+
+    // Parse Hermes stack string into frame objects for Metro symbolicate endpoint
+    const lines = stackString.split('\n');
+    const inputFrames: any[] = [];
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim().replace(/^at /, '');
+      if (!line) continue;
+
+      let methodName = '<anonymous>';
+      let locationPart = line;
+
+      const parenMatch = line.match(/^(.*?)\s*\((.*?)\)$/);
+      if (parenMatch) {
+        methodName = parenMatch[1].trim() || '<anonymous>';
+        locationPart = parenMatch[2].trim();
+      } else if (line.includes('@')) {
+        const atIdx = line.indexOf('@');
+        methodName = line.substring(0, atIdx).trim() || '<anonymous>';
+        locationPart = line.substring(atIdx + 1).trim();
+      }
+
+      locationPart = locationPart.replace(/^address at /, '');
+
+      const locMatch = locationPart.match(/^(.*?):(\d+):(\d+)$/);
+      if (locMatch) {
+        let file = locMatch[1];
+        if (!file.startsWith('http') && file !== 'native' && !file.includes('InternalBytecode')) {
+          file = scriptURL;
+        }
+        inputFrames.push({
+          file,
+          lineNumber: parseInt(locMatch[2], 10),
+          column: parseInt(locMatch[3], 10),
+          methodName,
+        });
+      }
+    }
+
+    if (inputFrames.length > 0) {
+      const response = await fetch(metroUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({stack: inputFrames}),
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        if (json && Array.isArray(json.stack) && json.stack.length > 0) {
+          return json.stack;
+        }
       }
     }
   } catch {}
@@ -194,41 +260,10 @@ const addLog = (
     notify();
 
     // Asynchronously symbolicate stack trace via Metro in development
-    if (newLog.stack && typeof __DEV__ !== 'undefined' && __DEV__) {
-      symbolicateStack(newLog.stack)
-        .then(symbolicatedFrames => {
-          if (symbolicatedFrames && symbolicatedFrames.length > 0) {
-            const validFrames = symbolicatedFrames.filter(
-              f =>
-                f.file &&
-                !f.file.includes('react-native/Libraries') &&
-                !f.file.includes('node_modules') &&
-                !isLoggerInternal(f.file) &&
-                !isLoggerInternal(f.methodName || ''),
-            );
-            const topFrame = validFrames[0] || symbolicatedFrames[0];
-            if (topFrame) {
-              const cleanMethod = topFrame.methodName || 'anonymous';
-              const cleanFile = topFrame.file.split('/').pop() || topFrame.file;
-              newLog.caller = `${cleanMethod} (${cleanFile}:${topFrame.lineNumber || 1}:${topFrame.column || 1})`;
-            }
-            newLog.stack = symbolicatedFrames
-              .filter(f => !isLoggerInternal(f.file || '') && !isLoggerInternal(f.methodName || ''))
-              .map(
-                f =>
-                  `    at ${f.methodName || 'anonymous'} (${f.file}:${f.lineNumber || 1}:${f.column || 1})`,
-              )
-              .join('\n');
-            notify();
-          }
-        })
-        .catch(() => {});
-    }
-
-    // Asynchronously symbolicate stack trace using Metro in DEV mode
-    if (stackToUse && typeof __DEV__ !== 'undefined' && __DEV__) {
+    const stackToSymbolicate = errorStack || stackToUse || stack;
+    if (stackToSymbolicate && typeof __DEV__ !== 'undefined' && __DEV__) {
       const currentLogId = newLog.id;
-      symbolicateStack(stackToUse)
+      symbolicateStack(stackToSymbolicate)
         .then(symFrames => {
           if (symFrames && Array.isArray(symFrames) && symFrames.length > 0) {
             const symLines: string[] = [];
@@ -239,6 +274,22 @@ const addLog = (
               const method = frame.methodName || '<anonymous>';
               const line = frame.lineNumber != null ? `:${frame.lineNumber}` : '';
               const col = frame.column != null ? `:${frame.column}` : '';
+
+              // Skip logger internal frames
+              const isInternal =
+                file.includes('customHooks/consoleLogger') ||
+                file.includes('setupConsoleLogger') ||
+                file.includes('getStackDetails') ||
+                file.includes('react-native-inapp-inspector/dist') ||
+                file.includes('react-native-inapp-inspector/src') ||
+                method === 'getStackDetails' ||
+                method === 'addLog' ||
+                (method === 'log' && file.includes('consoleLogger'));
+
+              if (isInternal) {
+                continue;
+              }
+
               const lineStr = `at ${method} (${file}${line}${col})`;
               symLines.push(lineStr);
 
@@ -246,15 +297,14 @@ const addLog = (
                 file &&
                 !file.includes('node_modules') &&
                 !file.includes('react-native/') &&
-                !file.includes('consoleLogger') &&
-                !file.includes('setupConsoleLogger') &&
                 (file.endsWith('.tsx') ||
                   file.endsWith('.jsx') ||
                   file.endsWith('.ts') ||
                   file.endsWith('.js'));
 
               if (!symUserCaller && isUserFile) {
-                symUserCaller = `${method} (${file}${line}${col})`;
+                const cleanFile = file.split('/').pop() || file;
+                symUserCaller = `${method} (${cleanFile}${line}${col})`;
               }
             }
 

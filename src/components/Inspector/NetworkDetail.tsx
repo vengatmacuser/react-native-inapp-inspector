@@ -42,6 +42,8 @@ import {
   DownloadIcon,
   ClearIcon,
   SizeIcon,
+  ExternalLinkIcon,
+  ClockIcon,
 } from '../NetworkIcons';
 
 const NetworkDetail = React.memo(() => {
@@ -129,8 +131,11 @@ const NetworkDetail = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 8,
+                      gap: 6,
+                      flexWrap: 'wrap',
+                      flex: 1,
                     }}>
+                    {/* Method Chip */}
                     <View
                       style={[
                         styles.methodBadge,
@@ -139,6 +144,9 @@ const NetworkDetail = React.memo(() => {
                             METHOD_COLORS[
                               selected.method as Method
                             ] ?? METHOD_COLORS.ALL,
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 7,
                         },
                       ]}>
                       <Text
@@ -146,12 +154,14 @@ const NetworkDetail = React.memo(() => {
                           styles.methodBadgeText,
                           {
                             color: AppColors.white,
+                            fontSize: 10.5,
                           },
                         ]}>
                         {selected.method}
                       </Text>
                     </View>
 
+                    {/* Status Pill */}
                     {selected.status != null && (
                       <View
                         style={[
@@ -159,16 +169,19 @@ const NetworkDetail = React.memo(() => {
                           {
                             backgroundColor:
                               selected.status === 0
-                                ? `${AppColors.errorColor}15`
+                                ? `${AppColors.errorColor}18`
                                 : `${getStatusColor(
                                     selected.status,
-                                  )}15`,
+                                  )}18`,
                             borderColor:
                               selected.status === 0
                                 ? `${AppColors.errorColor}40`
                                 : `${getStatusColor(
                                     selected.status,
                                   )}40`,
+                            paddingHorizontal: 7,
+                            paddingVertical: 3.5,
+                            borderRadius: 7,
                           },
                         ]}>
                         {selected.status === 0 ? (
@@ -177,20 +190,16 @@ const NetworkDetail = React.memo(() => {
                             color={AppColors.errorColor}
                           />
                         ) : (
-                          <Svg
-                            width={6}
-                            height={6}
-                            viewBox="0 0 10 10"
-                            fill="none">
-                            <Circle
-                              cx="5"
-                              cy="5"
-                              r="5"
-                              fill={getStatusColor(
+                          <View
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: 3,
+                              backgroundColor: getStatusColor(
                                 selected.status,
-                              )}
-                            />
-                          </Svg>
+                              ),
+                            }}
+                          />
                         )}
                         <Text
                           style={[
@@ -202,45 +211,83 @@ const NetworkDetail = React.memo(() => {
                                   : getStatusColor(
                                       selected.status,
                                     ),
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
                             },
                           ]}>
                           {selected.status === 0
                             ? 'Failed'
-                            : String(selected.status)}
+                            : `${selected.status} ${selected.status === 200 ? 'OK' : ''}`}
                         </Text>
                       </View>
                     )}
 
+                    {/* Duration Pill */}
                     {selected.duration != null && (
                       <View
                         style={[
                           styles.chip,
                           {
-                            backgroundColor:
-                              `${AppColors.purple}14`,
-                            borderColor:
-                              `${AppColors.purple}2E`,
+                            backgroundColor: `${AppColors.brandPurple}14`,
+                            borderColor: `${AppColors.brandPurple}30`,
+                            paddingHorizontal: 7,
+                            paddingVertical: 3.5,
+                            borderRadius: 7,
+                            gap: 4,
                           },
                         ]}>
+                        <ClockIcon color={AppColors.brandPurple} size={10} />
                         <Text
                           style={[
                             styles.chipText,
-                            {color: AppColors.purple},
+                            {
+                              color: AppColors.brandPurple,
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
+                            },
                           ]}>
                           {selected.duration}ms
                         </Text>
                       </View>
                     )}
+
+                    {/* Size Pill */}
+                    {selected.response != null && (
+                      <View
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: `${AppColors.sky600}14`,
+                            borderColor: `${AppColors.sky600}30`,
+                            paddingHorizontal: 7,
+                            paddingVertical: 3.5,
+                            borderRadius: 7,
+                            gap: 4,
+                          },
+                        ]}>
+                        <SizeIcon color={AppColors.sky600} size={10} />
+                        <Text
+                          style={[
+                            styles.chipText,
+                            {
+                              color: AppColors.sky600,
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
+                            },
+                          ]}>
+                          {getSize(selected.response)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
+
                   <View style={styles.detailInfoRight}>
                     <TouchableScale
-                      style={styles.iconSquareBtn}
-                      onPress={() =>
-                        Linking.openURL(detailDisplayUrl)
-                      }
+                      style={[styles.iconSquareBtn, {backgroundColor: `${AppColors.sky600}15`}]}
+                      onPress={() => Linking.openURL(detailDisplayUrl)}
                       hitSlop={12}>
-                      <GlobeIcon
-                        color={AppColors.grayTextWeak}
+                      <ExternalLinkIcon
+                        color={AppColors.sky600}
                         size={14}
                       />
                     </TouchableScale>
@@ -261,6 +308,7 @@ const NetworkDetail = React.memo(() => {
                   </View>
                 </View>
 
+                {/* Full Live URL Analysis Card */}
                 <Pressable
                   style={{
                     backgroundColor: AppColors.grayBackground,
@@ -268,85 +316,107 @@ const NetworkDetail = React.memo(() => {
                     borderWidth: 1,
                     borderColor: AppColors.dividerColor,
                     padding: 10,
-                    marginTop: 6,
+                    marginTop: 8,
+                    gap: 6,
                   }}
-                  onPress={() =>
-                    Linking.openURL(detailDisplayUrl)
-                  }>
+                  onPress={() => Linking.openURL(detailDisplayUrl)}>
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      marginBottom: 2,
                     }}>
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interMedium,
-                        fontSize: 10,
-                        color: AppColors.grayTextWeak,
-                        flex: 1,
-                      }}
-                      numberOfLines={1}>
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                       {schemeStr ? (
-                        <>
+                        <View
+                          style={{
+                            backgroundColor: schemeStr.startsWith('https')
+                              ? `${AppColors.green600}18`
+                              : `${AppColors.amber500}18`,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                            borderRadius: 4,
+                          }}>
                           <Text
                             style={{
-                              color: AppColors.slate400,
-                              fontFamily: AppFonts.interRegular,
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 9,
+                              color: schemeStr.startsWith('https')
+                                ? AppColors.green600
+                                : AppColors.amber500,
                             }}>
-                            {schemeStr}
+                            {schemeStr.replace('://', '').toUpperCase()}
                           </Text>
-                          {hostStr}
-                        </>
-                      ) : (
-                        hostStr || 'API Endpoint'
-                      )}
-                    </Text>
-                    {queryStr ? (
+                        </View>
+                      ) : null}
+
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10,
+                          color: AppColors.grayTextWeak,
+                          letterSpacing: 0.4,
+                          textTransform: 'uppercase',
+                        }}>
+                        ENDPOINT URL ↗
+                      </Text>
+                    </View>
+
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                      {queryStr ? (
+                        <View
+                          style={{
+                            backgroundColor: `${AppColors.purple}14`,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                            borderRadius: 4,
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 8.5,
+                              color: AppColors.purple,
+                            }}>
+                            {t('network.queryParams')}
+                          </Text>
+                        </View>
+                      ) : null}
+
                       <View
                         style={{
-                          backgroundColor:
-                            `${AppColors.purple}14`,
-                          paddingHorizontal: 5,
-                          paddingVertical: 1,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 3,
+                          backgroundColor: `${AppColors.sky600}14`,
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
                           borderRadius: 4,
                         }}>
+                        <ExternalLinkIcon color={AppColors.sky600} size={10} />
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
-                            fontSize: 8.5,
-                            color: AppColors.purple,
+                            fontSize: 9,
+                            color: AppColors.sky600,
                           }}>
-                          {t('network.queryParams')}
+                          Open ↗
                         </Text>
                       </View>
-                    ) : null}
+                    </View>
                   </View>
+
+                  {/* Full Clickable Hyperlink */}
                   <Text
                     selectable={true}
                     style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 12,
-                      color: AppColors.primaryBlack,
-                      marginTop: 2,
-                    }}
-                    numberOfLines={2}>
-                    {pathStr}
+                      fontFamily: AppFonts.interMedium,
+                      fontSize: 12.5,
+                      color: AppColors.skyBlue,
+                      textDecorationLine: 'underline',
+                      lineHeight: 18,
+                    }}>
+                    {detailDisplayUrl}
                   </Text>
-                  {queryStr ? (
-                    <Text
-                      selectable={true}
-                      style={{
-                        fontFamily: AppFonts.interRegular,
-                        fontSize: 10,
-                        color: AppColors.grayTextWeak,
-                        marginTop: 4,
-                      }}
-                      numberOfLines={1}>
-                      {queryStr}
-                    </Text>
-                  ) : null}
                 </Pressable>
               </>
             );

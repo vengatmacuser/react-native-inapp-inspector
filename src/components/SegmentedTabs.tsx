@@ -21,44 +21,53 @@ const SegmentedTabs = React.memo(({tabs, activeKey, onChange, style}: SegmentedT
     style={[
       {
         flexDirection: 'row',
-        borderRadius: 8,
-        overflow: 'hidden',
+        borderRadius: 10,
+        backgroundColor: `${AppColors.slate200}80`,
+        padding: 3,
         borderWidth: 1,
         borderColor: AppColors.dividerColor,
-        backgroundColor: AppColors.primaryLight,
+        gap: 3,
       },
       style,
     ]}>
-    {tabs.map((tab, index) => {
+    {tabs.map((tab) => {
       const isActive = activeKey === tab.key;
       return (
         <Pressable
           key={tab.key}
           onPress={() => onChange(tab.key)}
-          style={{
-            flex: 1,
-            paddingVertical: 8,
-            paddingHorizontal: 8,
-            backgroundColor: isActive
-              ? AppColors.brandPurple
-              : AppColors.primaryLight,
-            borderRightWidth: index < tabs.length - 1 ? 1 : 0,
-            borderRightColor: AppColors.dividerColor,
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            flexDirection: 'row',
-          }}>
+          style={({pressed}) => [
+            {
+              flex: 1,
+              paddingVertical: 7,
+              paddingHorizontal: 6,
+              borderRadius: 7,
+              backgroundColor: isActive
+                ? AppColors.brandPurple
+                : 'transparent',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4.5,
+              flexDirection: 'row',
+              opacity: pressed ? 0.8 : 1,
+            },
+            isActive && {
+              shadowColor: AppColors.brandPurple,
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.25,
+              shadowRadius: 3,
+              elevation: 2,
+            },
+          ]}>
           {tab.icon ? tab.icon(isActive) : null}
           <Text
             style={{
               fontFamily: AppFonts.interBold,
-              fontSize: 10,
+              fontSize: 10.5,
               color: isActive
                 ? AppColors.white
-                : AppColors.grayTextWeak,
-              textTransform: 'capitalize',
-              letterSpacing: 0.3,
+                : AppColors.grayText,
+              letterSpacing: 0.2,
             }}>
             {tab.label}
           </Text>

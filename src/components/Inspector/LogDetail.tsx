@@ -67,6 +67,7 @@ const LogDetail = React.memo(() => {
 
   const [stackViewMode, setStackViewMode] = useState<'structured' | 'raw'>('structured');
   const [stackSource, setStackSource] = useState<'caller' | 'error'>('caller');
+  const [stackFilter, setStackFilter] = useState<'app' | 'all'>('app');
 
   const activeStackString = useMemo(() => {
     if (!selectedLog) return '';
@@ -76,20 +77,6 @@ const LogDetail = React.memo(() => {
     return selectedLog.stack || selectedLog.caller || '';
   }, [selectedLog, stackSource]);
 
-  const originFrame: ParsedStackFrame | null = useMemo(() => {
-    if (!selectedLog) return null;
-    if (selectedLog.caller && selectedLog.caller !== 'Unknown') {
-      return parseStackLine(selectedLog.caller, true);
-    }
-    if (selectedLog.stack) {
-      const firstLine = selectedLog.stack
-        .split('\n')
-        .find(l => l.trim().length > 0);
-      if (firstLine) return parseStackLine(firstLine, true);
-    }
-    return null;
-  }, [selectedLog]);
-
   const parsedStackFrames: ParsedStackFrame[] = useMemo(() => {
     if (!activeStackString) return [];
     return activeStackString
@@ -98,6 +85,31 @@ const LogDetail = React.memo(() => {
       .filter(l => l.length > 0)
       .map((line, idx) => parseStackLine(line, idx === 0));
   }, [activeStackString]);
+
+  const appStackFrames = useMemo(() => {
+    return parsedStackFrames.filter(f => f.frameType === 'app' || !f.isRuntimeNoise);
+  }, [parsedStackFrames]);
+
+  const displayedFrames = useMemo(() => {
+    if (stackFilter === 'app' && appStackFrames.length > 0) {
+      return appStackFrames;
+    }
+    return parsedStackFrames;
+  }, [stackFilter, appStackFrames, parsedStackFrames]);
+
+  const originFrame: ParsedStackFrame | null = useMemo(() => {
+    if (!selectedLog) return null;
+    if (appStackFrames.length > 0) {
+      return appStackFrames[0];
+    }
+    if (selectedLog.caller && selectedLog.caller !== 'Unknown') {
+      return parseStackLine(selectedLog.caller, true);
+    }
+    if (parsedStackFrames.length > 0) {
+      return parsedStackFrames[0];
+    }
+    return null;
+  }, [selectedLog, appStackFrames, parsedStackFrames]);
 
   if (!selectedLog) return null;
 
@@ -137,7 +149,7 @@ const LogDetail = React.memo(() => {
   const subTabs = [
     {
       key: 'output',
-      label: 'Output',
+      label: t('console.tabOutput'),
       icon: (isActive: boolean) => (
         <TerminalIcon
           color={isActive ? AppColors.white : AppColors.grayTextWeak}
@@ -149,7 +161,7 @@ const LogDetail = React.memo(() => {
       ? [
           {
             key: 'arguments',
-            label: `Args (${selectedLog.rawArgs?.length})`,
+            label: t('console.tabArgs', {count: selectedLog.rawArgs?.length}),
             icon: (isActive: boolean) => (
               <RequestIcon
                 color={isActive ? AppColors.white : AppColors.grayTextWeak}
@@ -163,7 +175,7 @@ const LogDetail = React.memo(() => {
       ? [
           {
             key: 'stack',
-            label: 'Stack Trace',
+            label: t('console.tabStack'),
             icon: (isActive: boolean) => (
               <LayersIcon
                 color={isActive ? AppColors.white : AppColors.grayTextWeak}
@@ -175,7 +187,7 @@ const LogDetail = React.memo(() => {
       : []),
     {
       key: 'metadata',
-      label: 'Metadata',
+      label: t('console.tabMetadata'),
       icon: (isActive: boolean) => (
         <InfoCircleIcon
           color={isActive ? AppColors.white : AppColors.grayTextWeak}
@@ -791,11 +803,13 @@ const LogDetail = React.memo(() => {
                   ? AppColors.primaryLight
                   : AppColors.grayBackground,
               }}>
+              {/* Header Top Row: Title, Mode switcher & Full copy */}
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
+                  gap: 8,
                 }}>
                 <Text
                   style={{
@@ -805,12 +819,97 @@ const LogDetail = React.memo(() => {
                     textTransform: 'uppercase',
                     letterSpacing: 0.4,
                   }}>
-                  {stackSource === 'error' ? 'Error Exception Stack' : 'Call Stack'} ({parsedStackFrames.length} frames)
+                  {stackSource === 'error'
+                    ? t('console.errorStack', {count: parsedStackFrames.length})
+                    : t('console.callStack', {count: parsedStackFrames.length})}
                 </Text>
-                <CopyButton
-                  value={activeStackString}
-                  label="Full Stack Trace"
-                />
+
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      backgroundColor: isDark ? AppColors.primaryLight : AppColors.white,
+                      borderRadius: 7,
+                      padding: 2,
+                      borderWidth: 1,
+                      borderColor: AppColors.dividerColor,
+                    }}>
+                    <Pressable
+                      onPress={() => setStackViewMode('structured')}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 3,
+                        paddingVertical: 3.5,
+                        paddingHorizontal: 7,
+                        borderRadius: 5,
+                        backgroundColor:
+                          stackViewMode === 'structured'
+                            ? AppColors.brandPurple
+                            : 'transparent',
+                      }}>
+                      <LayersIcon
+                        color={
+                          stackViewMode === 'structured'
+                            ? AppColors.white
+                            : AppColors.grayTextWeak
+                        }
+                        size={11}
+                      />
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10,
+                          color:
+                            stackViewMode === 'structured'
+                              ? AppColors.white
+                              : AppColors.grayTextStrong,
+                        }}>
+                        {t('console.cardsView')}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => setStackViewMode('raw')}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 3,
+                        paddingVertical: 3.5,
+                        paddingHorizontal: 7,
+                        borderRadius: 5,
+                        backgroundColor:
+                          stackViewMode === 'raw'
+                            ? AppColors.brandPurple
+                            : 'transparent',
+                      }}>
+                      <RawIcon
+                        color={
+                          stackViewMode === 'raw'
+                            ? AppColors.white
+                            : AppColors.grayTextWeak
+                        }
+                        size={11}
+                      />
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10,
+                          color:
+                            stackViewMode === 'raw'
+                              ? AppColors.white
+                              : AppColors.grayTextStrong,
+                        }}>
+                        {t('console.rawTraceView')}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <CopyButton
+                    value={activeStackString}
+                    label={t('console.fullStackTrace')}
+                  />
+                </View>
               </View>
 
               {/* Source Switcher if Error Stack exists */}
@@ -819,11 +918,11 @@ const LogDetail = React.memo(() => {
                   tabs={[
                     {
                       key: 'caller',
-                      label: 'Call Origin Stack',
+                      label: t('console.callOriginStack'),
                     },
                     {
                       key: 'error',
-                      label: 'Error Thrown Stack',
+                      label: t('console.errorThrownStack'),
                     },
                   ]}
                   activeKey={stackSource}
@@ -831,41 +930,47 @@ const LogDetail = React.memo(() => {
                 />
               )}
 
-              {/* Structured vs Raw View Mode Tabs */}
+              {/* Scope Filter Tabs (Full Width) */}
               <SegmentedTabs
                 tabs={[
                   {
-                    key: 'structured',
-                    label: 'Structured Cards',
-                    icon: (isActive: boolean) => (
-                      <LayersIcon
-                        color={isActive ? AppColors.white : AppColors.grayTextWeak}
-                        size={12}
-                      />
-                    ),
+                    key: 'app',
+                    label: t('console.appCodeScope', {count: appStackFrames.length}),
                   },
                   {
-                    key: 'raw',
-                    label: 'Raw Trace',
-                    icon: (isActive: boolean) => (
-                      <RawIcon
-                        color={isActive ? AppColors.white : AppColors.grayTextWeak}
-                        size={12}
-                      />
-                    ),
+                    key: 'all',
+                    label: t('console.allFramesScope', {count: parsedStackFrames.length}),
                   },
                 ]}
-                activeKey={stackViewMode}
-                onChange={key => setStackViewMode(key as 'structured' | 'raw')}
+                activeKey={stackFilter}
+                onChange={key => setStackFilter(key as 'app' | 'all')}
               />
             </View>
 
             {/* Stack Content: Structured Cards or Raw Full Trace */}
             {stackViewMode === 'structured' ? (
               <View style={{padding: 12, gap: 10}}>
-                {parsedStackFrames.length > 0 ? (
-                  parsedStackFrames.map((frame, frameIdx) => {
+                {displayedFrames.length > 0 ? (
+                  displayedFrames.map((frame, frameIdx) => {
                     const isTopFrame = frameIdx === 0;
+
+                    const frameBadgeBg =
+                      frame.frameType === 'app'
+                        ? `${AppColors.brandPurple}15`
+                        : frame.frameType === 'dependency'
+                        ? `${AppColors.amber500}18`
+                        : frame.frameType === 'native'
+                        ? `${AppColors.sky500}18`
+                        : AppColors.grayBorderSecondary;
+
+                    const frameBadgeText =
+                      frame.frameType === 'app'
+                        ? AppColors.brandPurple
+                        : frame.frameType === 'dependency'
+                        ? AppColors.amber700
+                        : frame.frameType === 'native'
+                        ? AppColors.sky500
+                        : AppColors.grayTextWeak;
 
                     return (
                       <View
@@ -874,15 +979,15 @@ const LogDetail = React.memo(() => {
                           backgroundColor: isTopFrame
                             ? `${AppColors.brandPurple}0A`
                             : AppColors.primaryLight,
-                          borderRadius: 8,
+                          borderRadius: 10,
                           borderWidth: 1,
                           borderColor: isTopFrame
-                            ? `${AppColors.brandPurple}30`
+                            ? `${AppColors.brandPurple}35`
                             : AppColors.dividerColor,
-                          padding: 10,
-                          gap: 5,
+                          padding: 11,
+                          gap: 6,
                         }}>
-                        {/* Frame Header Row */}
+                        {/* Frame Top Row: Origin / Category, File, Line badge, Copy */}
                         <View
                           style={{
                             flexDirection: 'row',
@@ -890,124 +995,155 @@ const LogDetail = React.memo(() => {
                             justifyContent: 'space-between',
                             gap: 6,
                           }}>
-                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1}}>
-                            <View
-                              style={{
-                                backgroundColor: isTopFrame
-                                  ? AppColors.brandPurple
-                                  : AppColors.grayBorderSecondary,
-                                borderRadius: 4,
-                                paddingHorizontal: 5,
-                                paddingVertical: 1.5,
-                              }}>
-                              <Text
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1, flexWrap: 'wrap'}}>
+                            {isTopFrame && (
+                              <View
                                 style={{
-                                  fontFamily: AppFonts.interBold,
-                                  fontSize: 9,
-                                  color: isTopFrame
-                                    ? AppColors.white
-                                    : AppColors.grayTextStrong,
+                                  backgroundColor: AppColors.brandPurple,
+                                  borderRadius: 4,
+                                  paddingHorizontal: 5,
+                                  paddingVertical: 1.5,
                                 }}>
-                                #{frameIdx + 1}
-                                {isTopFrame ? ' ORIGIN' : ''}
-                              </Text>
-                            </View>
+                                <Text
+                                  style={{
+                                    fontFamily: AppFonts.interBold,
+                                    fontSize: 8.5,
+                                    color: AppColors.white,
+                                  }}>
+                                  {t('console.originBadge')}
+                                </Text>
+                              </View>
+                            )}
 
-                            <HighlightText
-                              text={frame.functionName !== '<anonymous>' ? `${frame.functionName}()` : '<anonymous>'}
-                              search={detailSearch}
+                            {frame.fileExt && frame.fileExt !== 'other' && (
+                              <View
+                                style={{
+                                  backgroundColor:
+                                    frame.fileExt === 'tsx' || frame.fileExt === 'ts'
+                                      ? `${AppColors.brandPurple}18`
+                                      : `${AppColors.teal600}18`,
+                                  borderRadius: 4,
+                                  paddingHorizontal: 4.5,
+                                  paddingVertical: 1.5,
+                                }}>
+                                <Text
+                                  style={{
+                                    fontFamily: AppFonts.interBold,
+                                    fontSize: 8.5,
+                                    color:
+                                      frame.fileExt === 'tsx' || frame.fileExt === 'ts'
+                                        ? AppColors.brandPurple
+                                        : AppColors.teal600,
+                                  }}>
+                                  {frame.fileExt.toUpperCase()}
+                                </Text>
+                              </View>
+                            )}
+
+                            <Text
                               style={{
                                 fontFamily: AppFonts.interBold,
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 color: isTopFrame
-                                  ? AppColors.primaryBlack
-                                  : AppColors.grayTextStrong,
-                              }}
-                              highlightStyle={{
-                                backgroundColor: AppColors.yellowHighlight,
-                                color: AppColors.primaryBlack,
-                              }}
-                            />
+                                  ? AppColors.brandPurple
+                                  : AppColors.primaryBlack,
+                              }}>
+                              {frame.fileName}
+                            </Text>
                           </View>
 
-                          {frame.lineNumber && (
-                            <View
-                              style={{
-                                backgroundColor: `${AppColors.teal600}15`,
-                                borderColor: `${AppColors.teal600}30`,
-                                borderWidth: 1,
-                                borderRadius: 4,
-                                paddingHorizontal: 6,
-                                paddingVertical: 1.5,
-                              }}>
-                              <Text
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                            {frame.lineNumber && (
+                              <View
                                 style={{
-                                  fontFamily: AppFonts.interBold,
-                                  fontSize: 9.5,
-                                  color: AppColors.teal600,
+                                  backgroundColor: `${AppColors.teal600}15`,
+                                  borderColor: `${AppColors.teal600}30`,
+                                  borderWidth: 1,
+                                  borderRadius: 4,
+                                  paddingHorizontal: 5,
+                                  paddingVertical: 1.5,
                                 }}>
-                                L{frame.lineNumber}
-                                {frame.columnNumber ? `:C${frame.columnNumber}` : ''}
-                              </Text>
-                            </View>
-                          )}
+                                <Text
+                                  style={{
+                                    fontFamily: AppFonts.interBold,
+                                    fontSize: 9.5,
+                                    color: AppColors.teal600,
+                                  }}>
+                                  L{frame.lineNumber}{frame.columnNumber ? `:C${frame.columnNumber}` : ''}
+                                </Text>
+                              </View>
+                            )}
+                            <CopyButton
+                              value={frame.copyableLocation}
+                              label={frame.fileName}
+                            />
+                          </View>
                         </View>
 
-                        {/* File Path Row */}
-                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
-                          {frame.fileExt && frame.fileExt !== 'other' && (
-                            <View
-                              style={{
-                                backgroundColor:
-                                  frame.fileExt === 'tsx' || frame.fileExt === 'ts'
-                                    ? `${AppColors.brandPurple}18`
-                                    : `${AppColors.teal600}18`,
-                                borderRadius: 3,
-                                paddingHorizontal: 4,
-                                paddingVertical: 1,
-                              }}>
-                              <Text
-                                style={{
-                                  fontFamily: AppFonts.interBold,
-                                  fontSize: 8.5,
-                                  color:
-                                    frame.fileExt === 'tsx' || frame.fileExt === 'ts'
-                                      ? AppColors.brandPurple
-                                      : AppColors.teal600,
-                                }}>
-                                {frame.fileExt.toUpperCase()}
-                              </Text>
-                            </View>
-                          )}
-                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
-                          <DocIcon color={isTopFrame ? AppColors.brandPurple : AppColors.grayTextWeak} size={10} />
-                          <Text
+                        {/* Middle Row: Function / Symbol Invocation */}
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                          <HighlightText
+                            text={frame.functionName !== '<anonymous>' ? `${frame.functionName}()` : '<anonymous>'}
+                            search={detailSearch}
                             style={{
-                              fontFamily: AppFonts.interMedium,
-                              fontSize: 10.5,
-                              color: isTopFrame
-                                ? AppColors.brandPurple
-                                : AppColors.grayTextWeak,
-                            }}>
-                            {frame.fileName}
-                          </Text>
-                        </View>
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 12.5,
+                              color: AppColors.primaryBlack,
+                            }}
+                            highlightStyle={{
+                              backgroundColor: AppColors.yellowHighlight,
+                              color: AppColors.primaryBlack,
+                            }}
+                          />
                         </View>
 
-                        {/* Full path */}
-                        {frame.fullPath && frame.fullPath !== frame.fileName && (
+                        {/* Bottom Row: Clean Relative Path & Execution Scope Tag */}
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            backgroundColor: isDark ? `${AppColors.primaryBlack}25` : AppColors.grayBackground,
+                            borderRadius: 6,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4.5,
+                            gap: 6,
+                          }}>
                           <Text
                             selectable
                             style={{
                               fontFamily: AppFonts.interRegular,
                               fontSize: 9.5,
-                              color: AppColors.grayTextWeak,
-                              lineHeight: 14,
+                              color: AppColors.grayTextStrong,
+                              flex: 1,
                             }}
-                            numberOfLines={2}>
-                            {frame.fullPath}
+                            numberOfLines={1}>
+                            📂 {frame.fullPath}
                           </Text>
-                        )}
+
+                          <View
+                            style={{
+                              backgroundColor: frameBadgeBg,
+                              borderRadius: 4,
+                              paddingHorizontal: 5,
+                              paddingVertical: 1.5,
+                            }}>
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 8.5,
+                                color: frameBadgeText,
+                              }}>
+                              {frame.frameType === 'app'
+                                ? t('console.appCodeBadge')
+                                : frame.frameType === 'dependency'
+                                ? t('console.dependencyBadge')
+                                : frame.frameType === 'native'
+                                ? t('console.nativeBadge')
+                                : t('console.hermesVmBadge')}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
                     );
                   })
@@ -1020,7 +1156,7 @@ const LogDetail = React.memo(() => {
                       textAlign: 'center',
                       paddingVertical: 16,
                     }}>
-                    No call stack trace available for this log.
+                    {t('console.noStackAvailable')}
                   </Text>
                 )}
               </View>
