@@ -11,6 +11,7 @@ buildscript {
 apply plugin: 'com.android.library'
 
 android {
+    namespace "com.inappinspector"
     compileSdkVersion 34
 
     defaultConfig {

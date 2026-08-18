@@ -3,4 +3,6 @@
 
 @interface NetworkInspectorModule : RCTEventEmitter <RCTBridgeModule>
 
+- (void)emitCrashEventWithMessage:(NSString *)message stackTrace:(NSString *)stackTrace;
+
 @end
