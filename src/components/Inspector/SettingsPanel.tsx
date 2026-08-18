@@ -22,6 +22,9 @@ import {clearAnalyticsEvents} from '../../customHooks/analyticsLogger';
 import {
   clearCrashRecords,
 } from '../../customHooks/crashHandler';
+import {isReduxConnected} from '../../customHooks/reduxLogger';
+import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
+import {useTranslation} from '../../i18n';
 import {
   SignalIcon,
   TerminalIcon,
@@ -44,6 +47,7 @@ import {
 } from '../NetworkIcons';
 
 const SettingsPanel = () => {
+  const {t} = useTranslation();
   const {
     settingsPage,
     setSettingsPage,
@@ -287,9 +291,16 @@ const SettingsPanel = () => {
               </View>
 
               {settingsTabs.map((tab, idx) => {
-                const isVisible = tab.key === 'apis' || tabVisibility?.[tab.key];
+                const isReduxAvail = isReduxConnected();
+                const isAnalyticsAvail = isAnalyticsConnected();
+                const isUnavailable =
+                  (tab.key === 'redux' && !isReduxAvail) ||
+                  (tab.key === 'analytics' && !isAnalyticsAvail);
+                const isLocked = tab.key === 'apis' || isUnavailable;
+                const isVisible =
+                  tab.key === 'apis' ||
+                  (Boolean(tabVisibility?.[tab.key]) && !isUnavailable);
                 const isLast = idx === settingsTabs.length - 1;
-                const isLocked = tab.key === 'apis';
 
                 return (
                   <View
@@ -310,6 +321,7 @@ const SettingsPanel = () => {
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 8,
+                        flexWrap: 'wrap',
                       }}>
                       {/* Small icon tile */}
                       <View
@@ -409,8 +421,32 @@ const SettingsPanel = () => {
                         }}>
                         {tab.label}
                       </Text>
+                      {/* Unavailable badge */}
+                      {isUnavailable && (
+                        <View
+                          style={{
+                            backgroundColor: `${AppColors.amber500}18`,
+                            borderRadius: 4,
+                            paddingHorizontal: 5,
+                            paddingVertical: 1.5,
+                            borderWidth: 1,
+                            borderColor: `${AppColors.amber500}35`,
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 8,
+                              color: AppColors.amber700,
+                              letterSpacing: 0.3,
+                            }}>
+                            {tab.key === 'redux'
+                              ? t('settings.notConnectedBadge')
+                              : t('settings.notDetectedBadge')}
+                          </Text>
+                        </View>
+                      )}
                       {/* #6 — badge marks the configured default tab */}
-                      {tab.key === defaultTab && (
+                      {tab.key === defaultTab && !isUnavailable && (
                         <View
                           style={{
                             flexDirection: 'row',
@@ -445,24 +481,26 @@ const SettingsPanel = () => {
                       )}
 
                       {/* Settings gear icon next to label */}
-                      <TouchableScale
-                        onPress={() => {
-                          animateNextLayout();
-                          setSettingsPage(tab.key);
-                        }}
-                        hitSlop={8}
-                        style={{
-                          marginLeft: 4,
-                          padding: 4,
-                          borderRadius: 6,
-                          backgroundColor: AppColors.purpleShade50,
-                          borderWidth: 1,
-                          borderColor: `${AppColors.purple}26`,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                        <SettingsIcon color={AppColors.purple} size={10} />
-                      </TouchableScale>
+                      {!isUnavailable && (
+                        <TouchableScale
+                          onPress={() => {
+                            animateNextLayout();
+                            setSettingsPage(tab.key);
+                          }}
+                          hitSlop={8}
+                          style={{
+                            marginLeft: 4,
+                            padding: 4,
+                            borderRadius: 6,
+                            backgroundColor: AppColors.purpleShade50,
+                            borderWidth: 1,
+                            borderColor: `${AppColors.purple}26`,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                          <SettingsIcon color={AppColors.purple} size={10} />
+                        </TouchableScale>
+                      )}
                     </View>
 
                     {/* Visibility Switch in VISIBILITY column */}
@@ -533,12 +571,17 @@ const SettingsPanel = () => {
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
-                            fontSize: 8,
-                            color: AppColors.grayTextWeak,
-                            letterSpacing: 0.4,
+                            fontSize: 7.5,
+                            color: isUnavailable
+                              ? AppColors.amber700
+                              : AppColors.grayTextWeak,
+                            letterSpacing: 0.3,
                             marginTop: 3,
+                            textAlign: 'right',
                           }}>
-                          REQUIRED
+                          {tab.key === 'apis'
+                            ? t('settings.requiredBadge')
+                            : t('settings.readOnlyBadge')}
                         </Text>
                       )}
                     </View>

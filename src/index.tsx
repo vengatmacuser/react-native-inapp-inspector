@@ -71,6 +71,7 @@ import {
   subscribeAnalyticsEvents,
   clearAnalyticsEvents,
   autoSetupAnalyticsLogger,
+  isAnalyticsConnected,
 } from './customHooks/analyticsLogger';
 
 import {
@@ -79,6 +80,7 @@ import {
   setReduxAutoRefresh,
   getLastActionForReducer,
   clearActionHistory,
+  isReduxConnected,
 } from './customHooks/reduxLogger';
 
 // Constants
@@ -473,8 +475,20 @@ const NetworkInspector = ({
     setReduxAutoRefresh(reduxAutoRefresh);
   }, [reduxAutoRefresh]);
 
+  // Auto-unselect Redux or Analytics tab if module is not connected / available
+  useEffect(() => {
+    if (activeTab === 'redux' && !isReduxConnected()) {
+      setActiveTab('apis');
+    }
+    if (activeTab === 'analytics' && !isAnalyticsConnected()) {
+      setActiveTab('apis');
+    }
+  }, [activeTab]);
+
   const toggleTabVisibility = (key: ActiveTab) => {
     if (key === 'apis') return;
+    if (key === 'redux' && !isReduxConnected()) return;
+    if (key === 'analytics' && !isAnalyticsConnected()) return;
     setTabVisibility(prev => {
       const nextVal = !prev[key];
       const newVisibility = {...prev, [key]: nextVal};
@@ -491,6 +505,8 @@ const NetworkInspector = ({
   };
 
   const switchActiveTab = useCallback((key: ActiveTab) => {
+    if (key === 'redux' && !isReduxConnected()) return;
+    if (key === 'analytics' && !isAnalyticsConnected()) return;
     setActiveTab(key);
   }, []);
 
@@ -1433,6 +1449,10 @@ const NetworkInspector = ({
     setVisible(false);
     setSelected(null);
     setSelectedEvent(null);
+    setSelectedLog(null);
+    setSelectedReduxSlice(null);
+    setSelectedReduxAction(null);
+    setSelectedCrash(null);
   }
 
   function handleClearAll() {
@@ -1851,10 +1871,23 @@ export {
 
 export {
   usePerformanceTracker,
+  useComponentProfiler,
+  useNavigationProfiler,
+  trackComponentRender,
+  trackNavigationTransition,
+  trackHeavyTask,
+  measureAsync,
+  getHermesMemoryStats,
+  registerComponentProfile,
+  subscribeRenderProfiles,
+  getRenderProfiles,
   logPerformanceEvent,
   clearPerformanceEvents,
   subscribePerformanceEvents,
   getPerformanceEvents,
+  getInitialRenderProfiles,
+  getInitialPerformanceEvents,
+  generateFixSnippet,
 } from './customHooks/performanceTracker';
 
 export {

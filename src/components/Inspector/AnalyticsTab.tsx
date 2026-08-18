@@ -15,7 +15,9 @@ import EndOfListFooter from '../EndOfListFooter';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {useTranslation} from '../../i18n';
 import Svg, {
+  Path,
   Rect,
   Line,
   Circle,
@@ -54,6 +56,7 @@ import {
 } from '../NetworkIcons';
 
 const AnalyticsHeader = React.memo(() => {
+  const {t} = useTranslation();
   const {
     analyticsEvents,
     filteredAnalyticsEvents,
@@ -151,27 +154,45 @@ const AnalyticsHeader = React.memo(() => {
     });
   };
 
-  // 12-Bucket GA4 Realtime Stacked Histogram Graph (-30m / 30s to NOW)
+  // 12-Bucket GA4 Realtime Stacked Histogram & Spline Wave Graph (-30m / 30s to NOW)
   const BUCKET_COUNT = 12;
-  const chartHeight = 56;
-  const histogramBars = useMemo(() => {
+  const chartHeight = 64;
+  const svgWidth = 320;
+  const [selectedBucketIdx, setSelectedBucketIdx] = useState<number | null>(null);
+
+  const histogramData = useMemo(() => {
     const buckets: {
+      index: number;
       ecommerce: number;
       page_view: number;
       system: number;
       custom: number;
       total: number;
-    }[] = Array.from({length: BUCKET_COUNT}, () => ({
-      ecommerce: 0,
-      page_view: 0,
-      system: 0,
-      custom: 0,
-      total: 0,
-    }));
+      x: number;
+      y: number;
+      isLatest: boolean;
+      ageLabel: string;
+    }[] = [];
 
     const now = Date.now();
     const windowMs = 60000; // 60s window
     const bucketDuration = windowMs / BUCKET_COUNT;
+
+    for (let i = 0; i < BUCKET_COUNT; i++) {
+      const bucketAgeSec = Math.round(((BUCKET_COUNT - 1 - i) * bucketDuration) / 1000);
+      buckets.push({
+        index: i,
+        ecommerce: 0,
+        page_view: 0,
+        system: 0,
+        custom: 0,
+        total: 0,
+        x: (i / (BUCKET_COUNT - 1)) * (svgWidth - 24) + 12,
+        y: chartHeight - 12,
+        isLatest: i === BUCKET_COUNT - 1,
+        ageLabel: i === BUCKET_COUNT - 1 ? t('analytics.timeNow') : `-${bucketAgeSec}s`,
+      });
+    }
 
     for (const e of filteredAnalyticsEvents) {
       const age = now - e.timestamp;
@@ -190,29 +211,44 @@ const AnalyticsHeader = React.memo(() => {
     }
 
     const maxVal = Math.max(...buckets.map(b => b.total), 4);
-    return buckets.map((b, idx) => {
-      const totalH = Math.max(
-        (b.total / maxVal) * (chartHeight - 14),
-        b.total > 0 ? 8 : 2.5,
-      );
-      const ecomH = b.total > 0 ? (b.ecommerce / b.total) * totalH : 0;
-      const screenH = b.total > 0 ? (b.page_view / b.total) * totalH : 0;
-      const sysH = b.total > 0 ? (b.system / b.total) * totalH : 0;
-      const custH =
-        b.total > 0 ? (b.custom / b.total) * totalH : totalH;
-
-      return {
-        index: idx,
-        total: b.total,
-        totalHeight: totalH,
-        ecomHeight: ecomH,
-        screenHeight: screenH,
-        sysHeight: sysH,
-        custHeight: custH,
-        isLatest: idx === BUCKET_COUNT - 1,
-      };
+    buckets.forEach(b => {
+      const normalizedH = (b.total / maxVal) * (chartHeight - 22);
+      b.y = chartHeight - 10 - normalizedH;
     });
-  }, [filteredAnalyticsEvents, chartHeight]);
+
+    // Generate Cubic Bézier Spline paths
+    let linePath = `M ${buckets[0].x.toFixed(1)} ${buckets[0].y.toFixed(1)}`;
+    for (let i = 0; i < buckets.length - 1; i++) {
+      const p0 = buckets[Math.max(0, i - 1)];
+      const p1 = buckets[i];
+      const p2 = buckets[i + 1];
+      const p3 = buckets[Math.min(buckets.length - 1, i + 2)];
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      linePath += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+
+    const lastB = buckets[buckets.length - 1];
+    const firstB = buckets[0];
+    const areaPath = `${linePath} L ${lastB.x.toFixed(1)} ${chartHeight - 4} L ${firstB.x.toFixed(1)} ${chartHeight - 4} Z`;
+
+    const peakVal = Math.max(...buckets.map(b => b.total), 0);
+    const eventRate = Math.round(buckets.reduce((a, b) => a + b.total, 0));
+
+    return {
+      buckets,
+      linePath,
+      areaPath,
+      peakVal,
+      eventRate,
+    };
+  }, [filteredAnalyticsEvents, chartHeight, svgWidth, t]);
+
+  const selectedBucket = selectedBucketIdx != null ? histogramData.buckets[selectedBucketIdx] : null;
 
   return (
     <View style={styles.analyticsHeaderCard}>
@@ -220,7 +256,7 @@ const AnalyticsHeader = React.memo(() => {
       <View style={styles.analyticsHeaderTop}>
         <View style={{flex: 1}}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-            <Text style={styles.analyticsHeaderTitle}>Users in last 30 minutes</Text>
+            <Text style={styles.analyticsHeaderTitle}>{t('analytics.realtimeStream')}</Text>
             <View
               style={[
                 styles.statusDot,
@@ -241,11 +277,11 @@ const AnalyticsHeader = React.memo(() => {
                   fontFamily: AppFonts.interBold,
                 },
               ]}>
-              {isTrackingEnabled ? 'Realtime' : 'Paused'}
+              {isTrackingEnabled ? t('performance.live') : t('common.pause')}
             </Text>
           </View>
           <Text style={styles.analyticsHeaderSubtitle} numberOfLines={1}>
-            {userId ? `User: ${userId}` : 'Anonymous Session'}
+            {userId ? `${t('analytics.userId')}: ${userId}` : t('analytics.emptySubtitle')}
           </Text>
         </View>
 
@@ -257,7 +293,7 @@ const AnalyticsHeader = React.memo(() => {
             setAnalyticsHeaderExpanded(!analyticsHeaderExpanded);
           }}>
           <Text style={styles.analyticsHeaderToggleText}>
-            {analyticsHeaderExpanded ? 'Hide Info' : 'Session Info'}
+            {analyticsHeaderExpanded ? t('common.close') : t('analytics.eventDetails')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -279,7 +315,7 @@ const AnalyticsHeader = React.memo(() => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            marginBottom: 8,
+            marginBottom: 6,
           }}>
           <View>
             <View style={{flexDirection: 'row', alignItems: 'baseline', gap: 6}}>
@@ -298,13 +334,35 @@ const AnalyticsHeader = React.memo(() => {
                   fontSize: 10.5,
                   color: AppColors.grayTextWeak,
                 }}>
-                events in window
+                {t('analytics.eventsInWindow')}
               </Text>
             </View>
           </View>
 
-          {/* Realtime Badges */}
+          {/* Realtime Rate Badges */}
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 3,
+                backgroundColor: `${AppColors.purple}14`,
+                paddingHorizontal: 6,
+                paddingVertical: 2.5,
+                borderRadius: 4,
+                borderWidth: 1,
+                borderColor: `${AppColors.purple}2E`,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 9.5,
+                  color: AppColors.purple,
+                }}>
+                {t('analytics.eventVelocity', {rate: histogramData.eventRate})}
+              </Text>
+            </View>
+
             {categoryStats.totalRevenue > 0 && (
               <View
                 style={{
@@ -329,126 +387,168 @@ const AnalyticsHeader = React.memo(() => {
                 </Text>
               </View>
             )}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-                backgroundColor: `${AppColors.brandPurple}14`,
-                paddingHorizontal: 6,
-                paddingVertical: 2.5,
-                borderRadius: 4,
-                borderWidth: 1,
-                borderColor: `${AppColors.brandPurple}2E`,
-              }}>
-              <TargetGoalIcon color={AppColors.brandPurple} size={10} />
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 9.5,
-                  color: AppColors.brandPurple,
-                }}>
-                Live Telemetry
-              </Text>
-            </View>
           </View>
         </View>
 
-        {/* GA4 Stacked Realtime Histogram Bar Graph */}
-        <View
-          style={{
-            height: chartHeight,
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            paddingHorizontal: 2,
-            paddingBottom: 2,
-            borderBottomWidth: 1,
-            borderBottomColor: AppColors.dividerColor,
-          }}>
-          {histogramBars.map(bar => (
-            <View
-              key={bar.index}
+        {/* ── High Precision SVG Spline Area Graph ── */}
+        <View style={{height: chartHeight, position: 'relative'}}>
+          <Svg width="100%" height={chartHeight} viewBox={`0 0 ${svgWidth} ${chartHeight}`}>
+            <Defs>
+              <SvgLinearGradient id="telemetryAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor={AppColors.brandPurple} stopOpacity="0.4" />
+                <Stop offset="80%" stopColor={AppColors.brandPurple} stopOpacity="0.05" />
+                <Stop offset="100%" stopColor={AppColors.brandPurple} stopOpacity="0.0" />
+              </SvgLinearGradient>
+            </Defs>
+
+            {/* Baseline & Grid lines */}
+            <Line
+              x1="8"
+              y1={chartHeight - 6}
+              x2={svgWidth - 8}
+              y2={chartHeight - 6}
+              stroke={AppColors.dividerColor}
+              strokeWidth="1"
+            />
+            <Line
+              x1="8"
+              y1={chartHeight / 2}
+              x2={svgWidth - 8}
+              y2={chartHeight / 2}
+              stroke={AppColors.dividerColor}
+              strokeWidth="0.8"
+              strokeDasharray="3,3"
+            />
+
+            {/* Glowing Area Fill */}
+            <Path d={histogramData.areaPath} fill="url(#telemetryAreaGrad)" />
+
+            {/* Smooth Spline Wave Stroke */}
+            <Path
+              d={histogramData.linePath}
+              fill="none"
+              stroke={AppColors.brandPurple}
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Data Points & Active Bucket Indicators */}
+            {histogramData.buckets.map((b, idx) => {
+              const isSelected = selectedBucketIdx === idx;
+              return (
+                <G key={b.index}>
+                  {isSelected && (
+                    <Line
+                      x1={b.x}
+                      y1={4}
+                      x2={b.x}
+                      y2={chartHeight - 6}
+                      stroke={AppColors.brandPurple}
+                      strokeWidth="1.2"
+                      strokeDasharray="2,2"
+                    />
+                  )}
+
+                  {b.total > 0 && (
+                    <Circle
+                      cx={b.x}
+                      cy={b.y}
+                      r={isSelected ? 4.5 : 2.8}
+                      fill={isSelected ? AppColors.brandPurple : AppColors.white}
+                      stroke={AppColors.brandPurple}
+                      strokeWidth={isSelected ? 2 : 1.5}
+                    />
+                  )}
+
+                  {b.isLatest && (
+                    <G>
+                      <Circle
+                        cx={b.x}
+                        cy={b.y}
+                        r="6.5"
+                        fill={AppColors.brandPurple}
+                        opacity="0.22"
+                      />
+                      <Circle
+                        cx={b.x}
+                        cy={b.y}
+                        r="3"
+                        fill={AppColors.brandPurple}
+                      />
+                    </G>
+                  )}
+                </G>
+              );
+            })}
+          </Svg>
+
+          {/* Invisible Touch Columns for Interactive Bucket Selection */}
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              flexDirection: 'row',
+            }}>
+            {histogramData.buckets.map((b, idx) => (
+              <TouchableOpacity
+                key={b.index}
+                style={{flex: 1, height: '100%'}}
+                activeOpacity={0.8}
+                onPress={() => setSelectedBucketIdx(selectedBucketIdx === idx ? null : idx)}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Selected Bucket Quick Breakdown Overlay */}
+        {selectedBucket && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: AppColors.white,
+              borderRadius: 6,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              marginTop: 4,
+              borderWidth: 1,
+              borderColor: AppColors.brandPurple,
+            }}>
+            <Text
               style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                height: '100%',
-                marginHorizontal: 1.5,
+                fontFamily: AppFonts.interBold,
+                fontSize: 10,
+                color: AppColors.primaryBlack,
               }}>
-              {bar.total > 0 && (
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 7.5,
-                    color: bar.isLatest
-                      ? AppColors.brandPurple
-                      : AppColors.grayTextWeak,
-                    marginBottom: 2,
-                  }}>
-                  {bar.total}
+              {t('analytics.selectedBucket', {
+                time: selectedBucket.ageLabel,
+                count: selectedBucket.total,
+              })}
+            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              {selectedBucket.ecommerce > 0 && (
+                <Text style={{fontSize: 9, fontFamily: AppFonts.interBold, color: AppColors.amber700}}>
+                  Ecom: {selectedBucket.ecommerce}
                 </Text>
               )}
-              {/* Stacked Category Segments Column */}
-              <View
-                style={{
-                  width: '100%',
-                  maxWidth: 15,
-                  height: bar.totalHeight,
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                  backgroundColor:
-                    bar.total > 0
-                      ? `${AppColors.grayBorderSecondary}40`
-                      : `${AppColors.grayBorderSecondary}40`,
-                }}>
-                {bar.total > 0 ? (
-                  <>
-                    {bar.ecomHeight > 0 && (
-                      <View
-                        style={{
-                          height: bar.ecomHeight,
-                          backgroundColor: AppColors.amber500,
-                        }}
-                      />
-                    )}
-                    {bar.screenHeight > 0 && (
-                      <View
-                        style={{
-                          height: bar.screenHeight,
-                          backgroundColor: AppColors.sky500,
-                        }}
-                      />
-                    )}
-                    {bar.sysHeight > 0 && (
-                      <View
-                        style={{
-                          height: bar.sysHeight,
-                          backgroundColor: AppColors.purple,
-                        }}
-                      />
-                    )}
-                    {bar.custHeight > 0 && (
-                      <View
-                        style={{
-                          height: bar.custHeight,
-                          backgroundColor: AppColors.brandPurple,
-                        }}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <View
-                    style={{
-                      height: 2.5,
-                      backgroundColor: `${AppColors.grayBorderSecondary}80`,
-                    }}
-                  />
-                )}
-              </View>
+              {selectedBucket.page_view > 0 && (
+                <Text style={{fontSize: 9, fontFamily: AppFonts.interBold, color: AppColors.sky500}}>
+                  Screen: {selectedBucket.page_view}
+                </Text>
+              )}
+              {selectedBucket.custom > 0 && (
+                <Text style={{fontSize: 9, fontFamily: AppFonts.interBold, color: AppColors.brandPurple}}>
+                  Custom: {selectedBucket.custom}
+                </Text>
+              )}
             </View>
-          ))}
-        </View>
+          </View>
+        )}
 
         {/* Timeline Axis Labels */}
         <View
@@ -456,39 +556,39 @@ const AnalyticsHeader = React.memo(() => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             marginTop: 4,
-            paddingHorizontal: 2,
+            paddingHorizontal: 4,
           }}>
           <Text
             style={{
               fontFamily: AppFonts.interMedium,
-              fontSize: 8,
+              fontSize: 8.5,
               color: AppColors.grayTextWeak,
             }}>
-            -30 min
+            {t('analytics.time30mAgo')}
           </Text>
           <Text
             style={{
               fontFamily: AppFonts.interMedium,
-              fontSize: 8,
+              fontSize: 8.5,
               color: AppColors.grayTextWeak,
             }}>
-            -20 min
+            {t('analytics.time20mAgo')}
           </Text>
           <Text
             style={{
               fontFamily: AppFonts.interMedium,
-              fontSize: 8,
+              fontSize: 8.5,
               color: AppColors.grayTextWeak,
             }}>
-            -10 min
+            {t('analytics.time10mAgo')}
           </Text>
           <Text
             style={{
               fontFamily: AppFonts.interBold,
-              fontSize: 8,
+              fontSize: 8.5,
               color: AppColors.brandPurple,
             }}>
-            NOW
+            {t('analytics.timeNow')}
           </Text>
         </View>
       </View>
@@ -837,19 +937,19 @@ const AnalyticsHeader = React.memo(() => {
           <View style={styles.analyticsStatsRow}>
             <View style={styles.analyticsStatBox}>
               <Text style={styles.analyticsStatValue}>{totalEvents}</Text>
-              <Text style={styles.analyticsStatLabel}>Events</Text>
+              <Text style={styles.analyticsStatLabel}>{t('analytics.eventCount', {count: totalEvents})}</Text>
             </View>
             <View style={styles.analyticsStatBox}>
               <Text style={styles.analyticsStatValue}>
                 {Object.keys(userProperties).length}
               </Text>
-              <Text style={styles.analyticsStatLabel}>User Props</Text>
+              <Text style={styles.analyticsStatLabel}>{t('analytics.props')}</Text>
             </View>
             <View style={styles.analyticsStatBox}>
               <Text style={styles.analyticsStatValue}>
                 {Object.keys(defaultParams).length}
               </Text>
-              <Text style={styles.analyticsStatLabel}>Defaults</Text>
+              <Text style={styles.analyticsStatLabel}>{t('analytics.defaultParameters')}</Text>
             </View>
           </View>
 
@@ -858,7 +958,7 @@ const AnalyticsHeader = React.memo(() => {
             <View style={styles.analyticsHeaderDetails}>
               {hasUserProps && (
                 <View style={{marginBottom: 10}}>
-                  <Text style={styles.detailsGroupTitle}>Active User Properties</Text>
+                  <Text style={styles.detailsGroupTitle}>{t('analytics.userProperties')}</Text>
                   {Object.entries(userProperties).map(([k, v]) => (
                     <View key={k} style={styles.detailsRow}>
                       <Text style={styles.detailsKey} selectable={true}>{k}</Text>
@@ -870,7 +970,7 @@ const AnalyticsHeader = React.memo(() => {
 
               {hasDefaultParams && (
                 <View>
-                  <Text style={styles.detailsGroupTitle}>Default Event Parameters</Text>
+                  <Text style={styles.detailsGroupTitle}>{t('analytics.defaultParameters')}</Text>
                   {Object.entries(defaultParams).map(([k, v]) => (
                     <View key={k} style={styles.detailsRow}>
                       <Text style={styles.detailsKey} selectable={true}>{k}</Text>
@@ -888,6 +988,7 @@ const AnalyticsHeader = React.memo(() => {
 });
 
 const AnalyticsTab = React.memo(() => {
+  const {t} = useTranslation();
   const {
     filteredAnalyticsEvents,
     analyticsSearch,

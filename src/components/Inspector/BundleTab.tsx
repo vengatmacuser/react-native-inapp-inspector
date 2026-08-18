@@ -3,8 +3,10 @@ import {
   ActivityIndicator,
   Image,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -20,6 +22,7 @@ import EndOfListFooter from '../EndOfListFooter';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import styles from '../../styles';
+import {copyToClipboard} from '../../helpers';
 import {
   PackageIcon,
   SearchIcon,
@@ -43,6 +46,7 @@ import {
   ExternalLinkIcon,
   AppleIcon,
   AndroidIcon,
+  DownloadIcon,
 } from '../NetworkIcons';
 
 import Svg, {
@@ -618,6 +622,77 @@ function buildBundleFileTree(files: BundleFileItem[]): TreeNode[] {
   return convertMapToNodes(rootMap);
 }
 
+export const downloadBundleFile = async (file: BundleFileItem, scriptURL?: string): Promise<void> => {
+  let content = '';
+
+  // 1. Attempt to fetch real source code from Metro dev server if available
+  try {
+    let devServerOrigin = 'http://localhost:8081';
+    if (scriptURL && scriptURL.startsWith('http')) {
+      const match = scriptURL.match(/^(https?:\/\/[^/]+)/);
+      if (match) {
+        devServerOrigin = match[1];
+      }
+    }
+    const cleanPath = file.path.replace(/^\/+/, '');
+    const url = `${devServerOrigin}/${cleanPath}`;
+
+    const res = await fetch(url);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.length > 0) {
+        content = text;
+      }
+    }
+  } catch {}
+
+  // 2. If dev server direct fetch is unavailable, provide structured module descriptor with full path
+  if (!content) {
+    content = `// ─────────────────────────────────────────────────────────────
+// File: ${file.name}
+// Path: ${file.path}
+// Category: ${file.category.toUpperCase()}
+// Size: ${file.sizeKb} KB
+// Status: ${file.status === 'optimal' ? 'Active in Dependency Graph' : 'Not consumed / Static'}
+// Meta: ${file.meta}
+// ─────────────────────────────────────────────────────────────
+
+export default {
+  id: ${JSON.stringify(file.id)},
+  name: ${JSON.stringify(file.name)},
+  path: ${JSON.stringify(file.path)},
+  category: ${JSON.stringify(file.category)},
+  sizeKb: ${file.sizeKb},
+  meta: ${JSON.stringify(file.meta)},
+  status: ${JSON.stringify(file.status || 'optimal')},
+};
+`;
+  }
+
+  // 3. Trigger native Share / Download sheet
+  try {
+    await Share.share(
+      Platform.OS === 'ios'
+        ? {
+            title: file.name,
+            message: content,
+          }
+        : {
+            title: `Download ${file.name}`,
+            message: content,
+          },
+      {
+        dialogTitle: `Download / Save ${file.name}`,
+      },
+    );
+  } catch {}
+
+  // 4. Also copy directly to clipboard for quick paste in VS Code or external editor
+  try {
+    copyToClipboard(content, file.name);
+  } catch {}
+};
+
 const BundleTreeNodeView: React.FC<{
   node: TreeNode;
   level: number;
@@ -626,6 +701,7 @@ const BundleTreeNodeView: React.FC<{
   expandedFolders: Record<string, boolean>;
   toggleFolder: (path: string) => void;
   isLastChild: boolean;
+  onDownload?: (file: BundleFileItem) => void;
 }> = ({
   node,
   level,
@@ -634,6 +710,7 @@ const BundleTreeNodeView: React.FC<{
   expandedFolders,
   toggleFolder,
   isLastChild,
+  onDownload,
 }) => {
   const isExpanded = search ? true : !!expandedFolders[node.fullPath];
   const isCollapsed = !isExpanded;
@@ -699,6 +776,7 @@ const BundleTreeNodeView: React.FC<{
                 expandedFolders={expandedFolders}
                 toggleFolder={toggleFolder}
                 isLastChild={cIdx === node.children.length - 1}
+                onDownload={onDownload}
               />
             ))}
           </View>
@@ -754,10 +832,21 @@ const BundleTreeNodeView: React.FC<{
           <Text style={bundleStyles.treeFilePctText}>{pctOfTotal}%</Text>
         </View>
 
-        <CopyButton
-          value={() => file}
-          label={t('bundle.fileDetailsJson')}
-        />
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+          {onDownload && (
+            <TouchableScale
+              onPress={() => onDownload(file)}
+              style={bundleStyles.treeActionBtn}
+              hitSlop={8}>
+              <DownloadIcon size={13} color={AppColors.sky500} />
+            </TouchableScale>
+          )}
+
+          <CopyButton
+            value={() => file}
+            label={t('bundle.fileDetailsJson')}
+          />
+        </View>
       </View>
     </View>
   );
@@ -965,13 +1054,30 @@ const BundleTab = React.memo(() => {
     return filteredFiles.reduce((acc, f) => acc + f.sizeKb, 0);
   }, [filteredFiles]);
 
-  // Tree View State & Node Generation (Collapsed by default)
+  // Tree View State & Node Generation (Top folders expanded by default)
   const [filesViewMode, setFilesViewMode] = useState<'tree' | 'list'>('tree');
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 
   const fileTreeNodes = useMemo(() => {
     return buildBundleFileTree(filteredFiles);
   }, [filteredFiles]);
+
+  useEffect(() => {
+    if (fileTreeNodes.length > 0 && Object.keys(expandedFolders).length === 0) {
+      const initial: Record<string, boolean> = {};
+      fileTreeNodes.forEach(node => {
+        if (node.isFolder) {
+          initial[node.fullPath] = true;
+          node.children.forEach(child => {
+            if (child.isFolder) {
+              initial[child.fullPath] = true;
+            }
+          });
+        }
+      });
+      setExpandedFolders(initial);
+    }
+  }, [fileTreeNodes]);
 
   const toggleFolder = useCallback((path: string) => {
     setExpandedFolders(prev => ({
@@ -1898,6 +2004,7 @@ const BundleTab = React.memo(() => {
                     expandedFolders={expandedFolders}
                     toggleFolder={toggleFolder}
                     isLastChild={nIdx === fileTreeNodes.length - 1}
+                    onDownload={f => downloadBundleFile(f, analysis?.scriptURL)}
                   />
                 ))}
               </View>
@@ -1953,6 +2060,12 @@ const BundleTab = React.memo(() => {
                           </Text>
                           <Text style={bundleStyles.filePercent}>{pctOfTotal}%</Text>
                         </View>
+                        <TouchableScale
+                          onPress={() => downloadBundleFile(file, analysis?.scriptURL)}
+                          style={bundleStyles.downloadFileBtn}
+                          hitSlop={8}>
+                          <DownloadIcon size={14} color={AppColors.sky500} />
+                        </TouchableScale>
                         <CopyButton
                           value={() => file}
                           label={t('bundle.fileDetailsJson')}
@@ -1975,29 +2088,41 @@ const BundleTab = React.memo(() => {
                     <View style={bundleStyles.fileCardBottom}>
                       <Text style={bundleStyles.fileMetaText}>{file.meta}</Text>
                       {file.advice && (
-                        <View style={[
-                          bundleStyles.adviceBadge,
-                          file.status === 'warning' && bundleStyles.adviceWarning,
-                          file.status === 'optimal' && bundleStyles.adviceOptimal,
-                          isUnused && bundleStyles.adviceUnused,
-                        ]}>
-                          <View style={{flexDirection: 'row', alignItems: 'flex-start', gap: 5}}>
+                        <View
+                          style={[
+                            bundleStyles.adviceBadge,
+                            file.status === 'warning' &&
+                              bundleStyles.adviceWarning,
+                            file.status === 'optimal' &&
+                              bundleStyles.adviceOptimal,
+                            isUnused && bundleStyles.adviceUnused,
+                          ]}>
                           {isUnused ? (
                             <TrashIcon color={AppColors.red600} size={12} />
                           ) : file.status === 'warning' ? (
-                            <LightbulbIcon color={AppColors.amber800Warm} size={12} />
+                            <LightbulbIcon
+                              color={AppColors.amber800Warm}
+                              size={12}
+                            />
                           ) : (
-                            <SparkleIcon color={AppColors.emerald700} size={12} />
+                            <SparkleIcon
+                              color={AppColors.emerald700}
+                              size={12}
+                            />
                           )}
-                          <Text style={[
-                            bundleStyles.adviceText,
-                            file.status === 'warning' && {color: AppColors.amber800Warm},
-                            file.status === 'optimal' && {color: AppColors.emerald700},
-                            isUnused && {color: AppColors.red600},
-                          ]}>
+                          <Text
+                            style={[
+                              bundleStyles.adviceText,
+                              file.status === 'warning' && {
+                                color: AppColors.amber800Warm,
+                              },
+                              file.status === 'optimal' && {
+                                color: AppColors.emerald700,
+                              },
+                              isUnused && {color: AppColors.red600},
+                            ]}>
                             {file.advice}
                           </Text>
-                        </View>
                         </View>
                       )}
                     </View>
@@ -2290,6 +2415,12 @@ const BundleTab = React.memo(() => {
                         {t('bundle.fileSizeKb', {size: file.sizeKb})}
                       </Text>
                     </View>
+                    <TouchableScale
+                      onPress={() => downloadBundleFile(file, analysis?.scriptURL)}
+                      style={bundleStyles.downloadFileBtn}
+                      hitSlop={8}>
+                      <DownloadIcon size={14} color={AppColors.sky500} />
+                    </TouchableScale>
                     <CopyButton
                       value={() => file}
                       label={t('bundle.mediaItemJson')}
@@ -2300,25 +2431,32 @@ const BundleTab = React.memo(() => {
                 <View style={bundleStyles.fileCardBottom}>
                   <Text style={bundleStyles.fileMetaText}>{file.meta}</Text>
                   {file.advice && (
-                    <View style={[
-                      bundleStyles.adviceBadge,
-                      file.status === 'warning' && bundleStyles.adviceWarning,
-                      file.status === 'optimal' && bundleStyles.adviceOptimal,
-                    ]}>
-                      <View style={{flexDirection: 'row', alignItems: 'flex-start', gap: 5}}>
-                        {file.status === 'warning' ? (
-                          <LightbulbIcon color={AppColors.amber800Warm} size={12} />
-                        ) : (
-                          <SparkleIcon color={AppColors.emerald700} size={12} />
-                        )}
-                        <Text style={[
+                    <View
+                      style={[
+                        bundleStyles.adviceBadge,
+                        file.status === 'warning' && bundleStyles.adviceWarning,
+                        file.status === 'optimal' && bundleStyles.adviceOptimal,
+                      ]}>
+                      {file.status === 'warning' ? (
+                        <LightbulbIcon
+                          color={AppColors.amber800Warm}
+                          size={12}
+                        />
+                      ) : (
+                        <SparkleIcon color={AppColors.emerald700} size={12} />
+                      )}
+                      <Text
+                        style={[
                           bundleStyles.adviceText,
-                          file.status === 'warning' && {color: AppColors.amber800Warm},
-                          file.status === 'optimal' && {color: AppColors.emerald700},
+                          file.status === 'warning' && {
+                            color: AppColors.amber800Warm,
+                          },
+                          file.status === 'optimal' && {
+                            color: AppColors.emerald700,
+                          },
                         ]}>
-                          {file.advice}
-                        </Text>
-                      </View>
+                        {file.advice}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -3107,6 +3245,24 @@ const bundleStyles = StyleSheet.create({
   fileSizeBox: {
     alignItems: 'flex-end',
   },
+  downloadFileBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: `${AppColors.sky500}14`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: `${AppColors.sky500}28`,
+  },
+  treeActionBtn: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: `${AppColors.sky500}14`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: `${AppColors.sky500}28`,
+  },
   fileSizeKb: {
     fontFamily: AppFonts.interBold,
     fontSize: 12,
@@ -3278,10 +3434,13 @@ const bundleStyles = StyleSheet.create({
     color: AppColors.amber800Warm,
   },
   adviceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 6,
-    marginTop: 2,
+    marginTop: 4,
+    gap: 6,
   },
   adviceWarning: {
     backgroundColor: AppColors.amber100,
@@ -3297,6 +3456,7 @@ const bundleStyles = StyleSheet.create({
     fontFamily: AppFonts.interMedium,
     fontSize: 10.5,
     lineHeight: 14,
+    flex: 1,
   },
   impactBadge: {
     paddingHorizontal: 6,

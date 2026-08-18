@@ -33,6 +33,9 @@ let historyIdSeq = 0;
 const connectedStores = new WeakSet<object>();
 let middlewareAttached = false;
 
+export const isReduxConnected = () =>
+  middlewareAttached || currentReduxState != null || actionHistory.length > 0;
+
 export const getReduxState = () => currentReduxState;
 
 export const setReduxAutoRefresh = (val: boolean) => {

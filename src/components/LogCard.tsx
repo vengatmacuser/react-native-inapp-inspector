@@ -115,6 +115,53 @@ const LogCard = React.memo(function LogCard({
               </Text>
             </View>
 
+            {item.client && (
+              <View
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor:
+                      item.client === 'axios'
+                        ? `${AppColors.purple}14`
+                        : item.client === 'apollo' || item.client === 'graphql'
+                        ? `${AppColors.pink500}14`
+                        : item.client === 'xhr'
+                        ? `${AppColors.amber500}14`
+                        : `${AppColors.sky500}14`,
+                    borderColor:
+                      item.client === 'axios'
+                        ? `${AppColors.purple}30`
+                        : item.client === 'apollo' || item.client === 'graphql'
+                        ? `${AppColors.pink500}30`
+                        : item.client === 'xhr'
+                        ? `${AppColors.amber500}30`
+                        : `${AppColors.sky500}30`,
+                    paddingHorizontal: 4.5,
+                    paddingVertical: 1,
+                    borderRadius: 4,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 8.5,
+                      color:
+                        item.client === 'axios'
+                          ? AppColors.purple
+                          : item.client === 'apollo' || item.client === 'graphql'
+                          ? AppColors.pink500
+                          : item.client === 'xhr'
+                          ? AppColors.amber700
+                          : AppColors.sky600,
+                    },
+                  ]}>
+                  {item.client.toUpperCase()}
+                </Text>
+              </View>
+            )}
+
             <HighlightText
               text={baseUrl || item.url}
               search={searchStr}
@@ -161,58 +208,56 @@ const LogCard = React.memo(function LogCard({
           </View>
         </View>
 
-        {/* Row 2: Improved Slug Capsule Container */}
-        {showSlug && (
-          <View style={styles.cardSlugBox}>
-            <View style={styles.slugLeft}>
-              <Text style={styles.slugTag}>PATH</Text>
-              <HighlightText
-                text={slug}
-                search={searchStr}
-                style={styles.slugText}
-                highlightStyle={styles.highlight}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              />
-            </View>
-
-            <View style={styles.slugRight}>
-              {isJson && (
-                <View
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: `${AppColors.darkOrange}12`,
-                      borderColor: `${AppColors.darkOrange}28`,
-                    },
-                  ]}>
-                  <Text style={[styles.chipText, {color: AppColors.darkOrange}]}>
-                    .json
-                  </Text>
-                </View>
-              )}
-
-              {item.duplicateCount != null && item.duplicateCount > 1 && (
-                <View
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: `${AppColors.purple}12`,
-                      borderColor: `${AppColors.purple}28`,
-                    },
-                  ]}>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      {color: AppColors.purple, fontWeight: '700'},
-                    ]}>
-                    ×{item.duplicateCount}
-                  </Text>
-                </View>
-              )}
-            </View>
+        {/* Row 2: Full URL Capsule Container */}
+        <View style={styles.cardSlugBox}>
+          <View style={styles.slugLeft}>
+            <Text style={styles.slugTag}>URL</Text>
+            <HighlightText
+              text={item.url}
+              search={searchStr}
+              style={styles.slugText}
+              highlightStyle={styles.highlight}
+              numberOfLines={2}
+              ellipsizeMode="middle"
+            />
           </View>
-        )}
+
+          <View style={styles.slugRight}>
+            {isJson && (
+              <View
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: `${AppColors.darkOrange}12`,
+                    borderColor: `${AppColors.darkOrange}28`,
+                  },
+                ]}>
+                <Text style={[styles.chipText, {color: AppColors.darkOrange}]}>
+                  .json
+                </Text>
+              </View>
+            )}
+
+            {item.duplicateCount != null && item.duplicateCount > 1 && (
+              <View
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: `${AppColors.purple}12`,
+                    borderColor: `${AppColors.purple}28`,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    {color: AppColors.purple, fontWeight: '700'},
+                  ]}>
+                  ×{item.duplicateCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
 
         {/* Row 3: Footer (Timestamp on Left, Response Size & Duration on Right) */}
         <View style={styles.cardFooterRow}>

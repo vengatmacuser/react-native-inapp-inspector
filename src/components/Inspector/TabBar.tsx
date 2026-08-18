@@ -14,6 +14,9 @@ import {
   CrashIcon,
 } from '../NetworkIcons';
 
+import {isReduxConnected} from '../../customHooks/reduxLogger';
+import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
+
 const TabBar = React.memo(() => {
   const {
     activeTab,
@@ -28,6 +31,9 @@ const TabBar = React.memo(() => {
     lastReadCrashesCount,
     unreadPulseAnim,
   } = useInspector();
+
+  const isReduxAvail = isReduxConnected();
+  const isAnalyticsAvail = isAnalyticsConnected();
 
   return (
     <View style={styles.tabBarContainer}>
@@ -81,7 +87,12 @@ const TabBar = React.memo(() => {
             },
           ] as const
         )
-          .filter(tab => tabVisibility?.[tab.key])
+          .filter(tab => {
+            if (!tabVisibility?.[tab.key]) return false;
+            if (tab.key === 'redux' && !isReduxAvail) return false;
+            if (tab.key === 'analytics' && !isAnalyticsAvail) return false;
+            return true;
+          })
           .map(tab => {
             const isActive = activeTab === tab.key;
             const iconColor = isActive

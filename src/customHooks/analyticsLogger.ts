@@ -109,6 +109,14 @@ export const logAnalyticsEvent = (
  *   import analytics from '@react-native-firebase/analytics';
  *   setupAnalyticsLogger(analytics());
  */
+let isAnalyticsPatched = false;
+
+export const isAnalyticsConnected = () =>
+  isAnalyticsPatched ||
+  events.length > 0 ||
+  Object.keys(currentUserProperties).length > 0 ||
+  currentUserId != null;
+
 export const setupAnalyticsLogger = (analyticsInstance: any): void => {
   if (!analyticsInstance) {
     console.warn(
@@ -116,6 +124,8 @@ export const setupAnalyticsLogger = (analyticsInstance: any): void => {
     );
     return;
   }
+
+  isAnalyticsPatched = true;
 
   // Guard against double-patching the same instance
   if (analyticsInstance.__INSPECTOR_PATCHED__) return;

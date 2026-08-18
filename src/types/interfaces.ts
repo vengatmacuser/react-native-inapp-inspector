@@ -123,6 +123,9 @@ export interface NetworkLog {
   responseHeaders?: Record<string, string>;
   /** #9 — number of consecutive identical requests collapsed into this entry. */
   duplicateCount?: number;
+  /** Client identifier: axios, fetch, xhr, apollo, etc. */
+  client?: 'axios' | 'fetch' | 'xhr' | 'apollo' | 'graphql' | string;
+  caller?: string;
 }
 
 export interface RouteInfo {

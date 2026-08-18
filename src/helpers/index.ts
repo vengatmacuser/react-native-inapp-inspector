@@ -64,7 +64,21 @@ export const getSize = (data: unknown): string => {
 
 // Safely detect and load clipboard natively without static require() calls that Metro fails on
 const getClipboardModule = () => {
-  // 1. Check TurboModuleRegistry (TurboModules / New Architecture)
+  // 1. Check our built-in native module (NetworkInspectorModule)
+  try {
+    const tmReg = (TurboModuleRegistry as any) || (globalThis as any).__turboModuleProxy;
+    const inspectorMod =
+      NativeModules?.NetworkInspectorModule ||
+      (tmReg?.get ? tmReg.get('NetworkInspectorModule') : null);
+    if (inspectorMod && typeof inspectorMod.copyToClipboard === 'function') {
+      return {
+        setString: (str: string) => inspectorMod.copyToClipboard(str),
+        setStringAsync: (str: string) => inspectorMod.copyToClipboard(str),
+      };
+    }
+  } catch {}
+
+  // 2. Check TurboModuleRegistry (TurboModules / New Architecture)
   try {
     const tmReg = (TurboModuleRegistry as any) || (globalThis as any).__turboModuleProxy;
     if (tmReg?.get) {
@@ -82,7 +96,7 @@ const getClipboardModule = () => {
     }
   } catch {}
 
-  // 2. Check legacy NativeModules table (Bridge / Old Architecture)
+  // 3. Check legacy NativeModules table (Bridge / Old Architecture)
   try {
     if (
       NativeModules?.RNCClipboard &&
@@ -104,7 +118,7 @@ const getClipboardModule = () => {
     }
   } catch {}
 
-  // 3. Check legacy React Native core Clipboard
+  // 4. Check legacy React Native core Clipboard
   try {
     if (Clipboard && typeof (Clipboard as any).setString === 'function') {
       return Clipboard;
@@ -133,6 +147,17 @@ export const copyToClipboard = (value: unknown, label: string): void => {
       }
     }
   } catch {}
+
+  // Built-in native module direct invocation
+  if (!copied) {
+    try {
+      const inspectorMod = NativeModules?.NetworkInspectorModule;
+      if (inspectorMod && typeof inspectorMod.copyToClipboard === 'function') {
+        inspectorMod.copyToClipboard(textToCopy);
+        copied = true;
+      }
+    } catch {}
+  }
 
   if (!copied) {
     try {

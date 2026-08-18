@@ -5,8 +5,19 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import Svg, {
+  Path,
+  Defs,
+  LinearGradient,
+  Stop,
+  Line,
+  Circle,
+  G,
+  Rect,
+} from 'react-native-svg';
 import TouchableScale from '../TouchableScale';
 import CopyButton from '../CopyButton';
 import HighlightText from '../HighlightText';
@@ -28,7 +39,7 @@ import {
   GlobeIcon,
 } from '../NetworkIcons';
 import {
-  INITIAL_EVENTS,
+  getPerformanceEvents,
   subscribePerformanceEvents,
   logPerformanceEvent,
   clearPerformanceEvents,
@@ -41,6 +52,11 @@ export interface PerformanceEvent {
   category: 'render' | 'navigation' | 'memory' | 'io' | 'bridge';
   fps: number;
   durationMs: number;
+  droppedFrames?: number;
+  frameTimeMs?: number;
+  frameBudgetPct?: number;
+  bottleneckThread?: 'JS Thread' | 'UI Thread' | 'Bridge' | 'Balanced';
+  screenName?: string;
   label: string;
   detail: string;
   source?: string;
@@ -83,8 +99,10 @@ const PerformanceTab = React.memo(() => {
     60, 59, 60, 60, 58, 60, 59, 60, 60, 60, 57, 60, 59, 60, 60, 58, 60, 60, 59, 60,
   ]);
 
-  // Performance Log Events (Initialized with benchmark & diagnostics events)
-  const [events, setEvents] = useState<PerformanceEvent[]>(INITIAL_EVENTS);
+  // Performance Log Events (Dynamic live subscription)
+  const [events, setEvents] = useState<PerformanceEvent[]>(() =>
+    getPerformanceEvents(),
+  );
   const [filterCategory, setFilterCategory] = useState<'ALL' | 'JANKY' | 'NAVIGATION' | 'RENDER' | 'MEMORY' | 'IO'>('ALL');
   const [search, setSearch] = useState('');
 
@@ -285,9 +303,100 @@ const PerformanceTab = React.memo(() => {
     };
   }, [avgFps, jsLagMs]);
 
+  // ─── Dynamic SVG FPS Area & Trend Curve Data ────────────────────────────
+  const [selectedFpsPointIdx, setSelectedFpsPointIdx] = useState<number | null>(
+    null,
+  );
+  const svgGraphWidth = 320;
+  const svgGraphHeight = 64;
+
+  const fpsGraphData = useMemo(() => {
+    const points = fpsHistory.length > 0 ? fpsHistory : [60, 60];
+    const stepX = svgGraphWidth / Math.max(1, points.length - 1);
+    const coords = points.map((val, idx) => {
+      const clamped = Math.max(0, Math.min(60, val));
+      const x = Number((idx * stepX).toFixed(1));
+      const y = Number(
+        (svgGraphHeight - (clamped / 60) * (svgGraphHeight - 14) - 6).toFixed(
+          1,
+        ),
+      );
+      return {x, y, val};
+    });
+
+    let linePath = `M ${coords[0].x} ${coords[0].y}`;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p0 = coords[i];
+      const p1 = coords[i + 1];
+      const midX = Number(((p0.x + p1.x) / 2).toFixed(1));
+      linePath += ` C ${midX} ${p0.y}, ${midX} ${p1.y}, ${p1.x} ${p1.y}`;
+    }
+
+    const last = coords[coords.length - 1];
+    const first = coords[0];
+    const areaPath = `${linePath} L ${last.x} ${svgGraphHeight} L ${first.x} ${svgGraphHeight} Z`;
+
+    return {linePath, areaPath, coords};
+  }, [fpsHistory]);
+
+  const latencyBuckets = useMemo(() => {
+    let optimal = 0;
+    let minorJank = 0;
+    let noticeableJank = 0;
+    let severeFreeze = 0;
+
+    fpsHistory.forEach(fps => {
+      if (fps >= 55) optimal++;
+      else if (fps >= 30) minorJank++;
+      else if (fps >= 20) noticeableJank++;
+      else severeFreeze++;
+    });
+
+    const total = Math.max(1, fpsHistory.length);
+    return [
+      {
+        key: 'optimal',
+        label: t('performance.optimalBucket'),
+        count: optimal,
+        percent: Number(((optimal / total) * 100).toFixed(0)),
+        color: AppColors.emerald500,
+        bgColor: AppColors.emerald100,
+      },
+      {
+        key: 'minorJank',
+        label: t('performance.minorJankBucket'),
+        count: minorJank,
+        percent: Number(((minorJank / total) * 100).toFixed(0)),
+        color: AppColors.amber500,
+        bgColor: AppColors.amber100,
+      },
+      {
+        key: 'noticeableJank',
+        label: t('performance.noticeableJankBucket'),
+        count: noticeableJank,
+        percent: Number(((noticeableJank / total) * 100).toFixed(0)),
+        color: AppColors.firebaseOrange,
+        bgColor: AppColors.lightOrange,
+      },
+      {
+        key: 'severeFreeze',
+        label: t('performance.severeFreezeBucket'),
+        count: severeFreeze,
+        percent: Number(((severeFreeze / total) * 100).toFixed(0)),
+        color: AppColors.errorColor,
+        bgColor: AppColors.errorCardBg,
+      },
+    ];
+  }, [fpsHistory, t]);
+
   const clearEvents = () => {
     clearPerformanceEvents();
   };
+
+  const activeScrubPoint =
+    selectedFpsPointIdx !== null && fpsGraphData.coords[selectedFpsPointIdx]
+      ? fpsGraphData.coords[selectedFpsPointIdx]
+      : null;
 
   return (
     <View style={perfStyles.container}>
@@ -311,103 +420,73 @@ const PerformanceTab = React.memo(() => {
           ) : null}
         </View>
 
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-          <TouchableScale
-            onPress={() => setIsRecording(prev => !prev)}
+        {/* Live FPS Telemetry Recorder Toggle */}
+        <TouchableScale
+          onPress={() => setIsRecording(prev => !prev)}
+          style={[
+            perfStyles.recordToggleBtn,
+            isRecording
+              ? perfStyles.recordToggleActive
+              : perfStyles.recordToggleInactive,
+          ]}>
+          <View
             style={[
-              perfStyles.recordBtn,
-              isRecording ? perfStyles.recordBtnActive : perfStyles.recordBtnPaused,
-            ]}>
-            <View
-              style={[
-                perfStyles.recordDot,
-                {backgroundColor: isRecording ? AppColors.emerald500 : AppColors.amber500},
-              ]}
-            />
-            <Text
-              style={[
-                perfStyles.recordBtnText,
-                {color: isRecording ? AppColors.emerald600 : AppColors.amber700},
-              ]}>
-              {isRecording ? t('performance.live') : t('redux.paused')}
-            </Text>
-          </TouchableScale>
-
-          <CopyButton
-            value={() => ({
-              currentFps,
-              minFps,
-              maxFps,
-              avgFps,
-              jankyFrameCount,
-              jsLagMs,
-              platform: Platform.OS,
-              engine: runtimeDiagnostics.jsEngineName,
-              totalEvents: events.length,
-              events,
-            })}
-            label={t('common.copyJson')}
+              perfStyles.recordingDot,
+              {
+                backgroundColor: isRecording
+                  ? AppColors.errorColor
+                  : AppColors.grayTextWeak,
+              },
+            ]}
           />
-        </View>
+          <Text
+            style={[
+              perfStyles.recordToggleText,
+              {
+                color: isRecording
+                  ? AppColors.errorColor
+                  : AppColors.grayTextWeak,
+              },
+            ]}>
+            {isRecording
+              ? t('performance.recording')
+              : t('performance.paused')}
+          </Text>
+        </TouchableScale>
       </View>
 
-      {/* ─── Frozen Interactive Filter Tabs Under Search Component ─── */}
-      <View style={perfStyles.filterRow}>
+      {/* Filter Category Tabs Carousel */}
+      <View style={perfStyles.categoryScrollWrapper}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={perfStyles.filterScrollContent}>
+          style={perfStyles.categoryScrollView}
+          contentContainerStyle={perfStyles.categoryScroll}>
           {(
             [
-              {key: 'ALL', label: t('performance.allLogs'), Icon: BoltIcon, count: events.length},
-              {
-                key: 'JANKY',
-                label: t('performance.jankySlow'),
-                Icon: WarningTriangleIcon,
-                count: events.filter(e => e.severity === 'warning' || e.severity === 'critical').length,
-              },
-              {
-                key: 'NAVIGATION',
-                label: t('performance.navigation'),
-                Icon: MapIcon,
-                count: events.filter(e => e.category === 'navigation').length,
-              },
-              {
-                key: 'RENDER',
-                label: t('performance.components'),
-                Icon: AtomIcon,
-                count: events.filter(e => e.category === 'render').length,
-              },
-              {
-                key: 'MEMORY',
-                label: t('performance.memoryGc'),
-                Icon: BrainIcon,
-                count: events.filter(e => e.category === 'memory').length,
-              },
-              {
-                key: 'IO',
-                label: t('performance.networkIo'),
-                Icon: GlobeIcon,
-                count: events.filter(e => e.category === 'io' || e.category === 'bridge').length,
-              },
+              {key: 'ALL', label: t('performance.catAll')},
+              {key: 'JANKY', label: t('performance.catJanky')},
+              {key: 'NAVIGATION', label: t('performance.catNavigation')},
+              {key: 'RENDER', label: t('performance.catRender')},
+              {key: 'MEMORY', label: t('performance.catMemory')},
+              {key: 'IO', label: t('performance.catIo')},
             ] as const
-          ).map(tab => {
-            const isActive = filterCategory === tab.key;
+          ).map(cat => {
+            const isSelected = filterCategory === cat.key;
             return (
               <TouchableScale
-                key={tab.key}
-                onPress={() => setFilterCategory(tab.key)}
+                key={cat.key}
+                onPress={() => setFilterCategory(cat.key)}
                 style={[
-                  perfStyles.filterPill,
-                  isActive && perfStyles.filterPillActive,
+                  perfStyles.categoryChip,
+                  isSelected && perfStyles.categoryChipActive,
                 ]}>
-                <tab.Icon color={isActive ? AppColors.white : AppColors.grayTextStrong} size={12} />
                 <Text
                   style={[
-                    perfStyles.filterPillText,
-                    isActive && perfStyles.filterPillTextActive,
+                    perfStyles.categoryChipText,
+                    isSelected && perfStyles.categoryChipTextActive,
                   ]}>
-                  {tab.label} ({tab.count})
+                  {cat.label}
                 </Text>
               </TouchableScale>
             );
@@ -415,17 +494,27 @@ const PerformanceTab = React.memo(() => {
         </ScrollView>
       </View>
 
+      {/* Main Content Scroll View */}
       <ScrollView
-        style={{flex: 1}}
+        style={perfStyles.scrollBody}
         contentContainerStyle={perfStyles.scrollContent}
-        keyboardShouldPersistTaps="handled">
-        {/* ── 1. REALTIME FPS METRIC DASHBOARD ── */}
-        <View style={perfStyles.metricCard}>
-          <View style={perfStyles.metricCardHeader}>
+        showsVerticalScrollIndicator={false}>
+        {/* ── 1. REAL-TIME FPS SCORECARD & SMOOTH AREA GRAPH ── */}
+        <View style={perfStyles.heroCard}>
+          <View style={perfStyles.heroHeaderRow}>
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-              <PerformanceIcon color={AppColors.purple} size={18} />
-              <Text style={perfStyles.metricCardTitle}>{t('performance.liveFps')}</Text>
+              <PerformanceIcon color={AppColors.purple} size={17} />
+              <View>
+                <Text style={perfStyles.heroTitle}>
+                  {t('performance.fpsAreaChartTitle')}
+                </Text>
+                <Text style={perfStyles.heroSubTitle}>
+                  {t('performance.fpsAreaChartSub')}
+                </Text>
+              </View>
             </View>
+
+            {/* Health Grade Score Pill */}
             <View
               style={[
                 perfStyles.scorePill,
@@ -463,59 +552,264 @@ const PerformanceTab = React.memo(() => {
 
             <View style={perfStyles.fpsStatsGrid}>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>{t('performance.avgFrameTime')}</Text>
+                <Text style={perfStyles.statLabel}>
+                  {t('performance.avgFrameTime')}
+                </Text>
                 <Text style={perfStyles.statValue}>{avgFps}</Text>
               </View>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>{t('performance.peakTime')}</Text>
-                <Text style={[perfStyles.statValue, minFps < 50 && {color: AppColors.firebaseOrange}]}>
+                <Text style={perfStyles.statLabel}>
+                  {t('performance.peakTime')}
+                </Text>
+                <Text
+                  style={[
+                    perfStyles.statValue,
+                    minFps < 50 && {color: AppColors.firebaseOrange},
+                  ]}>
                   {minFps}
                 </Text>
               </View>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>{t('performance.jsLag')}</Text>
-                <Text style={[perfStyles.statValue, jsLagMs > 5 && {color: AppColors.firebaseOrange}]}>
+                <Text style={perfStyles.statLabel}>
+                  {t('performance.jsLag')}
+                </Text>
+                <Text
+                  style={[
+                    perfStyles.statValue,
+                    jsLagMs > 5 && {color: AppColors.firebaseOrange},
+                  ]}>
                   {jsLagMs}ms
                 </Text>
               </View>
               <View style={perfStyles.statItem}>
-                <Text style={perfStyles.statLabel}>{t('performance.jankRate')}</Text>
+                <Text style={perfStyles.statLabel}>
+                  {t('performance.jankRate')}
+                </Text>
                 <Text style={perfStyles.statValue}>
                   {totalFrames > 0
-                    ? `${((jankyFrameCount / Math.max(1, totalFrames / 60)) * 100).toFixed(0)}%`
+                    ? `${(
+                        (jankyFrameCount / Math.max(1, totalFrames / 60)) *
+                        100
+                      ).toFixed(0)}%`
                     : '0%'}
                 </Text>
               </View>
             </View>
           </View>
 
-          {/* Sparkline Bar Graph */}
-          <View style={perfStyles.sparklineTrack}>
-            {fpsHistory.map((fpsVal, idx) => {
-              const barHeight = Math.max(6, (fpsVal / 60) * 36);
-              const isLow = fpsVal < 50;
-              return (
-                <View key={idx} style={perfStyles.sparklineCol}>
-                  <View
-                    style={[
-                      perfStyles.sparklineBar,
-                      {
-                        height: barHeight,
-                        backgroundColor: isLow ? AppColors.errorColor : AppColors.emerald500,
-                      },
-                    ]}
+          {/* Interactive Scrub Tooltip */}
+          {activeScrubPoint && (
+            <View style={perfStyles.graphScrubTooltip}>
+              <Text style={perfStyles.graphScrubTooltipText}>
+                {activeScrubPoint.val} FPS •{' '}
+                {Number((1000 / Math.max(1, activeScrubPoint.val)).toFixed(1))}
+                ms
+              </Text>
+            </View>
+          )}
+
+          {/* Real-Time SVG Smooth Area & Trend Wave Graph */}
+          <View style={perfStyles.svgGraphContainer}>
+            <Svg
+              width="100%"
+              height={svgGraphHeight}
+              viewBox={`0 0 ${svgGraphWidth} ${svgGraphHeight}`}>
+              <Defs>
+                <LinearGradient
+                  id="fpsAreaGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1">
+                  <Stop
+                    offset="0%"
+                    stopColor={
+                      avgFps >= 55
+                        ? AppColors.emerald500
+                        : avgFps >= 40
+                        ? AppColors.amber500
+                        : AppColors.errorColor
+                    }
+                    stopOpacity="0.32"
                   />
-                </View>
-              );
-            })}
+                  <Stop
+                    offset="100%"
+                    stopColor={
+                      avgFps >= 55
+                        ? AppColors.emerald500
+                        : avgFps >= 40
+                        ? AppColors.amber500
+                        : AppColors.errorColor
+                    }
+                    stopOpacity="0.02"
+                  />
+                </LinearGradient>
+              </Defs>
+
+              {/* 60 FPS Target Baseline */}
+              <Line
+                x1="0"
+                y1="7"
+                x2={svgGraphWidth}
+                y2="7"
+                stroke={AppColors.emerald500}
+                strokeWidth="1"
+                strokeDasharray="4,4"
+                opacity="0.4"
+              />
+
+              {/* 30 FPS Warning Baseline */}
+              <Line
+                x1="0"
+                y1={svgGraphHeight / 2}
+                x2={svgGraphWidth}
+                y2={svgGraphHeight / 2}
+                stroke={AppColors.amber500}
+                strokeWidth="0.8"
+                strokeDasharray="3,3"
+                opacity="0.3"
+              />
+
+              {/* Shaded Area Under Curve */}
+              {fpsGraphData.areaPath ? (
+                <Path
+                  d={fpsGraphData.areaPath}
+                  fill="url(#fpsAreaGradient)"
+                />
+              ) : null}
+
+              {/* Bezier Trend Line */}
+              {fpsGraphData.linePath ? (
+                <Path
+                  d={fpsGraphData.linePath}
+                  fill="none"
+                  stroke={
+                    avgFps >= 55
+                      ? AppColors.emerald600
+                      : avgFps >= 40
+                      ? AppColors.amber600
+                      : AppColors.errorColor
+                  }
+                  strokeWidth="2.2"
+                />
+              ) : null}
+
+              {/* Sample Nodes */}
+              {fpsGraphData.coords.map((c, idx) => {
+                const isSelected = selectedFpsPointIdx === idx;
+                const isDip = c.val < 50;
+                return (
+                  <G key={idx}>
+                    {isDip && (
+                      <Circle
+                        cx={c.x}
+                        cy={c.y}
+                        r="4"
+                        fill={AppColors.errorColor}
+                        opacity="0.25"
+                      />
+                    )}
+                    <Circle
+                      cx={c.x}
+                      cy={c.y}
+                      r={isSelected ? 4 : isDip ? 2.5 : 1.8}
+                      fill={
+                        isSelected
+                          ? AppColors.brandPurple
+                          : isDip
+                          ? AppColors.errorColor
+                          : AppColors.emerald600
+                      }
+                      stroke={AppColors.white}
+                      strokeWidth={isSelected ? 1.5 : 0.8}
+                    />
+                  </G>
+                );
+              })}
+            </Svg>
+
+            {/* Invisible Touch Column Targets for Interactive Inspection */}
+            <View style={perfStyles.svgTouchOverlay}>
+              {fpsGraphData.coords.map((_, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={perfStyles.svgTouchCol}
+                  activeOpacity={0.7}
+                  onPress={() =>
+                    setSelectedFpsPointIdx(
+                      selectedFpsPointIdx === idx ? null : idx,
+                    )
+                  }
+                />
+              ))}
+            </View>
           </View>
+
           <View style={perfStyles.sparklineFooter}>
-            <Text style={perfStyles.sparklineFooterText}>{t('performance.realtimeWindow')}</Text>
-            <Text style={perfStyles.sparklineFooterTarget}>{t('performance.fpsTarget')}</Text>
+            <Text style={perfStyles.sparklineFooterText}>
+              {t('performance.realtimeWindow')}
+            </Text>
+            <Text style={perfStyles.sparklineFooterTarget}>
+              {t('performance.target60Fps', {fps: avgFps})}
+            </Text>
           </View>
         </View>
 
-        {/* ── 2. FRAME BUDGET BREAKDOWN CARD ── */}
+        {/* ── 2. FRAME LATENCY DISTRIBUTION HISTOGRAM CARD ── */}
+        <View style={perfStyles.budgetCard}>
+          <View style={perfStyles.budgetHeader}>
+            <View>
+              <Text style={perfStyles.budgetTitle}>
+                {t('performance.frameLatencyDistTitle')}
+              </Text>
+              <Text style={perfStyles.heroSubTitle}>
+                {t('performance.frameLatencyDistSub')}
+              </Text>
+            </View>
+          </View>
+
+          <View style={perfStyles.histogramContainer}>
+            {latencyBuckets.map(b => (
+              <View key={b.key} style={perfStyles.histogramRow}>
+                <View style={perfStyles.histogramLabelCol}>
+                  <View
+                    style={[perfStyles.legendDot, {backgroundColor: b.color}]}
+                  />
+                  <Text style={perfStyles.histogramLabelText}>{b.label}</Text>
+                </View>
+
+                <View style={perfStyles.histogramBarCol}>
+                  <View style={perfStyles.histogramTrack}>
+                    <View
+                      style={[
+                        perfStyles.histogramBarFill,
+                        {
+                          width: `${Math.max(b.percent > 0 ? 4 : 0, b.percent)}%`,
+                          backgroundColor: b.color,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+
+                <View style={perfStyles.histogramStatsCol}>
+                  <Text
+                    style={[
+                      perfStyles.histogramPercentText,
+                      {color: b.color},
+                    ]}>
+                    {b.percent}%
+                  </Text>
+                  <Text style={perfStyles.histogramCountText}>
+                    ({b.count})
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ── 3. FRAME BUDGET BREAKDOWN CARD ── */}
         <View style={perfStyles.budgetCard}>
           <View style={perfStyles.budgetHeader}>
             <Text style={perfStyles.budgetTitle}>{t('performance.budgetUsage')}</Text>
@@ -644,26 +938,50 @@ const PerformanceTab = React.memo(() => {
                   isCritical && {borderColor: AppColors.errorBorder, backgroundColor: AppColors.errorCardBg},
                 ]}>
                 <View style={perfStyles.eventTopRow}>
-                  <View
-                    style={[
-                      perfStyles.fpsBadge,
-                      {backgroundColor: badgeBg, borderColor: badgeBorder},
-                    ]}>
-                    <Text style={[perfStyles.fpsBadgeText, {color: badgeColor}]}>
-                      {event.fps} FPS
-                    </Text>
-                  </View>
+                  <View style={perfStyles.fpsBadgeGroup}>
+                    <View
+                      style={[
+                        perfStyles.fpsBadge,
+                        {backgroundColor: badgeBg, borderColor: badgeBorder},
+                      ]}>
+                      <Text style={[perfStyles.fpsBadgeText, {color: badgeColor}]}>
+                        {event.fps} FPS
+                      </Text>
+                    </View>
 
-                  <View style={{flex: 1, paddingHorizontal: 6}}>
-                    <HighlightText
-                      text={event.label}
-                      search={search}
-                      style={perfStyles.eventLabel}
-                      highlightStyle={perfStyles.searchHighlight}
-                    />
-                    <Text style={perfStyles.eventMeta}>
-                      {t('performance.msTotal', {duration: event.durationMs, time: new Date(event.timestamp).toLocaleTimeString()})}
-                    </Text>
+                    {/* Dropped Frames Badge */}
+                    <View
+                      style={[
+                        perfStyles.droppedBadge,
+                        (event.droppedFrames ?? Math.max(0, 60 - event.fps)) > 0
+                          ? perfStyles.droppedBadgeWarning
+                          : perfStyles.droppedBadgeOptimal,
+                      ]}>
+                      <Text
+                        style={[
+                          perfStyles.droppedBadgeText,
+                          (event.droppedFrames ?? Math.max(0, 60 - event.fps)) > 0
+                            ? {color: AppColors.red600}
+                            : {color: AppColors.emerald600},
+                        ]}>
+                        {(event.droppedFrames ?? Math.max(0, 60 - event.fps)) > 0
+                          ? t('performance.droppedFrames', {count: event.droppedFrames ?? Math.max(0, 60 - event.fps)})
+                          : t('performance.zeroDropped')}
+                      </Text>
+                    </View>
+
+                    {/* Bottleneck Thread Tag */}
+                    {event.bottleneckThread && (
+                      <View style={perfStyles.bottleneckTag}>
+                        <Text style={perfStyles.bottleneckTagText}>
+                          {event.bottleneckThread === 'JS Thread'
+                            ? `⚡ ${t('performance.jsBound')}`
+                            : event.bottleneckThread === 'UI Thread'
+                            ? `🎨 ${t('performance.uiBound')}`
+                            : t('performance.balanced')}
+                        </Text>
+                      </View>
+                    )}
                   </View>
 
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
@@ -677,6 +995,50 @@ const PerformanceTab = React.memo(() => {
                   </View>
                 </View>
 
+                {/* Event Label & Meta */}
+                <View style={{marginTop: 4}}>
+                  <HighlightText
+                    text={event.label}
+                    search={search}
+                    style={perfStyles.eventLabel}
+                    highlightStyle={perfStyles.searchHighlight}
+                  />
+                  <View style={perfStyles.eventMetaRow}>
+                    <Text style={perfStyles.eventMeta}>
+                      {t('performance.msTotal', {
+                        duration: event.durationMs,
+                        time: new Date(event.timestamp).toLocaleTimeString(),
+                      })}
+                    </Text>
+                    <Text style={perfStyles.eventMetaDot}>•</Text>
+                    <Text
+                      style={[
+                        perfStyles.frameBudgetHint,
+                        event.durationMs > 16.67
+                          ? {color: AppColors.amber800Warm}
+                          : {color: AppColors.emerald600},
+                      ]}>
+                      {t('performance.frameBudgetMs', {
+                        time: event.durationMs,
+                        budget: Number(((event.durationMs / 16.67) * 100).toFixed(0)),
+                      })}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Visual Frame Time Budget Bar */}
+                <View style={perfStyles.frameBarTrack}>
+                  <View
+                    style={[
+                      perfStyles.frameBarFill,
+                      {
+                        width: `${Math.min(100, Math.max(10, (event.durationMs / 33.33) * 100))}%`,
+                        backgroundColor: badgeColor,
+                      },
+                    ]}
+                  />
+                </View>
+
                 <HighlightText
                   text={event.detail}
                   search={search}
@@ -687,15 +1049,47 @@ const PerformanceTab = React.memo(() => {
                 {/* ── EXPANDABLE IN-DEPTH METRICS ACCORDION ── */}
                 {isExpanded && (
                   <View style={perfStyles.expandedDetailBox}>
-                    {/* Source file / hook tag */}
-                    {event.source && (
+                    {/* Screen / Component Context */}
+                    {(event.screenName || event.source) && (
                       <View style={perfStyles.sourceRow}>
-                        <Text style={perfStyles.sourceTag}>{t('common.source')}</Text>
+                        <Text style={perfStyles.sourceTag}>{t('performance.screenContext')}</Text>
                         <Text style={perfStyles.sourceText} numberOfLines={1}>
-                          {event.source}
+                          {event.screenName || event.source}
                         </Text>
                       </View>
                     )}
+
+                    {/* Frame Metrics Grid */}
+                    <View style={perfStyles.fpsMetricsGrid}>
+                      <View style={perfStyles.fpsMetricItem}>
+                        <Text style={perfStyles.fpsMetricLabel}>{t('performance.target60Fps', {fps: event.fps})}</Text>
+                        <Text style={[perfStyles.fpsMetricVal, {color: badgeColor}]}>
+                          {event.fps} FPS
+                        </Text>
+                      </View>
+                      <View style={perfStyles.fpsMetricItem}>
+                        <Text style={perfStyles.fpsMetricLabel}>{t('performance.frameDuration')}</Text>
+                        <Text style={perfStyles.fpsMetricVal}>
+                          {event.durationMs} ms
+                        </Text>
+                      </View>
+                      <View style={perfStyles.fpsMetricItem}>
+                        <Text style={perfStyles.fpsMetricLabel}>{t('performance.jankRate')}</Text>
+                        <Text
+                          style={[
+                            perfStyles.fpsMetricVal,
+                            (event.droppedFrames ?? 0) > 0 ? {color: AppColors.red600} : {color: AppColors.emerald600},
+                          ]}>
+                          {event.droppedFrames ?? Math.max(0, 60 - event.fps)} frames
+                        </Text>
+                      </View>
+                      <View style={perfStyles.fpsMetricItem}>
+                        <Text style={perfStyles.fpsMetricLabel}>{t('performance.bottleneck')}</Text>
+                        <Text style={perfStyles.fpsMetricVal}>
+                          {event.bottleneckThread || t('performance.balanced')}
+                        </Text>
+                      </View>
+                    </View>
 
                     {/* Thread Timing Breakdown */}
                     {event.breakdown && (
@@ -795,7 +1189,7 @@ const perfStyles = StyleSheet.create({
     color: AppColors.primaryBlack,
     paddingVertical: 0,
   },
-  recordBtn: {
+  recordToggleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
@@ -804,63 +1198,72 @@ const perfStyles = StyleSheet.create({
     borderRadius: 7,
     borderWidth: 1,
   },
-  recordBtnActive: {
-    backgroundColor: AppColors.greenBg,
-    borderColor: AppColors.greenBorder,
+  recordToggleActive: {
+    backgroundColor: `${AppColors.errorColor}14`,
+    borderColor: `${AppColors.errorColor}30`,
   },
-  recordBtnPaused: {
-    backgroundColor: AppColors.amberBg,
-    borderColor: AppColors.lightOrange,
+  recordToggleInactive: {
+    backgroundColor: AppColors.graySurface,
+    borderColor: AppColors.dividerColor,
   },
-  recordDot: {
+  recordingDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
   },
-  recordBtnText: {
+  recordToggleText: {
     fontFamily: AppFonts.interBold,
     fontSize: 11,
   },
-  filterRow: {
+  categoryScrollWrapper: {
     backgroundColor: AppColors.white,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.dividerColor,
-    paddingVertical: 5,
+    height: 42,
   },
-  filterScrollContent: {
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 2,
+  categoryScrollView: {
+    flexGrow: 0,
+    height: 42,
   },
-  filterPill: {
+  categoryScroll: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
+    gap: 6,
+    paddingHorizontal: 12,
+    height: 42,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
   },
-  filterPillActive: {
+  categoryChipActive: {
     backgroundColor: AppColors.brandPurple,
     borderColor: AppColors.brandPurple,
   },
-  filterPillText: {
+  categoryChipText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 11,
     color: AppColors.grayTextStrong,
   },
-  filterPillTextActive: {
+  categoryChipTextActive: {
     fontFamily: AppFonts.interBold,
     color: AppColors.white,
+  },
+  scrollBody: {
+    flex: 1,
   },
   scrollContent: {
     padding: 12,
     gap: 10,
   },
-  metricCard: {
+  heroCard: {
     backgroundColor: AppColors.white,
     borderRadius: 12,
     padding: 14,
@@ -872,16 +1275,22 @@ const perfStyles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
   },
-  metricCardHeader: {
+  heroHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  metricCardTitle: {
+  heroTitle: {
     fontFamily: AppFonts.interBold,
-    fontSize: 13.5,
+    fontSize: 13,
     color: AppColors.primaryBlack,
+  },
+  heroSubTitle: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 9.5,
+    color: AppColors.grayTextWeak,
+    marginTop: 1,
   },
   scorePill: {
     paddingHorizontal: 8,
@@ -937,26 +1346,85 @@ const perfStyles = StyleSheet.create({
     marginTop: 2,
     textAlign: 'center',
   },
-  sparklineTrack: {
+  graphScrubTooltip: {
+    alignSelf: 'center',
+    backgroundColor: AppColors.primaryBlack,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  graphScrubTooltipText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.white,
+  },
+  svgGraphContainer: {
+    width: '100%',
+    height: 64,
+    marginTop: 6,
+    position: 'relative',
+  },
+  svgTouchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 38,
-    marginTop: 10,
-    paddingTop: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.dividerColor,
   },
-  sparklineCol: {
+  svgTouchCol: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
     height: '100%',
-    paddingHorizontal: 1,
   },
-  sparklineBar: {
-    width: '80%',
-    borderRadius: 2,
+  histogramContainer: {
+    gap: 8,
+    marginTop: 4,
+  },
+  histogramRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  histogramLabelCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    width: 140,
+  },
+  histogramLabelText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10,
+    color: AppColors.grayTextStrong,
+  },
+  histogramBarCol: {
+    flex: 1,
+  },
+  histogramTrack: {
+    height: 8,
+    backgroundColor: AppColors.grayBackground,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  histogramBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  histogramStatsCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minWidth: 52,
+    justifyContent: 'flex-end',
+  },
+  histogramPercentText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10.5,
+  },
+  histogramCountText: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 9.5,
+    color: AppColors.grayTextWeak,
   },
   sparklineFooter: {
     flexDirection: 'row',
@@ -1089,6 +1557,12 @@ const perfStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  fpsBadgeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
   fpsBadge: {
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -1098,6 +1572,91 @@ const perfStyles = StyleSheet.create({
   fpsBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 10,
+  },
+  droppedBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+    borderWidth: 1,
+  },
+  droppedBadgeWarning: {
+    backgroundColor: AppColors.red100,
+    borderColor: AppColors.errorBorder,
+  },
+  droppedBadgeOptimal: {
+    backgroundColor: AppColors.green100,
+    borderColor: AppColors.greenBorder,
+  },
+  droppedBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+  },
+  bottleneckTag: {
+    backgroundColor: AppColors.purpleShade50,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: AppColors.purpleTint2,
+  },
+  bottleneckTagText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 9.5,
+    color: AppColors.purple,
+  },
+  eventMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+    flexWrap: 'wrap',
+  },
+  eventMetaDot: {
+    fontSize: 9,
+    color: AppColors.grayTextWeak,
+  },
+  frameBudgetHint: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10,
+  },
+  frameBarTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: AppColors.graySurface,
+    overflow: 'hidden',
+    marginVertical: 4,
+  },
+  frameBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  fpsMetricsGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.white,
+    borderRadius: 6,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: AppColors.dividerColor,
+    justifyContent: 'space-between',
+    gap: 4,
+  },
+  fpsMetricItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  fpsMetricLabel: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 8.5,
+    color: AppColors.grayTextWeak,
+    textAlign: 'center',
+  },
+  fpsMetricVal: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10.5,
+    color: AppColors.primaryBlack,
+    marginTop: 1,
+    textAlign: 'center',
   },
   eventLabel: {
     fontFamily: AppFonts.interBold,

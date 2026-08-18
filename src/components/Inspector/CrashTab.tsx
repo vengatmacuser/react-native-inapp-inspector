@@ -98,15 +98,6 @@ const CrashTab = React.memo(() => {
     'stack' | 'device' | 'breadcrumbs' | 'raw'
   >('stack');
 
-  // Auto-open the latest crash detail on first visit if crashes exist
-  const hasAutoOpened = React.useRef(false);
-  React.useEffect(() => {
-    if (!hasAutoOpened.current && !selectedCrash && crashRecords.length > 0) {
-      setSelectedCrash(crashRecords[0]);
-      hasAutoOpened.current = true;
-    }
-  }, [crashRecords, selectedCrash, setSelectedCrash]);
-
   // Calculate statistics
   const stats = useMemo(() => {
     const total = crashRecords.length;

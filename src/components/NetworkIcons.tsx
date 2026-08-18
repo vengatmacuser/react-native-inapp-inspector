@@ -4,7 +4,18 @@ import Svg, {Circle, Ellipse, Line, Path, Rect} from 'react-native-svg';
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
 
-export const EmptyRadarIcon = ({color = AppColors.purple, size = 32}: any) => {
+export interface IconProps {
+  color?: string;
+  size?: number;
+  strokeWidth?: number;
+  isExpanded?: boolean;
+  isPaused?: boolean;
+  active?: boolean;
+  direction?: 'up' | 'down' | string;
+  ascending?: boolean;
+}
+
+export const EmptyRadarIcon = ({color = AppColors.purple, size = 32}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -28,7 +39,7 @@ export const EmptyRadarIcon = ({color = AppColors.purple, size = 32}: any) => {
 export const MapPinIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -54,7 +65,7 @@ export const MapPinIcon = ({
 export const ScreenIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect
@@ -83,7 +94,7 @@ export const ExpandCollapseIcon = ({
   isExpanded,
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {isExpanded ? (
@@ -110,7 +121,7 @@ export const ExpandCollapseIcon = ({
 export const SearchIcon = ({
   color = AppColors.primaryLight,
   size = 18,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="11" cy="11" r="8" stroke={color} strokeWidth="2" />
@@ -127,7 +138,7 @@ export const SearchIcon = ({
   );
 };
 
-export const ClearIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const ClearIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -141,7 +152,7 @@ export const ClearIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const ClockIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const ClockIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -170,7 +181,7 @@ export const ClockIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
 export const CalendarIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect
@@ -213,7 +224,7 @@ export const CalendarIcon = ({
   );
 };
 
-export const StatusIcon = ({color = AppColors.grayTextWeak}: any) => {
+export const StatusIcon = ({color = AppColors.grayTextWeak}: IconProps) => {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -231,7 +242,7 @@ export const StatusIcon = ({color = AppColors.grayTextWeak}: any) => {
   );
 };
 
-export const SizeIcon = ({color = AppColors.grayTextWeak}: any) => {
+export const SizeIcon = ({color = AppColors.grayTextWeak}: IconProps) => {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Path
@@ -244,7 +255,7 @@ export const SizeIcon = ({color = AppColors.grayTextWeak}: any) => {
   );
 };
 
-export const RequestIcon = ({color = AppColors.offerPurple}: any) => {
+export const RequestIcon = ({color = AppColors.offerPurple}: IconProps) => {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Path
@@ -258,7 +269,7 @@ export const RequestIcon = ({color = AppColors.offerPurple}: any) => {
   );
 };
 
-export const ResponseIcon = ({color = AppColors.greenColor}: any) => {
+export const ResponseIcon = ({color = AppColors.greenColor}: IconProps) => {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Path
@@ -272,7 +283,7 @@ export const ResponseIcon = ({color = AppColors.greenColor}: any) => {
   );
 };
 
-export const HeadersIcon = ({color = AppColors.skyBlue}: any) => {
+export const HeadersIcon = ({color = AppColors.skyBlue}: IconProps) => {
   return (
     <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
       <Path
@@ -285,7 +296,7 @@ export const HeadersIcon = ({color = AppColors.skyBlue}: any) => {
   );
 };
 
-export const CopyIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const CopyIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -308,7 +319,7 @@ export const CopyIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const FetchIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const FetchIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -334,7 +345,7 @@ export const FetchIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
 export const TerminalIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -348,7 +359,7 @@ export const TerminalIcon = ({
   );
 };
 
-export const CheckIcon = ({color = AppColors.greenColor, size = 14}: any) => {
+export const CheckIcon = ({color = AppColors.greenColor, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -362,7 +373,7 @@ export const CheckIcon = ({color = AppColors.greenColor, size = 14}: any) => {
   );
 };
 
-export const CircleCheckIcon = ({color = AppColors.greenColor, size = 14}: any) => {
+export const CircleCheckIcon = ({color = AppColors.greenColor, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
@@ -377,7 +388,7 @@ export const CircleCheckIcon = ({color = AppColors.greenColor, size = 14}: any) 
   );
 };
 
-export const CircleXIcon = ({color = AppColors.errorColor, size = 14}: any) => {
+export const CircleXIcon = ({color = AppColors.errorColor, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
@@ -391,7 +402,7 @@ export const CircleXIcon = ({color = AppColors.errorColor, size = 14}: any) => {
   );
 };
 
-export const CircleAlertIcon = ({color = AppColors.warningIconGold, size = 14}: any) => {
+export const CircleAlertIcon = ({color = AppColors.warningIconGold, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
@@ -406,7 +417,7 @@ export const CircleAlertIcon = ({color = AppColors.warningIconGold, size = 14}: 
   );
 };
 
-export const FailIcon = ({color = AppColors.errorColor, size = 10}: any) => {
+export const FailIcon = ({color = AppColors.errorColor, size = 10}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -420,7 +431,7 @@ export const FailIcon = ({color = AppColors.errorColor, size = 10}: any) => {
   );
 };
 
-export const TrashIcon = ({color = AppColors.primaryLight, size = 18}: any) => {
+export const TrashIcon = ({color = AppColors.primaryLight, size = 18}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -438,7 +449,7 @@ export const HeaderPauseIcon = ({
   isPaused,
   color = AppColors.primaryLight,
   size = 20,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {isPaused ? (
@@ -453,7 +464,7 @@ export const HeaderPauseIcon = ({
 export const ExportIcon = ({
   color = AppColors.primaryLight,
   size = 18,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -470,7 +481,7 @@ export const ExportIcon = ({
 export const SignalIcon = ({
   color = AppColors.primaryLight,
   size = 18,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -484,7 +495,7 @@ export const SignalIcon = ({
   );
 };
 
-export const DiffIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const DiffIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -498,7 +509,7 @@ export const DiffIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const GlobeIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const GlobeIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -516,7 +527,7 @@ export const SortArrowIcon = ({
   color = AppColors.primaryLight,
   size = 20,
   direction = 'down',
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {direction === 'down' ? (
@@ -559,7 +570,7 @@ export const SortArrowIcon = ({
 export const ChevronIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -576,7 +587,7 @@ export const ChevronIcon = ({
 export const FilterIcon = ({
   color = AppColors.grayTextWeak,
   size = 18,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -593,7 +604,7 @@ export const FilterIcon = ({
 export const DownloadIcon = ({
   color = AppColors.primaryLight,
   size = 18,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -607,7 +618,7 @@ export const DownloadIcon = ({
   );
 };
 
-export const CloseWhite = ({color = AppColors.white, size = 20}: any) => {
+export const CloseWhite = ({color = AppColors.white, size = 20}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -621,7 +632,7 @@ export const CloseWhite = ({color = AppColors.white, size = 20}: any) => {
   );
 };
 
-export const WhiteBackNavigation = ({color = AppColors.white, size = 20}: any) => {
+export const WhiteBackNavigation = ({color = AppColors.white, size = 20}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -638,7 +649,7 @@ export const WhiteBackNavigation = ({color = AppColors.white, size = 20}: any) =
 export const AnalyticsIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -655,7 +666,7 @@ export const AnalyticsIcon = ({
 export const InsightsIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -669,7 +680,7 @@ export const InsightsIcon = ({
   );
 };
 
-export const DebugIcon = ({color = AppColors.white, size = 18}: any) => {
+export const DebugIcon = ({color = AppColors.white, size = 18}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {/* Hammer: diagonal from bottom-left to top-right */}
@@ -715,7 +726,7 @@ export const DebugIcon = ({color = AppColors.white, size = 18}: any) => {
   );
 };
 
-export const SunIcon = ({color = AppColors.white, size = 16}: any) => {
+export const SunIcon = ({color = AppColors.white, size = 16}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="5" stroke={color} strokeWidth="2" />
@@ -729,7 +740,7 @@ export const SunIcon = ({color = AppColors.white, size = 16}: any) => {
   );
 };
 
-export const MoonIcon = ({color = AppColors.white, size = 16}: any) => {
+export const MoonIcon = ({color = AppColors.white, size = 16}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -747,7 +758,7 @@ export const MoonIcon = ({color = AppColors.white, size = 16}: any) => {
 export {BrandCircleIcon} from './BrandCircleIcon';
 export {BrandSquareIcon} from './BrandSquareIcon';
 
-export const HtmlIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const HtmlIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -761,7 +772,7 @@ export const HtmlIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const CssIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const CssIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -775,7 +786,7 @@ export const CssIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const JsIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const JsIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect
@@ -797,7 +808,7 @@ export const JsIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const EyeIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const EyeIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -823,7 +834,7 @@ export const EyeIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
 export const SettingsIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -841,7 +852,7 @@ export const SettingsIcon = ({
 export const FolderIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -856,7 +867,7 @@ export const FolderIcon = ({
 };
 
 // #3 — Broom/sweep "wipe" icon used by the header Clear-Everything button.
-export const WipeIcon = ({color = AppColors.white, size = 16}: any) => {
+export const WipeIcon = ({color = AppColors.white, size = 16}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {/* Handle */}
@@ -895,7 +906,7 @@ export const WipeIcon = ({color = AppColors.white, size = 16}: any) => {
 export const LayersIcon = ({
   color = AppColors.grayTextWeak,
   size = 12,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -909,7 +920,7 @@ export const LayersIcon = ({
   );
 };
 
-export const UserIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => {
+export const UserIcon = ({color = AppColors.grayTextWeak, size = 12}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -927,7 +938,7 @@ export const UserIcon = ({color = AppColors.grayTextWeak, size = 12}: any) => {
 export const InfoCircleIcon = ({
   color = AppColors.grayTextWeak,
   size = 12,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -944,7 +955,7 @@ export const InfoCircleIcon = ({
 export const WarningTriangleIcon = ({
   color = AppColors.grayTextWeak,
   size = 12,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -967,7 +978,7 @@ export const WarningTriangleIcon = ({
 export const ErrorCircleIcon = ({
   color = AppColors.grayTextWeak,
   size = 12,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
@@ -984,7 +995,7 @@ export const ErrorCircleIcon = ({
 export const TrendingUpIcon = ({
   color = AppColors.grayTextWeak,
   size = 12,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1008,7 +1019,7 @@ export const TrendingUpIcon = ({
 export const MotionIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1026,7 +1037,7 @@ export const SortIcon = ({
   ascending,
   color = AppColors.purple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1044,7 +1055,7 @@ export const SortIcon = ({
 export const PrettyIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1068,7 +1079,7 @@ export const PrettyIcon = ({
 export const RawIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Line x1="21" y1="6" x2="3" y2="6" stroke={color} strokeWidth="2" strokeLinecap="round" />
@@ -1081,7 +1092,7 @@ export const RawIcon = ({
 export const TableIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="3" y="3" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
@@ -1095,7 +1106,7 @@ export const TableIcon = ({
 export const PackageIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1119,7 +1130,7 @@ export const PackageIcon = ({
 export const ForwardChevronIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1138,7 +1149,7 @@ export const BundleIcon = PackageIcon;
 export const LiveStateIcon = ({
   color = AppColors.purple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1156,7 +1167,7 @@ export const LiveStateIcon = ({
 export const TimelineIcon = ({
   color = AppColors.purple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
@@ -1174,7 +1185,7 @@ export const TimelineIcon = ({
 export const RefreshCcwIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1191,7 +1202,7 @@ export const RefreshCcwIcon = ({
 export const StorageIcon = ({
   color = AppColors.purple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Ellipse cx="12" cy="6" rx="8" ry="2.8" stroke={color} strokeWidth="1.8" />
@@ -1214,7 +1225,7 @@ export const StorageIcon = ({
 export const MetadataIcon = ({
   color = AppColors.purple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
@@ -1231,7 +1242,7 @@ export const MetadataIcon = ({
 export const ReduxIcon = ({
   color = AppColors.purple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="4" stroke={color} strokeWidth="1.8" />
@@ -1250,7 +1261,7 @@ export const ReduxIcon = ({
 export const PerformanceIcon = ({
   color = AppColors.purple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1278,7 +1289,7 @@ export const PerformanceIcon = ({
 
 // ─── App-wide Vector Icons (emoji-free, render on every device) ─────────────
 
-export const BoltIcon = ({color = AppColors.amber500, size = 14}: any) => {
+export const BoltIcon = ({color = AppColors.amber500, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1291,7 +1302,7 @@ export const BoltIcon = ({color = AppColors.amber500, size = 14}: any) => {
   );
 };
 
-export const BanIcon = ({color = AppColors.errorColor, size = 14}: any) => {
+export const BanIcon = ({color = AppColors.errorColor, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
@@ -1300,7 +1311,7 @@ export const BanIcon = ({color = AppColors.errorColor, size = 14}: any) => {
   );
 };
 
-export const FolderOpenIcon = ({color = AppColors.amber500, size = 14}: any) => {
+export const FolderOpenIcon = ({color = AppColors.amber500, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1319,7 +1330,7 @@ export const FolderOpenIcon = ({color = AppColors.amber500, size = 14}: any) => 
   );
 };
 
-export const DocIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const DocIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1334,7 +1345,7 @@ export const DocIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const LightbulbIcon = ({color = AppColors.amber500, size = 14}: any) => {
+export const LightbulbIcon = ({color = AppColors.amber500, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1350,7 +1361,7 @@ export const LightbulbIcon = ({color = AppColors.amber500, size = 14}: any) => {
   );
 };
 
-export const SparkleIcon = ({color = AppColors.amber500, size = 14}: any) => {
+export const SparkleIcon = ({color = AppColors.amber500, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1362,7 +1373,7 @@ export const SparkleIcon = ({color = AppColors.amber500, size = 14}: any) => {
   );
 };
 
-export const MapIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const MapIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1377,7 +1388,7 @@ export const MapIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const AtomIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const AtomIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Ellipse cx="12" cy="12" rx="9" ry="3.8" stroke={color} strokeWidth="1.6" />
@@ -1404,7 +1415,7 @@ export const AtomIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const BrainIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const BrainIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1417,7 +1428,7 @@ export const BrainIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
   );
 };
 
-export const TextAaIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => {
+export const TextAaIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M4 19 7.5 7 11 19" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
@@ -1428,7 +1439,7 @@ export const TextAaIcon = ({color = AppColors.grayTextWeak, size = 14}: any) => 
   );
 };
 
-export const CartIcon = ({color = AppColors.amber500, size = 14}: any) => {
+export const CartIcon = ({color = AppColors.amber500, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="9.5" cy="20" r="1.3" stroke={color} strokeWidth="1.8" />
@@ -1444,7 +1455,7 @@ export const CartIcon = ({color = AppColors.amber500, size = 14}: any) => {
   );
 };
 
-export const MoneyIcon = ({color = AppColors.emerald500, size = 14}: any) => {
+export const MoneyIcon = ({color = AppColors.emerald500, size = 14}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
@@ -1461,7 +1472,7 @@ export const MoneyIcon = ({color = AppColors.emerald500, size = 14}: any) => {
 export const ExternalLinkIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1485,7 +1496,7 @@ export const ExternalLinkIcon = ({
 export const PackageBoxIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1509,7 +1520,7 @@ export const PackageBoxIcon = ({
 export const GitHubIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1526,7 +1537,7 @@ export const GitHubIcon = ({
 export const LinkChainIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1550,7 +1561,7 @@ export const LinkChainIcon = ({
 export const AppleIcon = ({
   color = AppColors.white,
   size = 12,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
       <Path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.87-.9.04-1.99.6-2.63 1.35-.56.65-1.06 1.71-.93 2.74 1.01.08 2.03-.47 2.64-1.22z" />
@@ -1561,7 +1572,7 @@ export const AppleIcon = ({
 export const AndroidIcon = ({
   color = AppColors.white,
   size = 12,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
       <Path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v6c0 .83.67 1.5 1.5 1.5S5 16.33 5 15.5v-6C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v6c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-6c0-.83-.67-1.5-1.5-1.5zm-4.97-4.84l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 2.23 12.95 2 12 2c-.96 0-1.86.23-2.66.63L7.85 1.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.73 4.26 5.54 6 5.16 8h13.68c-.38-2-1.57-3.74-3.31-4.84zM9 6c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm6 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1z" />
@@ -1572,7 +1583,7 @@ export const AndroidIcon = ({
 export const CodeBracketsIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1589,7 +1600,7 @@ export const CodeBracketsIcon = ({
 export const FlameIcon = ({
   color = AppColors.darkOrange,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1606,7 +1617,7 @@ export const FlameIcon = ({
 export const HourglassIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1623,7 +1634,7 @@ export const HourglassIcon = ({
 export const PinIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1641,7 +1652,7 @@ export const PinIcon = ({
 export const RepeatIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1658,7 +1669,7 @@ export const RepeatIcon = ({
 export const TargetGoalIcon = ({
   color = AppColors.brandPurple,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
@@ -1671,7 +1682,7 @@ export const TargetGoalIcon = ({
 export const UserCheckIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1696,7 +1707,7 @@ export const UserCheckIcon = ({
 export const CrashIcon = ({
   color = AppColors.errorColor,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {/* Bug / Crash Hybrid Icon */}
@@ -1726,7 +1737,7 @@ export const CrashIcon = ({
 export const ShieldAlertIcon = ({
   color = AppColors.errorColor,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1755,7 +1766,7 @@ export const ShieldAlertIcon = ({
 export const SkullIcon = ({
   color = AppColors.errorColor,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
@@ -1775,7 +1786,7 @@ export const SkullIcon = ({
 export const ChipIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="7" y="7" width="10" height="10" rx="2" stroke={color} strokeWidth="1.8" />
@@ -1795,7 +1806,7 @@ export const ChipIcon = ({
 export const LayoutIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect x="3" y="3" width="18" height="18" rx="2" stroke={color} strokeWidth="1.8" />
@@ -1809,7 +1820,7 @@ export const LayoutIcon = ({
 export const StackTraceIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1832,7 +1843,7 @@ export const StackTraceIcon = ({
 export const DiagnosticsIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1850,7 +1861,7 @@ export const DiagnosticsIcon = ({
 export const TrailIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="5" cy="18" r="2" fill={color} />
@@ -1869,7 +1880,7 @@ export const TrailIcon = ({
 export const RawJsonIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1886,7 +1897,7 @@ export const RawJsonIcon = ({
 export const AppFramesIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -1909,7 +1920,7 @@ export const AppFramesIcon = ({
 export const AllFramesIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
-}: any) => {
+}: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path

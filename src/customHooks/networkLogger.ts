@@ -11,6 +11,7 @@ type NetworkLog = {
   duration?: number;
   startTime: number;
   caller?: string; // ✅ Captures the file and line number
+  client?: string; // ✅ Captures request client: axios, fetch, xhr, apollo, etc.
   requestHeaders?: Record<string, string>;
   responseHeaders?: Record<string, string>;
 };
@@ -186,10 +187,19 @@ export const setupNetworkLogger = () => {
 
       let caller = "Unknown";
       let requestHeaders: Record<string, string> | undefined;
+      let client = 'fetch';
 
       try {
         requestHeaders = normaliseHeaders(options?.headers);
         caller = getCallerFromStack(); // ✅ Capture call line
+
+        if (requestHeaders?.['apollographql-client-name'] || finalUrl?.toLowerCase().includes('/graphql')) {
+          client = 'apollo';
+        } else if (requestHeaders?.['x-requested-with']?.toLowerCase().includes('xmlhttprequest')) {
+          client = 'xhr';
+        } else if (caller?.toLowerCase().includes('axios')) {
+          client = 'axios';
+        }
 
         addOrUpdateLog({
           id,
@@ -197,6 +207,7 @@ export const setupNetworkLogger = () => {
           method,
           startTime: start,
           caller,
+          client,
           request: method === "GET" ? undefined : parseRequestData(options?.body),
           requestHeaders,
         });
@@ -236,6 +247,7 @@ export const setupNetworkLogger = () => {
             duration,
             startTime: start,
             caller,
+            client,
             responseHeaders,
           });
         } catch {}
@@ -251,6 +263,7 @@ export const setupNetworkLogger = () => {
             startTime: start,
             response: error,
             caller,
+            client,
             duration: Date.now() - start,
           });
         } catch {}
@@ -309,6 +322,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       method,
       startTime: start,
       caller,
+      client: 'axios',
       request: method === "GET" ? undefined : parseRequestData(config.data),
       requestHeaders: normaliseHeaders(config.headers),
     });
@@ -338,6 +352,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
         startTime: start || Date.now(),
         duration: start != null ? Date.now() - start : undefined,
         caller,
+        client: 'axios',
         responseHeaders: normaliseHeaders(response.headers),
       });
 
@@ -363,6 +378,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
           startTime: start || Date.now(),
           duration: start != null ? Date.now() - start : undefined,
           caller,
+          client: 'axios',
           responseHeaders: normaliseHeaders(error.response?.headers),
         });
       }

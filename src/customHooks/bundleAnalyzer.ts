@@ -1,4 +1,5 @@
 import {AppColors} from '../styles/AppColors';
+import {t} from '../i18n';
 // ─── Real Host App Bundle Analyzer ──────────────────────────────────────────
 //
 // Dynamically measures and analyzes the real JavaScript bundle and packages
@@ -376,27 +377,36 @@ const extractBundleModules = (bundleText: string): ParsedBundleModule[] => {
   const seenIds = new Set<number>();
 
   if (bundleText && bundleText.length > 0) {
-    // Primary high-speed Metro tail regex: matches }, <id>, [<deps>], "<path>"
+    // 1. Primary Metro regex: matches }, <id>, [<deps>] or {<deps>}, "<path>"
     const tailRegex =
-      /\}\s*,\s*(\d+)\s*,\s*\[([\d,\s]*)\]\s*,\s*(?:"([^"\r\n]+)"|'([^'\r\n]+)')/g;
+      /\}\s*,\s*(\d+)\s*,\s*(?:\[[\s\S]*?\]|\{[\s\S]*?\})\s*,\s*(?:"([^"\r\n]+)"|'([^'\r\n]+)')/g;
     let match: RegExpExecArray | null;
     while ((match = tailRegex.exec(bundleText)) !== null) {
       const id = parseInt(match[1], 10);
-      const depsStr = match[2];
-      const path = match[3] || match[4] || '';
-      const deps: number[] = depsStr
-        ? depsStr
-            .split(',')
-            .map(s => parseInt(s.trim(), 10))
-            .filter(n => !isNaN(n))
-        : [];
+      const path = match[2] || match[3] || '';
       if (!seenIds.has(id) && path.length > 0) {
         seenIds.add(id);
-        modules.push({id, deps, path});
+        modules.push({id, deps: [], path});
       }
     }
 
-    // Secondary fallback if tailRegex didn't find modules
+    // 2. SourceURL comment extraction (Metro dev server embeds //# sourceURL=... for every module)
+    const sourceUrlRegex =
+      /\/\/[#@]\s*sourceURL=(?:https?:\/\/[^/\n\r]+\/|file:\/\/)?([^?\r\n#\s]+)/g;
+    let srcMatch: RegExpExecArray | null;
+    let autoId = 900000;
+    while ((srcMatch = sourceUrlRegex.exec(bundleText)) !== null) {
+      const path = srcMatch[1];
+      if (path && path.length > 0 && !path.endsWith('.bundle')) {
+        const id = autoId++;
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          modules.push({id, deps: [], path});
+        }
+      }
+    }
+
+    // 3. Fallback scan for __d calls
     if (modules.length === 0) {
       const defineRe = /__d\s*\(/g;
       let m: RegExpExecArray | null;
@@ -410,23 +420,13 @@ const extractBundleModules = (bundleText: string): ParsedBundleModule[] => {
         const idNum = parseInt(idMatch[1], 10);
         if (seenIds.has(idNum)) continue;
 
-        const depsMatch = args[2].match(/\[([^\]]*)\]/);
-        const deps: number[] = [];
-        if (depsMatch) {
-          const depRe = /\d+/g;
-          let d: RegExpExecArray | null;
-          while ((d = depRe.exec(depsMatch[1])) !== null) {
-            deps.push(parseInt(d[0], 10));
-          }
-        }
-
         const pathRaw = args[3].trim();
         const pathMatch = pathRaw.match(/^["']([^"']+)["']$/);
         const path = pathMatch ? pathMatch[1] : pathRaw;
         if (path.length === 0 || path.length > 500) continue;
 
         seenIds.add(idNum);
-        modules.push({id: idNum, deps, path});
+        modules.push({id: idNum, deps: [], path});
       }
     }
   }
@@ -452,26 +452,79 @@ const getStaticStartupModuleIds = (bundleText: string): Set<number> => {
   return ids;
 };
 
-const findCommonDirectoryPrefix = (paths: string[]): string => {
-  const absPaths = paths.filter(p => p.startsWith('/'));
+/**
+ * Dynamically computes the host app's project root directory without hardcoding any folder names.
+ * Uses node_modules boundary, root entry points (index/App/package.json), and common directory analysis.
+ */
+const detectProjectRoot = (allRawPaths: string[]): string => {
+  const normPaths = allRawPaths.map(p => p.replace(/\\/g, '/'));
+
+  // 1. Extract from node_modules path (most definitive in Metro dev bundles)
+  for (const norm of normPaths) {
+    const nmIdx = norm.indexOf('/node_modules/');
+    if (nmIdx !== -1) {
+      return norm.slice(0, nmIdx + 1); // e.g. "/Users/user/Projects/my-app/"
+    }
+  }
+
+  // 2. Extract from root entrypoint files (e.g. /path/to/project/index.js or App.tsx)
+  for (const norm of normPaths) {
+    const match = norm.match(/^(.*\/)(?:index\.[jt]sx?|app\.[jt]sx?|package\.json)(?:[?#].*)?$/i);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  // 3. Fallback: lowest common directory ancestor among all absolute project paths
+  const absPaths = normPaths.filter(p => p.startsWith('/') && !p.includes('/node_modules/'));
   if (absPaths.length === 0) return '';
   if (absPaths.length === 1) {
     const lastSlash = absPaths[0].lastIndexOf('/');
     return lastSlash > 0 ? absPaths[0].slice(0, lastSlash + 1) : '';
   }
+
   const splitPaths = absPaths.map(p => p.split('/'));
-  let commonIndex = 0;
+  let commonLen = 0;
   const first = splitPaths[0];
-  while (commonIndex < first.length - 1) {
-    const segment = first[commonIndex];
-    if (splitPaths.every(p => p[commonIndex] === segment)) {
-      commonIndex++;
+  const minLen = Math.min(...splitPaths.map(sp => sp.length));
+
+  while (commonLen < minLen - 1) {
+    const seg = first[commonLen];
+    if (splitPaths.every(sp => sp[commonLen] === seg)) {
+      commonLen++;
     } else {
       break;
     }
   }
-  if (commonIndex === 0) return '';
-  return first.slice(0, commonIndex).join('/') + '/';
+
+  return commonLen > 0 ? first.slice(0, commonLen).join('/') + '/' : '';
+};
+
+/**
+ * Normalizes absolute or relative module paths so they retain their full
+ * folder hierarchy from the host project root dynamically.
+ */
+const normalizeProjectRelativePath = (rawPath: string, projectRoot: string): string => {
+  let clean = rawPath.replace(/\\/g, '/');
+
+  // Strip query parameters e.g. ?platform=ios or hashes
+  const qIdx = clean.search(/[?#]/);
+  if (qIdx !== -1) {
+    clean = clean.slice(0, qIdx);
+  }
+
+  // Strip file:// or http://.../ dev server URL prefixes
+  clean = clean.replace(/^(?:https?:\/\/[^/]+\/|file:\/\/)/, '');
+
+  // Strip dynamically detected project root prefix
+  if (projectRoot && clean.startsWith(projectRoot)) {
+    clean = clean.slice(projectRoot.length);
+  }
+
+  // Clean leading ../ sequences, ./, and leading /
+  clean = clean.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '').replace(/^\/+/, '');
+  if (!clean) clean = rawPath.split('/').pop() || rawPath;
+  return clean;
 };
 
 const isExternalPackage = (rawPath: string): {isPkg: boolean; pkgName?: string} => {
@@ -613,20 +666,14 @@ export const parseBundleSource = (
     rawProjectItems.push({mod, rawPath});
   }
 
-  // Calculate common prefix for absolute paths to cleanly extract host app project files
-  const commonPrefix = findCommonDirectoryPrefix(rawProjectItems.map(item => item.rawPath));
+  // Dynamically calculate project root prefix to cleanly extract all host app folders & files
+  const projectRoot = detectProjectRoot(modules.map(item => item.path));
 
   const discoveredFiles: HostBundleFileItem[] = [];
   let fileIdx = 0;
 
   for (const {mod, rawPath} of rawProjectItems) {
-    let cleanPath = rawPath;
-    if (commonPrefix && cleanPath.startsWith(commonPrefix)) {
-      cleanPath = cleanPath.slice(commonPrefix.length);
-    }
-    // Clean leading ../ sequences, ./, and leading /
-    cleanPath = cleanPath.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '').replace(/^\/+/, '');
-    if (!cleanPath) cleanPath = rawPath.split('/').pop() || rawPath;
+    const cleanPath = normalizeProjectRelativePath(rawPath, projectRoot);
 
     const isLocalFile =
       cleanPath.endsWith('.tsx') ||
@@ -703,48 +750,6 @@ export const parseBundleSource = (
         : 'Not consumed: Defined in the bundle but not referenced in active execution tree',
       isConsumed,
     });
-  }
-
-  // If no modules could be parsed (e.g. Hermes bytecode / obfuscated bundle), synthesize from loaded modules
-  if (discoveredFiles.length === 0) {
-    discoveredFiles.push(
-      {
-        id: 'hf-1',
-        name: 'index.js (App Entry)',
-        path: 'index.js',
-        ext: 'JS',
-        category: 'javascript',
-        sizeKb: Math.round(totalDevKb * 0.08),
-        meta: 'React Native Root Entrypoint',
-        color: AppColors.indigo500,
-        status: 'optimal',
-        isConsumed: true,
-      },
-      {
-        id: 'hf-2',
-        name: 'App.tsx',
-        path: 'src/App.tsx',
-        ext: 'TSX',
-        category: 'typescript',
-        sizeKb: Math.round(totalDevKb * 0.12),
-        meta: 'Root Navigation & Provider Container',
-        color: AppColors.sky500,
-        status: 'optimal',
-        isConsumed: true,
-      },
-      {
-        id: 'hf-3',
-        name: 'HomeScreen.tsx',
-        path: 'src/screens/HomeScreen.tsx',
-        ext: 'TSX',
-        category: 'typescript',
-        sizeKb: Math.round(totalDevKb * 0.06),
-        meta: 'Main Dashboard Screen View',
-        color: AppColors.sky500,
-        status: 'optimal',
-        isConsumed: true,
-      },
-    );
   }
 
   // Dynamic color palette generator based on package name hash
@@ -927,106 +932,106 @@ export const parseBundleSource = (
   const iosComponents: HostBinaryComponentItem[] = [
     {
       id: 'ios-c1',
-      name: 'Frameworks & Dynamic Pods',
+      name: t('bundle.iosComp1Name'),
       category: 'frameworks',
       sizeMb: nativeFrameworksMb,
       pct: Number(((nativeFrameworksMb / iosInstallMb) * 100).toFixed(1)),
       color: AppColors.indigo500,
-      description: `React, Hermes, and ${packagesList.length} native pod frameworks.`,
-      advice: 'Ensure Dead Code Stripping (STRIP_INSTALLED_PRODUCT = YES) in Release mode.',
+      description: t('bundle.iosComp1Desc', {count: packagesList.length}),
+      advice: t('bundle.iosComp1Advice'),
     },
     {
       id: 'ios-c2',
-      name: 'Mach-O Executable (ARM64)',
+      name: t('bundle.iosComp2Name'),
       category: 'native',
       sizeMb: nativeMachoMb,
       pct: Number(((nativeMachoMb / iosInstallMb) * 100).toFixed(1)),
       color: AppColors.sky500,
-      description: 'Host App compiled Swift/Objective-C and C++ native bridges.',
-      advice: 'Enable Monolithic LTO (Link-Time Optimization) in Xcode Scheme.',
+      description: t('bundle.iosComp2Desc'),
+      advice: t('bundle.iosComp2Advice'),
     },
     {
       id: 'ios-c3',
-      name: 'Asset Catalog (Assets.car)',
+      name: t('bundle.iosComp3Name'),
       category: 'assets',
       sizeMb: assetsCatalogMb,
       pct: Number(((assetsCatalogMb / iosInstallMb) * 100).toFixed(1)),
       color: AppColors.pink500,
-      description: 'AppIcons, splash screens, vector glyphs, and bundled fonts.',
-      advice: 'Compile images into Xcode Asset Catalog for automatic App Thinning.',
+      description: t('bundle.iosComp3Desc'),
+      advice: t('bundle.iosComp3Advice'),
     },
     {
       id: 'ios-c4',
-      name: 'Hermes Bytecode (main.jsbundle)',
+      name: t('bundle.iosComp4Name'),
       category: 'js',
       sizeMb: releaseJsMb,
       pct: Number(((releaseJsMb / iosInstallMb) * 100).toFixed(1)),
       color: AppColors.emerald500,
-      description: `Host app JavaScript compiled AOT into Hermes bytecode (${discoveredFiles.length} files).`,
-      advice: 'AOT bytecode loads with 0ms compile latency on device launch.',
+      description: t('bundle.iosComp4Desc', {count: discoveredFiles.length}),
+      advice: t('bundle.iosComp4Advice'),
     },
     {
       id: 'ios-c5',
-      name: 'Metadata & Code Signatures',
+      name: t('bundle.iosComp5Name'),
       category: 'meta',
       sizeMb: metadataMb,
       pct: Number(((metadataMb / iosInstallMb) * 100).toFixed(1)),
       color: AppColors.amber500,
-      description: '_CodeSignature, Info.plist, and entitlements block.',
-      advice: 'Standard Apple Code Signing & provisioning signature.',
+      description: t('bundle.iosComp5Desc'),
+      advice: t('bundle.iosComp5Advice'),
     },
   ];
 
   const androidComponents: HostBinaryComponentItem[] = [
     {
       id: 'and-c1',
-      name: 'Native C++ Libraries (.so)',
+      name: t('bundle.andComp1Name'),
       category: 'native',
       sizeMb: androidCppMb,
       pct: Number(((androidCppMb / androidInstallMb) * 100).toFixed(1)),
       color: AppColors.sky500,
-      description: `libhermes.so, libfbjni.so, and ${packagesList.length} C++ native adapters.`,
-      advice: 'Deploy with Android App Bundle (.aab) to deliver per-ABI split APKs.',
+      description: t('bundle.andComp1Desc', {count: packagesList.length}),
+      advice: t('bundle.andComp1Advice'),
     },
     {
       id: 'and-c2',
-      name: 'Compiled DEX (classes.dex)',
+      name: t('bundle.andComp2Name'),
       category: 'frameworks',
       sizeMb: androidDexMb,
       pct: Number(((androidDexMb / androidInstallMb) * 100).toFixed(1)),
       color: AppColors.indigo500,
-      description: 'Compiled Java & Kotlin runtime, AndroidX, and React Native bridges.',
-      advice: 'Enable R8 / ProGuard shrinking (minifyEnabled true) in build.gradle.',
+      description: t('bundle.andComp2Desc'),
+      advice: t('bundle.andComp2Advice'),
     },
     {
       id: 'and-c3',
-      name: 'Android Resources (res/)',
+      name: t('bundle.andComp3Name'),
       category: 'assets',
       sizeMb: androidResMb,
       pct: Number(((androidResMb / androidInstallMb) * 100).toFixed(1)),
       color: AppColors.pink500,
-      description: 'Drawables, vector XMLs, mipmap densities, resources.arsc, fonts.',
-      advice: 'Use WebP and VectorDrawables to avoid multi-density asset duplication.',
+      description: t('bundle.andComp3Desc'),
+      advice: t('bundle.andComp3Advice'),
     },
     {
       id: 'and-c4',
-      name: 'Hermes Bytecode (Android)',
+      name: t('bundle.andComp4Name'),
       category: 'js',
       sizeMb: releaseJsMb,
       pct: Number(((releaseJsMb / androidInstallMb) * 100).toFixed(1)),
       color: AppColors.emerald500,
-      description: `Host app JavaScript compiled into Hermes bytecode (${discoveredFiles.length} files).`,
-      advice: 'Pre-compiled bytecode during assembleRelease gradle task.',
+      description: t('bundle.andComp4Desc', {count: discoveredFiles.length}),
+      advice: t('bundle.andComp4Advice'),
     },
     {
       id: 'and-c5',
-      name: 'Manifest & Signatures (META-INF)',
+      name: t('bundle.andComp5Name'),
       category: 'meta',
       sizeMb: 2.6,
       pct: Number(((2.6 / androidInstallMb) * 100).toFixed(1)),
       color: AppColors.amber500,
-      description: 'AndroidManifest.xml, signing certs, v2/v3/v4 APK Signature Scheme blocks.',
-      advice: 'Official Google Play signing & signature block.',
+      description: t('bundle.andComp5Desc'),
+      advice: t('bundle.andComp5Advice'),
     },
   ];
 
@@ -1040,53 +1045,53 @@ export const parseBundleSource = (
   const androidApkComponents: HostBinaryComponentItem[] = [
     {
       id: 'apk-c1',
-      name: 'Multi-ABI C++ Libraries (.so)',
+      name: t('bundle.apkComp1Name'),
       category: 'native',
       sizeMb: androidMultiAbiCppMb,
       pct: Number(((androidMultiAbiCppMb / androidApkInstallMb) * 100).toFixed(1)),
       color: AppColors.sky500,
-      description: 'Universal multi-architecture shared libraries (.so) bundled for direct sideloading.',
-      advice: 'Use Android App Bundle (.aab) for Google Play to reduce install size by 60%.',
+      description: t('bundle.apkComp1Desc'),
+      advice: t('bundle.apkComp1Advice'),
     },
     {
       id: 'apk-c2',
-      name: 'Compiled DEX Bytecode (classes.dex)',
+      name: t('bundle.apkComp2Name'),
       category: 'frameworks',
       sizeMb: androidDexMb,
       pct: Number(((androidDexMb / androidApkInstallMb) * 100).toFixed(1)),
       color: AppColors.indigo500,
-      description: 'Compiled Java & Kotlin runtime, AndroidX libraries, and native bridge modules.',
-      advice: 'Enable R8 / ProGuard shrinking (minifyEnabled true) and shrinkResources true.',
+      description: t('bundle.apkComp2Desc'),
+      advice: t('bundle.apkComp2Advice'),
     },
     {
       id: 'apk-c3',
-      name: 'Android Resources & Assets (res/)',
+      name: t('bundle.apkComp3Name'),
       category: 'assets',
       sizeMb: androidResMb,
       pct: Number(((androidResMb / androidApkInstallMb) * 100).toFixed(1)),
       color: AppColors.pink500,
-      description: 'Drawables, vector XMLs, mipmap densities, resources.arsc, fonts.',
-      advice: 'Use WebP and VectorDrawables to avoid multi-density asset duplication.',
+      description: t('bundle.apkComp3Desc'),
+      advice: t('bundle.apkComp3Advice'),
     },
     {
       id: 'apk-c4',
-      name: 'Hermes Bytecode Bundle (Android)',
+      name: t('bundle.apkComp4Name'),
       category: 'js',
       sizeMb: releaseJsMb,
       pct: Number(((releaseJsMb / androidApkInstallMb) * 100).toFixed(1)),
       color: AppColors.emerald500,
-      description: `Host app JavaScript compiled into Hermes bytecode (${discoveredFiles.length} files).`,
-      advice: 'Pre-compiled bytecode during assembleRelease gradle task.',
+      description: t('bundle.apkComp4Desc', {count: discoveredFiles.length}),
+      advice: t('bundle.apkComp4Advice'),
     },
     {
       id: 'apk-c5',
-      name: 'Manifest & Signatures (META-INF)',
+      name: t('bundle.apkComp5Name'),
       category: 'meta',
       sizeMb: 3.2,
       pct: Number(((3.2 / androidApkInstallMb) * 100).toFixed(1)),
       color: AppColors.amber500,
-      description: 'AndroidManifest.xml, signing certs, JAR & v2/v3/v4 APK Signature Scheme.',
-      advice: 'Enterprise sideload & direct install signature block.',
+      description: t('bundle.apkComp5Desc'),
+      advice: t('bundle.apkComp5Advice'),
     },
   ];
 

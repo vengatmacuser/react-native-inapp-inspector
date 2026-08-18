@@ -1,5 +1,8 @@
 package com.inappinspector;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -100,6 +103,37 @@ public class NetworkInspectorModule extends ReactContextBaseJavaModule {
     public void enableNativeCrashProtection(Promise promise) {
         setupNativeCrashProtection();
         promise.resolve(true);
+    }
+
+    @ReactMethod
+    public void copyToClipboard(String text, Promise promise) {
+        try {
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.post(() -> {
+                try {
+                    ClipboardManager clipboard = (ClipboardManager) reactContext.getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        ClipData clip = ClipData.newPlainText("NetworkInspector", text != null ? text : "");
+                        clipboard.setPrimaryClip(clip);
+                        if (promise != null) {
+                            promise.resolve(true);
+                        }
+                        return;
+                    }
+                    if (promise != null) {
+                        promise.resolve(false);
+                    }
+                } catch (Exception e) {
+                    if (promise != null) {
+                        promise.reject("CLIPBOARD_ERROR", e.getMessage(), e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            if (promise != null) {
+                promise.reject("CLIPBOARD_ERROR", e.getMessage(), e);
+            }
+        }
     }
 
     @ReactMethod

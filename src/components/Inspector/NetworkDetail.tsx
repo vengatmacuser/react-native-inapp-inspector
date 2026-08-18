@@ -161,6 +161,54 @@ const NetworkDetail = React.memo(() => {
                       </Text>
                     </View>
 
+                    {/* Client Chip (AXIOS / FETCH / XHR) */}
+                    {selected.client && (
+                      <View
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor:
+                              selected.client === 'axios'
+                                ? `${AppColors.purple}14`
+                                : selected.client === 'apollo' || selected.client === 'graphql'
+                                ? `${AppColors.pink500}14`
+                                : selected.client === 'xhr'
+                                ? `${AppColors.amber500}14`
+                                : `${AppColors.sky500}14`,
+                            borderColor:
+                              selected.client === 'axios'
+                                ? `${AppColors.purple}30`
+                                : selected.client === 'apollo' || selected.client === 'graphql'
+                                ? `${AppColors.pink500}30`
+                                : selected.client === 'xhr'
+                                ? `${AppColors.amber500}30`
+                                : `${AppColors.sky500}30`,
+                            paddingHorizontal: 6,
+                            paddingVertical: 3,
+                            borderRadius: 6,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.chipText,
+                            {
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 9.5,
+                              color:
+                                selected.client === 'axios'
+                                  ? AppColors.purple
+                                  : selected.client === 'apollo' || selected.client === 'graphql'
+                                  ? AppColors.pink500
+                                  : selected.client === 'xhr'
+                                  ? AppColors.amber700
+                                  : AppColors.sky600,
+                            },
+                          ]}>
+                          {selected.client.toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+
                     {/* Status Pill */}
                     {selected.status != null && (
                       <View
