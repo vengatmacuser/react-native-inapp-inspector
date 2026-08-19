@@ -36,3 +36,6 @@ developerReadme.md
 # Android build artifacts
 android/.gradle/
 android/build/
+
+# Xcode workspace shared data (generated)
+example/ios/example.xcworkspace/xcshareddata/
