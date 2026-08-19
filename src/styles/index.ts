@@ -9,8 +9,8 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     zIndex: 10,
     minHeight: 56,
     shadowColor: colors.black,
@@ -399,6 +399,12 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     borderWidth: 1,
     borderColor: colors.grayBorderSecondary,
   },
+  domainHeaderCardExpanded: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0,
+    marginBottom: 0,
+  },
   domainHeaderTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -408,6 +414,8 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
+    marginRight: 6,
     gap: 8,
   },
   domainIconWrap: {
@@ -474,6 +482,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   domainStatsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
     gap: 4,
   },
   domainStatPill: {
@@ -495,8 +504,20 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   treeNodeRow: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    paddingLeft: 12,
-    paddingRight: 12,
+    marginHorizontal: 12,
+    paddingRight: 8,
+    paddingLeft: 4,
+    backgroundColor: colors.grayBackground,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: colors.grayBorderSecondary,
+  },
+  treeNodeRowLast: {
+    borderBottomWidth: 1,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    marginBottom: 8,
+    paddingBottom: 6,
   },
   treeLines: {
     width: 28,

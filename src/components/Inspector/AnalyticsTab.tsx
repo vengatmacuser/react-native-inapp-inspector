@@ -38,6 +38,8 @@ import {
   getCategoryColors,
 } from '../../helpers';
 import {
+  LayersIcon,
+  CheckIcon,
   SearchIcon,
   ClearIcon,
   TrashIcon,
@@ -140,17 +142,38 @@ const AnalyticsHeader = React.memo(() => {
     }));
   }, [filteredAnalyticsEvents]);
 
-  // Toggle category filter from top button group
+  // Multi-select category toggle from top button group
   const toggleCategoryFilter = (cat: string) => {
     animateNextLayout();
     setAnalyticsFilters(prev => {
-      const isSelected =
-        !prev.categories.has('all') && prev.categories.has(cat);
-      if (isSelected) {
+      if (cat === 'all') {
         return {...prev, categories: new Set(['all'])};
-      } else {
-        return {...prev, categories: new Set([cat])};
       }
+
+      const nextCategories = new Set(prev.categories);
+      if (nextCategories.has('all')) {
+        nextCategories.delete('all');
+        nextCategories.add(cat);
+      } else {
+        if (nextCategories.has(cat)) {
+          nextCategories.delete(cat);
+          if (nextCategories.size === 0) {
+            nextCategories.add('all');
+          }
+        } else {
+          nextCategories.add(cat);
+          if (
+            nextCategories.has('ecommerce') &&
+            nextCategories.has('page_view') &&
+            nextCategories.has('system') &&
+            nextCategories.has('custom')
+          ) {
+            return {...prev, categories: new Set(['all'])};
+          }
+        }
+      }
+
+      return {...prev, categories: nextCategories};
     });
   };
 
@@ -252,7 +275,7 @@ const AnalyticsHeader = React.memo(() => {
 
   return (
     <View style={styles.analyticsHeaderCard}>
-      {/* ── Top Header Row (GA4 Style) ─────────────────────────────────────── */}
+      {/* ── 1. Top Header Row (GA4 Style) ─────────────────────────────────── */}
       <View style={styles.analyticsHeaderTop}>
         <View style={{flex: 1}}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
@@ -298,10 +321,348 @@ const AnalyticsHeader = React.memo(() => {
         </TouchableOpacity>
       </View>
 
-      {/* ── GA4 Realtime Metric Hero & Activity Chart ─────────────────────── */}
+      {/* ── 2. Multi-Select Category Filter Buttons (AT THE TOP) ──────────── */}
+      <View style={{marginTop: 10, marginBottom: 8}}>
+        {/* Multi-color Proportional Segmented Bar */}
+        <View
+          style={{
+            height: 4.5,
+            borderRadius: 2.5,
+            backgroundColor: `${AppColors.grayBorderSecondary}40`,
+            flexDirection: 'row',
+            overflow: 'hidden',
+            marginBottom: 8,
+          }}>
+          {categoryStats.ecommerce > 0 && (
+            <View
+              style={{
+                flex: categoryStats.ecommerce,
+                backgroundColor: AppColors.amber500,
+              }}
+            />
+          )}
+          {categoryStats.page_view > 0 && (
+            <View
+              style={{
+                flex: categoryStats.page_view,
+                backgroundColor: AppColors.sky500,
+              }}
+            />
+          )}
+          {categoryStats.system > 0 && (
+            <View
+              style={{
+                flex: categoryStats.system,
+                backgroundColor: AppColors.purple,
+              }}
+            />
+          )}
+          {categoryStats.custom > 0 && (
+            <View
+              style={{
+                flex: categoryStats.custom,
+                backgroundColor: AppColors.brandPurple,
+              }}
+            />
+          )}
+        </View>
+
+        {/* Multi-Select Category Buttons with Checkboxes */}
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 6,
+          }}>
+          {/* All Button */}
+          {(() => {
+            const isAllSelected = analyticsFilters.categories.has('all');
+            return (
+              <TouchableScale
+                onPress={() => toggleCategoryFilter('all')}
+                style={[
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: isAllSelected ? AppColors.indigo600Alt : AppColors.indigo50,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 7,
+                    borderWidth: 1,
+                    borderColor: isAllSelected ? AppColors.indigo600 : AppColors.indigo400,
+                  },
+                  isAllSelected && {
+                    shadowColor: AppColors.indigo600Alt,
+                    shadowOffset: {width: 0, height: 1},
+                    shadowOpacity: 0.28,
+                    shadowRadius: 2.5,
+                    elevation: 2,
+                  },
+                ]}>
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    borderWidth: 1.2,
+                    borderColor: isAllSelected ? AppColors.white : AppColors.indigo400,
+                    backgroundColor: isAllSelected ? AppColors.white : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {isAllSelected && <CheckIcon color={AppColors.indigo600Alt} size={8} />}
+                </View>
+                <LayersIcon
+                  color={isAllSelected ? AppColors.white : AppColors.indigo600Alt}
+                  size={11}
+                />
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    color: isAllSelected ? AppColors.white : AppColors.indigo600Alt,
+                  }}>
+                  {t('analytics.allCategory')}: {categoryStats.totalCount}
+                </Text>
+              </TouchableScale>
+            );
+          })()}
+
+          {/* Ecommerce Button */}
+          {(() => {
+            const isSelected =
+              !analyticsFilters.categories.has('all') &&
+              analyticsFilters.categories.has('ecommerce');
+            return (
+              <TouchableScale
+                onPress={() => toggleCategoryFilter('ecommerce')}
+                style={[
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: isSelected ? AppColors.amber600 : AppColors.amber100,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 7,
+                    borderWidth: 1,
+                    borderColor: isSelected ? AppColors.amber700 : AppColors.amber200,
+                  },
+                  isSelected && {
+                    shadowColor: AppColors.amber600,
+                    shadowOffset: {width: 0, height: 1},
+                    shadowOpacity: 0.28,
+                    shadowRadius: 2.5,
+                    elevation: 2,
+                  },
+                ]}>
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    borderWidth: 1.2,
+                    borderColor: isSelected ? AppColors.white : AppColors.amber500,
+                    backgroundColor: isSelected ? AppColors.white : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {isSelected && <CheckIcon color={AppColors.amber600} size={8} />}
+                </View>
+                <CartIcon
+                  color={isSelected ? AppColors.white : AppColors.amber700}
+                  size={11}
+                />
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    color: isSelected ? AppColors.white : AppColors.amber800Warm,
+                  }}>
+                  {t('analytics.ecommerceCategory')}: {categoryStats.ecommerce} ({categoryStats.ecommercePct}%)
+                </Text>
+              </TouchableScale>
+            );
+          })()}
+
+          {/* Screens Button */}
+          {(() => {
+            const isSelected =
+              !analyticsFilters.categories.has('all') &&
+              analyticsFilters.categories.has('page_view');
+            return (
+              <TouchableScale
+                onPress={() => toggleCategoryFilter('page_view')}
+                style={[
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: isSelected ? AppColors.sky600 : AppColors.sky100,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 7,
+                    borderWidth: 1,
+                    borderColor: isSelected ? AppColors.blue700 : AppColors.sky400,
+                  },
+                  isSelected && {
+                    shadowColor: AppColors.sky600,
+                    shadowOffset: {width: 0, height: 1},
+                    shadowOpacity: 0.28,
+                    shadowRadius: 2.5,
+                    elevation: 2,
+                  },
+                ]}>
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    borderWidth: 1.2,
+                    borderColor: isSelected ? AppColors.white : AppColors.sky400,
+                    backgroundColor: isSelected ? AppColors.white : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {isSelected && <CheckIcon color={AppColors.sky600} size={8} />}
+                </View>
+                <GlobeIcon
+                  color={isSelected ? AppColors.white : AppColors.sky600}
+                  size={11}
+                />
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    color: isSelected ? AppColors.white : AppColors.sky600,
+                  }}>
+                  {t('analytics.screensCategory')}: {categoryStats.page_view} ({categoryStats.page_viewPct}%)
+                </Text>
+              </TouchableScale>
+            );
+          })()}
+
+          {/* System Button */}
+          {(() => {
+            const isSelected =
+              !analyticsFilters.categories.has('all') &&
+              analyticsFilters.categories.has('system');
+            return (
+              <TouchableScale
+                onPress={() => toggleCategoryFilter('system')}
+                style={[
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: isSelected ? AppColors.violet600 : AppColors.purple100,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 7,
+                    borderWidth: 1,
+                    borderColor: isSelected ? AppColors.purpleShade700 : AppColors.purple200,
+                  },
+                  isSelected && {
+                    shadowColor: AppColors.violet600,
+                    shadowOffset: {width: 0, height: 1},
+                    shadowOpacity: 0.28,
+                    shadowRadius: 2.5,
+                    elevation: 2,
+                  },
+                ]}>
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    borderWidth: 1.2,
+                    borderColor: isSelected ? AppColors.white : AppColors.purple400,
+                    backgroundColor: isSelected ? AppColors.white : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {isSelected && <CheckIcon color={AppColors.violet600} size={8} />}
+                </View>
+                <BoltIcon
+                  color={isSelected ? AppColors.white : AppColors.purple}
+                  size={11}
+                />
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    color: isSelected ? AppColors.white : AppColors.brandPurple,
+                  }}>
+                  {t('analytics.systemCategory')}: {categoryStats.system} ({categoryStats.systemPct}%)
+                </Text>
+              </TouchableScale>
+            );
+          })()}
+
+          {/* Custom Button */}
+          {(() => {
+            const isSelected =
+              !analyticsFilters.categories.has('all') &&
+              analyticsFilters.categories.has('custom');
+            return (
+              <TouchableScale
+                onPress={() => toggleCategoryFilter('custom')}
+                style={[
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: isSelected ? AppColors.pink600 : AppColors.pink100,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 7,
+                    borderWidth: 1,
+                    borderColor: isSelected ? AppColors.rose700 : AppColors.roseBorder,
+                  },
+                  isSelected && {
+                    shadowColor: AppColors.pink600,
+                    shadowOffset: {width: 0, height: 1},
+                    shadowOpacity: 0.28,
+                    shadowRadius: 2.5,
+                    elevation: 2,
+                  },
+                ]}>
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                    borderWidth: 1.2,
+                    borderColor: isSelected ? AppColors.white : AppColors.pink400,
+                    backgroundColor: isSelected ? AppColors.white : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {isSelected && <CheckIcon color={AppColors.pink600} size={8} />}
+                </View>
+                <SparkleIcon
+                  color={isSelected ? AppColors.white : AppColors.brandPurple}
+                  size={11}
+                />
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    color: isSelected ? AppColors.white : AppColors.pink600,
+                  }}>
+                  {t('analytics.customCategory')}: {categoryStats.custom} ({categoryStats.customPct}%)
+                </Text>
+              </TouchableScale>
+            );
+          })()}
+        </View>
+      </View>
+
+      {/* ── 3. GA4 Realtime Metric Hero & Activity Chart (UNDER CATEGORIES) ─ */}
       <View
         style={{
-          marginTop: 10,
+          marginTop: 2,
           marginBottom: 8,
           backgroundColor: AppColors.grayBackground,
           borderRadius: 10,
@@ -612,253 +973,6 @@ const AnalyticsHeader = React.memo(() => {
             }}>
             {t('analytics.timeNow')}
           </Text>
-        </View>
-      </View>
-
-      {/* ── Category Breakdown Distribution Bar & Interactive Filter Buttons ─ */}
-      <View style={{marginTop: 2, marginBottom: 4}}>
-        {/* Multi-color Proportional Segmented Bar */}
-        <View
-          style={{
-            height: 5,
-            borderRadius: 2.5,
-            backgroundColor: `${AppColors.grayBorderSecondary}40`,
-            flexDirection: 'row',
-            overflow: 'hidden',
-            marginBottom: 8,
-          }}>
-          {categoryStats.ecommerce > 0 && (
-            <View
-              style={{
-                flex: categoryStats.ecommerce,
-                backgroundColor: AppColors.amber500,
-              }}
-            />
-          )}
-          {categoryStats.page_view > 0 && (
-            <View
-              style={{
-                flex: categoryStats.page_view,
-                backgroundColor: AppColors.sky500,
-              }}
-            />
-          )}
-          {categoryStats.system > 0 && (
-            <View
-              style={{
-                flex: categoryStats.system,
-                backgroundColor: AppColors.purple,
-              }}
-            />
-          )}
-          {categoryStats.custom > 0 && (
-            <View
-              style={{
-                flex: categoryStats.custom,
-                backgroundColor: AppColors.brandPurple,
-              }}
-            />
-          )}
-        </View>
-
-        {/* 4 Interactive Category Filter Buttons */}
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: 6,
-          }}>
-          {/* Ecommerce Button */}
-          {(() => {
-            const isSelected =
-              !analyticsFilters.categories.has('all') &&
-              analyticsFilters.categories.has('ecommerce');
-            return (
-              <TouchableScale
-                onPress={() => toggleCategoryFilter('ecommerce')}
-                style={[
-                  {
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4.5,
-                    backgroundColor: isSelected
-                      ? AppColors.amber500
-                      : `${AppColors.amber500}14`,
-                    paddingHorizontal: 7,
-                    paddingVertical: 4.5,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: isSelected
-                      ? AppColors.amber500
-                      : `${AppColors.amber500}35`,
-                  },
-                  isSelected && {
-                    shadowColor: AppColors.amber500,
-                    shadowOffset: {width: 0, height: 1},
-                    shadowOpacity: 0.25,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  },
-                ]}>
-                <CartIcon
-                  color={isSelected ? AppColors.white : AppColors.amber700}
-                  size={11}
-                />
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: isSelected ? AppColors.white : AppColors.amber700,
-                  }}>
-                  Ecommerce: {categoryStats.ecommerce} ({categoryStats.ecommercePct}%)
-                </Text>
-              </TouchableScale>
-            );
-          })()}
-
-          {/* Screens Button */}
-          {(() => {
-            const isSelected =
-              !analyticsFilters.categories.has('all') &&
-              analyticsFilters.categories.has('page_view');
-            return (
-              <TouchableScale
-                onPress={() => toggleCategoryFilter('page_view')}
-                style={[
-                  {
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4.5,
-                    backgroundColor: isSelected
-                      ? AppColors.sky600
-                      : `${AppColors.sky500}14`,
-                    paddingHorizontal: 7,
-                    paddingVertical: 4.5,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: isSelected
-                      ? AppColors.sky600
-                      : `${AppColors.sky500}35`,
-                  },
-                  isSelected && {
-                    shadowColor: AppColors.sky600,
-                    shadowOffset: {width: 0, height: 1},
-                    shadowOpacity: 0.25,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  },
-                ]}>
-                <GlobeIcon
-                  color={isSelected ? AppColors.white : AppColors.sky600}
-                  size={11}
-                />
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: isSelected ? AppColors.white : AppColors.sky600,
-                  }}>
-                  Screens: {categoryStats.page_view} ({categoryStats.page_viewPct}%)
-                </Text>
-              </TouchableScale>
-            );
-          })()}
-
-          {/* System Button */}
-          {(() => {
-            const isSelected =
-              !analyticsFilters.categories.has('all') &&
-              analyticsFilters.categories.has('system');
-            return (
-              <TouchableScale
-                onPress={() => toggleCategoryFilter('system')}
-                style={[
-                  {
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4.5,
-                    backgroundColor: isSelected
-                      ? AppColors.purple
-                      : `${AppColors.purple}14`,
-                    paddingHorizontal: 7,
-                    paddingVertical: 4.5,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: isSelected
-                      ? AppColors.purple
-                      : `${AppColors.purple}35`,
-                  },
-                  isSelected && {
-                    shadowColor: AppColors.purple,
-                    shadowOffset: {width: 0, height: 1},
-                    shadowOpacity: 0.25,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  },
-                ]}>
-                <BoltIcon
-                  color={isSelected ? AppColors.white : AppColors.purple}
-                  size={11}
-                />
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: isSelected ? AppColors.white : AppColors.purple,
-                  }}>
-                  System: {categoryStats.system} ({categoryStats.systemPct}%)
-                </Text>
-              </TouchableScale>
-            );
-          })()}
-
-          {/* Custom Button */}
-          {(() => {
-            const isSelected =
-              !analyticsFilters.categories.has('all') &&
-              analyticsFilters.categories.has('custom');
-            return (
-              <TouchableScale
-                onPress={() => toggleCategoryFilter('custom')}
-                style={[
-                  {
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4.5,
-                    backgroundColor: isSelected
-                      ? AppColors.brandPurple
-                      : `${AppColors.brandPurple}14`,
-                    paddingHorizontal: 7,
-                    paddingVertical: 4.5,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: isSelected
-                      ? AppColors.brandPurple
-                      : `${AppColors.brandPurple}35`,
-                  },
-                  isSelected && {
-                    shadowColor: AppColors.brandPurple,
-                    shadowOffset: {width: 0, height: 1},
-                    shadowOpacity: 0.25,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  },
-                ]}>
-                <SparkleIcon
-                  color={isSelected ? AppColors.white : AppColors.brandPurple}
-                  size={11}
-                />
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    color: isSelected ? AppColors.white : AppColors.brandPurple,
-                  }}>
-                  Custom: {categoryStats.custom} ({categoryStats.customPct}%)
-                </Text>
-              </TouchableScale>
-            );
-          })()}
         </View>
       </View>
 

@@ -1,7 +1,10 @@
 import React from 'react';
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import NetworkInspector, {
   ErrorBoundary,
@@ -42,11 +45,7 @@ function App() {
         </NavigationContainer>
       </ErrorBoundary>
       {/* Render inspector globally outside inner component ErrorBoundary */}
-      <NetworkInspector
-        navigationRef={navigationRef}
-        appIcon={require('./assets/app_icon.png')}
-        environment="DEV"
-      />
+      <NetworkInspector navigationRef={navigationRef} environment="DEV" />
     </SafeAreaProvider>
   );
 }

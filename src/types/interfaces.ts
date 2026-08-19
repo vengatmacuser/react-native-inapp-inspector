@@ -144,6 +144,13 @@ export interface ReduxHistoryEntry {
   affectedSlices: string[];
   prevState?: any;
   nextState?: any;
+  stack?: string;
+  caller?: string;
+  callerFile?: string;
+  callerLine?: number;
+  callerCol?: number;
+  originType?: 'saga' | 'thunk' | 'ui' | 'direct' | 'listener';
+  sliceName?: string;
 }
 
 // ─── Settings persistence ─────────────────────────────────────────────────────

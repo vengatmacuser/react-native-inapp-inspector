@@ -93,7 +93,7 @@ const JsonViewer = React.memo(({
   data,
   search,
   forceOpen,
-  defaultExpandDepth,
+  defaultExpandDepth = 1,
   wrap,
   fullHeight = false,
   maxHeight,

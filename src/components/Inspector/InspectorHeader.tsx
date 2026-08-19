@@ -170,18 +170,19 @@ const InspectorHeader = React.memo(() => {
             </TouchableScale>
 
             {!isAnySelected ? (
-              <TouchableScale
-                onPress={() => setShowHeaderInfo(prev => !prev)}
+              <View
                 style={{
                   flexDirection: 'row',
-                  alignItems: 'flex-start',
-                  gap: 10,
+                  alignItems: 'center',
+                  gap: 8,
                   flex: 1,
+                  minWidth: 0,
+                  marginRight: 6,
                 }}>
-                <AppHeaderLogo size={46} customIcon={appIcon} />
-                <View style={{gap: 2, flex: 1, minWidth: 0}}>
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0}}>
-                    <Text style={[styles.headerTitle, {flexShrink: 1}]} numberOfLines={1}>
+                <AppHeaderLogo size={38} customIcon={appIcon} />
+                <View style={{gap: 2.5, flex: 1, minWidth: 0}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0}}>
+                    <Text style={[styles.headerTitle, {flexShrink: 1}]} numberOfLines={1} ellipsizeMode="tail">
                       {getAppName()}
                     </Text>
                     <View
@@ -190,6 +191,9 @@ const InspectorHeader = React.memo(() => {
                         {
                           backgroundColor: envConfig.bg,
                           borderColor: envConfig.border,
+                          flexShrink: 0,
+                          paddingVertical: 1.5,
+                          marginBottom: 0,
                         },
                       ]}>
                       <Text
@@ -222,6 +226,7 @@ const InspectorHeader = React.memo(() => {
                         style={{
                           alignItems: 'center',
                           justifyContent: 'center',
+                          flexShrink: 0,
                         }}>
                         <Animated.View
                           style={{
@@ -238,151 +243,71 @@ const InspectorHeader = React.memo(() => {
                       </Pressable>
                     )}
                   </View>
+
+                  {/* Clean Bundle Identifier & Version Representation */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      alignSelf: 'flex-start',
-                      backgroundColor: `${AppColors.white}1A`,
-                      borderRadius: 10,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      gap: 5,
-                      borderWidth: 1,
-                      borderColor: `${AppColors.white}26`,
+                      gap: 4.5,
+                      minWidth: 0,
                     }}>
-                    <View
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: AppColors.liveGreen,
-                      }}
-                    />
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interMedium,
-                        fontSize: 10,
-                        color: `${AppColors.white}D9`,
-                        letterSpacing: 0.2,
-                      }}
-                      numberOfLines={1}>
-                      {getBundleIdentifier()}
-                    </Text>
-                    <Animated.View
-                      style={{
-                        transform: [{rotate: showHeaderInfo ? '180deg' : '0deg'}],
-                        marginLeft: 2,
-                      }}>
-                      <ChevronIcon color="rgba(255,255,255,0.6)" size={12} />
-                    </Animated.View>
-                  </View>
-                  {showHeaderInfo && (
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 6,
-                        marginTop: 4,
+                        backgroundColor: `${AppColors.white}1F`,
+                        borderRadius: 5,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        gap: 3.5,
+                        borderWidth: 1,
+                        borderColor: `${AppColors.white}2E`,
+                        flexShrink: 1,
+                        minWidth: 0,
                       }}>
-                      <View
+                      {Platform.OS === 'ios' ? (
+                        <AppleIcon color={`${AppColors.white}D9`} size={9} />
+                      ) : (
+                        <AndroidIcon color={`${AppColors.white}D9`} size={9} />
+                      )}
+                      <Text
                         style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          borderRadius: 6,
-                          overflow: 'hidden',
-                          borderWidth: 1,
-                          borderColor: `${AppColors.white}2E`,
-                        }}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 3.5,
-                            paddingHorizontal: 6,
-                            paddingVertical: 2.5,
-                            backgroundColor: `${AppColors.white}47`,
-                          }}>
-                          {Platform.OS === 'ios' ? (
-                            <AppleIcon color={AppColors.white} size={10} />
-                          ) : (
-                            <AndroidIcon color={AppColors.white} size={10} />
-                          )}
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 9,
-                              color: AppColors.white,
-                              letterSpacing: 0.3,
-                            }}>
-                            {Platform.OS === 'ios' ? 'iOS' : 'Android'}
-                          </Text>
-                        </View>
-                        <View
-                          style={{
-                            paddingHorizontal: 5,
-                            paddingVertical: 2.5,
-                            backgroundColor: `${AppColors.white}1F`,
-                          }}>
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interMedium,
-                              fontSize: 9.5,
-                              color: `${AppColors.white}EB`,
-                            }}>
-                            {String(Platform.Version)}
-                          </Text>
-                        </View>
-                      </View>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          borderRadius: 6,
-                          overflow: 'hidden',
-                          borderWidth: 1,
-                          borderColor: `${AppColors.white}2E`,
-                        }}>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 3.5,
-                            paddingHorizontal: 6,
-                            paddingVertical: 2.5,
-                            backgroundColor: `${AppColors.white}47`,
-                          }}>
-                          <PackageBoxIcon color={AppColors.white} size={10} />
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 9,
-                              color: AppColors.white,
-                              letterSpacing: 0.3,
-                            }}>
-                            npm
-                          </Text>
-                        </View>
-                        <View
-                          style={{
-                            paddingHorizontal: 5,
-                            paddingVertical: 2,
-                            backgroundColor: `${AppColors.white}1F`,
-                          }}>
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interMedium,
-                              fontSize: 9.5,
-                              color: `${AppColors.white}EB`,
-                            }}>
-                            v{LIB_VERSION}
-                          </Text>
-                        </View>
-                      </View>
+                          fontFamily: AppFonts.interMedium,
+                          fontSize: 9.5,
+                          color: `${AppColors.white}EB`,
+                          letterSpacing: 0.1,
+                          flexShrink: 1,
+                        }}
+                        numberOfLines={1}
+                        ellipsizeMode="middle">
+                        {getBundleIdentifier()}
+                      </Text>
                     </View>
-                  )}
+
+                    <View
+                      style={{
+                        backgroundColor: `${AppColors.white}14`,
+                        borderRadius: 4,
+                        paddingHorizontal: 4.5,
+                        paddingVertical: 1.5,
+                        borderWidth: 1,
+                        borderColor: `${AppColors.white}20`,
+                        flexShrink: 0,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interMedium,
+                          fontSize: 8.5,
+                          color: `${AppColors.white}B3`,
+                        }}
+                        numberOfLines={1}>
+                        v{LIB_VERSION}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              </TouchableScale>
+              </View>
             ) : null}
           </View>
 

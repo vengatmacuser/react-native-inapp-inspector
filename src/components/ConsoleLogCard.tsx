@@ -39,37 +39,37 @@ const getLogMessageWithBadges = (
     const getTagDecorator = (tag: string) => {
       const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
       if (clean === 'AXIOS') {
-        return { color: '#059669', icon: '⚡', label: 'AXIOS' };
+        return { color: AppColors.emerald600, icon: '⚡', label: 'AXIOS' };
       }
       if (clean === 'API' || clean === 'FETCH' || clean === 'HTTP' || clean === 'NETWORK') {
-        return { color: '#0284C7', icon: '🌐', label: clean };
+        return { color: AppColors.sky600, icon: '🌐', label: clean };
       }
       if (clean === 'SAMPLE' || clean === 'BATCH') {
-        return { color: '#4F46E5', icon: '🎲', label: clean };
+        return { color: AppColors.indigo600Alt, icon: '🎲', label: clean };
       }
       if (clean === 'REDUX' || clean === 'STORE' || clean === 'STATE') {
-        return { color: '#7C3AED', icon: '⚛️', label: clean };
+        return { color: AppColors.violet600, icon: '⚛️', label: clean };
       }
       if (clean === 'ANALYTICS' || clean === 'FIREBASE' || clean === 'GA4' || clean === 'GA') {
-        return { color: '#0D9488', icon: '📊', label: clean };
+        return { color: AppColors.teal600, icon: '📊', label: clean };
       }
       if (clean === 'AUTH' || clean === 'TOKEN' || clean === 'SESSION') {
-        return { color: '#D97706', icon: '🔑', label: clean };
+        return { color: AppColors.amber600, icon: '🔑', label: clean };
       }
       if (clean === 'APP') {
-        return { color: '#4F46E5', icon: '📱', label: 'APP' };
+        return { color: AppColors.indigo600Alt, icon: '📱', label: 'APP' };
       }
       if (clean === 'TEST') {
-        return { color: '#10B981', icon: '🧪', label: 'TEST' };
+        return { color: AppColors.emerald500, icon: '🧪', label: 'TEST' };
       }
       if (clean === 'WARN' || clean === 'WARNING') {
-        return { color: '#D97706', icon: '⚠️', label: 'WARN' };
+        return { color: AppColors.amber600, icon: '⚠️', label: 'WARN' };
       }
       if (clean === 'ERROR' || clean === 'CRASH' || clean === 'BUG') {
-        return { color: '#DC2626', icon: '💥', label: 'ERROR' };
+        return { color: AppColors.red600, icon: '💥', label: 'ERROR' };
       }
       if (clean === 'PERF' || clean === 'RENDER') {
-        return { color: '#8B5CF6', icon: '⚡', label: clean };
+        return { color: AppColors.violet500, icon: '⚡', label: clean };
       }
       return { color: AppColors.slate600, icon: '🏷️', label: clean };
     };
@@ -137,51 +137,74 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
     : null;
 
   const getLogColors = () => {
-    const isDark = AppColors.primaryLight !== AppColors.white;
-    if (isAnalyticsError) {
+    const type = (item.type || 'log').toLowerCase();
+    const method = ((item as any).sourceMethod || type).toLowerCase();
+
+    if (isAnalyticsError || type === 'error' || method === 'error') {
       return {
-        border: AppColors.skyBlue,
-        badgeBg: `${AppColors.skyBlue}15`,
-        badgeText: AppColors.skyBlue,
+        border: '#EF4444',
+        badgeBg: '#FEE2E2',
+        badgeText: '#DC2626',
         label: 'ERROR',
-        cardBg: isDark ? `${AppColors.skyBlue}26` : AppColors.blueTintBg,
+        cardBg: '#FEF2F2',
+        methodBorder: '#FECACA',
+        methodBg: '#FEE2E2',
+        methodText: '#DC2626',
+        textColor: '#991B1B',
       };
     }
-    switch (item.type) {
-      case 'error':
-        return {
-          border: AppColors.errorColor,
-          badgeBg: `${AppColors.errorColor}15`,
-          badgeText: AppColors.errorColor,
-          label: 'ERROR',
-          cardBg: isDark ? `${AppColors.errorColor}26` : AppColors.errorCardBg,
-        };
-      case 'warn':
-        return {
-          border: AppColors.lightOrange,
-          badgeBg: `${AppColors.lightOrange}15`,
-          badgeText: AppColors.darkOrange || AppColors.lightOrange,
-          label: 'WARN',
-          cardBg: isDark ? `${AppColors.amber500}26` : AppColors.warnCardBg,
-        };
-      default:
-        if (isUserLog) {
-          return {
-            border: AppColors.slate600,
-            badgeBg: isDark ? AppColors.gray700 : AppColors.slate200,
-            badgeText: isDark ? AppColors.gray300 : AppColors.slate700,
-            label: 'INFO',
-            cardBg: isDark ? AppColors.primaryLight : AppColors.slate100,
-          };
-        }
-        return {
-          border: AppColors.purple,
-          badgeBg: `${AppColors.purple}15`,
-          badgeText: AppColors.purple,
-          label: 'INFO',
-          cardBg: isDark ? `${AppColors.purple}1F` : AppColors.purpleShade50,
-        };
+    if (type === 'warn' || method === 'warn') {
+      return {
+        border: '#F59E0B',
+        badgeBg: '#FEF3C7',
+        badgeText: '#D97706',
+        label: 'WARN',
+        cardBg: '#FFFBEB',
+        methodBorder: '#FDE68A',
+        methodBg: '#FEF3C7',
+        methodText: '#D97706',
+        textColor: '#92400E',
+      };
     }
+    if (type === 'debug' || method === 'debug') {
+      return {
+        border: '#8B5CF6',
+        badgeBg: '#EDE9FE',
+        badgeText: '#7C3AED',
+        label: 'DEBUG',
+        cardBg: '#F5F3FF',
+        methodBorder: '#DDD6FE',
+        methodBg: '#EDE9FE',
+        methodText: '#7C3AED',
+        textColor: '#4C1D95',
+      };
+    }
+    if (type === 'info' || method === 'info') {
+      return {
+        border: '#0EA5E9',
+        badgeBg: '#E0F2FE',
+        badgeText: '#0284C7',
+        label: 'INFO',
+        cardBg: '#F0F9FF',
+        methodBorder: '#BAE6FD',
+        methodBg: '#E0F2FE',
+        methodText: '#0284C7',
+        textColor: '#075985',
+      };
+    }
+
+    // Default / Standard console.log
+    return {
+      border: '#6366F1',
+      badgeBg: '#EEF2FF',
+      badgeText: '#4F46E5',
+      label: 'LOG',
+      cardBg: '#FFFFFF',
+      methodBorder: '#E0E7FF',
+      methodBg: '#EEF2FF',
+      methodText: '#4F46E5',
+      textColor: '#0F172A',
+    };
   };
 
   const colors = getLogColors();
@@ -202,6 +225,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           styles.card,
           {
             borderLeftColor: colors.border,
+            borderLeftWidth: 3.5,
             backgroundColor: colors.cardBg,
           },
           pressed && styles.cardPressed,
@@ -212,7 +236,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
               <View
                 style={[styles.typeDot, {backgroundColor: colors.badgeText}]}
               />
-              <Text style={[styles.typeChipText, {color: colors.badgeText}]}>
+              <Text style={[styles.typeChipText, {color: colors.badgeText, fontFamily: AppFonts.interBold}]}>
                 {colors.label}
               </Text>
             </View>
@@ -220,12 +244,12 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
               style={[
                 styles.metaChip,
                 {
-                  backgroundColor: `${AppColors.brandPurple}12`,
-                  borderColor: `${AppColors.brandPurple}30`,
+                  backgroundColor: colors.methodBg,
+                  borderColor: colors.methodBorder,
                 },
               ]}>
               <Text
-                style={[styles.metaChipText, {color: AppColors.brandPurple}]}>
+                style={[styles.metaChipText, {color: colors.methodText, fontFamily: AppFonts.interBold}]}>
                 console.
                 {('sourceMethod' in item ? item.sourceMethod : undefined) ||
                   item.type ||
@@ -237,12 +261,12 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                 style={[
                   styles.metaChip,
                   {
-                    backgroundColor: `${AppColors.teal600}12`,
-                    borderColor: `${AppColors.teal600}2B`,
+                    backgroundColor: '#ECFDF5',
+                    borderColor: '#A7F3D0',
                   },
                 ]}>
                 <Text
-                  style={[styles.metaChipText, {color: AppColors.teal600}]}>
+                  style={[styles.metaChipText, {color: '#059669', fontFamily: AppFonts.interBold}]}>
                   {Array.isArray(jsonContent.data)
                     ? `Array[${jsonContent.data.length}]`
                     : `Object{${Object.keys(jsonContent.data).length}}`}
@@ -261,7 +285,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                     },
                   ]}>
                   <Text
-                    style={[styles.metaChipText, {color: AppColors.purple}]}>
+                    style={[styles.metaChipText, {color: AppColors.purple, fontFamily: AppFonts.interBold}]}>
                     ×{item.duplicateCount}
                   </Text>
                 </View>

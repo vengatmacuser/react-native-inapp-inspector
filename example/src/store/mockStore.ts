@@ -72,12 +72,20 @@ export const mockStore = {
           theme: action.payload,
         },
       };
-    } else if (action.type === 'UPDATE_USER_TIME') {
+    } else if (action.type === 'UPDATE_USER_TIME' || action.type === 'auth/loginWithSaga') {
       this.state = {
         ...this.state,
         auth: {
           ...this.state.auth,
           lastLogin: new Date().toLocaleTimeString(),
+        },
+      };
+    } else if (action.type === 'users/fetch/fulfilled') {
+      this.state = {
+        ...this.state,
+        auth: {
+          ...this.state.auth,
+          user: { ...this.state.auth.user, ...action.payload },
         },
       };
     }

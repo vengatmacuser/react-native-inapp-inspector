@@ -657,44 +657,52 @@ export const parseStackLine = (
   };
 };
 
-/** Opens a file and line number directly in VS Code */
+/** Opens a file and line number directly in VS Code / system editor */
 export const openInVSCode = (
   filePath: string,
   lineNumber?: string | number,
   columnNumber?: string | number,
 ) => {
+  const numLine = lineNumber ? Number(lineNumber) : 1;
+  const numCol = columnNumber ? Number(columnNumber) : 1;
   const line = lineNumber ? `:${lineNumber}` : '';
   const col = columnNumber ? `:${columnNumber}` : '';
   const cleanPath = filePath.replace(/^file:\/\//, '');
 
-  const vscodeUrl = `vscode://file/${cleanPath.replace(
-    /^\/+/,
-    '',
-  )}${line}${col}`;
+  // 1. Notify Metro dev server on host to launch editor directly on local system
+  const metroHosts = [
+    'http://localhost:8081',
+    'http://127.0.0.1:8081',
+    'http://10.0.2.2:8081',
+  ];
 
-  Linking.canOpenURL(vscodeUrl)
-    .then(supported => {
-      if (supported) {
-        Linking.openURL(vscodeUrl);
-      } else {
-        Linking.openURL(vscodeUrl).catch(() => {
-          const insidersUrl = `vscode-insiders://file/${cleanPath.replace(
-            /^\/+/,
-            '',
-          )}${line}${col}`;
-          Linking.openURL(insidersUrl).catch(() => {
-            Alert.alert(
-              'Open in VS Code',
-              `Target location:\n${cleanPath}${line}${col}\n\nPlease ensure VS Code is installed.`,
-              [{text: 'OK'}],
-            );
-          });
-        });
-      }
-    })
-    .catch(() => {
-      Linking.openURL(vscodeUrl).catch(() => {});
+  metroHosts.forEach(host => {
+    try {
+      fetch(`${host}/open-stack-frame`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          file: cleanPath,
+          lineNumber: numLine,
+          column: numCol,
+        }),
+      }).catch(() => {});
+    } catch {}
+  });
+
+  // 2. Also invoke native URL scheme handlers
+  const vscodeUrl = `vscode://file/${cleanPath.replace(/^\/+/, '')}${line}${col}`;
+  const cursorUrl = `cursor://file/${cleanPath.replace(/^\/+/, '')}${line}${col}`;
+  const vscodeInsidersUrl = `vscode-insiders://file/${cleanPath.replace(/^\/+/, '')}${line}${col}`;
+
+  Linking.openURL(vscodeUrl).catch(() => {
+    Linking.openURL(cursorUrl).catch(() => {
+      Linking.openURL(vscodeInsidersUrl).catch(() => {
+        // Fallback: Copy to clipboard so user can jump immediately
+        copyToClipboard(`${cleanPath}${line}${col}`, 'Location');
+      });
     });
+  });
 };
 
 // ─── Analytics Helpers ────────────────────────────────────────────────────────

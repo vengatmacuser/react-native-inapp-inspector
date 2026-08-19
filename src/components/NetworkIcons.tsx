@@ -1152,14 +1152,10 @@ export const LiveStateIcon = ({
 }: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 3v3M12 18v3M3 12h3M18 12h3"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <Circle cx="12" cy="12" r="3.5" stroke={color} strokeWidth="1.8" fill={`${color}22`} />
-      <Circle cx="12" cy="12" r="1.5" fill={color} />
+      <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" strokeDasharray="3 3" opacity={0.6} />
+      <Circle cx="12" cy="12" r="4.5" stroke={color} strokeWidth="1.8" />
+      <Circle cx="12" cy="12" r="2" fill={color} />
+      <Path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
     </Svg>
   );
 };
@@ -1170,14 +1166,13 @@ export const TimelineIcon = ({
 }: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
-      <Path
-        d="M12 7.5v4.5l3 2"
-        stroke={color}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <Path d="M6 3v18" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Circle cx="6" cy="6" r="2.5" stroke={color} strokeWidth="1.8" fill={`${color}25`} />
+      <Path d="M6 12h5a3 3 0 0 0 3-3V6" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Circle cx="14" cy="6" r="2.5" stroke={color} strokeWidth="1.8" fill={color} />
+      <Circle cx="6" cy="18" r="2.5" stroke={color} strokeWidth="1.8" fill={color} />
+      <Path d="M6 18h8" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Circle cx="17" cy="18" r="2.5" stroke={color} strokeWidth="1.8" fill={`${color}25`} />
     </Svg>
   );
 };
@@ -1205,15 +1200,21 @@ export const StorageIcon = ({
 }: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Ellipse cx="12" cy="6" rx="8" ry="2.8" stroke={color} strokeWidth="1.8" />
+      <Ellipse cx="12" cy="5" rx="8" ry="2.5" stroke={color} strokeWidth="1.8" />
       <Path
-        d="M20 12c0 1.55-3.58 2.8-8 2.8s-8-1.25-8-2.8"
+        d="M4 5v4.5c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V5"
         stroke={color}
         strokeWidth="1.8"
         strokeLinecap="round"
       />
       <Path
-        d="M4 6v12c0 1.55 3.58 2.8 8 2.8s8-1.25 8-2.8V6"
+        d="M4 9.5v4.5c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5v-4.5"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <Path
+        d="M4 14v4.5c0 1.38 3.58 2.5 8 2.5s8-1.12 8-2.5V14"
         stroke={color}
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -1228,13 +1229,10 @@ export const MetadataIcon = ({
 }: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="12" r="8.5" stroke={color} strokeWidth="1.8" />
-      <Path
-        d="M12 16v-4M12 8.2h.01"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <Rect x="3" y="3" width="18" height="18" rx="4" stroke={color} strokeWidth="1.8" />
+      <Path d="M7 8h10M7 12h6M7 16h7" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+      <Circle cx="16.5" cy="12" r="1.5" fill={color} />
+      <Circle cx="16.5" cy="16" r="1.5" fill={color} />
     </Svg>
   );
 };

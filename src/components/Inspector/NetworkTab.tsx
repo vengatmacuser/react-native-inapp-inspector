@@ -172,7 +172,13 @@ const NetworkTab = React.memo(() => {
 
       const {log, isLast, color} = item;
       return (
-        <AnimatedEntrance index={index} distance={8} style={styles.treeNodeRow}>
+        <AnimatedEntrance
+          index={index}
+          distance={8}
+          style={[
+            styles.treeNodeRow,
+            isLast && styles.treeNodeRowLast,
+          ]}>
           <View style={styles.treeLines}>
             <View
               style={[

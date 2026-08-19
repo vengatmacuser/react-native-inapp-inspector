@@ -65,14 +65,17 @@ const logoStyles = StyleSheet.create({
   container: {
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    padding: 2.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 7.5,
   },
 });
 

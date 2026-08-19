@@ -1143,6 +1143,34 @@ export function HomeScreen({ navigation }: any) {
                 />
               </View>
               <TactileButton
+                label="⚡ Dispatch Saga Action: auth/loginWithSaga"
+                onPress={() => {
+                  notifyAction('Saga Action Dispatched');
+                  mockStore.dispatch({
+                    type: 'auth/loginWithSaga',
+                    payload: { user: 'Venkatesh', authType: 'OAuth2' },
+                    __origin: 'saga',
+                  });
+                }}
+                color="#7C3AED"
+                bgColor="#F5F3FF"
+                fullWidth
+              />
+              <TactileButton
+                label="⚛️ Dispatch Thunk Action: users/fetch/fulfilled"
+                onPress={() => {
+                  notifyAction('Thunk Action Dispatched');
+                  mockStore.dispatch({
+                    type: 'users/fetch/fulfilled',
+                    payload: { id: 101, status: 'synced', role: 'Architect' },
+                    __origin: 'thunk',
+                  });
+                }}
+                color="#D97706"
+                bgColor="#FFFBEB"
+                fullWidth
+              />
+              <TactileButton
                 label="Dispatch: Toggle Sidebar & Update Timestamp"
                 onPress={handleToggleSidebar}
                 color="#7C3AED"

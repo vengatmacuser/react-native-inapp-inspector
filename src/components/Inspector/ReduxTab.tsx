@@ -8,16 +8,22 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import {useTranslation} from '../../i18n';
 import {useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
 import AnimatedEntrance from '../AnimatedEntrance';
 import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
 import HighlightText from '../HighlightText';
-import {getSize} from '../../helpers';
+import {getSize, openInVSCode} from '../../helpers';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {
+  getActionHistory,
+  getReduxAutoRefresh,
+  setReduxAutoRefresh,
+} from '../../customHooks/reduxLogger';
 import {
   TerminalIcon,
   SearchIcon,
@@ -28,6 +34,8 @@ import {
   SortArrowIcon,
   BoltIcon,
   TextAaIcon,
+  StorageIcon,
+  HeaderPauseIcon,
 } from '../NetworkIcons';
 
 interface ReduxSliceItem {
@@ -35,15 +43,114 @@ interface ReduxSliceItem {
   name: string;
   keysCount: number;
   sizeStr: string;
+  typeLabel: string;
+  topKeys: string[];
+  totalKeysCount: number;
+  status: 'live' | 'loading' | 'error' | 'empty';
+  statusMessage?: string;
+  timelineCount: number;
   lastAction?: {
     type: string;
     timestamp: string;
-    updatedAt?: number;
+    updatedAt: number;
+    payloadPreview?: string;
+    originType?: 'saga' | 'thunk' | 'ui' | 'direct' | 'listener';
+    callerFile?: string;
+    callerLine?: number;
+    callerCol?: number;
   };
   updatedAt: number;
 }
 
+const getOriginBadge = (originType?: string) => {
+  switch (originType) {
+    case 'saga':
+      return {
+        label: 'SAGA',
+        icon: '⚡',
+        bg: AppColors.purple100,
+        text: AppColors.brandPurple,
+        border: AppColors.purple200,
+      };
+    case 'thunk':
+      return {
+        label: 'THUNK',
+        icon: '⚛️',
+        bg: AppColors.amber100,
+        text: AppColors.amber800Warm,
+        border: AppColors.amber200,
+      };
+    case 'ui':
+      return {
+        label: 'UI',
+        icon: '📱',
+        bg: AppColors.sky100,
+        text: AppColors.sky600,
+        border: AppColors.sky400,
+      };
+    case 'listener':
+      return {
+        label: 'LISTENER',
+        icon: '👂',
+        bg: AppColors.teal100,
+        text: AppColors.teal700,
+        border: AppColors.teal400,
+      };
+    default:
+      return {
+        label: 'DIRECT',
+        icon: '⚡',
+        bg: AppColors.slate100,
+        text: AppColors.slate700,
+        border: AppColors.slate200,
+      };
+  }
+};
+
+const getKeyChipStyle = (key: string) => {
+  const k = key.toLowerCase();
+  if (k.includes('load') || k.includes('pend') || k.includes('status')) {
+    return {
+      bg: AppColors.amber100,
+      border: AppColors.amber200,
+      text: AppColors.amber800Warm,
+      dot: AppColors.darkOrange,
+    };
+  }
+  if (k.includes('err') || k.includes('fail') || k.includes('reject')) {
+    return {
+      bg: AppColors.red100,
+      border: AppColors.errorBorder,
+      text: AppColors.red600,
+      dot: AppColors.errorColor,
+    };
+  }
+  if (k.includes('user') || k.includes('auth') || k.includes('token') || k.includes('profile')) {
+    return {
+      bg: AppColors.indigo50,
+      border: AppColors.indigo400,
+      text: AppColors.indigo600Alt,
+      dot: AppColors.indigo500,
+    };
+  }
+  if (k.includes('item') || k.includes('data') || k.includes('list') || k.includes('entit') || k.includes('count')) {
+    return {
+      bg: AppColors.emeraldBg,
+      border: AppColors.emeraldBorder,
+      text: AppColors.emerald700,
+      dot: AppColors.emerald500,
+    };
+  }
+  return {
+    bg: AppColors.slate100,
+    border: AppColors.slate200,
+    text: AppColors.slate700,
+    dot: AppColors.slate400,
+  };
+};
+
 const ReduxTab = React.memo(() => {
+  const {t} = useTranslation();
   const {
     reduxState,
     reduxLastActionMap,
@@ -55,36 +162,135 @@ const ReduxTab = React.memo(() => {
   // Sort mode: 'latest' (newest updated first) vs 'alpha' (A-Z)
   const [sortMode, setSortMode] = useState<'latest' | 'alpha'>('latest');
 
+  // Pause / Live Auto-Refresh State
+  const [isReduxPaused, setIsReduxPaused] = useState<boolean>(
+    !getReduxAutoRefresh(),
+  );
+
+  const handleTogglePause = useCallback(() => {
+    setIsReduxPaused(prev => {
+      const next = !prev;
+      setReduxAutoRefresh(!next);
+      return next;
+    });
+  }, []);
+
   // Total state size calculation
   const totalStateSize = useMemo(() => {
     return getSize(reduxState);
   }, [reduxState]);
 
-  // Compute slice items with exact timestamps
+  // Fetch full action history for timeline counts
+  const allActions = useMemo(() => {
+    return getActionHistory();
+  }, [reduxLastActionMap]);
+
+  // Compute slice items with exact timestamps & rich details
   const sliceItems: ReduxSliceItem[] = useMemo(() => {
     if (!reduxState || typeof reduxState !== 'object') return [];
     const keys = Object.keys(reduxState);
     return keys.map(key => {
       const sliceVal = reduxState[key];
-      const keysCount =
-        sliceVal && typeof sliceVal === 'object'
-          ? Object.keys(sliceVal).length
-          : typeof sliceVal !== 'undefined'
-          ? 1
-          : 0;
-      const lastAction = reduxLastActionMap[key];
-      const updatedAt = lastAction?.updatedAt || 0;
+      const isArray = Array.isArray(sliceVal);
+      const isObject = sliceVal && typeof sliceVal === 'object';
+
+      let typeLabel = 'Primitive';
+      let keysCount = 0;
+      let topKeys: string[] = [];
+      let totalKeysCount = 0;
+
+      if (isArray) {
+        keysCount = sliceVal.length;
+        typeLabel = `Array [${keysCount}]`;
+      } else if (isObject) {
+        const objKeys = Object.keys(sliceVal);
+        totalKeysCount = objKeys.length;
+        keysCount = totalKeysCount;
+        topKeys = objKeys.slice(0, 4);
+        typeLabel = `Object {${keysCount}}`;
+      } else if (typeof sliceVal !== 'undefined') {
+        keysCount = 1;
+        typeLabel = typeof sliceVal;
+      }
+
+      // Determine state status
+      let status: 'live' | 'loading' | 'error' | 'empty' = 'live';
+      let statusMessage: string | undefined;
+
+      if (isObject) {
+        if (
+          sliceVal.loading === true ||
+          sliceVal.isLoading === true ||
+          sliceVal.status === 'loading' ||
+          sliceVal.status === 'pending'
+        ) {
+          status = 'loading';
+          statusMessage = 'Loading';
+        } else if (
+          sliceVal.error ||
+          sliceVal.hasError ||
+          sliceVal.status === 'error' ||
+          sliceVal.status === 'failed'
+        ) {
+          status = 'error';
+          statusMessage = typeof sliceVal.error === 'string' ? sliceVal.error : 'Error';
+        } else if (keysCount === 0) {
+          status = 'empty';
+          statusMessage = 'Empty';
+        }
+      }
+
+      const lastActionRaw = reduxLastActionMap[key];
+      const updatedAt = lastActionRaw?.updatedAt || 0;
+
+      // Count actions affecting this slice in timeline
+      const timelineCount = allActions.filter(action => {
+        if (!action.affectedSlices || action.affectedSlices.length === 0) return true;
+        return action.affectedSlices.includes(key);
+      }).length;
+
+      let lastAction: ReduxSliceItem['lastAction'] = undefined;
+      if (lastActionRaw) {
+        let payloadPreview: string | undefined;
+        if (lastActionRaw.payload !== undefined && lastActionRaw.payload !== null) {
+          try {
+            if (typeof lastActionRaw.payload === 'object') {
+              const pKeys = Object.keys(lastActionRaw.payload);
+              payloadPreview = `{ ${pKeys.slice(0, 3).join(', ')}${pKeys.length > 3 ? '...' : ''} }`;
+            } else {
+              payloadPreview = String(lastActionRaw.payload);
+            }
+          } catch {}
+        }
+
+        lastAction = {
+          type: lastActionRaw.type,
+          timestamp: lastActionRaw.timestamp,
+          updatedAt: lastActionRaw.updatedAt,
+          payloadPreview,
+          originType: lastActionRaw.originType,
+          callerFile: lastActionRaw.callerFile,
+          callerLine: lastActionRaw.callerLine,
+          callerCol: lastActionRaw.callerCol,
+        };
+      }
 
       return {
         id: `slice-${key}`,
         name: key,
         keysCount,
         sizeStr: getSize(sliceVal),
+        typeLabel,
+        topKeys,
+        totalKeysCount,
+        status,
+        statusMessage,
+        timelineCount,
         lastAction,
         updatedAt,
       };
     });
-  }, [reduxState, reduxLastActionMap]);
+  }, [reduxState, reduxLastActionMap, allActions]);
 
   // Filter & Sort slices: by default, the most recently updated item is at the FIRST position
   const filteredSlices = useMemo(() => {
@@ -93,7 +299,8 @@ const ReduxTab = React.memo(() => {
       const q = reduxSearch.toLowerCase();
       list = list.filter(item =>
         item.name.toLowerCase().includes(q) ||
-        (item.lastAction && item.lastAction.type.toLowerCase().includes(q)),
+        (item.lastAction && item.lastAction.type.toLowerCase().includes(q)) ||
+        item.topKeys.some(k => k.toLowerCase().includes(q)),
       );
     }
 
@@ -133,7 +340,7 @@ const ReduxTab = React.memo(() => {
               reduxTabStyles.card,
               isRecentlyUpdated && reduxTabStyles.cardRecentlyUpdated,
             ]}>
-            {/* Top row: Badge + Slice Name + Timestamp + Chevron */}
+            {/* Top row: Badge + Slice Name + Status + Timestamp + Chevron */}
             <View style={reduxTabStyles.cardHeader}>
               <View style={reduxTabStyles.sliceBadge}>
                 <Text style={reduxTabStyles.sliceBadgeText}>SLICE</Text>
@@ -145,6 +352,26 @@ const ReduxTab = React.memo(() => {
                 style={reduxTabStyles.sliceName}
                 highlightStyle={reduxTabStyles.highlight}
               />
+
+              {/* Status Badge */}
+              {item.status === 'loading' ? (
+                <View style={reduxTabStyles.loadingPill}>
+                  <Text style={reduxTabStyles.loadingPillText}>⏳ Loading</Text>
+                </View>
+              ) : item.status === 'error' ? (
+                <View style={reduxTabStyles.errorPill}>
+                  <Text style={reduxTabStyles.errorPillText}>⚠️ Error</Text>
+                </View>
+              ) : item.status === 'empty' ? (
+                <View style={reduxTabStyles.emptyPill}>
+                  <Text style={reduxTabStyles.emptyPillText}>Empty</Text>
+                </View>
+              ) : (
+                <View style={reduxTabStyles.livePill}>
+                  <View style={reduxTabStyles.liveDot} />
+                  <Text style={reduxTabStyles.livePillText}>Live</Text>
+                </View>
+              )}
 
               {item.lastAction?.timestamp && (
                 <View style={reduxTabStyles.timePill}>
@@ -161,37 +388,158 @@ const ReduxTab = React.memo(() => {
             {/* Middle row: Stats pills */}
             <View style={reduxTabStyles.statsRow}>
               <View style={reduxTabStyles.pill}>
-                <Text style={reduxTabStyles.pillLabel}>Keys:</Text>
-                <Text style={reduxTabStyles.pillValue}>{item.keysCount}</Text>
+                <LayersIcon color={AppColors.grayTextWeak} size={11} />
+                <Text style={reduxTabStyles.pillValue}>{item.typeLabel}</Text>
               </View>
               <View style={reduxTabStyles.pill}>
                 <Text style={reduxTabStyles.pillLabel}>Size:</Text>
                 <Text style={reduxTabStyles.pillValue}>{item.sizeStr}</Text>
               </View>
-              <View style={reduxTabStyles.livePill}>
-                <View style={reduxTabStyles.liveDot} />
-                <Text style={reduxTabStyles.livePillText}>Live</Text>
-              </View>
+              {item.timelineCount > 0 && (
+                <View style={reduxTabStyles.pill}>
+                  <Text style={reduxTabStyles.pillLabel}>Actions:</Text>
+                  <Text style={reduxTabStyles.pillValue}>{item.timelineCount}</Text>
+                </View>
+              )}
             </View>
 
-            {/* Bottom row: Last Dispatched Action */}
+            {/* Keys Preview Chips (if object has keys) */}
+            {item.topKeys.length > 0 && (
+              <View style={reduxTabStyles.keysContainer}>
+                <Text style={reduxTabStyles.keysHeading}>Keys:</Text>
+                <View style={reduxTabStyles.keysWrap}>
+                  {item.topKeys.map((k, kIdx) => {
+                    const chipStyle = getKeyChipStyle(k);
+                    return (
+                      <View
+                        key={kIdx}
+                        style={[
+                          reduxTabStyles.keyChip,
+                          {
+                            backgroundColor: chipStyle.bg,
+                            borderColor: chipStyle.border,
+                          },
+                        ]}>
+                        <View
+                          style={{
+                            width: 5,
+                            height: 5,
+                            borderRadius: 2.5,
+                            backgroundColor: chipStyle.dot,
+                          }}
+                        />
+                        <Text
+                          style={[
+                            reduxTabStyles.keyChipText,
+                            {color: chipStyle.text},
+                          ]}
+                          numberOfLines={1}>
+                          {k}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                  {item.totalKeysCount > item.topKeys.length && (
+                    <View style={reduxTabStyles.keyMoreChip}>
+                      <Text style={reduxTabStyles.keyMoreChipText}>
+                        +{item.totalKeysCount - item.topKeys.length}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {/* Bottom row: Last Dispatched Action with Origin & Trigger Line */}
             {item.lastAction && (
               <View style={reduxTabStyles.lastActionRow}>
-                <Text style={reduxTabStyles.lastActionLabel}>Last Action:</Text>
-                <HighlightText
-                  text={item.lastAction.type}
-                  search={reduxSearch}
-                  style={reduxTabStyles.lastActionValue}
-                  highlightStyle={reduxTabStyles.highlight}
-                  numberOfLines={1}
-                />
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1, minWidth: 0, flexWrap: 'wrap'}}>
+                  <BoltIcon color={AppColors.brandPurple} size={12} />
+                  <Text style={reduxTabStyles.lastActionLabel}>{t('redux.last', 'Last')}:</Text>
+
+                  {/* Origin Badge */}
+                  {item.lastAction.originType && (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 2.5,
+                        backgroundColor: getOriginBadge(item.lastAction.originType).bg,
+                        paddingHorizontal: 4.5,
+                        paddingVertical: 1.5,
+                        borderRadius: 3.5,
+                        borderWidth: 1,
+                        borderColor: getOriginBadge(item.lastAction.originType).border,
+                      }}>
+                      <Text style={{fontSize: 8.5}}>
+                        {getOriginBadge(item.lastAction.originType).icon}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 8,
+                          color: getOriginBadge(item.lastAction.originType).text,
+                          letterSpacing: 0.3,
+                        }}>
+                        {getOriginBadge(item.lastAction.originType).label}
+                      </Text>
+                    </View>
+                  )}
+
+                  <HighlightText
+                    text={item.lastAction.type}
+                    search={reduxSearch}
+                    style={reduxTabStyles.lastActionValue}
+                    highlightStyle={reduxTabStyles.highlight}
+                    numberOfLines={1}
+                  />
+
+                  {/* Triggered from file preview */}
+                  {item.lastAction.callerFile && (
+                    <Pressable
+                      onPress={() =>
+                        openInVSCode(
+                          item.lastAction!.callerFile!,
+                          item.lastAction!.callerLine,
+                          item.lastAction!.callerCol,
+                        )
+                      }
+                      hitSlop={6}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 2,
+                        backgroundColor: AppColors.sky100,
+                        paddingHorizontal: 4.5,
+                        paddingVertical: 1.5,
+                        borderRadius: 3,
+                        borderWidth: 0.5,
+                        borderColor: AppColors.sky400,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interMedium,
+                          fontSize: 8.5,
+                          color: AppColors.sky600,
+                        }}>
+                        📄 {item.lastAction.callerFile.split('/').pop()}:{item.lastAction.callerLine || 1}
+                      </Text>
+                    </Pressable>
+                  )}
+
+                  {item.lastAction.payloadPreview && (
+                    <Text style={reduxTabStyles.payloadPreviewText} numberOfLines={1}>
+                      {item.lastAction.payloadPreview}
+                    </Text>
+                  )}
+                </View>
               </View>
             )}
           </TouchableScale>
         </AnimatedEntrance>
       );
     },
-    [reduxSearch, setSelectedReduxSlice],
+    [reduxSearch, setSelectedReduxSlice, t],
   );
 
   if (!reduxState) {
@@ -222,8 +570,28 @@ const ReduxTab = React.memo(() => {
           <Text style={reduxTabStyles.statBigVal}>{totalStateSize}</Text>
         </View>
         <View style={reduxTabStyles.statDivider} />
-        <View style={[reduxTabStyles.statCol, {flex: 1.5}]}>
-          <Text style={reduxTabStyles.statHeading}>LAST ACTION</Text>
+        <View style={[reduxTabStyles.statCol, {flex: 1.6}]}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+            <Text style={reduxTabStyles.statHeading}>LAST ACTION</Text>
+            {lastGlobalAction?.originType && (
+              <View
+                style={{
+                  backgroundColor: getOriginBadge(lastGlobalAction.originType).bg,
+                  paddingHorizontal: 4,
+                  paddingVertical: 1,
+                  borderRadius: 3,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 7.5,
+                    color: getOriginBadge(lastGlobalAction.originType).text,
+                  }}>
+                  {getOriginBadge(lastGlobalAction.originType).label}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text style={reduxTabStyles.statLastAction} numberOfLines={1}>
             {lastGlobalAction ? lastGlobalAction.type : 'Initial'}
           </Text>
@@ -256,6 +624,28 @@ const ReduxTab = React.memo(() => {
             )}
           </View>
 
+          {/* Pause / Resume Live Updates Button */}
+          <TouchableOpacity
+            style={[
+              styles.toolbarBtn,
+              isReduxPaused && {
+                backgroundColor: `${AppColors.darkOrange}1F`,
+                borderColor: AppColors.darkOrange,
+              },
+            ]}
+            onPress={handleTogglePause}
+            hitSlop={6}>
+            <HeaderPauseIcon
+              isPaused={isReduxPaused}
+              color={
+                isReduxPaused
+                  ? AppColors.darkOrange
+                  : AppColors.grayTextStrong
+              }
+              size={16}
+            />
+          </TouchableOpacity>
+
           {/* Sort Button */}
           <TouchableOpacity
             style={[
@@ -275,15 +665,22 @@ const ReduxTab = React.memo(() => {
           <Text style={reduxTabStyles.resultCount}>
             Showing {filteredSlices.length} of {sliceItems.length} state slices
           </Text>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
-            {sortMode === 'latest' ? (
-              <BoltIcon color={AppColors.brandPurple} size={11} />
-            ) : (
-              <TextAaIcon color={AppColors.brandPurple} size={11} />
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            {isReduxPaused && (
+              <View style={reduxTabStyles.pausedBannerPill}>
+                <Text style={reduxTabStyles.pausedBannerText}>PAUSED</Text>
+              </View>
             )}
-            <Text style={reduxTabStyles.sortLabel}>
-              {sortMode === 'latest' ? 'Newest Updates First' : 'Alphabetical (A-Z)'}
-            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+              {sortMode === 'latest' ? (
+                <BoltIcon color={AppColors.brandPurple} size={11} />
+              ) : (
+                <TextAaIcon color={AppColors.brandPurple} size={11} />
+              )}
+              <Text style={reduxTabStyles.sortLabel}>
+                {sortMode === 'latest' ? 'Newest Updates First' : 'Alphabetical (A-Z)'}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -511,17 +908,104 @@ const reduxTabStyles = StyleSheet.create({
   livePillText: {
     fontFamily: AppFonts.interBold,
     fontSize: 10,
-    color: '#047857',
+    color: AppColors.emerald700,
+  },
+  loadingPill: {
+    backgroundColor: AppColors.amber100,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: AppColors.amber200,
+  },
+  loadingPillText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    color: AppColors.amber800Warm,
+  },
+  errorPill: {
+    backgroundColor: AppColors.red100,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: AppColors.errorBorder,
+  },
+  errorPillText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    color: AppColors.red600,
+  },
+  emptyPill: {
+    backgroundColor: AppColors.grayBackground,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: AppColors.dividerColor,
+  },
+  emptyPillText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 9.5,
+    color: AppColors.grayTextWeak,
+  },
+  keysContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  keysHeading: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+  },
+  keysWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    flex: 1,
+  },
+  keyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: AppColors.slate100,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: AppColors.slate200,
+    maxWidth: 120,
+  },
+  keyChipText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    color: AppColors.slate700,
+  },
+  keyMoreChip: {
+    backgroundColor: AppColors.purple100,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: AppColors.purple200,
+  },
+  keyMoreChipText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9,
+    color: AppColors.brandPurple,
   },
   lastActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: AppColors.grayBackground,
     borderRadius: 6,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginTop: 2,
+    paddingVertical: 5,
+    marginTop: 4,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
   },
@@ -531,15 +1015,35 @@ const reduxTabStyles = StyleSheet.create({
     color: AppColors.grayTextWeak,
   },
   lastActionValue: {
-    flex: 1,
     fontFamily: AppFonts.interBold,
     fontSize: 11,
     color: AppColors.primaryBlack,
   },
+  payloadPreviewText: {
+    flex: 1,
+    fontFamily: AppFonts.interRegular,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+    marginLeft: 4,
+  },
   highlight: {
-    backgroundColor: '#FEF08A',
-    color: '#854D0E',
+    backgroundColor: AppColors.yellow200,
+    color: AppColors.yellow800,
     fontFamily: AppFonts.interBold,
+  },
+  pausedBannerPill: {
+    backgroundColor: AppColors.amber100,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: AppColors.amber200,
+  },
+  pausedBannerText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9,
+    color: AppColors.amber800Warm,
+    letterSpacing: 0.5,
   },
 });
 

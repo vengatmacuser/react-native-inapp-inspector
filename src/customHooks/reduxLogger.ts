@@ -13,6 +13,7 @@
 //      and per-reducer "last action" consistently.
 
 import {ReduxHistoryEntry} from '../types';
+import {parseStackLine} from '../helpers';
 
 export {ReduxHistoryEntry};
 
@@ -85,7 +86,122 @@ function actionTypeOf(action: any): string {
   return 'UNKNOWN_ACTION';
 }
 
-function recordAction(action: any, prevState: any, nextState: any) {
+function detectActionOrigin(stack: string, actionType: string, actionObj?: any): {
+  originType: 'saga' | 'thunk' | 'ui' | 'direct' | 'listener';
+  caller?: string;
+  callerFile?: string;
+  callerLine?: number;
+  callerCol?: number;
+} {
+  const stackLower = (stack || '').toLowerCase();
+  const typeLower = (actionType || '').toLowerCase();
+
+  // Explicit hint on action if developer tagged it
+  if (actionObj && actionObj.__origin) {
+    const raw = String(actionObj.__origin).toLowerCase();
+    if (raw.includes('saga')) return {originType: 'saga'};
+    if (raw.includes('thunk')) return {originType: 'thunk'};
+    if (raw.includes('ui')) return {originType: 'ui'};
+  }
+
+  // 1. Saga Detection (Stack + Action naming conventions)
+  const isSaga =
+    stackLower.includes('redux-saga') ||
+    stackLower.includes('runputeffect') ||
+    stackLower.includes('proc.js') ||
+    stackLower.includes('effects.js') ||
+    stackLower.includes('sagamiddleware') ||
+    stackLower.includes('saga.ts') ||
+    stackLower.includes('saga.js') ||
+    stackLower.includes('sagas') ||
+    typeLower.includes('saga') ||
+    typeLower.startsWith('saga/') ||
+    typeLower.startsWith('@saga/');
+
+  // 2. Thunk / RTK Query Detection
+  const isThunk =
+    stackLower.includes('createasyncthunk') ||
+    stackLower.includes('redux-thunk') ||
+    stackLower.includes('rtk-query') ||
+    stackLower.includes('thunkmiddleware') ||
+    stackLower.includes('actioncreator') ||
+    typeLower.includes('thunk') ||
+    typeLower.endsWith('/pending') ||
+    typeLower.endsWith('/fulfilled') ||
+    typeLower.endsWith('/rejected');
+
+  // 3. Parse Stack Frames to find best application caller
+  const lines = (stack || '').split('\n').map(l => l.trim()).filter(Boolean);
+  let bestFrame: any = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Ignore logger / middleware lines inside inspector
+    if (
+      line.includes('reduxLogger') ||
+      line.includes('inspectorReduxMiddleware') ||
+      line.includes('recordAction') ||
+      line.includes('redux.js') ||
+      line.includes('redux.cjs')
+    ) {
+      continue;
+    }
+    const parsed = parseStackLine(line, false);
+    if (parsed.frameType === 'app' || (!parsed.isRuntimeNoise && parsed.fileName !== 'Unknown')) {
+      bestFrame = parsed;
+      break;
+    }
+  }
+
+  if (!bestFrame && lines.length > 0) {
+    for (let i = 0; i < lines.length; i++) {
+      if (!lines[i].includes('reduxLogger') && !lines[i].includes('inspectorReduxMiddleware')) {
+        bestFrame = parseStackLine(lines[i], false);
+        break;
+      }
+    }
+  }
+
+  let originType: 'saga' | 'thunk' | 'ui' | 'direct' | 'listener' = 'direct';
+  if (isSaga || (bestFrame && bestFrame.fileName?.toLowerCase().includes('saga'))) {
+    originType = 'saga';
+  } else if (isThunk || (bestFrame && bestFrame.fileName?.toLowerCase().includes('thunk'))) {
+    originType = 'thunk';
+  } else if (
+    bestFrame &&
+    (bestFrame.fileName?.endsWith('.tsx') ||
+      bestFrame.functionName?.includes('onPress') ||
+      bestFrame.functionName?.includes('touchable') ||
+      bestFrame.functionName?.includes('Effect'))
+  ) {
+    originType = 'ui';
+  } else if (stackLower.includes('listener') || stackLower.includes('subscribe')) {
+    originType = 'listener';
+  }
+
+  return {
+    originType,
+    caller: bestFrame?.copyableLocation || bestFrame?.raw || undefined,
+    callerFile: bestFrame?.fullPath || bestFrame?.fileName || undefined,
+    callerLine: bestFrame?.lineNumber ? Number(bestFrame.lineNumber) : undefined,
+    callerCol: bestFrame?.columnNumber ? Number(bestFrame.columnNumber) : undefined,
+  };
+}
+
+function extractSliceName(actionType: string, affectedSlices: string[]): string | undefined {
+  if (affectedSlices && affectedSlices.length > 0) {
+    return affectedSlices[0];
+  }
+  // If Redux Toolkit action format: e.g. "users/fetchById" -> "users"
+  const match = actionType.match(/^([a-zA-Z0-9_\-]+)\//);
+  if (match && match[1] && !match[1].startsWith('@@')) {
+    return match[1];
+  }
+  return undefined;
+}
+
+function recordAction(action: any, prevState: any, nextState: any, rawStack?: string) {
+  const stack = rawStack || new Error().stack || '';
   const type = actionTypeOf(action);
   const payload =
     action && typeof action === 'object' && action.payload !== undefined
@@ -95,6 +211,9 @@ function recordAction(action: any, prevState: any, nextState: any) {
   const timestamp = new Date(now).toLocaleTimeString();
 
   const affectedSlices: string[] = [];
+  const origin = detectActionOrigin(stack, type, action);
+  const sliceName = extractSliceName(type, affectedSlices);
+
   if (
     prevState &&
     nextState &&
@@ -103,7 +222,18 @@ function recordAction(action: any, prevState: any, nextState: any) {
   ) {
     Object.keys(nextState).forEach(key => {
       if (prevState[key] !== nextState[key]) {
-        lastActionForReducer[key] = {type, payload, timestamp, updatedAt: now};
+        lastActionForReducer[key] = {
+          type,
+          payload,
+          timestamp,
+          updatedAt: now,
+          originType: origin.originType,
+          callerFile: origin.callerFile,
+          callerLine: origin.callerLine,
+          callerCol: origin.callerCol,
+          caller: origin.caller,
+          stack,
+        };
         affectedSlices.push(key);
       }
     });
@@ -118,6 +248,13 @@ function recordAction(action: any, prevState: any, nextState: any) {
     affectedSlices,
     prevState,
     nextState,
+    stack,
+    caller: origin.caller,
+    callerFile: origin.callerFile,
+    callerLine: origin.callerLine,
+    callerCol: origin.callerCol,
+    originType: origin.originType,
+    sliceName,
   });
   if (actionHistory.length > MAX_HISTORY) {
     actionHistory.length = MAX_HISTORY;
@@ -146,6 +283,7 @@ function recordAction(action: any, prevState: any, nextState: any) {
 export const inspectorReduxMiddleware =
   (storeApi: any) => (next: (action: any) => any) => (action: any) => {
     middlewareAttached = true;
+    const capturedStack = new Error().stack || '';
     // Thunks are functions — let them run; their inner plain-action dispatches
     // pass back through this same middleware, so nothing is lost.
     if (typeof action === 'function') {
@@ -155,7 +293,7 @@ export const inspectorReduxMiddleware =
     const result = next(action);
     const nextState = storeApi.getState();
     if (currentReduxState == null) currentReduxState = nextState;
-    recordAction(action, prevState, nextState);
+    recordAction(action, prevState, nextState, capturedStack);
     return result;
   };
 
@@ -184,6 +322,7 @@ export const connectReduxStore = (store: any) => {
   const originalDispatch = store.dispatch.bind(store);
   let inWrappedDispatch = false;
   store.dispatch = (action: any) => {
+    const capturedStack = new Error().stack || '';
     if (middlewareAttached || typeof action === 'function') {
       // Middleware handles recording, or it's a thunk whose inner dispatches
       // will be picked up individually.
@@ -202,7 +341,7 @@ export const connectReduxStore = (store: any) => {
     } finally {
       inWrappedDispatch = false;
     }
-    recordAction(action, prevState, store.getState());
+    recordAction(action, prevState, store.getState(), capturedStack);
     return result;
   };
 
@@ -228,10 +367,12 @@ export const connectReduxStore = (store: any) => {
     }
     // Change arrived outside the wrapped dispatch — record it so the
     // timeline stays consistent, even without the original action type.
+    const subStack = new Error().stack || '';
     recordAction(
       {type: '@@inspector/EXTERNAL_STATE_CHANGE'},
       prevState,
       nextState,
+      subStack,
     );
   });
 };

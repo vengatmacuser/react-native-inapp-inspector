@@ -70,21 +70,25 @@ const DomainHeader = ({
 
   return (
     <Pressable
-      style={styles.domainHeaderCard}
+      style={[
+        styles.domainHeaderCard,
+        !isCollapsed && styles.domainHeaderCardExpanded,
+      ]}
       onPress={() => onToggleCollapse(pageName)}>
       <View style={styles.domainHeaderTopRow}>
         <View style={styles.domainHeaderLeft}>
-          <Animated.View style={{transform: [{rotate: chevronRotate}]}}>
+          <Animated.View style={{transform: [{rotate: chevronRotate}], flexShrink: 0}}>
             <ChevronIcon color={AppColors.grayTextWeak} size={13} />
           </Animated.View>
-          <View style={[styles.domainIconWrap, {backgroundColor: `${color}18`}]}>
+          <View style={[styles.domainIconWrap, {backgroundColor: `${color}18`, flexShrink: 0}]}>
             <ScreenIcon color={color} size={14} />
           </View>
           <View style={{flex: 1, justifyContent: 'center', minWidth: 0}}>
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0}}>
               <Text
                 style={[styles.domainTitleText, {flexShrink: 1}]}
-                numberOfLines={1}>
+                numberOfLines={1}
+                ellipsizeMode="tail">
                 {pageName}
               </Text>
               {total > 0 && (
@@ -95,20 +99,21 @@ const DomainHeader = ({
                     gap: 4,
                     backgroundColor:
                       stats.failed > 0
-                        ? '#FEE2E2'
+                        ? AppColors.red100
                         : stats.loading > 0
-                        ? '#FEF3C7'
-                        : '#D1FAE5',
+                        ? AppColors.amber100
+                        : AppColors.emerald100,
                     paddingHorizontal: 5,
                     paddingVertical: 1.5,
                     borderRadius: 4,
+                    flexShrink: 0,
                   }}>
                   <View
                     style={{
-                      width: 24,
+                      width: 22,
                       height: 3.5,
                       borderRadius: 2,
-                      backgroundColor: '#E5E7EB',
+                      backgroundColor: AppColors.gray200,
                       flexDirection: 'row',
                       overflow: 'hidden',
                     }}>
@@ -117,7 +122,7 @@ const DomainHeader = ({
                         style={{
                           width: `${pctSuccess}%`,
                           height: '100%',
-                          backgroundColor: '#10B981',
+                          backgroundColor: AppColors.emerald500,
                         }}
                       />
                     )}
@@ -126,7 +131,7 @@ const DomainHeader = ({
                         style={{
                           width: `${pctFailed}%`,
                           height: '100%',
-                          backgroundColor: '#EF4444',
+                          backgroundColor: AppColors.red500,
                         }}
                       />
                     )}
@@ -135,7 +140,7 @@ const DomainHeader = ({
                         style={{
                           width: `${pctLoading}%`,
                           height: '100%',
-                          backgroundColor: '#F59E0B',
+                          backgroundColor: AppColors.amber500,
                         }}
                       />
                     )}
@@ -146,17 +151,17 @@ const DomainHeader = ({
                       fontSize: 8.5,
                       color:
                         stats.failed > 0
-                          ? '#991B1B'
+                          ? AppColors.redErrorText
                           : stats.loading > 0
-                          ? '#92400E'
-                          : '#065F46',
+                          ? AppColors.amber800Warm
+                          : AppColors.emerald700,
                     }}>
                     {pctSuccess}%
                   </Text>
                 </View>
               )}
             </View>
-            <Text style={styles.domainSummaryText} numberOfLines={1}>
+            <Text style={styles.domainSummaryText} numberOfLines={1} ellipsizeMode="tail">
               {formatDateTime(timestamp)}
             </Text>
           </View>

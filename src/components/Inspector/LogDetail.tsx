@@ -117,27 +117,61 @@ const LogDetail = React.memo(() => {
 
   const isDark = AppColors.primaryLight !== AppColors.white;
   const getTypeColors = () => {
-    if (selectedLog.type === 'error') {
+    const type = (selectedLog.type || 'log').toLowerCase();
+    const method = ((selectedLog as any).sourceMethod || type).toLowerCase();
+
+    if (type === 'error' || method === 'error') {
       return {
-        border: AppColors.errorColor,
-        badgeBg: `${AppColors.errorColor}15`,
-        badgeText: AppColors.errorColor,
+        border: AppColors.red500,
+        badgeBg: AppColors.red100,
+        badgeText: AppColors.redErrorText,
         label: 'ERROR',
+        methodBorder: AppColors.errorBorder,
+        methodBg: AppColors.red100,
+        methodText: AppColors.redErrorText,
       };
     }
-    if (selectedLog.type === 'warn') {
+    if (type === 'warn' || method === 'warn') {
       return {
-        border: AppColors.lightOrange,
-        badgeBg: `${AppColors.lightOrange}15`,
-        badgeText: AppColors.darkOrange || AppColors.lightOrange,
+        border: AppColors.amber500,
+        badgeBg: AppColors.amber100,
+        badgeText: AppColors.amber800Warm,
         label: 'WARN',
+        methodBorder: AppColors.amber200,
+        methodBg: AppColors.amber100,
+        methodText: AppColors.amber800Warm,
+      };
+    }
+    if (type === 'debug' || method === 'debug') {
+      return {
+        border: AppColors.violet500,
+        badgeBg: AppColors.purple100,
+        badgeText: AppColors.violet600,
+        label: 'DEBUG',
+        methodBorder: AppColors.purple200,
+        methodBg: AppColors.purple100,
+        methodText: AppColors.violet600,
+      };
+    }
+    if (type === 'info' || method === 'info') {
+      return {
+        border: AppColors.sky500,
+        badgeBg: AppColors.sky100,
+        badgeText: AppColors.sky600,
+        label: 'INFO',
+        methodBorder: AppColors.sky400,
+        methodBg: AppColors.sky100,
+        methodText: AppColors.sky600,
       };
     }
     return {
-      border: AppColors.purple,
-      badgeBg: `${AppColors.purple}15`,
-      badgeText: AppColors.purple,
-      label: 'INFO',
+      border: AppColors.indigo500,
+      badgeBg: AppColors.indigo50,
+      badgeText: AppColors.indigo600Alt,
+      label: 'LOG',
+      methodBorder: AppColors.indigo400,
+      methodBg: AppColors.indigo50,
+      methodText: AppColors.indigo600Alt,
     };
   };
 

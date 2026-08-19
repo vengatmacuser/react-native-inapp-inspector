@@ -23,6 +23,7 @@ import {
   SortArrowIcon,
   TrashIcon,
   LayersIcon,
+  CheckIcon,
   UserIcon,
   InfoCircleIcon,
   WarningTriangleIcon,
@@ -209,6 +210,7 @@ const ConsoleTab = React.memo(() => {
             alignItems: 'center',
             gap: 8,
           }}>
+          {/* All Filter */}
           {(() => {
             const active = logFilters.has('all');
             return (
@@ -219,36 +221,52 @@ const ConsoleTab = React.memo(() => {
                 <View
                   style={[
                     styles.statusFilterChip,
+                    {
+                      backgroundColor: active ? AppColors.indigo600Alt : AppColors.indigo50,
+                      borderColor: active ? AppColors.indigo600 : AppColors.indigo400,
+                      borderRadius: 7,
+                    },
                     active && {
-                      borderColor: AppColors.purpleShade700,
-                      backgroundColor: AppColors.purpleTintBg,
+                      shadowColor: AppColors.indigo600Alt,
+                      shadowOffset: {width: 0, height: 1},
+                      shadowOpacity: 0.28,
+                      shadowRadius: 2.5,
+                      elevation: 2,
                     },
                   ]}>
-                  {/* #7 */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 5,
                     }}>
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        borderWidth: 1.2,
+                        borderColor: active ? AppColors.white : AppColors.indigo400,
+                        backgroundColor: active ? AppColors.white : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      {active && <CheckIcon color={AppColors.indigo600Alt} size={8} />}
+                    </View>
                     <LayersIcon
                       size={12}
-                      color={
-                        active
-                          ? AppColors.purpleShade700
-                          : AppColors.grayTextStrong
-                      }
+                      color={active ? AppColors.white : AppColors.indigo600Alt}
                     />
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.statusFilterText,
-                        active && {
-                          color: AppColors.purpleShade700,
+                        {
+                          color: active ? AppColors.white : AppColors.indigo600Alt,
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      All ({logCounts.all})
+                      {t('common.all', 'All')} ({logCounts.all})
                     </Text>
                   </View>
                 </View>
@@ -256,6 +274,7 @@ const ConsoleTab = React.memo(() => {
             );
           })()}
 
+          {/* User Log / Standard Log Filter */}
           {(() => {
             const active = logFilters.has('user-log');
             return (
@@ -274,36 +293,52 @@ const ConsoleTab = React.memo(() => {
                 <View
                   style={[
                     styles.statusFilterChip,
+                    {
+                      backgroundColor: active ? AppColors.teal600 : AppColors.teal100,
+                      borderColor: active ? AppColors.teal600 : AppColors.teal400,
+                      borderRadius: 7,
+                    },
                     active && {
-                      borderColor: AppColors.slate500,
-                      backgroundColor: AppColors.slate100,
+                      shadowColor: AppColors.teal600,
+                      shadowOffset: {width: 0, height: 1},
+                      shadowOpacity: 0.28,
+                      shadowRadius: 2.5,
+                      elevation: 2,
                     },
                   ]}>
-                  {/* #7 */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 5,
                     }}>
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        borderWidth: 1.2,
+                        borderColor: active ? AppColors.white : AppColors.teal400,
+                        backgroundColor: active ? AppColors.white : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      {active && <CheckIcon color={AppColors.teal600} size={8} />}
+                    </View>
                     <UserIcon
                       size={12}
-                      color={
-                        active
-                          ? AppColors.slate700
-                          : AppColors.grayTextStrong
-                      }
+                      color={active ? AppColors.white : AppColors.teal600}
                     />
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.statusFilterText,
-                        active && {
-                          color: AppColors.slate700,
+                        {
+                          color: active ? AppColors.white : AppColors.teal600,
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      User Log ({logCounts['user-log']})
+                      {t('console.log', 'Log')} ({logCounts['user-log']})
                     </Text>
                   </View>
                 </View>
@@ -311,6 +346,7 @@ const ConsoleTab = React.memo(() => {
             );
           })()}
 
+          {/* Info Filter */}
           {(() => {
             const active = logFilters.has('info');
             return (
@@ -329,36 +365,52 @@ const ConsoleTab = React.memo(() => {
                 <View
                   style={[
                     styles.statusFilterChip,
+                    {
+                      backgroundColor: active ? AppColors.sky600 : AppColors.sky100,
+                      borderColor: active ? AppColors.blue700 : AppColors.sky400,
+                      borderRadius: 7,
+                    },
                     active && {
-                      borderColor: AppColors.purple,
-                      backgroundColor: AppColors.purpleShade50,
+                      shadowColor: AppColors.sky600,
+                      shadowOffset: {width: 0, height: 1},
+                      shadowOpacity: 0.28,
+                      shadowRadius: 2.5,
+                      elevation: 2,
                     },
                   ]}>
-                  {/* #7 */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 5,
                     }}>
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        borderWidth: 1.2,
+                        borderColor: active ? AppColors.white : AppColors.sky400,
+                        backgroundColor: active ? AppColors.white : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      {active && <CheckIcon color={AppColors.sky600} size={8} />}
+                    </View>
                     <InfoCircleIcon
                       size={12}
-                      color={
-                        active
-                          ? AppColors.purple
-                          : AppColors.grayTextStrong
-                      }
+                      color={active ? AppColors.white : AppColors.sky600}
                     />
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.statusFilterText,
-                        active && {
-                          color: AppColors.purple,
+                        {
+                          color: active ? AppColors.white : AppColors.sky600,
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      Info ({logCounts.info})
+                      {t('console.info', 'Info')} ({logCounts.info})
                     </Text>
                   </View>
                 </View>
@@ -366,6 +418,7 @@ const ConsoleTab = React.memo(() => {
             );
           })()}
 
+          {/* Warning Filter */}
           {(() => {
             const active = logFilters.has('warn');
             return (
@@ -384,39 +437,52 @@ const ConsoleTab = React.memo(() => {
                 <View
                   style={[
                     styles.statusFilterChip,
+                    {
+                      backgroundColor: active ? AppColors.amber600 : AppColors.amber100,
+                      borderColor: active ? AppColors.amber700 : AppColors.amber200,
+                      borderRadius: 7,
+                    },
                     active && {
-                      borderColor: AppColors.lightOrange,
-                      backgroundColor: AppColors.warnCardBg,
+                      shadowColor: AppColors.amber600,
+                      shadowOffset: {width: 0, height: 1},
+                      shadowOpacity: 0.28,
+                      shadowRadius: 2.5,
+                      elevation: 2,
                     },
                   ]}>
-                  {/* #7 */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 5,
                     }}>
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        borderWidth: 1.2,
+                        borderColor: active ? AppColors.white : AppColors.amber500,
+                        backgroundColor: active ? AppColors.white : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      {active && <CheckIcon color={AppColors.amber600} size={8} />}
+                    </View>
                     <WarningTriangleIcon
                       size={12}
-                      color={
-                        active
-                          ? AppColors.darkOrange ||
-                            AppColors.lightOrange
-                          : AppColors.grayTextStrong
-                      }
+                      color={active ? AppColors.white : AppColors.amber700}
                     />
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.statusFilterText,
-                        active && {
-                          color:
-                            AppColors.darkOrange ||
-                            AppColors.lightOrange,
+                        {
+                          color: active ? AppColors.white : AppColors.amber800Warm,
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      Warning ({logCounts.warn})
+                      {t('console.warning', 'Warn')} ({logCounts.warn})
                     </Text>
                   </View>
                 </View>
@@ -424,6 +490,7 @@ const ConsoleTab = React.memo(() => {
             );
           })()}
 
+          {/* Error Filter */}
           {(() => {
             const active = logFilters.has('error');
             return (
@@ -442,36 +509,52 @@ const ConsoleTab = React.memo(() => {
                 <View
                   style={[
                     styles.statusFilterChip,
+                    {
+                      backgroundColor: active ? AppColors.red500 : AppColors.red100,
+                      borderColor: active ? AppColors.red600 : AppColors.errorBorder,
+                      borderRadius: 7,
+                    },
                     active && {
-                      borderColor: AppColors.errorColor,
-                      backgroundColor: AppColors.errorCardBg,
+                      shadowColor: AppColors.red500,
+                      shadowOffset: {width: 0, height: 1},
+                      shadowOpacity: 0.28,
+                      shadowRadius: 2.5,
+                      elevation: 2,
                     },
                   ]}>
-                  {/* #7 */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 5,
                     }}>
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        borderWidth: 1.2,
+                        borderColor: active ? AppColors.white : AppColors.red500,
+                        backgroundColor: active ? AppColors.white : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      {active && <CheckIcon color={AppColors.red500} size={8} />}
+                    </View>
                     <ErrorCircleIcon
                       size={12}
-                      color={
-                        active
-                          ? AppColors.errorColor
-                          : AppColors.grayTextStrong
-                      }
+                      color={active ? AppColors.white : AppColors.red500}
                     />
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.statusFilterText,
-                        active && {
-                          color: AppColors.errorColor,
+                        {
+                          color: active ? AppColors.white : AppColors.redErrorText,
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      Error ({logCounts.error})
+                      {t('console.error', 'Error')} ({logCounts.error})
                     </Text>
                   </View>
                 </View>
@@ -479,6 +562,7 @@ const ConsoleTab = React.memo(() => {
             );
           })()}
 
+          {/* Analytics Filter */}
           {(() => {
             const active = logFilters.has('analytics');
             return (
@@ -497,36 +581,52 @@ const ConsoleTab = React.memo(() => {
                 <View
                   style={[
                     styles.statusFilterChip,
+                    {
+                      backgroundColor: active ? AppColors.violet600 : AppColors.purple100,
+                      borderColor: active ? AppColors.purple700 : AppColors.purple200,
+                      borderRadius: 7,
+                    },
                     active && {
-                      borderColor: AppColors.skyBlue,
-                      backgroundColor: `${AppColors.skyBlue}15`,
+                      shadowColor: AppColors.violet600,
+                      shadowOffset: {width: 0, height: 1},
+                      shadowOpacity: 0.28,
+                      shadowRadius: 2.5,
+                      elevation: 2,
                     },
                   ]}>
-                  {/* #7 */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       gap: 5,
                     }}>
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 3,
+                        borderWidth: 1.2,
+                        borderColor: active ? AppColors.white : AppColors.purple400,
+                        backgroundColor: active ? AppColors.white : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      {active && <CheckIcon color={AppColors.violet600} size={8} />}
+                    </View>
                     <AnalyticsIcon
                       size={12}
-                      color={
-                        active
-                          ? AppColors.skyBlue
-                          : AppColors.grayTextStrong
-                      }
+                      color={active ? AppColors.white : AppColors.purple}
                     />
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.statusFilterText,
-                        active && {
-                          color: AppColors.skyBlue,
+                        {
+                          color: active ? AppColors.white : AppColors.brandPurple,
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      Analytics ({logCounts.analytics})
+                      {t('tabs.analytics', 'Analytics')} ({logCounts.analytics})
                     </Text>
                   </View>
                 </View>

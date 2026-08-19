@@ -22,7 +22,7 @@ import TouchableScale from '../TouchableScale';
 import HighlightText from '../HighlightText';
 import AnimatedEntrance from '../AnimatedEntrance';
 import {getActionHistory, clearActionHistory} from '../../customHooks/reduxLogger';
-import {getSize, copyToClipboard} from '../../helpers';
+import {getSize, copyToClipboard, openInVSCode, parseStackLine} from '../../helpers';
 import {getCustomStorage} from '../../helpers/settingsStore';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -42,9 +42,56 @@ import {
   TimelineIcon,
   StorageIcon,
   MetadataIcon,
+  BoltIcon,
+  ExternalLinkIcon,
 } from '../NetworkIcons';
 
 type SliceDetailSubTab = 'live' | 'timeline' | 'persisted' | 'metadata';
+
+const getOriginBadge = (originType?: string) => {
+  switch (originType) {
+    case 'saga':
+      return {
+        label: 'SAGA',
+        icon: '⚡',
+        bg: AppColors.purple100,
+        text: AppColors.brandPurple,
+        border: AppColors.purple200,
+      };
+    case 'thunk':
+      return {
+        label: 'THUNK',
+        icon: '⚛️',
+        bg: AppColors.amber100,
+        text: AppColors.amber800Warm,
+        border: AppColors.amber200,
+      };
+    case 'ui':
+      return {
+        label: 'UI',
+        icon: '📱',
+        bg: AppColors.sky100,
+        text: AppColors.sky600,
+        border: AppColors.sky400,
+      };
+    case 'listener':
+      return {
+        label: 'LISTENER',
+        icon: '👂',
+        bg: AppColors.teal100,
+        text: AppColors.teal700,
+        border: AppColors.teal400,
+      };
+    default:
+      return {
+        label: 'DIRECT',
+        icon: '⚡',
+        bg: AppColors.slate100,
+        text: AppColors.slate700,
+        border: AppColors.slate200,
+      };
+  }
+};
 
 const ReduxDetail = React.memo(() => {
   const {t} = useTranslation();
@@ -185,10 +232,46 @@ const ReduxDetail = React.memo(() => {
     const lastAction = reduxLastActionMap[selectedReduxSlice];
 
     const sliceTabs = [
-      {key: 'live', label: 'Live State', icon: () => <LiveStateIcon color={AppColors.purple} size={11} />},
-      {key: 'timeline', label: `Timeline (${sliceActions.length})`, icon: () => <TimelineIcon color={AppColors.purple} size={11} />},
-      {key: 'persisted', label: isPersisted ? 'Persisted' : 'Storage', icon: () => <StorageIcon color={AppColors.purple} size={11} />},
-      {key: 'metadata', label: 'Metadata', icon: () => <MetadataIcon color={AppColors.purple} size={11} />},
+      {
+        key: 'live',
+        label: t('redux.liveState'),
+        icon: (isActive: boolean) => (
+          <LiveStateIcon
+            color={isActive ? AppColors.white : AppColors.grayText}
+            size={12}
+          />
+        ),
+      },
+      {
+        key: 'timeline',
+        label: `${t('redux.timeline')} (${sliceActions.length})`,
+        icon: (isActive: boolean) => (
+          <TimelineIcon
+            color={isActive ? AppColors.white : AppColors.grayText}
+            size={12}
+          />
+        ),
+      },
+      {
+        key: 'persisted',
+        label: isPersisted ? t('redux.persisted') : t('redux.storage'),
+        icon: (isActive: boolean) => (
+          <StorageIcon
+            color={isActive ? AppColors.white : AppColors.grayText}
+            size={12}
+          />
+        ),
+      },
+      {
+        key: 'metadata',
+        label: t('redux.metadata'),
+        icon: (isActive: boolean) => (
+          <MetadataIcon
+            color={isActive ? AppColors.white : AppColors.grayText}
+            size={12}
+          />
+        ),
+      },
     ];
 
     return (
@@ -197,24 +280,25 @@ const ReduxDetail = React.memo(() => {
         <View style={reduxDetailStyles.infoBar}>
           <View style={reduxDetailStyles.infoTopRow}>
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1}}>
-              <View style={[reduxDetailStyles.methodBadge, {backgroundColor: AppColors.purple}]}>
-                <Text style={reduxDetailStyles.methodBadgeText}>SLICE</Text>
+              <View style={[reduxDetailStyles.methodBadge, {backgroundColor: AppColors.indigo600Alt}]}>
+                <Text style={reduxDetailStyles.methodBadgeText}>{t('redux.slice')}</Text>
               </View>
               <Text style={reduxDetailStyles.sliceNameText}>
                 {selectedReduxSlice}
               </Text>
               {isPersisted ? (
                 <View style={reduxDetailStyles.persistedChip}>
-                  <Text style={reduxDetailStyles.persistedChipText}>PERSISTED</Text>
+                  <StorageIcon color={AppColors.emerald700} size={10} />
+                  <Text style={reduxDetailStyles.persistedChipText}>{t('redux.persisted').toUpperCase()}</Text>
                 </View>
               ) : (
                 <View style={reduxDetailStyles.inMemoryChip}>
-                  <Text style={reduxDetailStyles.inMemoryChipText}>IN-MEMORY</Text>
+                  <Text style={reduxDetailStyles.inMemoryChipText}>{t('redux.inMemory').toUpperCase()}</Text>
                 </View>
               )}
               {lastAction?.timestamp && (
                 <View style={reduxDetailStyles.timePill}>
-                  <ClockIcon color={AppColors.purple} size={10} />
+                  <ClockIcon color={AppColors.violet600} size={10} />
                   <Text style={reduxDetailStyles.timeText}>
                     {lastAction.timestamp}
                   </Text>
@@ -225,28 +309,31 @@ const ReduxDetail = React.memo(() => {
             {/* Copy Button */}
             <CopyButton
               value={() => (sliceTab === 'live' ? sliceData : persistedData)}
-              label="Slice JSON"
+              label={t('redux.sliceJson')}
             />
           </View>
 
           {/* Sub Stats Row */}
           <View style={reduxDetailStyles.subStatsRow}>
-            <View style={reduxDetailStyles.statPill}>
-              <Text style={reduxDetailStyles.statLabel}>Root Keys:</Text>
-              <Text style={reduxDetailStyles.statValue}>{fieldsCount}</Text>
+            <View style={[reduxDetailStyles.statPill, {backgroundColor: AppColors.indigo50, borderColor: AppColors.indigo400}]}>
+              <LayersIcon color={AppColors.indigo600Alt} size={11} />
+              <Text style={[reduxDetailStyles.statLabel, {color: AppColors.indigo600Alt}]}>{t('redux.keys')}:</Text>
+              <Text style={[reduxDetailStyles.statValue, {color: AppColors.indigo600Alt}]}>{fieldsCount}</Text>
             </View>
-            <View style={reduxDetailStyles.statPill}>
-              <Text style={reduxDetailStyles.statLabel}>Size:</Text>
-              <Text style={reduxDetailStyles.statValue}>{getSize(sliceData)}</Text>
+            <View style={[reduxDetailStyles.statPill, {backgroundColor: AppColors.sky100, borderColor: AppColors.sky400}]}>
+              <Text style={[reduxDetailStyles.statLabel, {color: AppColors.sky600}]}>{t('redux.size')}:</Text>
+              <Text style={[reduxDetailStyles.statValue, {color: AppColors.sky600}]}>{getSize(sliceData)}</Text>
             </View>
-            <View style={reduxDetailStyles.statPill}>
-              <Text style={reduxDetailStyles.statLabel}>Timeline:</Text>
-              <Text style={reduxDetailStyles.statValue}>{sliceActions.length} actions</Text>
+            <View style={[reduxDetailStyles.statPill, {backgroundColor: AppColors.purple100, borderColor: AppColors.purple200}]}>
+              <TimelineIcon color={AppColors.violet600} size={11} />
+              <Text style={[reduxDetailStyles.statLabel, {color: AppColors.brandPurple}]}>{t('redux.timeline')}:</Text>
+              <Text style={[reduxDetailStyles.statValue, {color: AppColors.brandPurple}]}>{sliceActions.length}</Text>
             </View>
             {lastAction && (
-              <View style={[reduxDetailStyles.statPill, {flex: 1, minWidth: 140}]}>
-                <Text style={reduxDetailStyles.statLabel}>Last Action:</Text>
-                <Text style={reduxDetailStyles.statValue} numberOfLines={1}>
+              <View style={[reduxDetailStyles.statPill, {backgroundColor: AppColors.amber100, borderColor: AppColors.amber200, flex: 1, minWidth: 140}]}>
+                <BoltIcon color={AppColors.amber800Warm} size={11} />
+                <Text style={[reduxDetailStyles.statLabel, {color: AppColors.amber800Warm}]}>{t('redux.last')}:</Text>
+                <Text style={[reduxDetailStyles.statValue, {color: AppColors.amber800Warm}]} numberOfLines={1}>
                   {lastAction.type}
                 </Text>
               </View>
@@ -298,6 +385,11 @@ const ReduxDetail = React.memo(() => {
             ) : (
               sliceActions.map((action, aIdx) => {
                 const isExpanded = expandedActionId === action.id;
+                const originMeta = getOriginBadge(action.originType);
+                const callerBasename = action.callerFile
+                  ? action.callerFile.split('/').pop()
+                  : null;
+
                 return (
                   <AnimatedEntrance key={action.id} index={aIdx} distance={6}>
                     <TouchableScale
@@ -306,17 +398,45 @@ const ReduxDetail = React.memo(() => {
                       }
                       style={reduxDetailStyles.timelineCard}>
                       <View style={reduxDetailStyles.timelineHeader}>
-                        <View style={reduxDetailStyles.actionBadge}>
-                          <Text style={reduxDetailStyles.actionBadgeText}>
-                            #{action.id}
-                          </Text>
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, flexWrap: 'wrap'}}>
+                          <View style={reduxDetailStyles.actionBadge}>
+                            <Text style={reduxDetailStyles.actionBadgeText}>
+                              #{action.id}
+                            </Text>
+                          </View>
+                          {/* Origin Badge */}
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 3,
+                              backgroundColor: originMeta.bg,
+                              paddingHorizontal: 6,
+                              paddingVertical: 2,
+                              borderRadius: 4,
+                              borderWidth: 1,
+                              borderColor: originMeta.border,
+                            }}>
+                            <Text style={{fontSize: 9}}>{originMeta.icon}</Text>
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 8.5,
+                                color: originMeta.text,
+                                letterSpacing: 0.3,
+                              }}>
+                              {originMeta.label}
+                            </Text>
+                          </View>
+
+                          <HighlightText
+                            text={action.type}
+                            search={detailSearch}
+                            style={reduxDetailStyles.actionTitle}
+                            highlightStyle={reduxDetailStyles.highlight}
+                          />
                         </View>
-                        <HighlightText
-                          text={action.type}
-                          search={detailSearch}
-                          style={reduxDetailStyles.actionTitle}
-                          highlightStyle={reduxDetailStyles.highlight}
-                        />
+
                         <View style={reduxDetailStyles.timePill}>
                           <ClockIcon color={AppColors.purple} size={10} />
                           <Text style={reduxDetailStyles.timeText}>
@@ -325,13 +445,143 @@ const ReduxDetail = React.memo(() => {
                         </View>
                       </View>
 
-                      {/* Expanded Payload & Diff Viewer */}
+                      {/* Trigger caller preview row */}
+                      {action.callerFile && (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginTop: 5,
+                            marginBottom: 2,
+                            paddingHorizontal: 7,
+                            paddingVertical: 3,
+                            backgroundColor: AppColors.grayBackground,
+                            borderRadius: 5,
+                            borderWidth: 1,
+                            borderColor: AppColors.dividerColor,
+                          }}>
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, minWidth: 0}}>
+                            <Text style={{fontFamily: AppFonts.interMedium, fontSize: 9.5, color: AppColors.grayTextWeak}}>
+                              {t('redux.triggeredFrom')}
+                            </Text>
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 9.5,
+                                color: AppColors.sky600,
+                              }}
+                              numberOfLines={1}>
+                              {callerBasename}:{action.callerLine || 1}
+                            </Text>
+                          </View>
+
+                          <Pressable
+                            onPress={() =>
+                              openInVSCode(
+                                action.callerFile!,
+                                action.callerLine,
+                                action.callerCol,
+                              )
+                            }
+                            hitSlop={8}
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 3,
+                              backgroundColor: AppColors.sky100,
+                              paddingHorizontal: 5,
+                              paddingVertical: 1.5,
+                              borderRadius: 3,
+                            }}>
+                            <ExternalLinkIcon color={AppColors.sky600} size={9} />
+                            <Text style={{fontFamily: AppFonts.interBold, fontSize: 8.5, color: AppColors.sky600}}>
+                              {t('redux.openInEditor')}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      )}
+
+                      {/* Expanded Payload, Diff Viewer & Call Stack */}
                       {isExpanded ? (
                         <View style={reduxDetailStyles.expandedContent}>
+                          {/* Call Stack Trace Box */}
+                          {action.stack ? (
+                            <View style={{marginBottom: 10}}>
+                              <Text style={reduxDetailStyles.expandedSectionTitle}>
+                                {t('redux.callStack')}:
+                              </Text>
+                              <View
+                                style={{
+                                  backgroundColor: AppColors.grayBackground,
+                                  borderRadius: 8,
+                                  padding: 8,
+                                  borderWidth: 1,
+                                  borderColor: AppColors.dividerColor,
+                                  gap: 4,
+                                }}>
+                                {action.stack
+                                  .split('\n')
+                                  .map(l => l.trim())
+                                  .filter(l => l.length > 0 && !l.includes('reduxLogger') && !l.includes('inspectorReduxMiddleware'))
+                                  .slice(0, 8)
+                                  .map((frameLine, fIdx) => {
+                                    const parsed = parseStackLine(frameLine, fIdx === 0);
+                                    const isApp = parsed.frameType === 'app';
+                                    return (
+                                      <Pressable
+                                        key={fIdx}
+                                        onPress={() => {
+                                          if (parsed.fileName !== 'Unknown') {
+                                            openInVSCode(
+                                              parsed.fullPath || parsed.fileName,
+                                              parsed.lineNumber,
+                                              parsed.columnNumber,
+                                            );
+                                          }
+                                        }}
+                                        style={{
+                                          flexDirection: 'row',
+                                          alignItems: 'center',
+                                          justifyContent: 'space-between',
+                                          paddingVertical: 2.5,
+                                          borderBottomWidth: fIdx < 7 ? 0.5 : 0,
+                                          borderBottomColor: AppColors.dividerColor,
+                                        }}>
+                                        <View style={{flex: 1, minWidth: 0}}>
+                                          <Text
+                                            style={{
+                                              fontFamily: isApp ? AppFonts.interBold : AppFonts.interRegular,
+                                              fontSize: 9.5,
+                                              color: isApp ? AppColors.primaryBlack : AppColors.grayTextWeak,
+                                            }}
+                                            numberOfLines={1}>
+                                            {parsed.functionName || 'anonymous'}
+                                          </Text>
+                                          <Text
+                                            style={{
+                                              fontFamily: AppFonts.interRegular,
+                                              fontSize: 8.5,
+                                              color: isApp ? AppColors.sky600 : AppColors.grayTextWeak,
+                                            }}
+                                            numberOfLines={1}>
+                                            {parsed.fileName}:{parsed.lineNumber || 1}:{parsed.columnNumber || 1}
+                                          </Text>
+                                        </View>
+                                        {isApp && (
+                                          <ExternalLinkIcon color={AppColors.sky600} size={10} />
+                                        )}
+                                      </Pressable>
+                                    );
+                                  })}
+                              </View>
+                            </View>
+                          ) : null}
+
                           {action.payload !== undefined && (
                             <View style={{marginBottom: 10}}>
                               <Text style={reduxDetailStyles.expandedSectionTitle}>
-                                Action Payload:
+                                {t('redux.actionPayload')}
                               </Text>
                               <JsonViewer
                                 data={action.payload}
@@ -342,7 +592,7 @@ const ReduxDetail = React.memo(() => {
                           )}
 
                           <Text style={reduxDetailStyles.expandedSectionTitle}>
-                            State Changes (Diff):
+                            {t('redux.stateChangesDiff')}
                           </Text>
                           <DiffViewer
                             oldData={action.prevState?.[selectedReduxSlice] || {}}
@@ -353,7 +603,7 @@ const ReduxDetail = React.memo(() => {
                       ) : (
                         <View style={reduxDetailStyles.collapsedPrompt}>
                           <Text style={reduxDetailStyles.collapsedPromptText}>
-                            Tap to inspect action payload & diff changes
+                            {t('redux.tapToInspectAction')}
                           </Text>
                           <ForwardChevronIcon color={AppColors.grayTextWeak} size={12} />
                         </View>
@@ -467,12 +717,15 @@ const reduxDetailStyles = StyleSheet.create({
     color: AppColors.primaryBlack,
   },
   persistedChip: {
-    backgroundColor: '#D1FAE5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    backgroundColor: '#ECFDF5',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: AppColors.emeraldBorder,
+    borderColor: '#A7F3D0',
   },
   persistedChipText: {
     fontFamily: AppFonts.interBold,
@@ -480,22 +733,22 @@ const reduxDetailStyles = StyleSheet.create({
     color: '#047857',
   },
   inMemoryChip: {
-    backgroundColor: '#F3E8FF',
+    backgroundColor: '#EEF2FF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#C7D2FE',
   },
   inMemoryChipText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9,
-    color: '#7E22CE',
+    color: '#4338CA',
   },
   subStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     flexWrap: 'wrap',
   },
   statPill: {
@@ -503,20 +756,20 @@ const reduxDetailStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: AppColors.grayBackground,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3.5,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
   },
   statLabel: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 10.5,
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
     color: AppColors.grayTextWeak,
   },
   statValue: {
     fontFamily: AppFonts.interBold,
-    fontSize: 11,
+    fontSize: 10.5,
     color: AppColors.primaryBlack,
   },
   searchContainer: {
