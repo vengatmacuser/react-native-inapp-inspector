@@ -9,23 +9,34 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     zIndex: 10,
-    minHeight: 64,
+    minHeight: 56,
     shadowColor: colors.black,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 3,
   },
-  headerLeft: {flex: 2, alignItems: 'flex-start'},
-  headerCenter: {flex: 3, alignItems: 'center'},
-  headerRight: {
+  headerLeft: {
     flex: 1,
+    minWidth: 0,
+    alignItems: 'flex-start',
+  },
+  headerCenter: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  headerRight: {
+    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    gap: 6,
   },
   headerTitle: {
     fontFamily: AppFonts.interBold,
@@ -153,11 +164,12 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: `${colors.white}26`,
+    backgroundColor: `${colors.white}2B`,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: `${colors.white}14`,
+    borderColor: `${colors.white}33`,
+    overflow: 'hidden',
   },
 
   fabWrapper: {
@@ -237,11 +249,16 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     backgroundColor: colors.primaryLight,
     borderWidth: 1.5,
     borderColor: colors.grayBorderSecondary,
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: colors.black,
+          shadowOffset: {width: 0, height: 1},
+          shadowOpacity: 0.04,
+          shadowRadius: 2,
+        }
+      : {
+          elevation: 0,
+        }),
   },
   toolbarBtnActive: {
     borderColor: colors.purple,
@@ -422,17 +439,37 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
   },
+  domainProgressSection: {
+    marginTop: 8,
+    gap: 4,
+    width: '100%',
+  },
   domainProgressTrack: {
     flexDirection: 'row',
-    height: 2.5,
-    borderRadius: 1.25,
+    height: 4,
+    borderRadius: 2,
     overflow: 'hidden',
-    backgroundColor: 'rgba(148, 163, 184, 0.2)',
-    marginTop: 6,
+    backgroundColor: '#E2E8F0',
     width: '100%',
   },
   domainProgressSegment: {
     height: '100%',
+  },
+  domainProgressLabelsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  domainProgressRateText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    color: colors.grayTextStrong,
+  },
+  domainProgressSummaryText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 9,
+    color: colors.grayTextWeak,
   },
   domainStatsGroup: {
     flexDirection: 'row',
@@ -553,21 +590,29 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   },
 
   methodBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 6.5,
     paddingVertical: 2.5,
-    borderRadius: 6,
+    borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.black,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: colors.black,
+          shadowOffset: {width: 0, height: 1},
+          shadowOpacity: 0.12,
+          shadowRadius: 2,
+        }
+      : {
+          elevation: 1,
+        }),
   },
   methodBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
-    letterSpacing: 0.4,
+    letterSpacing: 0.6,
+    color: colors.white,
   },
 
   cardHostText: {

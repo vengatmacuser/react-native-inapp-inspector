@@ -101,5 +101,8 @@
     "react-native-linear-gradient": "^2.8.3",
     "react-native-svg": "^15.14.0",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@react-native-clipboard/clipboard": "^1.16.3"
   }
 }

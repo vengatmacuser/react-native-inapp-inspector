@@ -122,14 +122,4 @@ RCT_EXPORT_METHOD(enableNativeCrashProtection:(RCTPromiseResolveBlock)resolve
     resolve(@(YES));
 }
 
-RCT_EXPORT_METHOD(copyToClipboard:(NSString *)text
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-        pasteboard.string = text ?: @"";
-        resolve(@(YES));
-    });
-}
-
 @end

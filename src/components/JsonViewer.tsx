@@ -113,7 +113,7 @@ const JsonViewer = React.memo(({
   hideTabs?: boolean;
 }) => {
   const {t} = useTranslation();
-  const [internalMode, setInternalMode] = useState<'pretty' | 'raw' | 'table'>('pretty');
+  const [internalMode, setInternalMode] = useState<'pretty' | 'raw' | 'table'>('raw');
   const mode = externalMode ?? internalMode;
 
   const setMode = (newMode: 'pretty' | 'raw' | 'table') => {
@@ -134,6 +134,11 @@ const JsonViewer = React.memo(({
       return String(data);
     }
   }, [data]);
+
+  const [showFullRaw, setShowFullRaw] = useState(false);
+  const RAW_LIMIT = 50000;
+  const isTruncated = rawText.length > RAW_LIMIT && !showFullRaw;
+  const displayRawText = isTruncated ? rawText.slice(0, RAW_LIMIT) : rawText;
 
   useEffect(() => {
     if (externalMode) {
@@ -259,7 +264,7 @@ const JsonViewer = React.memo(({
           isEmpty ? (
             <View style={localStyles.emptyTable}>
               <Text style={localStyles.emptyTableText}>
-                {t('network.emptyResponse')}
+                {t('network.jsonViewer.emptyPayload')}
               </Text>
             </View>
           ) : (
@@ -299,10 +304,11 @@ const JsonViewer = React.memo(({
             showsVerticalScrollIndicator={true}
             nestedScrollEnabled={true}>
             <HighlightText
-              text={rawText}
+              text={displayRawText}
               search={search}
-              detectLinks={true}
+              detectLinks={rawText.length < 20000}
               style={localStyles.rawPlainText}
+              selectable={true}
               highlightStyle={{
                 backgroundColor: AppColors.yellowHighlight,
                 color: AppColors.primaryBlack,
@@ -310,6 +316,29 @@ const JsonViewer = React.memo(({
                 paddingHorizontal: 2,
               }}
             />
+            {isTruncated && (
+              <TouchableOpacity
+                onPress={() => setShowFullRaw(true)}
+                style={{
+                  marginTop: 10,
+                  backgroundColor: `${AppColors.brandPurple}15`,
+                  paddingVertical: 8,
+                  paddingHorizontal: 12,
+                  borderRadius: 6,
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: `${AppColors.brandPurple}30`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    color: AppColors.brandPurple,
+                  }}>
+                  Showing first 50 KB ({Math.round(rawText.length / 1024)} KB total) · Tap to load full
+                </Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
         )}
 

@@ -27,6 +27,7 @@ import PerformanceTab from './PerformanceTab';
 import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
 import SettingsPanel from './SettingsPanel';
+import Toast from '../Toast';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import NavigationTracker from './NavigationTracker';
@@ -186,6 +187,9 @@ const MainScreen = () => {
                   <SettingsPanel />
                 </View>
               )}
+
+              {/* Bottom floating toast notification */}
+              <Toast />
             </View>
           </View>
         </ErrorBoundary>

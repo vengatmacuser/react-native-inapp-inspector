@@ -390,97 +390,119 @@ const AnalyticsHeader = React.memo(() => {
           </View>
         </View>
 
-        {/* ── High Precision SVG Spline Area Graph ── */}
+        {/* ── Crashlytics-Style Multi-Bar Histogram with Trendline Overlay ── */}
         <View style={{height: chartHeight, position: 'relative'}}>
           <Svg width="100%" height={chartHeight} viewBox={`0 0 ${svgWidth} ${chartHeight}`}>
             <Defs>
-              <SvgLinearGradient id="telemetryAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0%" stopColor={AppColors.brandPurple} stopOpacity="0.4" />
-                <Stop offset="80%" stopColor={AppColors.brandPurple} stopOpacity="0.05" />
-                <Stop offset="100%" stopColor={AppColors.brandPurple} stopOpacity="0.0" />
+              <SvgLinearGradient id="crashlyticsBarGrad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.9" />
+                <Stop offset="100%" stopColor="#6366F1" stopOpacity="0.6" />
+              </SvgLinearGradient>
+              <SvgLinearGradient id="crashlyticsAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.25" />
+                <Stop offset="80%" stopColor="#8B5CF6" stopOpacity="0.04" />
+                <Stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.0" />
               </SvgLinearGradient>
             </Defs>
 
-            {/* Baseline & Grid lines */}
+            {/* Subtle Grid Guidelines */}
             <Line
-              x1="8"
+              x1="6"
               y1={chartHeight - 6}
-              x2={svgWidth - 8}
+              x2={svgWidth - 6}
               y2={chartHeight - 6}
-              stroke={AppColors.dividerColor}
+              stroke="#E2E8F0"
               strokeWidth="1"
             />
             <Line
-              x1="8"
+              x1="6"
               y1={chartHeight / 2}
-              x2={svgWidth - 8}
+              x2={svgWidth - 6}
               y2={chartHeight / 2}
-              stroke={AppColors.dividerColor}
-              strokeWidth="0.8"
-              strokeDasharray="3,3"
+              stroke="#F1F5F9"
+              strokeWidth="1"
+              strokeDasharray="4,4"
             />
 
-            {/* Glowing Area Fill */}
-            <Path d={histogramData.areaPath} fill="url(#telemetryAreaGrad)" />
+            {/* Glowing Area Underlay */}
+            <Path d={histogramData.areaPath} fill="url(#crashlyticsAreaGrad)" />
 
-            {/* Smooth Spline Wave Stroke */}
-            <Path
-              d={histogramData.linePath}
-              fill="none"
-              stroke={AppColors.brandPurple}
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            {/* Data Points & Active Bucket Indicators */}
+            {/* Vertical Crashlytics Histogram Bars */}
             {histogramData.buckets.map((b, idx) => {
               const isSelected = selectedBucketIdx === idx;
+              const barWidth = 10;
+              const barX = b.x - barWidth / 2;
+              const barHeight = Math.max(3, chartHeight - 8 - b.y);
+              const barY = chartHeight - 8 - barHeight;
+
               return (
-                <G key={b.index}>
+                <G key={`bar-${b.index}`}>
+                  {/* Background slot */}
+                  <Rect
+                    x={barX}
+                    y={6}
+                    width={barWidth}
+                    height={chartHeight - 14}
+                    rx={3}
+                    fill={isSelected ? '#EDE9FE' : '#F8FAFC'}
+                  />
+
+                  {/* Active Event Bar */}
+                  {b.total > 0 && (
+                    <Rect
+                      x={barX}
+                      y={barY}
+                      width={barWidth}
+                      height={barHeight}
+                      rx={3}
+                      fill="url(#crashlyticsBarGrad)"
+                    />
+                  )}
+
+                  {/* Selected Cursor Line */}
                   {isSelected && (
                     <Line
                       x1={b.x}
                       y1={4}
                       x2={b.x}
                       y2={chartHeight - 6}
-                      stroke={AppColors.brandPurple}
-                      strokeWidth="1.2"
+                      stroke="#8B5CF6"
+                      strokeWidth="1.5"
                       strokeDasharray="2,2"
                     />
-                  )}
-
-                  {b.total > 0 && (
-                    <Circle
-                      cx={b.x}
-                      cy={b.y}
-                      r={isSelected ? 4.5 : 2.8}
-                      fill={isSelected ? AppColors.brandPurple : AppColors.white}
-                      stroke={AppColors.brandPurple}
-                      strokeWidth={isSelected ? 2 : 1.5}
-                    />
-                  )}
-
-                  {b.isLatest && (
-                    <G>
-                      <Circle
-                        cx={b.x}
-                        cy={b.y}
-                        r="6.5"
-                        fill={AppColors.brandPurple}
-                        opacity="0.22"
-                      />
-                      <Circle
-                        cx={b.x}
-                        cy={b.y}
-                        r="3"
-                        fill={AppColors.brandPurple}
-                      />
-                    </G>
                   )}
                 </G>
               );
             })}
+
+            {/* Crashlytics Apex Trendline */}
+            <Path
+              d={histogramData.linePath}
+              fill="none"
+              stroke="#8B5CF6"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+
+            {/* Pulsing Dot on Current Active Time Bucket */}
+            {histogramData.buckets.length > 0 && (
+              <G>
+                <Circle
+                  cx={histogramData.buckets[histogramData.buckets.length - 1].x}
+                  cy={histogramData.buckets[histogramData.buckets.length - 1].y}
+                  r="5.5"
+                  fill="#8B5CF6"
+                  opacity="0.25"
+                />
+                <Circle
+                  cx={histogramData.buckets[histogramData.buckets.length - 1].x}
+                  cy={histogramData.buckets[histogramData.buckets.length - 1].y}
+                  r="3"
+                  fill="#7C3AED"
+                />
+              </G>
+            )}
           </Svg>
 
           {/* Invisible Touch Columns for Interactive Bucket Selection */}

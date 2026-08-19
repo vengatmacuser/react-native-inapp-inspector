@@ -1,6 +1,7 @@
 import React from 'react';
 import {useTranslation} from '../../i18n';
 import {
+  Alert,
   Image,
   Linking,
   Pressable,
@@ -67,6 +68,30 @@ const NetworkDetail = React.memo(() => {
     prevResponseData,
     logRouteMapRef,
   } = useInspector();
+
+  const handleOpenUrl = () => {
+    Alert.alert(
+      t('common.openInBrowser') || 'Open in Browser',
+      `${t('common.openInBrowserPrompt') || 'Are you sure you want to open this URL in your external browser?'}\n\n${detailDisplayUrl}`,
+      [
+        {text: t('common.cancel') || 'Cancel', style: 'cancel'},
+        {
+          text: t('common.open') || 'Open',
+          onPress: () => {
+            Linking.canOpenURL(detailDisplayUrl)
+              .then(supported => {
+                if (supported) {
+                  Linking.openURL(detailDisplayUrl);
+                } else {
+                  Linking.openURL(detailDisplayUrl).catch(() => {});
+                }
+              })
+              .catch(() => {});
+          },
+        },
+      ],
+    );
+  };
 
   if (!selected) return null;
 
@@ -196,12 +221,12 @@ const NetworkDetail = React.memo(() => {
                               fontSize: 9.5,
                               color:
                                 selected.client === 'axios'
-                                  ? AppColors.purple
-                                  : selected.client === 'apollo' || selected.client === 'graphql'
-                                  ? AppColors.pink500
-                                  : selected.client === 'xhr'
-                                  ? AppColors.amber700
-                                  : AppColors.sky600,
+                                ? AppColors.purple
+                                : selected.client === 'apollo' || selected.client === 'graphql'
+                                ? AppColors.pink500
+                                : selected.client === 'xhr'
+                                ? AppColors.amber700
+                                : AppColors.sky600,
                             },
                           ]}>
                           {selected.client.toUpperCase()}
@@ -332,7 +357,7 @@ const NetworkDetail = React.memo(() => {
                   <View style={styles.detailInfoRight}>
                     <TouchableScale
                       style={[styles.iconSquareBtn, {backgroundColor: `${AppColors.sky600}15`}]}
-                      onPress={() => Linking.openURL(detailDisplayUrl)}
+                      onPress={handleOpenUrl}
                       hitSlop={12}>
                       <ExternalLinkIcon
                         color={AppColors.sky600}
@@ -367,7 +392,7 @@ const NetworkDetail = React.memo(() => {
                     marginTop: 8,
                     gap: 6,
                   }}
-                  onPress={() => Linking.openURL(detailDisplayUrl)}>
+                  onPress={handleOpenUrl}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -678,7 +703,6 @@ const NetworkDetail = React.memo(() => {
                   <JsonViewer
                     data={selected.request}
                     search={detailSearch}
-                    forceOpen
                   />
                 ) : (
                   <View style={styles.codeBlock}>
@@ -720,30 +744,6 @@ const NetworkDetail = React.memo(() => {
                   </Pressable>
                 )}
               </View>
-              {selected.response != null && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    paddingHorizontal: 10,
-                    height: 34,
-                    borderRadius: 8,
-                    borderWidth: 1,
-                    borderColor: `${AppColors.purple}30`,
-                    backgroundColor: `${AppColors.purple}10`,
-                  }}>
-                  <SizeIcon color={AppColors.purple} size={12} />
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 10.5,
-                      color: AppColors.purple,
-                    }}>
-                    {getSize(selected.response)}
-                  </Text>
-                </View>
-              )}
             </View>
 
             <View style={styles.sectionContainer}>
@@ -770,7 +770,6 @@ const NetworkDetail = React.memo(() => {
                 <JsonViewer
                   data={selected.response}
                   search={detailSearch}
-                  forceOpen
                   wrap
                 />
               ) : (

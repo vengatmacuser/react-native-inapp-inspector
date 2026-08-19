@@ -25,6 +25,7 @@ import {
   RequestIcon,
   InfoCircleIcon,
   DocIcon,
+  ExternalLinkIcon,
 } from '../NetworkIcons';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -35,6 +36,7 @@ import {
   formatDateTime,
   parseStackLine,
   ParsedStackFrame,
+  openInVSCode,
 } from '../../helpers';
 
 type DetailSubTab = 'output' | 'arguments' | 'stack' | 'metadata';
@@ -358,17 +360,27 @@ const LogDetail = React.memo(() => {
               </Text>
 
               {originFrame?.fileName && (
-                <View
+                <Pressable
+                  onPress={() =>
+                    openInVSCode(
+                      originFrame.rawFilePath ||
+                        originFrame.fullPath ||
+                        originFrame.fileName,
+                      originFrame.lineNumber,
+                      originFrame.columnNumber,
+                    )
+                  }
+                  hitSlop={8}
                   style={[
                     styles.metaChip,
                     {
-                      backgroundColor: `${AppColors.brandPurple}12`,
-                      borderColor: `${AppColors.brandPurple}30`,
+                      backgroundColor: `${AppColors.brandPurple}15`,
+                      borderColor: `${AppColors.brandPurple}40`,
                       paddingHorizontal: 7,
                       paddingVertical: 2,
                     },
                   ]}>
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 3, flexWrap: 'wrap', flexShrink: 1}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1}}>
                     <DocIcon color={AppColors.brandPurple} size={10} />
                     <Text
                       style={[
@@ -379,8 +391,9 @@ const LogDetail = React.memo(() => {
                       {originFrame.lineNumber ? `:${originFrame.lineNumber}` : ''}
                       {originFrame.columnNumber ? `:${originFrame.columnNumber}` : ''}
                     </Text>
+                    <ExternalLinkIcon color={AppColors.brandPurple} size={9} />
                   </View>
-                </View>
+                </Pressable>
               )}
             </View>
 

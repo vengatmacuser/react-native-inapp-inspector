@@ -3,12 +3,14 @@ import {Animated, Pressable, StyleSheet, Platform} from 'react-native';
 
 const TouchableScale = React.memo(function TouchableScale({
   onPress,
+  onLongPress,
   style,
   children,
   hitSlop,
   disabled,
 }: {
   onPress?: () => void;
+  onLongPress?: () => void;
   style?: any;
   children?: React.ReactNode;
   hitSlop?: any;
@@ -19,6 +21,7 @@ const TouchableScale = React.memo(function TouchableScale({
       <Pressable
         disabled={disabled}
         onPress={onPress}
+        onLongPress={onLongPress}
         hitSlop={hitSlop}
         style={({pressed}) => [
           style,
@@ -68,6 +71,7 @@ const TouchableScale = React.memo(function TouchableScale({
       onPressIn={() => animatePress(true)}
       onPressOut={() => animatePress(false)}
       onPress={onPress}
+      onLongPress={onLongPress}
       hitSlop={hitSlop}>
       <Animated.View style={[{opacity, transform: [{scale}]}, layoutStyle]}>
         {children}

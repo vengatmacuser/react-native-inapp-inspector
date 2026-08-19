@@ -1,14 +1,20 @@
 import {Method} from '../types';
 import React, {useEffect, useRef} from 'react';
-import {Animated, View, Pressable, Text, StyleSheet} from 'react-native';
+import {
+  Alert,
+  Animated,
+  Linking,
+  View,
+  Pressable,
+  Text,
+  StyleSheet,
+} from 'react-native';
 import Svg, {Path} from 'react-native-svg';
 import {AppColors} from '../styles/AppColors';
 import {METHOD_COLORS} from '../constants';
 import {
   getStatusColor,
   getDurationColor,
-  getPath,
-  getBaseUrl,
   formatDateTime,
   getSize,
 } from '../helpers';
@@ -32,6 +38,31 @@ const LogCard = React.memo(function LogCard({
 }: LogCardProps) {
   const {t} = useTranslation();
   const methodColor = METHOD_COLORS[item.method as Method] ?? METHOD_COLORS.ALL;
+
+  const handleOpenUrl = (e?: any) => {
+    e?.stopPropagation?.();
+    Alert.alert(
+      t('common.openInBrowser') || 'Open in Browser',
+      `${t('common.openInBrowserPrompt') || 'Are you sure you want to open this URL in your external browser?'}\n\n${item.url}`,
+      [
+        {text: t('common.cancel') || 'Cancel', style: 'cancel'},
+        {
+          text: t('common.open') || 'Open',
+          onPress: () => {
+            Linking.canOpenURL(item.url)
+              .then(supported => {
+                if (supported) {
+                  Linking.openURL(item.url);
+                } else {
+                  Linking.openURL(item.url).catch(() => {});
+                }
+              })
+              .catch(() => {});
+          },
+        },
+      ],
+    );
+  };
 
   const isFailed =
     item.status === 0 || (item.status != null && item.status >= 400);
@@ -65,10 +96,6 @@ const LogCard = React.memo(function LogCard({
     }
   }, [isNew]);
 
-  const path = getPath(item.url);
-  const baseUrl = getBaseUrl(item.url) || item.url;
-  const slug = path && path !== '/' ? path : item.url;
-  const showSlug = slug !== baseUrl && slug !== item.url;
   const triggeredAt = formatDateTime(item.startTime);
   const isJson = item.url.split('?')[0].toLowerCase().endsWith('.json');
 
@@ -83,7 +110,7 @@ const LogCard = React.memo(function LogCard({
         },
       ]}>
       <View style={styles.cardBody}>
-        {/* Row 1: Header (Checkbox, Serial, Method Badge, Base URL / Host with HTTPS, Status Pill) */}
+        {/* Row 1: Header (Checkbox, Serial, Method Badge, Client Tag, Status Pill) */}
         <View style={styles.cardHeaderRow}>
           <View style={styles.cardHeaderLeft}>
             <Pressable
@@ -162,14 +189,92 @@ const LogCard = React.memo(function LogCard({
               </View>
             )}
 
-            <HighlightText
-              text={baseUrl || item.url}
-              search={searchStr}
-              style={styles.cardHostText}
-              highlightStyle={styles.highlight}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            />
+            {/* Protocol / HTTPS Badge */}
+            <View
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: item.url.toLowerCase().startsWith('https')
+                    ? '#ECFDF5'
+                    : '#FFFBEB',
+                  borderColor: item.url.toLowerCase().startsWith('https')
+                    ? '#A7F3D0'
+                    : '#FDE68A',
+                  paddingHorizontal: 4,
+                  paddingVertical: 1,
+                  borderRadius: 4,
+                },
+              ]}>
+              <Text
+                style={[
+                  styles.chipText,
+                  {
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 8,
+                    color: item.url.toLowerCase().startsWith('https')
+                      ? '#059669'
+                      : '#D97706',
+                  },
+                ]}>
+                {item.url.toLowerCase().startsWith('https') ? 'HTTPS' : 'HTTP'}
+              </Text>
+            </View>
+
+            {/* GraphQL Indicator */}
+            {(item.url.toLowerCase().includes('graphql') ||
+              item.client === 'apollo' ||
+              item.client === 'graphql') && (
+              <View
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: '#FDF2F8',
+                    borderColor: '#FBCFE8',
+                    paddingHorizontal: 4,
+                    paddingVertical: 1,
+                    borderRadius: 4,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 8,
+                      color: '#DB2777',
+                    },
+                  ]}>
+                  GQL
+                </Text>
+              </View>
+            )}
+
+            {/* In-Line Duration / Latency Pill */}
+            {item.duration != null && !isFailed && (
+              <View
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: `${durationColor}12`,
+                    borderColor: `${durationColor}2E`,
+                    paddingHorizontal: 4.5,
+                    paddingVertical: 1,
+                    borderRadius: 4,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 8.5,
+                      color: durationColor,
+                    },
+                  ]}>
+                  {item.duration}ms
+                </Text>
+              </View>
+            )}
           </View>
 
           <View
@@ -208,19 +313,22 @@ const LogCard = React.memo(function LogCard({
           </View>
         </View>
 
-        {/* Row 2: Full URL Capsule Container */}
+        {/* Row 2: Full URL Capsule Container (Clickable with link prompt) */}
         <View style={styles.cardSlugBox}>
-          <View style={styles.slugLeft}>
-            <Text style={styles.slugTag}>URL</Text>
+          <Pressable
+            onPress={handleOpenUrl}
+            style={styles.slugLeft}
+            hitSlop={6}>
+            <Text style={styles.slugTag}>URL ↗</Text>
             <HighlightText
               text={item.url}
               search={searchStr}
-              style={styles.slugText}
+              style={[styles.slugText, {color: AppColors.skyBlue, textDecorationLine: 'underline'}]}
               highlightStyle={styles.highlight}
               numberOfLines={2}
               ellipsizeMode="middle"
             />
-          </View>
+          </Pressable>
 
           <View style={styles.slugRight}>
             {isJson && (

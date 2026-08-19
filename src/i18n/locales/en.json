@@ -15,7 +15,10 @@
     "expandAll": "Expand All",
     "viewOnNpm": "View on NPM",
     "later": "Later",
-    "source": "SOURCE"
+    "source": "SOURCE",
+    "open": "Open",
+    "openInBrowser": "Open in Browser",
+    "openInBrowserPrompt": "Are you sure you want to open this URL in your external browser?"
   },
   "header": {
     "updateAvailableTitle": "Update Available",

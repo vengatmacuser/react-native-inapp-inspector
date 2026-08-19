@@ -1,12 +1,12 @@
 import {
-  Clipboard,
   Platform,
   ToastAndroid,
   Alert,
   NativeModules,
   Linking,
-  TurboModuleRegistry,
 } from 'react-native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import {showToast} from './toast';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -15,7 +15,13 @@ import {AppColors} from '../styles/AppColors';
 import {DOMAIN_COLORS, DURATION_FAST_MS, DURATION_SLOW_MS} from '../constants';
 
 // Type Definition
-import {NetworkLog, RouteInfo, DiffResult, JsonContent, StackFrameType} from '../types';
+import {
+  NetworkLog,
+  RouteInfo,
+  DiffResult,
+  JsonContent,
+  StackFrameType,
+} from '../types';
 
 export const getDomainColor = (domain: string): string => {
   if (!domain) return DOMAIN_COLORS[0];
@@ -36,6 +42,19 @@ export const formatDateTime = (timestamp: number): string => {
   const minutes = pad(date.getMinutes());
   const seconds = pad(date.getSeconds());
   return `${day}/${month}/${year}  ${hours}:${minutes}:${seconds}`;
+};
+
+export const formatTimestamp = (timestamp: number): string => {
+  try {
+    const date = new Date(timestamp);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    const ms = date.getMilliseconds().toString().padStart(3, '0');
+    return `${hours}:${minutes}:${seconds}.${ms}`;
+  } catch {
+    return '—';
+  }
 };
 
 export const getStatusColor = (status: number | null): string => {
@@ -62,116 +81,44 @@ export const getSize = (data: unknown): string => {
   }
 };
 
-// Safely detect and load clipboard natively without static require() calls that Metro fails on
-const getClipboardModule = () => {
-  // 1. Check our built-in native module (NetworkInspectorModule)
-  try {
-    const tmReg = (TurboModuleRegistry as any) || (globalThis as any).__turboModuleProxy;
-    const inspectorMod =
-      NativeModules?.NetworkInspectorModule ||
-      (tmReg?.get ? tmReg.get('NetworkInspectorModule') : null);
-    if (inspectorMod && typeof inspectorMod.copyToClipboard === 'function') {
-      return {
-        setString: (str: string) => inspectorMod.copyToClipboard(str),
-        setStringAsync: (str: string) => inspectorMod.copyToClipboard(str),
-      };
-    }
-  } catch {}
-
-  // 2. Check TurboModuleRegistry (TurboModules / New Architecture)
-  try {
-    const tmReg = (TurboModuleRegistry as any) || (globalThis as any).__turboModuleProxy;
-    if (tmReg?.get) {
-      const tm =
-        tmReg.get('RNCClipboard') ||
-        tmReg.get('NativeClipboard') ||
-        tmReg.get('ExpoClipboard');
-      if (
-        tm &&
-        (typeof tm.setString === 'function' ||
-          typeof tm.setStringAsync === 'function')
-      ) {
-        return tm;
-      }
-    }
-  } catch {}
-
-  // 3. Check legacy NativeModules table (Bridge / Old Architecture)
-  try {
-    if (
-      NativeModules?.RNCClipboard &&
-      typeof NativeModules.RNCClipboard.setString === 'function'
-    ) {
-      return NativeModules.RNCClipboard;
-    }
-    if (
-      NativeModules?.ExpoClipboard &&
-      typeof NativeModules.ExpoClipboard.setStringAsync === 'function'
-    ) {
-      return NativeModules.ExpoClipboard;
-    }
-    if (
-      NativeModules?.Clipboard &&
-      typeof NativeModules.Clipboard.setString === 'function'
-    ) {
-      return NativeModules.Clipboard;
-    }
-  } catch {}
-
-  // 4. Check legacy React Native core Clipboard
-  try {
-    if (Clipboard && typeof (Clipboard as any).setString === 'function') {
-      return Clipboard;
-    }
-  } catch {}
-
-  return null;
-};
-
 export const copyToClipboard = (value: unknown, label: string): void => {
   const resolved = typeof value === 'function' ? (value as Function)() : value;
-  const text =
-    typeof resolved === 'string' ? resolved : JSON.stringify(resolved, null, 2);
-  const textToCopy = text ?? '';
-
-  let copied = false;
-  try {
-    const cb = getClipboardModule();
-    if (cb) {
-      if (typeof cb.setStringAsync === 'function') {
-        cb.setStringAsync(textToCopy);
-        copied = true;
-      } else if (typeof cb.setString === 'function') {
-        cb.setString(textToCopy);
-        copied = true;
-      }
+  let textToCopy = '';
+  if (typeof resolved === 'string') {
+    textToCopy = resolved;
+  } else {
+    try {
+      textToCopy = JSON.stringify(resolved, null, 2);
+    } catch {
+      textToCopy = String(resolved);
     }
+  }
+
+  // Use @react-native-clipboard/clipboard npm package
+  try {
+    if (typeof Clipboard?.setString === 'function') {
+      Clipboard.setString(textToCopy);
+    } else if (typeof (Clipboard as any)?.default?.setString === 'function') {
+      (Clipboard as any).default.setString(textToCopy);
+    }
+  } catch (err) {
+    if (__DEV__) {
+      console.warn('[NetworkInspector] Clipboard.setString failed:', err);
+    }
+  }
+
+  // Trigger floating in-app bottom toast notification
+  try {
+    showToast(label ? `${label} copied to clipboard` : 'Copied to clipboard');
   } catch {}
 
-  // Built-in native module direct invocation
-  if (!copied) {
-    try {
-      const inspectorMod = NativeModules?.NetworkInspectorModule;
-      if (inspectorMod && typeof inspectorMod.copyToClipboard === 'function') {
-        inspectorMod.copyToClipboard(textToCopy);
-        copied = true;
-      }
-    } catch {}
-  }
-
-  if (!copied) {
-    try {
-      if (typeof navigator !== 'undefined' && (navigator as any)?.clipboard?.writeText) {
-        (navigator as any).clipboard.writeText(textToCopy);
-        copied = true;
-      }
-    } catch {}
-  }
-
-  // Visual toast feedback on Android if ToastAndroid exists
+  // Native Android Toast fallback
   try {
     if (Platform.OS === 'android' && ToastAndroid?.show) {
-      ToastAndroid.show(`${label} copied`, ToastAndroid.SHORT);
+      ToastAndroid.show(
+        label ? `${label} copied to clipboard` : 'Copied to clipboard',
+        ToastAndroid.SHORT,
+      );
     }
   } catch {}
 };
@@ -467,7 +414,7 @@ export const handleOpenExternalLink = (url: string): void => {
           Linking.openURL(openUrl).catch(() => {});
         },
       },
-    ]
+    ],
   );
 };
 
@@ -528,7 +475,10 @@ export const getJsonContent = (message: string): JsonContent | null => {
 };
 
 /** Pretty-prints JSON data showing 3-4 lines with trailing "..." */
-export const getJsonPreviewText = (data: any, maxLines = 4): {text: string; hasMore: boolean} => {
+export const getJsonPreviewText = (
+  data: any,
+  maxLines = 4,
+): {text: string; hasMore: boolean} => {
   try {
     const formatted = JSON.stringify(data, null, 2);
     const lines = formatted.split('\n');
@@ -559,6 +509,7 @@ export interface ParsedStackFrame {
   frameType: StackFrameType | 'app' | 'dependency' | 'runtime' | 'native';
   isUserCode: boolean;
   isRuntimeNoise: boolean;
+  rawFilePath?: string;
   lineNumber?: string;
   columnNumber?: string;
   isOrigin?: boolean;
@@ -566,7 +517,10 @@ export interface ParsedStackFrame {
 }
 
 /** Parses a stack trace line to extract function name, file name, extension (.tsx/.jsx/.ts), line, and column numbers */
-export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFrame => {
+export const parseStackLine = (
+  rawLine: string,
+  isOrigin = false,
+): ParsedStackFrame => {
   let line = rawLine.trim().replace(/^at /, '');
 
   // Format: func@file:line:col (JSC / Hermes format)
@@ -614,7 +568,10 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
     .replace(/[)]+$/, '')
     .replace(/\/\/+$/, '');
   // Remove protocol prefixes
-  cleanPath = cleanPath.replace(/^(?:https?:\/\/[^\/]+\/|file:\/\/\/|webpack:\/\/\/?)/, '');
+  cleanPath = cleanPath.replace(
+    /^(?:https?:\/\/[^\/]+\/|file:\/\/\/|webpack:\/\/\/?)/,
+    '',
+  );
   const fileName = cleanPath.split('/').filter(Boolean).pop() || cleanPath;
 
   // Determine file extension (.tsx, .jsx, .ts, .js)
@@ -638,13 +595,18 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
   const isDependency =
     cleanPath.includes('node_modules') ||
     cleanPath.includes('react-native/Libraries') ||
-    (cleanPath.includes('react-native-inapp-inspector') && !cleanPath.includes('/example/'));
+    (cleanPath.includes('react-native-inapp-inspector') &&
+      !cleanPath.includes('/example/'));
 
   const isUserCode =
     !isNative &&
     !isInternalBytecode &&
     !isDependency &&
-    (fileExt === 'tsx' || fileExt === 'jsx' || fileExt === 'ts' || fileExt === 'js' || !fileName.includes('.bundle'));
+    (fileExt === 'tsx' ||
+      fileExt === 'jsx' ||
+      fileExt === 'ts' ||
+      fileExt === 'js' ||
+      !fileName.includes('.bundle'));
 
   const frameType: 'app' | 'dependency' | 'runtime' | 'native' = isUserCode
     ? 'app'
@@ -654,16 +616,24 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
     ? 'native'
     : 'runtime';
 
-  const isRuntimeNoise = isInternalBytecode || isNative || functionName === 'asyncGeneratorStep' || functionName === '_next';
+  const isRuntimeNoise =
+    isInternalBytecode ||
+    isNative ||
+    functionName === 'asyncGeneratorStep' ||
+    functionName === '_next';
 
   // Format clean relative project path
   let relativePath = cleanPath;
   if (relativePath.includes('/example/')) {
-    relativePath = relativePath.substring(relativePath.indexOf('/example/') + 9);
+    relativePath = relativePath.substring(
+      relativePath.indexOf('/example/') + 9,
+    );
   } else if (relativePath.includes('/src/')) {
     relativePath = relativePath.substring(relativePath.indexOf('/src/') + 1);
   } else if (relativePath.includes('/node_modules/')) {
-    relativePath = relativePath.substring(relativePath.indexOf('/node_modules/') + 14);
+    relativePath = relativePath.substring(
+      relativePath.indexOf('/node_modules/') + 14,
+    );
   }
 
   const copyableLocation = lineNumber
@@ -675,6 +645,7 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
     functionName,
     fileName,
     fullPath: relativePath,
+    rawFilePath: fullPath,
     fileExt,
     frameType,
     isUserCode,
@@ -684,6 +655,46 @@ export const parseStackLine = (rawLine: string, isOrigin = false): ParsedStackFr
     isOrigin,
     copyableLocation,
   };
+};
+
+/** Opens a file and line number directly in VS Code */
+export const openInVSCode = (
+  filePath: string,
+  lineNumber?: string | number,
+  columnNumber?: string | number,
+) => {
+  const line = lineNumber ? `:${lineNumber}` : '';
+  const col = columnNumber ? `:${columnNumber}` : '';
+  const cleanPath = filePath.replace(/^file:\/\//, '');
+
+  const vscodeUrl = `vscode://file/${cleanPath.replace(
+    /^\/+/,
+    '',
+  )}${line}${col}`;
+
+  Linking.canOpenURL(vscodeUrl)
+    .then(supported => {
+      if (supported) {
+        Linking.openURL(vscodeUrl);
+      } else {
+        Linking.openURL(vscodeUrl).catch(() => {
+          const insidersUrl = `vscode-insiders://file/${cleanPath.replace(
+            /^\/+/,
+            '',
+          )}${line}${col}`;
+          Linking.openURL(insidersUrl).catch(() => {
+            Alert.alert(
+              'Open in VS Code',
+              `Target location:\n${cleanPath}${line}${col}\n\nPlease ensure VS Code is installed.`,
+              [{text: 'OK'}],
+            );
+          });
+        });
+      }
+    })
+    .catch(() => {
+      Linking.openURL(vscodeUrl).catch(() => {});
+    });
 };
 
 // ─── Analytics Helpers ────────────────────────────────────────────────────────
@@ -705,7 +716,9 @@ export const getEventColor = (name: string): string => {
   for (let i = 0; i < safeName.length; i++) {
     hash = (hash * 31 + safeName.charCodeAt(i)) | 0;
   }
-  return ANALYTICS_EVENT_PALETTE[Math.abs(hash) % ANALYTICS_EVENT_PALETTE.length];
+  return ANALYTICS_EVENT_PALETTE[
+    Math.abs(hash) % ANALYTICS_EVENT_PALETTE.length
+  ];
 };
 
 export {
@@ -757,7 +770,11 @@ export interface RuntimeDiagnostics {
 export const getRuntimeDiagnostics = (): RuntimeDiagnostics => {
   const isHermes = typeof (global as any).HermesInternal !== 'undefined';
   const isV8 = typeof (global as any)._v8runtime !== 'undefined';
-  const engineType: 'hermes' | 'v8' | 'jsc' = isHermes ? 'hermes' : isV8 ? 'v8' : 'jsc';
+  const engineType: 'hermes' | 'v8' | 'jsc' = isHermes
+    ? 'hermes'
+    : isV8
+    ? 'v8'
+    : 'jsc';
 
   const isFabric =
     typeof (global as any).nativeFabricUIManager !== 'undefined' ||
@@ -768,13 +785,32 @@ export const getRuntimeDiagnostics = (): RuntimeDiagnostics => {
   let totalAllocMb = 64.0;
 
   try {
-    const hermesStats = (global as any).HermesInternal?.getInstrumentedStats?.();
+    const hermesStats = (
+      global as any
+    ).HermesInternal?.getInstrumentedStats?.();
     if (hermesStats?.js_heap_size) {
-      usedHeapMb = Number((hermesStats.js_heap_size / (1024 * 1024)).toFixed(1));
-      totalAllocMb = Number(((hermesStats.js_allocated_bytes || hermesStats.js_heap_size * 1.6) / (1024 * 1024)).toFixed(1));
+      usedHeapMb = Number(
+        (hermesStats.js_heap_size / (1024 * 1024)).toFixed(1),
+      );
+      totalAllocMb = Number(
+        (
+          (hermesStats.js_allocated_bytes || hermesStats.js_heap_size * 1.6) /
+          (1024 * 1024)
+        ).toFixed(1),
+      );
     } else if ((global as any).performance?.memory?.usedJSHeapSize) {
-      usedHeapMb = Number(((global as any).performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1));
-      totalAllocMb = Number(((global as any).performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1));
+      usedHeapMb = Number(
+        (
+          (global as any).performance.memory.usedJSHeapSize /
+          (1024 * 1024)
+        ).toFixed(1),
+      );
+      totalAllocMb = Number(
+        (
+          (global as any).performance.memory.totalJSHeapSize /
+          (1024 * 1024)
+        ).toFixed(1),
+      );
     }
   } catch {}
 

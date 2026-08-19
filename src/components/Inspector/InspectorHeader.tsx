@@ -26,6 +26,7 @@ import {
   CloseWhite,
   ChevronIcon,
   ClockIcon,
+  SizeIcon,
   AppleIcon,
   AndroidIcon,
   PackageBoxIcon,
@@ -178,9 +179,9 @@ const InspectorHeader = React.memo(() => {
                   flex: 1,
                 }}>
                 <AppHeaderLogo size={46} customIcon={appIcon} />
-                <View style={{gap: 2, flex: 1}}>
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
-                    <Text style={[styles.headerTitle]} numberOfLines={1}>
+                <View style={{gap: 2, flex: 1, minWidth: 0}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'nowrap', minWidth: 0}}>
+                    <Text style={[styles.headerTitle, {flexShrink: 1}]} numberOfLines={1}>
                       {getAppName()}
                     </Text>
                     <View
@@ -464,6 +465,23 @@ const InspectorHeader = React.memo(() => {
                           : '—'}
                       </Text>
                     </View>
+                    {selected.response != null && (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          paddingHorizontal: 8,
+                          paddingVertical: 3,
+                          borderRadius: 20,
+                          backgroundColor: `${AppColors.white}29`,
+                        }}>
+                        <SizeIcon color={AppColors.white} size={11} />
+                        <Text style={styles.headerSubTitle}>
+                          {getSize(selected.response)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               ) : activeTab === 'analytics' && selectedEvent != null ? (

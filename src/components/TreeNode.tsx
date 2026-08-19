@@ -23,7 +23,7 @@ const TreeNode = React.memo(function TreeNode({
   defaultExpandDepth,
 }: TreeNodeProps) {
   const [localOpen, setLocalOpen] = useState(
-    forceOpen || level < (defaultExpandDepth ?? 1),
+    forceOpen || (defaultExpandDepth !== undefined ? level < defaultExpandDepth : false),
   );
   const open = localOpen;
 

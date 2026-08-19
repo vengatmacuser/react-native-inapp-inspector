@@ -14,10 +14,11 @@ import {
   getJsonContent,
   getJsonPreviewText,
   parseStackLine,
+  openInVSCode,
 } from '../helpers';
 import HighlightText from './HighlightText';
 import CopyButton from './CopyButton';
-import {ChevronIcon} from './NetworkIcons';
+import {ChevronIcon, ExternalLinkIcon} from './NetworkIcons';
 import {useInspector} from './Inspector/InspectorContext';
 
 const getLogMessageWithBadges = (
@@ -320,22 +321,45 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             {parsedCaller && (
               <>
                 <View style={styles.footerDot} />
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, maxWidth: 170}}>
+                <Pressable
+                  onPress={e => {
+                    e.stopPropagation?.();
+                    openInVSCode(
+                      parsedCaller.rawFilePath ||
+                        parsedCaller.fullPath ||
+                        parsedCaller.fileName,
+                      parsedCaller.lineNumber,
+                      parsedCaller.columnNumber,
+                    );
+                  }}
+                  hitSlop={8}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    maxWidth: 185,
+                    backgroundColor: `${AppColors.sky600}10`,
+                    borderColor: `${AppColors.sky600}2B`,
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingHorizontal: 5,
+                    paddingVertical: 1.5,
+                  }}>
                   {parsedCaller.fileExt && parsedCaller.fileExt !== 'other' && (
                     <View
                       style={{
                         backgroundColor:
                           parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
-                            ? `${AppColors.brandPurple}18`
-                            : `${AppColors.teal600}18`,
+                            ? `${AppColors.brandPurple}22`
+                            : `${AppColors.teal600}22`,
                         borderRadius: 3,
                         paddingHorizontal: 3.5,
-                        paddingVertical: 1,
+                        paddingVertical: 0.5,
                       }}>
                       <Text
                         style={{
                           fontFamily: AppFonts.interBold,
-                          fontSize: 8.5,
+                          fontSize: 8,
                           color:
                             parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
                               ? AppColors.brandPurple
@@ -346,13 +370,21 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                     </View>
                   )}
                   <Text
-                    style={[styles.footerText, styles.footerCaller]}
+                    style={[
+                      styles.footerText,
+                      {
+                        fontFamily: AppFonts.interBold,
+                        color: AppColors.sky600,
+                        fontSize: 9.5,
+                      },
+                    ]}
                     numberOfLines={1}
                     ellipsizeMode="middle">
                     {parsedCaller.fileName}
                     {parsedCaller.lineNumber ? `:${parsedCaller.lineNumber}` : ''}
                   </Text>
-                </View>
+                  <ExternalLinkIcon color={AppColors.sky600} size={8.5} />
+                </Pressable>
               </>
             )}
           </View>

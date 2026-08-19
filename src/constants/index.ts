@@ -16,12 +16,12 @@ export const STATUS_FILTERS: StatusFilter[] = [
 ];
 
 export const METHOD_COLORS: Record<Method, string> = {
-  ALL: AppColors.grayText,
-  GET: AppColors.purple,
-  POST: AppColors.greenColor,
-  PUT: AppColors.lightOrange,
-  PATCH: AppColors.offerPurple,
-  DELETE: AppColors.errorColor,
+  ALL: '#64748B',     // Slate
+  GET: '#059669',     // Emerald
+  POST: '#2563EB',    // Royal Blue
+  PUT: '#D97706',     // Amber Gold
+  PATCH: '#7C3AED',   // Rich Violet
+  DELETE: '#DC2626',  // Crimson Red
 };
 
 export const DOMAIN_COLORS: string[] = AppColors.domainColors;

@@ -3,6 +3,7 @@ import {Animated, Pressable, View, Text} from 'react-native';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
+import {AppFonts} from '../styles/AppFonts';
 
 // Helpers
 import {formatDateTime} from '../helpers';
@@ -79,12 +80,82 @@ const DomainHeader = ({
           <View style={[styles.domainIconWrap, {backgroundColor: `${color}18`}]}>
             <ScreenIcon color={color} size={14} />
           </View>
-          <View style={{flex: 1, justifyContent: 'center'}}>
-            <Text
-              style={styles.domainTitleText}
-              numberOfLines={1}>
-              {pageName}
-            </Text>
+          <View style={{flex: 1, justifyContent: 'center', minWidth: 0}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <Text
+                style={[styles.domainTitleText, {flexShrink: 1}]}
+                numberOfLines={1}>
+                {pageName}
+              </Text>
+              {total > 0 && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    backgroundColor:
+                      stats.failed > 0
+                        ? '#FEE2E2'
+                        : stats.loading > 0
+                        ? '#FEF3C7'
+                        : '#D1FAE5',
+                    paddingHorizontal: 5,
+                    paddingVertical: 1.5,
+                    borderRadius: 4,
+                  }}>
+                  <View
+                    style={{
+                      width: 24,
+                      height: 3.5,
+                      borderRadius: 2,
+                      backgroundColor: '#E5E7EB',
+                      flexDirection: 'row',
+                      overflow: 'hidden',
+                    }}>
+                    {pctSuccess > 0 && (
+                      <View
+                        style={{
+                          width: `${pctSuccess}%`,
+                          height: '100%',
+                          backgroundColor: '#10B981',
+                        }}
+                      />
+                    )}
+                    {pctFailed > 0 && (
+                      <View
+                        style={{
+                          width: `${pctFailed}%`,
+                          height: '100%',
+                          backgroundColor: '#EF4444',
+                        }}
+                      />
+                    )}
+                    {pctLoading > 0 && (
+                      <View
+                        style={{
+                          width: `${pctLoading}%`,
+                          height: '100%',
+                          backgroundColor: '#F59E0B',
+                        }}
+                      />
+                    )}
+                  </View>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 8.5,
+                      color:
+                        stats.failed > 0
+                          ? '#991B1B'
+                          : stats.loading > 0
+                          ? '#92400E'
+                          : '#065F46',
+                    }}>
+                    {pctSuccess}%
+                  </Text>
+                </View>
+              )}
+            </View>
             <Text style={styles.domainSummaryText} numberOfLines={1}>
               {formatDateTime(timestamp)}
             </Text>
@@ -154,44 +225,6 @@ const DomainHeader = ({
           })}
         </View>
       </View>
-
-      {total > 0 && (
-        <View style={styles.domainProgressTrack}>
-          {pctSuccess > 0 && (
-            <View
-              style={[
-                styles.domainProgressSegment,
-                {
-                  width: `${pctSuccess}%`,
-                  backgroundColor: AppColors.greenColor,
-                },
-              ]}
-            />
-          )}
-          {pctFailed > 0 && (
-            <View
-              style={[
-                styles.domainProgressSegment,
-                {
-                  width: `${pctFailed}%`,
-                  backgroundColor: AppColors.errorColor,
-                },
-              ]}
-            />
-          )}
-          {pctLoading > 0 && (
-            <View
-              style={[
-                styles.domainProgressSegment,
-                {
-                  width: `${pctLoading}%`,
-                  backgroundColor: AppColors.darkOrange,
-                },
-              ]}
-            />
-          )}
-        </View>
-      )}
     </Pressable>
   );
 };

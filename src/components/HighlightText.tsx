@@ -13,6 +13,14 @@ const HighlightText = React.memo(function HighlightText({
   numberOfLines,
   ...rest
 }: any) {
+  // Optimization: For huge strings (> 20KB) with no active search, bypass all splitting/regex overhead
+  if (!text || (text.length > 20000 && !search && !detectLinks)) {
+    return (
+      <Text style={style} numberOfLines={numberOfLines} {...rest}>
+        {text}
+      </Text>
+    );
+  }
 
   // Regex to detect absolute URLs
   const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -38,7 +46,7 @@ const HighlightText = React.memo(function HighlightText({
     );
   };
 
-  if (detectLinks && text) {
+  if (detectLinks && text && text.length < 20000) {
     const parts = text.split(URL_REGEX);
     return (
       <Text style={style} numberOfLines={numberOfLines} {...rest}>

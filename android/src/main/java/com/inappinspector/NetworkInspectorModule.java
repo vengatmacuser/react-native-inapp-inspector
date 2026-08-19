@@ -1,8 +1,5 @@
 package com.inappinspector;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -31,7 +28,6 @@ public class NetworkInspectorModule extends ReactContextBaseJavaModule {
     public NetworkInspectorModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
-        setupNativeCrashProtection();
     }
 
     @NonNull
@@ -41,55 +37,39 @@ public class NetworkInspectorModule extends ReactContextBaseJavaModule {
     }
 
     private void setupNativeCrashProtection() {
-        if (isProtectionEnabled) return;
-        isProtectionEnabled = true;
-
-        try {
-            defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
-            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(@NonNull Thread thread, @NonNull Throwable throwable) {
-                    try {
-                        StringWriter sw = new StringWriter();
-                        PrintWriter pw = new PrintWriter(sw);
-                        throwable.printStackTrace(pw);
-                        String stackTrace = sw.toString();
-                        String message = throwable.getMessage() != null ? throwable.getMessage() : throwable.toString();
-
-                        Log.e(TAG, "Intercepted Android Native Crash: " + message, throwable);
-
-                        sendCrashEventToJS(message, stackTrace, thread.getName());
-                    } catch (Exception e) {
-                        Log.e(TAG, "Failed to dispatch native crash event", e);
-                    }
-
-                    // Keep main looper processing to prevent instant process exit
-                    if (Looper.myLooper() != null) {
-                        while (true) {
-                            try {
-                                Looper.loop();
-                            } catch (Throwable inner) {
-                                Log.e(TAG, "Caught inner loop exception", inner);
-                            }
-                        }
-                    }
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error installing uncaught exception handler", e);
+        if (isProtectionEnabled) {
+            return;
         }
+        defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            try {
+                handleNativeCrash(thread, throwable);
+            } catch (Exception e) {
+                Log.e(TAG, "Error in native crash handler", e);
+            } finally {
+                if (defaultHandler != null) {
+                    defaultHandler.uncaughtException(thread, throwable);
+                }
+            }
+        });
+        isProtectionEnabled = true;
+        Log.i(TAG, "Native crash protection enabled");
     }
 
-    private void sendCrashEventToJS(String message, String stackTrace, String threadName) {
+    private void handleNativeCrash(Thread thread, Throwable throwable) {
         try {
-            if (reactContext != null && reactContext.hasActiveReactInstance()) {
-                WritableMap params = Arguments.createMap();
-                params.putString("platform", "android");
-                params.putString("message", message);
-                params.putString("stack", stackTrace);
-                params.putString("thread", threadName);
-                params.putDouble("timestamp", System.currentTimeMillis());
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            throwable.printStackTrace(pw);
+            String stackTrace = sw.toString();
 
+            WritableMap params = Arguments.createMap();
+            params.putString("error", throwable.getMessage() != null ? throwable.getMessage() : "Unknown native crash");
+            params.putString("name", throwable.getClass().getName());
+            params.putString("stack", stackTrace);
+            params.putDouble("timestamp", System.currentTimeMillis());
+
+            if (reactContext.hasActiveReactInstance()) {
                 reactContext
                         .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                         .emit("onNativeCrash", params);
@@ -103,37 +83,6 @@ public class NetworkInspectorModule extends ReactContextBaseJavaModule {
     public void enableNativeCrashProtection(Promise promise) {
         setupNativeCrashProtection();
         promise.resolve(true);
-    }
-
-    @ReactMethod
-    public void copyToClipboard(String text, Promise promise) {
-        try {
-            Handler mainHandler = new Handler(Looper.getMainLooper());
-            mainHandler.post(() -> {
-                try {
-                    ClipboardManager clipboard = (ClipboardManager) reactContext.getSystemService(Context.CLIPBOARD_SERVICE);
-                    if (clipboard != null) {
-                        ClipData clip = ClipData.newPlainText("NetworkInspector", text != null ? text : "");
-                        clipboard.setPrimaryClip(clip);
-                        if (promise != null) {
-                            promise.resolve(true);
-                        }
-                        return;
-                    }
-                    if (promise != null) {
-                        promise.resolve(false);
-                    }
-                } catch (Exception e) {
-                    if (promise != null) {
-                        promise.reject("CLIPBOARD_ERROR", e.getMessage(), e);
-                    }
-                }
-            });
-        } catch (Exception e) {
-            if (promise != null) {
-                promise.reject("CLIPBOARD_ERROR", e.getMessage(), e);
-            }
-        }
     }
 
     @ReactMethod

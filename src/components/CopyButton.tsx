@@ -1,4 +1,5 @@
 import React, {useState, useCallback} from 'react';
+import {Share} from 'react-native';
 
 // Components
 import TouchableScale from './TouchableScale';
@@ -26,6 +27,20 @@ const CopyButton = React.memo(({value, label, iconType = 'copy'}: CopyButtonProp
     setTimeout(() => setCopied(false), 1200);
   }, [value, label]);
 
+  const handleLongPress = useCallback(() => {
+    try {
+      const resolvedValue = typeof value === 'function' ? (value as Function)() : value;
+      const textToShare =
+        typeof resolvedValue === 'string'
+          ? resolvedValue
+          : JSON.stringify(resolvedValue, null, 2);
+      Share.share({
+        message: textToShare,
+        title: label,
+      });
+    } catch {}
+  }, [value, label]);
+
   const containerStyle = [
     styles.iconSquareBtn,
     copied && styles.iconSquareBtnSuccess,
@@ -39,7 +54,11 @@ const CopyButton = React.memo(({value, label, iconType = 'copy'}: CopyButtonProp
       : CopyIcon;
 
   return (
-    <TouchableScale onPress={handlePress} hitSlop={12} style={containerStyle}>
+    <TouchableScale
+      onPress={handlePress}
+      onLongPress={handleLongPress}
+      hitSlop={12}
+      style={containerStyle}>
       {copied ? (
         <CheckIcon color={AppColors.greenColor} size={14} />
       ) : (
