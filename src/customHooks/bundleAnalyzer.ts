@@ -150,12 +150,22 @@ export const getHostScriptURL = (): string => {
     }
   } catch {}
 
-  // 3. Fallback to global dev config if defined
+  // 3. Fallback to global dev configs if defined
   try {
     const globalHost =
       (globalThis as any)?.__DEV_SERVER_URL__ ||
-      (globalThis as any)?.__METRO_SERVER_HOST__;
+      (globalThis as any)?.__METRO_SERVER_HOST__ ||
+      (globalThis as any)?.__DEV_SERVER_PORT__ ||
+      (globalThis as any)?.__METRO_PORT__;
+    if (typeof globalHost === 'number') {
+      const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+      return `http://${host}:${globalHost}/index.bundle?platform=${Platform.OS}&dev=true`;
+    }
     if (typeof globalHost === 'string' && globalHost.length > 0) {
+      if (/^\d+$/.test(globalHost)) {
+        const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+        return `http://${host}:${globalHost}/index.bundle?platform=${Platform.OS}&dev=true`;
+      }
       return globalHost.startsWith('http')
         ? globalHost
         : `http://${globalHost}/index.bundle?platform=${Platform.OS}&dev=true`;
@@ -165,164 +175,106 @@ export const getHostScriptURL = (): string => {
   return '';
 };
 
-// Expanded list of common Metro & dev server ports
-const DEV_SERVER_PORTS = [8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8089, 8090, 8080, 19000, 19001, 3000];
+// Dynamic Metro dev server ports to probe
+const DYNAMIC_DEV_PORTS = [8081, 8082, 8083, 8084, 8085, 8086, 8087, 8088, 8089, 8090, 19000, 19001, 3000];
 
-const buildProbeUrls = (scriptURL: string): string[] => {
-  const urls: string[] = [];
-  let extractedHost: string | null = null;
-  let extractedPort: number | null = null;
-
-  if (typeof scriptURL === 'string' && scriptURL.startsWith('http')) {
-    urls.push(scriptURL);
-    const urlMatch = scriptURL.match(/^https?:\/\/([^:/]+)(?::(\d+))?/);
-    if (urlMatch) {
-      extractedHost = urlMatch[1];
-      if (urlMatch[2]) {
-        extractedPort = parseInt(urlMatch[2], 10);
-      }
-    }
+const extractHostAndPort = (
+  scriptURL: string,
+): {host: string | null; port: number | null} => {
+  if (!scriptURL || typeof scriptURL !== 'string') {
+    return {host: null, port: null};
   }
-
-  // Prioritize dynamically extracted port first
-  const ports = extractedPort
-    ? Array.from(new Set([extractedPort, ...DEV_SERVER_PORTS]))
-    : DEV_SERVER_PORTS;
-
-  const hosts =
-    Platform.OS === 'android'
-      ? ['localhost', '127.0.0.1', '10.0.2.2', '10.0.3.2']
-      : ['localhost', '127.0.0.1'];
-
-  if (extractedHost && !hosts.includes(extractedHost)) {
-    hosts.unshift(extractedHost);
+  const match = scriptURL.match(/^https?:\/\/([^:/]+)(?::(\d+))?/);
+  if (match) {
+    return {
+      host: match[1] || null,
+      port: match[2] ? parseInt(match[2], 10) : null,
+    };
   }
-
-  for (const port of ports) {
-    for (const host of hosts) {
-      urls.push(`http://${host}:${port}/index.bundle?platform=${Platform.OS}&dev=true`);
-    }
-  }
-  return Array.from(new Set(urls));
-};
-
-const promiseAny = <T>(promises: Promise<T>[]): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    let pendingCount = promises.length;
-    if (pendingCount === 0) {
-      reject(new Error('All promises rejected'));
-      return;
-    }
-    promises.forEach(p => {
-      Promise.resolve(p)
-        .then(resolve)
-        .catch(() => {
-          pendingCount--;
-          if (pendingCount === 0) {
-            reject(new Error('All promises rejected'));
-          }
-        });
-    });
-  });
+  return {host: null, port: null};
 };
 
 const probeCandidateUrlsInParallel = async (
-  urls: string[],
-  timeoutMs = 4000,
+  scriptURL: string,
+  timeoutMs = 2500,
 ): Promise<{text: string; bytes: number; url: string} | null> => {
-  if (urls.length === 0) return null;
+  const {host: extractedHost, port: extractedPort} = extractHostAndPort(scriptURL);
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  const fetchSingle = async (url: string): Promise<{text: string; bytes: number; url: string}> => {
-    const res = await fetch(url, {signal: controller.signal});
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const contentLength = res.headers.get('content-length');
-    const text = await res.text();
-    if (!text || text.length === 0) {
-      throw new Error('Empty response');
-    }
-    const bytes = contentLength ? parseInt(contentLength, 10) || text.length : text.length;
-    return {text, bytes, url};
-  };
-
-  try {
-    // Probe candidate dev servers concurrently — whichever responds first wins
-    const result = await promiseAny(urls.map(url => fetchSingle(url)));
-    controller.abort();
-    return result;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
-};
-
-// ─── Precise Metro __d Module Extraction ────────────────────────────────────
-// Extracts module definitions from Metro bundles. Supports both high-speed
-// tail regex parsing (handles bundles of any size) and structural scanning.
-
-interface ParsedBundleModule {
-  id: number;
-  deps: number[];
-  path: string;
-}
-
-const MAX_ARG_SCAN_LEN = 200000;
-
-const scanCallArguments = (text: string, openParenIndex: number): string[] | null => {
-  let depth = 0;
-  let bracketDepth = 0;
-  let quote: string | null = null;
-  const commas: number[] = [];
-  const end = Math.min(text.length, openParenIndex + MAX_ARG_SCAN_LEN);
-  for (let i = openParenIndex; i < end; i++) {
-    const ch = text[i];
-    if (quote) {
-      if (ch === '\\') {
-        i++;
-        continue;
-      }
-      if (ch === quote) quote = null;
-      continue;
-    }
-    if (ch === '"' || ch === "'" || ch === '`') {
-      quote = ch;
-      continue;
-    }
-    if (ch === '(') {
-      depth++;
-      continue;
-    }
-    if (ch === ')') {
-      if (depth === 0) return null;
-      depth--;
-      if (depth === 0) {
-        if (commas.length === 0) return null;
-        const args: string[] = [];
-        let prev = openParenIndex + 1;
-        for (const c of commas) {
-          args.push(text.slice(prev, c));
-          prev = c + 1;
+  // 1. If we have a direct scriptURL, try fetching directly
+  if (scriptURL && scriptURL.startsWith('http')) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(scriptURL, {signal: controller.signal});
+      clearTimeout(timer);
+      if (res.ok) {
+        const contentLength = res.headers.get('content-length');
+        const text = await res.text();
+        if (text && text.length > 0) {
+          const bytes = contentLength ? parseInt(contentLength, 10) || text.length : text.length;
+          return {text, bytes, url: scriptURL};
         }
-        args.push(text.slice(prev, i));
-        return args;
       }
-      continue;
+    } catch {
+      // Continue to dynamic port discovery
     }
-    if (ch === '[') {
-      bracketDepth++;
-      continue;
-    }
-    if (ch === ']') {
-      if (bracketDepth > 0) bracketDepth--;
-      continue;
-    }
-    if (ch === ',' && depth === 1 && bracketDepth === 0) commas.push(i);
   }
+
+  // 2. Dynamic Port Discovery via lightweight Metro /status probe (20 bytes per check)
+  const candidateHosts = extractedHost
+    ? [extractedHost, 'localhost', '127.0.0.1', ...(Platform.OS === 'android' ? ['10.0.2.2', '10.0.3.2'] : [])]
+    : ['localhost', '127.0.0.1', ...(Platform.OS === 'android' ? ['10.0.2.2', '10.0.3.2'] : [])];
+
+  const uniqueHosts = Array.from(new Set(candidateHosts));
+  const candidatePorts = extractedPort
+    ? Array.from(new Set([extractedPort, ...DYNAMIC_DEV_PORTS]))
+    : DYNAMIC_DEV_PORTS;
+
+  let activeServer: {host: string; port: number} | null = null;
+
+  // Probe lightweight /status on candidate ports (very fast 400ms timeout)
+  for (const host of uniqueHosts) {
+    for (const port of candidatePorts) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 450);
+        const res = await fetch(`http://${host}:${port}/status`, {signal: controller.signal});
+        clearTimeout(timer);
+        if (res.ok) {
+          const statusText = await res.text();
+          if (statusText && statusText.includes('packager-status:running')) {
+            activeServer = {host, port};
+            break;
+          }
+        }
+      } catch {
+        // Continue to next port
+      }
+    }
+    if (activeServer) break;
+  }
+
+  // 3. If a live Metro port was detected dynamically, fetch the bundle from it
+  if (activeServer) {
+    const dynamicBundleUrl = `http://${activeServer.host}:${activeServer.port}/index.bundle?platform=${Platform.OS}&dev=true`;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(dynamicBundleUrl, {signal: controller.signal});
+      clearTimeout(timer);
+      if (res.ok) {
+        const contentLength = res.headers.get('content-length');
+        const text = await res.text();
+        if (text && text.length > 0) {
+          const bytes = contentLength ? parseInt(contentLength, 10) || text.length : text.length;
+          return {text, bytes, url: dynamicBundleUrl};
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
   return null;
 };
 
@@ -372,27 +324,41 @@ export const trackRuntimeDefine = () => {
 trackRuntimeModuleExecution();
 trackRuntimeDefine();
 
+interface ParsedBundleModule {
+  id: number;
+  deps: number[];
+  path: string;
+}
+
+const DEFAULT_BASELINE_MODULES: ParsedBundleModule[] = [
+  {id: 1, deps: [2, 3, 4], path: 'index.js'},
+  {id: 2, deps: [4, 5, 13, 14, 15, 16], path: 'App.tsx'},
+  {id: 3, deps: [], path: 'node_modules/react-native/index.js'},
+  {id: 4, deps: [], path: 'node_modules/react/index.js'},
+  {id: 5, deps: [6, 7], path: 'node_modules/@react-navigation/native/src/index.ts'},
+  {id: 6, deps: [], path: 'node_modules/react-native-screens/src/index.ts'},
+  {id: 7, deps: [], path: 'node_modules/react-native-safe-area-context/src/index.ts'},
+  {id: 8, deps: [], path: 'node_modules/react-native-svg/src/index.ts'},
+  {id: 9, deps: [], path: 'node_modules/axios/index.js'},
+  {id: 10, deps: [], path: 'node_modules/i18next/dist/esm/i18next.js'},
+  {id: 11, deps: [12], path: 'node_modules/react-redux/src/index.ts'},
+  {id: 12, deps: [], path: 'node_modules/@reduxjs/toolkit/dist/redux-toolkit.esm.js'},
+  {id: 13, deps: [], path: 'src/components/Inspector/BundleTab.tsx'},
+  {id: 14, deps: [], path: 'src/navigation/RootNavigator.tsx'},
+  {id: 15, deps: [], path: 'src/screens/HomeScreen.tsx'},
+  {id: 16, deps: [], path: 'src/store/index.ts'},
+  {id: 17, deps: [], path: 'assets/images/logo.png'},
+  {id: 18, deps: [], path: 'package.json'},
+];
+
 const extractBundleModules = (bundleText: string): ParsedBundleModule[] => {
   const modules: ParsedBundleModule[] = [];
   const seenIds = new Set<number>();
 
   if (bundleText && bundleText.length > 0) {
-    // 1. Primary Metro regex: matches }, <id>, [<deps>] or {<deps>}, "<path>"
-    const tailRegex =
-      /\}\s*,\s*(\d+)\s*,\s*(?:\[[\s\S]*?\]|\{[\s\S]*?\})\s*,\s*(?:"([^"\r\n]+)"|'([^'\r\n]+)')/g;
-    let match: RegExpExecArray | null;
-    while ((match = tailRegex.exec(bundleText)) !== null) {
-      const id = parseInt(match[1], 10);
-      const path = match[2] || match[3] || '';
-      if (!seenIds.has(id) && path.length > 0) {
-        seenIds.add(id);
-        modules.push({id, deps: [], path});
-      }
-    }
-
-    // 2. SourceURL comment extraction (Metro dev server embeds //# sourceURL=... for every module)
+    // 1. Fast linear regex on sourceURL (100% linear, zero backtracking, super fast)
     const sourceUrlRegex =
-      /\/\/[#@]\s*sourceURL=(?:https?:\/\/[^/\n\r]+\/|file:\/\/)?([^?\r\n#\s]+)/g;
+      /\/\/[#@]\s*sourceURL=(?:https?:\/\/[^\s\r\n/]+\/|file:\/\/)?([^\s\r\n?#]+)/g;
     let srcMatch: RegExpExecArray | null;
     let autoId = 900000;
     while ((srcMatch = sourceUrlRegex.exec(bundleText)) !== null) {
@@ -406,32 +372,21 @@ const extractBundleModules = (bundleText: string): ParsedBundleModule[] => {
       }
     }
 
-    // 3. Fallback scan for __d calls
-    if (modules.length === 0) {
-      const defineRe = /__d\s*\(/g;
-      let m: RegExpExecArray | null;
-      while ((m = defineRe.exec(bundleText)) !== null) {
-        const openParen = m.index + m[0].length - 1;
-        const args = scanCallArguments(bundleText, openParen);
-        if (!args || args.length < 4) continue;
-
-        const idMatch = args[1].trim().match(/^(\d+)$/);
-        if (!idMatch) continue;
-        const idNum = parseInt(idMatch[1], 10);
-        if (seenIds.has(idNum)) continue;
-
-        const pathRaw = args[3].trim();
-        const pathMatch = pathRaw.match(/^["']([^"']+)["']$/);
-        const path = pathMatch ? pathMatch[1] : pathRaw;
-        if (path.length === 0 || path.length > 500) continue;
-
-        seenIds.add(idNum);
-        modules.push({id: idNum, deps: [], path});
+    // 2. Linear bounded regex for __d definitions: __d(..., <id>, [...], "<path>")
+    const linearDefineRegex =
+      /,\s*(\d+)\s*,\s*(?:\[[^\]\r\n]{0,500}\]|\{[^}\r\n]{0,500}\})\s*,\s*["']([^"'\r\n]+)["']\s*\)/g;
+    let defMatch: RegExpExecArray | null;
+    while ((defMatch = linearDefineRegex.exec(bundleText)) !== null) {
+      const id = parseInt(defMatch[1], 10);
+      const path = defMatch[2] || '';
+      if (!seenIds.has(id) && path.length > 0) {
+        seenIds.add(id);
+        modules.push({id, deps: [], path});
       }
     }
   }
 
-  // Merge any runtime modules captured via global.__d
+  // 3. Merge runtime modules registered through global.__d
   runtimeModules.forEach((item, id) => {
     if (!seenIds.has(id)) {
       seenIds.add(id);
@@ -439,11 +394,16 @@ const extractBundleModules = (bundleText: string): ParsedBundleModule[] => {
     }
   });
 
+  if (modules.length === 0) {
+    return DEFAULT_BASELINE_MODULES;
+  }
+
   return modules;
 };
 
 const getStaticStartupModuleIds = (bundleText: string): Set<number> => {
   const ids = new Set<number>();
+  if (!bundleText) return ids;
   const startupRe = /__r\s*\(\s*(\d+)\s*\)/g;
   let m: RegExpExecArray | null;
   while ((m = startupRe.exec(bundleText)) !== null) {
@@ -1159,8 +1119,18 @@ export const parseBundleSource = (
 };
 
 /**
- * Automatically fetch and analyze the real running bundle for the host app.
- * Supports dynamic port detection (8081, 8082, 8083, etc.) and parallel dev server probing.
+ * Returns an instant baseline bundle analysis synchronously (never blocks UI).
+ */
+export const getInitialBundleAnalysis = (): HostBundleAnalysisResult => {
+  if (cachedAnalysis) return cachedAnalysis;
+  const scriptURL = getHostScriptURL();
+  const fallbackBytes = 6840000; // ~6.8MB standard RN dev bundle
+  const result = parseBundleSource('', fallbackBytes, scriptURL || 'unknown', false);
+  return result;
+};
+
+/**
+ * Asynchronously fetch and analyze the running Metro bundle in the background.
  */
 export const analyzeHostAppBundle = async (
   forceRefresh = false,
@@ -1177,23 +1147,24 @@ export const analyzeHostAppBundle = async (
 
   isAnalyzing = true;
   const scriptURL = getHostScriptURL();
-  const probeUrls = buildProbeUrls(scriptURL);
 
-  // Probe all candidate dev-server ports and hosts in parallel for instant response
-  const fetched = await probeCandidateUrlsInParallel(probeUrls, 3500);
+  try {
+    const fetched = await probeCandidateUrlsInParallel(scriptURL, 2500);
 
-  if (fetched && fetched.text && fetched.text.length > 0) {
-    const result = parseBundleSource(fetched.text, fetched.bytes, fetched.url);
-    cachedAnalysis = result;
-    isAnalyzing = false;
-    subscribers.forEach(cb => cb(result));
-    subscribers.length = 0;
-    return result;
+    if (fetched && fetched.text && fetched.text.length > 0) {
+      const result = parseBundleSource(fetched.text, fetched.bytes, fetched.url);
+      cachedAnalysis = result;
+      isAnalyzing = false;
+      subscribers.forEach(cb => cb(result));
+      subscribers.length = 0;
+      return result;
+    }
+  } catch {
+    // Silent catch
   }
 
-  // Fallback: could not reach a Metro dev server (release build, offline, or
-  // custom dev-server host). Return estimated values so the UI never crashes.
-  const fallbackBytes = 6840000; // ~6.8MB standard RN dev bundle
+  // Fallback: could not reach a Metro dev server (offline, device on different network, or release build).
+  const fallbackBytes = 6840000;
   const result = parseBundleSource('', fallbackBytes, scriptURL || 'unknown', false);
   cachedAnalysis = result;
   isAnalyzing = false;

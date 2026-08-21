@@ -62,6 +62,8 @@ import Svg, {
 import {
   analyzeHostAppBundle,
   getCachedBundleAnalysis,
+  getInitialBundleAnalysis,
+  getHostScriptURL,
   HostBundleAnalysisResult,
 } from '../../customHooks/bundleAnalyzer';
 
@@ -625,23 +627,26 @@ function buildBundleFileTree(files: BundleFileItem[]): TreeNode[] {
 export const downloadBundleFile = async (file: BundleFileItem, scriptURL?: string): Promise<void> => {
   let content = '';
 
-  // 1. Attempt to fetch real source code from Metro dev server if available
+  // 1. Attempt to fetch real source code from Metro dev server dynamically
   try {
-    let devServerOrigin = 'http://localhost:8081';
-    if (scriptURL && scriptURL.startsWith('http')) {
-      const match = scriptURL.match(/^(https?:\/\/[^/]+)/);
+    let devServerOrigin = '';
+    const activeUrl = scriptURL || getHostScriptURL();
+    if (activeUrl && activeUrl.startsWith('http')) {
+      const match = activeUrl.match(/^(https?:\/\/[^/]+)/);
       if (match) {
         devServerOrigin = match[1];
       }
     }
-    const cleanPath = file.path.replace(/^\/+/, '');
-    const url = `${devServerOrigin}/${cleanPath}`;
+    if (devServerOrigin) {
+      const cleanPath = file.path.replace(/^\/+/, '');
+      const url = `${devServerOrigin}/${cleanPath}`;
 
-    const res = await fetch(url);
-    if (res.ok) {
-      const text = await res.text();
-      if (text && text.length > 0) {
-        content = text;
+      const res = await fetch(url);
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.length > 0) {
+          content = text;
+        }
       }
     }
   } catch {}
@@ -881,27 +886,37 @@ const BundleTab = React.memo(() => {
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
   // ─── Live Host App Bundle Analysis (fetched from Metro / runtime) ─────────
-  const [analysis, setAnalysis] = useState<HostBundleAnalysisResult | null>(() =>
-    getCachedBundleAnalysis(),
+  const [analysis, setAnalysis] = useState<HostBundleAnalysisResult>(() =>
+    getCachedBundleAnalysis() || getInitialBundleAnalysis(),
   );
-  const [isAnalyzing, setIsAnalyzing] = useState(!getCachedBundleAnalysis());
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
   const refreshAnalysis = useCallback(() => {
     setIsAnalyzing(true);
-    analyzeHostAppBundle(true).then(result => {
-      setAnalysis(result);
-      setIsAnalyzing(false);
-    });
+    analyzeHostAppBundle(true)
+      .then(result => {
+        setAnalysis(result);
+        setIsAnalyzing(false);
+      })
+      .catch(() => {
+        setIsAnalyzing(false);
+      });
   }, []);
 
   useEffect(() => {
     let mounted = true;
-    analyzeHostAppBundle().then(result => {
-      if (mounted) {
-        setAnalysis(result);
-        setIsAnalyzing(false);
-      }
-    });
+    analyzeHostAppBundle()
+      .then(result => {
+        if (mounted) {
+          setAnalysis(result);
+          setIsAnalyzing(false);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setIsAnalyzing(false);
+        }
+      });
     return () => {
       mounted = false;
     };
@@ -1217,23 +1232,10 @@ const BundleTab = React.memo(() => {
         </TouchableScale>
       </View>
 
-      {/* ─── Live Bundle Analysis Loading State ─── */}
-      {isAnalyzing && (
-        <View style={bundleStyles.analyzingContainer}>
-          <ActivityIndicator size="small" color={AppColors.brandPurple} />
-          <Text style={bundleStyles.analyzingText}>
-            {t('bundle.analyzingTitle')}
-          </Text>
-          <Text style={bundleStyles.analyzingHint}>
-            {t('bundle.analyzingHint')}
-          </Text>
-        </View>
-      )}
-
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 1. TAB: OVERVIEW & TREEMAP ───────────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'overview' && !isAnalyzing && (
+      {activeSubTab === 'overview' && (
         <ScrollView
           style={{flex: 1}}
           contentContainerStyle={bundleStyles.contentContainer}
@@ -1594,7 +1596,7 @@ const BundleTab = React.memo(() => {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 2. TAB: PRODUCTION BUILDS & PLATFORMS ───────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'production' && !isAnalyzing && (
+      {activeSubTab === 'production' && (
         <ScrollView
           style={{flex: 1}}
           contentContainerStyle={bundleStyles.contentContainer}
@@ -1862,7 +1864,7 @@ const BundleTab = React.memo(() => {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 2. TAB: FILES BREAKDOWN ─────────────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'files' && !isAnalyzing && (
+      {activeSubTab === 'files' && (
         <View style={{flex: 1}}>
           {/* Search & Category Filter */}
           <View style={bundleStyles.filterContainer}>
@@ -2156,7 +2158,7 @@ const BundleTab = React.memo(() => {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 3. TAB: PACKAGES & NODE_MODULES ─────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'packages' && !isAnalyzing && (
+      {activeSubTab === 'packages' && (
         <View style={{flex: 1}}>
           <ScrollView
             style={{flex: 1}}
@@ -2360,7 +2362,7 @@ const BundleTab = React.memo(() => {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 4. TAB: MEDIA & ASSET AUDITOR ───────────────────────────────────── */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      {activeSubTab === 'media' && !isAnalyzing && (
+      {activeSubTab === 'media' && (
         <View style={{flex: 1}}>
           <ScrollView
             style={{flex: 1}}

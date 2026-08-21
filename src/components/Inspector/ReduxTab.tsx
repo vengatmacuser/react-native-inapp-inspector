@@ -50,8 +50,6 @@ interface ReduxSliceItem {
   keysCount: number;
   sizeStr: string;
   typeLabel: string;
-  topKeys: string[];
-  totalKeysCount: number;
   status: 'live' | 'loading' | 'error' | 'empty';
   statusMessage?: string;
   timelineCount: number;
@@ -113,48 +111,6 @@ const getOriginBadge = (originType?: string) => {
   }
 };
 
-const getKeyChipStyle = (key: string) => {
-  const k = key.toLowerCase();
-  if (k.includes('load') || k.includes('pend') || k.includes('status')) {
-    return {
-      bg: AppColors.amber100,
-      border: AppColors.amber200,
-      text: AppColors.amber800Warm,
-      dot: AppColors.darkOrange,
-    };
-  }
-  if (k.includes('err') || k.includes('fail') || k.includes('reject')) {
-    return {
-      bg: AppColors.red100,
-      border: AppColors.errorBorder,
-      text: AppColors.red600,
-      dot: AppColors.errorColor,
-    };
-  }
-  if (k.includes('user') || k.includes('auth') || k.includes('token') || k.includes('profile')) {
-    return {
-      bg: AppColors.indigo50,
-      border: AppColors.indigo400,
-      text: AppColors.indigo600Alt,
-      dot: AppColors.indigo500,
-    };
-  }
-  if (k.includes('item') || k.includes('data') || k.includes('list') || k.includes('entit') || k.includes('count')) {
-    return {
-      bg: AppColors.emeraldBg,
-      border: AppColors.emeraldBorder,
-      text: AppColors.emerald700,
-      dot: AppColors.emerald500,
-    };
-  }
-  return {
-    bg: AppColors.slate100,
-    border: AppColors.slate200,
-    text: AppColors.slate700,
-    dot: AppColors.slate400,
-  };
-};
-
 const ReduxTab = React.memo(() => {
   const {t} = useTranslation();
   const {
@@ -202,17 +158,12 @@ const ReduxTab = React.memo(() => {
 
       let typeLabel = 'Primitive';
       let keysCount = 0;
-      let topKeys: string[] = [];
-      let totalKeysCount = 0;
 
       if (isArray) {
         keysCount = sliceVal.length;
         typeLabel = `Array [${keysCount}]`;
       } else if (isObject) {
-        const objKeys = Object.keys(sliceVal);
-        totalKeysCount = objKeys.length;
-        keysCount = totalKeysCount;
-        topKeys = objKeys.slice(0, 4);
+        keysCount = Object.keys(sliceVal).length;
         typeLabel = `Object {${keysCount}}`;
       } else if (typeof sliceVal !== 'undefined') {
         keysCount = 1;
@@ -287,8 +238,6 @@ const ReduxTab = React.memo(() => {
         keysCount,
         sizeStr: getSize(sliceVal),
         typeLabel,
-        topKeys,
-        totalKeysCount,
         status,
         statusMessage,
         timelineCount,
@@ -305,8 +254,7 @@ const ReduxTab = React.memo(() => {
       const q = reduxSearch.toLowerCase();
       list = list.filter(item =>
         item.name.toLowerCase().includes(q) ||
-        (item.lastAction && item.lastAction.type.toLowerCase().includes(q)) ||
-        item.topKeys.some(k => k.toLowerCase().includes(q)),
+        (item.lastAction && item.lastAction.type.toLowerCase().includes(q)),
       );
     }
 
@@ -410,53 +358,6 @@ const ReduxTab = React.memo(() => {
                 </View>
               )}
             </View>
-
-            {/* Keys Preview Chips (if object has keys) */}
-            {item.topKeys.length > 0 && (
-              <View style={reduxTabStyles.keysContainer}>
-                <Text style={reduxTabStyles.keysHeading}>Keys:</Text>
-                <View style={reduxTabStyles.keysWrap}>
-                  {item.topKeys.map((k, kIdx) => {
-                    const chipStyle = getKeyChipStyle(k);
-                    return (
-                      <View
-                        key={kIdx}
-                        style={[
-                          reduxTabStyles.keyChip,
-                          {
-                            backgroundColor: chipStyle.bg,
-                            borderColor: chipStyle.border,
-                          },
-                        ]}>
-                        <View
-                          style={{
-                            width: 5,
-                            height: 5,
-                            borderRadius: 2.5,
-                            backgroundColor: chipStyle.dot,
-                          }}
-                        />
-                        <Text
-                          style={[
-                            reduxTabStyles.keyChipText,
-                            {color: chipStyle.text},
-                          ]}
-                          numberOfLines={1}>
-                          {k}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                  {item.totalKeysCount > item.topKeys.length && (
-                    <View style={reduxTabStyles.keyMoreChip}>
-                      <Text style={reduxTabStyles.keyMoreChipText}>
-                        +{item.totalKeysCount - item.topKeys.length}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            )}
 
             {/* Bottom row: Last Dispatched Action with Origin & Trigger Line */}
             {item.lastAction && (
@@ -965,54 +866,6 @@ const reduxTabStyles = StyleSheet.create({
     fontFamily: AppFonts.interMedium,
     fontSize: 9.5,
     color: AppColors.grayTextWeak,
-  },
-  keysContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  keysHeading: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-  },
-  keysWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    flex: 1,
-  },
-  keyChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: AppColors.slate100,
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: AppColors.slate200,
-    maxWidth: 120,
-  },
-  keyChipText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 9.5,
-    color: AppColors.slate700,
-  },
-  keyMoreChip: {
-    backgroundColor: AppColors.purple100,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: AppColors.purple200,
-  },
-  keyMoreChipText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 9,
-    color: AppColors.brandPurple,
   },
   lastActionRow: {
     flexDirection: 'row',

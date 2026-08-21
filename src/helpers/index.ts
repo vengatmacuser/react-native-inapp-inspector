@@ -670,11 +670,30 @@ export const openInVSCode = (
   const cleanPath = filePath.replace(/^file:\/\//, '');
 
   // 1. Notify Metro dev server on host to launch editor directly on local system
-  const metroHosts = [
-    'http://localhost:8081',
-    'http://127.0.0.1:8081',
-    'http://10.0.2.2:8081',
-  ];
+  let extractedOrigin: string | null = null;
+  try {
+    const scriptURL =
+      (NativeModules?.SourceCode as any)?.scriptURL ||
+      (NativeModules?.PlatformConstants as any)?.serverHost ||
+      (NativeModules?.DevSettings as any)?.serverHost;
+    if (typeof scriptURL === 'string' && scriptURL.length > 0) {
+      const match = scriptURL.match(/^(https?:\/\/[^/]+)/);
+      if (match) {
+        extractedOrigin = match[1];
+      } else if (!scriptURL.startsWith('http') && scriptURL.includes(':')) {
+        extractedOrigin = `http://${scriptURL}`;
+      }
+    }
+  } catch {}
+
+  const metroHosts = Array.from(
+    new Set([
+      ...(extractedOrigin ? [extractedOrigin] : []),
+      'http://localhost:8081',
+      'http://127.0.0.1:8081',
+      'http://10.0.2.2:8081',
+    ]),
+  );
 
   metroHosts.forEach(host => {
     try {

@@ -33,11 +33,16 @@ const formatArgs = (args: any[]): string => {
 
 const getMetroSymbolicateUrl = (): string => {
   try {
-    const scriptURL = (NativeModules.SourceCode as any)?.scriptURL;
-    if (typeof scriptURL === 'string') {
+    const scriptURL =
+      (NativeModules.SourceCode as any)?.scriptURL ||
+      (NativeModules?.PlatformConstants as any)?.serverHost ||
+      (NativeModules?.DevSettings as any)?.serverHost;
+    if (typeof scriptURL === 'string' && scriptURL.length > 0) {
       const match = scriptURL.match(/^(https?:\/\/[^\/]+)/);
       if (match) {
         return `${match[1]}/symbolicate`;
+      } else if (!scriptURL.startsWith('http') && scriptURL.includes(':')) {
+        return `http://${scriptURL}/symbolicate`;
       }
     }
   } catch {}
