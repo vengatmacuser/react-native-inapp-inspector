@@ -10,6 +10,8 @@ import NetworkInspector, {
   ErrorBoundary,
   connectReduxStore,
   setupNetworkLogger,
+  setupConsoleLogger,
+  enableNativeCrashProtection,
 } from 'react-native-inapp-inspector';
 
 import { mockStore } from './src/store/mockStore';
@@ -18,6 +20,10 @@ import { DetailsScreen } from './src/screens/DetailsScreen';
 
 // ⚡ Call BEFORE any component renders so axios.create() is already patched
 setupNetworkLogger();
+setupConsoleLogger();
+
+// ⚡ Enable Native Kotlin (Android) & iOS Signal/Exception Crash Protection
+enableNativeCrashProtection();
 
 // Connect mock store to the inspector
 connectReduxStore(mockStore);

@@ -10,6 +10,10 @@ import {
 import {CrashRecord, ParsedStackFrame, CrashBreadcrumb} from '../types';
 import {CrashExportFormat, CrashType} from '../types/enums';
 import {addLogFromCrash} from './consoleLogger';
+import {
+  showNativeFloatingButton,
+  setNativeFloatingButtonBadge,
+} from '../native/NativeInspector';
 import {t} from '../i18n';
 
 export interface CrashEventPayload {
@@ -491,6 +495,12 @@ export const handleInterceptedCrash = (
       logId: log?.id,
       crashRecord,
     });
+
+    // Ensure native floating icon is visible & badged even if React UI is broken
+    try {
+      showNativeFloatingButton();
+      setNativeFloatingButtonBadge(true);
+    } catch {}
 
     return crashRecord;
   } catch (err: any) {

@@ -31,7 +31,7 @@ export const StatusFilter = {
   FiveXx: '5xx',
   Failed: 'Failed',
 } as const;
-export type StatusFilter = (typeof StatusFilter)[keyof typeof StatusFilter];
+export type StatusFilter = (typeof StatusFilter)[keyof typeof StatusFilter] | string;
 
 export const SortOrder = {
   Newest: 'newest',

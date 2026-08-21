@@ -1,14 +1,25 @@
 buildscript {
+    ext.kotlin_version = '1.9.22'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.0.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+def isNewArchitectureEnabled() {
+    return project.hasProperty("newArchEnabled") && project.getProperty("newArchEnabled") == "true"
+}
+
+if (isNewArchitectureEnabled()) {
+    apply plugin: "com.facebook.react"
+}
 
 android {
     namespace "com.inappinspector"
@@ -18,7 +29,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 34
         versionCode 1
-        versionName "1.1.25"
+        versionName "1.1.35"
     }
 
     lintOptions {
@@ -34,4 +45,5 @@ repositories {
 dependencies {
     //noinspection GradleDynamicVersion
     implementation 'com.facebook.react:react-native:+'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }

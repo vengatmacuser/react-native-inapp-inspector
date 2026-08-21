@@ -7,6 +7,8 @@ import TouchableScale from './TouchableScale';
 // Helpers
 import {copyToClipboard} from '../helpers';
 
+import {triggerNativeHaptic} from '../native/NativeInspector';
+
 // Assets
 import {TerminalIcon, FetchIcon, CopyIcon, CheckIcon} from './NetworkIcons';
 
@@ -21,6 +23,7 @@ const CopyButton = React.memo(({value, label, iconType = 'copy'}: CopyButtonProp
   const [copied, setCopied] = useState<boolean>(false);
 
   const handlePress = useCallback(() => {
+    triggerNativeHaptic('success');
     const resolvedValue = typeof value === 'function' ? (value as Function)() : value;
     copyToClipboard(resolvedValue, label);
     setCopied(true);
@@ -29,6 +32,7 @@ const CopyButton = React.memo(({value, label, iconType = 'copy'}: CopyButtonProp
 
   const handleLongPress = useCallback(() => {
     try {
+      triggerNativeHaptic('medium');
       const resolvedValue = typeof value === 'function' ? (value as Function)() : value;
       const textToShare =
         typeof resolvedValue === 'string'

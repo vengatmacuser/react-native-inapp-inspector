@@ -143,8 +143,8 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   // #2 — scroll-to-top button, always shown at the bottom right.
   scrollTopBtn: {
     position: 'absolute',
-    bottom: 25,
-    right: 15,
+    bottom: 22,
+    right: 16,
     width: 38,
     height: 38,
     borderRadius: 19,
@@ -153,10 +153,10 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     justifyContent: 'center',
     shadowColor: colors.black,
     shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 6,
-    zIndex: 50,
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 12,
+    zIndex: 999,
   },
   detailScroll: {flex: 1},
 

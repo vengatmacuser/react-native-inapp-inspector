@@ -44,10 +44,31 @@ const STATUS_META: Record<
 > = {
   ALL: {color: AppColors.grayText, Icon: LayersIcon},
   '2xx': {color: AppColors.greenColor, Icon: CircleCheckIcon},
+  '200': {color: AppColors.greenColor, Icon: CircleCheckIcon},
   '3xx': {color: AppColors.warningIconGold, Icon: CircleAlertIcon},
+  '300': {color: AppColors.warningIconGold, Icon: CircleAlertIcon},
   '4xx': {color: AppColors.darkOrange, Icon: CircleAlertIcon},
+  '400': {color: AppColors.darkOrange, Icon: CircleAlertIcon},
+  '404': {color: AppColors.darkOrange, Icon: CircleAlertIcon},
   '5xx': {color: AppColors.errorColor, Icon: CircleXIcon},
+  '500': {color: AppColors.errorColor, Icon: CircleXIcon},
   Failed: {color: AppColors.errorColor, Icon: CircleXIcon},
+};
+
+const getStatusMeta = (filter: string) => {
+  if (STATUS_META[filter]) return STATUS_META[filter];
+  const num = parseInt(filter, 10);
+  if (!isNaN(num)) {
+    if (num >= 200 && num < 300) return {color: AppColors.greenColor, Icon: CircleCheckIcon};
+    if (num >= 300 && num < 400) return {color: AppColors.warningIconGold, Icon: CircleAlertIcon};
+    if (num >= 400 && num < 500) return {color: AppColors.darkOrange, Icon: CircleAlertIcon};
+    if (num >= 500) return {color: AppColors.errorColor, Icon: CircleXIcon};
+  }
+  if (filter.startsWith('2')) return {color: AppColors.greenColor, Icon: CircleCheckIcon};
+  if (filter.startsWith('3')) return {color: AppColors.warningIconGold, Icon: CircleAlertIcon};
+  if (filter.startsWith('4')) return {color: AppColors.darkOrange, Icon: CircleAlertIcon};
+  if (filter.startsWith('5')) return {color: AppColors.errorColor, Icon: CircleXIcon};
+  return {color: AppColors.grayText, Icon: LayersIcon};
 };
 
 const FilterChip = React.memo(({
@@ -269,10 +290,11 @@ const NetworkTab = React.memo(() => {
         data={groupedData}
         keyExtractor={item => item?.id?.toString()}
         renderItem={renderItem}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
+        initialNumToRender={12}
+        maxToRenderPerBatch={8}
         windowSize={5}
         removeClippedSubviews={true}
+        renderToHardwareTextureAndroid={true}
         ListHeaderComponent={
           <View style={{marginTop: 6}}>
             {/* Network Health & Telemetry Strip */}
@@ -471,10 +493,7 @@ const NetworkTab = React.memo(() => {
                     const active = isAll
                       ? statusFilters.size === 0
                       : statusFilters.has(filter);
-                    const meta = STATUS_META[filter] ?? {
-                      color: AppColors.grayText,
-                      Icon: LayersIcon,
-                    };
+                    const meta = getStatusMeta(filter);
                     return (
                       <FilterChip
                         key={filter}
@@ -580,12 +599,21 @@ const NetworkTab = React.memo(() => {
       {/* #2 — always-visible scroll-to-top, bottom right */}
       <TouchableScale
         onPress={() => {
-          apisListRef.current?.scrollToOffset({
-            offset: 0,
-            animated: true,
-          });
+          try {
+            apisListRef.current?.scrollToOffset({
+              offset: 0,
+              animated: true,
+            });
+          } catch {
+            try {
+              apisListRef.current?.scrollToIndex({
+                index: 0,
+                animated: true,
+              });
+            } catch {}
+          }
         }}
-        hitSlop={10}
+        hitSlop={12}
         style={styles.scrollTopBtn}>
         <View style={{transform: [{rotate: '180deg'}]}}>
           <ChevronIcon color={AppColors.white} size={18} />

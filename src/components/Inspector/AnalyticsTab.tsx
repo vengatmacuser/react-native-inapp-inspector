@@ -73,6 +73,11 @@ const AnalyticsHeader = React.memo(() => {
   const defaultParams = getDefaultEventParameters();
   const isTrackingEnabled = getCollectionEnabled();
 
+  // If there are no analytics events in the session, hide the graph, category breakdown, and realtime card
+  if (analyticsEvents.length === 0) {
+    return null;
+  }
+
   const hasUserProps = Object.keys(userProperties).length > 0;
   const hasDefaultParams = Object.keys(defaultParams).length > 0;
   const totalEvents = filteredAnalyticsEvents.length;
@@ -752,8 +757,8 @@ const AnalyticsHeader = React.memo(() => {
         </View>
 
         {/* ── Crashlytics-Style Multi-Bar Histogram with Trendline Overlay ── */}
-        <View style={{height: chartHeight, position: 'relative'}}>
-          <Svg width="100%" height={chartHeight} viewBox={`0 0 ${svgWidth} ${chartHeight}`}>
+        <View style={{height: chartHeight, position: 'relative', overflow: 'hidden', borderRadius: 8}}>
+          <Svg width="100%" height={chartHeight} viewBox={`0 0 ${svgWidth} ${chartHeight}`} preserveAspectRatio="none">
             <Defs>
               <SvgLinearGradient id="crashlyticsBarGrad" x1="0" y1="0" x2="0" y2="1">
                 <Stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.9" />
@@ -1340,10 +1345,11 @@ const AnalyticsTab = React.memo(() => {
             keyExtractor={keyExtractor}
             ListHeaderComponent={AnalyticsHeader}
             renderItem={renderItem}
-            initialNumToRender={20}
-            maxToRenderPerBatch={20}
+            initialNumToRender={12}
+            maxToRenderPerBatch={8}
             windowSize={5}
-            removeClippedSubviews={false}
+            removeClippedSubviews={true}
+            renderToHardwareTextureAndroid={true}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <View style={styles.emptyIconWrap}>

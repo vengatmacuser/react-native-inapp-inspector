@@ -16,6 +16,8 @@ import {
   logAnalyticsEvent,
   subscribeAnalyticsEvents,
   simulateTestCrash,
+  getNativeDeviceMetrics,
+  isNativeModuleAvailable,
 } from 'react-native-inapp-inspector';
 import { mockStore } from '../store/mockStore';
 import { styles } from '../styles/appStyles';
@@ -1213,13 +1215,17 @@ export function HomeScreen({ navigation }: any) {
               <View style={styles.btnRow}>
                 <TactileButton
                   label="Simulate JS Exception"
-                  onPress={() => simulateTestCrash('js')}
+                  onPress={() => {
+                    simulateTestCrash('js');
+                  }}
                   color="#E11D48"
                   bgColor="#FFF1F2"
                 />
                 <TactileButton
                   label="Simulate Native Exception"
-                  onPress={() => simulateTestCrash('native')}
+                  onPress={() => {
+                    simulateTestCrash('native');
+                  }}
                   color="#DC2626"
                   bgColor="#FEF2F2"
                 />
@@ -1265,18 +1271,18 @@ export function HomeScreen({ navigation }: any) {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Latest Version</Text>
-                  <Text style={styles.infoValue}>1.1.24</Text>
+                  <Text style={styles.infoValue}>1.1.35</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Unpacked Size</Text>
-                  <Text style={styles.infoValue}>
-                    ~165 KB ({'< 45 KB gzipped'})
+                  <Text style={styles.infoLabel}>Native Architecture</Text>
+                  <Text style={[styles.infoValue, { color: '#6366F1' }]}>
+                    Kotlin (Android) + Obj-C (iOS)
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Native Compilation</Text>
-                  <Text style={[styles.infoValue, { color: '#16A34A' }]}>
-                    Zero (Pure JS / TS)
+                  <Text style={styles.infoLabel}>Native Module Linked</Text>
+                  <Text style={[styles.infoValue, { color: isNativeModuleAvailable() ? '#16A34A' : '#D97706' }]}>
+                    {isNativeModuleAvailable() ? 'YES (Active)' : 'NO (JS Fallback)'}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
@@ -1290,6 +1296,22 @@ export function HomeScreen({ navigation }: any) {
                   <Text style={styles.infoValue}>MIT</Text>
                 </View>
               </View>
+
+              <TactileButton
+                label="Fetch Native Device Telemetry"
+                onPress={async () => {
+                  const metrics = await getNativeDeviceMetrics();
+                  if (metrics) {
+                    console.log('[PERF] ⚡ Native Hardware Telemetry:', metrics);
+                  } else {
+                    console.log('[PERF] ⚡ Native module not linked or running in pure JS mode.');
+                  }
+                }}
+                color="#6366F1"
+                bgColor="#EEF2FF"
+                icon={<SvgBolt color="#6366F1" size={13} />}
+                fullWidth
+              />
 
               <TactileButton
                 label="View Package on NPM Registry"

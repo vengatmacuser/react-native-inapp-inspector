@@ -13,13 +13,16 @@
   "homepage": "https://github.com/vengatmacuser/react-native-inapp-inspector#readme",
   "main": "dist/commonjs/index.js",
   "module": "dist/esm/index.js",
+  "react-native": "dist/commonjs/index.js",
   "types": "dist/commonjs/index.d.ts",
   "sideEffects": false,
   "exports": {
     ".": {
+      "react-native": "./dist/commonjs/index.js",
       "types": "./dist/commonjs/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/commonjs/index.js"
+      "require": "./dist/commonjs/index.js",
+      "default": "./dist/commonjs/index.js"
     }
   },
   "files": [
@@ -29,6 +32,14 @@
     "ios",
     "react-native-inapp-inspector.podspec"
   ],
+  "codegenConfig": {
+    "name": "RNInAppInspectorSpec",
+    "type": "modules",
+    "jsSrcsDir": "src/native",
+    "android": {
+      "javaPackageName": "com.inappinspector"
+    }
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "prebuild": "node scripts/gen-version.js",

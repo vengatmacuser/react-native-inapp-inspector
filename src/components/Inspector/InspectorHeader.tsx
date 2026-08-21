@@ -30,6 +30,7 @@ import {
   AppleIcon,
   AndroidIcon,
   PackageBoxIcon,
+  NpmIcon,
 } from '../NetworkIcons';
 
 const InspectorHeader = React.memo(() => {
@@ -285,26 +286,35 @@ const InspectorHeader = React.memo(() => {
                       </Text>
                     </View>
 
-                    <View
+                    <Pressable
+                      onPress={() =>
+                        Linking.openURL(
+                          'https://www.npmjs.com/package/react-native-inapp-inspector',
+                        ).catch(() => {})
+                      }
                       style={{
-                        backgroundColor: `${AppColors.white}14`,
+                        backgroundColor: '#CB383726',
                         borderRadius: 4,
-                        paddingHorizontal: 4.5,
+                        paddingHorizontal: 5,
                         paddingVertical: 1.5,
                         borderWidth: 1,
-                        borderColor: `${AppColors.white}20`,
+                        borderColor: '#CB383780',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 3.5,
                         flexShrink: 0,
                       }}>
+                      <NpmIcon size={11} color="#FF6B6B" />
                       <Text
                         style={{
-                          fontFamily: AppFonts.interMedium,
-                          fontSize: 8.5,
-                          color: `${AppColors.white}B3`,
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 9,
+                          color: '#FF6B6B',
                         }}
                         numberOfLines={1}>
                         v{LIB_VERSION}
                       </Text>
-                    </View>
+                    </Pressable>
                   </View>
                 </View>
               </View>

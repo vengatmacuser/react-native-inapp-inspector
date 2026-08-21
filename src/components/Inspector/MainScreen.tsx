@@ -48,21 +48,10 @@ const MainScreen = () => {
     activeTab,
     isReady,
     isEnabled,
+    useNativeFab,
     hasNavigationContext,
     setNavState,
   } = useInspector();
-
-  // Lazy-mount each tab on first visit and cache it in memory for 0ms instantaneous switching
-  const [mountedTabs, setMountedTabs] = useState<Record<string, boolean>>({
-    [activeTab]: true,
-  });
-
-  useEffect(() => {
-    setMountedTabs(prev => {
-      if (prev[activeTab]) return prev;
-      return {...prev, [activeTab]: true};
-    });
-  }, [activeTab]);
 
   const isDetailActive =
     (activeTab === 'apis' && selected != null) ||
@@ -73,7 +62,9 @@ const MainScreen = () => {
 
   return (
     <>
-      {(Platform.OS === 'ios' || Platform.OS === 'android') && isEnabled && <FabLauncher />}
+      {(Platform.OS === 'ios' || Platform.OS === 'android') &&
+        isEnabled &&
+        !useNativeFab && <FabLauncher />}
       <Modal
         visible={visible}
         animationType={modalAnimationType}
@@ -108,7 +99,9 @@ const MainScreen = () => {
                 <TabBar />
               ) : null}
 
-              {isReady ? (
+              {settingsPage !== null ? (
+                <SettingsPanel />
+              ) : isReady ? (
                 isDetailActive ? (
                   activeTab === 'apis' && selected != null ? (
                     <NetworkDetail />
@@ -122,57 +115,15 @@ const MainScreen = () => {
                     <CrashDetail />
                   ) : null
                 ) : (
-                  <>
-                    <View
-                      style={{
-                        flex: 1,
-                        display: activeTab === 'apis' ? 'flex' : 'none',
-                      }}>
-                      {mountedTabs.apis && <NetworkTab />}
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        display: activeTab === 'logs' ? 'flex' : 'none',
-                      }}>
-                      {mountedTabs.logs && <ConsoleTab />}
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        display: activeTab === 'analytics' ? 'flex' : 'none',
-                      }}>
-                      {mountedTabs.analytics && <AnalyticsTab />}
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        display: activeTab === 'redux' ? 'flex' : 'none',
-                      }}>
-                      {mountedTabs.redux && <ReduxTab />}
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        display: activeTab === 'bundle' ? 'flex' : 'none',
-                      }}>
-                      {mountedTabs.bundle && <BundleTab />}
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        display: activeTab === 'performance' ? 'flex' : 'none',
-                      }}>
-                      {mountedTabs.performance && <PerformanceTab />}
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        display: activeTab === 'crash' ? 'flex' : 'none',
-                      }}>
-                      {mountedTabs.crash && <CrashTab />}
-                    </View>
-                  </>
+                  <View style={{flex: 1}}>
+                    {activeTab === 'apis' && <NetworkTab />}
+                    {activeTab === 'logs' && <ConsoleTab />}
+                    {activeTab === 'analytics' && <AnalyticsTab />}
+                    {activeTab === 'redux' && <ReduxTab />}
+                    {activeTab === 'bundle' && <BundleTab />}
+                    {activeTab === 'performance' && <PerformanceTab />}
+                    {activeTab === 'crash' && <CrashTab />}
+                  </View>
                 )
               ) : (
                 <View style={styles.empty}>
@@ -180,19 +131,6 @@ const MainScreen = () => {
                   <Text style={[styles.emptySub, {marginTop: 12}]}>
                     Loading logs...
                   </Text>
-                </View>
-              )}
-
-              {settingsPage !== null && (
-                <View
-                  style={[
-                    StyleSheet.absoluteFill,
-                    {
-                      backgroundColor: AppColors.grayBackground,
-                      zIndex: 99999,
-                    },
-                  ]}>
-                  <SettingsPanel />
                 </View>
               )}
 

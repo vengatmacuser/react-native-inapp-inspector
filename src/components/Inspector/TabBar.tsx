@@ -1,7 +1,6 @@
 import React from 'react';
-import {Animated, ScrollView, Text, View} from 'react-native';
+import {Animated, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {useInspector} from './InspectorContext';
-import TouchableScale from '../TouchableScale';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {
@@ -16,6 +15,7 @@ import {
 
 import {isReduxConnected} from '../../customHooks/reduxLogger';
 import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
+import {triggerNativeHaptic} from '../../native/NativeInspector';
 
 const TabBar = React.memo(() => {
   const {
@@ -112,9 +112,13 @@ const TabBar = React.memo(() => {
               activeTab !== 'crash' &&
               (crashRecords?.length || 0) > (lastReadCrashesCount || 0);
             return (
-              <TouchableScale
+              <TouchableOpacity
                 key={tab.key}
-                onPress={() => switchActiveTab(tab.key)}
+                activeOpacity={0.7}
+                onPress={() => {
+                  switchActiveTab(tab.key);
+                  triggerNativeHaptic('light');
+                }}
                 style={[
                   styles.contentTabButton,
                   isActive && styles.contentTabButtonActive,
@@ -173,7 +177,7 @@ const TabBar = React.memo(() => {
                     />
                   )}
                 </View>
-              </TouchableScale>
+              </TouchableOpacity>
             );
           })}
       </ScrollView>

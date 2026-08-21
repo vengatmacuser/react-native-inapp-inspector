@@ -641,10 +641,11 @@ const ConsoleTab = React.memo(() => {
         keyExtractor={keyExtractor}
         ListHeaderComponent={listHeader}
         renderItem={renderItem}
-        initialNumToRender={15}
-        maxToRenderPerBatch={15}
-        windowSize={7}
+        initialNumToRender={12}
+        maxToRenderPerBatch={8}
+        windowSize={5}
         removeClippedSubviews={true}
+        renderToHardwareTextureAndroid={true}
         ListEmptyComponent={
           <EmptyState
             isSearch={

@@ -119,11 +119,12 @@ export const logAnalyticsEvent = (
  */
 let isAnalyticsPatched = false;
 
-export const isAnalyticsConnected = () =>
-  isAnalyticsPatched ||
-  events.length > 0 ||
-  Object.keys(currentUserProperties).length > 0 ||
-  currentUserId != null;
+/**
+ * Returns true if analytics logging is active (always ready for custom and Firebase events).
+ */
+export const isAnalyticsConnected = () => true;
+
+export const isFirebaseAnalyticsPatched = () => isAnalyticsPatched;
 
 export const setupAnalyticsLogger = (analyticsInstance: any): void => {
   if (!analyticsInstance) {

@@ -1,5 +1,8 @@
 import React, {useRef} from 'react';
-import {Animated, Pressable, PressableProps, StyleSheet, Platform} from 'react-native';
+import {Animated, Pressable, PressableProps} from 'react-native';
+import {triggerNativeHaptic} from '../native/NativeInspector';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface TouchableScaleProps extends PressableProps {
   onPress?: () => void;
@@ -8,6 +11,7 @@ export interface TouchableScaleProps extends PressableProps {
   children?: React.ReactNode;
   hitSlop?: any;
   disabled?: boolean;
+  enableHaptics?: boolean;
 }
 
 const TouchableScale = React.memo(function TouchableScale({
@@ -17,6 +21,7 @@ const TouchableScale = React.memo(function TouchableScale({
   children,
   hitSlop,
   disabled,
+  enableHaptics = true,
   accessible,
   accessibilityRole,
   accessibilityLabel,
@@ -25,63 +30,45 @@ const TouchableScale = React.memo(function TouchableScale({
   accessibilityValue,
   ...rest
 }: TouchableScaleProps) {
-  if (Platform.OS === 'android') {
-    return (
-      <Pressable
-        accessible={accessible}
-        accessibilityRole={accessibilityRole}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={accessibilityHint}
-        accessibilityState={accessibilityState}
-        accessibilityValue={accessibilityValue}
-        disabled={disabled}
-        onPress={onPress}
-        onLongPress={onLongPress}
-        hitSlop={hitSlop}
-        style={({pressed}) => [
-          style,
-          {opacity: pressed ? 0.75 : 1},
-        ]}
-        {...rest}>
-        {children}
-      </Pressable>
-    );
-  }
-
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
 
-  const animatePress = (pressed: boolean) => {
+  const handlePressIn = () => {
+    if (disabled) return;
+    if (enableHaptics) {
+      triggerNativeHaptic('light');
+    }
     Animated.parallel([
-      Animated.spring(scale, {
-        toValue: pressed ? 0.94 : 1,
-        friction: 6,
-        tension: 120,
+      Animated.timing(scale, {
+        toValue: 0.94,
+        duration: 50,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
-        toValue: pressed ? 0.86 : 1,
-        duration: pressed ? 90 : 140,
+        toValue: 0.85,
+        duration: 50,
         useNativeDriver: true,
       }),
     ]).start();
   };
 
-  const flattenedStyle = StyleSheet.flatten(style) || {};
-  const layoutStyle = {
-    flex: flattenedStyle.flex,
-    flexDirection: flattenedStyle.flexDirection,
-    alignItems: flattenedStyle.alignItems,
-    justifyContent: flattenedStyle.justifyContent,
-    flexWrap: flattenedStyle.flexWrap,
-    alignSelf: flattenedStyle.alignSelf,
-    flexGrow: flattenedStyle.flexGrow,
-    flexShrink: flattenedStyle.flexShrink,
-    gap: flattenedStyle.gap,
+  const handlePressOut = () => {
+    Animated.parallel([
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       accessible={accessible}
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel}
@@ -89,17 +76,15 @@ const TouchableScale = React.memo(function TouchableScale({
       accessibilityState={accessibilityState}
       accessibilityValue={accessibilityValue}
       disabled={disabled}
-      style={style}
-      onPressIn={() => animatePress(true)}
-      onPressOut={() => animatePress(false)}
+      style={[style, {opacity, transform: [{scale}]}]}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={onPress}
       onLongPress={onLongPress}
       hitSlop={hitSlop}
       {...rest}>
-      <Animated.View style={[{opacity, transform: [{scale}]}, layoutStyle]}>
-        {children}
-      </Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 });
 

@@ -36,7 +36,13 @@ import {
   saveSettings,
   setCustomStorage,
   clearPersistedSettings,
+  calculateRamBasedLimits,
 } from './helpers/settingsStore';
+import {
+  getNativeSystemMetrics,
+  pushNativeLogRecord,
+  fetchNativeCachedPage,
+} from './native/NativeInspector';
 
 // Network
 import {
@@ -90,6 +96,19 @@ import {
 
 import {setPerformanceModuleEnabled} from './customHooks/performanceTracker';
 import {setBundleModuleEnabled} from './customHooks/bundleAnalyzer';
+import {
+  showNativeFloatingButton,
+  hideNativeFloatingButton,
+  setNativeFloatingButtonBadge,
+  subscribeNativeFloatingButtonPress,
+  subscribeNativeDeviceShake,
+  startNativeFpsMonitoring,
+  stopNativeFpsMonitoring,
+  getNativeFpsMetrics,
+  getNativeStorageItem,
+  setNativeStorageItem,
+  isNativeModuleAvailable,
+} from './native/NativeInspector';
 
 // Constants
 import {
@@ -317,6 +336,9 @@ const NetworkInspector = ({
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
+  const [maxAnalyticsEventsLimit, setMaxAnalyticsEventsLimit] = useState<number>(250);
+  const [isAutoRamLimitEnabled, setIsAutoRamLimitEnabled] = useState<boolean>(true);
+  const [deviceFreeRamMb, setDeviceFreeRamMb] = useState<number>(1800);
 
   const [reduxAutoRefresh, setReduxAutoRefreshState] = useState<boolean>(true);
   const [reduxExpandDepth, setReduxExpandDepth] = useState<number>(1);
@@ -336,6 +358,26 @@ const NetworkInspector = ({
     setBundleModuleEnabled(!!tabVisibility.bundle);
   }, [tabVisibility]);
 
+  // Query native hardware RAM and auto-tune limits if auto-RAM is active
+  useEffect(() => {
+    getNativeSystemMetrics()
+      .then(metrics => {
+        if (metrics) {
+          const freeRam = metrics.totalPhysicalRamMb - metrics.residentRamMb;
+          const freeMb = Math.max(200, Math.round(freeRam > 0 ? freeRam : 1500));
+          setDeviceFreeRamMb(freeMb);
+          if (isAutoRamLimitEnabled) {
+            const profile = calculateRamBasedLimits(freeMb);
+            setMaxNetworkLogs(profile.maxNetworkLogs);
+            setMaxConsoleLogs(profile.maxConsoleLogs);
+            setMaxAnalyticsEventsLimit(profile.maxAnalyticsEvents);
+            setMaxCrashLogs(profile.maxCrashRecords);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [isAutoRamLimitEnabled]);
+
   const resetToDefaults = async () => {
     await clearPersistedSettings();
     setIsDark(false);
@@ -352,9 +394,12 @@ const NetworkInspector = ({
       crash: false,
     });
     setDefaultTab('apis');
-    setMaxCrashLogs(100);
-    setMaxNetworkLogs(100);
-    setMaxConsoleLogs(200);
+    setIsAutoRamLimitEnabled(true);
+    const profile = calculateRamBasedLimits(deviceFreeRamMb);
+    setMaxCrashLogs(profile.maxCrashRecords);
+    setMaxNetworkLogs(profile.maxNetworkLogs);
+    setMaxConsoleLogs(profile.maxConsoleLogs);
+    setMaxAnalyticsEventsLimit(profile.maxAnalyticsEvents);
     setShowConsoleLevels({
       info: true,
       warn: true,
@@ -387,8 +432,13 @@ const NetworkInspector = ({
           apis: true, // APIs is always required
         }));
       if (saved.defaultTab) setDefaultTab(saved.defaultTab as ActiveTab);
+      if (saved.isAutoRamLimitEnabled != null)
+        setIsAutoRamLimitEnabled(saved.isAutoRamLimitEnabled);
       if (saved.maxNetworkLogs != null) setMaxNetworkLogs(saved.maxNetworkLogs);
       if (saved.maxConsoleLogs != null) setMaxConsoleLogs(saved.maxConsoleLogs);
+      if (saved.maxAnalyticsEventsLimit != null)
+        setMaxAnalyticsEventsLimit(saved.maxAnalyticsEventsLimit);
+      if (saved.maxCrashLogs != null) setMaxCrashLogs(saved.maxCrashLogs);
       if (saved.showConsoleLevels)
         setShowConsoleLevels(saved.showConsoleLevels);
       if (saved.reduxAutoRefresh != null)
@@ -431,6 +481,9 @@ const NetworkInspector = ({
       defaultTab,
       maxNetworkLogs,
       maxConsoleLogs,
+      maxAnalyticsEventsLimit,
+      maxCrashLogs,
+      isAutoRamLimitEnabled,
       showConsoleLevels,
       reduxAutoRefresh,
       reduxExpandDepth,
@@ -444,6 +497,9 @@ const NetworkInspector = ({
     defaultTab,
     maxNetworkLogs,
     maxConsoleLogs,
+    maxAnalyticsEventsLimit,
+    maxCrashLogs,
+    isAutoRamLimitEnabled,
     showConsoleLevels,
     reduxAutoRefresh,
     reduxExpandDepth,
@@ -519,11 +575,39 @@ const NetworkInspector = ({
     });
   };
 
+  const loadNativePage = useCallback(async (tabKey: ActiveTab, query: string = '') => {
+    if (tabKey === 'apis' || tabKey === 'logs' || tabKey === 'analytics' || tabKey === 'crash') {
+      const pageData = await fetchNativeCachedPage(tabKey, 0, 100, query);
+      if (pageData && pageData.items && pageData.items.length > 0) {
+        if (tabKey === 'apis') setLogs(pageData.items);
+        else if (tabKey === 'logs') setConsoleLogs(pageData.items);
+        else if (tabKey === 'analytics') setAnalyticsEvents(pageData.items);
+        else if (tabKey === 'crash') setCrashRecords(pageData.items);
+      }
+    }
+  }, []);
+
   const switchActiveTab = useCallback((key: ActiveTab) => {
     if (key === 'redux' && !isReduxConnected()) return;
     if (key === 'analytics' && !isAnalyticsConnected()) return;
-    setActiveTab(key);
-  }, []);
+
+    setSelected(null);
+    setSelectedEvent(null);
+    setSelectedLog(null);
+    setSelectedReduxSlice(null);
+    setSelectedReduxAction(null);
+    setSelectedCrash(null);
+
+    if (typeof React.startTransition === 'function') {
+      React.startTransition(() => {
+        setActiveTab(key);
+        loadNativePage(key);
+      });
+    } else {
+      setActiveTab(key);
+      loadNativePage(key);
+    }
+  }, [loadNativePage]);
 
   const [selectedEvent, setSelectedEvent] = useState<AnalyticsEvent | null>(
     null,
@@ -792,6 +876,58 @@ const NetworkInspector = ({
     return () => loop.stop();
   }, [unreadPulseAnim]);
 
+  const isNativeModule = useMemo(() => isNativeModuleAvailable(), []);
+  const useNativeFab =
+    (Platform.OS === 'ios' || Platform.OS === 'android') && isNativeModule;
+
+  // 100% Native Main-Thread Floating Button Lifecycle
+  useEffect(() => {
+    if (!useNativeFab || !isEnabled || !enabled) {
+      if (useNativeFab) {
+        hideNativeFloatingButton();
+      }
+      return;
+    }
+
+    if (visible) {
+      hideNativeFloatingButton();
+    } else {
+      showNativeFloatingButton();
+      setNativeFloatingButtonBadge(
+        logs.length > 0 || analyticsEvents.length > 0,
+      );
+    }
+  }, [
+    useNativeFab,
+    isEnabled,
+    enabled,
+    visible,
+    logs.length,
+    analyticsEvents.length,
+  ]);
+
+  // Subscribe to native UI-thread floating button tap events
+  useEffect(() => {
+    if (!useNativeFab) return;
+    const unsubscribe = subscribeNativeFloatingButtonPress(() => {
+      setVisible(true);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [useNativeFab]);
+
+  // Subscribe to physical hardware shake events (or Cmd+Ctrl+Z on iOS simulator)
+  useEffect(() => {
+    if (!useNativeFab) return;
+    const unsubscribe = subscribeNativeDeviceShake(() => {
+      setVisible(prev => !prev);
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [useNativeFab]);
+
   const isVisibleRefObj = useRef(visible);
 
   // #6 — every time the inspector is opened, land on chosen default tab & sync latest logs
@@ -864,6 +1000,9 @@ const NetworkInspector = ({
         return;
       }
       const updated = getCrashRecords();
+      if (updated.length > 0) {
+        pushNativeLogRecord('crash', JSON.stringify(updated[0]));
+      }
       if (isVisibleRef.current) {
         setCrashRecords(updated);
       }
@@ -873,6 +1012,7 @@ const NetworkInspector = ({
     // during the very first commit, which fires before effects are mounted).
     const pendingCrashes = getCrashRecords();
     if (pendingCrashes.length > 0) {
+      pendingCrashes.forEach(c => pushNativeLogRecord('crash', JSON.stringify(c)));
       setCrashRecords(pendingCrashes);
     }
 
@@ -881,6 +1021,9 @@ const NetworkInspector = ({
     let isFirstNetworkCall = true;
     const unsubscribe = subscribeNetworkLogs((raw: NetworkLog[]) => {
       latestNetworkLogsRef.current = raw;
+      if (raw.length > 0) {
+        pushNativeLogRecord('apis', JSON.stringify(raw[0]));
+      }
       if (isNetworkPausedRef.current) return;
       if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
 
@@ -923,6 +1066,9 @@ const NetworkInspector = ({
     const unsubscribeAnalytics = subscribeAnalyticsEvents(
       (raw: AnalyticsEvent[]) => {
         latestAnalyticsEventsRef.current = raw;
+        if (raw.length > 0) {
+          pushNativeLogRecord('analytics', JSON.stringify(raw[0]));
+        }
         if (isAnalyticsPausedRef.current) return;
         if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
 
@@ -966,6 +1112,9 @@ const NetworkInspector = ({
 
     const unsubscribeConsole = subscribeConsoleLogs((raw: ConsoleLog[]) => {
       latestConsoleLogsRef.current = raw;
+      if (raw.length > 0) {
+        pushNativeLogRecord('logs', JSON.stringify(raw[0]));
+      }
       if (isConsolePausedRef.current) return;
       if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
 
@@ -1038,6 +1187,10 @@ const NetworkInspector = ({
         const matched = [...statusFilters].some(f => {
           if (f === 'ALL') return true;
           if (f === 'Failed') return log.status === 0 || log.status == null;
+          const codeNum = parseInt(f, 10);
+          if (!isNaN(codeNum)) {
+            return Number(log.status) === codeNum;
+          }
           return String(log.status)[0] === f[0];
         });
         if (!matched) return false;
@@ -1052,9 +1205,26 @@ const NetworkInspector = ({
         if (!matchedMethod) return false;
       }
 
-      // Search Bar Check
-      if (search && !log.url?.toLowerCase().includes(search.toLowerCase()))
-        return false;
+      // Comprehensive Search Bar Check
+      if (search && search.trim().length > 0) {
+        const queryTokens = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const routePath = logRouteMapRef.current.get(log.id)?.path || '';
+        const reqStr = typeof log.request === 'string' ? log.request : JSON.stringify(log.request || '');
+        const resStr = typeof log.response === 'string' ? log.response : JSON.stringify(log.response || '');
+        const searchTarget = [
+          log.method || '',
+          log.url || '',
+          String(log.status ?? ''),
+          routePath,
+          reqStr,
+          resStr,
+          JSON.stringify(log.requestHeaders || ''),
+          JSON.stringify(log.responseHeaders || ''),
+        ].join(' ').toLowerCase();
+
+        const isMatch = queryTokens.every(token => searchTarget.includes(token));
+        if (!isMatch) return false;
+      }
 
       return true;
     });
@@ -1233,15 +1403,21 @@ const NetworkInspector = ({
     let events = analyticsEvents;
 
     // Search query filter
-    if (analyticsSearch) {
-      const s = analyticsSearch.toLowerCase();
-      events = events.filter(
-        e =>
-          e.name.toLowerCase().includes(s) ||
-          JSON.stringify(e.params || {}).toLowerCase().includes(s) ||
-          (e.screenName ?? '').toLowerCase().includes(s) ||
-          (e.pageTitle ?? '').toLowerCase().includes(s),
-      );
+    if (analyticsSearch && analyticsSearch.trim().length > 0) {
+      const queryTokens = analyticsSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      events = events.filter(e => {
+        const searchTarget = [
+          e.name || '',
+          JSON.stringify(e.params || ''),
+          JSON.stringify(e.userProperties || ''),
+          e.screenName || '',
+          e.pageTitle || '',
+          e.userId || '',
+          e.source || '',
+        ].join(' ').toLowerCase();
+
+        return queryTokens.every(token => searchTarget.includes(token));
+      });
     }
 
     // Category filter
@@ -1283,13 +1459,19 @@ const NetworkInspector = ({
 
     // Payload complexity filter
     if (analyticsFilters.payloadComplexity !== 'all') {
-      events = events.filter(e => {
-        const count = e.params ? Object.keys(e.params).length : 0;
-        if (analyticsFilters.payloadComplexity === 'none') return count === 0;
-        if (analyticsFilters.payloadComplexity === 'simple') return count >= 1 && count <= 5;
-        if (analyticsFilters.payloadComplexity === 'heavy') return count > 5;
-        return true;
-      });
+      if (analyticsFilters.payloadComplexity === 'none') {
+        events = events.filter(
+          e => !e.params || Object.keys(e.params).length === 0,
+        );
+      } else if (analyticsFilters.payloadComplexity === 'simple') {
+        events = events.filter(
+          e => e.params && Object.keys(e.params).length <= 3,
+        );
+      } else if (analyticsFilters.payloadComplexity === 'heavy') {
+        events = events.filter(
+          e => e.params && Object.keys(e.params).length > 3,
+        );
+      }
     }
 
     // Conversion / Goal events filter
@@ -1328,10 +1510,11 @@ const NetworkInspector = ({
 
     // Has Revenue filter
     if (analyticsFilters.hasRevenue) {
-      events = events.filter(e => {
-        const val = e.params?.value ?? e.params?.price;
-        return val !== undefined && val !== null && Number(val) > 0;
-      });
+      events = events.filter(
+        e =>
+          (e.params?.value != null && !isNaN(Number(e.params.value))) ||
+          (e.params?.price != null && !isNaN(Number(e.params.price))),
+      );
     }
 
     // Has Items filter
@@ -1411,21 +1594,26 @@ const NetworkInspector = ({
           return true;
         if (
           logFilters.has('analytics') &&
-          log.message.toLowerCase().includes('[analytics error]')
+          log.message?.toLowerCase().includes('[analytics error]')
         )
           return true;
         return false;
       });
     }
 
-    // Search bar check
-    if (logSearch) {
-      const s = logSearch.toLowerCase();
-      result = result.filter(
-        log =>
-          log.message.toLowerCase().includes(s) ||
-          (log.caller ?? '').toLowerCase().includes(s),
-      );
+    // Comprehensive Search bar check
+    if (logSearch && logSearch.trim().length > 0) {
+      const queryTokens = logSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      result = result.filter(log => {
+        const searchTarget = [
+          log.message || '',
+          log.caller || '',
+          log.type || '',
+          log.sourceMethod || '',
+        ].join(' ').toLowerCase();
+
+        return queryTokens.every(token => searchTarget.includes(token));
+      });
     }
 
     // #7 — apply sort order (newest/oldest first)
@@ -1469,13 +1657,18 @@ const NetworkInspector = ({
 
   const logCounts = useMemo(() => {
     let searchedLogs = visibleConsoleLogs;
-    if (logSearch) {
-      const s = logSearch.toLowerCase();
-      searchedLogs = visibleConsoleLogs.filter(
-        log =>
-          log.message.toLowerCase().includes(s) ||
-          (log.caller ?? '').toLowerCase().includes(s),
-      );
+    if (logSearch && logSearch.trim().length > 0) {
+      const queryTokens = logSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      searchedLogs = visibleConsoleLogs.filter(log => {
+        const searchTarget = [
+          log.message || '',
+          log.caller || '',
+          log.type || '',
+          log.sourceMethod || '',
+        ].join(' ').toLowerCase();
+
+        return queryTokens.every(token => searchTarget.includes(token));
+      });
     }
 
     const total = visibleConsoleLogs.length;
@@ -1703,6 +1896,7 @@ const NetworkInspector = ({
     runClearAllWithAnimation,
 
     // ─── FAB / launcher ─────────────────────────────────────────────────
+    useNativeFab,
     fabPan,
     fabPanResponder,
     fabDraggedRef,
@@ -1827,6 +2021,11 @@ const NetworkInspector = ({
     setMaxNetworkLogs,
     maxConsoleLogs,
     setMaxConsoleLogs,
+    maxAnalyticsEventsLimit,
+    setMaxAnalyticsEventsLimit,
+    isAutoRamLimitEnabled,
+    setIsAutoRamLimitEnabled,
+    deviceFreeRamMb,
     reduxAutoRefresh,
     setReduxAutoRefreshState,
     reduxExpandDepth,
@@ -1948,6 +2147,27 @@ export {
   InspectCatch,
   type InspectLogOptions,
 } from './decorators';
+
+export {
+  getNativeDeviceMetrics,
+  enableNativeCrashProtection,
+  subscribeNativeCrashes,
+  showNativeFloatingButton,
+  hideNativeFloatingButton,
+  setNativeFloatingButtonBadge,
+  subscribeNativeFloatingButtonPress,
+  subscribeNativeDeviceShake,
+  startNativeFpsMonitoring,
+  stopNativeFpsMonitoring,
+  getNativeFpsMetrics,
+  getNativeStorageItem,
+  setNativeStorageItem,
+  isNativeModuleAvailable,
+  type NativeDeviceMetrics,
+  type NativeCrashEvent,
+  type FloatingButtonOptions,
+  type NativeFpsMetrics,
+} from './native/NativeInspector';
 
 export {
   ActiveTab,

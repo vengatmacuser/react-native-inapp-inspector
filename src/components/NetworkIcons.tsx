@@ -2078,3 +2078,10 @@ export const TagIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) 
   </Svg>
 );
 
+export const NpmIcon = ({color = '#CB3837', size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 256 256" fill="none">
+    <Rect width="256" height="256" rx="32" fill={color} />
+    <Path d="M48 48h160v160h-32V96h-32v112H48V48z" fill="#FFFFFF" />
+  </Svg>
+);
+

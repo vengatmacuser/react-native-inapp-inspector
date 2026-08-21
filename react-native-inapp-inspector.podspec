@@ -9,10 +9,15 @@ Pod::Spec.new do |s|
   s.license      = package['license']
   s.authors      = package['author']
   s.homepage     = package['homepage']
-  s.platform     = :ios, "11.0"
+  s.platforms    = { :ios => "12.4" }
   s.source       = { :git => "https://github.com/vengatmacuser/react-native-inapp-inspector.git", :tag => "v#{s.version}" }
   s.source_files = "ios/**/*.{h,m,mm,swift}"
   s.requires_arc = true
 
-  s.dependency "React-Core"
+  # React Native New Architecture (TurboModules & Codegen) support
+  if respond_to?(:install_modules_dependencies, true)
+    install_modules_dependencies(s)
+  else
+    s.dependency "React-Core"
+  end
 end

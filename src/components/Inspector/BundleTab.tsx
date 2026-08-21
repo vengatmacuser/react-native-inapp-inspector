@@ -1317,6 +1317,8 @@ const BundleTab = React.memo(() => {
                       </View>
                       <Text
                         selectable={true}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
                         style={{
                           fontFamily: AppFonts.interMedium,
                           fontSize: 11,

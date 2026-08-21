@@ -36,7 +36,12 @@ const config = {
     extraNodeModules: new Proxy(
       {},
       {
-        get: (target, name) => path.join(__dirname, 'node_modules', name),
+        get: (target, name) => {
+          if (name === 'react-native-inapp-inspector') {
+            return root;
+          }
+          return path.join(__dirname, 'node_modules', name);
+        },
       }
     ),
   },

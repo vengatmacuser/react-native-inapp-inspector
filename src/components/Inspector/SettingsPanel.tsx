@@ -5,6 +5,7 @@ import {
   ScrollView,
   StatusBar,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -16,7 +17,10 @@ import styles, {toggleGlobalTheme} from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {LIB_VERSION} from '../../constants';
-import {isPersistentStorageAvailable} from '../../helpers/settingsStore';
+import {
+  isPersistentStorageAvailable,
+  calculateRamBasedLimits,
+} from '../../helpers/settingsStore';
 import {clearNetworkLogs} from '../../customHooks/networkLogger';
 import {clearConsoleLogs} from '../../customHooks/consoleLogger';
 import {clearAnalyticsEvents} from '../../customHooks/analyticsLogger';
@@ -80,6 +84,11 @@ const SettingsPanel = () => {
     setMaxNetworkLogs,
     maxConsoleLogs,
     setMaxConsoleLogs,
+    maxAnalyticsEventsLimit,
+    setMaxAnalyticsEventsLimit,
+    isAutoRamLimitEnabled,
+    setIsAutoRamLimitEnabled,
+    deviceFreeRamMb,
     reduxAutoRefresh,
     setReduxAutoRefreshState,
     reduxExpandDepth,
@@ -92,6 +101,8 @@ const SettingsPanel = () => {
     maxCrashLogs,
     setMaxCrashLogs,
   } = useInspector();
+
+  const autoRamProfile = calculateRamBasedLimits(deviceFreeRamMb);
 
   const isPersistent = isPersistentStorageAvailable();
   
@@ -944,9 +955,239 @@ const SettingsPanel = () => {
                   );
                 })}
               </View>
+
+              {/* Section 3.5: RAM-Based Auto Limits */}
+              <View
+                style={{
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  overflow: 'hidden',
+                  padding: 14,
+                  gap: 12,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: AppColors.grayTextWeak,
+                    letterSpacing: 0.8,
+                  }}>
+                  RAM-Based Auto Limits
+                </Text>
+
+                {/* Auto RAM Limit Toggle */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                      flex: 1,
+                    }}>
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundColor: AppColors.purpleShade50,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <PerformanceIcon color={AppColors.purple} size={15} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13.5,
+                          lineHeight: 18,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        Auto-Calculate Limits from Device RAM
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          lineHeight: 15,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        Automatically set API, Logs, Analytics & Crash limits based on available memory
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="switch"
+                    accessibilityLabel="Toggle auto RAM limit calculation"
+                    accessibilityState={{checked: isAutoRamLimitEnabled}}
+                    onPress={() => setIsAutoRamLimitEnabled(prev => !prev)}
+                    style={{
+                      width: 42,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: isAutoRamLimitEnabled
+                        ? AppColors.purple
+                        : AppColors.grayBorderSecondary,
+                      padding: 2,
+                      justifyContent: 'center',
+                      alignItems: isAutoRamLimitEnabled ? 'flex-end' : 'flex-start',
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 10,
+                        backgroundColor: AppColors.white,
+                        shadowColor: AppColors.black,
+                        shadowOpacity: 0.18,
+                        shadowRadius: 2,
+                        shadowOffset: {width: 0, height: 1},
+                      }}
+                    />
+                  </TouchableScale>
+                </View>
+
+                <View
+                  style={{height: 1, backgroundColor: AppColors.dividerColor}}
+                />
+
+                {/* Device Free RAM Display */}
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      backgroundColor: isAutoRamLimitEnabled
+                        ? `${AppColors.purple}14`
+                        : AppColors.grayBackground,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <SignalIcon
+                      color={isAutoRamLimitEnabled ? AppColors.purple : AppColors.grayTextWeak}
+                      size={15}
+                    />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 13.5,
+                        lineHeight: 18,
+                        color: isAutoRamLimitEnabled
+                          ? AppColors.primaryBlack
+                          : AppColors.grayText,
+                      }}>
+                      Detected Free RAM
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 11,
+                        lineHeight: 15,
+                        color: AppColors.grayText,
+                        marginTop: 1,
+                      }}>
+                      {deviceFreeRamMb} MB available
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                      backgroundColor: isAutoRamLimitEnabled
+                        ? `${AppColors.purple}12`
+                        : AppColors.grayBackground,
+                      borderWidth: 1,
+                      borderColor: isAutoRamLimitEnabled
+                        ? `${AppColors.purple}26`
+                        : AppColors.dividerColor,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 12,
+                        lineHeight: 15,
+                        color: isAutoRamLimitEnabled
+                          ? AppColors.purple
+                          : AppColors.grayText,
+                      }}>
+                      {deviceFreeRamMb} MB
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Current Auto-Calculated Limits Preview */}
+                {isAutoRamLimitEnabled && (
+                  <View style={{marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: AppColors.dividerColor, gap: 6}}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 11.5,
+                        lineHeight: 15,
+                        color: AppColors.purple,
+                      }}>
+                      Auto Profile: {autoRamProfile.profileName}
+                    </Text>
+                    <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
+                      {[
+                        {label: 'APIs', value: autoRamProfile.maxNetworkLogs, color: AppColors.blue500},
+                        {label: 'Logs', value: autoRamProfile.maxConsoleLogs, color: AppColors.sky500},
+                        {label: 'Analytics', value: autoRamProfile.maxAnalyticsEvents, color: AppColors.purple},
+                        {label: 'Crash', value: autoRamProfile.maxCrashRecords, color: AppColors.errorColor},
+                      ].map(item => (
+                        <View
+                          key={item.label}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            borderRadius: 6,
+                            backgroundColor: `${item.color}14`,
+                            borderWidth: 1,
+                            borderColor: `${item.color}33`,
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
+                              lineHeight: 14,
+                              color: item.color,
+                            }}>
+                            {item.label}
+                          </Text>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
+                              lineHeight: 14,
+                              color: item.color,
+                            }}>
+                            {item.value}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
             </View>
           ) : (
-            /* UI Preferences Subtab */
             <View style={{gap: 14}}>
               {/* Section 1: Appearance */}
               <View
@@ -1857,105 +2098,177 @@ const SettingsPanel = () => {
       onSelect: (val: any) => void;
       formatLabel?: (val: any) => string;
     };
+    numericInput?: {
+      value: number;
+      onChange: (val: number) => void;
+      min?: number;
+      max?: number;
+      placeholder?: string;
+      keyboardType?: 'numeric' | 'number-pad' | 'decimal-pad';
+    };
     onPress?: () => void;
     isLast?: boolean;
-  }) => (
-    <View
-      style={{
-        paddingVertical: 12,
-        borderBottomWidth: opts.isLast ? 0 : 1,
-        borderBottomColor: AppColors.dividerColor,
-      }}>
-      <TouchableScale
-        disabled={!opts.onPress}
-        onPress={opts.onPress}
+  }) => {
+    return (
+      <View
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 12,
+          paddingVertical: 12,
+          borderBottomWidth: opts.isLast ? 0 : 1,
+          borderBottomColor: AppColors.dividerColor,
         }}>
-        <View
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            backgroundColor: AppColors.purpleShade50,
-            borderWidth: 1,
-            borderColor: `${AppColors.purple}2E`,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-          {opts.icon}
-        </View>
-        <View style={{flex: 1}}>
-          <Text
-            style={{
-              fontFamily: AppFonts.interBold,
-              fontSize: 14,
-              lineHeight: 18,
-              color: AppColors.primaryBlack,
-            }}>
-            {opts.label}
-          </Text>
-          {opts.description ? (
-            <Text
-              style={{
-                fontFamily: AppFonts.interRegular,
-                fontSize: 11,
-                lineHeight: 15,
-                color: AppColors.grayText,
-                marginTop: 1,
-              }}>
-              {opts.description}
-            </Text>
-          ) : null}
-        </View>
-        {opts.right || null}
-      </TouchableScale>
-      {opts.picker && (
-        <View
+        <TouchableScale
+          disabled={!opts.onPress}
+          onPress={opts.onPress}
           style={{
             flexDirection: 'row',
-            backgroundColor: AppColors.grayBackground,
-            borderRadius: 8,
-            padding: 2.5,
-            marginTop: 10,
-            borderWidth: 1,
-            borderColor: AppColors.dividerColor,
+            alignItems: 'center',
+            gap: 12,
           }}>
-          {opts.picker.options.map(opt => {
-            const isActive = opts.picker!.selectedValue === opt;
-            return (
-              <TouchableScale
-                key={String(opt)}
-                onPress={() => opts.picker!.onSelect(opt)}
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: AppColors.purpleShade50,
+              borderWidth: 1,
+              borderColor: `${AppColors.purple}2E`,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            {opts.icon}
+          </View>
+          <View style={{flex: 1}}>
+            <Text
+              style={{
+                fontFamily: AppFonts.interBold,
+                fontSize: 14,
+                lineHeight: 18,
+                color: AppColors.primaryBlack,
+              }}>
+              {opts.label}
+            </Text>
+            {opts.description ? (
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 11,
+                  lineHeight: 15,
+                  color: AppColors.grayText,
+                  marginTop: 1,
+                }}>
+                {opts.description}
+              </Text>
+            ) : null}
+          </View>
+          {opts.right || null}
+        </TouchableScale>
+        {opts.numericInput && (
+          <View style={{marginTop: 10, gap: 6}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: AppColors.grayBackground,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+              }}>
+              <TextInput
                 style={{
                   flex: 1,
+                  fontFamily: AppFonts.interMedium,
+                  fontSize: 14,
+                  lineHeight: 18,
+                  color: AppColors.primaryBlack,
                   paddingVertical: 6,
-                  alignItems: 'center',
-                  borderRadius: 6,
-                  backgroundColor: isActive
-                    ? AppColors.purple
-                    : 'transparent',
+                }}
+                value={String(opts.numericInput.value || '')}
+                onChangeText={text => {
+                  const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                  if (!isNaN(num)) {
+                    const clamped = Math.max(
+                      opts.numericInput?.min ?? 1,
+                      Math.min(opts.numericInput?.max ?? 10000, num),
+                    );
+                    opts.numericInput?.onChange(clamped);
+                  }
+                }}
+                keyboardType={opts.numericInput.keyboardType ?? 'number-pad'}
+                placeholder={opts.numericInput.placeholder}
+                placeholderTextColor={AppColors.grayTextWeak}
+                maxLength={6}
+                selectTextOnFocus
+              />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  color: AppColors.purple,
+                  marginLeft: 6,
                 }}>
-                <Text
+                MAX
+              </Text>
+            </View>
+            {opts.numericInput.min !== undefined || opts.numericInput.max !== undefined ? (
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 10,
+                  lineHeight: 13,
+                  color: AppColors.grayTextWeak,
+                }}>
+                Range: {opts.numericInput.min ?? 1} - {opts.numericInput.max ?? '∞'}
+              </Text>
+            ) : null}
+          </View>
+        )}
+        {opts.picker && (
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: AppColors.grayBackground,
+              borderRadius: 8,
+              padding: 2.5,
+              marginTop: 10,
+              borderWidth: 1,
+              borderColor: AppColors.dividerColor,
+            }}>
+            {opts.picker.options.map(opt => {
+              const isActive = opts.picker!.selectedValue === opt;
+              return (
+                <TouchableScale
+                  key={String(opt)}
+                  onPress={() => opts.picker!.onSelect(opt)}
                   style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 11,
-                    lineHeight: 14,
-                    color: isActive ? AppColors.white : AppColors.grayText,
+                    flex: 1,
+                    paddingVertical: 6,
+                    alignItems: 'center',
+                    borderRadius: 6,
+                    backgroundColor: isActive
+                      ? AppColors.purple
+                      : 'transparent',
                   }}>
-                  {opts.picker!.formatLabel
-                    ? opts.picker!.formatLabel(opt)
-                    : opt}
-                </Text>
-              </TouchableScale>
-            );
-          })}
-        </View>
-      )}
-    </View>
-  );
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11,
+                      lineHeight: 14,
+                      color: isActive ? AppColors.white : AppColors.grayText,
+                    }}>
+                    {opts.picker!.formatLabel
+                      ? opts.picker!.formatLabel(opt)
+                      : opt}
+                  </Text>
+                </TouchableScale>
+              );
+            })}
+          </View>
+        )}
+      </View>
+    );
+  };
 
   let content: React.ReactNode = null;
   let title = '';
@@ -1982,10 +2295,12 @@ const SettingsPanel = () => {
             icon: <SignalIcon color={AppColors.purple} size={16} />,
             label: t('settings.apis.maxRequestLogs'),
             description: t('settings.apis.maxRequestLogsDescription'),
-            picker: {
-              options: [50, 100, 200, 500] as const,
-              selectedValue: maxNetworkLogs,
-              onSelect: setMaxNetworkLogs,
+            numericInput: {
+              value: maxNetworkLogs,
+              onChange: setMaxNetworkLogs,
+              min: 10,
+              max: 5000,
+              placeholder: 'Enter max requests (10-5000)',
             },
             isLast: true,
           })}
@@ -2055,10 +2370,12 @@ const SettingsPanel = () => {
             icon: <TerminalIcon color={AppColors.purple} size={16} />,
             label: t('settings.logs.maxConsoleLogs'),
             description: t('settings.logs.maxConsoleLogsDescription'),
-            picker: {
-              options: [100, 200, 500, 1000] as const,
-              selectedValue: maxConsoleLogs,
-              onSelect: setMaxConsoleLogs,
+            numericInput: {
+              value: maxConsoleLogs,
+              onChange: setMaxConsoleLogs,
+              min: 10,
+              max: 10000,
+              placeholder: 'Enter max logs (10-10000)',
             },
           })}
           <View
@@ -2201,6 +2518,13 @@ const SettingsPanel = () => {
             icon: <AnalyticsIcon color={AppColors.purple} size={16} />,
             label: t('settings.analytics.maxAnalyticsEvents'),
             description: t('settings.analytics.maxAnalyticsEventsDescription', {count: analyticsEvents.length}),
+            numericInput: {
+              value: maxAnalyticsEventsLimit,
+              onChange: setMaxAnalyticsEventsLimit,
+              min: 10,
+              max: 5000,
+              placeholder: 'Enter max events (10-5000)',
+            },
             isLast: true,
           })}
         </View>
@@ -2372,10 +2696,12 @@ const SettingsPanel = () => {
             icon: <LayersIcon color={AppColors.purple} size={16} />,
             label: t('settings.crash.maxCrashLogs'),
             description: t('settings.crash.maxCrashLogsDesc'),
-            picker: {
-              options: [25, 50, 100, 200] as const,
-              selectedValue: (maxCrashLogs as 25 | 50 | 100 | 200) || 100,
-              onSelect: val => setMaxCrashLogs(val),
+            numericInput: {
+              value: maxCrashLogs,
+              onChange: setMaxCrashLogs,
+              min: 5,
+              max: 500,
+              placeholder: 'Enter max crashes (5-500)',
             },
           })}
           <View

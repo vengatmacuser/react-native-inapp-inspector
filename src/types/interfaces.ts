@@ -169,6 +169,9 @@ export interface PersistedSettings {
   defaultTab?: string;
   maxNetworkLogs?: number;
   maxConsoleLogs?: number;
+  maxAnalyticsEventsLimit?: number;
+  maxCrashLogs?: number;
+  isAutoRamLimitEnabled?: boolean;
   showConsoleLevels?: {info: boolean; warn: boolean; error: boolean};
   reduxAutoRefresh?: boolean;
   reduxExpandDepth?: number;
@@ -236,6 +239,7 @@ export interface InspectorContextValue {
   runClearAllWithAnimation: () => void;
 
   // ─── FAB / launcher ────────────────────────────────────────────────────────
+  useNativeFab: boolean;
   fabPan: Animated.ValueXY;
   fabPanResponder: PanResponderInstance;
   fabDraggedRef: React.MutableRefObject<boolean>;
@@ -360,6 +364,11 @@ export interface InspectorContextValue {
   setMaxNetworkLogs: React.Dispatch<React.SetStateAction<number>>;
   maxConsoleLogs: number;
   setMaxConsoleLogs: React.Dispatch<React.SetStateAction<number>>;
+  maxAnalyticsEventsLimit: number;
+  setMaxAnalyticsEventsLimit: React.Dispatch<React.SetStateAction<number>>;
+  isAutoRamLimitEnabled: boolean;
+  setIsAutoRamLimitEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  deviceFreeRamMb: number;
   reduxAutoRefresh: boolean;
   setReduxAutoRefreshState: React.Dispatch<React.SetStateAction<boolean>>;
   reduxExpandDepth: number;

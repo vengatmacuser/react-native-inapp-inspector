@@ -168,11 +168,17 @@ const CrashTab = React.memo(() => {
 
       // Search filter
       if (searchQuery.trim().length > 0) {
-        const q = searchQuery.toLowerCase();
-        const msg = (item.message || '').toLowerCase();
-        const name = (item.name || '').toLowerCase();
-        const stack = (item.stack || '').toLowerCase();
-        return msg.includes(q) || name.includes(q) || stack.includes(q);
+        const queryTokens = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const searchTarget = [
+          item.message || '',
+          item.name || '',
+          item.stack || '',
+          item.type || '',
+          item.deviceInfo?.platform || '',
+          ...(item.breadcrumbs || []).map(b => `${b.type || ''} ${b.message || ''}`),
+        ].join(' ').toLowerCase();
+
+        return queryTokens.every(token => searchTarget.includes(token));
       }
 
       return true;
@@ -362,162 +368,162 @@ const CrashTab = React.memo(() => {
 
   return (
     <View style={localStyles.container}>
-      {/* ─── Top Stats Bar ─── */}
-      <View style={localStyles.statsBar}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={localStyles.statsScrollContent}>
-          <View style={[localStyles.statChip, localStyles.statChipActive]}>
-            <Text style={localStyles.statChipValue}>{stats.total}</Text>
-            <Text style={localStyles.statChipLabel}>{t('crash.statCrashes')}</Text>
-          </View>
+      {crashRecords.length > 0 && (
+        <>
+          {/* ─── Top Stats Bar ─── */}
+          <View style={localStyles.statsBar}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={localStyles.statsScrollContent}>
+              <View style={[localStyles.statChip, localStyles.statChipActive]}>
+                <Text style={localStyles.statChipValue}>{stats.total}</Text>
+                <Text style={localStyles.statChipLabel}>{t('crash.statCrashes')}</Text>
+              </View>
 
-          <View style={localStyles.statChip}>
-            <Text style={[localStyles.statChipValue, {color: AppColors.errorColor}]}>
-              {stats.fatalCount}
-            </Text>
-            <Text style={localStyles.statChipLabel}>{t('crash.statFatal')}</Text>
-          </View>
-
-          <View style={localStyles.statChip}>
-            <Text style={[localStyles.statChipValue, {color: AppColors.offerPurple}]}>
-              {stats.jsCount}
-            </Text>
-            <Text style={localStyles.statChipLabel}>{t('crash.statJsErrors')}</Text>
-          </View>
-
-          <View style={localStyles.statChip}>
-            <Text style={[localStyles.statChipValue, {color: AppColors.darkOrange}]}>
-              {stats.promiseCount}
-            </Text>
-            <Text style={localStyles.statChipLabel}>{t('crash.statPromises')}</Text>
-          </View>
-
-          <View style={localStyles.statChip}>
-            <Text style={[localStyles.statChipValue, {color: AppColors.purple}]}>
-              {stats.renderCount}
-            </Text>
-            <Text style={localStyles.statChipLabel}>{t('crash.statRender')}</Text>
-          </View>
-
-          <View style={localStyles.statChip}>
-            <Text style={[localStyles.statChipValue, {color: AppColors.skyBlue}]}>
-              {stats.nativeCount}
-            </Text>
-            <Text style={localStyles.statChipLabel}>{t('crash.statNative')}</Text>
-          </View>
-        </ScrollView>
-      </View>
-
-      {/* ─── Search & Controls ─── */}
-      <View style={localStyles.controlsContainer}>
-        <View style={localStyles.searchRow}>
-          <View style={localStyles.searchInputWrapper}>
-            <SearchIcon color={AppColors.grayTextWeak} size={14} />
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder={t('crash.searchPlaceholder')}
-              placeholderTextColor={AppColors.grayTextWeak}
-              style={localStyles.searchInput}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
-                <ClearIcon color={AppColors.grayTextWeak} size={14} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Crash Filters */}
-          {crashRecords.length > 0 && (
-            <TouchableScale
-              onPress={() => setIsFilterModalOpen(true)}
-              style={[
-                localStyles.filterButton,
-                !isCrashFiltersDefault(crashFilters) && {
-                  borderColor: `${AppColors.brandPurple}60`,
-                  backgroundColor: `${AppColors.brandPurple}15`,
-                },
-              ]}>
-              <FilterIcon
-                size={14}
-                color={
-                  isCrashFiltersDefault(crashFilters)
-                    ? AppColors.grayTextStrong
-                    : AppColors.brandPurple
-                }
-              />
-              {!isCrashFiltersDefault(crashFilters) && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: 2,
-                    right: 2,
-                    width: 7,
-                    height: 7,
-                    borderRadius: 3.5,
-                    backgroundColor: AppColors.darkOrange,
-                    borderWidth: 1,
-                    borderColor: AppColors.white,
-                  }}
-                />
-              )}
-            </TouchableScale>
-          )}
-
-          {/* Clear Crashes */}
-          {crashRecords.length > 0 && (
-            <TouchableScale
-              onPress={handleClearAll}
-              style={localStyles.clearButton}>
-              <TrashIcon size={14} color={AppColors.errorColor} />
-            </TouchableScale>
-          )}
-        </View>
-
-        {/* ─── Filter Chips ─── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={localStyles.filterScrollContent}>
-          {(
-            [
-              {key: 'all', label: t('crash.filterAll'), Icon: LayersIcon},
-              {key: 'fatal', label: t('crash.filterFatal'), Icon: SkullIcon},
-              {key: 'js', label: t('crash.filterJsError'), Icon: JsIcon},
-              {key: 'promise', label: t('crash.filterPromise'), Icon: HourglassIcon},
-              {key: 'render', label: t('crash.filterRender'), Icon: LayoutIcon},
-              {key: 'native', label: t('crash.filterNative'), Icon: ChipIcon},
-            ] as const
-          ).map(chip => {
-            const isActive = filterType === chip.key;
-            return (
-              <TouchableOpacity
-                key={chip.key}
-                onPress={() => setFilterType(chip.key)}
-                style={[
-                  localStyles.filterChip,
-                  isActive && localStyles.filterChipActive,
-                ]}>
-                <chip.Icon
-                  size={12}
-                  color={isActive ? AppColors.white : AppColors.grayTextStrong}
-                />
-                <Text
-                  style={[
-                    localStyles.filterChipText,
-                    isActive && localStyles.filterChipTextActive,
-                  ]}>
-                  {chip.label}
+              <View style={localStyles.statChip}>
+                <Text style={[localStyles.statChipValue, {color: AppColors.errorColor}]}>
+                  {stats.fatalCount}
                 </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+                <Text style={localStyles.statChipLabel}>{t('crash.statFatal')}</Text>
+              </View>
+
+              <View style={localStyles.statChip}>
+                <Text style={[localStyles.statChipValue, {color: AppColors.offerPurple}]}>
+                  {stats.jsCount}
+                </Text>
+                <Text style={localStyles.statChipLabel}>{t('crash.statJsErrors')}</Text>
+              </View>
+
+              <View style={localStyles.statChip}>
+                <Text style={[localStyles.statChipValue, {color: AppColors.darkOrange}]}>
+                  {stats.promiseCount}
+                </Text>
+                <Text style={localStyles.statChipLabel}>{t('crash.statPromises')}</Text>
+              </View>
+
+              <View style={localStyles.statChip}>
+                <Text style={[localStyles.statChipValue, {color: AppColors.purple}]}>
+                  {stats.renderCount}
+                </Text>
+                <Text style={localStyles.statChipLabel}>{t('crash.statRender')}</Text>
+              </View>
+
+              <View style={localStyles.statChip}>
+                <Text style={[localStyles.statChipValue, {color: AppColors.skyBlue}]}>
+                  {stats.nativeCount}
+                </Text>
+                <Text style={localStyles.statChipLabel}>{t('crash.statNative')}</Text>
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* ─── Search & Controls ─── */}
+          <View style={localStyles.controlsContainer}>
+            <View style={localStyles.searchRow}>
+              <View style={localStyles.searchInputWrapper}>
+                <SearchIcon color={AppColors.grayTextWeak} size={14} />
+                <TextInput
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder={t('crash.searchPlaceholder')}
+                  placeholderTextColor={AppColors.grayTextWeak}
+                  style={localStyles.searchInput}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
+                    <ClearIcon color={AppColors.grayTextWeak} size={14} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Crash Filters */}
+              <TouchableScale
+                onPress={() => setIsFilterModalOpen(true)}
+                style={[
+                  localStyles.filterButton,
+                  !isCrashFiltersDefault(crashFilters) && {
+                    borderColor: `${AppColors.brandPurple}60`,
+                    backgroundColor: `${AppColors.brandPurple}15`,
+                  },
+                ]}>
+                <FilterIcon
+                  size={14}
+                  color={
+                    isCrashFiltersDefault(crashFilters)
+                      ? AppColors.grayTextStrong
+                      : AppColors.brandPurple
+                  }
+                />
+                {!isCrashFiltersDefault(crashFilters) && (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: 2,
+                      right: 2,
+                      width: 7,
+                      height: 7,
+                      borderRadius: 3.5,
+                      backgroundColor: AppColors.darkOrange,
+                      borderWidth: 1,
+                      borderColor: AppColors.white,
+                    }}
+                  />
+                )}
+              </TouchableScale>
+
+              {/* Clear Crashes */}
+              <TouchableScale
+                onPress={handleClearAll}
+                style={localStyles.clearButton}>
+                <TrashIcon size={14} color={AppColors.errorColor} />
+              </TouchableScale>
+            </View>
+
+            {/* ─── Filter Chips ─── */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={localStyles.filterScrollContent}>
+              {(
+                [
+                  {key: 'all', label: t('crash.filterAll'), Icon: LayersIcon},
+                  {key: 'fatal', label: t('crash.filterFatal'), Icon: SkullIcon},
+                  {key: 'js', label: t('crash.filterJsError'), Icon: JsIcon},
+                  {key: 'promise', label: t('crash.filterPromise'), Icon: HourglassIcon},
+                  {key: 'render', label: t('crash.filterRender'), Icon: LayoutIcon},
+                  {key: 'native', label: t('crash.filterNative'), Icon: ChipIcon},
+                ] as const
+              ).map(chip => {
+                const isActive = filterType === chip.key;
+                return (
+                  <TouchableOpacity
+                    key={chip.key}
+                    onPress={() => setFilterType(chip.key)}
+                    style={[
+                      localStyles.filterChip,
+                      isActive && localStyles.filterChipActive,
+                    ]}>
+                    <chip.Icon
+                      size={12}
+                      color={isActive ? AppColors.white : AppColors.grayTextStrong}
+                    />
+                    <Text
+                      style={[
+                        localStyles.filterChipText,
+                        isActive && localStyles.filterChipTextActive,
+                      ]}>
+                      {chip.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </>
+      )}
 
       {/* ─── Crash List or Empty State ─── */}
       {filteredList.length === 0 ? (
@@ -539,6 +545,11 @@ const CrashTab = React.memo(() => {
           data={filteredList}
           keyExtractor={item => item.id}
           renderItem={renderCard}
+          initialNumToRender={12}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={true}
+          renderToHardwareTextureAndroid={true}
           contentContainerStyle={localStyles.listContent}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={<EndOfListFooter />}

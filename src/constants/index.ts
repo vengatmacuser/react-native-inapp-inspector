@@ -6,12 +6,16 @@ import {AppColors} from '../styles/AppColors';
 // Type Definition
 import {StatusFilter} from '../types';
 
-export const STATUS_FILTERS: StatusFilter[] = [
+export const STATUS_FILTERS: string[] = [
   'ALL',
   '2xx',
+  '200',
   '3xx',
   '4xx',
+  '400',
+  '404',
   '5xx',
+  '500',
   'Failed',
 ];
 

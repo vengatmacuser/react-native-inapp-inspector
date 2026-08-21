@@ -21,6 +21,10 @@ import {
 } from './NetworkIcons';
 import { handleInterceptedCrash } from '../customHooks/crashHandler';
 import { CrashType } from '../types/enums';
+import {
+  showNativeFloatingButton,
+  setNativeFloatingButtonBadge,
+} from '../native/NativeInspector';
 
 interface ParsedFrame {
   method: string;
@@ -121,6 +125,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         CrashType.Render,
         errorInfo?.componentStack,
       );
+      showNativeFloatingButton();
+      setNativeFloatingButtonBadge(true);
     } catch {}
   }
 

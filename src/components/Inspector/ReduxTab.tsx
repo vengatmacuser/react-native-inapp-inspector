@@ -250,12 +250,22 @@ const ReduxTab = React.memo(() => {
   // Filter & Sort slices: by default, the most recently updated item is at the FIRST position
   const filteredSlices = useMemo(() => {
     let list = sliceItems;
-    if (reduxSearch.trim().length > 0) {
-      const q = reduxSearch.toLowerCase();
-      list = list.filter(item =>
-        item.name.toLowerCase().includes(q) ||
-        (item.lastAction && item.lastAction.type.toLowerCase().includes(q)),
-      );
+    if (reduxSearch && reduxSearch.trim().length > 0) {
+      const queryTokens = reduxSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      list = list.filter(item => {
+        const sliceVal = reduxState ? reduxState[item.name] : null;
+        const searchTarget = [
+          item.name || '',
+          item.lastAction?.type || '',
+          item.lastAction?.payloadPreview || '',
+          item.lastAction?.originType || '',
+          item.status || '',
+          item.statusMessage || '',
+          sliceVal ? (typeof sliceVal === 'string' ? sliceVal : JSON.stringify(sliceVal)) : '',
+        ].join(' ').toLowerCase();
+
+        return queryTokens.every(tok => searchTarget.includes(tok));
+      });
     }
 
     return [...list].sort((a, b) => {
@@ -265,12 +275,10 @@ const ReduxTab = React.memo(() => {
           return b.updatedAt - a.updatedAt;
         }
         return a.name.localeCompare(b.name);
-      } else {
-        // Alphabetical A-Z
-        return a.name.localeCompare(b.name);
       }
+      return a.name.localeCompare(b.name);
     });
-  }, [sliceItems, reduxSearch, sortMode]);
+  }, [sliceItems, reduxSearch, sortMode, reduxState]);
 
   const lastGlobalAction = useMemo(() => {
     const actions = Object.values(reduxLastActionMap);
@@ -633,10 +641,11 @@ const ReduxTab = React.memo(() => {
         data={filteredSlices}
         keyExtractor={item => item.id}
         renderItem={renderSliceItem}
-        initialNumToRender={15}
-        maxToRenderPerBatch={10}
-        windowSize={7}
+        initialNumToRender={12}
+        maxToRenderPerBatch={8}
+        windowSize={5}
         removeClippedSubviews={true}
+        renderToHardwareTextureAndroid={true}
         ListEmptyComponent={
           <EmptyState
             isSearch={reduxSearch.length > 0}

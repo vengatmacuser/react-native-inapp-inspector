@@ -174,8 +174,15 @@ export const getFetchCommand = (log: NetworkLog): string => {
 export const deduplicateLogs = (raw: NetworkLog[]): NetworkLog[] => {
   const map = new Map<number, NetworkLog>();
   raw.forEach(entry => {
-    if (!map.has(entry.id) || entry.status != null) {
+    if (!map.has(entry.id)) {
       map.set(entry.id, entry);
+    } else {
+      const existing = map.get(entry.id)!;
+      if (existing.status == null && entry.status != null) {
+        map.set(entry.id, entry);
+      } else if ((entry.startTime ?? 0) >= (existing.startTime ?? 0)) {
+        map.set(entry.id, entry);
+      }
     }
   });
   return Array.from(map.values()).sort((a, b) => b.id - a.id);

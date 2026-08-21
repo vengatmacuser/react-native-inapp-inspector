@@ -5,6 +5,11 @@
 
 import { Platform, Settings } from 'react-native';
 import {InspectorStorage, PersistedSettings} from '../types';
+import {
+  getNativeStorageItem,
+  setNativeStorageItem,
+  isNativeModuleAvailable,
+} from '../native/NativeInspector';
 
 export {InspectorStorage, PersistedSettings};
 
@@ -28,6 +33,14 @@ export async function loadSettings(): Promise<PersistedSettings> {
       return parsed && typeof parsed === 'object' ? parsed : {};
     }
 
+    if (isNativeModuleAvailable()) {
+      const raw = await getNativeStorageItem(SETTINGS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      }
+    }
+
     if (Platform.OS === 'ios') {
       const raw = Settings.get(SETTINGS_KEY);
       if (!raw) return {};
@@ -38,7 +51,7 @@ export async function loadSettings(): Promise<PersistedSettings> {
       return raw && typeof raw === 'object' ? raw : {};
     }
 
-    // Android/fallback: memory
+    // In-memory fallback
     const raw = memory.get(SETTINGS_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
@@ -57,12 +70,15 @@ export function saveSettings(settings: PersistedSettings): void {
       return;
     }
 
+    if (isNativeModuleAvailable()) {
+      setNativeStorageItem(SETTINGS_KEY, raw);
+    }
+
     if (Platform.OS === 'ios') {
       Settings.set({ [SETTINGS_KEY]: raw });
       return;
     }
 
-    // Android/fallback: memory
     memory.set(SETTINGS_KEY, raw);
   } catch {
     // ignore
@@ -80,6 +96,10 @@ export async function clearPersistedSettings(): Promise<void> {
       return;
     }
 
+    if (isNativeModuleAvailable()) {
+      await setNativeStorageItem(SETTINGS_KEY, null);
+    }
+
     if (Platform.OS === 'ios') {
       Settings.set({ [SETTINGS_KEY]: null });
       return;
@@ -92,10 +112,60 @@ export async function clearPersistedSettings(): Promise<void> {
 }
 
 export const isPersistentStorageAvailable = () => {
-  return customStorage !== null || Platform.OS === 'ios';
+  return customStorage !== null || isNativeModuleAvailable() || Platform.OS === 'ios';
 };
 
 export function getCustomStorage(): InspectorStorage | null {
   return customStorage;
 }
+
+export interface RamLimitsProfile {
+  maxNetworkLogs: number;
+  maxConsoleLogs: number;
+  maxAnalyticsEvents: number;
+  maxCrashRecords: number;
+  profileName: 'High-End' | 'Standard' | 'Compact' | 'Ultra-Light';
+  freeRamMb: number;
+}
+
+export function calculateRamBasedLimits(freeRamMb: number): RamLimitsProfile {
+  if (freeRamMb >= 3000) {
+    return {
+      maxNetworkLogs: 1000,
+      maxConsoleLogs: 1500,
+      maxAnalyticsEvents: 500,
+      maxCrashRecords: 100,
+      profileName: 'High-End',
+      freeRamMb,
+    };
+  } else if (freeRamMb >= 1500) {
+    return {
+      maxNetworkLogs: 500,
+      maxConsoleLogs: 750,
+      maxAnalyticsEvents: 250,
+      maxCrashRecords: 50,
+      profileName: 'Standard',
+      freeRamMb,
+    };
+  } else if (freeRamMb >= 600) {
+    return {
+      maxNetworkLogs: 200,
+      maxConsoleLogs: 300,
+      maxAnalyticsEvents: 100,
+      maxCrashRecords: 25,
+      profileName: 'Compact',
+      freeRamMb,
+    };
+  } else {
+    return {
+      maxNetworkLogs: 100,
+      maxConsoleLogs: 150,
+      maxAnalyticsEvents: 50,
+      maxCrashRecords: 15,
+      profileName: 'Ultra-Light',
+      freeRamMb,
+    };
+  }
+}
+
 
