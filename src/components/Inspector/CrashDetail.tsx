@@ -164,9 +164,11 @@ const CrashDetail: React.FC = React.memo(() => {
                 localStyles.pillBadge,
                 {
                   backgroundColor: selectedCrash.isFatal
-                    ? '#FEE2E2'
-                    : '#FEF3C7',
-                  borderColor: selectedCrash.isFatal ? '#FCA5A5' : '#FCD34D',
+                    ? AppColors.errorCardBg
+                    : AppColors.amberBg,
+                  borderColor: selectedCrash.isFatal
+                    ? AppColors.errorBorder
+                    : AppColors.amberWarmBorder,
                 },
               ]}>
               <View
@@ -174,8 +176,8 @@ const CrashDetail: React.FC = React.memo(() => {
                   localStyles.statusDot,
                   {
                     backgroundColor: selectedCrash.isFatal
-                      ? '#DC2626'
-                      : '#D97706',
+                      ? AppColors.red600
+                      : AppColors.amber600,
                   },
                 ]}
               />
@@ -183,7 +185,9 @@ const CrashDetail: React.FC = React.memo(() => {
                 style={[
                   localStyles.pillBadgeText,
                   {
-                    color: selectedCrash.isFatal ? '#991B1B' : '#92400E',
+                    color: selectedCrash.isFatal
+                      ? AppColors.redErrorText
+                      : AppColors.amberWarmText,
                   },
                 ]}>
                 {selectedCrash.isFatal ? t('crash.fatalCrash') : t('crash.handledException')}
@@ -195,11 +199,11 @@ const CrashDetail: React.FC = React.memo(() => {
               style={[
                 localStyles.pillBadge,
                 {
-                  backgroundColor: '#EDE9FE',
-                  borderColor: '#C4B5FD',
+                  backgroundColor: AppColors.violetSoftBg,
+                  borderColor: AppColors.violetSoftBorder,
                 },
               ]}>
-              <Text style={[localStyles.pillBadgeText, {color: '#6D28D9'}]}>
+              <Text style={[localStyles.pillBadgeText, {color: AppColors.purple700}]}>
                 {selectedCrash.type.toUpperCase()}
               </Text>
             </View>
@@ -212,17 +216,17 @@ const CrashDetail: React.FC = React.memo(() => {
               hitSlop={10}
               style={[
                 localStyles.actionButton,
-                copiedSuccess && {backgroundColor: '#ECFDF5', borderColor: '#6EE7B7'},
+                copiedSuccess && {backgroundColor: AppColors.mintGreenBg, borderColor: AppColors.mintGreenBorder},
               ]}>
               {copiedSuccess ? (
-                <CircleCheckIcon color="#059669" size={12} />
+                <CircleCheckIcon color={AppColors.mintGreenText} size={12} />
               ) : (
                 <CopyIcon color={AppColors.purple} size={12} />
               )}
               <Text
                 style={[
                   localStyles.actionButtonText,
-                  copiedSuccess && {color: '#059669'},
+                  copiedSuccess && {color: AppColors.mintGreenText},
                 ]}>
                 {copiedSuccess ? t('crash.copied') : t('crash.copyReport')}
               </Text>

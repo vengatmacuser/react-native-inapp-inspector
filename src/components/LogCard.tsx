@@ -195,11 +195,11 @@ const LogCard = React.memo(function LogCard({
                 styles.chip,
                 {
                   backgroundColor: item.url.toLowerCase().startsWith('https')
-                    ? '#ECFDF5'
-                    : '#FFFBEB',
+                    ? AppColors.mintGreenBg
+                    : AppColors.amberWarmBg,
                   borderColor: item.url.toLowerCase().startsWith('https')
-                    ? '#A7F3D0'
-                    : '#FDE68A',
+                    ? AppColors.mintGreenBorder
+                    : AppColors.amberWarmBorder,
                   paddingHorizontal: 4,
                   paddingVertical: 1,
                   borderRadius: 4,
@@ -212,8 +212,8 @@ const LogCard = React.memo(function LogCard({
                     fontFamily: AppFonts.interBold,
                     fontSize: 8,
                     color: item.url.toLowerCase().startsWith('https')
-                      ? '#059669'
-                      : '#D97706',
+                      ? AppColors.mintGreenText
+                      : AppColors.amber700,
                   },
                 ]}>
                 {item.url.toLowerCase().startsWith('https') ? 'HTTPS' : 'HTTP'}
@@ -228,8 +228,8 @@ const LogCard = React.memo(function LogCard({
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: '#FDF2F8',
-                    borderColor: '#FBCFE8',
+                    backgroundColor: AppColors.roseBg,
+                    borderColor: AppColors.roseBorder,
                     paddingHorizontal: 4,
                     paddingVertical: 1,
                     borderRadius: 4,
@@ -241,7 +241,7 @@ const LogCard = React.memo(function LogCard({
                     {
                       fontFamily: AppFonts.interBold,
                       fontSize: 8,
-                      color: '#DB2777',
+                      color: AppColors.pink600,
                     },
                   ]}>
                   GQL
@@ -412,6 +412,29 @@ const LogCard = React.memo(function LogCard({
             )}
           </View>
         </View>
+
+        {/* Mini Latency Timing Waterfall Bar */}
+        {typeof item.duration === 'number' && item.duration > 0 && !isFailed && (
+          <View style={{marginTop: 6, gap: 2}}>
+            <View
+              style={{
+                height: 2.5,
+                width: '100%',
+                backgroundColor: AppColors.grayBorderSecondary,
+                borderRadius: 1.5,
+                overflow: 'hidden',
+              }}>
+              <View
+                style={{
+                  height: '100%',
+                  width: `${Math.min(100, Math.max(6, (item.duration / 1200) * 100))}%`,
+                  backgroundColor: durationColor,
+                  borderRadius: 1.5,
+                }}
+              />
+            </View>
+          </View>
+        )}
       </View>
       <Animated.View
         pointerEvents="none"

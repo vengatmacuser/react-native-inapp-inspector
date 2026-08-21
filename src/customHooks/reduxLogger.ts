@@ -20,6 +20,13 @@ export {ReduxHistoryEntry};
 let currentReduxState: any = null;
 const listeners = new Set<() => void>();
 let globalReduxAutoRefresh = true;
+let isReduxModuleEnabled = false;
+
+export const setReduxModuleEnabled = (enabled: boolean) => {
+  isReduxModuleEnabled = enabled;
+};
+
+export const getReduxModuleEnabled = () => isReduxModuleEnabled;
 
 let lastActionForReducer: Record<string, any> = {};
 
@@ -201,6 +208,7 @@ function extractSliceName(actionType: string, affectedSlices: string[]): string 
 }
 
 function recordAction(action: any, prevState: any, nextState: any, rawStack?: string) {
+  if (!isReduxModuleEnabled) return;
   const stack = rawStack || new Error().stack || '';
   const type = actionTypeOf(action);
   const payload =

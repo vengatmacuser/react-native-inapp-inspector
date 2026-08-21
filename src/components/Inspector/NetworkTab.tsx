@@ -1,4 +1,4 @@
-import React, {useCallback, useRef} from 'react';
+import React, {useCallback, useMemo, useRef} from 'react';
 import {
   Animated,
   FlatList,
@@ -21,6 +21,7 @@ import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {STATUS_FILTERS, METHOD_COLORS} from '../../constants';
 import {GroupedListItem, Method} from '../../types';
+import {useTranslation} from '../../i18n';
 import {
   SearchIcon,
   ClearIcon,
@@ -34,6 +35,7 @@ import {
   CircleAlertIcon,
   LayersIcon,
   HeaderPauseIcon,
+  ClockIcon,
 } from '../NetworkIcons';
 
 const STATUS_META: Record<
@@ -147,8 +149,46 @@ const NetworkTab = React.memo(() => {
     setIsNetworkPaused,
   } = useInspector();
 
+  const {t} = useTranslation();
   const filtersAccordion = useAccordion(false, 300, 260);
   const apisListRef = useRef<FlatList<any>>(null);
+
+  const networkMetrics = useMemo(() => {
+    if (!logs || logs.length === 0) return null;
+    let successCount = 0;
+    let completedCount = 0;
+    let totalDuration = 0;
+    let totalBytes = 0;
+    const durations: number[] = [];
+
+    logs.forEach(log => {
+      if (log.status != null) {
+        completedCount++;
+        const s = typeof log.status === 'number' ? log.status : parseInt(String(log.status), 10);
+        if (!isNaN(s)) {
+          if (s >= 200 && s < 400) {
+            successCount++;
+          }
+        }
+      }
+      if (typeof log.duration === 'number' && log.duration > 0) {
+        durations.push(log.duration);
+        totalDuration += log.duration;
+      }
+    });
+
+    durations.sort((a, b) => a - b);
+    const avgDuration = durations.length > 0 ? Math.round(totalDuration / durations.length) : 0;
+    const p95 = durations.length > 0 ? durations[Math.floor(durations.length * 0.95)] : 0;
+    const successRate = completedCount > 0 ? Math.round((successCount / completedCount) * 100) : 100;
+
+    return {
+      successRate,
+      avgDuration,
+      p95,
+      totalCount: logs.length,
+    };
+  }, [logs]);
 
   const renderItem = useCallback(
     ({item, index}: {item: GroupedListItem; index: number}) => {
@@ -234,7 +274,73 @@ const NetworkTab = React.memo(() => {
         windowSize={5}
         removeClippedSubviews={true}
         ListHeaderComponent={
-          <View style={{marginTop: 8}}>
+          <View style={{marginTop: 6}}>
+            {/* Network Health & Telemetry Strip */}
+            {networkMetrics != null && networkMetrics.totalCount > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: AppColors.grayBackground,
+                  borderRadius: 8,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5.5,
+                  marginHorizontal: 12,
+                  marginBottom: 6,
+                  borderWidth: 1,
+                  borderColor: AppColors.dividerColor,
+                }}>
+                {/* Success Rate */}
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4.5}}>
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor:
+                        networkMetrics.successRate >= 95
+                          ? AppColors.greenColor
+                          : networkMetrics.successRate >= 80
+                          ? AppColors.amber500
+                          : AppColors.errorColor,
+                    }}
+                  />
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
+                    {networkMetrics.successRate}%
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak}}>
+                    {t('network.successRate')}
+                  </Text>
+                </View>
+
+                <View style={{width: 1, height: 11, backgroundColor: AppColors.dividerColor}} />
+
+                {/* Avg Latency */}
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                  <ClockIcon color={AppColors.purple} size={10} />
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.purple}}>
+                    {networkMetrics.avgDuration}ms
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak}}>
+                    {t('network.avgLatency')}
+                  </Text>
+                </View>
+
+                <View style={{width: 1, height: 11, backgroundColor: AppColors.dividerColor}} />
+
+                {/* P95 Latency */}
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
+                    {networkMetrics.p95}ms
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak}}>
+                    P95
+                  </Text>
+                </View>
+              </View>
+            )}
+
             <View style={styles.toolbarRow}>
               <View style={styles.searchContainer}>
                 <SearchIcon

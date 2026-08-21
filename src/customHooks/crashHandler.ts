@@ -34,6 +34,13 @@ let breadcrumbsStore: CrashBreadcrumb[] = [];
 const MAX_BREADCRUMBS = 50;
 let maxStoredCrashes = 100;
 const appStartTime = Date.now();
+let isCrashModuleEnabled = false;
+
+export const setCrashModuleEnabled = (enabled: boolean) => {
+  isCrashModuleEnabled = enabled;
+};
+
+export const getCrashModuleEnabled = () => isCrashModuleEnabled;
 
 // ─── BREADCRUMB MANAGERS ───────────────────────────────────────────────────────
 
@@ -49,6 +56,7 @@ export const addCrashBreadcrumb = (
   message: string,
   data?: any,
 ): void => {
+  if (!isCrashModuleEnabled) return;
   try {
     const entry: CrashBreadcrumb = {
       type,

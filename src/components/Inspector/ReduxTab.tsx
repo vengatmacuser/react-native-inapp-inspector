@@ -527,6 +527,10 @@ const ReduxTab = React.memo(() => {
           <View style={styles.searchContainer}>
             <SearchIcon color={AppColors.grayTextWeak} size={15} />
             <TextInput
+              accessible={true}
+              accessibilityRole="search"
+              accessibilityLabel="Search Redux slices or actions"
+              accessibilityHint="Type to filter state slices in real time"
               placeholder="Search Redux slices or actions..."
               placeholderTextColor={AppColors.grayTextWeak}
               value={reduxSearch}
@@ -536,7 +540,12 @@ const ReduxTab = React.memo(() => {
               autoCapitalize="none"
             />
             {reduxSearch.length > 0 && (
-              <Pressable onPress={() => setReduxSearch('')} hitSlop={10}>
+              <Pressable
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search input"
+                onPress={() => setReduxSearch('')}
+                hitSlop={10}>
                 <ClearIcon color={AppColors.grayTextWeak} size={14} />
               </Pressable>
             )}
@@ -544,6 +553,14 @@ const ReduxTab = React.memo(() => {
 
           {/* Pause / Resume Live Updates Button */}
           <TouchableOpacity
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isReduxPaused
+                ? 'Resume live Redux updates'
+                : 'Pause live Redux updates'
+            }
+            accessibilityHint="Toggles automatic recording of Redux state updates"
             style={[
               styles.toolbarBtn,
               isReduxPaused && {
@@ -566,6 +583,14 @@ const ReduxTab = React.memo(() => {
 
           {/* Sort Button */}
           <TouchableOpacity
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`Sort order: ${
+              sortMode === 'latest'
+                ? 'Recently updated first'
+                : 'Alphabetical A to Z'
+            }`}
+            accessibilityHint="Switches sorting between recently updated and alphabetical"
             style={[
               styles.toolbarBtn,
               sortMode === 'latest' && {backgroundColor: `${AppColors.brandPurple}1F`, borderColor: AppColors.brandPurple},
@@ -734,7 +759,7 @@ const reduxTabStyles = StyleSheet.create({
   },
   cardRecentlyUpdated: {
     borderColor: `${AppColors.brandPurple}66`,
-    backgroundColor: '#FAFAFF',
+    backgroundColor: AppColors.purpleTintBg,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -743,17 +768,17 @@ const reduxTabStyles = StyleSheet.create({
     marginBottom: 8,
   },
   sliceBadge: {
-    backgroundColor: '#EDE9FE',
+    backgroundColor: AppColors.violetSoftBg,
     paddingHorizontal: 6,
     paddingVertical: 3,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#DDD6FE',
+    borderColor: AppColors.violetSoftBorder,
   },
   sliceBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
-    color: '#6D28D9',
+    color: AppColors.purple700,
     letterSpacing: 0.4,
   },
   sliceName: {

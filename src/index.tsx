@@ -43,6 +43,7 @@ import {
   setupNetworkLogger,
   clearNetworkLogs,
   subscribeNetworkLogs,
+  setNetworkModuleEnabled,
 } from './customHooks/networkLogger';
 
 // Console
@@ -51,6 +52,7 @@ import {
   clearConsoleLogs,
   subscribeConsoleLogs,
   getConsoleLogs,
+  setConsoleModuleEnabled,
 } from './customHooks/consoleLogger';
 import {IGNORED_LOG_PREFIXES} from './customHooks/logFilters';
 
@@ -65,6 +67,7 @@ import {
   exportCrashReport,
   parseCrashStackTrace,
   setMaxCrashLogsLimit,
+  setCrashModuleEnabled,
 } from './customHooks/crashHandler';
 
 import {
@@ -72,6 +75,7 @@ import {
   clearAnalyticsEvents,
   autoSetupAnalyticsLogger,
   isAnalyticsConnected,
+  setAnalyticsModuleEnabled,
 } from './customHooks/analyticsLogger';
 
 import {
@@ -81,7 +85,11 @@ import {
   getLastActionForReducer,
   clearActionHistory,
   isReduxConnected,
+  setReduxModuleEnabled,
 } from './customHooks/reduxLogger';
+
+import {setPerformanceModuleEnabled} from './customHooks/performanceTracker';
+import {setBundleModuleEnabled} from './customHooks/bundleAnalyzer';
 
 // Constants
 import {
@@ -301,11 +309,11 @@ const NetworkInspector = ({
   >({
     apis: true,
     logs: true,
-    analytics: true,
+    analytics: false,
     redux: false,
     bundle: false,
     performance: false,
-    crash: true,
+    crash: false,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -317,6 +325,17 @@ const NetworkInspector = ({
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
   const [showDuplicateLogs, setShowDuplicateLogs] = useState<boolean>(false);
 
+  // Synchronize runtime background listeners with active settings
+  useEffect(() => {
+    setNetworkModuleEnabled(!!tabVisibility.apis);
+    setConsoleModuleEnabled(!!tabVisibility.logs);
+    setAnalyticsModuleEnabled(!!tabVisibility.analytics);
+    setReduxModuleEnabled(!!tabVisibility.redux);
+    setPerformanceModuleEnabled(!!tabVisibility.performance);
+    setCrashModuleEnabled(!!tabVisibility.crash);
+    setBundleModuleEnabled(!!tabVisibility.bundle);
+  }, [tabVisibility]);
+
   const resetToDefaults = async () => {
     await clearPersistedSettings();
     setIsDark(false);
@@ -326,11 +345,11 @@ const NetworkInspector = ({
     setTabVisibility({
       apis: true,
       logs: true,
-      analytics: true,
+      analytics: false,
       redux: false,
       bundle: false,
       performance: false,
-      crash: true,
+      crash: false,
     });
     setDefaultTab('apis');
     setMaxCrashLogs(100);
@@ -366,10 +385,6 @@ const NetworkInspector = ({
           ...prev,
           ...(saved.tabVisibility as Record<ActiveTab, boolean>),
           apis: true, // APIs is always required
-          crash:
-            (saved.tabVisibility as any).crash !== undefined
-              ? (saved.tabVisibility as any).crash
-              : true,
         }));
       if (saved.defaultTab) setDefaultTab(saved.defaultTab as ActiveTab);
       if (saved.maxNetworkLogs != null) setMaxNetworkLogs(saved.maxNetworkLogs);
@@ -388,11 +403,11 @@ const NetworkInspector = ({
           ...{
             apis: true,
             logs: true,
-            analytics: true,
+            analytics: false,
             redux: false,
             bundle: false,
             performance: false,
-            crash: true,
+            crash: false,
           },
           ...(saved.tabVisibility || {}),
           apis: true,
@@ -777,14 +792,40 @@ const NetworkInspector = ({
     return () => loop.stop();
   }, [unreadPulseAnim]);
 
-  // #6 — every time the inspector is opened, land on the chosen default tab.
+  const isVisibleRefObj = useRef(visible);
+
+  // #6 — every time the inspector is opened, land on chosen default tab & sync latest logs
   useEffect(() => {
+    isVisibleRefObj.current = visible;
     if (visible) {
       const target =
         defaultTab === 'apis' || tabVisibility?.[defaultTab]
           ? defaultTab
           : 'apis';
       setActiveTab(target);
+
+      // Instant synchronization of data collected while modal was closed
+      if (latestNetworkLogsRef.current.length > 0) {
+        const deduped = deduplicateLogs(latestNetworkLogsRef.current);
+        const incoming = new Set(deduped.map(l => l.id));
+        prevLogIdsRef.current = incoming;
+        setLogs(deduped);
+      }
+      if (latestConsoleLogsRef.current.length > 0) {
+        setConsoleLogs(latestConsoleLogsRef.current);
+      }
+      if (latestAnalyticsEventsRef.current.length > 0) {
+        setAnalyticsEvents(latestAnalyticsEventsRef.current);
+      }
+      const freshState = getReduxState();
+      if (freshState) {
+        setReduxState(typeof freshState === 'object' ? {...freshState} : freshState);
+        setReduxLastActionMap({...getLastActionForReducer()});
+      }
+      const freshCrashes = getCrashRecords();
+      if (freshCrashes.length > 0) {
+        setCrashRecords(freshCrashes);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -814,6 +855,8 @@ const NetworkInspector = ({
     autoSetupAnalyticsLogger();
     setupGlobalCrashHandler();
 
+    const isVisibleRef = isVisibleRefObj;
+
     const unsubscribeCrash = subscribeCrashEvents(crashInfo => {
       if (crashInfo.message === '__CLEARED__') {
         setCrashRecords([]);
@@ -821,7 +864,9 @@ const NetworkInspector = ({
         return;
       }
       const updated = getCrashRecords();
-      setCrashRecords(updated);
+      if (isVisibleRef.current) {
+        setCrashRecords(updated);
+      }
     });
 
     // Sync crashes recorded before this subscription ran (e.g. a render crash
@@ -837,6 +882,8 @@ const NetworkInspector = ({
     const unsubscribe = subscribeNetworkLogs((raw: NetworkLog[]) => {
       latestNetworkLogsRef.current = raw;
       if (isNetworkPausedRef.current) return;
+      if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
+
       clearTimeout(timeoutId);
       const updateNetworkState = () => {
         const deduped = deduplicateLogs(raw);
@@ -877,6 +924,8 @@ const NetworkInspector = ({
       (raw: AnalyticsEvent[]) => {
         latestAnalyticsEventsRef.current = raw;
         if (isAnalyticsPausedRef.current) return;
+        if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
+
         clearTimeout(analyticsTimeoutId);
         const updateAnalyticsState = () => {
           const incoming = new Set(raw.map(e => e.id));
@@ -918,6 +967,8 @@ const NetworkInspector = ({
     const unsubscribeConsole = subscribeConsoleLogs((raw: ConsoleLog[]) => {
       latestConsoleLogsRef.current = raw;
       if (isConsolePausedRef.current) return;
+      if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
+
       clearTimeout(consoleTimeoutId);
       if (isFirstConsoleCall) {
         isFirstConsoleCall = false;
@@ -930,11 +981,12 @@ const NetworkInspector = ({
     });
 
     const initialReduxState = getReduxState();
-    setReduxState(initialReduxState && typeof initialReduxState === 'object' ? {...initialReduxState} : initialReduxState);
-    setReduxLastActionMap({...getLastActionForReducer()});
+    if (initialReduxState) {
+      setReduxState(typeof initialReduxState === 'object' ? {...initialReduxState} : initialReduxState);
+      setReduxLastActionMap({...getLastActionForReducer()});
+    }
     const unsubscribeRedux = subscribeReduxState(() => {
-      // New references each time guarantee the Redux tab updates live, even when
-      // the root state object reference is unchanged or auto-refresh is paused.
+      if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
       const freshState = getReduxState();
       setReduxState(freshState && typeof freshState === 'object' ? {...freshState} : freshState);
       setReduxLastActionMap({...getLastActionForReducer()});

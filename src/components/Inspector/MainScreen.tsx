@@ -74,7 +74,11 @@ const MainScreen = () => {
   return (
     <>
       {(Platform.OS === 'ios' || Platform.OS === 'android') && isEnabled && <FabLauncher />}
-      <Modal visible={visible} animationType={modalAnimationType} transparent>
+      <Modal
+        visible={visible}
+        animationType={modalAnimationType}
+        transparent
+        statusBarTranslucent={true}>
       {visible && (
         <ErrorBoundary onClose={closeModal}>
           <View style={styles.modalBackdrop}>
@@ -85,7 +89,11 @@ const MainScreen = () => {
             <View
               style={[
                 styles.modalContentCard,
-                {height: `${modalHeightPercent}%`},
+                {
+                  height: `${modalHeightPercent}%`,
+                  borderTopLeftRadius: modalHeightPercent >= 100 ? 0 : 20,
+                  borderTopRightRadius: modalHeightPercent >= 100 ? 0 : 20,
+                },
               ]}>
               <StatusBar
                 translucent

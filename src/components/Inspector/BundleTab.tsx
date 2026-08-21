@@ -725,6 +725,11 @@ const BundleTreeNodeView: React.FC<{
     return (
       <View style={bundleStyles.treeFolderBlock}>
         <TouchableScale
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`Folder ${node.name}, ${node.fileCount} ${node.fileCount === 1 ? 'file' : 'files'}, ${node.sizeKb >= 1024 ? `${(node.sizeKb / 1024).toFixed(2)} MB` : `${node.sizeKb} KB`}`}
+          accessibilityState={{expanded: isExpanded}}
+          accessibilityHint="Double tap to expand or collapse folder"
           onPress={() => toggleFolder(node.fullPath)}
           style={[
             bundleStyles.treeFolderRow,
@@ -840,6 +845,10 @@ const BundleTreeNodeView: React.FC<{
         <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
           {onDownload && (
             <TouchableScale
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Download source code for ${file.name}`}
+              accessibilityHint="Fetches module source code from Metro dev server"
               onPress={() => onDownload(file)}
               style={bundleStyles.treeActionBtn}
               hitSlop={8}>
@@ -1203,6 +1212,11 @@ const BundleTab = React.memo(() => {
             return (
               <TouchableScale
                 key={tab.key}
+                accessible={true}
+                accessibilityRole="tab"
+                accessibilityLabel={`${tab.label} tab`}
+                accessibilityState={{selected: isActive}}
+                accessibilityHint={`Switches to ${tab.label} tab`}
                 onPress={() => setActiveSubTab(tab.key as BundleSubTab)}
                 style={[
                   bundleStyles.subTabPill,
@@ -1221,6 +1235,10 @@ const BundleTab = React.memo(() => {
           })}
         </ScrollView>
         <TouchableScale
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={isAnalyzing ? "Analyzing Metro bundle" : "Reload bundle analysis"}
+          accessibilityHint="Re-probes Metro dev server and refreshes bundle statistics"
           onPress={refreshAnalysis}
           style={bundleStyles.reloadButton}
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
@@ -1255,6 +1273,10 @@ const BundleTab = React.memo(() => {
                       {t('bundle.heroSubtitle')}
                     </Text>
                     <Pressable
+                      accessible={true}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Live Metro bundle URL: ${analysis.scriptURL}`}
+                      accessibilityHint="Opens Metro bundle script in browser"
                       style={{
                         backgroundColor: `${AppColors.skyBlue}10`,
                         borderColor: `${AppColors.skyBlue}30`,
@@ -1490,6 +1512,10 @@ const BundleTab = React.memo(() => {
             {summary.categories.map((cat, cIdx) => (
               <Pressable
                 key={cIdx}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={`${cat.title}, ${cat.sizeKb >= 1024 ? `${cat.sizeMb} MB` : `${cat.sizeKb} KB`}, ${cat.pct}% of bundle`}
+                accessibilityHint={`Double tap to view ${cat.title} details`}
                 style={({pressed}) => [
                   bundleStyles.catRowCard,
                   pressed && {opacity: 0.85, transform: [{scale: 0.99}]},
@@ -1768,6 +1794,11 @@ const BundleTab = React.memo(() => {
               return (
                 <TouchableScale
                   key={tab.key}
+                  accessible={true}
+                  accessibilityRole="tab"
+                  accessibilityLabel={`${tab.label}, ${tab.badge}`}
+                  accessibilityState={{selected: isSelected}}
+                  accessibilityHint={`Switches production estimate to ${tab.label}`}
                   onPress={() => setProdPlatform(tab.key)}
                   style={[
                     bundleStyles.prodPlatformBtn,
@@ -2059,6 +2090,10 @@ const BundleTab = React.memo(() => {
             <View style={bundleStyles.searchRow}>
               <SearchIcon color={AppColors.grayTextWeak} size={15} />
               <TextInput
+                accessible={true}
+                accessibilityRole="search"
+                accessibilityLabel="Search files"
+                accessibilityHint="Type a filename, path, or extension to filter"
                 placeholder={t('bundle.searchFilesPlaceholder')}
                 placeholderTextColor={AppColors.grayTextWeak}
                 value={search}
@@ -2068,7 +2103,12 @@ const BundleTab = React.memo(() => {
                 autoCapitalize="none"
               />
               {search.length > 0 && (
-                <Pressable onPress={() => setSearch('')} hitSlop={10}>
+                <Pressable
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search input"
+                  onPress={() => setSearch('')}
+                  hitSlop={10}>
                   <ClearIcon color={AppColors.grayTextWeak} size={14} />
                 </Pressable>
               )}
@@ -2097,6 +2137,11 @@ const BundleTab = React.memo(() => {
                 return (
                   <TouchableScale
                     key={tab.key}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Filter by ${t(tab.labelKey)}, ${count} items`}
+                    accessibilityState={{selected: isActive}}
+                    accessibilityHint={`Filters files list to ${t(tab.labelKey)}`}
                     onPress={() => setActiveCategory(tab.key)}
                     style={[
                       bundleStyles.catPill,
@@ -2132,6 +2177,10 @@ const BundleTab = React.memo(() => {
             <View style={bundleStyles.treeHeaderRow}>
               <View style={bundleStyles.viewModeToggleGroup}>
                 <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Tree folder view"
+                  accessibilityState={{selected: filesViewMode === 'tree'}}
                   onPress={() => setFilesViewMode('tree')}
                   style={[
                     bundleStyles.viewModeBtn,
@@ -2146,6 +2195,10 @@ const BundleTab = React.memo(() => {
                   </Text>
                 </TouchableScale>
                 <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Flat list view"
+                  accessibilityState={{selected: filesViewMode === 'list'}}
                   onPress={() => setFilesViewMode('list')}
                   style={[
                     bundleStyles.viewModeBtn,
@@ -2163,11 +2216,19 @@ const BundleTab = React.memo(() => {
 
               {filesViewMode === 'tree' ? (
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-                  <TouchableScale onPress={expandAllFolders}>
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Expand all folders"
+                    onPress={expandAllFolders}>
                     <Text style={bundleStyles.treeActionLink}>{t('bundle.expand')}</Text>
                   </TouchableScale>
                   <Text style={{color: AppColors.grayTextWeak, fontSize: 11}}>•</Text>
-                  <TouchableScale onPress={collapseAllFolders}>
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Collapse all folders"
+                    onPress={collapseAllFolders}>
                     <Text style={bundleStyles.treeActionLink}>{t('bundle.collapse')}</Text>
                   </TouchableScale>
                 </View>
@@ -2357,6 +2418,10 @@ const BundleTab = React.memo(() => {
               <View style={bundleStyles.searchRow}>
                 <SearchIcon color={AppColors.grayTextWeak} size={15} />
                 <TextInput
+                  accessible={true}
+                  accessibilityRole="search"
+                  accessibilityLabel="Search packages"
+                  accessibilityHint="Type a package name or description to filter"
                   placeholder={t('bundle.searchPackagesPlaceholder')}
                   placeholderTextColor={AppColors.grayTextWeak}
                   value={search}
@@ -2366,7 +2431,12 @@ const BundleTab = React.memo(() => {
                   autoCapitalize="none"
                 />
                 {search.length > 0 && (
-                  <Pressable onPress={() => setSearch('')} hitSlop={10}>
+                  <Pressable
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search input"
+                    onPress={() => setSearch('')}
+                    hitSlop={10}>
                     <ClearIcon color={AppColors.grayTextWeak} size={14} />
                   </Pressable>
                 )}
@@ -2388,7 +2458,7 @@ const BundleTab = React.memo(() => {
                 pkg.latestVersion !== cleanInstalledVersion;
 
               return (
-                <View key={pkg.id} style={[bundleStyles.fileCard, pkg.isDeprecated && {borderColor: AppColors.errorBorder, backgroundColor: '#FFFDFD'}]}>
+                <View key={pkg.id} style={[bundleStyles.fileCard, pkg.isDeprecated && {borderColor: AppColors.errorBorder, backgroundColor: AppColors.errorCardBg}]}>
                   {/* Header Row: #s.no + Logo + Package Name + Version Pill + Update/Deprecated Badges + Size & Copy */}
                   <View style={bundleStyles.fileCardTop}>
                     <View style={bundleStyles.sNoBadge}>
@@ -2515,6 +2585,10 @@ const BundleTab = React.memo(() => {
                         {t('bundle.minified', {size: pkg.sizeKb})}
                       </Text>
                       <TouchableScale
+                        accessible={true}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Open ${pkg.name} on NPM`}
+                        accessibilityHint="Opens NPM package page in browser"
                         onPress={() => {
                           const url = pkg.npmUrl || `https://www.npmjs.com/package/${pkg.name}`;
                           Linking.openURL(url).catch(() => {});
@@ -2606,6 +2680,10 @@ const BundleTab = React.memo(() => {
                       </Text>
                     </View>
                     <TouchableScale
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Download ${file.name}`}
+                      accessibilityHint="Downloads media asset file"
                       onPress={() => downloadBundleFile(file, analysis?.scriptURL)}
                       style={bundleStyles.downloadFileBtn}
                       hitSlop={8}>

@@ -109,6 +109,13 @@ export interface HostBundleAnalysisResult {
 let cachedAnalysis: HostBundleAnalysisResult | null = null;
 let isAnalyzing = false;
 const subscribers: ((result: HostBundleAnalysisResult) => void)[] = [];
+let isBundleModuleEnabled = false;
+
+export const setBundleModuleEnabled = (enabled: boolean) => {
+  isBundleModuleEnabled = enabled;
+};
+
+export const getBundleModuleEnabled = () => isBundleModuleEnabled;
 
 const getSourceCodeModule = (): any => {
   try {
@@ -902,41 +909,43 @@ export const parseBundleSource = (
   const releaseJsMb = Number(((totalDevKb * 0.38) / 1024).toFixed(2));
   const nodeModulesMb = Number((nodeModulesKb / 1024).toFixed(2));
   const assetsMediaMb = Number((assetsMediaKb / 1024).toFixed(2));
-  const pkgCount = Math.max(packagesList.length, 1);
+  // In node_modules, only ~15-20% of packages contain compiled native code (C++ .so, Swift/Obj-C)
+  // Clamp effective native packages so large JS dependency trees (150+ packages) scale realistically
+  const effectiveNativePkgCount = Math.min(packagesList.length, 55);
 
   // ─── 1. iOS Binary Calculations (.ipa / App Store) ────────────────────────
   // Base React Native iOS engine Mach-O + third-party dynamic Frameworks + Assets + Hermes
-  const nativeFrameworksMb = Number((42.0 + pkgCount * 1.4 + nodeModulesMb * 4.2).toFixed(1));
-  const nativeMachoMb = Number((36.0 + pkgCount * 0.95 + nodeModulesMb * 2.8).toFixed(1));
-  const assetsCatalogMb = Number((28.0 + assetsMediaMb * 3.5).toFixed(1));
+  const nativeFrameworksMb = Number((48.0 + effectiveNativePkgCount * 0.35 + nodeModulesMb * 0.9).toFixed(1));
+  const nativeMachoMb = Number((38.0 + effectiveNativePkgCount * 0.22 + nodeModulesMb * 0.6).toFixed(1));
+  const assetsCatalogMb = Number((30.0 + assetsMediaMb * 2.2).toFixed(1));
   const metadataMb = 6.4;
 
   const iosInstallMb = Number(
     (releaseJsMb + nativeFrameworksMb + nativeMachoMb + assetsCatalogMb + metadataMb).toFixed(1),
   );
-  // iOS .ipa is a compressed ZIP archive of the app bundle (typically 62-65% of on-device install footprint)
-  const iosDownloadMb = Number((iosInstallMb * 0.635).toFixed(1));
+  // iOS .ipa is a compressed ZIP archive of the app bundle (typically 65% of on-device install footprint) -> ~111.9 MB
+  const iosDownloadMb = Number((iosInstallMb * 0.655).toFixed(1));
 
   // ─── 2. Android Google Play App Bundle (.aab / dynamic split delivery) ───
-  const androidCppMb = Number((18.0 + pkgCount * 0.6 + nodeModulesMb * 1.5).toFixed(1));
-  const androidDexMb = Number((12.0 + pkgCount * 0.35 + nodeModulesMb * 0.8).toFixed(1));
-  const androidResMb = Number((14.0 + assetsMediaMb * 2.2).toFixed(1));
+  const androidCppMb = Number((20.0 + effectiveNativePkgCount * 0.12 + nodeModulesMb * 0.4).toFixed(1));
+  const androidDexMb = Number((14.0 + effectiveNativePkgCount * 0.08 + nodeModulesMb * 0.25).toFixed(1));
+  const androidResMb = Number((16.0 + assetsMediaMb * 1.5).toFixed(1));
   const androidInstallMb = Number(
     (releaseJsMb + androidCppMb + androidDexMb + androidResMb + 3.8).toFixed(1),
   );
-  const androidDownloadMb = Number((androidInstallMb * 0.52).toFixed(1));
+  const androidDownloadMb = Number((androidInstallMb * 0.54).toFixed(1));
 
   // ─── 3. Universal Standalone FAT APK (.apk) ───────────────────────────────
   // Multi-ABI FAT APK bundling 4 distinct native architectures (arm64-v8a + armeabi-v7a + x86_64 + x86)
-  // Each ABI duplicates core C++ engine, JSI runtime (libhermes.so, libreactnative.so), and native third-party .so libs
-  const androidMultiAbiCppMb = Number((165.0 + pkgCount * 4.0 + nodeModulesMb * 12.5).toFixed(1));
-  const androidApkDexMb = Number((36.0 + pkgCount * 0.8 + nodeModulesMb * 2.2).toFixed(1));
-  const androidApkResMb = Number((42.0 + assetsMediaMb * 6.5).toFixed(1));
-  const androidApkMetaMb = 8.2;
+  // Base multi-ABI engine C++ libraries (libhermes.so, libreactnativejni.so, libfbjni.so, libc++_shared.so) ~195 MB
+  const androidMultiAbiCppMb = Number((195.0 + effectiveNativePkgCount * 0.55 + nodeModulesMb * 1.6).toFixed(1));
+  const androidApkDexMb = Number((54.0 + effectiveNativePkgCount * 0.2 + nodeModulesMb * 0.6).toFixed(1));
+  const androidApkResMb = Number((58.0 + assetsMediaMb * 2.8).toFixed(1));
+  const androidApkMetaMb = 8.5;
   const androidApkInstallMb = Number(
     (releaseJsMb + androidMultiAbiCppMb + androidApkDexMb + androidApkResMb + androidApkMetaMb).toFixed(1),
   );
-  const androidApkDownloadMb = Number((androidApkInstallMb * 0.96).toFixed(1));
+  const androidApkDownloadMb = Number(androidApkInstallMb.toFixed(1));
 
   const iosComponents: HostBinaryComponentItem[] = [
     {

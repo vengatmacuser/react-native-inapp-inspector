@@ -216,6 +216,53 @@ const MetaAccordion = ({
               </Text>
             </View>
           </View>
+
+          {/* Visual Latency Timing Breakdown Waterfall */}
+          {duration != null && !isFailed && (
+            <View style={{paddingVertical: 8, gap: 6}}>
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                <Text style={{fontFamily: AppFonts.interBold, fontSize: 11, color: AppColors.primaryBlack}}>
+                  {t('network.timingWaterfall')}
+                </Text>
+                <Text style={{fontFamily: AppFonts.interMedium, fontSize: 10.5, color: getDurationColor(duration)}}>
+                  {duration < DURATION_FAST_MS
+                    ? t('network.perf.fast')
+                    : duration < DURATION_SLOW_MS
+                    ? t('network.perf.moderate')
+                    : t('network.perf.slow')}
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  height: 6,
+                  backgroundColor: AppColors.grayBorderSecondary,
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                }}>
+                <View
+                  style={{
+                    height: '100%',
+                    width: `${Math.min(100, Math.max(8, (duration / 1200) * 100))}%`,
+                    backgroundColor: getDurationColor(duration),
+                    borderRadius: 3,
+                  }}
+                />
+              </View>
+
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 1}}>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 9.5, color: AppColors.grayTextWeak}}>
+                  0 ms
+                </Text>
+                <Text style={{fontFamily: AppFonts.interBold, fontSize: 10, color: getDurationColor(duration)}}>
+                  {duration} ms
+                </Text>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 9.5, color: AppColors.grayTextWeak}}>
+                  1,200+ ms
+                </Text>
+              </View>
+            </View>
+          )}
           <View style={styles.metaDivider} />
 
           <View style={styles.metaRow}>

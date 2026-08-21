@@ -30,8 +30,9 @@
     "react-native-inapp-inspector.podspec"
   ],
   "scripts": {
+    "clean": "rm -rf dist",
     "prebuild": "node scripts/gen-version.js",
-    "build": "tsc && tsc -p tsconfig.esm.json",
+    "build": "npm run clean && tsc && tsc -p tsconfig.esm.json",
     "watch": "tsc -w",
     "prepack": "npm run build",
     "publish": "node release.cjs",

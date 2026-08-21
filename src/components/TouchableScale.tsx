@@ -1,5 +1,14 @@
 import React, {useRef} from 'react';
-import {Animated, Pressable, StyleSheet, Platform} from 'react-native';
+import {Animated, Pressable, PressableProps, StyleSheet, Platform} from 'react-native';
+
+export interface TouchableScaleProps extends PressableProps {
+  onPress?: () => void;
+  onLongPress?: () => void;
+  style?: any;
+  children?: React.ReactNode;
+  hitSlop?: any;
+  disabled?: boolean;
+}
 
 const TouchableScale = React.memo(function TouchableScale({
   onPress,
@@ -8,17 +17,23 @@ const TouchableScale = React.memo(function TouchableScale({
   children,
   hitSlop,
   disabled,
-}: {
-  onPress?: () => void;
-  onLongPress?: () => void;
-  style?: any;
-  children?: React.ReactNode;
-  hitSlop?: any;
-  disabled?: boolean;
-}) {
+  accessible,
+  accessibilityRole,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
+  accessibilityValue,
+  ...rest
+}: TouchableScaleProps) {
   if (Platform.OS === 'android') {
     return (
       <Pressable
+        accessible={accessible}
+        accessibilityRole={accessibilityRole}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={accessibilityState}
+        accessibilityValue={accessibilityValue}
         disabled={disabled}
         onPress={onPress}
         onLongPress={onLongPress}
@@ -26,7 +41,8 @@ const TouchableScale = React.memo(function TouchableScale({
         style={({pressed}) => [
           style,
           {opacity: pressed ? 0.75 : 1},
-        ]}>
+        ]}
+        {...rest}>
         {children}
       </Pressable>
     );
@@ -66,13 +82,20 @@ const TouchableScale = React.memo(function TouchableScale({
 
   return (
     <Pressable
+      accessible={accessible}
+      accessibilityRole={accessibilityRole}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={accessibilityState}
+      accessibilityValue={accessibilityValue}
       disabled={disabled}
       style={style}
       onPressIn={() => animatePress(true)}
       onPressOut={() => animatePress(false)}
       onPress={onPress}
       onLongPress={onLongPress}
-      hitSlop={hitSlop}>
+      hitSlop={hitSlop}
+      {...rest}>
       <Animated.View style={[{opacity, transform: [{scale}]}, layoutStyle]}>
         {children}
       </Animated.View>

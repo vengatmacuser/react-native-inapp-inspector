@@ -7,6 +7,13 @@ let logs: ConsoleLog[] = [];
 let listeners: ((logs: ConsoleLog[]) => void)[] = [];
 let counter = 0;
 let isIntercepting = false;
+let isConsoleModuleEnabled = true;
+
+export const setConsoleModuleEnabled = (enabled: boolean) => {
+  isConsoleModuleEnabled = enabled;
+};
+
+export const getConsoleModuleEnabled = () => isConsoleModuleEnabled;
 
 const MAX_LOGS = 100;
 
@@ -225,6 +232,7 @@ const addLog = (
   args: any[],
   sourceMethod?: 'log' | 'info' | 'warn' | 'error',
 ) => {
+  if (!isConsoleModuleEnabled) return;
   if (isIntercepting) return;
   isIntercepting = true;
   try {

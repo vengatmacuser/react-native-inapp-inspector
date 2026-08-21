@@ -168,6 +168,22 @@ const LightColors = {
   paperBg: '#FBF9FC',
   contentBg: '#F8F7FB',
 
+  // ─── Toast / Glass / Chip Tokens ───
+  toastBg: '#0F172AEE',
+  toastBorder: '#33415588',
+  mintGreenBg: '#ECFDF5',
+  mintGreenBorder: '#A7F3D0',
+  mintGreenText: '#059669',
+  amberWarmBg: '#FFFBEB',
+  amberWarmBorder: '#FDE68A',
+  amberWarmText: '#92400E',
+  violetSoftBg: '#EDE9FE',
+  violetSoftBorder: '#DDD6FE',
+  violetSoftText: '#7C3AED',
+  skySoftBg: '#E0F2FE',
+  skySoftBorder: '#BAE6FD',
+  skySoftText: '#0284C7',
+
   // ─── Domain Colors (Thai Airways Themed) ───
   domainColors: [
     '#5C2D91',
@@ -248,6 +264,22 @@ const DarkColors = {
   amber700: '#C5A059',
   amber800: '#B89758',
   green500: '#22C55E',
+
+  // ─── Toast / Glass / Chip Tokens (Dark) ───
+  toastBg: '#1E293BEE',
+  toastBorder: '#47556988',
+  mintGreenBg: '#064E3B66',
+  mintGreenBorder: '#05966988',
+  mintGreenText: '#34D399',
+  amberWarmBg: '#451A0366',
+  amberWarmBorder: '#D9770688',
+  amberWarmText: '#FCD34D',
+  violetSoftBg: '#3B076466',
+  violetSoftBorder: '#7C3AED88',
+  violetSoftText: '#C084FC',
+  skySoftBg: '#082F4966',
+  skySoftBorder: '#0284C788',
+  skySoftText: '#38BDF8',
   green600: '#16A34A',
   green700: '#15803D',
   green800: '#166534',

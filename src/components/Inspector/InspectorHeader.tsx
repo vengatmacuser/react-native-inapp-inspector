@@ -72,33 +72,33 @@ const InspectorHeader = React.memo(() => {
     if (clean === 'DEV' || clean.includes('DEV') || clean === 'LOCAL') {
       return {
         label: rawEnv,
-        bg: 'rgba(16, 185, 129, 0.25)', // emerald
-        border: 'rgba(110, 231, 183, 0.55)',
-        text: '#A7F3D0',
+        bg: `${AppColors.emerald500}40`, // emerald
+        border: `${AppColors.emerald400}8C`,
+        text: AppColors.mintGreenBorder,
       };
     }
     if (clean === 'UAT' || clean === 'QA' || clean === 'TEST') {
       return {
         label: rawEnv,
-        bg: 'rgba(245, 158, 11, 0.28)', // amber
-        border: 'rgba(252, 211, 77, 0.6)',
-        text: '#FDE68A',
+        bg: `${AppColors.amber500}47`, // amber
+        border: `${AppColors.amber400}99`,
+        text: AppColors.amberWarmBorder,
       };
     }
     if (clean === 'PREPROD' || clean === 'STAGE' || clean === 'STAGING') {
       return {
         label: rawEnv,
-        bg: 'rgba(139, 92, 246, 0.28)', // purple
-        border: 'rgba(196, 181, 253, 0.6)',
-        text: '#DDD6FE',
+        bg: `${AppColors.purple500}47`, // purple
+        border: `${AppColors.purple400}99`,
+        text: AppColors.violetSoftBorder,
       };
     }
     // PROD / Live
     return {
       label: rawEnv,
-      bg: 'rgba(244, 63, 94, 0.25)', // rose
-      border: 'rgba(253, 164, 175, 0.55)',
-      text: '#FECDD3',
+      bg: `${AppColors.rose500}40`, // rose
+      border: `${AppColors.roseBorder}8C`,
+      text: AppColors.errorBorder,
     };
   }, [environment]);
 
@@ -611,8 +611,8 @@ const InspectorHeader = React.memo(() => {
                         styles.headerMethodBadge,
                         {
                           backgroundColor: selectedCrash.isFatal
-                            ? '#DC2626'
-                            : '#D97706',
+                            ? AppColors.red600
+                            : AppColors.amber600,
                         },
                       ]}>
                       <Text style={styles.headerMethodText}>
@@ -632,8 +632,8 @@ const InspectorHeader = React.memo(() => {
                         styles.headerStatusDot,
                         {
                           backgroundColor: selectedCrash.isFatal
-                            ? '#DC2626'
-                            : '#F59E0B',
+                            ? AppColors.red600
+                            : AppColors.amber500,
                         },
                       ]}
                     />

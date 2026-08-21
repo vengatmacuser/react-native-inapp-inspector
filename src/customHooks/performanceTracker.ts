@@ -268,6 +268,14 @@ export const getInitialPerformanceEvents = (): PerformanceEvent[] => [];
 
 export const INITIAL_EVENTS: PerformanceEvent[] = [];
 
+let isPerformanceModuleEnabled = false;
+
+export const setPerformanceModuleEnabled = (enabled: boolean) => {
+  isPerformanceModuleEnabled = enabled;
+};
+
+export const getPerformanceModuleEnabled = () => isPerformanceModuleEnabled;
+
 const globalRenderRegistry = new Map<string, ComponentRenderProfile>();
 const renderListeners = new Set<(profiles: ComponentRenderProfile[]) => void>();
 
@@ -293,6 +301,7 @@ export const subscribeRenderProfiles = (
 export const getRenderProfiles = () => Array.from(globalRenderRegistry.values());
 
 export const registerComponentProfile = (profile: ComponentRenderProfile) => {
+  if (!isPerformanceModuleEnabled) return;
   globalRenderRegistry.set(profile.name, profile);
   notifyRenderListeners();
 };
@@ -306,6 +315,7 @@ export const trackComponentRender = (params: {
   reason?: string;
   fixKeys?: PerformanceFixKey[];
 }) => {
+  if (!isPerformanceModuleEnabled) return;
   const existing = globalRenderRegistry.get(params.name);
   const now = Date.now();
   const renderTimeMs = params.renderTimeMs ?? 1.5;
@@ -611,7 +621,8 @@ export const useComponentProfiler = (
   });
 };
 
-export const usePerformanceTracker = () => {
+export const usePerformanceTracker = (enabled: boolean = true) => {
+  const isTrackerActive = enabled && isPerformanceModuleEnabled;
   const [isRecording, setIsRecording] = useState(true);
   const [currentFps, setCurrentFps] = useState(60);
   const [minFps, setMinFps] = useState(60);
@@ -636,6 +647,7 @@ export const usePerformanceTracker = () => {
   );
 
   useEffect(() => {
+    if (!isTrackerActive) return;
     const unsubRender = subscribeRenderProfiles(profiles => {
       setRenderProfiles(profiles);
     });
@@ -646,7 +658,7 @@ export const usePerformanceTracker = () => {
       unsubRender();
       unsubEvents();
     };
-  }, []);
+  }, [isTrackerActive]);
 
   const lastFrameTimeRef = useRef<number>(Date.now());
   const rafIdRef = useRef<number | null>(null);
@@ -654,7 +666,7 @@ export const usePerformanceTracker = () => {
 
   // Live Frame Measurement Loop
   useEffect(() => {
-    if (!isRecording) return;
+    if (!isTrackerActive || !isRecording) return;
 
     let isMounted = true;
     let frameCount = 0;

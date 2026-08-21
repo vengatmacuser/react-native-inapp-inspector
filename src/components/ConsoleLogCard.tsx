@@ -18,7 +18,21 @@ import {
 } from '../helpers';
 import HighlightText from './HighlightText';
 import CopyButton from './CopyButton';
-import {ChevronIcon, ExternalLinkIcon} from './NetworkIcons';
+import {
+  ChevronIcon,
+  ExternalLinkIcon,
+  FlaskIcon,
+  ZapIcon,
+  GlobeIcon,
+  DiceIcon,
+  AtomIcon,
+  BarChartIcon,
+  KeyIcon,
+  SmartphoneIcon,
+  AlertTriangleIcon,
+  BugIcon,
+  TagIcon,
+} from './NetworkIcons';
 import {useInspector} from './Inspector/InspectorContext';
 
 const getLogMessageWithBadges = (
@@ -39,39 +53,39 @@ const getLogMessageWithBadges = (
     const getTagDecorator = (tag: string) => {
       const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
       if (clean === 'AXIOS') {
-        return { color: AppColors.emerald600, icon: '⚡', label: 'AXIOS' };
+        return { color: AppColors.emerald600, Icon: ZapIcon, label: 'AXIOS' };
       }
       if (clean === 'API' || clean === 'FETCH' || clean === 'HTTP' || clean === 'NETWORK') {
-        return { color: AppColors.sky600, icon: '🌐', label: clean };
+        return { color: AppColors.sky600, Icon: GlobeIcon, label: clean };
       }
       if (clean === 'SAMPLE' || clean === 'BATCH') {
-        return { color: AppColors.indigo600Alt, icon: '🎲', label: clean };
+        return { color: AppColors.indigo600Alt, Icon: DiceIcon, label: clean };
       }
       if (clean === 'REDUX' || clean === 'STORE' || clean === 'STATE') {
-        return { color: AppColors.violet600, icon: '⚛️', label: clean };
+        return { color: AppColors.violet600, Icon: AtomIcon, label: clean };
       }
       if (clean === 'ANALYTICS' || clean === 'FIREBASE' || clean === 'GA4' || clean === 'GA') {
-        return { color: AppColors.teal600, icon: '📊', label: clean };
+        return { color: AppColors.teal600, Icon: BarChartIcon, label: clean };
       }
       if (clean === 'AUTH' || clean === 'TOKEN' || clean === 'SESSION') {
-        return { color: AppColors.amber600, icon: '🔑', label: clean };
+        return { color: AppColors.amber600, Icon: KeyIcon, label: clean };
       }
       if (clean === 'APP') {
-        return { color: AppColors.indigo600Alt, icon: '📱', label: 'APP' };
+        return { color: AppColors.indigo600Alt, Icon: SmartphoneIcon, label: 'APP' };
       }
       if (clean === 'TEST') {
-        return { color: AppColors.emerald500, icon: '🧪', label: 'TEST' };
+        return { color: AppColors.emerald500, Icon: FlaskIcon, label: 'TEST' };
       }
       if (clean === 'WARN' || clean === 'WARNING') {
-        return { color: AppColors.amber600, icon: '⚠️', label: 'WARN' };
+        return { color: AppColors.amber600, Icon: AlertTriangleIcon, label: 'WARN' };
       }
       if (clean === 'ERROR' || clean === 'CRASH' || clean === 'BUG') {
-        return { color: AppColors.red600, icon: '💥', label: 'ERROR' };
+        return { color: AppColors.red600, Icon: BugIcon, label: 'ERROR' };
       }
       if (clean === 'PERF' || clean === 'RENDER') {
-        return { color: AppColors.violet500, icon: '⚡', label: clean };
+        return { color: AppColors.violet500, Icon: ZapIcon, label: clean };
       }
-      return { color: AppColors.slate600, icon: '🏷️', label: clean };
+      return { color: AppColors.slate600, Icon: TagIcon, label: clean };
     };
 
     return (
@@ -79,6 +93,7 @@ const getLogMessageWithBadges = (
         <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 5}}>
           {tags.map((tag, i) => {
             const dec = getTagDecorator(tag);
+            const IconComp = dec.Icon;
             return (
               <View
                 key={i}
@@ -89,7 +104,7 @@ const getLogMessageWithBadges = (
                     borderColor: `${dec.color}35`,
                   },
                 ]}>
-                <Text style={{fontSize: 9.5}}>{dec.icon}</Text>
+                <IconComp color={dec.color} size={10} />
                 <Text style={[styles.prefixTagText, {color: dec.color}]}>
                   {dec.label}
                 </Text>
@@ -142,68 +157,68 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 
     if (isAnalyticsError || type === 'error' || method === 'error') {
       return {
-        border: '#EF4444',
-        badgeBg: '#FEE2E2',
-        badgeText: '#DC2626',
+        border: AppColors.errorColor,
+        badgeBg: AppColors.errorCardBg,
+        badgeText: AppColors.rose600,
         label: 'ERROR',
-        cardBg: '#FEF2F2',
-        methodBorder: '#FECACA',
-        methodBg: '#FEE2E2',
-        methodText: '#DC2626',
-        textColor: '#991B1B',
+        cardBg: AppColors.errorCardBg,
+        methodBorder: AppColors.errorBorder,
+        methodBg: AppColors.errorCardBg,
+        methodText: AppColors.rose600,
+        textColor: AppColors.redErrorText,
       };
     }
     if (type === 'warn' || method === 'warn') {
       return {
-        border: '#F59E0B',
-        badgeBg: '#FEF3C7',
-        badgeText: '#D97706',
+        border: AppColors.amber600,
+        badgeBg: AppColors.amberBg,
+        badgeText: AppColors.amber700,
         label: 'WARN',
-        cardBg: '#FFFBEB',
-        methodBorder: '#FDE68A',
-        methodBg: '#FEF3C7',
-        methodText: '#D97706',
-        textColor: '#92400E',
+        cardBg: AppColors.amberWarmBg,
+        methodBorder: AppColors.amberWarmBorder,
+        methodBg: AppColors.amberBg,
+        methodText: AppColors.amber700,
+        textColor: AppColors.amberWarmText,
       };
     }
     if (type === 'debug' || method === 'debug') {
       return {
-        border: '#8B5CF6',
-        badgeBg: '#EDE9FE',
-        badgeText: '#7C3AED',
+        border: AppColors.purple500,
+        badgeBg: AppColors.violetSoftBg,
+        badgeText: AppColors.violetSoftText,
         label: 'DEBUG',
-        cardBg: '#F5F3FF',
-        methodBorder: '#DDD6FE',
-        methodBg: '#EDE9FE',
-        methodText: '#7C3AED',
-        textColor: '#4C1D95',
+        cardBg: AppColors.purpleShade50,
+        methodBorder: AppColors.violetSoftBorder,
+        methodBg: AppColors.violetSoftBg,
+        methodText: AppColors.violetSoftText,
+        textColor: AppColors.purpleText,
       };
     }
     if (type === 'info' || method === 'info') {
       return {
-        border: '#0EA5E9',
-        badgeBg: '#E0F2FE',
-        badgeText: '#0284C7',
+        border: AppColors.sky500,
+        badgeBg: AppColors.skySoftBg,
+        badgeText: AppColors.skySoftText,
         label: 'INFO',
-        cardBg: '#F0F9FF',
-        methodBorder: '#BAE6FD',
-        methodBg: '#E0F2FE',
-        methodText: '#0284C7',
-        textColor: '#075985',
+        cardBg: AppColors.blueBg,
+        methodBorder: AppColors.skySoftBorder,
+        methodBg: AppColors.skySoftBg,
+        methodText: AppColors.skySoftText,
+        textColor: AppColors.blue800,
       };
     }
 
     // Default / Standard console.log
     return {
-      border: '#6366F1',
-      badgeBg: '#EEF2FF',
-      badgeText: '#4F46E5',
+      border: AppColors.indigo500,
+      badgeBg: AppColors.indigo50,
+      badgeText: AppColors.indigo600Alt,
       label: 'LOG',
-      cardBg: '#FFFFFF',
-      methodBorder: '#E0E7FF',
-      methodBg: '#EEF2FF',
-      methodText: '#4F46E5',
-      textColor: '#0F172A',
+      cardBg: AppColors.primaryLight,
+      methodBorder: AppColors.dividerColor,
+      methodBg: AppColors.indigo50,
+      methodText: AppColors.indigo600Alt,
+      textColor: AppColors.primaryBlack,
     };
   };
 
@@ -261,12 +276,12 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                 style={[
                   styles.metaChip,
                   {
-                    backgroundColor: '#ECFDF5',
-                    borderColor: '#A7F3D0',
+                    backgroundColor: AppColors.mintGreenBg,
+                    borderColor: AppColors.mintGreenBorder,
                   },
                 ]}>
                 <Text
-                  style={[styles.metaChipText, {color: '#059669', fontFamily: AppFonts.interBold}]}>
+                  style={[styles.metaChipText, {color: AppColors.mintGreenText, fontFamily: AppFonts.interBold}]}>
                   {Array.isArray(jsonContent.data)
                     ? `Array[${jsonContent.data.length}]`
                     : `Object{${Object.keys(jsonContent.data).length}}`}

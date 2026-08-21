@@ -55,6 +55,18 @@ const CopyButton = React.memo(({value, label, iconType = 'copy'}: CopyButtonProp
 
   return (
     <TouchableScale
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={
+        label
+          ? copied
+            ? `${label} copied`
+            : `Copy ${label}`
+          : copied
+          ? 'Copied to clipboard'
+          : 'Copy to clipboard'
+      }
+      accessibilityHint="Double tap to copy, long press to share"
       onPress={handlePress}
       onLongPress={handleLongPress}
       hitSlop={12}

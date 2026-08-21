@@ -19,6 +19,13 @@ type NetworkLog = {
 let logs: NetworkLog[] = [];
 let listeners: ((logs: NetworkLog[]) => void)[] = [];
 let counter = 0;
+let isNetworkModuleEnabled = true;
+
+export const setNetworkModuleEnabled = (enabled: boolean) => {
+  isNetworkModuleEnabled = enabled;
+};
+
+export const getNetworkModuleEnabled = () => isNetworkModuleEnabled;
 
 const ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
 
@@ -148,6 +155,7 @@ const notify = () => {
 };
 
 const addOrUpdateLog = (log: NetworkLog) => {
+  if (!isNetworkModuleEnabled) return;
   const method = log.method?.toUpperCase();
 
   if (!ALLOWED_METHODS.includes(method)) return;
@@ -176,6 +184,7 @@ export const setupNetworkLogger = () => {
 
   if (originalFetch) {
     (globalThis as any).fetch = async (url: any, options: any = {}) => {
+      if (!isNetworkModuleEnabled) return originalFetch(url, options);
       const method = (options?.method || "GET").toUpperCase();
       if (!ALLOWED_METHODS.includes(method)) return originalFetch(url, options);
 

@@ -1971,3 +1971,110 @@ export const LoadingSpinnerIcon = ({
   );
 };
 
+export const FlaskIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M10 2v5.5L4.4 18.2A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.8-2.8L14 7.5V2M8.5 2h7M7 15h10"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="12" cy="18" r="1" fill={color} />
+  </Svg>
+);
+
+export const ZapIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const DiceIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="3" width="18" height="18" rx="4" stroke={color} strokeWidth="1.8" />
+    <Circle cx="8.5" cy="8.5" r="1.5" fill={color} />
+    <Circle cx="15.5" cy="8.5" r="1.5" fill={color} />
+    <Circle cx="12" cy="12" r="1.5" fill={color} />
+    <Circle cx="8.5" cy="15.5" r="1.5" fill={color} />
+    <Circle cx="15.5" cy="15.5" r="1.5" fill={color} />
+  </Svg>
+);
+
+export const BarChartIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M18 20V10M12 20V4M6 20v-6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const KeyIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="7.5" cy="15.5" r="4.5" stroke={color} strokeWidth="1.8" />
+    <Path
+      d="m11 12 8.5-8.5M16 4.5l3 3M19 7.5l2-2"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const SmartphoneIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="5" y="2" width="14" height="20" rx="3" stroke={color} strokeWidth="1.8" />
+    <Path d="M12 18h.01" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+  </Svg>
+);
+
+export const AlertTriangleIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path d="M12 9v4M12 17h.01" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const BugIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect width="8" height="12" x="8" y="8" rx="4" stroke={color} strokeWidth="1.8" />
+    <Path
+      d="m19 7-3 2M5 7l3 2M19 19l-3-2M5 19l3-2M20 13h-4M4 13h4M10 4l2 2 2-2"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const TagIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8 8a2 2 0 0 0 2.828 0l7.172-7.172a2 2 0 0 0 0-2.828l-8-8z"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="7.5" cy="7.5" r="1.5" fill={color} />
+  </Svg>
+);
+

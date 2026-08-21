@@ -28,6 +28,13 @@ import {AnalyticsEvent} from '../types';
 let events: AnalyticsEvent[] = [];
 let listeners: ((events: AnalyticsEvent[]) => void)[] = [];
 let counter = 0;
+let isAnalyticsModuleEnabled = false;
+
+export const setAnalyticsModuleEnabled = (enabled: boolean) => {
+  isAnalyticsModuleEnabled = enabled;
+};
+
+export const getAnalyticsModuleEnabled = () => isAnalyticsModuleEnabled;
 
 // Running snapshot of user properties set so far — attached to every event
 let currentUserProperties: Record<string, any> = {};
@@ -43,6 +50,7 @@ const notify = () => {
 };
 
 const addEvent = (event: AnalyticsEvent) => {
+  if (!isAnalyticsModuleEnabled) return;
   events.unshift(event);
   events = events.slice(0, 200);
   notify();
