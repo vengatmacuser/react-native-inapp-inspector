@@ -33,6 +33,12 @@ import {
   ForwardChevronIcon,
   SortArrowIcon,
   BoltIcon,
+  AtomIcon,
+  ScreenIcon,
+  ListenerIcon,
+  DocIcon,
+  LoadingSpinnerIcon,
+  CircleAlertIcon,
   TextAaIcon,
   StorageIcon,
   HeaderPauseIcon,
@@ -67,7 +73,7 @@ const getOriginBadge = (originType?: string) => {
     case 'saga':
       return {
         label: 'SAGA',
-        icon: '⚡',
+        renderIcon: (color: string, size = 9) => <BoltIcon color={color} size={size} />,
         bg: AppColors.purple100,
         text: AppColors.brandPurple,
         border: AppColors.purple200,
@@ -75,7 +81,7 @@ const getOriginBadge = (originType?: string) => {
     case 'thunk':
       return {
         label: 'THUNK',
-        icon: '⚛️',
+        renderIcon: (color: string, size = 9) => <AtomIcon color={color} size={size} />,
         bg: AppColors.amber100,
         text: AppColors.amber800Warm,
         border: AppColors.amber200,
@@ -83,7 +89,7 @@ const getOriginBadge = (originType?: string) => {
     case 'ui':
       return {
         label: 'UI',
-        icon: '📱',
+        renderIcon: (color: string, size = 9) => <ScreenIcon color={color} size={size} />,
         bg: AppColors.sky100,
         text: AppColors.sky600,
         border: AppColors.sky400,
@@ -91,7 +97,7 @@ const getOriginBadge = (originType?: string) => {
     case 'listener':
       return {
         label: 'LISTENER',
-        icon: '👂',
+        renderIcon: (color: string, size = 9) => <ListenerIcon color={color} size={size} />,
         bg: AppColors.teal100,
         text: AppColors.teal700,
         border: AppColors.teal400,
@@ -99,7 +105,7 @@ const getOriginBadge = (originType?: string) => {
     default:
       return {
         label: 'DIRECT',
-        icon: '⚡',
+        renderIcon: (color: string, size = 9) => <BoltIcon color={color} size={size} />,
         bg: AppColors.slate100,
         text: AppColors.slate700,
         border: AppColors.slate200,
@@ -356,11 +362,13 @@ const ReduxTab = React.memo(() => {
               {/* Status Badge */}
               {item.status === 'loading' ? (
                 <View style={reduxTabStyles.loadingPill}>
-                  <Text style={reduxTabStyles.loadingPillText}>⏳ Loading</Text>
+                  <LoadingSpinnerIcon color={AppColors.amber800Warm} size={10} />
+                  <Text style={reduxTabStyles.loadingPillText}>Loading</Text>
                 </View>
               ) : item.status === 'error' ? (
                 <View style={reduxTabStyles.errorPill}>
-                  <Text style={reduxTabStyles.errorPillText}>⚠️ Error</Text>
+                  <CircleAlertIcon color={AppColors.red600} size={10} />
+                  <Text style={reduxTabStyles.errorPillText}>Error</Text>
                 </View>
               ) : item.status === 'empty' ? (
                 <View style={reduxTabStyles.emptyPill}>
@@ -458,33 +466,34 @@ const ReduxTab = React.memo(() => {
                   <Text style={reduxTabStyles.lastActionLabel}>{t('redux.last', 'Last')}:</Text>
 
                   {/* Origin Badge */}
-                  {item.lastAction.originType && (
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 2.5,
-                        backgroundColor: getOriginBadge(item.lastAction.originType).bg,
-                        paddingHorizontal: 4.5,
-                        paddingVertical: 1.5,
-                        borderRadius: 3.5,
-                        borderWidth: 1,
-                        borderColor: getOriginBadge(item.lastAction.originType).border,
-                      }}>
-                      <Text style={{fontSize: 8.5}}>
-                        {getOriginBadge(item.lastAction.originType).icon}
-                      </Text>
-                      <Text
+                  {item.lastAction.originType && (() => {
+                    const origin = getOriginBadge(item.lastAction.originType);
+                    return (
+                      <View
                         style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 8,
-                          color: getOriginBadge(item.lastAction.originType).text,
-                          letterSpacing: 0.3,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 2.5,
+                          backgroundColor: origin.bg,
+                          paddingHorizontal: 4.5,
+                          paddingVertical: 1.5,
+                          borderRadius: 3.5,
+                          borderWidth: 1,
+                          borderColor: origin.border,
                         }}>
-                        {getOriginBadge(item.lastAction.originType).label}
-                      </Text>
-                    </View>
-                  )}
+                        {origin.renderIcon(origin.text, 8.5)}
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 8,
+                            color: origin.text,
+                            letterSpacing: 0.3,
+                          }}>
+                          {origin.label}
+                        </Text>
+                      </View>
+                    );
+                  })()}
 
                   <HighlightText
                     text={item.lastAction.type}
@@ -508,7 +517,7 @@ const ReduxTab = React.memo(() => {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 2,
+                        gap: 2.5,
                         backgroundColor: AppColors.sky100,
                         paddingHorizontal: 4.5,
                         paddingVertical: 1.5,
@@ -516,13 +525,14 @@ const ReduxTab = React.memo(() => {
                         borderWidth: 0.5,
                         borderColor: AppColors.sky400,
                       }}>
+                      <DocIcon color={AppColors.sky600} size={9} />
                       <Text
                         style={{
                           fontFamily: AppFonts.interMedium,
                           fontSize: 8.5,
                           color: AppColors.sky600,
                         }}>
-                        📄 {item.lastAction.callerFile.split('/').pop()}:{item.lastAction.callerLine || 1}
+                        {item.lastAction.callerFile.split('/').pop()}:{item.lastAction.callerLine || 1}
                       </Text>
                     </Pressable>
                   )}
@@ -573,24 +583,31 @@ const ReduxTab = React.memo(() => {
         <View style={[reduxTabStyles.statCol, {flex: 1.6}]}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
             <Text style={reduxTabStyles.statHeading}>LAST ACTION</Text>
-            {lastGlobalAction?.originType && (
-              <View
-                style={{
-                  backgroundColor: getOriginBadge(lastGlobalAction.originType).bg,
-                  paddingHorizontal: 4,
-                  paddingVertical: 1,
-                  borderRadius: 3,
-                }}>
-                <Text
+            {lastGlobalAction?.originType && (() => {
+              const origin = getOriginBadge(lastGlobalAction.originType);
+              return (
+                <View
                   style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 7.5,
-                    color: getOriginBadge(lastGlobalAction.originType).text,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 2,
+                    backgroundColor: origin.bg,
+                    paddingHorizontal: 4,
+                    paddingVertical: 1,
+                    borderRadius: 3,
                   }}>
-                  {getOriginBadge(lastGlobalAction.originType).label}
-                </Text>
-              </View>
-            )}
+                  {origin.renderIcon(origin.text, 8)}
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 7.5,
+                      color: origin.text,
+                    }}>
+                    {origin.label}
+                  </Text>
+                </View>
+              );
+            })()}
           </View>
           <Text style={reduxTabStyles.statLastAction} numberOfLines={1}>
             {lastGlobalAction ? lastGlobalAction.type : 'Initial'}
