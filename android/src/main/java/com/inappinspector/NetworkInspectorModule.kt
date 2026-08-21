@@ -645,7 +645,6 @@ class InAppInspectorFloatingView(
     private var touchDownY = 0f
     private var touchDownTime = 0L
     private var isDragging = false
-    private val badgeView: android.view.View
 
     init {
         val density = context.resources.displayMetrics.density
@@ -823,28 +822,10 @@ class InAppInspectorFloatingView(
             isFocusable = false
         }
         addView(iconView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
-
-        // 3. Status Badge Dot (Top-Right)
-        val badgeSize = (10f * density).toInt()
-        badgeView = android.view.View(context).apply {
-            val badgeDrawable = android.graphics.drawable.GradientDrawable().apply {
-                shape = android.graphics.drawable.GradientDrawable.OVAL
-                setColor(android.graphics.Color.parseColor("#22C55E"))
-                setStroke((1.5f * density).toInt(), android.graphics.Color.parseColor("#0F172A"))
-            }
-            background = badgeDrawable
-            visibility = GONE
-        }
-        val badgeParams = LayoutParams(badgeSize, badgeSize).apply {
-            gravity = android.view.Gravity.TOP or android.view.Gravity.END
-            topMargin = (4f * density).toInt()
-            rightMargin = (4f * density).toInt()
-        }
-        addView(badgeView, badgeParams)
     }
 
     fun setBadgeVisible(visible: Boolean) {
-        badgeView.visibility = if (visible) VISIBLE else GONE
+        // Active badge dot removed
     }
 
     override fun onTouchEvent(event: android.view.MotionEvent): Boolean {
@@ -867,7 +848,8 @@ class InAppInspectorFloatingView(
                 val dx = event.rawX - touchDownX
                 val dy = event.rawY - touchDownY
 
-                if (!isDragging && Math.hypot(dx.toDouble(), dy.toDouble()) > 8 * density) {
+                val dist = Math.hypot(dx.toDouble(), dy.toDouble())
+                if (!isDragging && dist > 16 * density) {
                     isDragging = true
                 }
 
@@ -882,12 +864,12 @@ class InAppInspectorFloatingView(
                 }
                 return true
             }
-            android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start()
+            android.view.MotionEvent.ACTION_UP -> {
+                animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
                 val elapsed = System.currentTimeMillis() - touchDownTime
                 val totalDist = Math.hypot((event.rawX - touchDownX).toDouble(), (event.rawY - touchDownY).toDouble())
 
-                if (!isDragging && totalDist < 12 * density && elapsed < 350) {
+                if (!isDragging && totalDist < 24 * density && elapsed < 850) {
                     onTap()
                 } else if (isDragging) {
                     // Smooth native snap to nearest horizontal side
@@ -896,6 +878,10 @@ class InAppInspectorFloatingView(
                     val targetX = if (x < parentView.width / 2f) minX else maxX
                     animate().x(targetX).setDuration(220).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
                 }
+                return true
+            }
+            android.view.MotionEvent.ACTION_CANCEL -> {
+                animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
                 return true
             }
         }

@@ -95,23 +95,22 @@ const FilterChip = React.memo(({
       <View
         style={[
           styles.statusFilterChip,
+          {
+            paddingHorizontal: 9,
+            paddingVertical: 5,
+            borderRadius: 7,
+            borderWidth: 1,
+            borderColor: active ? color : `${AppColors.grayBorderSecondary}`,
+            backgroundColor: active ? `${color}14` : AppColors.grayBackground,
+          },
           active && {
-            borderColor: color,
-            backgroundColor: `${color}12`,
+            shadowColor: color,
+            shadowOffset: {width: 0, height: 1},
+            shadowOpacity: 0.2,
+            shadowRadius: 2,
+            elevation: 1.5,
           },
         ]}>
-        <View
-          style={[
-            styles.filterCheckbox,
-            active && [
-              styles.filterCheckboxActive,
-              {backgroundColor: color},
-            ],
-          ]}>
-          {active && (
-            <CheckIcon color={AppColors.white} size={10} />
-          )}
-        </View>
         {badge != null ? (
           <View
             style={[
@@ -131,9 +130,9 @@ const FilterChip = React.memo(({
           numberOfLines={1}
           style={[
             styles.statusFilterText,
-            active && {
-              color,
-              fontFamily: AppFonts.interBold,
+            {
+              color: active ? color : AppColors.grayText,
+              fontFamily: active ? AppFonts.interBold : AppFonts.interMedium,
             },
           ]}>
           {label}
@@ -173,6 +172,24 @@ const NetworkTab = React.memo(() => {
   const {t} = useTranslation();
   const filtersAccordion = useAccordion(false, 300, 260);
   const apisListRef = useRef<FlatList<any>>(null);
+
+  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+
+  const QUICK_API_QUERY_TAGS = useMemo(
+    () => [
+      {label: '⚠️ Failed', query: 'is:error'},
+      {label: '🐢 Slow >1s', query: 'slow:>1s'},
+      {label: 'POST', query: 'm:POST'},
+      {label: 'GET', query: 'm:GET'},
+      {label: 'GraphQL', query: 'is:graphql'},
+      {label: 'Axios', query: 'client:axios'},
+      {label: '200 OK', query: 'status:200'},
+      {label: '404', query: 'status:404'},
+      {label: '500', query: 'status:500'},
+      {label: '🔒 HTTPS', query: 'is:https'},
+    ],
+    [],
+  );
 
   const networkMetrics = useMemo(() => {
     if (!logs || logs.length === 0) return null;
@@ -364,30 +381,62 @@ const NetworkTab = React.memo(() => {
             )}
 
             <View style={styles.toolbarRow}>
-              <View style={styles.searchContainer}>
+              <View
+                style={[
+                  styles.searchContainer,
+                  isSearchFocused && {
+                    borderColor: AppColors.purple,
+                    borderWidth: 1.5,
+                  },
+                ]}>
                 <SearchIcon
-                  color={AppColors.grayTextWeak}
+                  color={isSearchFocused ? AppColors.purple : AppColors.grayTextWeak}
                   size={16}
                 />
                 <TextInput
-                  placeholder="Search endpoints..."
+                  placeholder="Search url, body, is:error, slow:>1s..."
                   placeholderTextColor={AppColors.grayTextWeak}
                   value={search}
                   onChangeText={setSearch}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
                   style={styles.searchInput}
                   autoCorrect={false}
                   autoCapitalize="none"
                 />
                 {search.length > 0 && (
-                  <Pressable
-                    onPress={() => setSearch('')}
-                    hitSlop={10}
-                    style={styles.clearBtn}>
-                    <ClearIcon
-                      color={AppColors.grayTextWeak}
-                      size={14}
-                    />
-                  </Pressable>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}>
+                    <View
+                      style={{
+                        backgroundColor: `${AppColors.purple}20`,
+                        borderRadius: 10,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                      }}>
+                      <Text
+                        style={{
+                          color: AppColors.purple,
+                          fontSize: 10,
+                          fontFamily: AppFonts.interBold,
+                        }}>
+                        {filteredLogs.length}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => setSearch('')}
+                      hitSlop={10}
+                      style={styles.clearBtn}>
+                      <ClearIcon
+                        color={AppColors.grayTextWeak}
+                        size={14}
+                      />
+                    </Pressable>
+                  </View>
                 )}
               </View>
 
@@ -472,6 +521,64 @@ const NetworkTab = React.memo(() => {
                 </TouchableScale>
               </View>
             </View>
+
+            {/* Advanced Search Quick Query Suggestions Bar */}
+            {(isSearchFocused || search.length > 0) && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{marginBottom: 6, maxHeight: 30}}
+                contentContainerStyle={{
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                }}>
+                {QUICK_API_QUERY_TAGS.map(item => {
+                  const isSelected = search.includes(item.query);
+                  return (
+                    <TouchableScale
+                      key={item.query}
+                      onPress={() => {
+                        if (isSelected) {
+                          setSearch(prev =>
+                            prev.replace(item.query, '').trim(),
+                          );
+                        } else {
+                          setSearch(prev =>
+                            prev ? `${prev} ${item.query}`.trim() : item.query,
+                          );
+                        }
+                      }}>
+                      <View
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 3.5,
+                          borderRadius: 6,
+                          backgroundColor: isSelected
+                            ? AppColors.purple
+                            : `${AppColors.purple}14`,
+                          borderWidth: 1,
+                          borderColor: isSelected
+                            ? AppColors.purple
+                            : `${AppColors.purple}30`,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: isSelected
+                              ? AppColors.white
+                              : AppColors.purple,
+                          }}>
+                          {item.label}
+                        </Text>
+                      </View>
+                    </TouchableScale>
+                  );
+                })}
+              </ScrollView>
+            )}
 
             <Animated.View
               style={[

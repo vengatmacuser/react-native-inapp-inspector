@@ -276,16 +276,17 @@ const ActivityGraphicsCard = ({
   history,
   status,
 }: ActivityGraphProps) => {
-  const chartWidth = SCREEN_WIDTH - 64;
+  const [measuredWidth, setMeasuredWidth] = useState<number>(0);
+  const chartWidth = Math.max(100, measuredWidth || SCREEN_WIDTH - 84);
   const chartHeight = 70;
 
   const totalEvents = apiCount + logCount + analyticsCount;
   const apiPct =
-    totalEvents > 0 ? Math.round((apiCount / totalEvents) * 100) : 33;
+    totalEvents > 0 ? Math.round((apiCount / totalEvents) * 100) : 0;
   const logPct =
-    totalEvents > 0 ? Math.round((logCount / totalEvents) * 100) : 45;
+    totalEvents > 0 ? Math.round((logCount / totalEvents) * 100) : 0;
   const analyticsPct =
-    totalEvents > 0 ? Math.max(0, 100 - apiPct - logPct) : 22;
+    totalEvents > 0 ? Math.max(0, 100 - apiPct - logPct) : 0;
 
   // 10 chronological time bars (-18s to NOW)
   const barData = useMemo(() => {
@@ -301,7 +302,7 @@ const ActivityGraphicsCard = ({
   }, [history, chartHeight]);
 
   const barSlotWidth = chartWidth / barData.length;
-  const barWidth = Math.max(8, barSlotWidth - 8);
+  const barWidth = Math.max(6, Math.min(22, barSlotWidth - 8));
 
   return (
     <View style={styles.statsCard}>
@@ -321,6 +322,12 @@ const ActivityGraphicsCard = ({
 
       {/* Understandable Bar Chart with Time Axis and Grid lines */}
       <View
+        onLayout={e => {
+          const w = e.nativeEvent.layout.width - 16; // account for paddingHorizontal: 8
+          if (w > 0 && Math.abs(w - measuredWidth) > 2) {
+            setMeasuredWidth(w);
+          }
+        }}
         style={{
           backgroundColor: '#F8FAFC',
           borderRadius: 12,
@@ -329,6 +336,7 @@ const ActivityGraphicsCard = ({
           paddingTop: 8,
           paddingBottom: 4,
           paddingHorizontal: 8,
+          overflow: 'hidden',
         }}
       >
         {/* Top rate indicator */}
@@ -449,18 +457,27 @@ const ActivityGraphicsCard = ({
             backgroundColor: '#E2E8F0',
           }}
         >
-          <View
-            style={{ flex: Math.max(5, apiPct), backgroundColor: '#4F46E5' }}
-          />
-          <View
-            style={{ flex: Math.max(5, logPct), backgroundColor: '#F59E0B' }}
-          />
-          <View
-            style={{
-              flex: Math.max(5, analyticsPct),
-              backgroundColor: '#0D9488',
-            }}
-          />
+          {apiPct > 0 ? (
+            <View
+              style={{ flex: apiPct, backgroundColor: '#4F46E5' }}
+            />
+          ) : null}
+          {logPct > 0 ? (
+            <View
+              style={{ flex: logPct, backgroundColor: '#F59E0B' }}
+            />
+          ) : null}
+          {analyticsPct > 0 ? (
+            <View
+              style={{
+                flex: analyticsPct,
+                backgroundColor: '#0D9488',
+              }}
+            />
+          ) : null}
+          {totalEvents === 0 && (
+            <View style={{ flex: 1, backgroundColor: '#CBD5E1' }} />
+          )}
         </View>
 
         {/* Legend Ratio Breakdown */}

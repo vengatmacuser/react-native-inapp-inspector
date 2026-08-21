@@ -3,6 +3,7 @@ import {Animated, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import {useInspector} from './InspectorContext';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
+import TouchableScale from '../TouchableScale';
 import {
   SignalIcon,
   TerminalIcon,
@@ -112,12 +113,10 @@ const TabBar = React.memo(() => {
               activeTab !== 'crash' &&
               (crashRecords?.length || 0) > (lastReadCrashesCount || 0);
             return (
-              <TouchableOpacity
+              <TouchableScale
                 key={tab.key}
-                activeOpacity={0.7}
                 onPress={() => {
                   switchActiveTab(tab.key);
-                  triggerNativeHaptic('light');
                 }}
                 style={[
                   styles.contentTabButton,
@@ -177,7 +176,7 @@ const TabBar = React.memo(() => {
                     />
                   )}
                 </View>
-              </TouchableOpacity>
+              </TouchableScale>
             );
           })}
       </ScrollView>

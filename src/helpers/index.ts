@@ -22,6 +22,7 @@ import {
   JsonContent,
   StackFrameType,
 } from '../types';
+export * from './searchQueryParser';
 
 export const getDomainColor = (domain: string): string => {
   if (!domain) return DOMAIN_COLORS[0];

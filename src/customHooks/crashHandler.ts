@@ -36,7 +36,7 @@ let lastHandledErrorTimestamp = 0;
 let crashRecordsStore: CrashRecord[] = [];
 let breadcrumbsStore: CrashBreadcrumb[] = [];
 const MAX_BREADCRUMBS = 50;
-let maxStoredCrashes = 100;
+let maxStoredCrashes = 50;
 const appStartTime = Date.now();
 let isCrashModuleEnabled = false;
 

@@ -18,6 +18,7 @@ import {
 } from '../helpers';
 import HighlightText from './HighlightText';
 import CopyButton from './CopyButton';
+import LogSyntaxHighlighter from './LogSyntaxHighlighter';
 import {
   ChevronIcon,
   ExternalLinkIcon,
@@ -112,11 +113,10 @@ const getLogMessageWithBadges = (
             );
           })}
         </View>
-        <HighlightText
+        <LogSyntaxHighlighter
           text={remainingText}
           search={searchStr}
           style={textStyle}
-          highlightStyle={highlightStyle}
           numberOfLines={numberOfLines}
           detectLinks={true}
         />
@@ -125,11 +125,10 @@ const getLogMessageWithBadges = (
   }
 
   return (
-    <HighlightText
+    <LogSyntaxHighlighter
       text={message}
       search={searchStr}
       style={textStyle}
-      highlightStyle={highlightStyle}
       numberOfLines={numberOfLines}
       detectLinks={true}
     />
@@ -327,14 +326,13 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
               ) : null}
               {jsonPreview && (
                 <View style={styles.jsonPreviewContainer}>
-                  <HighlightText
+                  <LogSyntaxHighlighter
                     text={jsonPreview.text}
                     search={searchStr}
                     style={[
                       styles.jsonPreviewText,
                       {color: AppColors.primaryBlack},
                     ]}
-                    highlightStyle={styles.highlight}
                     detectLinks={false}
                     numberOfLines={5}
                   />

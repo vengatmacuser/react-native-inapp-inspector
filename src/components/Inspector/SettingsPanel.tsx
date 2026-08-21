@@ -1,9 +1,11 @@
-import React, {useMemo, useState, useEffect} from 'react';
+import React, {useMemo, useState, useEffect, useRef} from 'react';
 import {
   Alert,
+  Animated,
   Platform,
   ScrollView,
   StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -13,6 +15,7 @@ import Svg, {Path} from 'react-native-svg';
 import LinearGradient from 'react-native-linear-gradient';
 import {animateNextLayout, useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
+import Slider from '../Slider';
 import styles, {toggleGlobalTheme} from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -51,6 +54,7 @@ import {
   CrashIcon,
   ShieldAlertIcon,
   ForwardChevronIcon,
+  ChevronDownIcon,
 } from '../NetworkIcons';
 
 const SettingsPanel = () => {
@@ -101,6 +105,12 @@ const SettingsPanel = () => {
     maxCrashLogs,
     setMaxCrashLogs,
   } = useInspector();
+
+  const [stagedHeight, setStagedHeight] = useState(modalHeightPercent);
+
+  useEffect(() => {
+    setStagedHeight(modalHeightPercent);
+  }, [modalHeightPercent]);
 
   const autoRamProfile = calculateRamBasedLimits(deviceFreeRamMb);
 
@@ -218,119 +228,207 @@ const SettingsPanel = () => {
     );
   };
 
-  if (settingsPage === 'main') {
+  const [isDefaultTabDropdownOpen, setIsDefaultTabDropdownOpen] = useState(false);
+
+  const goBackToMain = () => {
+    animateNextLayout();
+    setSettingsPage('main');
+  };
+
+  // Helper: settings row with icon + label + optional description
+  const renderSettingRow = (opts: {
+    icon: React.ReactNode;
+    label: string;
+    description?: string;
+    right?: React.ReactNode;
+    picker?: {
+      options: readonly any[];
+      selectedValue: any;
+      onSelect: (val: any) => void;
+      formatLabel?: (val: any) => string;
+    };
+    numericInput?: {
+      value: number;
+      onChange: (val: number) => void;
+      min?: number;
+      max?: number;
+      placeholder?: string;
+      keyboardType?: 'numeric' | 'number-pad' | 'decimal-pad';
+    };
+    onPress?: () => void;
+    isLast?: boolean;
+  }) => {
     return (
       <View
         style={{
-          flex: 1,
-          backgroundColor: AppColors.grayBackground,
+          paddingVertical: 12,
+          borderBottomWidth: opts.isLast ? 0 : 1,
+          borderBottomColor: AppColors.dividerColor,
         }}>
-        {/* Modern Floating Gradient Header */}
-        <LinearGradient
-          colors={[AppColors.purple, AppColors.brandPurple]}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 0}}
-          style={styles.headerGradient}>
-          <View style={{paddingTop: headerTopPadding, width: '100%'}}>
-            <View
-              style={[
-                styles.header,
-                {paddingHorizontal: 16, paddingVertical: 12, gap: 12},
-              ]}>
-              <TouchableScale
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel={t('settings.back')}
-                onPress={() => {
-                  animateNextLayout();
-                  setSettingsPage(null);
-                  switchActiveTab('apis');
-                }}
-                hitSlop={12}
+        <TouchableScale
+          disabled={!opts.onPress}
+          onPress={opts.onPress}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 12,
+          }}>
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: AppColors.purpleShade50,
+              borderWidth: 1,
+              borderColor: `${AppColors.purple}2E`,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            {opts.icon}
+          </View>
+          <View style={{flex: 1}}>
+            <Text
+              style={{
+                fontFamily: AppFonts.interBold,
+                fontSize: 14,
+                lineHeight: 18,
+                color: AppColors.primaryBlack,
+              }}>
+              {opts.label}
+            </Text>
+            {opts.description ? (
+              <Text
                 style={{
-                  padding: 8,
-                  borderRadius: 10,
-                  backgroundColor: `${AppColors.white}26`,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.white}18`,
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 11,
+                  lineHeight: 15,
+                  color: AppColors.grayText,
+                  marginTop: 1,
                 }}>
-                <WhiteBackNavigation color={AppColors.white} size={16} />
-              </TouchableScale>
-
-              <View style={{flex: 1}}>
-                <View
+                {opts.description}
+              </Text>
+            ) : null}
+          </View>
+          {opts.right || null}
+        </TouchableScale>
+        {opts.numericInput && (
+          <View style={{marginTop: 10, gap: 6}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: AppColors.grayBackground,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: AppColors.dividerColor,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+              }}>
+              <TextInput
+                style={{
+                  flex: 1,
+                  fontFamily: AppFonts.interMedium,
+                  fontSize: 14,
+                  lineHeight: 18,
+                  color: AppColors.primaryBlack,
+                  paddingVertical: 6,
+                }}
+                value={String(opts.numericInput.value || '')}
+                onChangeText={text => {
+                  const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
+                  if (!isNaN(num)) {
+                    const clamped = Math.max(
+                      opts.numericInput?.min ?? 1,
+                      Math.min(opts.numericInput?.max ?? 10000, num),
+                    );
+                    opts.numericInput?.onChange(clamped);
+                  }
+                }}
+                keyboardType={opts.numericInput.keyboardType ?? 'number-pad'}
+                placeholder={opts.numericInput.placeholder}
+                placeholderTextColor={AppColors.grayTextWeak}
+                maxLength={6}
+                selectTextOnFocus
+              />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  color: AppColors.purple,
+                  marginLeft: 6,
+                }}>
+                MAX
+              </Text>
+            </View>
+            {opts.numericInput.min !== undefined || opts.numericInput.max !== undefined ? (
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 10,
+                  lineHeight: 13,
+                  color: AppColors.grayTextWeak,
+                }}>
+                Range: {opts.numericInput.min ?? 1} - {opts.numericInput.max ?? '∞'}
+              </Text>
+            ) : null}
+          </View>
+        )}
+        {opts.picker && (
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: AppColors.grayBackground,
+              borderRadius: 8,
+              padding: 2.5,
+              marginTop: 10,
+              borderWidth: 1,
+              borderColor: AppColors.dividerColor,
+            }}>
+            {opts.picker.options.map(opt => {
+              const isActive = opts.picker!.selectedValue === opt;
+              return (
+                <TouchableScale
+                  key={String(opt)}
+                  onPress={() => opts.picker!.onSelect(opt)}
                   style={{
-                    flexDirection: 'row',
+                    flex: 1,
+                    paddingVertical: 6,
                     alignItems: 'center',
-                    gap: 8,
+                    borderRadius: 6,
+                    backgroundColor: isActive
+                      ? AppColors.purple
+                      : 'transparent',
                   }}>
                   <Text
                     style={{
                       fontFamily: AppFonts.interBold,
-                      fontSize: 17,
-                      color: AppColors.white,
-                      letterSpacing: -0.3,
-                      lineHeight: 22,
+                      fontSize: 11,
+                      lineHeight: 14,
+                      color: isActive ? AppColors.white : AppColors.grayText,
                     }}>
-                    {t('settings.mainTitle')}
+                    {opts.picker!.formatLabel
+                      ? opts.picker!.formatLabel(opt)
+                      : opt}
                   </Text>
-                  <View
-                    style={{
-                      backgroundColor: `${AppColors.white}26`,
-                      paddingHorizontal: 7,
-                      paddingVertical: 2,
-                      borderRadius: 12,
-                    }}>
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interBold,
-                        fontSize: 10,
-                        color: AppColors.white,
-                        lineHeight: 13,
-                      }}>
-                      {stagedActiveCount}/{allModules.length} Active
-                    </Text>
-                  </View>
-                </View>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interRegular,
-                    fontSize: 11,
-                    color: `${AppColors.white}CC`,
-                    marginTop: 2,
-                    lineHeight: 15,
-                  }}>
-                  {t('settings.mainSubtitle')}
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  backgroundColor: `${AppColors.white}22`,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.white}1A`,
-                }}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 10.5,
-                    color: AppColors.white,
-                    lineHeight: 14,
-                  }}>
-                  v{LIB_VERSION}
-                </Text>
-              </View>
-            </View>
+                </TouchableScale>
+              );
+            })}
           </View>
-        </LinearGradient>
+        )}
+      </View>
+    );
+  };
 
-        <ScrollView
-          style={{flex: 1}}
-          contentContainerStyle={{padding: 16, gap: 14}}
-          showsVerticalScrollIndicator={false}>
+  const renderMainSettingsContent = () => (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: AppColors.grayBackground,
+      }}>
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 14}}
+        showsVerticalScrollIndicator={false}>
           {/* Segmented Top Navigation Sub-Tabs */}
           <View
             style={{
@@ -436,53 +534,7 @@ const SettingsPanel = () => {
 
           {settingsActiveSubTab === 'module' ? (
             <View style={{gap: 12}}>
-              {/* Performance Advisory Banner */}
-              <View
-                style={{
-                  backgroundColor: `${AppColors.purple}0A`,
-                  borderRadius: 12,
-                  padding: 12,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.purple}20`,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                }}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    backgroundColor: `${AppColors.purple}14`,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <SignalIcon color={AppColors.purple} size={15} />
-                </View>
-                <View style={{flex: 1}}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 12,
-                      color: AppColors.primaryBlack,
-                      lineHeight: 16,
-                    }}>
-                    {t('settings.zeroOverheadTitle')}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interRegular,
-                      fontSize: 10.5,
-                      color: AppColors.grayText,
-                      marginTop: 2,
-                      lineHeight: 14,
-                    }}>
-                    {t('settings.zeroOverheadDesc')}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Enhanced Individual Module Cards with Decorative Checkboxes */}
+              {/* Individual Module Cards with Left Checkboxes */}
               <View style={{gap: 10}}>
                 {allModules.map(moduleItem => {
                   const isReduxAvail = isReduxConnected();
@@ -530,15 +582,81 @@ const SettingsPanel = () => {
                         shadowRadius: 5,
                         shadowOffset: {width: 0, height: 2},
                       }}>
-                      {/* Top Row: Icon + Title & Badges + Checkbox */}
+                      {/* Top Row: [Checkbox] -> [Icon Tile] -> [Title & Subtitle] */}
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'flex-start',
-                          justifyContent: 'space-between',
                           gap: 10,
                         }}>
-                        {/* Tap Zone for Details/Settings */}
+                        {/* 1. Checkbox on the Left */}
+                        <TouchableScale
+                          accessible={true}
+                          accessibilityRole="checkbox"
+                          accessibilityLabel={`Select ${moduleItem.label}`}
+                          accessibilityState={{
+                            checked: isChecked,
+                            disabled: isLocked,
+                          }}
+                          disabled={isLocked}
+                          onPress={() => {
+                            if (isLocked) return;
+                            setStagedTabVisibility(prev => ({
+                              ...prev,
+                              [moduleItem.key]:
+                                !prev[moduleItem.key as ActiveTab],
+                            }));
+                          }}
+                          hitSlop={8}
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: 6,
+                            borderWidth: isChecked ? 0 : 1.8,
+                            borderColor: isLocked
+                              ? AppColors.dividerColor
+                              : AppColors.grayBorderSecondary,
+                            backgroundColor:
+                              moduleItem.key === 'apis'
+                                ? `${AppColors.blue500}22`
+                                : isChecked
+                                ? AppColors.purple
+                                : AppColors.grayBackground,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: 7,
+                            shadowColor: isChecked
+                              ? AppColors.purple
+                              : 'transparent',
+                            shadowOpacity: isChecked ? 0.25 : 0,
+                            shadowRadius: 2,
+                            elevation: isChecked ? 2 : 0,
+                          }}>
+                          {moduleItem.key === 'apis' ? (
+                            <CheckIcon size={12} color={AppColors.blue500} />
+                          ) : isChecked ? (
+                            <CheckIcon size={12} color={AppColors.white} />
+                          ) : isLocked ? (
+                            <Svg
+                              width={10}
+                              height={10}
+                              viewBox="0 0 24 24"
+                              fill="none">
+                              <Path
+                                d="M7 10V7a5 5 0 0 1 10 0v3"
+                                stroke={AppColors.grayText}
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                              />
+                              <Path
+                                d="M5 10h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"
+                                fill={AppColors.grayText}
+                              />
+                            </Svg>
+                          ) : null}
+                        </TouchableScale>
+
+                        {/* 2. Middle Tap Zone: Icon + Title & Desc */}
                         <TouchableScale
                           accessible={true}
                           accessibilityRole="button"
@@ -805,72 +923,6 @@ const SettingsPanel = () => {
                               {moduleItem.desc}
                             </Text>
                           </View>
-                        </TouchableScale>
-
-                        {/* Decorative Custom Checkbox */}
-                        <TouchableScale
-                          accessible={true}
-                          accessibilityRole="checkbox"
-                          accessibilityLabel={`Select ${moduleItem.label}`}
-                          accessibilityState={{
-                            checked: isChecked,
-                            disabled: isLocked,
-                          }}
-                          disabled={isLocked}
-                          onPress={() => {
-                            if (isLocked) return;
-                            setStagedTabVisibility(prev => ({
-                              ...prev,
-                              [moduleItem.key]:
-                                !prev[moduleItem.key as ActiveTab],
-                            }));
-                          }}
-                          style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: 8,
-                            borderWidth: isChecked ? 0 : 2,
-                            borderColor: isLocked
-                              ? AppColors.dividerColor
-                              : AppColors.grayBorderSecondary,
-                            backgroundColor:
-                              moduleItem.key === 'apis'
-                                ? `${AppColors.blue500}22`
-                                : isChecked
-                                ? AppColors.purple
-                                : AppColors.grayBackground,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            shadowColor: isChecked
-                              ? AppColors.purple
-                              : 'transparent',
-                            shadowOpacity: isChecked ? 0.3 : 0,
-                            shadowRadius: 3,
-                            shadowOffset: {width: 0, height: 1},
-                            elevation: isChecked ? 2 : 0,
-                          }}>
-                          {moduleItem.key === 'apis' ? (
-                            <CheckIcon size={14} color={AppColors.blue500} />
-                          ) : isChecked ? (
-                            <CheckIcon size={14} color={AppColors.white} />
-                          ) : isLocked ? (
-                            <Svg
-                              width={10}
-                              height={10}
-                              viewBox="0 0 24 24"
-                              fill="none">
-                              <Path
-                                d="M7 10V7a5 5 0 0 1 10 0v3"
-                                stroke={AppColors.grayText}
-                                strokeWidth="2.2"
-                                strokeLinecap="round"
-                              />
-                              <Path
-                                d="M5 10h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"
-                                fill={AppColors.grayText}
-                              />
-                            </Svg>
-                          ) : null}
                         </TouchableScale>
                       </View>
 
@@ -1327,84 +1379,92 @@ const SettingsPanel = () => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
+                      justifyContent: 'space-between',
                       gap: 10,
                     }}>
                     <View
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        backgroundColor: AppColors.purpleShade50,
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: 10,
+                        flex: 1,
                       }}>
-                      <ScreenIcon color={AppColors.purple} size={15} />
-                    </View>
-                    <View style={{flex: 1}}>
-                      <Text
+                      <View
                         style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 13.5,
-                          lineHeight: 18,
-                          color: AppColors.primaryBlack,
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          backgroundColor: AppColors.purpleShade50,
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}>
-                        {t('settings.general.modalHeight')}
-                      </Text>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interRegular,
-                          fontSize: 11,
-                          lineHeight: 15,
-                          color: AppColors.grayText,
-                          marginTop: 1,
-                        }}>
-                        {t('settings.general.modalHeightDescription')}
-                      </Text>
+                        <ScreenIcon color={AppColors.purple} size={15} />
+                      </View>
+                      <View style={{flex: 1}}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 13.5,
+                            lineHeight: 18,
+                            color: AppColors.primaryBlack,
+                          }}>
+                          {t('settings.general.modalHeight')}
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interRegular,
+                            fontSize: 11,
+                            lineHeight: 15,
+                            color: AppColors.grayText,
+                            marginTop: 1,
+                          }}>
+                          {t('settings.general.modalHeightDescription')}
+                        </Text>
+                      </View>
                     </View>
+
+                    {stagedHeight !== modalHeightPercent && (
+                      <TouchableScale
+                        onPress={() => {
+                          setModalHeightPercent(stagedHeight);
+                        }}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                          backgroundColor: AppColors.purple,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5,
+                          borderRadius: 7,
+                          shadowColor: AppColors.purple,
+                          shadowOffset: {width: 0, height: 1},
+                          shadowOpacity: 0.28,
+                          shadowRadius: 2,
+                          elevation: 2,
+                        }}>
+                        <CheckIcon size={11} color={AppColors.white} />
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 11,
+                            color: AppColors.white,
+                          }}>
+                          Save ({stagedHeight}%)
+                        </Text>
+                      </TouchableScale>
+                    )}
                   </View>
 
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      backgroundColor: AppColors.grayBackground,
-                      borderRadius: 10,
-                      padding: 3,
-                      borderWidth: 1,
-                      borderColor: AppColors.dividerColor,
-                    }}>
-                    {[50, 70, 90, 100].map(opt => {
-                      const isActive = modalHeightPercent === opt;
-                      return (
-                        <TouchableScale
-                          key={opt}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Set window height to ${opt} percent`}
-                          accessibilityState={{selected: isActive}}
-                          onPress={() => setModalHeightPercent(opt)}
-                          style={{
-                            flex: 1,
-                            paddingVertical: 7,
-                            alignItems: 'center',
-                            borderRadius: 8,
-                            backgroundColor: isActive
-                              ? AppColors.purple
-                              : 'transparent',
-                          }}>
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 11.5,
-                              lineHeight: 15,
-                              color: isActive
-                                ? AppColors.white
-                                : AppColors.grayText,
-                            }}>
-                            {opt}%
-                          </Text>
-                        </TouchableScale>
-                      );
-                    })}
+                  <View style={{marginTop: 6}}>
+                    <Slider
+                      value={stagedHeight}
+                      onValueChange={setStagedHeight}
+                      min={50}
+                      max={90}
+                      step={5}
+                      quickPresets={[50, 60, 70, 80, 90]}
+                      formatLabel={val => `${Math.round(val)}%`}
+                    />
                   </View>
                 </View>
 
@@ -1566,207 +1626,41 @@ const SettingsPanel = () => {
                   </View>
                 </View>
 
-                {/* Grid of Default Tab Cards */}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    gap: 8,
-                    marginTop: 4,
-                  }}>
-                  {allModules
-                    .filter(
-                      tab =>
-                        tab.key === 'apis' ||
-                        stagedTabVisibility?.[tab.key as ActiveTab] ||
-                        tabVisibility?.[tab.key as ActiveTab],
-                    )
-                    .map(tab => {
-                      const isActive = defaultTab === tab.key;
-                      return (
-                        <TouchableScale
-                          key={tab.key}
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Set ${tab.label} as default tab`}
-                          accessibilityState={{selected: isActive}}
-                          onPress={() => setDefaultTab(tab.key)}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 8,
-                            paddingVertical: 10,
-                            paddingHorizontal: 12,
-                            borderRadius: 10,
-                            borderWidth: 1.5,
-                            borderColor: isActive
-                              ? AppColors.purple
-                              : AppColors.grayBorderSecondary,
-                            backgroundColor: isActive
-                              ? `${AppColors.purple}0F`
-                              : AppColors.primaryLight,
-                            minWidth: '47%',
-                            flex: 1,
-                          }}>
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 12.5,
-                              lineHeight: 16,
-                              color: isActive
-                                ? AppColors.purple
-                                : AppColors.primaryBlack,
-                              flex: 1,
-                            }}>
-                            {tab.label}
-                          </Text>
-                          {isActive && (
-                            <View
-                              style={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: 8,
-                                backgroundColor: AppColors.purple,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                              }}>
-                              <CheckIcon size={9} color={AppColors.white} />
-                            </View>
-                          )}
-                        </TouchableScale>
-                      );
-                    })}
-                </View>
-              </View>
-
-              {/* Section 4: Log Deduplication & Levels */}
-              <View
-                style={{
-                  backgroundColor: AppColors.primaryLight,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: AppColors.grayBorderSecondary,
-                  overflow: 'hidden',
-                  padding: 14,
-                  gap: 14,
-                }}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 11,
-                    lineHeight: 14,
-                    color: AppColors.grayTextWeak,
-                    letterSpacing: 0.8,
-                  }}>
-                  {t('settings.logFiltersDeduplication')}
-                </Text>
-
-                {/* Show Duplicate Logs */}
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 10,
-                      flex: 1,
-                    }}>
-                    <View
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        backgroundColor: AppColors.purpleShade50,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      <EyeIcon color={AppColors.purple} size={15} />
-                    </View>
-                    <View style={{flex: 1}}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 13.5,
-                          lineHeight: 18,
-                          color: AppColors.primaryBlack,
-                        }}>
-                        {t('settings.general.duplicateLogs')}
-                      </Text>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interRegular,
-                          fontSize: 11,
-                          lineHeight: 15,
-                          color: AppColors.grayText,
-                          marginTop: 1,
-                        }}>
-                        {t('settings.general.duplicateLogsDescription')}
-                      </Text>
-                    </View>
-                  </View>
-
+                {/* Sleek Interactive Dropdown Picker */}
+                <View style={{marginTop: 6, gap: 6}}>
                   <TouchableScale
                     accessible={true}
-                    accessibilityRole="switch"
-                    accessibilityLabel="Toggle show duplicate logs"
-                    accessibilityState={{checked: showDuplicateLogs}}
-                    onPress={() => setShowDuplicateLogs(prev => !prev)}
-                    style={{
-                      width: 42,
-                      height: 24,
-                      borderRadius: 12,
-                      backgroundColor: showDuplicateLogs
-                        ? AppColors.purple
-                        : AppColors.grayBorderSecondary,
-                      padding: 2,
-                      justifyContent: 'center',
-                      alignItems: showDuplicateLogs
-                        ? 'flex-end'
-                        : 'flex-start',
-                    }}>
-                    <View
-                      style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: 10,
-                        backgroundColor: AppColors.white,
-                        shadowColor: AppColors.black,
-                        shadowOpacity: 0.18,
-                        shadowRadius: 2,
-                        shadowOffset: {width: 0, height: 1},
-                      }}
-                    />
-                  </TouchableScale>
-                </View>
-
-                <View
-                  style={{height: 1, backgroundColor: AppColors.dividerColor}}
-                />
-
-                {/* Console Log Levels */}
-                <View style={{gap: 8}}>
-                  <View
+                    accessibilityRole="button"
+                    accessibilityLabel={`Default opening tab: ${allModules.find(m => m.key === defaultTab)?.label || 'APIs'}`}
+                    onPress={() => setIsDefaultTabDropdownOpen(prev => !prev)}
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 10,
+                      justifyContent: 'space-between',
+                      backgroundColor: AppColors.grayBackground,
+                      borderRadius: 10,
+                      borderWidth: 1.5,
+                      borderColor: isDefaultTabDropdownOpen
+                        ? AppColors.purple
+                        : AppColors.grayBorderSecondary,
+                      paddingHorizontal: 14,
+                      paddingVertical: 11,
                     }}>
                     <View
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        backgroundColor: AppColors.purpleShade50,
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: 10,
+                        flex: 1,
                       }}>
-                      <TerminalIcon color={AppColors.purple} size={15} />
-                    </View>
-                    <View style={{flex: 1}}>
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: AppColors.purple,
+                        }}
+                      />
                       <Text
                         style={{
                           fontFamily: AppFonts.interBold,
@@ -1774,230 +1668,125 @@ const SettingsPanel = () => {
                           lineHeight: 18,
                           color: AppColors.primaryBlack,
                         }}>
-                        {t('settings.general.activeConsoleLogLevels')}
+                        {allModules.find(m => m.key === defaultTab)?.label || 'APIs (Network)'}
                       </Text>
-                      <Text
+                      <View
                         style={{
-                          fontFamily: AppFonts.interRegular,
-                          fontSize: 11,
-                          lineHeight: 15,
-                          color: AppColors.grayText,
-                          marginTop: 1,
+                          backgroundColor: `${AppColors.purple}14`,
+                          paddingHorizontal: 6,
+                          paddingVertical: 1.5,
+                          borderRadius: 6,
                         }}>
-                        {t('settings.general.activeConsoleLogLevelsDesc')}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={{flexDirection: 'row', gap: 8, marginTop: 4}}>
-                    {[
-                      {
-                        key: 'info' as const,
-                        label: 'Info',
-                        color: AppColors.blue500,
-                      },
-                      {
-                        key: 'warn' as const,
-                        label: 'Warning',
-                        color: AppColors.amber500,
-                      },
-                      {
-                        key: 'error' as const,
-                        label: 'Error',
-                        color: AppColors.errorColor,
-                      },
-                    ].map(level => {
-                      const isActive = showConsoleLevels[level.key];
-                      return (
-                        <TouchableScale
-                          key={level.key}
-                          accessible={true}
-                          accessibilityRole="checkbox"
-                          accessibilityLabel={`Toggle ${level.label} logs`}
-                          accessibilityState={{checked: isActive}}
-                          onPress={() =>
-                            setShowConsoleLevels(prev => ({
-                              ...prev,
-                              [level.key]: !prev[level.key],
-                            }))
-                          }
+                        <Text
                           style={{
-                            flex: 1,
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 6,
-                            paddingVertical: 8,
-                            borderRadius: 9,
-                            borderWidth: 1.5,
-                            borderColor: isActive
-                              ? level.color
-                              : AppColors.grayBorderSecondary,
-                            backgroundColor: isActive
-                              ? `${level.color}0D`
-                              : AppColors.primaryLight,
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 8.5,
+                            color: AppColors.purple,
                           }}>
-                          <View
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: 4,
-                              backgroundColor: isActive
-                                ? level.color
-                                : AppColors.grayBorderSecondary,
-                            }}
-                          />
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 11.5,
-                              lineHeight: 15,
-                              color: isActive
-                                ? level.color
-                                : AppColors.grayText,
-                            }}>
-                            {level.label}
-                          </Text>
-                        </TouchableScale>
-                      );
-                    })}
-                  </View>
-                </View>
-              </View>
+                          DEFAULT
+                        </Text>
+                      </View>
+                    </View>
 
-              {/* Section 5: Reset Settings */}
-              <View
-                style={{
-                  backgroundColor: AppColors.primaryLight,
-                  borderRadius: 14,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.errorColor}33`,
-                  overflow: 'hidden',
-                  padding: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                }}>
-                <View
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
-                    backgroundColor: `${AppColors.errorColor}14`,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <TrashIcon color={AppColors.errorColor} size={15} />
-                </View>
-                <View style={{flex: 1}}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 13.5,
-                      lineHeight: 18,
-                      color: AppColors.primaryBlack,
-                    }}>
-                    {t('settings.resetSettings')}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interRegular,
-                      fontSize: 11,
-                      lineHeight: 15,
-                      color: AppColors.grayText,
-                      marginTop: 1,
-                    }}>
-                    {t('settings.resetSettingsDesc')}
-                  </Text>
-                </View>
+                    <View
+                      style={{
+                        transform: [
+                          {rotate: isDefaultTabDropdownOpen ? '180deg' : '0deg'},
+                        ],
+                      }}>
+                      <ChevronDownIcon color={AppColors.grayText} size={15} />
+                    </View>
+                  </TouchableScale>
 
-                <TouchableScale
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Reset all settings to default"
-                  onPress={resetToDefaults}
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 7,
-                    borderRadius: 8,
-                    backgroundColor: `${AppColors.errorColor}14`,
-                    borderWidth: 1,
-                    borderColor: `${AppColors.errorColor}38`,
-                  }}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 11.5,
-                      lineHeight: 15,
-                      color: AppColors.errorColor,
-                    }}>
-                    {t('settings.reset')}
-                  </Text>
-                </TouchableScale>
+                  {/* Dropdown Options List */}
+                  {isDefaultTabDropdownOpen && (
+                    <View
+                      style={{
+                        backgroundColor: AppColors.primaryLight,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: AppColors.grayBorderSecondary,
+                        overflow: 'hidden',
+                        shadowColor: AppColors.black,
+                        shadowOpacity: 0.08,
+                        shadowRadius: 6,
+                        shadowOffset: {width: 0, height: 3},
+                        elevation: 4,
+                      }}>
+                      {allModules
+                        .filter(
+                          tab =>
+                            tab.key === 'apis' ||
+                            stagedTabVisibility?.[tab.key as ActiveTab] ||
+                            tabVisibility?.[tab.key as ActiveTab],
+                        )
+                        .map((tab, idx, arr) => {
+                          const isActive = defaultTab === tab.key;
+                          const isLast = idx === arr.length - 1;
+                          return (
+                            <TouchableScale
+                              key={tab.key}
+                              accessible={true}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Select ${tab.label} as default tab`}
+                              onPress={() => {
+                                setDefaultTab(tab.key);
+                                setIsDefaultTabDropdownOpen(false);
+                              }}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                paddingHorizontal: 14,
+                                paddingVertical: 11,
+                                backgroundColor: isActive
+                                  ? `${AppColors.purple}0F`
+                                  : 'transparent',
+                                borderBottomWidth: isLast ? 0 : 1,
+                                borderBottomColor: AppColors.dividerColor,
+                              }}>
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  gap: 10,
+                                }}>
+                                <View
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: 3,
+                                    backgroundColor: isActive
+                                      ? AppColors.purple
+                                      : AppColors.grayTextWeak,
+                                  }}
+                                />
+                                <Text
+                                  style={{
+                                    fontFamily: isActive
+                                      ? AppFonts.interBold
+                                      : AppFonts.interMedium,
+                                    fontSize: 13,
+                                    color: isActive
+                                      ? AppColors.purple
+                                      : AppColors.primaryBlack,
+                                  }}>
+                                  {tab.label}
+                                </Text>
+                              </View>
+                              {isActive && (
+                                <CheckIcon size={14} color={AppColors.purple} />
+                              )}
+                            </TouchableScale>
+                          );
+                        })}
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
           )}
-
-          {/* Storage & Engine Status Card */}
-          <View
-            style={{
-              backgroundColor: isPersistent
-                ? `${AppColors.liveGreen}12`
-                : `${AppColors.amber600}12`,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: isPersistent
-                ? `${AppColors.liveGreen}33`
-                : `${AppColors.amber600}33`,
-              padding: 12,
-              marginBottom: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 10,
-            }}>
-            <View
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                backgroundColor: isPersistent
-                  ? AppColors.green500
-                  : AppColors.amber600,
-              }}
-            />
-            <View style={{flex: 1}}>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 12,
-                  lineHeight: 16,
-                  color: isPersistent
-                    ? AppColors.green700
-                    : AppColors.amber800,
-                }}>
-                {isPersistent
-                  ? t('settings.general.storageStatusEnabled', {
-                      type: storage ? 'Custom Storage' : 'iOS NSUserDefaults',
-                    })
-                  : t('settings.general.storageStatusDisabled')}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interRegular,
-                  fontSize: 10.5,
-                  lineHeight: 14,
-                  color: isPersistent
-                    ? AppColors.green800
-                    : AppColors.amber800,
-                  marginTop: 2,
-                  opacity: 0.85,
-                }}>
-                {isPersistent
-                  ? t('settings.general.storageStatusEnabledDesc')
-                  : t('settings.general.storageStatusDisabledDesc')}
-              </Text>
-            </View>
-          </View>
+          <View style={{height: 48}} />
         </ScrollView>
 
         {/* Bottom Sticky Action Bar for Save Changes */}
@@ -2006,7 +1795,7 @@ const SettingsPanel = () => {
             style={{
               paddingHorizontal: 16,
               paddingTop: 12,
-              paddingBottom: Platform.OS === 'ios' ? 26 : 14,
+              paddingBottom: Platform.OS === 'ios' ? 36 : 24,
               backgroundColor: AppColors.primaryLight,
               borderTopWidth: 1,
               borderTopColor: AppColors.dividerColor,
@@ -2079,196 +1868,6 @@ const SettingsPanel = () => {
         )}
       </View>
     );
-  }
-
-  const goBackToMain = () => {
-    animateNextLayout();
-    setSettingsPage('main');
-  };
-
-  // Helper: settings row with icon + label + optional description
-  const renderSettingRow = (opts: {
-    icon: React.ReactNode;
-    label: string;
-    description?: string;
-    right?: React.ReactNode;
-    picker?: {
-      options: readonly any[];
-      selectedValue: any;
-      onSelect: (val: any) => void;
-      formatLabel?: (val: any) => string;
-    };
-    numericInput?: {
-      value: number;
-      onChange: (val: number) => void;
-      min?: number;
-      max?: number;
-      placeholder?: string;
-      keyboardType?: 'numeric' | 'number-pad' | 'decimal-pad';
-    };
-    onPress?: () => void;
-    isLast?: boolean;
-  }) => {
-    return (
-      <View
-        style={{
-          paddingVertical: 12,
-          borderBottomWidth: opts.isLast ? 0 : 1,
-          borderBottomColor: AppColors.dividerColor,
-        }}>
-        <TouchableScale
-          disabled={!opts.onPress}
-          onPress={opts.onPress}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-          }}>
-          <View
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              backgroundColor: AppColors.purpleShade50,
-              borderWidth: 1,
-              borderColor: `${AppColors.purple}2E`,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-            {opts.icon}
-          </View>
-          <View style={{flex: 1}}>
-            <Text
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 14,
-                lineHeight: 18,
-                color: AppColors.primaryBlack,
-              }}>
-              {opts.label}
-            </Text>
-            {opts.description ? (
-              <Text
-                style={{
-                  fontFamily: AppFonts.interRegular,
-                  fontSize: 11,
-                  lineHeight: 15,
-                  color: AppColors.grayText,
-                  marginTop: 1,
-                }}>
-                {opts.description}
-              </Text>
-            ) : null}
-          </View>
-          {opts.right || null}
-        </TouchableScale>
-        {opts.numericInput && (
-          <View style={{marginTop: 10, gap: 6}}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: AppColors.grayBackground,
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: AppColors.dividerColor,
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-              }}>
-              <TextInput
-                style={{
-                  flex: 1,
-                  fontFamily: AppFonts.interMedium,
-                  fontSize: 14,
-                  lineHeight: 18,
-                  color: AppColors.primaryBlack,
-                  paddingVertical: 6,
-                }}
-                value={String(opts.numericInput.value || '')}
-                onChangeText={text => {
-                  const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
-                  if (!isNaN(num)) {
-                    const clamped = Math.max(
-                      opts.numericInput?.min ?? 1,
-                      Math.min(opts.numericInput?.max ?? 10000, num),
-                    );
-                    opts.numericInput?.onChange(clamped);
-                  }
-                }}
-                keyboardType={opts.numericInput.keyboardType ?? 'number-pad'}
-                placeholder={opts.numericInput.placeholder}
-                placeholderTextColor={AppColors.grayTextWeak}
-                maxLength={6}
-                selectTextOnFocus
-              />
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 11,
-                  color: AppColors.purple,
-                  marginLeft: 6,
-                }}>
-                MAX
-              </Text>
-            </View>
-            {opts.numericInput.min !== undefined || opts.numericInput.max !== undefined ? (
-              <Text
-                style={{
-                  fontFamily: AppFonts.interRegular,
-                  fontSize: 10,
-                  lineHeight: 13,
-                  color: AppColors.grayTextWeak,
-                }}>
-                Range: {opts.numericInput.min ?? 1} - {opts.numericInput.max ?? '∞'}
-              </Text>
-            ) : null}
-          </View>
-        )}
-        {opts.picker && (
-          <View
-            style={{
-              flexDirection: 'row',
-              backgroundColor: AppColors.grayBackground,
-              borderRadius: 8,
-              padding: 2.5,
-              marginTop: 10,
-              borderWidth: 1,
-              borderColor: AppColors.dividerColor,
-            }}>
-            {opts.picker.options.map(opt => {
-              const isActive = opts.picker!.selectedValue === opt;
-              return (
-                <TouchableScale
-                  key={String(opt)}
-                  onPress={() => opts.picker!.onSelect(opt)}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 6,
-                    alignItems: 'center',
-                    borderRadius: 6,
-                    backgroundColor: isActive
-                      ? AppColors.purple
-                      : 'transparent',
-                  }}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 11,
-                      lineHeight: 14,
-                      color: isActive ? AppColors.white : AppColors.grayText,
-                    }}>
-                    {opts.picker!.formatLabel
-                      ? opts.picker!.formatLabel(opt)
-                      : opt}
-                  </Text>
-                </TouchableScale>
-              );
-            })}
-          </View>
-        )}
-      </View>
-    );
-  };
 
   let content: React.ReactNode = null;
   let title = '';
@@ -2282,7 +1881,7 @@ const SettingsPanel = () => {
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2299,8 +1898,8 @@ const SettingsPanel = () => {
               value: maxNetworkLogs,
               onChange: setMaxNetworkLogs,
               min: 10,
-              max: 5000,
-              placeholder: 'Enter max requests (10-5000)',
+              max: 100,
+              placeholder: 'Enter max requests (10-100)',
             },
             isLast: true,
           })}
@@ -2347,6 +1946,7 @@ const SettingsPanel = () => {
             ),
           })}
         </View>
+        <View style={{height: 48}} />
       </ScrollView>
     );
   } else if (settingsPage === 'logs') {
@@ -2356,7 +1956,7 @@ const SettingsPanel = () => {
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2374,8 +1974,8 @@ const SettingsPanel = () => {
               value: maxConsoleLogs,
               onChange: setMaxConsoleLogs,
               min: 10,
-              max: 10000,
-              placeholder: 'Enter max logs (10-10000)',
+              max: 100,
+              placeholder: 'Enter max logs (10-100)',
             },
           })}
           <View
@@ -2456,6 +2056,111 @@ const SettingsPanel = () => {
           })}
         </View>
 
+        {/* Log Deduplication Card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            overflow: 'hidden',
+            padding: 16,
+            gap: 14,
+          }}>
+          <Text
+            style={{
+              fontFamily: AppFonts.interBold,
+              fontSize: 11,
+              lineHeight: 14,
+              color: AppColors.grayTextWeak,
+              letterSpacing: 0.8,
+            }}>
+            {t('settings.logFiltersDeduplication')}
+          </Text>
+
+          {/* Show Duplicate Logs */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                flex: 1,
+              }}>
+              <View
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  backgroundColor: AppColors.purpleShade50,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <EyeIcon color={AppColors.purple} size={15} />
+              </View>
+              <View style={{flex: 1}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 13.5,
+                    lineHeight: 18,
+                    color: AppColors.primaryBlack,
+                  }}>
+                  {t('settings.general.duplicateLogs')}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 11,
+                    lineHeight: 15,
+                    color: AppColors.grayText,
+                    marginTop: 1,
+                  }}>
+                  {t('settings.general.duplicateLogsDescription')}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableScale
+              accessible={true}
+              accessibilityRole="switch"
+              accessibilityLabel="Toggle show duplicate logs"
+              accessibilityState={{checked: showDuplicateLogs}}
+              onPress={() => setShowDuplicateLogs(prev => !prev)}
+              style={{
+                width: 42,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: showDuplicateLogs
+                  ? AppColors.purple
+                  : AppColors.grayBorderSecondary,
+                padding: 2,
+                justifyContent: 'center',
+                alignItems: showDuplicateLogs
+                  ? 'flex-end'
+                  : 'flex-start',
+              }}>
+              <View
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  backgroundColor: AppColors.white,
+                  shadowColor: AppColors.black,
+                  shadowOpacity: 0.18,
+                  shadowRadius: 2,
+                  shadowOffset: {width: 0, height: 1},
+                }}
+              />
+            </TouchableScale>
+          </View>
+        </View>
+
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2496,6 +2201,7 @@ const SettingsPanel = () => {
             ),
           })}
         </View>
+        <View style={{height: 48}} />
       </ScrollView>
     );
   } else if (settingsPage === 'analytics') {
@@ -2505,7 +2211,7 @@ const SettingsPanel = () => {
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2522,8 +2228,8 @@ const SettingsPanel = () => {
               value: maxAnalyticsEventsLimit,
               onChange: setMaxAnalyticsEventsLimit,
               min: 10,
-              max: 5000,
-              placeholder: 'Enter max events (10-5000)',
+              max: 75,
+              placeholder: 'Enter max events (10-75)',
             },
             isLast: true,
           })}
@@ -2569,6 +2275,7 @@ const SettingsPanel = () => {
             ),
           })}
         </View>
+        <View style={{height: 48}} />
       </ScrollView>
     );
   } else if (settingsPage === 'redux') {
@@ -2578,7 +2285,7 @@ const SettingsPanel = () => {
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2673,6 +2380,7 @@ const SettingsPanel = () => {
             ),
           })}
         </View>
+        <View style={{height: 48}} />
       </ScrollView>
     );
   } else if (settingsPage === 'crash') {
@@ -2682,7 +2390,7 @@ const SettingsPanel = () => {
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2700,8 +2408,8 @@ const SettingsPanel = () => {
               value: maxCrashLogs,
               onChange: setMaxCrashLogs,
               min: 5,
-              max: 500,
-              placeholder: 'Enter max crashes (5-500)',
+              max: 50,
+              placeholder: 'Enter max crashes (5-50)',
             },
           })}
           <View
@@ -2774,6 +2482,7 @@ const SettingsPanel = () => {
             ),
           })}
         </View>
+        <View style={{height: 48}} />
       </ScrollView>
     );
   } else if (settingsPage === 'bundle') {
@@ -2783,7 +2492,7 @@ const SettingsPanel = () => {
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2869,6 +2578,7 @@ const SettingsPanel = () => {
             ),
           })}
         </View>
+        <View style={{height: 48}} />
       </ScrollView>
     );
   } else if (settingsPage === 'performance') {
@@ -2878,7 +2588,7 @@ const SettingsPanel = () => {
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -2964,9 +2674,23 @@ const SettingsPanel = () => {
             ),
           })}
         </View>
+        <View style={{height: 48}} />
       </ScrollView>
     );
   }
+
+  const subPageAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (settingsPage !== 'main') {
+      subPageAnim.setValue(0);
+      Animated.spring(subPageAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [settingsPage]);
 
   return (
     <View
@@ -2974,77 +2698,36 @@ const SettingsPanel = () => {
         flex: 1,
         backgroundColor: AppColors.grayBackground,
       }}>
-      <LinearGradient
-        colors={[AppColors.purple, AppColors.brandPurple]}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 0}}
-        style={styles.headerGradient}>
-        <View style={{paddingTop: headerTopPadding, width: '100%'}}>
-          <View style={[styles.header, {paddingHorizontal: 16, gap: 12}]}>
-            <TouchableScale
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={t('settings.back')}
-              onPress={goBackToMain}
-              hitSlop={12}
-              style={{
-                padding: 8,
-                borderRadius: 10,
-                backgroundColor: `${AppColors.white}26`,
-                borderWidth: 1,
-                borderColor: `${AppColors.white}14`,
-              }}>
-              <WhiteBackNavigation color={AppColors.white} size={16} />
-            </TouchableScale>
-            {icon && (
-              <View
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  backgroundColor: `${AppColors.white}26`,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                {icon}
-              </View>
-            )}
-            <View style={{flex: 1}}>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 17,
-                  lineHeight: 22,
-                  color: AppColors.white,
-                }}>
-                {title}
-              </Text>
-            </View>
-            {rightInfo ? (
-              <View
-                style={{
-                  backgroundColor: `${AppColors.white}26`,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.white}1A`,
-                }}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 11,
-                    lineHeight: 14,
-                    color: AppColors.white,
-                  }}>
-                  {rightInfo}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      </LinearGradient>
-      {content}
+      {/* ─── Persistent Main Settings (Retains 100% scroll position) ─── */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          settingsPage !== 'main' && {pointerEvents: 'none'},
+        ]}>
+        {renderMainSettingsContent()}
+      </View>
+
+      {/* ─── Sub-module Settings Overlay (Smooth Animated Slide) ─── */}
+      {settingsPage !== 'main' && (
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: AppColors.grayBackground,
+              opacity: subPageAnim,
+              transform: [
+                {
+                  translateX: subPageAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  }),
+                },
+              ],
+            },
+          ]}>
+          {content}
+        </Animated.View>
+      )}
     </View>
   );
 };

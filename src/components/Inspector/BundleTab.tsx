@@ -67,9 +67,20 @@ import {
   HostBundleAnalysisResult,
 } from '../../customHooks/bundleAnalyzer';
 
-export type BundleSubTab = 'overview' | 'production' | 'files' | 'packages' | 'media' | 'optimizer';
+export type BundleSubTab =
+  | 'overview'
+  | 'production'
+  | 'files'
+  | 'packages'
+  | 'media'
+  | 'optimizer';
 
-export type FileTypeCategory = 'image' | 'typescript' | 'javascript' | 'font' | 'json';
+export type FileTypeCategory =
+  | 'image'
+  | 'typescript'
+  | 'javascript'
+  | 'font'
+  | 'json';
 
 export interface BundleFileItem {
   id: string;
@@ -127,7 +138,11 @@ const PackageLogoRenderer: React.FC<{
           bundleStyles.pkgLogoWrap,
           {width: size, height: size, backgroundColor: AppColors.npmDark},
         ]}>
-        <Svg width={size - 6} height={size - 6} viewBox="0 0 100 100" fill="none">
+        <Svg
+          width={size - 6}
+          height={size - 6}
+          viewBox="0 0 100 100"
+          fill="none">
           <Circle cx="50" cy="50" r="9" fill={AppColors.reactCyan} />
           <Ellipse
             cx="50"
@@ -168,8 +183,18 @@ const PackageLogoRenderer: React.FC<{
           bundleStyles.pkgLogoWrap,
           {width: size, height: size, backgroundColor: AppColors.hermesPurple},
         ]}>
-        <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
-          <Circle cx="50" cy="50" r="38" stroke={AppColors.white} strokeWidth="8" />
+        <Svg
+          width={size - 8}
+          height={size - 8}
+          viewBox="0 0 100 100"
+          fill="none">
+          <Circle
+            cx="50"
+            cy="50"
+            r="38"
+            stroke={AppColors.white}
+            strokeWidth="8"
+          />
           <Path d="M50 20 L68 50 L50 80 L32 50 Z" fill={AppColors.reactCyan} />
           <Circle cx="50" cy="50" r="6" fill={AppColors.white} />
         </Svg>
@@ -185,7 +210,11 @@ const PackageLogoRenderer: React.FC<{
           bundleStyles.pkgLogoWrap,
           {width: size, height: size, backgroundColor: AppColors.pink400},
         ]}>
-        <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
+        <Svg
+          width={size - 8}
+          height={size - 8}
+          viewBox="0 0 100 100"
+          fill="none">
           <Path
             d="M20 75 C35 25, 65 25, 80 75"
             stroke={AppColors.white}
@@ -215,7 +244,11 @@ const PackageLogoRenderer: React.FC<{
           bundleStyles.pkgLogoWrap,
           {width: size, height: size, backgroundColor: AppColors.expoViolet},
         ]}>
-        <Svg width={size - 6} height={size - 6} viewBox="0 0 100 100" fill="none">
+        <Svg
+          width={size - 6}
+          height={size - 6}
+          viewBox="0 0 100 100"
+          fill="none">
           <Path
             d="M22 75 L50 20 L78 75 M33 58 L67 58"
             stroke={AppColors.white}
@@ -235,9 +268,17 @@ const PackageLogoRenderer: React.FC<{
       <View
         style={[
           bundleStyles.pkgLogoWrap,
-          {width: size, height: size, backgroundColor: AppColors.reanimatedNavy},
+          {
+            width: size,
+            height: size,
+            backgroundColor: AppColors.reanimatedNavy,
+          },
         ]}>
-        <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
+        <Svg
+          width={size - 8}
+          height={size - 8}
+          viewBox="0 0 100 100"
+          fill="none">
           <Path d="M50 15 L88 35 L50 55 L12 35 Z" fill={AppColors.sky400} />
           <Path
             d="M12 50 L50 70 L88 50"
@@ -264,7 +305,11 @@ const PackageLogoRenderer: React.FC<{
           bundleStyles.pkgLogoWrap,
           {width: size, height: size, backgroundColor: AppColors.rose600},
         ]}>
-        <Svg width={size - 4} height={size - 4} viewBox="0 0 100 100" fill="none">
+        <Svg
+          width={size - 4}
+          height={size - 4}
+          viewBox="0 0 100 100"
+          fill="none">
           <Defs>
             <LinearGradient
               id="pkgGrad"
@@ -292,8 +337,18 @@ const PackageLogoRenderer: React.FC<{
           bundleStyles.pkgLogoWrap,
           {width: size, height: size, backgroundColor: AppColors.emerald600},
         ]}>
-        <Svg width={size - 8} height={size - 8} viewBox="0 0 100 100" fill="none">
-          <Circle cx="50" cy="50" r="38" stroke={AppColors.white} strokeWidth="8" />
+        <Svg
+          width={size - 8}
+          height={size - 8}
+          viewBox="0 0 100 100"
+          fill="none">
+          <Circle
+            cx="50"
+            cy="50"
+            r="38"
+            stroke={AppColors.white}
+            strokeWidth="8"
+          />
           <Ellipse
             cx="50"
             cy="50"
@@ -317,10 +372,7 @@ const PackageLogoRenderer: React.FC<{
       ]}>
       <Svg width={size - 4} height={size - 4} viewBox="0 0 100 100" fill="none">
         <Rect width="100" height="100" rx="14" fill={AppColors.npmRed} />
-        <Path
-          d="M18 24 H82 V76 H50 V40 H38 V76 H18 Z"
-          fill={AppColors.white}
-        />
+        <Path d="M18 24 H82 V76 H50 V40 H38 V76 H18 Z" fill={AppColors.white} />
       </Svg>
     </View>
   );
@@ -347,7 +399,12 @@ const BundleCategoryIcon: React.FC<{
   size?: number;
   color?: string;
 }> = ({type, size = 16, color = AppColors.purple}) => {
-  const stroke = {stroke: color, strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const};
+  const stroke = {
+    stroke: color,
+    strokeWidth: 1.7,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+  };
   const renderGlyph = () => {
     switch (type) {
       case 'folder':
@@ -394,7 +451,10 @@ const BundleCategoryIcon: React.FC<{
           <G>
             <Rect x="3.5" y="4.5" width="17" height="15" rx="2" {...stroke} />
             <Circle cx="9" cy="10" r="1.5" {...stroke} />
-            <Path d="M3.5 17.5 L9.5 12.5 L14 16.5 L17 13.5 L20.5 17.5" {...stroke} />
+            <Path
+              d="M3.5 17.5 L9.5 12.5 L14 16.5 L17 13.5 L20.5 17.5"
+              {...stroke}
+            />
           </G>
         );
       case 'overhead':
@@ -528,7 +588,8 @@ const MediaPreviewThumbnail: React.FC<{file: BundleFileItem}> = ({file}) => {
     );
   }
 
-  const categoryMeta = CATEGORY_COLORS[file.category] || CATEGORY_COLORS.typescript;
+  const categoryMeta =
+    CATEGORY_COLORS[file.category] || CATEGORY_COLORS.typescript;
   return (
     <View
       style={[
@@ -624,7 +685,10 @@ function buildBundleFileTree(files: BundleFileItem[]): TreeNode[] {
   return convertMapToNodes(rootMap);
 }
 
-export const downloadBundleFile = async (file: BundleFileItem, scriptURL?: string): Promise<void> => {
+export const downloadBundleFile = async (
+  file: BundleFileItem,
+  scriptURL?: string,
+): Promise<void> => {
   let content = '';
 
   // 1. Attempt to fetch real source code from Metro dev server dynamically
@@ -658,7 +722,11 @@ export const downloadBundleFile = async (file: BundleFileItem, scriptURL?: strin
 // Path: ${file.path}
 // Category: ${file.category.toUpperCase()}
 // Size: ${file.sizeKb} KB
-// Status: ${file.status === 'optimal' ? 'Active in Dependency Graph' : 'Not consumed / Static'}
+// Status: ${
+      file.status === 'optimal'
+        ? 'Active in Dependency Graph'
+        : 'Not consumed / Static'
+    }
 // Meta: ${file.meta}
 // ─────────────────────────────────────────────────────────────
 
@@ -727,14 +795,17 @@ const BundleTreeNodeView: React.FC<{
         <TouchableScale
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={`Folder ${node.name}, ${node.fileCount} ${node.fileCount === 1 ? 'file' : 'files'}, ${node.sizeKb >= 1024 ? `${(node.sizeKb / 1024).toFixed(2)} MB` : `${node.sizeKb} KB`}`}
+          accessibilityLabel={`Folder ${node.name}, ${node.fileCount} ${
+            node.fileCount === 1 ? 'file' : 'files'
+          }, ${
+            node.sizeKb >= 1024
+              ? `${(node.sizeKb / 1024).toFixed(2)} MB`
+              : `${node.sizeKb} KB`
+          }`}
           accessibilityState={{expanded: isExpanded}}
           accessibilityHint="Double tap to expand or collapse folder"
           onPress={() => toggleFolder(node.fullPath)}
-          style={[
-            bundleStyles.treeFolderRow,
-            {paddingLeft: indentLeft},
-          ]}>
+          style={[bundleStyles.treeFolderRow, {paddingLeft: indentLeft}]}>
           <View style={bundleStyles.treeRowLeft}>
             <Text style={bundleStyles.treeChevron}>
               {isCollapsed ? '▸' : '▾'}
@@ -752,7 +823,8 @@ const BundleTreeNodeView: React.FC<{
             />
             <View style={bundleStyles.treeCountBadge}>
               <Text style={bundleStyles.treeCountBadgeText}>
-                {node.fileCount} {node.fileCount === 1 ? t('bundle.file') : t('bundle.files')}
+                {node.fileCount}{' '}
+                {node.fileCount === 1 ? t('bundle.file') : t('bundle.files')}
               </Text>
             </View>
           </View>
@@ -760,7 +832,9 @@ const BundleTreeNodeView: React.FC<{
           <View style={bundleStyles.treeRowRight}>
             <Text style={bundleStyles.treeFolderSize}>
               {node.sizeKb >= 1024
-                ? t('bundle.fileSizeMb', {size: (node.sizeKb / 1024).toFixed(2)})
+                ? t('bundle.fileSizeMb', {
+                    size: (node.sizeKb / 1024).toFixed(2),
+                  })
                 : t('bundle.fileSizeKb', {size: node.sizeKb})}
             </Text>
             <CopyButton
@@ -799,7 +873,8 @@ const BundleTreeNodeView: React.FC<{
   const file = node.fileItem;
   if (!file) return null;
 
-  const pctOfTotal = totalBundleKb > 0 ? ((file.sizeKb / totalBundleKb) * 100).toFixed(1) : '0';
+  const pctOfTotal =
+    totalBundleKb > 0 ? ((file.sizeKb / totalBundleKb) * 100).toFixed(1) : '0';
   const isUnused = file.isConsumed === false;
 
   return (
@@ -827,14 +902,20 @@ const BundleTreeNodeView: React.FC<{
 
         {isUnused && (
           <View style={bundleStyles.treeUnusedPill}>
-            <Text style={bundleStyles.treeUnusedPillText}>{t('bundle.notConsumed')}</Text>
+            <Text style={bundleStyles.treeUnusedPillText}>
+              {t('bundle.notConsumed')}
+            </Text>
           </View>
         )}
       </View>
 
       <View style={bundleStyles.treeRowRight}>
         <View style={bundleStyles.treeFileSizeGroup}>
-          <Text style={[bundleStyles.treeFileSizeText, isUnused && {color: AppColors.red600}]}>
+          <Text
+            style={[
+              bundleStyles.treeFileSizeText,
+              isUnused && {color: AppColors.red600},
+            ]}>
             {file.sizeKb >= 1024
               ? t('bundle.fileSizeMb', {size: (file.sizeKb / 1024).toFixed(2)})
               : t('bundle.fileSizeKb', {size: file.sizeKb})}
@@ -856,47 +937,71 @@ const BundleTreeNodeView: React.FC<{
             </TouchableScale>
           )}
 
-          <CopyButton
-            value={() => file}
-            label={t('bundle.fileDetailsJson')}
-          />
+          <CopyButton value={() => file} label={t('bundle.fileDetailsJson')} />
         </View>
       </View>
     </View>
   );
 };
 
-
-
 const CATEGORY_TABS = [
   {key: 'ALL', labelKey: 'bundle.catAll', iconType: 'folder' as const},
   {key: 'UNUSED', labelKey: 'bundle.catUnused', iconType: 'ban' as const},
   {key: 'CONSUMED', labelKey: 'bundle.catConsumed', iconType: 'bolt' as const},
   {key: 'image', labelKey: 'bundle.catImages', iconType: 'image' as const},
-  {key: 'typescript', labelKey: 'bundle.catTypescript', iconType: 'typescript' as const},
-  {key: 'javascript', labelKey: 'bundle.catJavascript', iconType: 'javascript' as const},
+  {
+    key: 'typescript',
+    labelKey: 'bundle.catTypescript',
+    iconType: 'typescript' as const,
+  },
+  {
+    key: 'javascript',
+    labelKey: 'bundle.catJavascript',
+    iconType: 'javascript' as const,
+  },
   {key: 'font', labelKey: 'bundle.catFonts', iconType: 'font' as const},
   {key: 'json', labelKey: 'bundle.catJson', iconType: 'json' as const},
 ];
 
-const CATEGORY_COLORS: Record<FileTypeCategory, {label: string; color: string; bg: string}> = {
-  image: {label: 'Images & Media', color: AppColors.pink500, bg: AppColors.pink100},
-  typescript: {label: 'TypeScript', color: AppColors.sky500, bg: AppColors.sky100},
-  javascript: {label: 'JavaScript', color: AppColors.indigo500, bg: AppColors.indigo50},
+const CATEGORY_COLORS: Record<
+  FileTypeCategory,
+  {label: string; color: string; bg: string}
+> = {
+  image: {
+    label: 'Images & Media',
+    color: AppColors.pink500,
+    bg: AppColors.pink100,
+  },
+  typescript: {
+    label: 'TypeScript',
+    color: AppColors.sky500,
+    bg: AppColors.sky100,
+  },
+  javascript: {
+    label: 'JavaScript',
+    color: AppColors.indigo500,
+    bg: AppColors.indigo50,
+  },
   font: {label: 'Fonts', color: AppColors.purple500, bg: AppColors.purple100},
-  json: {label: 'JSON / Data', color: AppColors.emerald500, bg: AppColors.emerald100},
+  json: {
+    label: 'JSON / Data',
+    color: AppColors.emerald500,
+    bg: AppColors.emerald100,
+  },
 };
 
 const BundleTab = React.memo(() => {
   const {t} = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<BundleSubTab>('overview');
-  const [prodPlatform, setProdPlatform] = useState<'ios' | 'androidAab' | 'androidApk'>('ios');
+  const [prodPlatform, setProdPlatform] = useState<
+    'ios' | 'androidAab' | 'androidApk'
+  >('ios');
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
 
   // ─── Live Host App Bundle Analysis (fetched from Metro / runtime) ─────────
-  const [analysis, setAnalysis] = useState<HostBundleAnalysisResult>(() =>
-    getCachedBundleAnalysis() || getInitialBundleAnalysis(),
+  const [analysis, setAnalysis] = useState<HostBundleAnalysisResult>(
+    () => getCachedBundleAnalysis() || getInitialBundleAnalysis(),
   );
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
@@ -946,19 +1051,29 @@ const BundleTab = React.memo(() => {
 
   // Comprehensive bundle summary (full Metro bundle calculation e.g. 6.0 MB)
   const summary = useMemo(() => {
-    const totalKb = analysis?.totalDevKb || (analysis?.totalDevBytes ? Math.round(analysis.totalDevBytes / 1024) : 6144);
-    const totalMb = analysis?.totalDevMb ? analysis.totalDevMb.toFixed(2) : (totalKb / 1024).toFixed(2);
+    const totalKb =
+      analysis?.totalDevKb ||
+      (analysis?.totalDevBytes
+        ? Math.round(analysis.totalDevBytes / 1024)
+        : 6144);
+    const totalMb = analysis?.totalDevMb
+      ? analysis.totalDevMb.toFixed(2)
+      : (totalKb / 1024).toFixed(2);
 
-    const nodeModulesKb = analysis?.splitUp?.nodeModules?.kb || Math.round(totalKb * 0.52);
+    const nodeModulesKb =
+      analysis?.splitUp?.nodeModules?.kb || Math.round(totalKb * 0.52);
     const nodeModulesPct = analysis?.splitUp?.nodeModules?.pct || 52.0;
 
-    const metroKb = analysis?.splitUp?.metroDevOverhead?.kb || Math.round(totalKb * 0.21);
+    const metroKb =
+      analysis?.splitUp?.metroDevOverhead?.kb || Math.round(totalKb * 0.21);
     const metroPct = analysis?.splitUp?.metroDevOverhead?.pct || 21.0;
 
-    const appSourceKb = analysis?.splitUp?.appSource?.kb || Math.round(totalKb * 0.15);
+    const appSourceKb =
+      analysis?.splitUp?.appSource?.kb || Math.round(totalKb * 0.15);
     const appSourcePct = analysis?.splitUp?.appSource?.pct || 15.0;
 
-    const assetsMediaKb = analysis?.splitUp?.assetsMedia?.kb || Math.round(totalKb * 0.12);
+    const assetsMediaKb =
+      analysis?.splitUp?.assetsMedia?.kb || Math.round(totalKb * 0.12);
     const assetsMediaPct = analysis?.splitUp?.assetsMedia?.pct || 12.0;
 
     const categories = [
@@ -972,7 +1087,9 @@ const BundleTab = React.memo(() => {
         sizeMb: (nodeModulesKb / 1024).toFixed(2),
         pct: nodeModulesPct,
         color: AppColors.indigo500,
-        desc: `${analysis?.packageCount || bundlePackages.length || 53} node_modules packages (React Native, React, navigation, axios)`,
+        desc: `${
+          analysis?.packageCount || bundlePackages.length || 53
+        } node_modules packages (React Native, React, navigation, axios)`,
       },
       {
         key: 'metro_runtime',
@@ -991,7 +1108,10 @@ const BundleTab = React.memo(() => {
         iconType: 'typescript' as const,
         title: 'App Source Code (TSX/JS)',
         targetTab: 'files' as const,
-        count: bundleFiles.filter(f => f.category === 'typescript' || f.category === 'javascript').length || 7,
+        count:
+          bundleFiles.filter(
+            f => f.category === 'typescript' || f.category === 'javascript',
+          ).length || 7,
         sizeKb: appSourceKb,
         sizeMb: (appSourceKb / 1024).toFixed(2),
         pct: appSourcePct,
@@ -1003,7 +1123,13 @@ const BundleTab = React.memo(() => {
         iconType: 'image' as const,
         title: 'Images & Static Media',
         targetTab: 'media' as const,
-        count: bundleFiles.filter(f => f.category === 'image' || f.category === 'font' || f.category === 'json').length || 3,
+        count:
+          bundleFiles.filter(
+            f =>
+              f.category === 'image' ||
+              f.category === 'font' ||
+              f.category === 'json',
+          ).length || 3,
         sizeKb: assetsMediaKb,
         sizeMb: (assetsMediaKb / 1024).toFixed(2),
         pct: assetsMediaPct,
@@ -1080,7 +1206,9 @@ const BundleTab = React.memo(() => {
 
   // Tree View State & Node Generation (Top folders expanded by default)
   const [filesViewMode, setFilesViewMode] = useState<'tree' | 'list'>('tree');
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [expandedFolders, setExpandedFolders] = useState<
+    Record<string, boolean>
+  >({});
 
   const fileTreeNodes = useMemo(() => {
     return buildBundleFileTree(filteredFiles);
@@ -1146,7 +1274,9 @@ const BundleTab = React.memo(() => {
 
   // Media files (Images + Fonts)
   const mediaFiles = useMemo(() => {
-    return bundleFiles.filter(f => f.category === 'image' || f.category === 'font');
+    return bundleFiles.filter(
+      f => f.category === 'image' || f.category === 'font',
+    );
   }, [bundleFiles]);
 
   const mediaTotalKb = useMemo(() => {
@@ -1158,42 +1288,60 @@ const BundleTab = React.memo(() => {
       key: 'overview',
       label: t('bundle.tabOverview'),
       icon: (isActive: boolean) => (
-        <LiveStateIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
+        <LiveStateIcon
+          color={isActive ? AppColors.white : AppColors.purple}
+          size={12}
+        />
       ),
     },
     {
       key: 'production',
       label: t('bundle.tabProduction', {count: 3}),
       icon: (isActive: boolean) => (
-        <TimelineIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
+        <TimelineIcon
+          color={isActive ? AppColors.white : AppColors.purple}
+          size={12}
+        />
       ),
     },
     {
       key: 'files',
       label: t('bundle.tabFiles', {count: bundleFiles.length}),
       icon: (isActive: boolean) => (
-        <LayersIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
+        <LayersIcon
+          color={isActive ? AppColors.white : AppColors.purple}
+          size={12}
+        />
       ),
     },
     {
       key: 'packages',
       label: t('bundle.tabPackages', {count: bundlePackages.length}),
       icon: (isActive: boolean) => (
-        <PackageIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
+        <PackageIcon
+          color={isActive ? AppColors.white : AppColors.purple}
+          size={12}
+        />
       ),
     },
     {
       key: 'media',
       label: t('bundle.tabMedia', {count: mediaFiles.length}),
       icon: (isActive: boolean) => (
-        <StorageIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
+        <StorageIcon
+          color={isActive ? AppColors.white : AppColors.purple}
+          size={12}
+        />
       ),
     },
     {
       key: 'optimizer',
       label: t('bundle.tabOptimizer'),
       icon: (isActive: boolean) => (
-        <MetadataIcon color={isActive ? AppColors.white : AppColors.purple} size={12} />
+        <MetadataIcon
+          color={isActive ? AppColors.white : AppColors.purple}
+          size={12}
+        />
       ),
     },
   ];
@@ -1237,7 +1385,9 @@ const BundleTab = React.memo(() => {
         <TouchableScale
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={isAnalyzing ? "Analyzing Metro bundle" : "Reload bundle analysis"}
+          accessibilityLabel={
+            isAnalyzing ? 'Analyzing Metro bundle' : 'Reload bundle analysis'
+          }
           accessibilityHint="Re-probes Metro dev server and refreshes bundle statistics"
           onPress={refreshAnalysis}
           style={bundleStyles.reloadButton}
@@ -1258,7 +1408,6 @@ const BundleTab = React.memo(() => {
           style={{flex: 1}}
           contentContainerStyle={bundleStyles.contentContainer}
           keyboardShouldPersistTaps="handled">
-          
           {/* Hero Overview Card */}
           <View style={bundleStyles.heroCard}>
             <View style={bundleStyles.heroTopRow}>
@@ -1266,7 +1415,9 @@ const BundleTab = React.memo(() => {
                 <PackageIcon color={AppColors.brandPurple} size={24} />
               </View>
               <View style={{flex: 1}}>
-                <Text style={bundleStyles.heroTitle}>{t('bundle.heroTitle')}</Text>
+                <Text style={bundleStyles.heroTitle}>
+                  {t('bundle.heroTitle')}
+                </Text>
                 {analysis?.isLive && analysis.scriptURL ? (
                   <View style={{marginTop: 4, gap: 4}}>
                     <Text style={bundleStyles.heroSubtitle}>
@@ -1293,8 +1444,16 @@ const BundleTab = React.memo(() => {
                           justifyContent: 'space-between',
                           marginBottom: 3,
                         }}>
-                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
-                          <ExternalLinkIcon color={AppColors.skyBlue} size={11} />
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}>
+                          <ExternalLinkIcon
+                            color={AppColors.skyBlue}
+                            size={11}
+                          />
                           <Text
                             style={{
                               fontFamily: AppFonts.interBold,
@@ -1345,7 +1504,9 @@ const BundleTab = React.memo(() => {
             {/* 4-Stat Metric Grid */}
             <View style={bundleStyles.metricsGrid}>
               <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>{t('bundle.devBundleSize')}</Text>
+                <Text style={bundleStyles.metricLabel}>
+                  {t('bundle.devBundleSize')}
+                </Text>
                 <Text style={bundleStyles.metricValue}>
                   {t('bundle.mbValue', {
                     size: analysis ? analysis.totalDevMb : summary.totalMb,
@@ -1362,8 +1523,14 @@ const BundleTab = React.memo(() => {
               </View>
 
               <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>{t('bundle.imagesMedia')}</Text>
-                <Text style={[bundleStyles.metricValue, {color: AppColors.pink500}]}>
+                <Text style={bundleStyles.metricLabel}>
+                  {t('bundle.imagesMedia')}
+                </Text>
+                <Text
+                  style={[
+                    bundleStyles.metricValue,
+                    {color: AppColors.pink500},
+                  ]}>
                   {t('bundle.fileSizeKb', {size: summary.images.kb})}
                 </Text>
                 <Text style={bundleStyles.metricHint}>
@@ -1372,9 +1539,14 @@ const BundleTab = React.memo(() => {
               </View>
 
               <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>{t('bundle.tsJsSource')}</Text>
-                <Text style={[bundleStyles.metricValue, {color: AppColors.sky500}]}>
-                  {t('bundle.fileSizeKb', {size: summary.ts.kb + summary.js.kb})}
+                <Text style={bundleStyles.metricLabel}>
+                  {t('bundle.tsJsSource')}
+                </Text>
+                <Text
+                  style={[bundleStyles.metricValue, {color: AppColors.sky500}]}>
+                  {t('bundle.fileSizeKb', {
+                    size: summary.ts.kb + summary.js.kb,
+                  })}
                 </Text>
                 <Text style={bundleStyles.metricHint}>
                   {t('bundle.pctOfTrackedAssets', {
@@ -1384,12 +1556,24 @@ const BundleTab = React.memo(() => {
               </View>
 
               <View style={bundleStyles.metricBox}>
-                <Text style={bundleStyles.metricLabel}>{t('bundle.jsEngine')}</Text>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2}}>
+                <Text style={bundleStyles.metricLabel}>
+                  {t('bundle.jsEngine')}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    marginTop: 2,
+                  }}>
                   <View
                     style={[
                       bundleStyles.statusIndicator,
-                      {backgroundColor: isHermes ? AppColors.greenColor : AppColors.darkOrange},
+                      {
+                        backgroundColor: isHermes
+                          ? AppColors.greenColor
+                          : AppColors.darkOrange,
+                      },
                     ]}
                   />
                   <Text style={bundleStyles.metricValue}>
@@ -1406,7 +1590,13 @@ const BundleTab = React.memo(() => {
           {/* Live analysis unavailable warning */}
           {analysis && !analysis.isLive && (
             <View style={bundleStyles.liveWarningCard}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  flex: 1,
+                }}>
                 <CircleAlertIcon color={AppColors.amber700} size={16} />
                 <View style={{flex: 1}}>
                   <Text style={bundleStyles.liveWarningTitle}>
@@ -1420,13 +1610,13 @@ const BundleTab = React.memo(() => {
             </View>
           )}
 
-
-
           {/* Visual Type Distribution Ratio Bar */}
           <View style={bundleStyles.sectionCard}>
             <View style={bundleStyles.sectionHeaderRow}>
-              <View>
-                <Text style={bundleStyles.sectionTitle}>{t('bundle.treemapTitle')}</Text>
+              <View style={{flex: 1, paddingRight: 4}}>
+                <Text style={bundleStyles.sectionTitle}>
+                  {t('bundle.treemapTitle')}
+                </Text>
                 <Text style={bundleStyles.sectionSub}>
                   {t('bundle.treemapSub', {mb: summary.totalMb})}
                 </Text>
@@ -1435,10 +1625,19 @@ const BundleTab = React.memo(() => {
                 value={() => ({
                   totalMb: summary.totalMb,
                   totalKb: summary.totalKb,
-                  nodeModules: {kb: summary.nodeModulesKb, pct: summary.nodeModulesPct},
+                  nodeModules: {
+                    kb: summary.nodeModulesKb,
+                    pct: summary.nodeModulesPct,
+                  },
                   metroRuntime: {kb: summary.metroKb, pct: summary.metroPct},
-                  appSource: {kb: summary.appSourceKb, pct: summary.appSourcePct},
-                  assetsMedia: {kb: summary.assetsMediaKb, pct: summary.assetsMediaPct},
+                  appSource: {
+                    kb: summary.appSourceKb,
+                    pct: summary.appSourcePct,
+                  },
+                  assetsMedia: {
+                    kb: summary.assetsMediaKb,
+                    pct: summary.assetsMediaPct,
+                  },
                 })}
                 label={t('bundle.treemapJson')}
               />
@@ -1446,55 +1645,99 @@ const BundleTab = React.memo(() => {
 
             {/* Stacked Colored Bar for Full 6.0 MB Bundle */}
             <View style={bundleStyles.treemapBar}>
-              <View style={{flex: summary.nodeModulesPct, backgroundColor: AppColors.indigo500, height: 16}} />
-              <View style={{flex: summary.metroPct, backgroundColor: AppColors.amber500, height: 16}} />
-              <View style={{flex: summary.appSourcePct, backgroundColor: AppColors.sky500, height: 16}} />
-              <View style={{flex: summary.assetsMediaPct, backgroundColor: AppColors.pink500, height: 16}} />
+              <View
+                style={{
+                  flex: summary.nodeModulesPct,
+                  backgroundColor: AppColors.indigo500,
+                  height: 16,
+                }}
+              />
+              <View
+                style={{
+                  flex: summary.metroPct,
+                  backgroundColor: AppColors.amber500,
+                  height: 16,
+                }}
+              />
+              <View
+                style={{
+                  flex: summary.appSourcePct,
+                  backgroundColor: AppColors.sky500,
+                  height: 16,
+                }}
+              />
+              <View
+                style={{
+                  flex: summary.assetsMediaPct,
+                  backgroundColor: AppColors.pink500,
+                  height: 16,
+                }}
+              />
             </View>
 
             {/* Legend Grid */}
             <View style={bundleStyles.legendGrid}>
               <View style={bundleStyles.legendItem}>
-                <BundleCategoryIcon type="javascript" size={13} color={AppColors.indigo500} />
+                <BundleCategoryIcon
+                  type="javascript"
+                  size={13}
+                  color={AppColors.indigo500}
+                />
                 <Text style={bundleStyles.legendText}>
                   Node Modules{' '}
                   <Text style={bundleStyles.legendVal}>
                     {summary.nodeModulesKb >= 1024
                       ? `${(summary.nodeModulesKb / 1024).toFixed(1)} MB`
-                      : `${summary.nodeModulesKb} KB`} ({summary.nodeModulesPct}%)
+                      : `${summary.nodeModulesKb} KB`}{' '}
+                    ({summary.nodeModulesPct}%)
                   </Text>
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <BundleCategoryIcon type="overhead" size={13} color={AppColors.amber500} />
+                <BundleCategoryIcon
+                  type="overhead"
+                  size={13}
+                  color={AppColors.amber500}
+                />
                 <Text style={bundleStyles.legendText}>
                   Metro Runtime{' '}
                   <Text style={bundleStyles.legendVal}>
                     {summary.metroKb >= 1024
                       ? `${(summary.metroKb / 1024).toFixed(1)} MB`
-                      : `${summary.metroKb} KB`} ({summary.metroPct}%)
+                      : `${summary.metroKb} KB`}{' '}
+                    ({summary.metroPct}%)
                   </Text>
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <BundleCategoryIcon type="typescript" size={13} color={AppColors.sky500} />
+                <BundleCategoryIcon
+                  type="typescript"
+                  size={13}
+                  color={AppColors.sky500}
+                />
                 <Text style={bundleStyles.legendText}>
                   App Source{' '}
                   <Text style={bundleStyles.legendVal}>
                     {summary.appSourceKb >= 1024
                       ? `${(summary.appSourceKb / 1024).toFixed(1)} MB`
-                      : `${summary.appSourceKb} KB`} ({summary.appSourcePct}%)
+                      : `${summary.appSourceKb} KB`}{' '}
+                    ({summary.appSourcePct}%)
                   </Text>
                 </Text>
               </View>
               <View style={bundleStyles.legendItem}>
-                <BundleCategoryIcon type="image" size={13} color={AppColors.pink500} />
+                <BundleCategoryIcon
+                  type="image"
+                  size={13}
+                  color={AppColors.pink500}
+                />
                 <Text style={bundleStyles.legendText}>
                   Assets & Media{' '}
                   <Text style={bundleStyles.legendVal}>
                     {summary.assetsMediaKb >= 1024
                       ? `${(summary.assetsMediaKb / 1024).toFixed(1)} MB`
-                      : `${summary.assetsMediaKb} KB`} ({summary.assetsMediaPct}%)
+                      : `${summary.assetsMediaKb} KB`}{' '}
+                    ({summary.assetsMediaPct}%)
                   </Text>
                 </Text>
               </View>
@@ -1504,19 +1747,23 @@ const BundleTab = React.memo(() => {
           {/* Detailed Category Footprint Cards */}
           <View style={bundleStyles.sectionCard}>
             <View style={bundleStyles.sectionHeaderRow}>
-              <Text style={bundleStyles.sectionTitle}>{t('bundle.categoryBreakdown')}</Text>
+              <Text style={bundleStyles.sectionTitle}>
+                {t('bundle.categoryBreakdown')}
+              </Text>
               <CopyButton
                 value={() => summary}
                 label={t('bundle.categoriesJson')}
               />
             </View>
-            
+
             {summary.categories.map((cat, cIdx) => (
               <Pressable
                 key={cIdx}
                 accessible={true}
                 accessibilityRole="button"
-                accessibilityLabel={`${cat.title}, ${cat.sizeKb >= 1024 ? `${cat.sizeMb} MB` : `${cat.sizeKb} KB`}, ${cat.pct}% of bundle`}
+                accessibilityLabel={`${cat.title}, ${
+                  cat.sizeKb >= 1024 ? `${cat.sizeMb} MB` : `${cat.sizeKb} KB`
+                }, ${cat.pct}% of bundle`}
                 accessibilityHint={`Double tap to view ${cat.title} details`}
                 style={({pressed}) => [
                   bundleStyles.catRowCard,
@@ -1527,26 +1774,50 @@ const BundleTab = React.memo(() => {
                   <View
                     style={[
                       bundleStyles.catIconBox,
-                      {backgroundColor: `${cat.color}15`, borderColor: `${cat.color}30`},
+                      {
+                        backgroundColor: `${cat.color}15`,
+                        borderColor: `${cat.color}30`,
+                      },
                     ]}>
-                    <BundleCategoryIcon type={cat.iconType} size={18} color={cat.color} />
+                    <BundleCategoryIcon
+                      type={cat.iconType}
+                      size={18}
+                      color={cat.color}
+                    />
                   </View>
 
                   <View style={bundleStyles.catRowTitleWrap}>
-                    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6}}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 6,
+                      }}>
                       <Text style={bundleStyles.catRowTitle} numberOfLines={1}>
                         {cat.title}
                       </Text>
-                      <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}>
                         <Text style={bundleStyles.catRowSize}>
-                          {cat.sizeKb >= 1024 ? `${cat.sizeMb} MB` : `${cat.sizeKb} KB`}
+                          {cat.sizeKb >= 1024
+                            ? `${cat.sizeMb} MB`
+                            : `${cat.sizeKb} KB`}
                         </Text>
                         <View
                           style={[
                             bundleStyles.catPctPill,
                             {backgroundColor: `${cat.color}18`},
                           ]}>
-                          <Text style={[bundleStyles.catPctText, {color: cat.color}]}>
+                          <Text
+                            style={[
+                              bundleStyles.catPctText,
+                              {color: cat.color},
+                            ]}>
                             {cat.pct}%
                           </Text>
                         </View>
@@ -1600,20 +1871,51 @@ const BundleTab = React.memo(() => {
               {/* 4-Pill Chip Breakdown */}
               <View style={bundleStyles.totalFormulaGrid}>
                 <View style={bundleStyles.totalChip}>
-                  <View style={[bundleStyles.totalDot, {backgroundColor: AppColors.indigo500}]} />
-                  <Text style={bundleStyles.totalChipText}>NPM: {(summary.nodeModulesKb / 1024).toFixed(1)}M ({summary.nodeModulesPct}%)</Text>
+                  <View
+                    style={[
+                      bundleStyles.totalDot,
+                      {backgroundColor: AppColors.indigo500},
+                    ]}
+                  />
+                  <Text style={bundleStyles.totalChipText}>
+                    NPM: {(summary.nodeModulesKb / 1024).toFixed(1)}M (
+                    {summary.nodeModulesPct}%)
+                  </Text>
                 </View>
                 <View style={bundleStyles.totalChip}>
-                  <View style={[bundleStyles.totalDot, {backgroundColor: AppColors.amber500}]} />
-                  <Text style={bundleStyles.totalChipText}>Metro: {(summary.metroKb / 1024).toFixed(1)}M ({summary.metroPct}%)</Text>
+                  <View
+                    style={[
+                      bundleStyles.totalDot,
+                      {backgroundColor: AppColors.amber500},
+                    ]}
+                  />
+                  <Text style={bundleStyles.totalChipText}>
+                    Metro: {(summary.metroKb / 1024).toFixed(1)}M (
+                    {summary.metroPct}%)
+                  </Text>
                 </View>
                 <View style={bundleStyles.totalChip}>
-                  <View style={[bundleStyles.totalDot, {backgroundColor: AppColors.sky500}]} />
-                  <Text style={bundleStyles.totalChipText}>Source: {(summary.appSourceKb / 1024).toFixed(1)}M ({summary.appSourcePct}%)</Text>
+                  <View
+                    style={[
+                      bundleStyles.totalDot,
+                      {backgroundColor: AppColors.sky500},
+                    ]}
+                  />
+                  <Text style={bundleStyles.totalChipText}>
+                    Source: {(summary.appSourceKb / 1024).toFixed(1)}M (
+                    {summary.appSourcePct}%)
+                  </Text>
                 </View>
                 <View style={bundleStyles.totalChip}>
-                  <View style={[bundleStyles.totalDot, {backgroundColor: AppColors.pink500}]} />
-                  <Text style={bundleStyles.totalChipText}>Media: {summary.assetsMediaKb}K ({summary.assetsMediaPct}%)</Text>
+                  <View
+                    style={[
+                      bundleStyles.totalDot,
+                      {backgroundColor: AppColors.pink500},
+                    ]}
+                  />
+                  <Text style={bundleStyles.totalChipText}>
+                    Media: {summary.assetsMediaKb}K ({summary.assetsMediaPct}%)
+                  </Text>
                 </View>
               </View>
             </View>
@@ -1622,21 +1924,37 @@ const BundleTab = React.memo(() => {
           {/* Detailed Subsystem Architecture Split-up */}
           <View style={bundleStyles.sectionCard}>
             <View style={bundleStyles.sectionHeaderRow}>
-              <View>
-                <Text style={bundleStyles.sectionTitle}>Bundle Subsystem Breakdown</Text>
+              <View style={{flex: 1, paddingRight: 4}}>
+                <Text style={bundleStyles.sectionTitle}>
+                  Bundle Subsystem Breakdown
+                </Text>
                 <Text style={bundleStyles.sectionSub}>
-                  Granular analysis of packages, application source, engine runtime & assets
+                  Granular analysis of packages, application source, engine
+                  runtime & assets
                 </Text>
               </View>
               <CopyButton
                 value={() => ({
-                  directPackages: bundlePackages.filter(p => p.type === 'direct').length,
-                  transitivePackages: bundlePackages.filter(p => p.type !== 'direct').length,
+                  directPackages: bundlePackages.filter(
+                    p => p.type === 'direct',
+                  ).length,
+                  transitivePackages: bundlePackages.filter(
+                    p => p.type !== 'direct',
+                  ).length,
                   hermesEngine: isHermes ? 'Hermes (Bytecode)' : 'JSC (Source)',
                   jsDevKb: summary.totalKb,
                   jsHermesReleaseKb: Math.round(summary.totalKb * 0.38),
-                  appSourceFiles: bundleFiles.filter(f => f.category === 'typescript' || f.category === 'javascript').length,
-                  mediaAssets: bundleFiles.filter(f => f.category === 'image' || f.category === 'font' || f.category === 'json').length,
+                  appSourceFiles: bundleFiles.filter(
+                    f =>
+                      f.category === 'typescript' ||
+                      f.category === 'javascript',
+                  ).length,
+                  mediaAssets: bundleFiles.filter(
+                    f =>
+                      f.category === 'image' ||
+                      f.category === 'font' ||
+                      f.category === 'json',
+                  ).length,
                 })}
                 label="Subsystem Split JSON"
               />
@@ -1645,30 +1963,60 @@ const BundleTab = React.memo(() => {
             {/* 1. NPM Dependencies Layer */}
             <View style={bundleStyles.subsystemCard}>
               <View style={bundleStyles.subsystemHeader}>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                  <BundleCategoryIcon type="deps" size={16} color={AppColors.indigo500} />
-                  <Text style={bundleStyles.subsystemTitle}>NPM & Third-Party Dependencies</Text>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <BundleCategoryIcon
+                    type="deps"
+                    size={16}
+                    color={AppColors.indigo500}
+                  />
+                  <Text style={bundleStyles.subsystemTitle}>
+                    NPM & Third-Party Dependencies
+                  </Text>
                 </View>
-                <View style={[bundleStyles.subsystemBadge, {backgroundColor: `${AppColors.indigo500}18`}]}>
-                  <Text style={[bundleStyles.subsystemBadgeText, {color: AppColors.indigo500}]}>
-                    {(summary.nodeModulesKb / 1024).toFixed(1)} MB • {summary.nodeModulesPct}%
+                <View
+                  style={[
+                    bundleStyles.subsystemBadge,
+                    {backgroundColor: `${AppColors.indigo500}18`},
+                  ]}>
+                  <Text
+                    style={[
+                      bundleStyles.subsystemBadgeText,
+                      {color: AppColors.indigo500},
+                    ]}>
+                    {(summary.nodeModulesKb / 1024).toFixed(1)} MB •{' '}
+                    {summary.nodeModulesPct}%
                   </Text>
                 </View>
               </View>
               <View style={bundleStyles.subsystemGrid}>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Direct: <Text style={bundleStyles.subsystemItemVal}>{bundlePackages.filter(p => p.type === 'direct').length || 12} pkgs</Text>
+                    Direct:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundlePackages.filter(p => p.type === 'direct').length ||
+                        12}{' '}
+                      pkgs
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Transitive: <Text style={bundleStyles.subsystemItemVal}>{bundlePackages.filter(p => p.type !== 'direct').length || 41} pkgs</Text>
+                    Transitive:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundlePackages.filter(p => p.type !== 'direct').length ||
+                        41}{' '}
+                      pkgs
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Top Package: <Text style={bundleStyles.subsystemItemVal}>{bundlePackages[0]?.name || 'react-native'} ({bundlePackages[0]?.sizeKb || 1240} KB)</Text>
+                    Top Package:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundlePackages[0]?.name || 'react-native'} (
+                      {bundlePackages[0]?.sizeKb || 1240} KB)
+                    </Text>
                   </Text>
                 </View>
               </View>
@@ -1677,30 +2025,59 @@ const BundleTab = React.memo(() => {
             {/* 2. App Source Code Layer */}
             <View style={bundleStyles.subsystemCard}>
               <View style={bundleStyles.subsystemHeader}>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                  <BundleCategoryIcon type="source" size={16} color={AppColors.sky500} />
-                  <Text style={bundleStyles.subsystemTitle}>Application Source Code</Text>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <BundleCategoryIcon
+                    type="source"
+                    size={16}
+                    color={AppColors.sky500}
+                  />
+                  <Text style={bundleStyles.subsystemTitle}>
+                    Application Source Code
+                  </Text>
                 </View>
-                <View style={[bundleStyles.subsystemBadge, {backgroundColor: `${AppColors.sky500}18`}]}>
-                  <Text style={[bundleStyles.subsystemBadgeText, {color: AppColors.sky500}]}>
-                    {(summary.appSourceKb / 1024).toFixed(1)} MB • {summary.appSourcePct}%
+                <View
+                  style={[
+                    bundleStyles.subsystemBadge,
+                    {backgroundColor: `${AppColors.sky500}18`},
+                  ]}>
+                  <Text
+                    style={[
+                      bundleStyles.subsystemBadgeText,
+                      {color: AppColors.sky500},
+                    ]}>
+                    {(summary.appSourceKb / 1024).toFixed(1)} MB •{' '}
+                    {summary.appSourcePct}%
                   </Text>
                 </View>
               </View>
               <View style={bundleStyles.subsystemGrid}>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    TypeScript/TSX: <Text style={bundleStyles.subsystemItemVal}>{bundleFiles.filter(f => f.category === 'typescript').length || 14} files</Text>
+                    TypeScript/TSX:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundleFiles.filter(f => f.category === 'typescript')
+                        .length || 14}{' '}
+                      files
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    JavaScript/JSX: <Text style={bundleStyles.subsystemItemVal}>{bundleFiles.filter(f => f.category === 'javascript').length || 3} files</Text>
+                    JavaScript/JSX:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundleFiles.filter(f => f.category === 'javascript')
+                        .length || 3}{' '}
+                      files
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Tracked Modules: <Text style={bundleStyles.subsystemItemVal}>{bundleFiles.length || 18} files</Text>
+                    Tracked Modules:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundleFiles.length || 18} files
+                    </Text>
                   </Text>
                 </View>
               </View>
@@ -1709,12 +2086,27 @@ const BundleTab = React.memo(() => {
             {/* 3. Hermes Optimization & Bytecode Engine */}
             <View style={bundleStyles.subsystemCard}>
               <View style={bundleStyles.subsystemHeader}>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                  <BundleCategoryIcon type="bolt" size={16} color={AppColors.emerald600} />
-                  <Text style={bundleStyles.subsystemTitle}>Hermes Bytecode Engine</Text>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <BundleCategoryIcon
+                    type="bolt"
+                    size={16}
+                    color={AppColors.emerald600}
+                  />
+                  <Text style={bundleStyles.subsystemTitle}>
+                    Hermes Bytecode Engine
+                  </Text>
                 </View>
-                <View style={[bundleStyles.subsystemBadge, {backgroundColor: `${AppColors.emerald500}18`}]}>
-                  <Text style={[bundleStyles.subsystemBadgeText, {color: AppColors.emerald700}]}>
+                <View
+                  style={[
+                    bundleStyles.subsystemBadge,
+                    {backgroundColor: `${AppColors.emerald500}18`},
+                  ]}>
+                  <Text
+                    style={[
+                      bundleStyles.subsystemBadgeText,
+                      {color: AppColors.emerald700},
+                    ]}>
                     ~62% AOT Compression
                   </Text>
                 </View>
@@ -1722,17 +2114,26 @@ const BundleTab = React.memo(() => {
               <View style={bundleStyles.subsystemGrid}>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Dev JS Size: <Text style={bundleStyles.subsystemItemVal}>{summary.totalMb} MB</Text>
+                    Dev JS Size:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {summary.totalMb} MB
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Hermes Bytecode: <Text style={bundleStyles.subsystemItemVal}>{((summary.totalKb * 0.38) / 1024).toFixed(2)} MB</Text>
+                    Hermes Bytecode:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {((summary.totalKb * 0.38) / 1024).toFixed(2)} MB
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Execution: <Text style={bundleStyles.subsystemItemVal}>{isHermes ? 'Hermes JSI Direct' : 'JSC Standard'}</Text>
+                    Execution:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {isHermes ? 'Hermes JSI Direct' : 'JSC Standard'}
+                    </Text>
                   </Text>
                 </View>
               </View>
@@ -1741,12 +2142,27 @@ const BundleTab = React.memo(() => {
             {/* 4. Assets & Media Layer */}
             <View style={bundleStyles.subsystemCard}>
               <View style={bundleStyles.subsystemHeader}>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                  <BundleCategoryIcon type="media" size={16} color={AppColors.pink500} />
-                  <Text style={bundleStyles.subsystemTitle}>Images, Fonts & Static Assets</Text>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <BundleCategoryIcon
+                    type="media"
+                    size={16}
+                    color={AppColors.pink500}
+                  />
+                  <Text style={bundleStyles.subsystemTitle}>
+                    Images, Fonts & Static Assets
+                  </Text>
                 </View>
-                <View style={[bundleStyles.subsystemBadge, {backgroundColor: `${AppColors.pink500}18`}]}>
-                  <Text style={[bundleStyles.subsystemBadgeText, {color: AppColors.pink500}]}>
+                <View
+                  style={[
+                    bundleStyles.subsystemBadge,
+                    {backgroundColor: `${AppColors.pink500}18`},
+                  ]}>
+                  <Text
+                    style={[
+                      bundleStyles.subsystemBadgeText,
+                      {color: AppColors.pink500},
+                    ]}>
                     {summary.assetsMediaKb} KB • {summary.assetsMediaPct}%
                   </Text>
                 </View>
@@ -1754,17 +2170,32 @@ const BundleTab = React.memo(() => {
               <View style={bundleStyles.subsystemGrid}>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Images & Icons: <Text style={bundleStyles.subsystemItemVal}>{bundleFiles.filter(f => f.category === 'image').length || 2} assets</Text>
+                    Images & Icons:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundleFiles.filter(f => f.category === 'image').length ||
+                        2}{' '}
+                      assets
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    JSON Data: <Text style={bundleStyles.subsystemItemVal}>{bundleFiles.filter(f => f.category === 'json').length || 1} files</Text>
+                    JSON Data:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundleFiles.filter(f => f.category === 'json').length ||
+                        1}{' '}
+                      files
+                    </Text>
                   </Text>
                 </View>
                 <View style={bundleStyles.subsystemItem}>
                   <Text style={bundleStyles.subsystemItemText}>
-                    Custom Fonts: <Text style={bundleStyles.subsystemItemVal}>{bundleFiles.filter(f => f.category === 'font').length || 0} fonts</Text>
+                    Custom Fonts:{' '}
+                    <Text style={bundleStyles.subsystemItemVal}>
+                      {bundleFiles.filter(f => f.category === 'font').length ||
+                        0}{' '}
+                      fonts
+                    </Text>
                   </Text>
                 </View>
               </View>
@@ -1781,16 +2212,33 @@ const BundleTab = React.memo(() => {
           style={{flex: 1}}
           contentContainerStyle={bundleStyles.contentContainer}
           keyboardShouldPersistTaps="handled">
-          
           {/* Platform Segmented Switcher (Horizontally Scrollable) */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={bundleStyles.prodPlatformScroll}>
             {[
-              {key: 'ios' as const, label: 'iOS App (.ipa)', badge: `${analysis?.production.ios.totalDownloadMb || 111.9} MB`},
-              {key: 'androidAab' as const, label: 'Android AAB (.aab)', badge: `${analysis?.production.androidAab.totalDownloadMb || 38.5} MB`},
-              {key: 'androidApk' as const, label: 'Universal APK (.apk)', badge: `${analysis?.production.androidApk.totalInstallMb || 364.0} MB`},
+              {
+                key: 'ios' as const,
+                label: 'iOS App (.ipa)',
+                badge: `${
+                  analysis?.production.ios.totalDownloadMb || 111.9
+                } MB`,
+              },
+              {
+                key: 'androidAab' as const,
+                label: 'Android AAB (.aab)',
+                badge: `${
+                  analysis?.production.androidAab.totalDownloadMb || 38.5
+                } MB`,
+              },
+              {
+                key: 'androidApk' as const,
+                label: 'Universal APK (.apk)',
+                badge: `${
+                  analysis?.production.androidApk.totalInstallMb || 364.0
+                } MB`,
+              },
             ].map(tab => {
               const isSelected = prodPlatform === tab.key;
               return (
@@ -1864,31 +2312,55 @@ const BundleTab = React.memo(() => {
               <View style={bundleStyles.metricsGrid}>
                 <View style={bundleStyles.metricBox}>
                   <Text style={bundleStyles.metricLabel}>INSTALL SIZE</Text>
-                  <Text style={[bundleStyles.metricValue, {color: AppColors.purple}]}>
+                  <Text
+                    style={[
+                      bundleStyles.metricValue,
+                      {color: AppColors.purple},
+                    ]}>
                     {analysis.production[prodPlatform].totalInstallMb} MB
                   </Text>
-                  <Text style={bundleStyles.metricHint}>On-device uncompressed footprint</Text>
+                  <Text style={bundleStyles.metricHint}>
+                    On-device uncompressed footprint
+                  </Text>
                 </View>
 
                 <View style={bundleStyles.metricBox}>
                   <Text style={bundleStyles.metricLabel}>DOWNLOAD SIZE</Text>
-                  <Text style={[bundleStyles.metricValue, {color: AppColors.emerald600}]}>
+                  <Text
+                    style={[
+                      bundleStyles.metricValue,
+                      {color: AppColors.emerald600},
+                    ]}>
                     ~{analysis.production[prodPlatform].totalDownloadMb} MB
                   </Text>
-                  <Text style={bundleStyles.metricHint}>Store network transfer payload</Text>
+                  <Text style={bundleStyles.metricHint}>
+                    Store network transfer payload
+                  </Text>
                 </View>
 
                 <View style={bundleStyles.metricBox}>
                   <Text style={bundleStyles.metricLabel}>COMPRESSION</Text>
-                  <Text style={[bundleStyles.metricValue, {color: AppColors.sky500}]}>
+                  <Text
+                    style={[
+                      bundleStyles.metricValue,
+                      {color: AppColors.sky500},
+                    ]}>
                     {analysis.production[prodPlatform].compressionRatioPct}%
                   </Text>
-                  <Text style={bundleStyles.metricHint}>Bytecode & asset ratio</Text>
+                  <Text style={bundleStyles.metricHint}>
+                    Bytecode & asset ratio
+                  </Text>
                 </View>
 
                 <View style={bundleStyles.metricBox}>
-                  <Text style={bundleStyles.metricLabel}>FORMAT ARCHITECTURE</Text>
-                  <Text style={[bundleStyles.metricValue, {color: AppColors.amber700}]}>
+                  <Text style={bundleStyles.metricLabel}>
+                    FORMAT ARCHITECTURE
+                  </Text>
+                  <Text
+                    style={[
+                      bundleStyles.metricValue,
+                      {color: AppColors.amber700},
+                    ]}>
                     {prodPlatform === 'ios'
                       ? 'Mach-O 64-bit'
                       : prodPlatform === 'androidAab'
@@ -1911,10 +2383,13 @@ const BundleTab = React.memo(() => {
           {analysis && (
             <View style={bundleStyles.sectionCard}>
               <View style={bundleStyles.sectionHeaderRow}>
-                <View>
-                  <Text style={bundleStyles.sectionTitle}>Binary Component Architecture</Text>
+                <View style={{flex: 1, paddingRight: 4}}>
+                  <Text style={bundleStyles.sectionTitle}>
+                    Binary Component Architecture
+                  </Text>
                   <Text style={bundleStyles.sectionSub}>
-                    Compiled native libraries, runtime bytecodes, assets, and signature blocks
+                    Compiled native libraries, runtime bytecodes, assets, and
+                    signature blocks
                   </Text>
                 </View>
                 <CopyButton
@@ -1925,38 +2400,42 @@ const BundleTab = React.memo(() => {
 
               {/* Visual Binary Component Ratio Bar */}
               <View style={bundleStyles.prodTreemapBar}>
-                {analysis.production[prodPlatform].components.map((comp, cIdx) => (
-                  <View
-                    key={cIdx}
-                    style={{
-                      flex: Math.max(comp.pct, 2),
-                      backgroundColor: comp.color,
-                      height: 16,
-                    }}
-                  />
-                ))}
+                {analysis.production[prodPlatform].components.map(
+                  (comp, cIdx) => (
+                    <View
+                      key={cIdx}
+                      style={{
+                        flex: Math.max(comp.pct, 2),
+                        backgroundColor: comp.color,
+                        height: 16,
+                      }}
+                    />
+                  ),
+                )}
               </View>
 
               {/* Production Binary Legend */}
               <View style={[bundleStyles.legendGrid, {marginBottom: 12}]}>
-                {analysis.production[prodPlatform].components.map((comp, cIdx) => (
-                  <View key={cIdx} style={bundleStyles.legendItem}>
-                    <View
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: comp.color,
-                      }}
-                    />
-                    <Text style={bundleStyles.legendText} numberOfLines={1}>
-                      {comp.name}{' '}
-                      <Text style={bundleStyles.legendVal}>
-                        {comp.sizeMb} MB ({comp.pct}%)
+                {analysis.production[prodPlatform].components.map(
+                  (comp, cIdx) => (
+                    <View key={cIdx} style={bundleStyles.legendItem}>
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: comp.color,
+                        }}
+                      />
+                      <Text style={bundleStyles.legendText} numberOfLines={1}>
+                        {comp.name}{' '}
+                        <Text style={bundleStyles.legendVal}>
+                          {comp.sizeMb} MB ({comp.pct}%)
+                        </Text>
                       </Text>
-                    </Text>
-                  </View>
-                ))}
+                    </View>
+                  ),
+                )}
               </View>
 
               {analysis.production[prodPlatform].components.map((comp, idx) => (
@@ -1965,7 +2444,10 @@ const BundleTab = React.memo(() => {
                     <View
                       style={[
                         bundleStyles.catIconBox,
-                        {backgroundColor: `${comp.color}15`, borderColor: `${comp.color}30`},
+                        {
+                          backgroundColor: `${comp.color}15`,
+                          borderColor: `${comp.color}30`,
+                        },
                       ]}>
                       <BundleCategoryIcon
                         type={
@@ -1985,18 +2467,37 @@ const BundleTab = React.memo(() => {
                     </View>
 
                     <View style={bundleStyles.catRowTitleWrap}>
-                      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6}}>
-                        <Text style={bundleStyles.catRowTitle} numberOfLines={1}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 6,
+                        }}>
+                        <Text
+                          style={bundleStyles.catRowTitle}
+                          numberOfLines={1}>
                           {comp.name}
                         </Text>
-                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                          <Text style={bundleStyles.catRowSize}>{comp.sizeMb} MB</Text>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                          }}>
+                          <Text style={bundleStyles.catRowSize}>
+                            {comp.sizeMb} MB
+                          </Text>
                           <View
                             style={[
                               bundleStyles.catPctPill,
                               {backgroundColor: `${comp.color}18`},
                             ]}>
-                            <Text style={[bundleStyles.catPctText, {color: comp.color}]}>
+                            <Text
+                              style={[
+                                bundleStyles.catPctText,
+                                {color: comp.color},
+                              ]}>
                               {comp.pct}%
                             </Text>
                           </View>
@@ -2019,9 +2520,18 @@ const BundleTab = React.memo(() => {
                   </View>
 
                   {comp.advice ? (
-                    <View style={[bundleStyles.adviceBadge, bundleStyles.adviceOptimal, {marginTop: 6}]}>
+                    <View
+                      style={[
+                        bundleStyles.adviceBadge,
+                        bundleStyles.adviceOptimal,
+                        {marginTop: 6},
+                      ]}>
                       <LightbulbIcon color={AppColors.emerald700} size={13} />
-                      <Text style={[bundleStyles.adviceText, {color: AppColors.emerald700, flex: 1, marginLeft: 4}]}>
+                      <Text
+                        style={[
+                          bundleStyles.adviceText,
+                          {color: AppColors.emerald700, flex: 1, marginLeft: 4},
+                        ]}>
                         {comp.advice}
                       </Text>
                     </View>
@@ -2058,21 +2568,39 @@ const BundleTab = React.memo(() => {
                 {/* Platform Metric Grid Chips */}
                 <View style={bundleStyles.totalFormulaGrid}>
                   <View style={bundleStyles.totalChip}>
-                    <View style={[bundleStyles.totalDot, {backgroundColor: AppColors.purple}]} />
+                    <View
+                      style={[
+                        bundleStyles.totalDot,
+                        {backgroundColor: AppColors.purple},
+                      ]}
+                    />
                     <Text style={bundleStyles.totalChipText}>
-                      Install: {analysis.production[prodPlatform].totalInstallMb} MB
+                      Install:{' '}
+                      {analysis.production[prodPlatform].totalInstallMb} MB
                     </Text>
                   </View>
                   <View style={bundleStyles.totalChip}>
-                    <View style={[bundleStyles.totalDot, {backgroundColor: AppColors.sky500}]} />
+                    <View
+                      style={[
+                        bundleStyles.totalDot,
+                        {backgroundColor: AppColors.sky500},
+                      ]}
+                    />
                     <Text style={bundleStyles.totalChipText}>
-                      Download: ~{analysis.production[prodPlatform].totalDownloadMb} MB
+                      Download: ~
+                      {analysis.production[prodPlatform].totalDownloadMb} MB
                     </Text>
                   </View>
                   <View style={bundleStyles.totalChip}>
-                    <View style={[bundleStyles.totalDot, {backgroundColor: AppColors.emerald500}]} />
+                    <View
+                      style={[
+                        bundleStyles.totalDot,
+                        {backgroundColor: AppColors.emerald500},
+                      ]}
+                    />
                     <Text style={bundleStyles.totalChipText}>
-                      Compression: {analysis.production[prodPlatform].compressionRatioPct}%
+                      Compression:{' '}
+                      {analysis.production[prodPlatform].compressionRatioPct}%
                     </Text>
                   </View>
                 </View>
@@ -2141,20 +2669,34 @@ const BundleTab = React.memo(() => {
                     key={tab.key}
                     accessible={true}
                     accessibilityRole="button"
-                    accessibilityLabel={`Filter by ${t(tab.labelKey)}, ${count} items`}
+                    accessibilityLabel={`Filter by ${t(
+                      tab.labelKey,
+                    )}, ${count} items`}
                     accessibilityState={{selected: isActive}}
-                    accessibilityHint={`Filters files list to ${t(tab.labelKey)}`}
+                    accessibilityHint={`Filters files list to ${t(
+                      tab.labelKey,
+                    )}`}
                     onPress={() => setActiveCategory(tab.key)}
                     style={[
                       bundleStyles.catPill,
                       isActive && bundleStyles.catPillActive,
-                      tab.key === 'UNUSED' && isActive && {backgroundColor: AppColors.red500, borderColor: AppColors.red600},
-                      tab.key === 'CONSUMED' && isActive && {backgroundColor: AppColors.emerald600, borderColor: AppColors.emerald700},
+                      tab.key === 'UNUSED' &&
+                        isActive && {
+                          backgroundColor: AppColors.red500,
+                          borderColor: AppColors.red600,
+                        },
+                      tab.key === 'CONSUMED' &&
+                        isActive && {
+                          backgroundColor: AppColors.emerald600,
+                          borderColor: AppColors.emerald700,
+                        },
                     ]}>
                     <BundleCategoryIcon
                       type={tab.iconType}
                       size={12}
-                      color={isActive ? AppColors.white : AppColors.grayTextStrong}
+                      color={
+                        isActive ? AppColors.white : AppColors.grayTextStrong
+                      }
                     />
                     <Text
                       style={[
@@ -2174,7 +2716,6 @@ const BundleTab = React.memo(() => {
             style={{flex: 1}}
             contentContainerStyle={bundleStyles.contentContainer}
             keyboardShouldPersistTaps="handled">
-            
             {/* View Mode Toggle Header Bar */}
             <View style={bundleStyles.treeHeaderRow}>
               <View style={bundleStyles.viewModeToggleGroup}>
@@ -2191,7 +2732,8 @@ const BundleTab = React.memo(() => {
                   <Text
                     style={[
                       bundleStyles.viewModeBtnText,
-                      filesViewMode === 'tree' && bundleStyles.viewModeBtnTextActive,
+                      filesViewMode === 'tree' &&
+                        bundleStyles.viewModeBtnTextActive,
                     ]}>
                     {t('bundle.treeView')}
                   </Text>
@@ -2209,7 +2751,8 @@ const BundleTab = React.memo(() => {
                   <Text
                     style={[
                       bundleStyles.viewModeBtnText,
-                      filesViewMode === 'list' && bundleStyles.viewModeBtnTextActive,
+                      filesViewMode === 'list' &&
+                        bundleStyles.viewModeBtnTextActive,
                     ]}>
                     {t('bundle.flatList')}
                   </Text>
@@ -2217,21 +2760,28 @@ const BundleTab = React.memo(() => {
               </View>
 
               {filesViewMode === 'tree' ? (
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
                   <TouchableScale
                     accessible={true}
                     accessibilityRole="button"
                     accessibilityLabel="Expand all folders"
                     onPress={expandAllFolders}>
-                    <Text style={bundleStyles.treeActionLink}>{t('bundle.expand')}</Text>
+                    <Text style={bundleStyles.treeActionLink}>
+                      {t('bundle.expand')}
+                    </Text>
                   </TouchableScale>
-                  <Text style={{color: AppColors.grayTextWeak, fontSize: 11}}>•</Text>
+                  <Text style={{color: AppColors.grayTextWeak, fontSize: 11}}>
+                    •
+                  </Text>
                   <TouchableScale
                     accessible={true}
                     accessibilityRole="button"
                     accessibilityLabel="Collapse all folders"
                     onPress={collapseAllFolders}>
-                    <Text style={bundleStyles.treeActionLink}>{t('bundle.collapse')}</Text>
+                    <Text style={bundleStyles.treeActionLink}>
+                      {t('bundle.collapse')}
+                    </Text>
                   </TouchableScale>
                 </View>
               ) : (
@@ -2264,12 +2814,21 @@ const BundleTab = React.memo(() => {
             ) : (
               /* ── MODE 2: FLAT LIST VIEW ── */
               filteredFiles.map((file, index) => {
-                const categoryMeta = CATEGORY_COLORS[file.category] || CATEGORY_COLORS.typescript;
-                const pctOfTotal = ((file.sizeKb / summary.totalKb) * 100).toFixed(1);
+                const categoryMeta =
+                  CATEGORY_COLORS[file.category] || CATEGORY_COLORS.typescript;
+                const pctOfTotal = (
+                  (file.sizeKb / summary.totalKb) *
+                  100
+                ).toFixed(1);
                 const isUnused = file.isConsumed === false;
 
                 return (
-                  <View key={file.id} style={[bundleStyles.fileCard, isUnused && bundleStyles.treeFileCardUnused]}>
+                  <View
+                    key={file.id}
+                    style={[
+                      bundleStyles.fileCard,
+                      isUnused && bundleStyles.treeFileCardUnused,
+                    ]}>
                     <View style={bundleStyles.fileCardTop}>
                       <View style={bundleStyles.sNoBadge}>
                         <Text style={bundleStyles.sNoText}>#{index + 1}</Text>
@@ -2278,7 +2837,13 @@ const BundleTab = React.memo(() => {
                       <MediaPreviewThumbnail file={file} />
 
                       <View style={{flex: 1, paddingHorizontal: 4}}>
-                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            flexWrap: 'wrap',
+                          }}>
                           <HighlightText
                             text={file.name}
                             search={search}
@@ -2287,11 +2852,15 @@ const BundleTab = React.memo(() => {
                           />
                           {isUnused ? (
                             <View style={bundleStyles.unusedBadge}>
-                              <Text style={bundleStyles.unusedBadgeText}>{t('bundle.notConsumed')}</Text>
+                              <Text style={bundleStyles.unusedBadgeText}>
+                                {t('bundle.notConsumed')}
+                              </Text>
                             </View>
                           ) : (
                             <View style={bundleStyles.consumedBadge}>
-                              <Text style={bundleStyles.consumedBadgeText}>{t('bundle.consumed')}</Text>
+                              <Text style={bundleStyles.consumedBadgeText}>
+                                {t('bundle.consumed')}
+                              </Text>
                             </View>
                           )}
                         </View>
@@ -2304,17 +2873,32 @@ const BundleTab = React.memo(() => {
                         />
                       </View>
 
-                      <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}>
                         <View style={bundleStyles.fileSizeBox}>
-                          <Text style={[bundleStyles.fileSizeKb, isUnused && {color: AppColors.amber800Warm}]}>
+                          <Text
+                            style={[
+                              bundleStyles.fileSizeKb,
+                              isUnused && {color: AppColors.amber800Warm},
+                            ]}>
                             {file.sizeKb >= 1024
-                              ? t('bundle.fileSizeMb', {size: (file.sizeKb / 1024).toFixed(2)})
+                              ? t('bundle.fileSizeMb', {
+                                  size: (file.sizeKb / 1024).toFixed(2),
+                                })
                               : t('bundle.fileSizeKb', {size: file.sizeKb})}
                           </Text>
-                          <Text style={bundleStyles.filePercent}>{pctOfTotal}%</Text>
+                          <Text style={bundleStyles.filePercent}>
+                            {pctOfTotal}%
+                          </Text>
                         </View>
                         <TouchableScale
-                          onPress={() => downloadBundleFile(file, analysis?.scriptURL)}
+                          onPress={() =>
+                            downloadBundleFile(file, analysis?.scriptURL)
+                          }
                           style={bundleStyles.downloadFileBtn}
                           hitSlop={8}>
                           <DownloadIcon size={14} color={AppColors.sky500} />
@@ -2331,8 +2915,13 @@ const BundleTab = React.memo(() => {
                         style={[
                           bundleStyles.fileProgressBar,
                           {
-                            width: `${Math.min(100, Math.max(4, Number(pctOfTotal) * 4))}%`,
-                            backgroundColor: isUnused ? AppColors.red500 : categoryMeta.color,
+                            width: `${Math.min(
+                              100,
+                              Math.max(4, Number(pctOfTotal) * 4),
+                            )}%`,
+                            backgroundColor: isUnused
+                              ? AppColors.red500
+                              : categoryMeta.color,
                           },
                         ]}
                       />
@@ -2415,7 +3004,6 @@ const BundleTab = React.memo(() => {
             style={{flex: 1}}
             contentContainerStyle={bundleStyles.contentContainer}
             keyboardShouldPersistTaps="handled">
-            
             <View style={bundleStyles.filterContainer}>
               <View style={bundleStyles.searchRow}>
                 <SearchIcon color={AppColors.grayTextWeak} size={15} />
@@ -2450,17 +3038,30 @@ const BundleTab = React.memo(() => {
             </View>
 
             <Text style={bundleStyles.listHeaderCount}>
-              {t('bundle.showingDependencies', {count: filteredPackages.length})}
+              {t('bundle.showingDependencies', {
+                count: filteredPackages.length,
+              })}
             </Text>
 
             {filteredPackages.map((pkg, index) => {
-              const cleanInstalledVersion = pkg.version ? pkg.version.replace(/^\^/, '') : '';
+              const cleanInstalledVersion = pkg.version
+                ? pkg.version.replace(/^\^/, '')
+                : '';
               const hasUpdate =
-                !!pkg.latestVersion && !!cleanInstalledVersion &&
+                !!pkg.latestVersion &&
+                !!cleanInstalledVersion &&
                 pkg.latestVersion !== cleanInstalledVersion;
 
               return (
-                <View key={pkg.id} style={[bundleStyles.fileCard, pkg.isDeprecated && {borderColor: AppColors.errorBorder, backgroundColor: AppColors.errorCardBg}]}>
+                <View
+                  key={pkg.id}
+                  style={[
+                    bundleStyles.fileCard,
+                    pkg.isDeprecated && {
+                      borderColor: AppColors.errorBorder,
+                      backgroundColor: AppColors.errorCardBg,
+                    },
+                  ]}>
                   {/* Header Row: #s.no + Logo + Package Name + Version Pill + Update/Deprecated Badges + Size & Copy */}
                   <View style={bundleStyles.fileCardTop}>
                     <View style={bundleStyles.sNoBadge}>
@@ -2474,7 +3075,13 @@ const BundleTab = React.memo(() => {
                     />
 
                     <View style={{flex: 1, paddingHorizontal: 4}}>
-                      <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 6,
+                          flexWrap: 'wrap',
+                        }}>
                         <HighlightText
                           text={pkg.name}
                           search={search}
@@ -2484,7 +3091,9 @@ const BundleTab = React.memo(() => {
                         <View style={bundleStyles.versionPill}>
                           <Text style={bundleStyles.versionPillText}>
                             {cleanInstalledVersion
-                              ? t('bundle.versionPrefix', {version: cleanInstalledVersion})
+                              ? t('bundle.versionPrefix', {
+                                  version: cleanInstalledVersion,
+                                })
                               : t('bundle.bundled')}
                           </Text>
                         </View>
@@ -2498,18 +3107,42 @@ const BundleTab = React.memo(() => {
                         ) : hasUpdate ? (
                           <View style={bundleStyles.updateBadge}>
                             <Text style={bundleStyles.updateBadgeText}>
-                              {t('bundle.updateAvailable', {version: pkg.latestVersion})}
+                              {t('bundle.updateAvailable', {
+                                version: pkg.latestVersion,
+                              })}
                             </Text>
                           </View>
                         ) : cleanInstalledVersion ? (
-                          <View style={[bundleStyles.updateBadge, {backgroundColor: AppColors.gray100, borderColor: AppColors.gray200}]}>
-                            <Text style={[bundleStyles.updateBadgeText, {color: AppColors.gray600}]}>
+                          <View
+                            style={[
+                              bundleStyles.updateBadge,
+                              {
+                                backgroundColor: AppColors.gray100,
+                                borderColor: AppColors.gray200,
+                              },
+                            ]}>
+                            <Text
+                              style={[
+                                bundleStyles.updateBadgeText,
+                                {color: AppColors.gray600},
+                              ]}>
                               {t('bundle.upToDate')}
                             </Text>
                           </View>
                         ) : (
-                          <View style={[bundleStyles.updateBadge, {backgroundColor: AppColors.gray100, borderColor: AppColors.gray200}]}>
-                            <Text style={[bundleStyles.updateBadgeText, {color: AppColors.gray600}]}>
+                          <View
+                            style={[
+                              bundleStyles.updateBadge,
+                              {
+                                backgroundColor: AppColors.gray100,
+                                borderColor: AppColors.gray200,
+                              },
+                            ]}>
+                            <Text
+                              style={[
+                                bundleStyles.updateBadgeText,
+                                {color: AppColors.gray600},
+                              ]}>
                               {t('bundle.bundledBadge')}
                             </Text>
                           </View>
@@ -2517,12 +3150,19 @@ const BundleTab = React.memo(() => {
                       </View>
                     </View>
 
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}>
                       <View style={bundleStyles.fileSizeBox}>
                         <Text style={bundleStyles.fileSizeKb}>
                           {t('bundle.fileSizeKb', {size: pkg.sizeKb})}
                         </Text>
-                        <Text style={bundleStyles.filePercent}>{pkg.percentage}%</Text>
+                        <Text style={bundleStyles.filePercent}>
+                          {pkg.percentage}%
+                        </Text>
                       </View>
                       <CopyButton
                         value={() => pkg}
@@ -2532,13 +3172,30 @@ const BundleTab = React.memo(() => {
                   </View>
 
                   {/* Subtitle Row: Category Chip + Description */}
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, marginBottom: 2}}>
-                    <View style={[bundleStyles.pkgBadge, {backgroundColor: `${pkg.color}1F`, borderColor: `${pkg.color}4D`}]}>
-                      <Text style={[bundleStyles.pkgBadgeText, {color: pkg.color}]}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      marginTop: 4,
+                      marginBottom: 2,
+                    }}>
+                    <View
+                      style={[
+                        bundleStyles.pkgBadge,
+                        {
+                          backgroundColor: `${pkg.color}1F`,
+                          borderColor: `${pkg.color}4D`,
+                        },
+                      ]}>
+                      <Text
+                        style={[bundleStyles.pkgBadgeText, {color: pkg.color}]}>
                         {pkg.category.toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={[bundleStyles.filePath, {flex: 1, marginTop: 0}]} numberOfLines={1}>
+                    <Text
+                      style={[bundleStyles.filePath, {flex: 1, marginTop: 0}]}
+                      numberOfLines={1}>
                       {pkg.description}
                     </Text>
                   </View>
@@ -2546,8 +3203,16 @@ const BundleTab = React.memo(() => {
                   {/* Deprecation Warning Banner if deprecated */}
                   {pkg.isDeprecated && pkg.deprecationReason && (
                     <View style={bundleStyles.deprecationBox}>
-                      <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
-                        <CircleAlertIcon color={AppColors.errorColor} size={12} />
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}>
+                        <CircleAlertIcon
+                          color={AppColors.errorColor}
+                          size={12}
+                        />
                         <Text style={bundleStyles.deprecationText}>
                           {pkg.deprecationReason}
                         </Text>
@@ -2559,21 +3224,44 @@ const BundleTab = React.memo(() => {
                     <View
                       style={[
                         bundleStyles.fileProgressBar,
-                        {width: `${pkg.percentage * 2}%`, backgroundColor: pkg.isDeprecated ? AppColors.red500 : pkg.color},
+                        {
+                          width: `${pkg.percentage * 2}%`,
+                          backgroundColor: pkg.isDeprecated
+                            ? AppColors.red500
+                            : pkg.color,
+                        },
                       ]}
                     />
                   </View>
 
                   {/* Footer Row: Type Tag + Last Active + NPM Link Button */}
-                  <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 3}}>
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginTop: 3,
+                    }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
                       <View style={bundleStyles.typeTag}>
                         <Text style={bundleStyles.typeTagText}>
-                          {pkg.type === 'direct' ? t('bundle.direct') : t('bundle.transitive')}
+                          {pkg.type === 'direct'
+                            ? t('bundle.direct')
+                            : t('bundle.transitive')}
                         </Text>
                       </View>
                       {pkg.lastActive && (
-                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}>
                           <ClockIcon color={AppColors.grayTextWeak} size={11} />
                           <Text style={bundleStyles.lastActiveText}>
                             {pkg.lastActive}
@@ -2582,7 +3270,12 @@ const BundleTab = React.memo(() => {
                       )}
                     </View>
 
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
                       <Text style={bundleStyles.fileMetaText}>
                         {t('bundle.minified', {size: pkg.sizeKb})}
                       </Text>
@@ -2592,11 +3285,15 @@ const BundleTab = React.memo(() => {
                         accessibilityLabel={`Open ${pkg.name} on NPM`}
                         accessibilityHint="Opens NPM package page in browser"
                         onPress={() => {
-                          const url = pkg.npmUrl || `https://www.npmjs.com/package/${pkg.name}`;
+                          const url =
+                            pkg.npmUrl ||
+                            `https://www.npmjs.com/package/${pkg.name}`;
                           Linking.openURL(url).catch(() => {});
                         }}
                         style={bundleStyles.npmLinkBtn}>
-                        <Text style={bundleStyles.npmLinkText}>{t('bundle.npmLink')}</Text>
+                        <Text style={bundleStyles.npmLinkText}>
+                          {t('bundle.npmLink')}
+                        </Text>
                       </TouchableScale>
                     </View>
                   </View>
@@ -2610,7 +3307,9 @@ const BundleTab = React.memo(() => {
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
               <PackageIcon color={AppColors.purple} size={14} />
               <Text style={bundleStyles.footerTitle}>
-                {t('bundle.dependenciesCount', {count: filteredPackages.length})}
+                {t('bundle.dependenciesCount', {
+                  count: filteredPackages.length,
+                })}
               </Text>
             </View>
             <Text style={bundleStyles.footerSizeVal}>
@@ -2632,12 +3331,20 @@ const BundleTab = React.memo(() => {
             style={{flex: 1}}
             contentContainerStyle={bundleStyles.contentContainer}
             keyboardShouldPersistTaps="handled">
-            
             <View style={bundleStyles.tipsCard}>
-              <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8}}>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 8,
+                }}>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                   <StorageIcon color={AppColors.purple} size={18} />
-                  <Text style={bundleStyles.tipsHeading}>{t('bundle.mediaAuditorTitle')}</Text>
+                  <Text style={bundleStyles.tipsHeading}>
+                    {t('bundle.mediaAuditorTitle')}
+                  </Text>
                 </View>
                 <CopyButton
                   value={() => mediaFiles}
@@ -2646,11 +3353,21 @@ const BundleTab = React.memo(() => {
               </View>
               <Text style={bundleStyles.tipDesc}>
                 {t('bundle.mediaAuditorPrefix')}{' '}
-                <Text style={{fontFamily: AppFonts.interBold, color: AppColors.purple}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    color: AppColors.purple,
+                  }}>
                   {summary.images.pct + summary.fonts.pct}%
                 </Text>{' '}
-                {t('bundle.mediaAuditorMid', {kb: summary.images.kb + summary.fonts.kb})}{' '}
-                <Text style={{fontFamily: AppFonts.interBold, color: AppColors.emerald700}}>
+                {t('bundle.mediaAuditorMid', {
+                  kb: summary.images.kb + summary.fonts.kb,
+                })}{' '}
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    color: AppColors.emerald700,
+                  }}>
                   {t('bundle.mediaSavings', {size: 540})}
                 </Text>{' '}
                 {t('bundle.mediaAuditorSuffix')}
@@ -2675,7 +3392,12 @@ const BundleTab = React.memo(() => {
                     <Text style={bundleStyles.filePath}>{file.path}</Text>
                   </View>
 
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}>
                     <View style={bundleStyles.fileSizeBox}>
                       <Text style={bundleStyles.fileSizeKb}>
                         {t('bundle.fileSizeKb', {size: file.sizeKb})}
@@ -2686,7 +3408,9 @@ const BundleTab = React.memo(() => {
                       accessibilityRole="button"
                       accessibilityLabel={`Download ${file.name}`}
                       accessibilityHint="Downloads media asset file"
-                      onPress={() => downloadBundleFile(file, analysis?.scriptURL)}
+                      onPress={() =>
+                        downloadBundleFile(file, analysis?.scriptURL)
+                      }
                       style={bundleStyles.downloadFileBtn}
                       hitSlop={8}>
                       <DownloadIcon size={14} color={AppColors.sky500} />
@@ -2760,17 +3484,27 @@ const BundleTab = React.memo(() => {
           style={{flex: 1}}
           contentContainerStyle={bundleStyles.contentContainer}
           keyboardShouldPersistTaps="handled">
-          
           <View style={bundleStyles.tipsCard}>
-            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12}}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 12,
+              }}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                 <CircleAlertIcon color={AppColors.purple} size={18} />
-                <Text style={bundleStyles.tipsHeading}>{t('bundle.optimizerTitle')}</Text>
+                <Text style={bundleStyles.tipsHeading}>
+                  {t('bundle.optimizerTitle')}
+                </Text>
               </View>
               <CopyButton
                 value={() => [
                   t('bundle.optTip1Title'),
-                  `${t('bundle.optTip2Title')} (${isHermes ? t('bundle.active') : t('bundle.actionRequired')})`,
+                  `${t('bundle.optTip2Title')} (${
+                    isHermes ? t('bundle.active') : t('bundle.actionRequired')
+                  })`,
                   t('bundle.optTip3Title'),
                   t('bundle.optTip4Title'),
                   t('bundle.optTip5Title'),
@@ -2795,8 +3529,12 @@ const BundleTab = React.memo(() => {
                 desc: isHermes
                   ? t('bundle.optTip2DescActive')
                   : t('bundle.optTip2DescInactive'),
-                badge: isHermes ? t('bundle.active') : t('bundle.actionRequired'),
-                badgeColor: isHermes ? AppColors.emerald500 : AppColors.amber500,
+                badge: isHermes
+                  ? t('bundle.active')
+                  : t('bundle.actionRequired'),
+                badgeColor: isHermes
+                  ? AppColors.emerald500
+                  : AppColors.amber500,
               },
               {
                 iconType: 'font' as const,
@@ -2829,12 +3567,27 @@ const BundleTab = React.memo(() => {
                     <View style={bundleStyles.sNoBadge}>
                       <Text style={bundleStyles.sNoText}>#{tIdx + 1}</Text>
                     </View>
-                    <BundleCategoryIcon type={tip.iconType} size={14} color={tip.iconColor} />
+                    <BundleCategoryIcon
+                      type={tip.iconType}
+                      size={14}
+                      color={tip.iconColor}
+                    />
                     <Text style={bundleStyles.tipTitle}>{tip.title}</Text>
                   </View>
                   <View style={bundleStyles.tipActionWrap}>
-                    <View style={[bundleStyles.impactBadge, {backgroundColor: `${tip.badgeColor}18`, borderColor: `${tip.badgeColor}40`}]}>
-                      <Text style={[bundleStyles.impactBadgeText, {color: tip.badgeColor}]}>
+                    <View
+                      style={[
+                        bundleStyles.impactBadge,
+                        {
+                          backgroundColor: `${tip.badgeColor}18`,
+                          borderColor: `${tip.badgeColor}40`,
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          bundleStyles.impactBadgeText,
+                          {color: tip.badgeColor},
+                        ]}>
                         {tip.badge}
                       </Text>
                     </View>
@@ -3064,12 +3817,14 @@ const bundleStyles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
+    overflow: 'hidden',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    gap: 8,
   },
   sectionTitle: {
     fontFamily: AppFonts.interBold,
@@ -3910,7 +4665,8 @@ const bundleStyles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: AppColors.white,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
     borderTopWidth: 1,
     borderTopColor: AppColors.dividerColor,
     shadowColor: AppColors.primaryBlack,

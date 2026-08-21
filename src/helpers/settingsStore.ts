@@ -131,36 +131,36 @@ export interface RamLimitsProfile {
 export function calculateRamBasedLimits(freeRamMb: number): RamLimitsProfile {
   if (freeRamMb >= 3000) {
     return {
-      maxNetworkLogs: 1000,
-      maxConsoleLogs: 1500,
-      maxAnalyticsEvents: 500,
-      maxCrashRecords: 100,
+      maxNetworkLogs: 100,
+      maxConsoleLogs: 100,
+      maxAnalyticsEvents: 75,
+      maxCrashRecords: 50,
       profileName: 'High-End',
       freeRamMb,
     };
   } else if (freeRamMb >= 1500) {
     return {
-      maxNetworkLogs: 500,
-      maxConsoleLogs: 750,
-      maxAnalyticsEvents: 250,
+      maxNetworkLogs: 100,
+      maxConsoleLogs: 100,
+      maxAnalyticsEvents: 75,
       maxCrashRecords: 50,
       profileName: 'Standard',
       freeRamMb,
     };
   } else if (freeRamMb >= 600) {
     return {
-      maxNetworkLogs: 200,
-      maxConsoleLogs: 300,
-      maxAnalyticsEvents: 100,
+      maxNetworkLogs: 100,
+      maxConsoleLogs: 100,
+      maxAnalyticsEvents: 50,
       maxCrashRecords: 25,
       profileName: 'Compact',
       freeRamMb,
     };
   } else {
     return {
-      maxNetworkLogs: 100,
-      maxConsoleLogs: 150,
-      maxAnalyticsEvents: 50,
+      maxNetworkLogs: 50,
+      maxConsoleLogs: 50,
+      maxAnalyticsEvents: 25,
       maxCrashRecords: 15,
       profileName: 'Ultra-Light',
       freeRamMb,

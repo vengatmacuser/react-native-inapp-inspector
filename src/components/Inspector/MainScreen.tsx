@@ -1,6 +1,7 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   ActivityIndicator,
+  Animated,
   Modal,
   Platform,
   Pressable,
@@ -60,6 +61,43 @@ const MainScreen = () => {
     (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null)) ||
     (activeTab === 'crash' && selectedCrash != null);
 
+  // ─── 60 FPS Transition Animations ──────────────────────────────────────────
+  const detailAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (isDetailActive) {
+      detailAnim.setValue(0);
+      Animated.spring(detailAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isDetailActive]);
+
+  const settingsAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (settingsPage !== null) {
+      settingsAnim.setValue(0);
+      Animated.spring(settingsAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [settingsPage !== null]);
+
+  const tabAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    tabAnim.setValue(0);
+    Animated.timing(tabAnim, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  }, [activeTab]);
+
   return (
     <>
       {(Platform.OS === 'ios' || Platform.OS === 'android') &&
@@ -94,45 +132,105 @@ const MainScreen = () => {
 
               <InspectorHeader />
 
-              {/* ─── Horizontal Scrollable Tab Bar inside Content ─── */}
-              {!isDetailActive && settingsPage === null ? (
-                <TabBar />
-              ) : null}
-
-              {settingsPage !== null ? (
-                <SettingsPanel />
-              ) : isReady ? (
-                isDetailActive ? (
-                  activeTab === 'apis' && selected != null ? (
-                    <NetworkDetail />
-                  ) : activeTab === 'analytics' && selectedEvent != null ? (
-                    <AnalyticsDetail event={selectedEvent} />
-                  ) : activeTab === 'logs' && selectedLog != null ? (
-                    <LogDetail />
-                  ) : activeTab === 'redux' ? (
-                    <ReduxDetail />
-                  ) : activeTab === 'crash' && selectedCrash != null ? (
-                    <CrashDetail />
-                  ) : null
-                ) : (
+              <View style={{flex: 1}}>
+                {isReady ? (
                   <View style={{flex: 1}}>
-                    {activeTab === 'apis' && <NetworkTab />}
-                    {activeTab === 'logs' && <ConsoleTab />}
-                    {activeTab === 'analytics' && <AnalyticsTab />}
-                    {activeTab === 'redux' && <ReduxTab />}
-                    {activeTab === 'bundle' && <BundleTab />}
-                    {activeTab === 'performance' && <PerformanceTab />}
-                    {activeTab === 'crash' && <CrashTab />}
+                    {/* ─── Horizontal Scrollable Tab Bar inside Content ─── */}
+                    {!isDetailActive && <TabBar />}
+
+                    {/* Persistent List Layer - Never unmounted, preserves 100% native scroll with smooth tab transition */}
+                    <Animated.View
+                      style={[
+                        {
+                          flex: 1,
+                          opacity: tabAnim,
+                          transform: [
+                            {
+                              translateY: tabAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [6, 0],
+                              }),
+                            },
+                          ],
+                        },
+                        (isDetailActive || settingsPage !== null) && {
+                          pointerEvents: 'none',
+                        },
+                      ]}>
+                      {activeTab === 'apis' && <NetworkTab />}
+                      {activeTab === 'logs' && <ConsoleTab />}
+                      {activeTab === 'analytics' && <AnalyticsTab />}
+                      {activeTab === 'redux' && <ReduxTab />}
+                      {activeTab === 'bundle' && <BundleTab />}
+                      {activeTab === 'performance' && <PerformanceTab />}
+                      {activeTab === 'crash' && <CrashTab />}
+                    </Animated.View>
+
+                    {/* Detail View Layer - Rendered on top with smooth slide & spring transition */}
+                    {isDetailActive && (
+                      <Animated.View
+                        style={[
+                          StyleSheet.absoluteFill,
+                          {
+                            backgroundColor: AppColors.contentBg,
+                            opacity: detailAnim,
+                            transform: [
+                              {
+                                translateX: detailAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [32, 0],
+                                }),
+                              },
+                            ],
+                          },
+                        ]}>
+                        {activeTab === 'apis' && selected != null && (
+                          <NetworkDetail />
+                        )}
+                        {activeTab === 'analytics' && selectedEvent != null && (
+                          <AnalyticsDetail event={selectedEvent} />
+                        )}
+                        {activeTab === 'logs' && selectedLog != null && (
+                          <LogDetail />
+                        )}
+                        {activeTab === 'redux' && <ReduxDetail />}
+                        {activeTab === 'crash' && selectedCrash != null && (
+                          <CrashDetail />
+                        )}
+                      </Animated.View>
+                    )}
                   </View>
-                )
-              ) : (
-                <View style={styles.empty}>
-                  <ActivityIndicator size="large" color={AppColors.purple} />
-                  <Text style={[styles.emptySub, {marginTop: 12}]}>
-                    Loading logs...
-                  </Text>
-                </View>
-              )}
+                ) : (
+                  <View style={styles.empty}>
+                    <ActivityIndicator size="large" color={AppColors.purple} />
+                    <Text style={[styles.emptySub, {marginTop: 12}]}>
+                      Loading logs...
+                    </Text>
+                  </View>
+                )}
+
+                {/* Settings Panel Layer - Rendered on top with smooth slide & spring transition */}
+                {settingsPage !== null && (
+                  <Animated.View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        backgroundColor: AppColors.grayBackground,
+                        opacity: settingsAnim,
+                        transform: [
+                          {
+                            translateY: settingsAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [24, 0],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}>
+                    <SettingsPanel />
+                  </Animated.View>
+                )}
+              </View>
 
               {/* Bottom floating toast notification */}
               <Toast />

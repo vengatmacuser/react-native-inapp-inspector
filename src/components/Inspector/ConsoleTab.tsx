@@ -103,6 +103,13 @@ const ConsoleTab = React.memo(() => {
     }
   }, [visibleConsoleLogs.length, filteredConsoleLogs.length, logFilters]);
 
+  const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+
+  const QUICK_TAG_SUGGESTIONS = useMemo(
+    () => ['[AXIOS]', '[API]', '[REDUX]', '[ANALYTICS]', '[AUTH]', '[WARN]', '[ERROR]'],
+    [],
+  );
+
   return (
     <View style={{flex: 1}}>
       <View
@@ -117,9 +124,16 @@ const ConsoleTab = React.memo(() => {
             styles.toolbarRow,
             {marginTop: 12, marginBottom: 8},
           ]}>
-          <View style={styles.searchContainer}>
+          <View
+            style={[
+              styles.searchContainer,
+              isSearchFocused && {
+                borderColor: AppColors.purple,
+                borderWidth: 1.5,
+              },
+            ]}>
             <SearchIcon
-              color={AppColors.grayTextWeak}
+              color={isSearchFocused ? AppColors.purple : AppColors.grayTextWeak}
               size={16}
             />
             <TextInput
@@ -127,20 +141,45 @@ const ConsoleTab = React.memo(() => {
               placeholderTextColor={AppColors.grayTextWeak}
               value={logSearch}
               onChangeText={setLogSearch}
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
               style={styles.searchInput}
               autoCorrect={false}
               autoCapitalize="none"
             />
             {logSearch.length > 0 && (
-              <Pressable
-                onPress={() => setLogSearch('')}
-                hitSlop={10}
-                style={styles.clearBtn}>
-                <ClearIcon
-                  color={AppColors.grayTextWeak}
-                  size={14}
-                />
-              </Pressable>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                }}>
+                <View
+                  style={{
+                    backgroundColor: `${AppColors.purple}20`,
+                    borderRadius: 10,
+                    paddingHorizontal: 6,
+                    paddingVertical: 2,
+                  }}>
+                  <Text
+                    style={{
+                      color: AppColors.purple,
+                      fontSize: 10,
+                      fontFamily: AppFonts.interBold,
+                    }}>
+                    {filteredConsoleLogs.length}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setLogSearch('')}
+                  hitSlop={10}
+                  style={styles.clearBtn}>
+                  <ClearIcon
+                    color={AppColors.grayTextWeak}
+                    size={14}
+                  />
+                </Pressable>
+              </View>
             )}
           </View>
 
@@ -199,6 +238,64 @@ const ConsoleTab = React.memo(() => {
           </View>
         </View>
 
+        {/* Quick Tag Search Suggestions Bar */}
+        {(isSearchFocused || logSearch.length > 0) && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{marginBottom: 6, maxHeight: 30}}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+            {QUICK_TAG_SUGGESTIONS.map(tag => {
+              const isSelected = logSearch.includes(tag);
+              return (
+                <TouchableScale
+                  key={tag}
+                  onPress={() => {
+                    if (isSelected) {
+                      setLogSearch(prev =>
+                        prev.replace(tag, '').trim(),
+                      );
+                    } else {
+                      setLogSearch(prev =>
+                        prev ? `${prev} ${tag}`.trim() : tag,
+                      );
+                    }
+                  }}>
+                  <View
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                      backgroundColor: isSelected
+                        ? AppColors.purple
+                        : `${AppColors.purple}14`,
+                      borderWidth: 1,
+                      borderColor: isSelected
+                        ? AppColors.purple
+                        : `${AppColors.purple}30`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10,
+                        color: isSelected
+                          ? AppColors.white
+                          : AppColors.purple,
+                      }}>
+                      {tag}
+                    </Text>
+                  </View>
+                </TouchableScale>
+              );
+            })}
+          </ScrollView>
+        )}
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -224,7 +321,9 @@ const ConsoleTab = React.memo(() => {
                     {
                       backgroundColor: active ? AppColors.indigo600Alt : AppColors.indigo50,
                       borderColor: active ? AppColors.indigo600 : AppColors.indigo400,
-                      borderRadius: 7,
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
                     },
                     active && {
                       shadowColor: AppColors.indigo600Alt,
@@ -238,23 +337,10 @@ const ConsoleTab = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 6,
                     }}>
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        borderWidth: 1.2,
-                        borderColor: active ? AppColors.white : AppColors.indigo400,
-                        backgroundColor: active ? AppColors.white : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      {active && <CheckIcon color={AppColors.indigo600Alt} size={8} />}
-                    </View>
                     <LayersIcon
-                      size={12}
+                      size={13}
                       color={active ? AppColors.white : AppColors.indigo600Alt}
                     />
                     <Text
@@ -296,7 +382,9 @@ const ConsoleTab = React.memo(() => {
                     {
                       backgroundColor: active ? AppColors.teal600 : AppColors.teal100,
                       borderColor: active ? AppColors.teal600 : AppColors.teal400,
-                      borderRadius: 7,
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
                     },
                     active && {
                       shadowColor: AppColors.teal600,
@@ -310,23 +398,10 @@ const ConsoleTab = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 6,
                     }}>
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        borderWidth: 1.2,
-                        borderColor: active ? AppColors.white : AppColors.teal400,
-                        backgroundColor: active ? AppColors.white : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      {active && <CheckIcon color={AppColors.teal600} size={8} />}
-                    </View>
                     <UserIcon
-                      size={12}
+                      size={13}
                       color={active ? AppColors.white : AppColors.teal600}
                     />
                     <Text
@@ -368,7 +443,9 @@ const ConsoleTab = React.memo(() => {
                     {
                       backgroundColor: active ? AppColors.sky600 : AppColors.sky100,
                       borderColor: active ? AppColors.blue700 : AppColors.sky400,
-                      borderRadius: 7,
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
                     },
                     active && {
                       shadowColor: AppColors.sky600,
@@ -382,23 +459,10 @@ const ConsoleTab = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 6,
                     }}>
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        borderWidth: 1.2,
-                        borderColor: active ? AppColors.white : AppColors.sky400,
-                        backgroundColor: active ? AppColors.white : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      {active && <CheckIcon color={AppColors.sky600} size={8} />}
-                    </View>
                     <InfoCircleIcon
-                      size={12}
+                      size={13}
                       color={active ? AppColors.white : AppColors.sky600}
                     />
                     <Text
@@ -440,7 +504,9 @@ const ConsoleTab = React.memo(() => {
                     {
                       backgroundColor: active ? AppColors.amber600 : AppColors.amber100,
                       borderColor: active ? AppColors.amber700 : AppColors.amber200,
-                      borderRadius: 7,
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
                     },
                     active && {
                       shadowColor: AppColors.amber600,
@@ -454,23 +520,10 @@ const ConsoleTab = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 6,
                     }}>
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        borderWidth: 1.2,
-                        borderColor: active ? AppColors.white : AppColors.amber500,
-                        backgroundColor: active ? AppColors.white : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      {active && <CheckIcon color={AppColors.amber600} size={8} />}
-                    </View>
                     <WarningTriangleIcon
-                      size={12}
+                      size={13}
                       color={active ? AppColors.white : AppColors.amber700}
                     />
                     <Text
@@ -512,7 +565,9 @@ const ConsoleTab = React.memo(() => {
                     {
                       backgroundColor: active ? AppColors.red500 : AppColors.red100,
                       borderColor: active ? AppColors.red600 : AppColors.errorBorder,
-                      borderRadius: 7,
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
                     },
                     active && {
                       shadowColor: AppColors.red500,
@@ -526,23 +581,10 @@ const ConsoleTab = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 6,
                     }}>
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        borderWidth: 1.2,
-                        borderColor: active ? AppColors.white : AppColors.red500,
-                        backgroundColor: active ? AppColors.white : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      {active && <CheckIcon color={AppColors.red500} size={8} />}
-                    </View>
                     <ErrorCircleIcon
-                      size={12}
+                      size={13}
                       color={active ? AppColors.white : AppColors.red500}
                     />
                     <Text
@@ -584,7 +626,9 @@ const ConsoleTab = React.memo(() => {
                     {
                       backgroundColor: active ? AppColors.violet600 : AppColors.purple100,
                       borderColor: active ? AppColors.purple700 : AppColors.purple200,
-                      borderRadius: 7,
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
                     },
                     active && {
                       shadowColor: AppColors.violet600,
@@ -598,35 +642,22 @@ const ConsoleTab = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: 6,
                     }}>
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 3,
-                        borderWidth: 1.2,
-                        borderColor: active ? AppColors.white : AppColors.purple400,
-                        backgroundColor: active ? AppColors.white : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      {active && <CheckIcon color={AppColors.violet600} size={8} />}
-                    </View>
                     <AnalyticsIcon
-                      size={12}
-                      color={active ? AppColors.white : AppColors.purple}
+                      size={13}
+                      color={active ? AppColors.white : AppColors.violet600}
                     />
                     <Text
                       numberOfLines={1}
                       style={[
                         styles.statusFilterText,
                         {
-                          color: active ? AppColors.white : AppColors.brandPurple,
+                          color: active ? AppColors.white : AppColors.purpleText,
                           fontFamily: AppFonts.interBold,
                         },
                       ]}>
-                      {t('tabs.analytics', 'Analytics')} ({logCounts.analytics})
+                      {t('console.analytics', 'Analytics')} ({logCounts.analytics})
                     </Text>
                   </View>
                 </View>

@@ -1,4 +1,4 @@
-import React, {useCallback, useState, useMemo} from 'react';
+import React, {useCallback, useState, useMemo, useEffect} from 'react';
 import {
   FlatList,
   Pressable,
@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import {animateNextLayout, useInspector} from './InspectorContext';
 import AnalyticsEventCard from '../AnalyticsEventCard';
-import AnalyticsDetail from '../AnalyticsDetail';
 import AnalyticsFilterModal from './AnalyticsFilterModal';
 import EndOfListFooter from '../EndOfListFooter';
 import styles from '../../styles';
@@ -182,11 +181,20 @@ const AnalyticsHeader = React.memo(() => {
     });
   };
 
-  // 12-Bucket GA4 Realtime Stacked Histogram & Spline Wave Graph (-30m / 30s to NOW)
+  // 12-Bucket GA4 Realtime Stacked Histogram & Spline Wave Graph (60s live rolling stream)
   const BUCKET_COUNT = 12;
   const chartHeight = 64;
   const svgWidth = 320;
   const [selectedBucketIdx, setSelectedBucketIdx] = useState<number | null>(null);
+  const [liveTick, setLiveTick] = useState<number>(0);
+
+  useEffect(() => {
+    if (!isTrackingEnabled) return;
+    const interval = setInterval(() => {
+      setLiveTick(t => (t + 1) % 100000);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isTrackingEnabled]);
 
   const histogramData = useMemo(() => {
     const buckets: {
@@ -203,8 +211,8 @@ const AnalyticsHeader = React.memo(() => {
     }[] = [];
 
     const now = Date.now();
-    const windowMs = 60000; // 60s window
-    const bucketDuration = windowMs / BUCKET_COUNT;
+    const windowMs = 60000; // 60s live rolling window
+    const bucketDuration = windowMs / BUCKET_COUNT; // 5s per bucket
 
     for (let i = 0; i < BUCKET_COUNT; i++) {
       const bucketAgeSec = Math.round(((BUCKET_COUNT - 1 - i) * bucketDuration) / 1000);
@@ -274,7 +282,7 @@ const AnalyticsHeader = React.memo(() => {
       peakVal,
       eventRate,
     };
-  }, [filteredAnalyticsEvents, chartHeight, svgWidth, t]);
+  }, [filteredAnalyticsEvents, chartHeight, svgWidth, liveTick, t]);
 
   const selectedBucket = selectedBucketIdx != null ? histogramData.buckets[selectedBucketIdx] : null;
 
@@ -372,7 +380,7 @@ const AnalyticsHeader = React.memo(() => {
           )}
         </View>
 
-        {/* Multi-Select Category Buttons with Checkboxes */}
+        {/* Multi-Select Category Buttons */}
         <View
           style={{
             flexDirection: 'row',
@@ -405,19 +413,6 @@ const AnalyticsHeader = React.memo(() => {
                     elevation: 2,
                   },
                 ]}>
-                <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                    borderWidth: 1.2,
-                    borderColor: isAllSelected ? AppColors.white : AppColors.indigo400,
-                    backgroundColor: isAllSelected ? AppColors.white : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  {isAllSelected && <CheckIcon color={AppColors.indigo600Alt} size={8} />}
-                </View>
                 <LayersIcon
                   color={isAllSelected ? AppColors.white : AppColors.indigo600Alt}
                   size={11}
@@ -462,19 +457,6 @@ const AnalyticsHeader = React.memo(() => {
                     elevation: 2,
                   },
                 ]}>
-                <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                    borderWidth: 1.2,
-                    borderColor: isSelected ? AppColors.white : AppColors.amber500,
-                    backgroundColor: isSelected ? AppColors.white : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  {isSelected && <CheckIcon color={AppColors.amber600} size={8} />}
-                </View>
                 <CartIcon
                   color={isSelected ? AppColors.white : AppColors.amber700}
                   size={11}
@@ -519,19 +501,6 @@ const AnalyticsHeader = React.memo(() => {
                     elevation: 2,
                   },
                 ]}>
-                <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                    borderWidth: 1.2,
-                    borderColor: isSelected ? AppColors.white : AppColors.sky400,
-                    backgroundColor: isSelected ? AppColors.white : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  {isSelected && <CheckIcon color={AppColors.sky600} size={8} />}
-                </View>
                 <GlobeIcon
                   color={isSelected ? AppColors.white : AppColors.sky600}
                   size={11}
@@ -576,19 +545,6 @@ const AnalyticsHeader = React.memo(() => {
                     elevation: 2,
                   },
                 ]}>
-                <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                    borderWidth: 1.2,
-                    borderColor: isSelected ? AppColors.white : AppColors.purple400,
-                    backgroundColor: isSelected ? AppColors.white : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  {isSelected && <CheckIcon color={AppColors.violet600} size={8} />}
-                </View>
                 <BoltIcon
                   color={isSelected ? AppColors.white : AppColors.purple}
                   size={11}
@@ -633,19 +589,6 @@ const AnalyticsHeader = React.memo(() => {
                     elevation: 2,
                   },
                 ]}>
-                <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                    borderWidth: 1.2,
-                    borderColor: isSelected ? AppColors.white : AppColors.pink400,
-                    backgroundColor: isSelected ? AppColors.white : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  {isSelected && <CheckIcon color={AppColors.pink600} size={8} />}
-                </View>
                 <SparkleIcon
                   color={isSelected ? AppColors.white : AppColors.brandPurple}
                   size={11}
@@ -938,7 +881,7 @@ const AnalyticsHeader = React.memo(() => {
           </View>
         )}
 
-        {/* Timeline Axis Labels */}
+        {/* Timeline Axis Labels (60s Realtime Rolling Stream) */}
         <View
           style={{
             flexDirection: 'row',
@@ -952,7 +895,7 @@ const AnalyticsHeader = React.memo(() => {
               fontSize: 8.5,
               color: AppColors.grayTextWeak,
             }}>
-            {t('analytics.time30mAgo')}
+            -60s
           </Text>
           <Text
             style={{
@@ -960,7 +903,7 @@ const AnalyticsHeader = React.memo(() => {
               fontSize: 8.5,
               color: AppColors.grayTextWeak,
             }}>
-            {t('analytics.time20mAgo')}
+            -40s
           </Text>
           <Text
             style={{
@@ -968,7 +911,7 @@ const AnalyticsHeader = React.memo(() => {
               fontSize: 8.5,
               color: AppColors.grayTextWeak,
             }}>
-            {t('analytics.time10mAgo')}
+            -20s
           </Text>
           <Text
             style={{
@@ -1337,9 +1280,7 @@ const AnalyticsTab = React.memo(() => {
       <View
         style={{flex: 1}}
         onLayout={() => setIsAnalyticsLayoutReady(true)}>
-        {selectedEvent != null ? (
-          <AnalyticsDetail event={selectedEvent} />
-        ) : isAnalyticsLayoutReady ? (
+        {isAnalyticsLayoutReady ? (
           <FlatList
             data={filteredAnalyticsEvents}
             keyExtractor={keyExtractor}

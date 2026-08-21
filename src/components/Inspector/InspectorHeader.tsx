@@ -31,6 +31,7 @@ import {
   AndroidIcon,
   PackageBoxIcon,
   NpmIcon,
+  ResetIcon,
 } from '../NetworkIcons';
 
 const InspectorHeader = React.memo(() => {
@@ -57,7 +58,9 @@ const InspectorHeader = React.memo(() => {
     activePulseAnim,
     unreadPulseAnim,
     runClearAllWithAnimation,
+    settingsPage,
     setSettingsPage,
+    resetToDefaults,
     closeModal,
     detailTitle,
     activeTab,
@@ -110,14 +113,38 @@ const InspectorHeader = React.memo(() => {
     (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null)) ||
     (activeTab === 'crash' && selectedCrash != null);
 
-  const isAnySelected = isDetailView;
+  const isSettingsView = settingsPage !== null;
+  const isAnySelected = isDetailView || isSettingsView;
+
+  const settingsModuleTitle = useMemo(() => {
+    switch (settingsPage) {
+      case 'apis':
+        return 'APIs (Network)';
+      case 'logs':
+        return 'Console Logs';
+      case 'performance':
+        return 'Performance Tracker';
+      case 'bundle':
+        return 'Bundle Analyzer';
+      case 'crash':
+        return 'Crash Protection';
+      case 'analytics':
+        return 'Analytics Logger';
+      case 'redux':
+        return 'Redux Inspector';
+      default:
+        return 'Settings & Modules';
+    }
+  }, [settingsPage]);
 
   const headerTopPadding =
     Platform.OS === 'ios' && modalHeightPercent >= 95 ? 44 : 0;
 
   return (
     <LinearGradient
-      colors={[AppColors.purple, AppColors.brandPurple]}
+      colors={['#4F46E5', '#7C3AED']}
+      start={{x: 0, y: 0}}
+      end={{x: 1, y: 1}}
       style={styles.headerGradient}>
       <View style={{paddingTop: headerTopPadding, width: '100%'}}>
         <View style={styles.header}>
@@ -127,13 +154,21 @@ const InspectorHeader = React.memo(() => {
               {
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 12,
+                gap: 8,
                 flex: !isDetailView ? 1 : 0,
                 minWidth: 0,
               },
             ]}>
             <TouchableScale
               onPress={() => {
+                if (isSettingsView) {
+                  if (settingsPage === 'main') {
+                    setSettingsPage(null);
+                  } else {
+                    setSettingsPage('main');
+                  }
+                  return;
+                }
                 requestAnimationFrame(() => {
                   setSelected(null);
                   setSelectedEvent(null);
@@ -170,7 +205,53 @@ const InspectorHeader = React.memo(() => {
               <WhiteBackNavigation />
             </TouchableScale>
 
-            {!isAnySelected ? (
+            {isSettingsView ? (
+              <View style={{gap: 2, flex: 1, minWidth: 0}}>
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 16,
+                      color: AppColors.white,
+                      letterSpacing: -0.2,
+                    }}
+                    numberOfLines={1}>
+                    {settingsModuleTitle}
+                  </Text>
+                  {settingsPage === 'main' && (
+                    <View
+                      style={{
+                        backgroundColor: `${AppColors.white}26`,
+                        paddingHorizontal: 6,
+                        paddingVertical: 1.5,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: `${AppColors.white}20`,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 9,
+                          color: AppColors.white,
+                        }}>
+                        v{LIB_VERSION}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 10.5,
+                    color: `${AppColors.white}CC`,
+                  }}
+                  numberOfLines={1}>
+                  {settingsPage === 'main'
+                    ? 'Manage modules and preferences'
+                    : 'Configure module parameters'}
+                </Text>
+              </View>
+            ) : !isAnySelected ? (
               <View
                 style={{
                   flexDirection: 'row',
@@ -180,7 +261,7 @@ const InspectorHeader = React.memo(() => {
                   minWidth: 0,
                   marginRight: 6,
                 }}>
-                <AppHeaderLogo size={38} customIcon={appIcon} />
+                <AppHeaderLogo size={30} customIcon={appIcon} />
                 <View style={{gap: 2.5, flex: 1, minWidth: 0}}>
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0}}>
                     <Text style={[styles.headerTitle, {flexShrink: 1}]} numberOfLines={1} ellipsizeMode="tail">
@@ -293,23 +374,27 @@ const InspectorHeader = React.memo(() => {
                         ).catch(() => {})
                       }
                       style={{
-                        backgroundColor: '#CB383726',
-                        borderRadius: 4,
-                        paddingHorizontal: 5,
-                        paddingVertical: 1.5,
-                        borderWidth: 1,
-                        borderColor: '#CB383780',
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 5,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 3.5,
+                        gap: 4,
                         flexShrink: 0,
+                        shadowColor: '#000000',
+                        shadowOffset: {width: 0, height: 1},
+                        shadowOpacity: 0.15,
+                        shadowRadius: 2,
+                        elevation: 2,
                       }}>
-                      <NpmIcon size={11} color="#FF6B6B" />
+                      <NpmIcon size={11} color="#CB3837" />
                       <Text
                         style={{
                           fontFamily: AppFonts.interBold,
-                          fontSize: 9,
-                          color: '#FF6B6B',
+                          fontSize: 9.5,
+                          color: '#CB3837',
+                          letterSpacing: 0.2,
                         }}
                         numberOfLines={1}>
                         v{LIB_VERSION}
@@ -675,6 +760,28 @@ const InspectorHeader = React.memo(() => {
                 gap: 8,
               },
             ]}>
+            {isSettingsView && (
+              <TouchableScale
+                onPress={() => {
+                  Alert.alert(
+                    'Reset All Settings',
+                    'This restores all module visibility and UI preferences to defaults. Continue?',
+                    [
+                      {text: 'Cancel', style: 'cancel'},
+                      {
+                        text: 'Reset',
+                        style: 'destructive',
+                        onPress: resetToDefaults,
+                      },
+                    ],
+                  );
+                }}
+                hitSlop={15}
+                style={styles.closeButtonSquare}>
+                <ResetIcon color={AppColors.white} size={14} />
+              </TouchableScale>
+            )}
+
             {!isAnySelected && (
               <TouchableScale
                 onPress={() => {
@@ -710,7 +817,7 @@ const InspectorHeader = React.memo(() => {
                       },
                     ],
                   }}>
-                  <TrashIcon color={AppColors.white} size={16} />
+                  <TrashIcon color={AppColors.white} size={14} />
                 </Animated.View>
               </TouchableScale>
             )}
@@ -720,7 +827,7 @@ const InspectorHeader = React.memo(() => {
                 onPress={() => setSettingsPage('main')}
                 hitSlop={15}
                 style={styles.closeButtonSquare}>
-                <SettingsIcon color={AppColors.white} size={16} />
+                <SettingsIcon color={AppColors.white} size={14} />
               </TouchableScale>
             )}
 
@@ -728,7 +835,7 @@ const InspectorHeader = React.memo(() => {
               onPress={closeModal}
               hitSlop={15}
               style={styles.closeButtonSquare}>
-              <CloseWhite size={16} />
+              <CloseWhite size={14} />
             </TouchableScale>
           </View>
         </View>

@@ -839,10 +839,11 @@ const localStyles = StyleSheet.create({
     color: AppColors.grayTextWeak,
   },
   emptyContainer: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    marginTop: 40,
+    paddingBottom: 80,
   },
   emptyIconCircle: {
     width: 72,

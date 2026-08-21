@@ -177,11 +177,20 @@ static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
 
 @end
 
+@interface InAppInspectorFloatingView ()
+@property (nonatomic, assign) CGPoint touchDownPoint;
+@property (nonatomic, assign) CGPoint initialCenter;
+@property (nonatomic, assign) NSTimeInterval touchDownTime;
+@property (nonatomic, assign) BOOL isDragging;
+@end
+
 @implementation InAppInspectorFloatingView
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
+        self.userInteractionEnabled = YES;
+        self.multipleTouchEnabled = NO;
         self.layer.cornerRadius = frame.size.width / 2.0;
         self.layer.masksToBounds = NO;
         self.backgroundColor = [UIColor colorWithRed:15.0/255.0 green:23.0/255.0 blue:42.0/255.0 alpha:0.95];
@@ -198,67 +207,98 @@ static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
         CGFloat iconSize = frame.size.width * 0.94;
         CGFloat iconOffset = (frame.size.width - iconSize) / 2.0;
         InAppInspectorOwlView *owlView = [[InAppInspectorOwlView alloc] initWithFrame:CGRectMake(iconOffset, iconOffset, iconSize, iconSize)];
+        owlView.userInteractionEnabled = NO;
         [self addSubview:owlView];
-
-        // Status dot badge
-        _badgeDot = [[UIView alloc] initWithFrame:CGRectMake(frame.size.width - 14, 4, 10, 10)];
-        _badgeDot.layer.cornerRadius = 5;
-        _badgeDot.backgroundColor = [UIColor colorWithRed:34.0/255.0 green:197.0/255.0 blue:94.0/255.0 alpha:1.0];
-        _badgeDot.layer.borderColor = [UIColor colorWithRed:15.0/255.0 green:23.0/255.0 blue:42.0/255.0 alpha:1.0].CGColor;
-        _badgeDot.layer.borderWidth = 1.5;
-        _badgeDot.hidden = YES;
-        [self addSubview:_badgeDot];
-        
-        // Gestures (Main UI thread only)
-        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePan:)];
-        [self addGestureRecognizer:pan];
-        
-        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
-        [self addGestureRecognizer:tap];
-        
-        [tap requireGestureRecognizerToFail:pan];
     }
     return self;
 }
 
 - (void)updateBadgeVisible:(BOOL)visible {
-    self.badgeDot.hidden = !visible;
+    // Active badge dot removed
 }
 
-- (void)handleTap:(UITapGestureRecognizer *)gesture {
-    if (gesture.state == UIGestureRecognizerStateEnded) {
-        if (self.onTapBlock) {
-            self.onTapBlock();
-        }
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
+    if (!touch) return;
+    
+    if (self.superview) {
+        [self.superview bringSubviewToFront:self];
+    }
+    
+    self.touchDownPoint = [touch locationInView:self.window];
+    self.initialCenter = self.center;
+    self.touchDownTime = CACurrentMediaTime();
+    self.isDragging = NO;
+    
+    [UIView animateWithDuration:0.08 animations:^{
+        self.transform = CGAffineTransformMakeScale(0.92, 0.92);
+    }];
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
+    UIView *superview = self.superview;
+    if (!touch || !superview) return;
+    
+    CGPoint currentPoint = [touch locationInView:self.window];
+    CGFloat dx = currentPoint.x - self.touchDownPoint.x;
+    CGFloat dy = currentPoint.y - self.touchDownPoint.y;
+    CGFloat distance = hypot(dx, dy);
+    
+    if (!self.isDragging && distance > 14.0) {
+        self.isDragging = YES;
+    }
+    
+    if (self.isDragging) {
+        CGFloat halfW = self.bounds.size.width / 2.0;
+        CGFloat halfH = self.bounds.size.height / 2.0;
+        CGFloat minX = halfW + 10.0;
+        CGFloat maxX = superview.bounds.size.width - halfW - 10.0;
+        CGFloat minY = halfH + 44.0;
+        CGFloat maxY = superview.bounds.size.height - halfH - 44.0;
+        
+        CGPoint newCenter = CGPointMake(self.initialCenter.x + dx, self.initialCenter.y + dy);
+        newCenter.x = MAX(minX, MIN(maxX, newCenter.x));
+        newCenter.y = MAX(minY, MIN(maxY, newCenter.y));
+        self.center = newCenter;
     }
 }
 
-- (void)handlePan:(UIPanGestureRecognizer *)pan {
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    UITouch *touch = [touches anyObject];
     UIView *superview = self.superview;
-    if (!superview) return;
     
-    CGPoint translation = [pan translationInView:superview];
-    CGPoint newCenter = CGPointMake(self.center.x + translation.x, self.center.y + translation.y);
+    [UIView animateWithDuration:0.12 animations:^{
+        self.transform = CGAffineTransformIdentity;
+    }];
     
-    CGFloat halfW = self.bounds.size.width / 2.0;
-    CGFloat halfH = self.bounds.size.height / 2.0;
-    CGFloat minX = halfW + 10;
-    CGFloat maxX = superview.bounds.size.width - halfW - 10;
-    CGFloat minY = halfH + 44;
-    CGFloat maxY = superview.bounds.size.height - halfH - 44;
+    if (!touch || !superview) return;
     
-    newCenter.x = MAX(minX, MIN(maxX, newCenter.x));
-    newCenter.y = MAX(minY, MIN(maxY, newCenter.y));
+    CGPoint currentPoint = [touch locationInView:self.window];
+    CGFloat dx = currentPoint.x - self.touchDownPoint.x;
+    CGFloat dy = currentPoint.y - self.touchDownPoint.y;
+    CGFloat distance = hypot(dx, dy);
+    NSTimeInterval elapsed = CACurrentMediaTime() - self.touchDownTime;
     
-    self.center = newCenter;
-    [pan setTranslation:CGPointZero inView:superview];
-    
-    if (pan.state == UIGestureRecognizerStateEnded || pan.state == UIGestureRecognizerStateCancelled) {
+    if (!self.isDragging && distance < 24.0 && elapsed < 0.85) {
+        if (self.onTapBlock) {
+            self.onTapBlock();
+        }
+    } else if (self.isDragging) {
+        CGFloat halfW = self.bounds.size.width / 2.0;
+        CGFloat minX = halfW + 10.0;
+        CGFloat maxX = superview.bounds.size.width - halfW - 10.0;
         CGFloat targetX = (self.center.x < superview.bounds.size.width / 2.0) ? minX : maxX;
         [UIView animateWithDuration:0.25 delay:0 usingSpringWithDamping:0.75 initialSpringVelocity:0.5 options:UIViewAnimationOptionCurveEaseOut animations:^{
             self.center = CGPointMake(targetX, self.center.y);
         } completion:nil];
     }
+}
+
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
+    [UIView animateWithDuration:0.12 animations:^{
+        self.transform = CGAffineTransformIdentity;
+    }];
 }
 
 @end
@@ -521,8 +561,8 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
             floatingButtonView = [[InAppInspectorFloatingView alloc] initWithFrame:CGRectMake(initialX, initialY, size, size)];
             __weak NetworkInspectorModule *weakSelf = self;
             floatingButtonView.onTapBlock = ^{
-                NetworkInspectorModule *strongSelf = weakSelf;
-                if (strongSelf && strongSelf->hasListeners) {
+                NetworkInspectorModule *strongSelf = weakSelf ?: sharedInstance;
+                if (strongSelf) {
                     [strongSelf sendEventWithName:@"onFloatingButtonPress" body:@{}];
                 }
             };

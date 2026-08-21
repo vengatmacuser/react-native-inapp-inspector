@@ -18,7 +18,16 @@ import {
   formatDateTime,
   getSize,
 } from '../helpers';
-import {CalendarIcon, ClockIcon, SizeIcon} from './NetworkIcons';
+import {
+  CalendarIcon,
+  ClockIcon,
+  SizeIcon,
+  GlobeIcon,
+  CircleCheckIcon,
+  CircleAlertIcon,
+  CircleXIcon,
+  RepeatIcon,
+} from './NetworkIcons';
 import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
 import {LogCardProps} from '../types';
@@ -95,6 +104,23 @@ const LogCard = React.memo(function LogCard({
       }).start();
     }
   }, [isNew]);
+
+  const renderStatusIcon = () => {
+    if (isLoading) {
+      return <ClockIcon color={AppColors.darkOrange} size={9} />;
+    }
+    const num = typeof item.status === 'number' ? item.status : parseInt(String(item.status || 0), 10);
+    if (num >= 200 && num < 300) {
+      return <CircleCheckIcon color={AppColors.greenColor} size={9} />;
+    }
+    if (num >= 300 && num < 400) {
+      return <RepeatIcon color={AppColors.amber700} size={9} />;
+    }
+    if (num >= 400 && num < 500) {
+      return <CircleAlertIcon color={AppColors.darkOrange} size={9} />;
+    }
+    return <CircleXIcon color={AppColors.errorColor} size={9} />;
+  };
 
   const triggeredAt = formatDateTime(item.startTime);
   const isJson = item.url.split('?')[0].toLowerCase().endsWith('.json');
@@ -281,6 +307,9 @@ const LogCard = React.memo(function LogCard({
             style={[
               styles.statusPill,
               {
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 3.5,
                 backgroundColor: isFailed
                   ? `${AppColors.errorColor}15`
                   : isLoading
@@ -293,6 +322,7 @@ const LogCard = React.memo(function LogCard({
                   : `${statusColor}30`,
               },
             ]}>
+            {renderStatusIcon()}
             <Text
               style={[
                 styles.statusPillText,
@@ -319,7 +349,18 @@ const LogCard = React.memo(function LogCard({
             onPress={handleOpenUrl}
             style={styles.slugLeft}
             hitSlop={6}>
-            <Text style={styles.slugTag}>URL ↗</Text>
+            <View
+              style={{
+                width: 17,
+                height: 17,
+                borderRadius: 4,
+                backgroundColor: `${AppColors.skyBlue}1A`,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 4,
+              }}>
+              <GlobeIcon color={AppColors.skyBlue} size={11} />
+            </View>
             <HighlightText
               text={item.url}
               search={searchStr}

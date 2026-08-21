@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import {CheckIcon} from './NetworkIcons';
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 28,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 32,
     gap: 8,
   },
   dividerLine: {

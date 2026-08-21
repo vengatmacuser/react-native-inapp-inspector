@@ -52,7 +52,7 @@ const notify = () => {
 const addEvent = (event: AnalyticsEvent) => {
   if (!isAnalyticsModuleEnabled) return;
   events.unshift(event);
-  events = events.slice(0, 200);
+  events = events.slice(0, 75);
   notify();
 };
 

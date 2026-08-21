@@ -29,6 +29,7 @@ import {
   deduplicateLogs,
   getDomainColor,
   getEventCategory,
+  matchNetworkLogQuery,
 } from './helpers';
 // #5 — settings persistence
 import {
@@ -235,7 +236,7 @@ const NetworkInspector = ({
     getCrashRecords(),
   );
   const [selectedCrash, setSelectedCrash] = useState<CrashRecord | null>(null);
-  const [maxCrashLogs, setMaxCrashLogs] = useState<number>(100);
+  const [maxCrashLogs, setMaxCrashLogs] = useState<number>(50);
 
   useEffect(() => {
     setMaxCrashLogsLimit(maxCrashLogs);
@@ -273,7 +274,7 @@ const NetworkInspector = ({
     }
   }, [activeTab, crashRecords.length]);
 
-  const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(200);
+  const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(100);
   const [showConsoleLevels, setShowConsoleLevels] = useState<{
     info: boolean;
     warn: boolean;
@@ -336,7 +337,7 @@ const NetworkInspector = ({
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
-  const [maxAnalyticsEventsLimit, setMaxAnalyticsEventsLimit] = useState<number>(250);
+  const [maxAnalyticsEventsLimit, setMaxAnalyticsEventsLimit] = useState<number>(75);
   const [isAutoRamLimitEnabled, setIsAutoRamLimitEnabled] = useState<boolean>(true);
   const [deviceFreeRamMb, setDeviceFreeRamMb] = useState<number>(1800);
 
@@ -1205,24 +1206,10 @@ const NetworkInspector = ({
         if (!matchedMethod) return false;
       }
 
-      // Comprehensive Search Bar Check
+      // Advanced Search Query Engine Check (Supports method:POST, is:error, slow:>1s, status:200, headers, body, etc.)
       if (search && search.trim().length > 0) {
-        const queryTokens = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
         const routePath = logRouteMapRef.current.get(log.id)?.path || '';
-        const reqStr = typeof log.request === 'string' ? log.request : JSON.stringify(log.request || '');
-        const resStr = typeof log.response === 'string' ? log.response : JSON.stringify(log.response || '');
-        const searchTarget = [
-          log.method || '',
-          log.url || '',
-          String(log.status ?? ''),
-          routePath,
-          reqStr,
-          resStr,
-          JSON.stringify(log.requestHeaders || ''),
-          JSON.stringify(log.responseHeaders || ''),
-        ].join(' ').toLowerCase();
-
-        const isMatch = queryTokens.every(token => searchTarget.includes(token));
+        const isMatch = matchNetworkLogQuery(log, search, routePath);
         if (!isMatch) return false;
       }
 
@@ -1580,8 +1567,8 @@ const NetworkInspector = ({
       result = [...result].sort((a, b) => (b.count || 1) - (a.count || 1));
     }
 
-    return result;
-  }, [analyticsEvents, analyticsSearch, analyticsFilters]);
+    return result.slice(0, maxAnalyticsEventsLimit);
+  }, [analyticsEvents, analyticsSearch, analyticsFilters, maxAnalyticsEventsLimit]);
 
   const filteredConsoleLogs = useMemo(() => {
     let result = visibleConsoleLogs;

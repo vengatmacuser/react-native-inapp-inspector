@@ -125,20 +125,25 @@ const JsonViewer = React.memo(({
   };
 
   const rawText = React.useMemo(() => {
+    if (data === undefined || data === null) {
+      return '';
+    }
     if (typeof data === 'string') {
       return data;
     }
     try {
-      return JSON.stringify(data);
+      const stringified = JSON.stringify(data);
+      return stringified ?? '';
     } catch {
-      return String(data);
+      return String(data) || '';
     }
   }, [data]);
 
   const [showFullRaw, setShowFullRaw] = useState(false);
   const RAW_LIMIT = 50000;
-  const isTruncated = rawText.length > RAW_LIMIT && !showFullRaw;
-  const displayRawText = isTruncated ? rawText.slice(0, RAW_LIMIT) : rawText;
+  const safeRawText = typeof rawText === 'string' ? rawText : '';
+  const isTruncated = safeRawText.length > RAW_LIMIT && !showFullRaw;
+  const displayRawText = isTruncated ? safeRawText.slice(0, RAW_LIMIT) : safeRawText;
 
   useEffect(() => {
     if (externalMode) {
