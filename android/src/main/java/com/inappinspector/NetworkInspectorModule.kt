@@ -176,6 +176,29 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
             val cpuAbi = if (Build.SUPPORTED_ABIS.isNotEmpty()) Build.SUPPORTED_ABIS[0] else "unknown"
             map.putString("cpuAbi", cpuAbi)
 
+            // 6. Application Identifiers (Legal & Non-PII)
+            try {
+                val packageManager = reactContext.packageManager
+                val packageName = reactContext.packageName
+                val packageInfo = packageManager.getPackageInfo(packageName, 0)
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                val appName = packageManager.getApplicationLabel(appInfo).toString()
+                val appVersion = packageInfo.versionName ?: "unknown"
+                val appBuild = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    packageInfo.longVersionCode.toString()
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageInfo.versionCode.toString()
+                }
+                map.putString("appName", appName)
+                map.putString("appPackageName", packageName)
+                map.putString("appBundleId", packageName)
+                map.putString("appVersion", appVersion)
+                map.putString("appBuild", appBuild)
+            } catch (e: Exception) {
+                // Ignore app info fallback
+            }
+
             promise.resolve(map)
         } catch (e: Exception) {
             promise.reject("DEVICE_METRICS_ERROR", e.message, e)

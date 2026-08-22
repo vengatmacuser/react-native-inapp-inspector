@@ -21,6 +21,8 @@ static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
     if (self = [super initWithFrame:frame]) {
         self.backgroundColor = [UIColor clearColor];
         self.userInteractionEnabled = NO;
+        self.contentMode = UIViewContentModeRedraw;
+        self.clipsToBounds = NO;
     }
     return self;
 }
@@ -177,11 +179,9 @@ static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
 
 @end
 
-@interface InAppInspectorFloatingView ()
-@property (nonatomic, assign) CGPoint touchDownPoint;
-@property (nonatomic, assign) CGPoint initialCenter;
-@property (nonatomic, assign) NSTimeInterval touchDownTime;
-@property (nonatomic, assign) BOOL isDragging;
+@interface InAppInspectorFloatingView () <UIGestureRecognizerDelegate>
+@property (nonatomic, assign) CGPoint panStartCenter;
+@property (nonatomic, assign) NSTimeInterval lastTapTime;
 @end
 
 @implementation InAppInspectorFloatingView
@@ -203,88 +203,100 @@ static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
         self.layer.borderWidth = 2.2;
         self.layer.borderColor = [UIColor colorWithRed:56.0/255.0 green:189.0/255.0 blue:248.0/255.0 alpha:0.9].CGColor;
         
-        // Native drawn Inspector Owl icon (Enhanced & Larger)
+        // Native drawn Inspector Owl icon
         CGFloat iconSize = frame.size.width * 0.94;
         CGFloat iconOffset = (frame.size.width - iconSize) / 2.0;
         InAppInspectorOwlView *owlView = [[InAppInspectorOwlView alloc] initWithFrame:CGRectMake(iconOffset, iconOffset, iconSize, iconSize)];
         owlView.userInteractionEnabled = NO;
         [self addSubview:owlView];
+
+        // Dedicated Tap Gesture Recognizer
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTapGesture:)];
+        tap.numberOfTapsRequired = 1;
+        tap.cancelsTouchesInView = NO;
+        tap.delegate = self;
+        [self addGestureRecognizer:tap];
+
+        // Dedicated Pan Gesture Recognizer
+        UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanGesture:)];
+        pan.delegate = self;
+        [self addGestureRecognizer:pan];
     }
     return self;
 }
 
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (!self.userInteractionEnabled || self.hidden || self.alpha < 0.01) {
+        return nil;
+    }
+    if (CGRectContainsPoint(self.bounds, point)) {
+        return self;
+    }
+    return [super hitTest:point withEvent:event];
+}
+
 - (void)updateBadgeVisible:(BOOL)visible {
-    // Active badge dot removed
+    // Active badge dot
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    UITouch *touch = [touches anyObject];
-    if (!touch) return;
-    
-    if (self.superview) {
-        [self.superview bringSubviewToFront:self];
+- (void)handleTapGesture:(UITapGestureRecognizer *)gesture {
+    if (gesture.state == UIGestureRecognizerStateEnded) {
+        [self triggerTapAction];
     }
-    
-    self.touchDownPoint = [touch locationInView:self.window];
-    self.initialCenter = self.center;
-    self.touchDownTime = CACurrentMediaTime();
-    self.isDragging = NO;
-    
+}
+
+- (void)triggerTapAction {
+    NSTimeInterval now = CACurrentMediaTime();
+    if (now - self.lastTapTime < 0.35) return;
+    self.lastTapTime = now;
+
+    if (@available(iOS 10.0, *)) {
+        UIImpactFeedbackGenerator *impact = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+        [impact prepare];
+        [impact impactOccurred];
+    }
+
     [UIView animateWithDuration:0.08 animations:^{
-        self.transform = CGAffineTransformMakeScale(0.92, 0.92);
+        self.transform = CGAffineTransformMakeScale(0.90, 0.90);
+    } completion:^(BOOL finished) {
+        [UIView animateWithDuration:0.10 animations:^{
+            self.transform = CGAffineTransformIdentity;
+        }];
     }];
+
+    if (self.onTapBlock) {
+        self.onTapBlock();
+    }
 }
 
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    UITouch *touch = [touches anyObject];
+- (void)handlePanGesture:(UIPanGestureRecognizer *)pan {
     UIView *superview = self.superview;
-    if (!touch || !superview) return;
-    
-    CGPoint currentPoint = [touch locationInView:self.window];
-    CGFloat dx = currentPoint.x - self.touchDownPoint.x;
-    CGFloat dy = currentPoint.y - self.touchDownPoint.y;
-    CGFloat distance = hypot(dx, dy);
-    
-    if (!self.isDragging && distance > 14.0) {
-        self.isDragging = YES;
-    }
-    
-    if (self.isDragging) {
+    if (!superview) return;
+
+    if (pan.state == UIGestureRecognizerStateBegan) {
+        self.panStartCenter = self.center;
+        [superview bringSubviewToFront:self];
+        [UIView animateWithDuration:0.1 animations:^{
+            self.transform = CGAffineTransformMakeScale(1.06, 1.06);
+        }];
+    } else if (pan.state == UIGestureRecognizerStateChanged) {
+        CGPoint translation = [pan translationInView:superview];
         CGFloat halfW = self.bounds.size.width / 2.0;
         CGFloat halfH = self.bounds.size.height / 2.0;
         CGFloat minX = halfW + 10.0;
         CGFloat maxX = superview.bounds.size.width - halfW - 10.0;
         CGFloat minY = halfH + 44.0;
         CGFloat maxY = superview.bounds.size.height - halfH - 44.0;
-        
-        CGPoint newCenter = CGPointMake(self.initialCenter.x + dx, self.initialCenter.y + dy);
+
+        CGPoint newCenter = CGPointMake(self.panStartCenter.x + translation.x, self.panStartCenter.y + translation.y);
         newCenter.x = MAX(minX, MIN(maxX, newCenter.x));
         newCenter.y = MAX(minY, MIN(maxY, newCenter.y));
         self.center = newCenter;
-    }
-}
+    } else if (pan.state == UIGestureRecognizerStateEnded || pan.state == UIGestureRecognizerStateCancelled) {
+        [UIView animateWithDuration:0.15 animations:^{
+            self.transform = CGAffineTransformIdentity;
+        }];
 
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    UITouch *touch = [touches anyObject];
-    UIView *superview = self.superview;
-    
-    [UIView animateWithDuration:0.12 animations:^{
-        self.transform = CGAffineTransformIdentity;
-    }];
-    
-    if (!touch || !superview) return;
-    
-    CGPoint currentPoint = [touch locationInView:self.window];
-    CGFloat dx = currentPoint.x - self.touchDownPoint.x;
-    CGFloat dy = currentPoint.y - self.touchDownPoint.y;
-    CGFloat distance = hypot(dx, dy);
-    NSTimeInterval elapsed = CACurrentMediaTime() - self.touchDownTime;
-    
-    if (!self.isDragging && distance < 24.0 && elapsed < 0.85) {
-        if (self.onTapBlock) {
-            self.onTapBlock();
-        }
-    } else if (self.isDragging) {
         CGFloat halfW = self.bounds.size.width / 2.0;
         CGFloat minX = halfW + 10.0;
         CGFloat maxX = superview.bounds.size.width - halfW - 10.0;
@@ -293,12 +305,6 @@ static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
             self.center = CGPointMake(targetX, self.center.y);
         } completion:nil];
     }
-}
-
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-    [UIView animateWithDuration:0.12 animations:^{
-        self.transform = CGAffineTransformIdentity;
-    }];
 }
 
 @end
@@ -451,13 +457,13 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
 }
 
 RCT_EXPORT_METHOD(enableNativeCrashProtection:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     [self installHandlers];
     resolve(@(YES));
 }
 
 RCT_EXPORT_METHOD(getDeviceMetrics:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     NSMutableDictionary *metrics = [NSMutableDictionary dictionary];
 
     // 1. Memory / RAM Metrics
@@ -510,46 +516,66 @@ RCT_EXPORT_METHOD(getDeviceMetrics:(RCTPromiseResolveBlock)resolve
     [metrics setObject:[UIDevice currentDevice].systemVersion forKey:@"osVersion"];
     [metrics setObject:@"arm64" forKey:@"cpuAbi"];
 
+    // 5. Application Identifiers (Legal & Non-PII)
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    NSString *appName = [mainBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"] ?: [mainBundle objectForInfoDictionaryKey:@"CFBundleName"];
+    NSString *appVersion = [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    NSString *appBuild = [mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"];
+    NSString *appBundleId = [mainBundle bundleIdentifier];
+    if (appName) [metrics setObject:appName forKey:@"appName"];
+    if (appVersion) [metrics setObject:appVersion forKey:@"appVersion"];
+    if (appBuild) [metrics setObject:appBuild forKey:@"appBuild"];
+    if (appBundleId) {
+        [metrics setObject:appBundleId forKey:@"appBundleId"];
+        [metrics setObject:appBundleId forKey:@"appPackageName"];
+    }
+
     resolve(metrics);
 }
 
-RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *targetWindow = nil;
-        if (@available(iOS 13.0, *)) {
-            for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) {
-                    for (UIWindow *w in scene.windows) {
-                        if (w.isKeyWindow) {
-                            targetWindow = w;
-                            break;
-                        }
+static UIWindow *GetAppActiveWindow(void) {
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *ws = (UIWindowScene *)scene;
+                for (UIWindow *w in ws.windows) {
+                    if (w.isKeyWindow || w.windowLevel == UIWindowLevelNormal) {
+                        return w;
                     }
                 }
-                if (targetWindow) break;
+                if (ws.windows.count > 0) {
+                    return ws.windows.firstObject;
+                }
             }
         }
-        if (!targetWindow) {
-            targetWindow = [UIApplication sharedApplication].keyWindow;
-            if (!targetWindow && [UIApplication sharedApplication].windows.count > 0) {
-                targetWindow = [UIApplication sharedApplication].windows.firstObject;
-            }
+    }
+    for (UIWindow *w in [UIApplication sharedApplication].windows) {
+        if (w.isKeyWindow || w.windowLevel == UIWindowLevelNormal) {
+            return w;
         }
+    }
+    return [UIApplication sharedApplication].windows.firstObject;
+}
 
-        if (!targetWindow) {
-            resolve(@(NO));
-            return;
-        }
+RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIWindow *targetWindow = GetAppActiveWindow();
+        CGRect screenBounds = targetWindow ? targetWindow.bounds : [UIScreen mainScreen].bounds;
+
+        CGFloat screenWidth = screenBounds.size.width > 0 ? screenBounds.size.width : [UIScreen mainScreen].bounds.size.width;
+        if (screenWidth <= 0) screenWidth = 393.0;
+        CGFloat screenHeight = screenBounds.size.height > 0 ? screenBounds.size.height : [UIScreen mainScreen].bounds.size.height;
+        if (screenHeight <= 0) screenHeight = 852.0;
 
         CGFloat size = 64.0;
         if (options && options[@"size"]) {
             size = [options[@"size"] doubleValue];
         }
 
-        CGFloat initialX = targetWindow.bounds.size.width - size - 20.0;
-        CGFloat initialY = targetWindow.bounds.size.height - size - 110.0;
+        CGFloat initialX = screenWidth - size - 20.0;
+        CGFloat initialY = screenHeight - size - 120.0;
         if (options && options[@"x"]) {
             initialX = [options[@"x"] doubleValue];
         }
@@ -559,6 +585,7 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
 
         if (floatingButtonView == nil) {
             floatingButtonView = [[InAppInspectorFloatingView alloc] initWithFrame:CGRectMake(initialX, initialY, size, size)];
+            floatingButtonView.layer.zPosition = 999999;
             __weak NetworkInspectorModule *weakSelf = self;
             floatingButtonView.onTapBlock = ^{
                 NetworkInspectorModule *strongSelf = weakSelf ?: sharedInstance;
@@ -566,26 +593,47 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
                     [strongSelf sendEventWithName:@"onFloatingButtonPress" body:@{}];
                 }
             };
+        } else {
+            floatingButtonView.layer.zPosition = 999999;
+            floatingButtonView.frame = CGRectMake(initialX, initialY, size, size);
         }
 
-        if (floatingButtonView.superview == nil) {
-            [targetWindow addSubview:floatingButtonView];
-        } else {
-            [targetWindow bringSubviewToFront:floatingButtonView];
-        }
-        
-        floatingButtonView.hidden = NO;
-        floatingButtonView.alpha = 0.0;
-        [UIView animateWithDuration:0.2 animations:^{
+        void (^attachToWindow)(void) = ^{
+            UIWindow *activeWin = GetAppActiveWindow();
+            if (!activeWin || !floatingButtonView) return;
+            
+            CGRect winBounds = activeWin.bounds;
+            if (winBounds.size.width > 0 && winBounds.size.height > 0) {
+                CGRect curFrame = floatingButtonView.frame;
+                if (curFrame.origin.x <= 0 || curFrame.origin.x >= winBounds.size.width ||
+                    curFrame.origin.y <= 0 || curFrame.origin.y >= winBounds.size.height) {
+                    floatingButtonView.frame = CGRectMake(winBounds.size.width - curFrame.size.width - 20.0,
+                                                          winBounds.size.height - curFrame.size.height - 120.0,
+                                                          curFrame.size.width,
+                                                          curFrame.size.height);
+                }
+            }
+            
+            if (floatingButtonView.superview != activeWin) {
+                [activeWin addSubview:floatingButtonView];
+            }
+            [activeWin bringSubviewToFront:floatingButtonView];
+            floatingButtonView.hidden = NO;
             floatingButtonView.alpha = 1.0;
-        }];
+            [floatingButtonView.subviews.firstObject setNeedsDisplay];
+        };
+
+        attachToWindow();
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), attachToWindow);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)), dispatch_get_main_queue(), attachToWindow);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), attachToWindow);
 
         resolve(@(YES));
     });
 }
 
 RCT_EXPORT_METHOD(hideFloatingButton:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (floatingButtonView != nil) {
             [UIView animateWithDuration:0.15 animations:^{
@@ -599,8 +647,8 @@ RCT_EXPORT_METHOD(hideFloatingButton:(RCTPromiseResolveBlock)resolve
 }
 
 RCT_EXPORT_METHOD(setFloatingButtonBadge:(BOOL)hasBadge
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (floatingButtonView != nil) {
             [floatingButtonView updateBadgeVisible:hasBadge];
@@ -610,8 +658,8 @@ RCT_EXPORT_METHOD(setFloatingButtonBadge:(BOOL)hasBadge
 }
 
 RCT_EXPORT_METHOD(setFloatingButtonPosition:(double)x y:(double)y
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (floatingButtonView != nil && floatingButtonView.superview != nil) {
             floatingButtonView.frame = CGRectMake(x, y, floatingButtonView.frame.size.width, floatingButtonView.frame.size.height);
@@ -621,7 +669,7 @@ RCT_EXPORT_METHOD(setFloatingButtonPosition:(double)x y:(double)y
 }
 
 RCT_EXPORT_METHOD(startFpsMonitoring:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->displayLink == nil) {
             self->lastFpsTimestamp = 0;
@@ -649,7 +697,7 @@ RCT_EXPORT_METHOD(startFpsMonitoring:(RCTPromiseResolveBlock)resolve
 }
 
 RCT_EXPORT_METHOD(stopFpsMonitoring:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self->displayLink != nil) {
             [self->displayLink invalidate];
@@ -660,7 +708,7 @@ RCT_EXPORT_METHOD(stopFpsMonitoring:(RCTPromiseResolveBlock)resolve
 }
 
 RCT_EXPORT_METHOD(getFpsMetrics:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     [dict setObject:@(self->currentCalculatedFps > 0 ? self->currentCalculatedFps : 60.0) forKey:@"fps"];
     [dict setObject:@(60.0) forKey:@"targetFps"];
@@ -668,8 +716,8 @@ RCT_EXPORT_METHOD(getFpsMetrics:(RCTPromiseResolveBlock)resolve
 }
 
 RCT_EXPORT_METHOD(getNativeStorageItem:(NSString *)key
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
     NSString *prefKey = [NSString stringWithFormat:@"inapp_inspector_%@", key ?: @""];
     NSString *val = [[NSUserDefaults standardUserDefaults] stringForKey:prefKey];
     resolve(val ?: [NSNull null]);
@@ -677,8 +725,8 @@ RCT_EXPORT_METHOD(getNativeStorageItem:(NSString *)key
 
 RCT_EXPORT_METHOD(setNativeStorageItem:(NSString *)key
                   value:(NSString *)value
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
     NSString *prefKey = [NSString stringWithFormat:@"inapp_inspector_%@", key ?: @""];
     if (value == nil || [value isKindOfClass:[NSNull class]]) {
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:prefKey];
@@ -690,8 +738,8 @@ RCT_EXPORT_METHOD(setNativeStorageItem:(NSString *)key
 }
 
 RCT_EXPORT_METHOD(triggerHaptic:(NSString *)style
-                  resolver:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         if (@available(iOS 10.0, *)) {
             NSString *s = [style lowercaseString] ?: @"light";
@@ -725,8 +773,16 @@ RCT_EXPORT_METHOD(triggerHaptic:(NSString *)style
     });
 }
 
+RCT_EXPORT_METHOD(addListener:(NSString *)eventName) {
+    [super addListener:eventName];
+}
+
+RCT_EXPORT_METHOD(removeListeners:(double)count) {
+    [super removeListeners:count];
+}
+
 RCT_EXPORT_METHOD(getNativeSystemMetrics:(RCTPromiseResolveBlock)resolve
-                  rejecter:(RCTPromiseRejectBlock)reject) {
+                  reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(self->_metricsQueue, ^{
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         
@@ -813,8 +869,8 @@ RCT_EXPORT_METHOD(pushNativeLogRecord:(NSString *)pageKey
 }
 
 RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
-                  offset:(NSInteger)offset
-                  limit:(NSInteger)limit
+                  offset:(double)offset
+                  limit:(double)limit
                   query:(NSString *)query
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {

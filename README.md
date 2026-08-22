@@ -371,6 +371,16 @@ npm run android
 
 ---
 
+## 🔒 Anonymous Telemetry
+
+`react-native-inapp-inspector` collects anonymous diagnostic usage telemetry (such as React Native framework version, OS platform, and feature interactions) to help maintainers prioritize features and track stability across architectures (e.g. Hermes vs. JSC, New Architecture vs. Paper).
+
+- **Zero PII**: No personal data, user identities, authentication tokens, device names, or network request payloads are ever collected.
+- **Fail-Safe & Non-Blocking**: Runs completely in the background without affecting app performance.
+- **User Consent Dialog**: On initial launch, an in-app consent dialog prompts the developer to allow or decline anonymous telemetry.
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please check out our [Contributing Guidelines](CONTRIBUTING.md) to get started.

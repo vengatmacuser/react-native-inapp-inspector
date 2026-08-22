@@ -12,6 +12,7 @@ import NetworkInspector, {
   setupNetworkLogger,
   setupConsoleLogger,
   enableNativeCrashProtection,
+  BrandSquareIcon,
 } from 'react-native-inapp-inspector';
 
 import { mockStore } from './src/store/mockStore';
@@ -51,7 +52,11 @@ function App() {
         </NavigationContainer>
       </ErrorBoundary>
       {/* Render inspector globally outside inner component ErrorBoundary */}
-      <NetworkInspector navigationRef={navigationRef} environment="DEV" />
+      <NetworkInspector
+        navigationRef={navigationRef}
+        environment="DEV"
+        appIcon={<BrandSquareIcon size={28} />}
+      />
     </SafeAreaProvider>
   );
 }

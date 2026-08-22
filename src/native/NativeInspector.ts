@@ -20,6 +20,11 @@ export interface NativeDeviceMetrics {
   osVersion?: string;
   apiLevel?: number;
   cpuAbi?: string;
+  appName?: string;
+  appVersion?: string;
+  appBuild?: string;
+  appBundleId?: string;
+  appPackageName?: string;
 }
 
 export interface NativeCrashEvent {
@@ -39,8 +44,11 @@ export const isNativeModuleAvailable = (): boolean => {
   return !!NativeModule;
 };
 
-const nativeEmitter = isNativeModuleAvailable()
-  ? new NativeEventEmitter(NativeModule)
+const eventTarget: any =
+  NativeModules.NetworkInspectorModule || NativeNetworkInspector;
+
+const nativeEmitter = eventTarget
+  ? new NativeEventEmitter(eventTarget)
   : null;
 
 /**

@@ -43,7 +43,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prebuild": "node scripts/gen-version.js",
-    "build": "npm run clean && tsc && tsc -p tsconfig.esm.json",
+    "build": "npm run clean && tsc && tsc -p tsconfig.esm.json && node scripts/inject-telemetry.js",
     "watch": "tsc -w",
     "prepack": "npm run build",
     "publish": "node release.cjs",

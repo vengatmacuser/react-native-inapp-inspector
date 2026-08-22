@@ -28,6 +28,7 @@ import PerformanceTab from './PerformanceTab';
 import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
 import SettingsPanel from './SettingsPanel';
+import TelemetryConsentModal from './TelemetryConsentModal';
 import Toast from '../Toast';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
@@ -234,6 +235,9 @@ const MainScreen = () => {
 
               {/* Bottom floating toast notification */}
               <Toast />
+
+              {/* Anonymous Telemetry Consent Dialog */}
+              <TelemetryConsentModal />
             </View>
           </View>
         </ErrorBoundary>

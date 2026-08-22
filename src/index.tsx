@@ -30,6 +30,13 @@ import {
   getDomainColor,
   getEventCategory,
   matchNetworkLogQuery,
+  sendSessionTelemetryPing,
+  trackTelemetryEvent,
+  trackInspectorOpen,
+  trackTabSwitch,
+  trackLogExport,
+  GA4_MEASUREMENT_ID,
+  GA4_API_SECRET,
 } from './helpers';
 // #5 — settings persistence
 import {
@@ -881,6 +888,15 @@ const NetworkInspector = ({
   const useNativeFab =
     (Platform.OS === 'ios' || Platform.OS === 'android') && isNativeModule;
 
+  // Send anonymous initialization heartbeat to GA4 Measurement Protocol
+  useEffect(() => {
+    sendSessionTelemetryPing({
+      environment,
+      hasNavigation: Boolean(navigationRef),
+      hasAppIcon: Boolean(appIcon),
+    });
+  }, [environment, navigationRef, appIcon]);
+
   // 100% Native Main-Thread Floating Button Lifecycle
   useEffect(() => {
     if (!useNativeFab || !isEnabled || !enabled) {
@@ -940,6 +956,9 @@ const NetworkInspector = ({
           ? defaultTab
           : 'apis';
       setActiveTab(target);
+
+      // Track inspector opened event in GA4
+      trackInspectorOpen({activeTab: target});
 
       // Instant synchronization of data collected while modal was closed
       if (latestNetworkLogsRef.current.length > 0) {
@@ -2155,6 +2174,21 @@ export {
   type FloatingButtonOptions,
   type NativeFpsMetrics,
 } from './native/NativeInspector';
+
+export {
+  sendSessionTelemetryPing,
+  trackTelemetryEvent,
+  trackInspectorOpen,
+  trackTabSwitch,
+  trackLogExport,
+  GA4_MEASUREMENT_ID,
+  GA4_API_SECRET,
+} from './helpers';
+
+export {
+  BrandSquareIcon,
+  BrandCircleIcon,
+} from './components/NetworkIcons';
 
 export {
   ActiveTab,
