@@ -45,6 +45,7 @@ npm run android
 ## 🧪 Interactive Test Controls
 
 The example screen provides one-tap triggers for:
+
 - **Network Requests**: `Fetch User`, `Failing Request`, `Axios GET`, `Axios POST`, `Axios PUT`, `Axios PATCH`, `Axios DELETE`.
 - **Console Events**: `Trigger Log / Warn / Error`, `Multi-Arg Log`, `Error Stack Log`.
 - **Analytics Events**: `Log Custom Event`, `Log Purchase`.

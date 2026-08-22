@@ -6,6 +6,9 @@
     "android": "react-native run-android",
     "ios": "react-native run-ios",
     "lint": "eslint .",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "prettier": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "prettier:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "start": "node -r ./polyfill.js node_modules/react-native/cli.js start",
     "test": "jest",
     "bundle-visualizer": "react-native-bundle-visualizer"

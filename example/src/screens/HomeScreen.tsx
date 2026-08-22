@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Text,
-  Pressable,
-  View,
-  ScrollView,
-  SafeAreaView,
-  Linking,
-  Dimensions,
-} from 'react-native';
+import { Text, Pressable, View, ScrollView, SafeAreaView, Linking, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Rect, Ellipse, Line } from 'react-native-svg';
 import axios from 'axios';
 import {
@@ -26,13 +18,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ─── Crisp SVG Vector Icons ───────────────────────────────────────────────────
 
-const SvgBolt = ({
-  color = '#FFFFFF',
-  size = 14,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgBolt = ({ color = '#FFFFFF', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
@@ -44,13 +30,7 @@ const SvgBolt = ({
   </Svg>
 );
 
-const SvgPackage = ({
-  color = '#64748B',
-  size = 14,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgPackage = ({ color = '#64748B', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M16.5 9.4L7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 2.5 1.55L16.5 14.6"
@@ -75,13 +55,7 @@ const SvgPackage = ({
   </Svg>
 );
 
-const SvgGitHub = ({
-  color = '#64748B',
-  size = 14,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgGitHub = ({ color = '#64748B', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
@@ -93,13 +67,7 @@ const SvgGitHub = ({
   </Svg>
 );
 
-const SvgGlobe = ({
-  color = '#0284C7',
-  size = 14,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgGlobe = ({ color = '#0284C7', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
     <Path
@@ -111,13 +79,7 @@ const SvgGlobe = ({
   </Svg>
 );
 
-const SvgTerminal = ({
-  color = '#4F46E5',
-  size = 14,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgTerminal = ({ color = '#4F46E5', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M4 17l6-6-6-6M12 19h8"
@@ -129,13 +91,7 @@ const SvgTerminal = ({
   </Svg>
 );
 
-const SvgAnalytics = ({
-  color = '#0D9488',
-  size = 14,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgAnalytics = ({ color = '#0D9488', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M18 20V10M12 20V4M6 20v-6"
@@ -147,13 +103,7 @@ const SvgAnalytics = ({
   </Svg>
 );
 
-const SvgAtom = ({
-  color = '#7C3AED',
-  size = 14,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgAtom = ({ color = '#7C3AED', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Circle cx="12" cy="12" r="2" fill={color} />
     <Ellipse
@@ -186,13 +136,7 @@ const SvgAtom = ({
   </Svg>
 );
 
-const SvgExternalLink = ({
-  color = '#FFFFFF',
-  size = 12,
-}: {
-  color?: string;
-  size?: number;
-}) => (
+const SvgExternalLink = ({ color = '#FFFFFF', size = 12 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
@@ -221,14 +165,7 @@ interface TactileButtonProps {
   icon?: React.ReactNode;
 }
 
-const TactileButton = ({
-  label,
-  onPress,
-  color,
-  bgColor,
-  fullWidth,
-  icon,
-}: TactileButtonProps) => {
+const TactileButton = ({ label, onPress, color, bgColor, fullWidth, icon }: TactileButtonProps) => {
   return (
     <Pressable
       onPress={onPress}
@@ -281,19 +218,13 @@ const ActivityGraphicsCard = ({
   const chartHeight = 70;
 
   const totalEvents = apiCount + logCount + analyticsCount;
-  const apiPct =
-    totalEvents > 0 ? Math.round((apiCount / totalEvents) * 100) : 0;
-  const logPct =
-    totalEvents > 0 ? Math.round((logCount / totalEvents) * 100) : 0;
-  const analyticsPct =
-    totalEvents > 0 ? Math.max(0, 100 - apiPct - logPct) : 0;
+  const apiPct = totalEvents > 0 ? Math.round((apiCount / totalEvents) * 100) : 0;
+  const logPct = totalEvents > 0 ? Math.round((logCount / totalEvents) * 100) : 0;
+  const analyticsPct = totalEvents > 0 ? Math.max(0, 100 - apiPct - logPct) : 0;
 
   // 10 chronological time bars (-18s to NOW)
   const barData = useMemo(() => {
-    const raw =
-      history.length >= 10
-        ? history.slice(-10)
-        : [2, 4, 3, 7, 5, 8, 12, 9, 14, 18];
+    const raw = history.length >= 10 ? history.slice(-10) : [2, 4, 3, 7, 5, 8, 12, 9, 14, 18];
     const maxVal = Math.max(...raw, 15);
     return raw.map(val => ({
       val,
@@ -314,9 +245,7 @@ const ActivityGraphicsCard = ({
         </View>
         <View style={styles.liveIndicator}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveText}>
-            {status ? status.toUpperCase() : 'STREAMING'}
-          </Text>
+          <Text style={styles.liveText}>{status ? status.toUpperCase() : 'STREAMING'}</Text>
         </View>
       </View>
 
@@ -348,8 +277,7 @@ const ActivityGraphicsCard = ({
           }}
         >
           <Text style={{ fontSize: 10, fontWeight: '700', color: '#64748B' }}>
-            Throughput:{' '}
-            <Text style={{ color: '#4F46E5' }}>{totalEvents} Total Events</Text>
+            Throughput: <Text style={{ color: '#4F46E5' }}>{totalEvents} Total Events</Text>
           </Text>
           <Text style={{ fontSize: 10, fontWeight: '700', color: '#16A34A' }}>
             ⚡ Live Activity Stream
@@ -409,18 +337,10 @@ const ActivityGraphicsCard = ({
             borderTopColor: '#E2E8F0',
           }}
         >
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>
-            -18s
-          </Text>
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>
-            -12s
-          </Text>
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>
-            -6s
-          </Text>
-          <Text style={{ fontSize: 9, color: '#4F46E5', fontWeight: '800' }}>
-            NOW ●
-          </Text>
+          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-18s</Text>
+          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-12s</Text>
+          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-6s</Text>
+          <Text style={{ fontSize: 9, color: '#4F46E5', fontWeight: '800' }}>NOW ●</Text>
         </View>
       </View>
 
@@ -457,16 +377,8 @@ const ActivityGraphicsCard = ({
             backgroundColor: '#E2E8F0',
           }}
         >
-          {apiPct > 0 ? (
-            <View
-              style={{ flex: apiPct, backgroundColor: '#4F46E5' }}
-            />
-          ) : null}
-          {logPct > 0 ? (
-            <View
-              style={{ flex: logPct, backgroundColor: '#F59E0B' }}
-            />
-          ) : null}
+          {apiPct > 0 ? <View style={{ flex: apiPct, backgroundColor: '#4F46E5' }} /> : null}
+          {logPct > 0 ? <View style={{ flex: logPct, backgroundColor: '#F59E0B' }} /> : null}
           {analyticsPct > 0 ? (
             <View
               style={{
@@ -475,9 +387,7 @@ const ActivityGraphicsCard = ({
               }}
             />
           ) : null}
-          {totalEvents === 0 && (
-            <View style={{ flex: 1, backgroundColor: '#CBD5E1' }} />
-          )}
+          {totalEvents === 0 && <View style={{ flex: 1, backgroundColor: '#CBD5E1' }} />}
         </View>
 
         {/* Legend Ratio Breakdown */}
@@ -558,9 +468,7 @@ const ActivityGraphicsCard = ({
           <Text style={styles.statLbl}>Logs</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={[styles.statVal, { color: '#0D9488' }]}>
-            {analyticsCount}
-          </Text>
+          <Text style={[styles.statVal, { color: '#0D9488' }]}>{analyticsCount}</Text>
           <Text style={styles.statLbl}>Events</Text>
         </View>
         <View style={styles.statBox}>
@@ -575,9 +483,7 @@ const ActivityGraphicsCard = ({
 };
 
 export function HomeScreen({ navigation }: any) {
-  const [activeTab, setActiveTab] = useState<'tests' | 'npm' | 'github'>(
-    'tests',
-  );
+  const [activeTab, setActiveTab] = useState<'tests' | 'npm' | 'github'>('tests');
   const [apiCount, setApiCount] = useState(0);
   const [logCount, setLogCount] = useState(0);
   const [analyticsCount, setAnalyticsCount] = useState(0);
@@ -600,28 +506,17 @@ export function HomeScreen({ navigation }: any) {
     // Subscribe to logs to display live dashboard counters
     const unsubNet = subscribeNetworkLogs(logs => {
       setApiCount(logs.length);
-      setActivityHistory(prev => [
-        ...prev.slice(-9),
-        Math.max(2, (logs.length % 20) + 2),
-      ]);
+      setActivityHistory(prev => [...prev.slice(-9), Math.max(2, (logs.length % 20) + 2)]);
     });
     const unsubConsole = subscribeConsoleLogs(logs => {
       setLogCount(logs.length);
-      setActivityHistory(prev => [
-        ...prev.slice(-9),
-        Math.max(2, (logs.length % 20) + 3),
-      ]);
+      setActivityHistory(prev => [...prev.slice(-9), Math.max(2, (logs.length % 20) + 3)]);
     });
     const unsubAnalytics = subscribeAnalyticsEvents(events => {
       setAnalyticsCount(events.length);
-      setActivityHistory(prev => [
-        ...prev.slice(-9),
-        Math.max(2, (events.length % 20) + 1),
-      ]);
+      setActivityHistory(prev => [...prev.slice(-9), Math.max(2, (events.length % 20) + 1)]);
     });
-    const unsubRedux = mockStore.subscribe(() =>
-      setReduxState(mockStore.getState()),
-    );
+    const unsubRedux = mockStore.subscribe(() => setReduxState(mockStore.getState()));
 
     // Initial Logs to populate stats
     console.log('[App] HomeScreen mounted and ready.');
@@ -714,9 +609,7 @@ export function HomeScreen({ navigation }: any) {
     notifyAction('Fetch (200 OK) fired');
     try {
       console.log('[API] Triggering fetch user...');
-      const response = await fetch(
-        'https://jsonplaceholder.typicode.com/users/1',
-      );
+      const response = await fetch('https://jsonplaceholder.typicode.com/users/1');
       const data = await response.json();
       console.log('[API] Fetch completed successfully:', data.name);
     } catch (error) {
@@ -736,9 +629,7 @@ export function HomeScreen({ navigation }: any) {
 
   const triggerConsoleLogs = () => {
     notifyAction('Console Logs fired');
-    console.log(
-      '[App] Manual log triggered at ' + new Date().toLocaleTimeString(),
-    );
+    console.log('[App] Manual log triggered at ' + new Date().toLocaleTimeString());
   };
 
   const triggerSampleAll = () => {
@@ -756,16 +647,10 @@ export function HomeScreen({ navigation }: any) {
       'session_started',
     ];
 
-    console.log(
-      `[Sample] Firing sample-all at ${new Date().toLocaleTimeString()}`,
-    );
+    console.log(`[Sample] Firing sample-all at ${new Date().toLocaleTimeString()}`);
     console.warn('[Sample] Randomized warning: throttled API response');
     console.error('[Sample] Randomized error: timeout on retry attempt #3');
-    console.log(
-      randomConsoleMessages[
-        Math.floor(Math.random() * randomConsoleMessages.length)
-      ],
-    );
+    console.log(randomConsoleMessages[Math.floor(Math.random() * randomConsoleMessages.length)]);
 
     triggerAxiosGet();
     triggerAxiosPost();
@@ -776,9 +661,7 @@ export function HomeScreen({ navigation }: any) {
     triggerFailedNetworkRequest();
 
     logAnalyticsEvent(
-      randomAnalyticsEvents[
-        Math.floor(Math.random() * randomAnalyticsEvents.length)
-      ],
+      randomAnalyticsEvents[Math.floor(Math.random() * randomAnalyticsEvents.length)],
       {
         sample_batch: 'all',
         triggered_at: new Date().toISOString(),
@@ -795,11 +678,7 @@ export function HomeScreen({ navigation }: any) {
     mockStore.dispatch({ type: 'TOGGLE_SIDEBAR' });
     mockStore.dispatch({ type: 'UPDATE_USER_TIME' });
 
-    fetch(
-      `https://jsonplaceholder.typicode.com/posts/${Math.floor(
-        Math.random() * 8 + 1,
-      )}`,
-    )
+    fetch(`https://jsonplaceholder.typicode.com/posts/${Math.floor(Math.random() * 8 + 1)}`)
       .then(r => r.json())
       .then(d => console.log('[Sample] Random fetch completed:', d.title))
       .catch(e => console.error('[Sample] Random fetch failed:', e));
@@ -812,17 +691,12 @@ export function HomeScreen({ navigation }: any) {
   };
 
   const openUrl = (url: string) => {
-    Linking.openURL(url).catch(err =>
-      console.error('Failed to open URL:', err),
-    );
+    Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
   };
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Header Hero Section */}
         <View style={styles.headerHero}>
           <View style={styles.headerBadgeContainer}>
@@ -833,72 +707,36 @@ export function HomeScreen({ navigation }: any) {
           </View>
           <Text style={styles.headerTitle}>Playground Workbench</Text>
           <Text style={styles.headerSubtitle}>
-            Interactive testing suite, NPM package specs, and open-source
-            documentation.
+            Interactive testing suite, NPM package specs, and open-source documentation.
           </Text>
         </View>
 
         {/* Multi-Tab Navigation Switcher with crisp SVG icons */}
         <View style={styles.tabBarContainer}>
           <Pressable
-            style={[
-              styles.tabItem,
-              activeTab === 'tests' && styles.tabItemActive,
-            ]}
+            style={[styles.tabItem, activeTab === 'tests' && styles.tabItemActive]}
             onPress={() => setActiveTab('tests')}
           >
-            <SvgBolt
-              color={activeTab === 'tests' ? '#FFFFFF' : '#64748B'}
-              size={13}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'tests' && styles.tabTextActive,
-              ]}
-            >
+            <SvgBolt color={activeTab === 'tests' ? '#FFFFFF' : '#64748B'} size={13} />
+            <Text style={[styles.tabText, activeTab === 'tests' && styles.tabTextActive]}>
               Tests
             </Text>
           </Pressable>
 
           <Pressable
-            style={[
-              styles.tabItem,
-              activeTab === 'npm' && styles.tabItemActive,
-            ]}
+            style={[styles.tabItem, activeTab === 'npm' && styles.tabItemActive]}
             onPress={() => setActiveTab('npm')}
           >
-            <SvgPackage
-              color={activeTab === 'npm' ? '#FFFFFF' : '#64748B'}
-              size={13}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'npm' && styles.tabTextActive,
-              ]}
-            >
-              NPM
-            </Text>
+            <SvgPackage color={activeTab === 'npm' ? '#FFFFFF' : '#64748B'} size={13} />
+            <Text style={[styles.tabText, activeTab === 'npm' && styles.tabTextActive]}>NPM</Text>
           </Pressable>
 
           <Pressable
-            style={[
-              styles.tabItem,
-              activeTab === 'github' && styles.tabItemActive,
-            ]}
+            style={[styles.tabItem, activeTab === 'github' && styles.tabItemActive]}
             onPress={() => setActiveTab('github')}
           >
-            <SvgGitHub
-              color={activeTab === 'github' ? '#FFFFFF' : '#64748B'}
-              size={13}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'github' && styles.tabTextActive,
-              ]}
-            >
+            <SvgGitHub color={activeTab === 'github' ? '#FFFFFF' : '#64748B'} size={13} />
+            <Text style={[styles.tabText, activeTab === 'github' && styles.tabTextActive]}>
               GitHub
             </Text>
           </Pressable>
@@ -920,13 +758,9 @@ export function HomeScreen({ navigation }: any) {
             {/* API & Network Tests */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <SvgGlobe color="#0284C7" size={14} />
-                  <Text style={styles.panelHeader}>
-                    Standard Fetch Requests
-                  </Text>
+                  <Text style={styles.panelHeader}>Standard Fetch Requests</Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>HTTP / REST</Text>
               </View>
@@ -949,13 +783,9 @@ export function HomeScreen({ navigation }: any) {
             {/* Axios Interception */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <SvgBolt color="#059669" size={14} />
-                  <Text style={styles.panelHeader}>
-                    Axios Auto-Interception
-                  </Text>
+                  <Text style={styles.panelHeader}>Axios Auto-Interception</Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>AXIOS METHODS</Text>
               </View>
@@ -1000,13 +830,9 @@ export function HomeScreen({ navigation }: any) {
             {/* Console & Stack Traces */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <SvgTerminal color="#4F46E5" size={14} />
-                  <Text style={styles.panelHeader}>
-                    Console Logs & Stack Traces
-                  </Text>
+                  <Text style={styles.panelHeader}>Console Logs & Stack Traces</Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>CALL STACK</Text>
               </View>
@@ -1030,11 +856,7 @@ export function HomeScreen({ navigation }: any) {
                         username: 'venkatesh',
                         role: 'Lead Architect',
                       },
-                      [
-                        'permissions.read',
-                        'permissions.write',
-                        'permissions.admin',
-                      ],
+                      ['permissions.read', 'permissions.write', 'permissions.admin'],
                       {
                         device: 'iPhone 15 Pro',
                         os: 'iOS 18.0',
@@ -1066,9 +888,7 @@ export function HomeScreen({ navigation }: any) {
             {/* Analytics Events */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <SvgAnalytics color="#0D9488" size={14} />
                   <Text style={styles.panelHeader}>Analytics & GA4 Events</Text>
                 </View>
@@ -1079,9 +899,7 @@ export function HomeScreen({ navigation }: any) {
                   label="Screen View"
                   onPress={() => {
                     notifyAction('Screen View Logged');
-                    console.log(
-                      '[App] Logged custom analytics event: screen_view',
-                    );
+                    console.log('[App] Logged custom analytics event: screen_view');
                     logAnalyticsEvent('screen_view', {
                       screen_name: 'HomeScreen',
                       screen_class: 'HomeScreenComponent',
@@ -1095,9 +913,7 @@ export function HomeScreen({ navigation }: any) {
                   label="Ecommerce Purchase"
                   onPress={() => {
                     notifyAction('Purchase Logged');
-                    console.log(
-                      '[App] Logged analytics ecommerce event: item_purchase',
-                    );
+                    console.log('[App] Logged analytics ecommerce event: item_purchase');
                     logAnalyticsEvent(
                       'item_purchase',
                       {
@@ -1128,13 +944,9 @@ export function HomeScreen({ navigation }: any) {
             {/* Redux State Actions */}
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <SvgAtom color="#7C3AED" size={14} />
-                  <Text style={styles.panelHeader}>
-                    Redux Store & Time-Travel
-                  </Text>
+                  <Text style={styles.panelHeader}>Redux Store & Time-Travel</Text>
                 </View>
                 <Text style={styles.panelHeaderBadge}>STATE TIMELINE</Text>
               </View>
@@ -1151,10 +963,7 @@ export function HomeScreen({ navigation }: any) {
                     notifyAction('Theme Toggled');
                     mockStore.dispatch({
                       type: 'SET_THEME',
-                      payload:
-                        mockStore.getState().settings.theme === 'dark'
-                          ? 'light'
-                          : 'dark',
+                      payload: mockStore.getState().settings.theme === 'dark' ? 'light' : 'dark',
                     });
                   }}
                   color="#0891B2"
@@ -1217,9 +1026,7 @@ export function HomeScreen({ navigation }: any) {
             {/* Crash Exception Simulation */}
             <View style={[styles.panelCard, { borderColor: '#FECDD3' }]}>
               <View style={styles.panelHeaderRow}>
-                <Text style={[styles.panelHeader, { color: '#E11D48' }]}>
-                  Exception Simulation
-                </Text>
+                <Text style={[styles.panelHeader, { color: '#E11D48' }]}>Exception Simulation</Text>
                 <Text
                   style={[
                     styles.panelHeaderBadge,
@@ -1256,9 +1063,7 @@ export function HomeScreen({ navigation }: any) {
           <>
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <SvgPackage color="#0F172A" size={15} />
                   <Text style={styles.panelHeader}>NPM Package Specs</Text>
                 </View>
@@ -1274,17 +1079,13 @@ export function HomeScreen({ navigation }: any) {
 
               {/* Install Code Snippet */}
               <View style={styles.codeSnippet}>
-                <Text style={styles.codeText}>
-                  npm i react-native-inapp-inspector
-                </Text>
+                <Text style={styles.codeText}>npm i react-native-inapp-inspector</Text>
               </View>
 
               <View style={{ gap: 2 }}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Package Name</Text>
-                  <Text style={styles.infoValue}>
-                    react-native-inapp-inspector
-                  </Text>
+                  <Text style={styles.infoValue}>react-native-inapp-inspector</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Latest Version</Text>
@@ -1298,15 +1099,18 @@ export function HomeScreen({ navigation }: any) {
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Native Module Linked</Text>
-                  <Text style={[styles.infoValue, { color: isNativeModuleAvailable() ? '#16A34A' : '#D97706' }]}>
+                  <Text
+                    style={[
+                      styles.infoValue,
+                      { color: isNativeModuleAvailable() ? '#16A34A' : '#D97706' },
+                    ]}
+                  >
                     {isNativeModuleAvailable() ? 'YES (Active)' : 'NO (JS Fallback)'}
                   </Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Module Formats</Text>
-                  <Text style={styles.infoValue}>
-                    CommonJS + ESM + TypeScript
-                  </Text>
+                  <Text style={styles.infoValue}>CommonJS + ESM + TypeScript</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>License</Text>
@@ -1333,9 +1137,7 @@ export function HomeScreen({ navigation }: any) {
               <TactileButton
                 label="View Package on NPM Registry"
                 onPress={() =>
-                  openUrl(
-                    'https://www.npmjs.com/package/react-native-inapp-inspector',
-                  )
+                  openUrl('https://www.npmjs.com/package/react-native-inapp-inspector')
                 }
                 color="#CC3534"
                 bgColor="#CC3534"
@@ -1350,48 +1152,24 @@ export function HomeScreen({ navigation }: any) {
                 <Text style={styles.panelHeaderBadge}>ALL-IN-ONE</Text>
               </View>
               <View style={{ gap: 6 }}>
-                <Text
-                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
-                >
-                  •{' '}
-                  <Text style={{ fontWeight: '700' }}>Network Inspector:</Text>{' '}
-                  Auto-intercepts Axios, Fetch, and XMLHttpRequest with cURL
-                  copy and headers.
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Network Inspector:</Text> Auto-intercepts
+                  Axios, Fetch, and XMLHttpRequest with cURL copy and headers.
                 </Text>
-                <Text
-                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
-                >
-                  •{' '}
-                  <Text style={{ fontWeight: '700' }}>
-                    Console & Stack Trace:
-                  </Text>{' '}
-                  Symbolicated source line and column coordinates directly from
-                  Metro.
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Console & Stack Trace:</Text> Symbolicated
+                  source line and column coordinates directly from Metro.
                 </Text>
-                <Text
-                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
-                >
-                  •{' '}
-                  <Text style={{ fontWeight: '700' }}>Redux Time-Travel:</Text>{' '}
-                  Dispatched action timeline, slice diff viewer, and state
-                  inspection.
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Redux Time-Travel:</Text> Dispatched action
+                  timeline, slice diff viewer, and state inspection.
                 </Text>
-                <Text
-                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
-                >
-                  •{' '}
-                  <Text style={{ fontWeight: '700' }}>
-                    Firebase & GA4 Analytics:
-                  </Text>{' '}
-                  Automatic screen and ecommerce event category detection.
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Firebase & GA4 Analytics:</Text> Automatic
+                  screen and ecommerce event category detection.
                 </Text>
-                <Text
-                  style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}
-                >
-                  •{' '}
-                  <Text style={{ fontWeight: '700' }}>
-                    Bundle & Performance Analyzer:
-                  </Text>{' '}
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Bundle & Performance Analyzer:</Text>{' '}
                   Real-time FPS monitor and JS asset ratio treemaps.
                 </Text>
               </View>
@@ -1404,9 +1182,7 @@ export function HomeScreen({ navigation }: any) {
           <>
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
-                <View
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <SvgGitHub color="#0F172A" size={15} />
                   <Text style={styles.panelHeader}>Open Source Repository</Text>
                 </View>
@@ -1423,27 +1199,19 @@ export function HomeScreen({ navigation }: any) {
               <View style={{ gap: 2 }}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Repository</Text>
-                  <Text style={styles.infoValue}>
-                    vengatmacuser/react-native-inapp-inspector
-                  </Text>
+                  <Text style={styles.infoValue}>vengatmacuser/react-native-inapp-inspector</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Author / Creator</Text>
-                  <Text style={styles.infoValue}>
-                    Vengateswaran Balakrishnan
-                  </Text>
+                  <Text style={styles.infoValue}>Vengateswaran Balakrishnan</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Platform Support</Text>
-                  <Text style={styles.infoValue}>
-                    iOS, Android, Expo, RN 0.60+
-                  </Text>
+                  <Text style={styles.infoValue}>iOS, Android, Expo, RN 0.60+</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Documentation</Text>
-                  <Text style={[styles.infoValue, { color: '#4F46E5' }]}>
-                    Interactive Showcase
-                  </Text>
+                  <Text style={[styles.infoValue, { color: '#4F46E5' }]}>Interactive Showcase</Text>
                 </View>
               </View>
 
@@ -1451,9 +1219,7 @@ export function HomeScreen({ navigation }: any) {
                 <TactileButton
                   label="Star & View on GitHub"
                   onPress={() =>
-                    openUrl(
-                      'https://github.com/vengatmacuser/react-native-inapp-inspector',
-                    )
+                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector')
                   }
                   color="#24292F"
                   bgColor="#24292F"
@@ -1463,9 +1229,7 @@ export function HomeScreen({ navigation }: any) {
                 <TactileButton
                   label="Report Issue / Request Feature"
                   onPress={() =>
-                    openUrl(
-                      'https://github.com/vengatmacuser/react-native-inapp-inspector/issues',
-                    )
+                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector/issues')
                   }
                   color="#0284C7"
                   bgColor="#0284C7"
@@ -1474,9 +1238,7 @@ export function HomeScreen({ navigation }: any) {
                 />
                 <TactileButton
                   label="Sponsor on GitHub ❤️"
-                  onPress={() =>
-                    openUrl('https://github.com/sponsors/vengatmacuser')
-                  }
+                  onPress={() => openUrl('https://github.com/sponsors/vengatmacuser')}
                   color="#DB2777"
                   bgColor="#DB2777"
                   icon={<SvgExternalLink color="#FFFFFF" size={13} />}
@@ -1514,9 +1276,7 @@ export function HomeScreen({ navigation }: any) {
           android_ripple={{ color: 'rgba(255,255,255,0.2)' }}
         >
           <SvgBolt color="#FFFFFF" size={16} />
-          <Text style={styles.footerButtonText}>
-            Trigger Fast Batch Sample Data
-          </Text>
+          <Text style={styles.footerButtonText}>Trigger Fast Batch Sample Data</Text>
         </Pressable>
       </View>
     </SafeAreaView>

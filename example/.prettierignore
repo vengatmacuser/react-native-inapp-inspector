@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+.bundle/
+vendor/
+
+# Native build artifacts
+android/
+ios/
+Pods/
+build/
+dist/
+
+# Tests & coverage
+coverage/
+.nyc_output/
+
+# Cache & temporary files
+.gradle/
+.idea/
+.vscode/
+*.lock
+package-lock.json

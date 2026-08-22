@@ -1,19 +1,21 @@
 if (!Array.prototype.toReversed) {
-  Array.prototype.toReversed = function() {
+  Array.prototype.toReversed = function () {
     return [...this].reverse();
   };
 }
 
 const util = require('util');
 if (!util.styleText) {
-  util.styleText = function(format, text) {
+  util.styleText = function (format, text) {
     return text;
   };
 }
 
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const exclusionList = require('metro-config/private/defaults/exclusionList').default || require('metro-config/private/defaults/exclusionList');
+const exclusionList =
+  require('metro-config/private/defaults/exclusionList').default ||
+  require('metro-config/private/defaults/exclusionList');
 
 const root = path.resolve(__dirname, '..');
 
@@ -26,12 +28,8 @@ const root = path.resolve(__dirname, '..');
 const config = {
   watchFolders: [root],
   resolver: {
-    blockList: exclusionList([
-      new RegExp(path.resolve(root, 'node_modules') + '/.*'),
-    ]),
-    nodeModulesPaths: [
-      path.resolve(__dirname, 'node_modules'),
-    ],
+    blockList: exclusionList([new RegExp(path.resolve(root, 'node_modules') + '/.*')]),
+    nodeModulesPaths: [path.resolve(__dirname, 'node_modules')],
     // Force all modules to resolve to the example project's node_modules to avoid duplicates
     extraNodeModules: new Proxy(
       {},
@@ -42,7 +40,7 @@ const config = {
           }
           return path.join(__dirname, 'node_modules', name);
         },
-      }
+      },
     ),
   },
 };

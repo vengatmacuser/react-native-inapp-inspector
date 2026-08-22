@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  Text,
-  TouchableOpacity,
-  View,
-  ScrollView,
-  SafeAreaView,
-} from 'react-native';
+import { Text, TouchableOpacity, View, ScrollView, SafeAreaView } from 'react-native';
 import { styles } from '../styles/appStyles';
 
 export function DetailsScreen({ navigation }: any) {
@@ -26,7 +20,8 @@ export function DetailsScreen({ navigation }: any) {
           </View>
           <Text style={styles.headerTitle}>Navigation Tracking</Text>
           <Text style={styles.headerSubtitle}>
-            The breadcrumbs inside the inspector track your screen transitions and route state in real-time.
+            The breadcrumbs inside the inspector track your screen transitions and route state in
+            real-time.
           </Text>
         </View>
 
@@ -36,15 +31,10 @@ export function DetailsScreen({ navigation }: any) {
             <Text style={styles.panelHeaderBadge}>ROUTE ACTIVE</Text>
           </View>
           <TouchableOpacity
-            style={[
-              styles.fullWidthBtn,
-              { backgroundColor: '#059669', marginBottom: 10 },
-            ]}
+            style={[styles.fullWidthBtn, { backgroundColor: '#059669', marginBottom: 10 }]}
             onPress={triggerDetailLogs}
           >
-            <Text style={styles.fullWidthBtnText}>
-              Trigger Log from Details Screen
-            </Text>
+            <Text style={styles.fullWidthBtnText}>Trigger Log from Details Screen</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
