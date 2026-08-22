@@ -19,6 +19,7 @@ import {METHOD_COLORS} from '../../constants';
 import {LIB_VERSION} from '../../constants';
 import {Method} from '../../types';
 import {getStatusColor, getAppName, getBundleIdentifier, formatTime, getSize} from '../../helpers';
+import {getTelemetryConsentStatus} from '../../helpers/telemetry';
 import {
   WhiteBackNavigation,
   TrashIcon,
@@ -65,9 +66,39 @@ const InspectorHeader = React.memo(() => {
     detailTitle,
     activeTab,
     environment,
+    visible,
     selectedCrash,
     setSelectedCrash,
   } = useInspector();
+
+  const [isTelemetryActive, setIsTelemetryActive] = React.useState<boolean>(false);
+  const telemetryPulseAnim = React.useRef(new Animated.Value(1)).current;
+
+  React.useEffect(() => {
+    getTelemetryConsentStatus().then(status => {
+      setIsTelemetryActive(status === 'granted');
+    });
+  }, [visible]);
+
+  React.useEffect(() => {
+    if (!isTelemetryActive) return;
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(telemetryPulseAnim, {
+          toValue: 2.2,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(telemetryPulseAnim, {
+          toValue: 1,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [isTelemetryActive, telemetryPulseAnim]);
 
   const envConfig = useMemo(() => {
     const rawEnv = (environment || (__DEV__ ? 'DEV' : 'PROD')).trim();
@@ -261,7 +292,7 @@ const InspectorHeader = React.memo(() => {
                   minWidth: 0,
                   marginRight: 6,
                 }}>
-                <AppHeaderLogo size={30} customIcon={appIcon} />
+                <AppHeaderLogo size={46} customIcon={appIcon} />
                 <View style={{gap: 2.5, flex: 1, minWidth: 0}}>
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0}}>
                     <Text style={[styles.headerTitle, {flexShrink: 1}]} numberOfLines={1} ellipsizeMode="tail">
@@ -326,12 +357,12 @@ const InspectorHeader = React.memo(() => {
                     )}
                   </View>
 
-                  {/* Clean Bundle Identifier & Version Representation */}
+                  {/* OS & NPM Version Representation */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 4.5,
+                      gap: 5,
                       minWidth: 0,
                     }}>
                     <View
@@ -342,16 +373,15 @@ const InspectorHeader = React.memo(() => {
                         borderRadius: 5,
                         paddingHorizontal: 6,
                         paddingVertical: 2,
-                        gap: 3.5,
+                        gap: 4,
                         borderWidth: 1,
                         borderColor: `${AppColors.white}2E`,
-                        flexShrink: 1,
-                        minWidth: 0,
+                        flexShrink: 0,
                       }}>
                       {Platform.OS === 'ios' ? (
-                        <AppleIcon color={`${AppColors.white}D9`} size={9} />
+                        <AppleIcon color={`${AppColors.white}E6`} size={10} />
                       ) : (
-                        <AndroidIcon color={`${AppColors.white}D9`} size={9} />
+                        <AndroidIcon color={`${AppColors.white}E6`} size={10} />
                       )}
                       <Text
                         style={{
@@ -359,11 +389,11 @@ const InspectorHeader = React.memo(() => {
                           fontSize: 9.5,
                           color: `${AppColors.white}EB`,
                           letterSpacing: 0.1,
-                          flexShrink: 1,
                         }}
-                        numberOfLines={1}
-                        ellipsizeMode="middle">
-                        {getBundleIdentifier()}
+                        numberOfLines={1}>
+                        {Platform.OS === 'ios'
+                          ? `iOS ${Platform.Version}`
+                          : `Android ${Platform.Version}`}
                       </Text>
                     </View>
 
@@ -400,6 +430,69 @@ const InspectorHeader = React.memo(() => {
                         v{LIB_VERSION}
                       </Text>
                     </Pressable>
+
+                    {isTelemetryActive && (
+                      <Pressable
+                        onPress={() =>
+                          Alert.alert(
+                            'Anonymous Telemetry Active',
+                            'Anonymous diagnostics (such as React Native version, JavaScript engine, and device model) are currently enabled to help improve library tooling.\n\nNo user data or network payloads are captured. You can toggle this anytime in Settings.',
+                            [{text: 'Got it'}],
+                          )
+                        }
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(16, 185, 129, 0.22)',
+                          borderRadius: 5,
+                          paddingHorizontal: 5.5,
+                          paddingVertical: 2,
+                          gap: 4.5,
+                          borderWidth: 1,
+                          borderColor: 'rgba(52, 211, 153, 0.45)',
+                          flexShrink: 0,
+                        }}>
+                        <View
+                          style={{
+                            width: 6,
+                            height: 6,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                          <Animated.View
+                            style={{
+                              position: 'absolute',
+                              width: 6,
+                              height: 6,
+                              borderRadius: 3,
+                              backgroundColor: '#34D399',
+                              opacity: telemetryPulseAnim.interpolate({
+                                inputRange: [1, 2.2],
+                                outputRange: [0.8, 0],
+                              }),
+                              transform: [{scale: telemetryPulseAnim}],
+                            }}
+                          />
+                          <View
+                            style={{
+                              width: 4,
+                              height: 4,
+                              borderRadius: 2,
+                              backgroundColor: '#10B981',
+                            }}
+                          />
+                        </View>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 9,
+                            color: '#6EE7B7',
+                            letterSpacing: 0.2,
+                          }}>
+                          LIVE
+                        </Text>
+                      </Pressable>
+                    )}
                   </View>
                 </View>
               </View>

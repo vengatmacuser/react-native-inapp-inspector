@@ -29,6 +29,7 @@ import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
 import SettingsPanel from './SettingsPanel';
 import TelemetryConsentModal from './TelemetryConsentModal';
+import NpmUpdateToast from './NpmUpdateToast';
 import Toast from '../Toast';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
@@ -236,8 +237,8 @@ const MainScreen = () => {
               {/* Bottom floating toast notification */}
               <Toast />
 
-              {/* Anonymous Telemetry Consent Dialog */}
-              <TelemetryConsentModal />
+              {/* NPM Version Update Toast with timeout progress bar */}
+              <NpmUpdateToast />
             </View>
           </View>
         </ErrorBoundary>
@@ -246,6 +247,9 @@ const MainScreen = () => {
         <NavigationTracker onStateChange={setNavState} />
       )}
     </Modal>
+
+    {/* Anonymous Telemetry Consent Dialog at root viewport */}
+    <TelemetryConsentModal />
     </>
   );
 };

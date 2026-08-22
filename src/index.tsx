@@ -148,6 +148,8 @@ const NetworkInspector = ({
   navigationRef,
   appIcon,
   environment,
+  initialVisible,
+  visible: controlledVisible,
 }: NetworkInspectorProps): React.JSX.Element => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
@@ -164,7 +166,16 @@ const NetworkInspector = ({
   const [modalAnimationType, setModalAnimationType] = useState<'slide' | 'fade' | 'none'>('slide');
 
   const [logs, setLogs] = useState<NetworkLog[]>([]);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState<boolean>(
+    initialVisible ?? controlledVisible ?? false,
+  );
+
+  useEffect(() => {
+    if (controlledVisible !== undefined) {
+      setVisible(controlledVisible);
+    }
+  }, [controlledVisible]);
+
   const [isReady, setIsReady] = useState(false);
   const [selected, setSelected] = useState<NetworkLog | null>(null);
   const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
@@ -354,6 +365,7 @@ const NetworkInspector = ({
   // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
   const [showDuplicateLogs, setShowDuplicateLogs] = useState<boolean>(false);
+  const [showUpdateToast, setShowUpdateToast] = useState<boolean>(true);
 
   // Synchronize runtime background listeners with active settings
   useEffect(() => {
@@ -416,6 +428,7 @@ const NetworkInspector = ({
     setReduxAutoRefreshState(true);
     setReduxExpandDepth(1);
     setShowDuplicateLogs(false);
+    setShowUpdateToast(true);
     Alert.alert('Settings Reset', 'All settings have been reset to default values.');
   };
 
@@ -455,6 +468,8 @@ const NetworkInspector = ({
         setReduxExpandDepth(saved.reduxExpandDepth);
       if (saved.showDuplicateLogs != null)
         setShowDuplicateLogs(saved.showDuplicateLogs);
+      if (saved.showUpdateToast != null)
+        setShowUpdateToast(saved.showUpdateToast);
       if (saved.defaultTab) {
         const dt = saved.defaultTab as ActiveTab;
         const vis = {
@@ -496,6 +511,7 @@ const NetworkInspector = ({
       reduxAutoRefresh,
       reduxExpandDepth,
       showDuplicateLogs,
+      showUpdateToast,
     });
   }, [
     isDark,
@@ -2019,6 +2035,8 @@ const NetworkInspector = ({
     setIsDark,
     showDuplicateLogs,
     setShowDuplicateLogs,
+    showUpdateToast,
+    setShowUpdateToast,
     showConsoleLevels,
     setShowConsoleLevels,
     resetToDefaults,

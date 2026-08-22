@@ -22,10 +22,33 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
 
   // 1. If customIcon is explicitly provided, render it directly edge-to-edge
   if (customIcon) {
+    if (React.isValidElement(customIcon)) {
+      const clonedIcon = React.cloneElement(
+        customIcon as React.ReactElement<any>,
+        {
+          size,
+          width: size,
+          height: size,
+        },
+      );
+      return (
+        <View
+          style={[
+            logoStyles.container,
+            {width: size, height: size, padding: 0, borderRadius: Math.round(size * 0.28)},
+          ]}>
+          {clonedIcon}
+        </View>
+      );
+    }
     return (
-      <View style={[logoStyles.container, {width: size, height: size}]}>
+      <View
+        style={[
+          logoStyles.container,
+          {width: size, height: size, borderRadius: Math.round(size * 0.28)},
+        ]}>
         <Image
-          source={customIcon}
+          source={customIcon as ImageSourcePropType}
           style={logoStyles.image}
           resizeMode="cover"
         />
@@ -55,7 +78,11 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
 
   // 3. Fallback: Inspector's Signature Owl Brand Logo
   return (
-    <View style={[logoStyles.container, {width: size, height: size}]}>
+    <View
+      style={[
+        logoStyles.container,
+        {width: size, height: size, padding: 0, borderRadius: Math.round(size * 0.28)},
+      ]}>
       <BrandSquareIcon size={size} />
     </View>
   );

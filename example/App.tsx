@@ -55,7 +55,7 @@ function App() {
       <NetworkInspector
         navigationRef={navigationRef}
         environment="DEV"
-        appIcon={<BrandSquareIcon size={28} />}
+        appIcon={<BrandSquareIcon />}
       />
     </SafeAreaProvider>
   );

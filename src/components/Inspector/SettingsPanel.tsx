@@ -35,6 +35,11 @@ import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
 import {useTranslation} from '../../i18n';
 import {ActiveTab} from '../../types';
 import {
+  getTelemetryConsentStatus,
+  setTelemetryConsent,
+  sendSessionTelemetryPing,
+} from '../../helpers/telemetry';
+import {
   SignalIcon,
   TerminalIcon,
   AnalyticsIcon,
@@ -76,6 +81,8 @@ const SettingsPanel = () => {
     setModalAnimationType,
     showDuplicateLogs,
     setShowDuplicateLogs,
+    showUpdateToast,
+    setShowUpdateToast,
     showConsoleLevels,
     setShowConsoleLevels,
     resetToDefaults,
@@ -107,6 +114,22 @@ const SettingsPanel = () => {
   } = useInspector();
 
   const [stagedHeight, setStagedHeight] = useState(modalHeightPercent);
+  const [telemetryConsent, setTelemetryConsentState] = useState<boolean>(true);
+
+  useEffect(() => {
+    getTelemetryConsentStatus().then(status => {
+      setTelemetryConsentState(status === 'granted');
+    });
+  }, []);
+
+  const handleToggleTelemetry = async () => {
+    const nextVal = !telemetryConsent;
+    setTelemetryConsentState(nextVal);
+    await setTelemetryConsent(nextVal);
+    if (nextVal) {
+      sendSessionTelemetryPing({force: true});
+    }
+  };
 
   useEffect(() => {
     setStagedHeight(modalHeightPercent);
@@ -1782,6 +1805,212 @@ const SettingsPanel = () => {
                         })}
                     </View>
                   )}
+                </View>
+              </View>
+
+              {/* Section 4: Privacy & Diagnostics */}
+              <View
+                style={{
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  overflow: 'hidden',
+                  padding: 14,
+                  gap: 12,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: AppColors.grayTextWeak,
+                    letterSpacing: 0.8,
+                  }}>
+                  PRIVACY & ANONYMOUS DIAGNOSTICS
+                </Text>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                      flex: 1,
+                      marginRight: 10,
+                    }}>
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundColor: AppColors.purpleShade50,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <ShieldAlertIcon color={AppColors.purple} size={15} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13.5,
+                          lineHeight: 18,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        Help Improve In-App Inspector
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          lineHeight: 15,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        Share non-identifiable technical metrics (RN version, JS engine, device model). No user data or network payloads are captured.
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="switch"
+                    accessibilityLabel="Toggle Anonymous Telemetry"
+                    accessibilityState={{checked: telemetryConsent}}
+                    onPress={handleToggleTelemetry}
+                    style={{
+                      width: 42,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: telemetryConsent
+                        ? AppColors.purple
+                        : AppColors.grayBorderSecondary,
+                      padding: 2,
+                      justifyContent: 'center',
+                      alignItems: telemetryConsent ? 'flex-end' : 'flex-start',
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 10,
+                        backgroundColor: AppColors.white,
+                        shadowColor: AppColors.black,
+                        shadowOpacity: 0.18,
+                        shadowRadius: 2,
+                        shadowOffset: {width: 0, height: 1},
+                      }}
+                    />
+                  </TouchableScale>
+                </View>
+              </View>
+
+              {/* Section 5: Notifications & Toasts */}
+              <View
+                style={{
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  overflow: 'hidden',
+                  padding: 14,
+                  gap: 12,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: AppColors.grayTextWeak,
+                    letterSpacing: 0.8,
+                  }}>
+                  NOTIFICATIONS & TOASTS
+                </Text>
+
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                      flex: 1,
+                      marginRight: 10,
+                    }}>
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundColor: AppColors.purpleShade50,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <PackageIcon color={AppColors.purple} size={15} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13.5,
+                          lineHeight: 18,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        NPM Update Toast
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          lineHeight: 15,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        Show a floating toast banner with countdown progress when a newer release is published on npm.
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="switch"
+                    accessibilityLabel="Toggle NPM Update Toast"
+                    accessibilityState={{checked: showUpdateToast}}
+                    onPress={() => setShowUpdateToast(prev => !prev)}
+                    style={{
+                      width: 42,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: showUpdateToast
+                        ? AppColors.purple
+                        : AppColors.grayBorderSecondary,
+                      padding: 2,
+                      justifyContent: 'center',
+                      alignItems: showUpdateToast ? 'flex-end' : 'flex-start',
+                    }}>
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 10,
+                        backgroundColor: AppColors.white,
+                        shadowColor: AppColors.black,
+                        shadowOpacity: 0.18,
+                        shadowRadius: 2,
+                        shadowOffset: {width: 0, height: 1},
+                      }}
+                    />
+                  </TouchableScale>
                 </View>
               </View>
             </View>

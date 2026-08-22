@@ -176,6 +176,7 @@ export interface PersistedSettings {
   reduxAutoRefresh?: boolean;
   reduxExpandDepth?: number;
   showDuplicateLogs?: boolean;
+  showUpdateToast?: boolean;
 }
 
 // ─── Inspector component props / context ──────────────────────────────────────
@@ -188,6 +189,8 @@ export interface NetworkInspectorProps {
   navigationRef?: any;
   appIcon?: any;
   environment?: 'DEV' | 'UAT' | 'PrePROD' | 'PROD' | 'QA' | 'Staging' | string;
+  initialVisible?: boolean;
+  visible?: boolean;
 }
 
 export interface NavigationTrackerProps {
@@ -354,6 +357,8 @@ export interface InspectorContextValue {
   setIsDark: React.Dispatch<React.SetStateAction<boolean>>;
   showDuplicateLogs: boolean;
   setShowDuplicateLogs: React.Dispatch<React.SetStateAction<boolean>>;
+  showUpdateToast: boolean;
+  setShowUpdateToast: React.Dispatch<React.SetStateAction<boolean>>;
   showConsoleLevels: {info: boolean; warn: boolean; error: boolean};
   setShowConsoleLevels: React.Dispatch<
     React.SetStateAction<{info: boolean; warn: boolean; error: boolean}>
