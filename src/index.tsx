@@ -135,6 +135,7 @@ import {
   CrashRecord,
   ParsedStackFrame,
   CrashBreadcrumb,
+  SearchScope,
 } from './types';
 import {LIB_VERSION} from './constants';
 
@@ -180,6 +181,10 @@ const NetworkInspector = ({
   const [selected, setSelected] = useState<NetworkLog | null>(null);
   const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
   const [search, setSearch] = useState('');
+  const [searchScope, setSearchScope] = useState<SearchScope>('all');
+  const [isRegexSearch, setIsRegexSearch] = useState<boolean>(false);
+  const [isCaseSensitive, setIsCaseSensitive] = useState<boolean>(false);
+  const [quickFilter, setQuickFilter] = useState<string>('all');
   const [detailSearch, setDetailSearch] = useState('');
   const [reduxSearch, setReduxSearch] = useState('');
   const [selectedReduxSlice, setSelectedReduxSlice] = useState<string | null>(null);
@@ -1218,7 +1223,36 @@ const NetworkInspector = ({
 
   const filteredLogs = useMemo(() => {
     let result = logs.filter(log => {
-      // Status Filter Check
+      // 1. Quick Filter Check (All, Errors, Success, Slow, GET, POST, GraphQL)
+      if (quickFilter && quickFilter !== 'all') {
+        if (quickFilter === 'errors') {
+          const isErr =
+            log.status === 0 ||
+            log.status == null ||
+            (typeof log.status === 'number' && log.status >= 400);
+          if (!isErr) return false;
+        } else if (quickFilter === 'success') {
+          const isSuccess =
+            typeof log.status === 'number' &&
+            log.status >= 200 &&
+            log.status < 400;
+          if (!isSuccess) return false;
+        } else if (quickFilter === 'slow') {
+          if ((log.duration || 0) < 500) return false;
+        } else if (quickFilter === 'graphql') {
+          const isGql =
+            (log.url || '').toLowerCase().includes('graphql') ||
+            (log.client || '').toLowerCase().includes('graphql') ||
+            (log.client || '').toLowerCase().includes('apollo');
+          if (!isGql) return false;
+        } else {
+          if (log.method?.toUpperCase() !== quickFilter.toUpperCase()) {
+            return false;
+          }
+        }
+      }
+
+      // 2. Status Filter Check (from filters accordion dropdown)
       if (statusFilters.size > 0) {
         const matched = [...statusFilters].some(f => {
           if (f === 'ALL') return true;
@@ -1232,7 +1266,7 @@ const NetworkInspector = ({
         if (!matched) return false;
       }
 
-      // Method Filter Check
+      // 3. Method Filter Check (from filters accordion dropdown)
       if (methodFilters.size > 0) {
         const matchedMethod = [...methodFilters].some(m => {
           if (m === 'ALL') return true;
@@ -1241,10 +1275,14 @@ const NetworkInspector = ({
         if (!matchedMethod) return false;
       }
 
-      // Advanced Search Query Engine Check (Supports method:POST, is:error, slow:>1s, status:200, headers, body, etc.)
+      // 4. Advanced Search Query Engine Check with Scope, Regex and Case-Sensitivity
       if (search && search.trim().length > 0) {
         const routePath = logRouteMapRef.current.get(log.id)?.path || '';
-        const isMatch = matchNetworkLogQuery(log, search, routePath);
+        const isMatch = matchNetworkLogQuery(log, search, routePath, {
+          scope: searchScope,
+          isRegex: isRegexSearch,
+          isCaseSensitive: isCaseSensitive,
+        });
         if (!isMatch) return false;
       }
 
@@ -1255,9 +1293,7 @@ const NetworkInspector = ({
       result = [...result].reverse();
     }
 
-    // #9 — collapse consecutive identical requests (same method + url +
-    // status) into one row carrying a ×N counter, unless the user opted in
-    // to seeing every duplicate via Settings → "Show Duplicate Logs".
+    // #9 — collapse consecutive identical requests
     if (!showDuplicateLogs) {
       const collapsed: NetworkLog[] = [];
       for (const log of result) {
@@ -1283,6 +1319,10 @@ const NetworkInspector = ({
   }, [
     logs,
     search,
+    searchScope,
+    isRegexSearch,
+    isCaseSensitive,
+    quickFilter,
     statusFilters,
     methodFilters,
     sortOrder,
@@ -1931,6 +1971,14 @@ const NetworkInspector = ({
     groupedData,
     search,
     setSearch,
+    searchScope,
+    setSearchScope,
+    isRegexSearch,
+    setIsRegexSearch,
+    isCaseSensitive,
+    setIsCaseSensitive,
+    quickFilter,
+    setQuickFilter,
     statusFilters,
     setStatusFilters,
     methodFilters,

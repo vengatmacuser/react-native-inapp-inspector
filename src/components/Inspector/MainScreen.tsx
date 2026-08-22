@@ -104,6 +104,7 @@ const MainScreen = () => {
     <>
       {(Platform.OS === 'ios' || Platform.OS === 'android') &&
         isEnabled &&
+        !visible &&
         !useNativeFab && <FabLauncher />}
       <Modal
         visible={visible}

@@ -15,6 +15,8 @@ import type {
   StatusFilter,
 } from './index';
 
+export type SearchScope = 'all' | 'url' | 'reqBody' | 'resBody' | 'headers';
+
 export interface ParsedStackFrame {
   method: string;
   file: string;
@@ -255,6 +257,14 @@ export interface InspectorContextValue {
   groupedData: GroupedListItem[];
   search: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
+  searchScope: SearchScope;
+  setSearchScope: React.Dispatch<React.SetStateAction<SearchScope>>;
+  isRegexSearch: boolean;
+  setIsRegexSearch: React.Dispatch<React.SetStateAction<boolean>>;
+  isCaseSensitive: boolean;
+  setIsCaseSensitive: React.Dispatch<React.SetStateAction<boolean>>;
+  quickFilter: string;
+  setQuickFilter: React.Dispatch<React.SetStateAction<string>>;
   statusFilters: Set<StatusFilter>;
   setStatusFilters: React.Dispatch<React.SetStateAction<Set<StatusFilter>>>;
   methodFilters: Set<Method>;

@@ -1,45 +1,91 @@
-import {NetworkLog} from '../types';
+import {NetworkLog, SearchScope} from '../types';
+
+export interface SearchQueryOptions {
+  scope?: SearchScope;
+  isRegex?: boolean;
+  isCaseSensitive?: boolean;
+}
 
 /**
  * Parses query strings like `method:POST is:error slow:>1s status:200 auth`
- * and checks whether a given NetworkLog matches all tokens.
+ * and checks whether a given NetworkLog matches all tokens against the specified scope.
  */
 export function matchNetworkLogQuery(
   log: NetworkLog,
   searchQuery: string,
   routePath?: string,
+  options?: SearchQueryOptions,
 ): boolean {
   if (!searchQuery || searchQuery.trim().length === 0) return true;
 
-  const rawTokens = searchQuery
-    .trim()
-    .match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+  const rawTokens =
+    searchQuery.trim().match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
 
   if (rawTokens.length === 0) return true;
 
-  const methodStr = (log.method || '').toLowerCase();
-  const urlStr = (log.url || '').toLowerCase();
-  const statusNum = typeof log.status === 'number' ? log.status : parseInt(String(log.status || 0), 10);
+  const isCaseSensitive = Boolean(options?.isCaseSensitive);
+  const isRegex = Boolean(options?.isRegex);
+  const scope = options?.scope || 'all';
+
+  const methodRaw = log.method || '';
+  const urlRaw = log.url || '';
+  const statusNum =
+    typeof log.status === 'number'
+      ? log.status
+      : parseInt(String(log.status || 0), 10);
   const statusStr = String(log.status ?? '');
   const durationNum = log.duration || 0;
-  const clientStr = (log.client || '').toLowerCase();
-  const reqStr = typeof log.request === 'string' ? log.request : JSON.stringify(log.request || '');
-  const resStr = typeof log.response === 'string' ? log.response : JSON.stringify(log.response || '');
-  const reqHeadersStr = JSON.stringify(log.requestHeaders || '').toLowerCase();
-  const resHeadersStr = JSON.stringify(log.responseHeaders || '').toLowerCase();
-  const pathStr = routePath ? routePath.toLowerCase() : '';
+  const clientRaw = log.client || '';
+  const reqRaw =
+    typeof log.request === 'string'
+      ? log.request
+      : JSON.stringify(log.request || '');
+  const resRaw =
+    typeof log.response === 'string'
+      ? log.response
+      : JSON.stringify(log.response || '');
+  const reqHeadersRaw = JSON.stringify(log.requestHeaders || '');
+  const resHeadersRaw = JSON.stringify(log.responseHeaders || '');
+  const pathRaw = routePath || '';
 
-  const fullSearchCorpus = [
-    methodStr,
-    urlStr,
-    statusStr,
-    pathStr,
-    clientStr,
-    reqStr.toLowerCase(),
-    resStr.toLowerCase(),
-    reqHeadersStr,
-    resHeadersStr,
-  ].join(' ');
+  // Construct search corpus based on active scope
+  const getScopedCorpus = (caseSens: boolean): string => {
+    let parts: string[] = [];
+    if (scope === 'url') {
+      parts = [methodRaw, urlRaw, pathRaw];
+    } else if (scope === 'reqBody') {
+      parts = [reqRaw];
+    } else if (scope === 'resBody') {
+      parts = [resRaw];
+    } else if (scope === 'headers') {
+      parts = [reqHeadersRaw, resHeadersRaw];
+    } else {
+      parts = [
+        methodRaw,
+        urlRaw,
+        statusStr,
+        pathRaw,
+        clientRaw,
+        reqRaw,
+        resRaw,
+        reqHeadersRaw,
+        resHeadersRaw,
+      ];
+    }
+    const combined = parts.join(' ');
+    return caseSens ? combined : combined.toLowerCase();
+  };
+
+  const targetCorpus = getScopedCorpus(isCaseSensitive);
+
+  const methodStr = methodRaw.toLowerCase();
+  const urlStr = urlRaw.toLowerCase();
+  const clientStr = clientRaw.toLowerCase();
+  const reqStr = reqRaw.toLowerCase();
+  const resStr = resRaw.toLowerCase();
+  const reqHeadersStr = reqHeadersRaw.toLowerCase();
+  const resHeadersStr = resHeadersRaw.toLowerCase();
+  const pathStr = pathRaw.toLowerCase();
 
   for (const rawToken of rawTokens) {
     const token = rawToken.replace(/^["']|["']$/g, '').trim();
@@ -90,8 +136,14 @@ export function matchNetworkLogQuery(
     // 3. is:<FLAG>
     if (lowerToken.startsWith('is:')) {
       const flag = lowerToken.slice(3).trim();
-      if (flag === 'error' || flag === 'failed' || flag === 'err' || flag === 'fail') {
-        const isErr = log.status === 0 || log.status == null || statusNum >= 400;
+      if (
+        flag === 'error' ||
+        flag === 'failed' ||
+        flag === 'err' ||
+        flag === 'fail'
+      ) {
+        const isErr =
+          log.status === 0 || log.status == null || statusNum >= 400;
         if (!isErr) return false;
       } else if (flag === 'success' || flag === 'ok' || flag === '2xx') {
         const isSuccess = statusNum >= 200 && statusNum < 300;
@@ -109,7 +161,8 @@ export function matchNetworkLogQuery(
       } else if (flag === 'https') {
         if (!urlStr.startsWith('https')) return false;
       } else if (flag === 'http') {
-        if (urlStr.startsWith('https') || !urlStr.startsWith('http')) return false;
+        if (urlStr.startsWith('https') || !urlStr.startsWith('http'))
+          return false;
       } else if (flag === 'json') {
         const isJson =
           reqHeadersStr.includes('application/json') ||
@@ -189,14 +242,14 @@ export function matchNetworkLogQuery(
     // 8. req:<TERM> or body:<TERM>
     if (lowerToken.startsWith('req:') || lowerToken.startsWith('body:')) {
       const target = lowerToken.replace(/^(req:|body:)/, '').trim();
-      if (!reqStr.toLowerCase().includes(target)) return false;
+      if (!reqStr.includes(target)) return false;
       continue;
     }
 
     // 9. res:<TERM>
     if (lowerToken.startsWith('res:')) {
       const target = lowerToken.slice(4).trim();
-      if (!resStr.toLowerCase().includes(target)) return false;
+      if (!resStr.includes(target)) return false;
       continue;
     }
 
@@ -209,9 +262,20 @@ export function matchNetworkLogQuery(
       continue;
     }
 
-    // 11. Generic Plain Substring Match
-    if (!fullSearchCorpus.includes(lowerToken)) {
-      return false;
+    // 11. Generic Match (handles Regex, Case-sensitivity, and Scoped corpus)
+    if (isRegex) {
+      try {
+        const re = new RegExp(token, isCaseSensitive ? '' : 'i');
+        if (!re.test(targetCorpus)) return false;
+      } catch {
+        const queryTerm = isCaseSensitive ? token : lowerToken;
+        if (!targetCorpus.includes(queryTerm)) return false;
+      }
+    } else {
+      const queryTerm = isCaseSensitive ? token : lowerToken;
+      if (!targetCorpus.includes(queryTerm)) {
+        return false;
+      }
     }
   }
 
