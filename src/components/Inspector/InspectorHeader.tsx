@@ -18,19 +18,18 @@ import {AppFonts} from '../../styles/AppFonts';
 import {METHOD_COLORS} from '../../constants';
 import {LIB_VERSION} from '../../constants';
 import {Method} from '../../types';
-import {getStatusColor, getAppName, getBundleIdentifier, formatTime, getSize} from '../../helpers';
+import {getStatusColor, getAppName, formatTime, getSize} from '../../helpers';
 import {getTelemetryConsentStatus} from '../../helpers/telemetry';
+import {UpdateAvailableModal} from './UpdateAvailableModal';
 import {
   WhiteBackNavigation,
   TrashIcon,
   SettingsIcon,
   CloseWhite,
-  ChevronIcon,
   ClockIcon,
   SizeIcon,
   AppleIcon,
   AndroidIcon,
-  PackageBoxIcon,
   NpmIcon,
   ResetIcon,
 } from '../NetworkIcons';
@@ -71,7 +70,9 @@ const InspectorHeader = React.memo(() => {
     setSelectedCrash,
   } = useInspector();
 
-  const [isTelemetryActive, setIsTelemetryActive] = React.useState<boolean>(false);
+  const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
+  const [isTelemetryActive, setIsTelemetryActive] =
+    React.useState<boolean>(false);
   const telemetryPulseAnim = React.useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
@@ -141,7 +142,8 @@ const InspectorHeader = React.memo(() => {
     (activeTab === 'apis' && selected != null) ||
     (activeTab === 'analytics' && selectedEvent != null) ||
     (activeTab === 'logs' && selectedLog != null) ||
-    (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null)) ||
+    (activeTab === 'redux' &&
+      (selectedReduxSlice != null || selectedReduxAction != null)) ||
     (activeTab === 'crash' && selectedCrash != null);
 
   const isSettingsView = settingsPage !== null;
@@ -172,11 +174,12 @@ const InspectorHeader = React.memo(() => {
     Platform.OS === 'ios' && modalHeightPercent >= 95 ? 44 : 0;
 
   return (
-    <LinearGradient
-      colors={['#4F46E5', '#7C3AED']}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 1}}
-      style={styles.headerGradient}>
+    <>
+      <LinearGradient
+        colors={['#4F46E5', '#7C3AED']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.headerGradient}>
       <View style={{paddingTop: headerTopPadding, width: '100%'}}>
         <View style={styles.header}>
           <View
@@ -238,7 +241,8 @@ const InspectorHeader = React.memo(() => {
 
             {isSettingsView ? (
               <View style={{gap: 2, flex: 1, minWidth: 0}}>
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                   <Text
                     style={{
                       fontFamily: AppFonts.interBold,
@@ -294,8 +298,17 @@ const InspectorHeader = React.memo(() => {
                 }}>
                 <AppHeaderLogo size={46} customIcon={appIcon} />
                 <View style={{gap: 2.5, flex: 1, minWidth: 0}}>
-                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0}}>
-                    <Text style={[styles.headerTitle, {flexShrink: 1}]} numberOfLines={1} ellipsizeMode="tail">
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      minWidth: 0,
+                    }}>
+                    <Text
+                      style={[styles.headerTitle, {flexShrink: 1}]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
                       {getAppName()}
                     </Text>
                     <View
@@ -310,49 +323,48 @@ const InspectorHeader = React.memo(() => {
                         },
                       ]}>
                       <Text
-                        style={[
-                          styles.envBadgeText,
-                          {color: envConfig.text},
-                        ]}>
+                        style={[styles.envBadgeText, {color: envConfig.text}]}>
                         {envConfig.label}
                       </Text>
                     </View>
                     {updateAvailable && (
                       <Pressable
                         hitSlop={10}
-                        onPress={() =>
-                          Alert.alert(
-                            'Update Available',
-                            `react-native-inapp-inspector v${latestNpmVersion} is available on NPM (installed: v${LIB_VERSION}).`,
-                            [
-                              {text: 'Later', style: 'cancel'},
-                              {
-                                text: 'View on NPM',
-                                onPress: () =>
-                                  Linking.openURL(
-                                    'https://www.npmjs.com/package/react-native-inapp-inspector',
-                                  ).catch(() => {}),
-                              },
-                            ],
-                          )
-                        }
+                        onPress={() => setShowUpdateModal(true)}
                         style={{
+                          flexDirection: 'row',
                           alignItems: 'center',
-                          justifyContent: 'center',
+                          backgroundColor: '#F59E0B',
+                          borderRadius: 5,
+                          paddingHorizontal: 5.5,
+                          paddingVertical: 1.5,
+                          gap: 3.5,
+                          shadowColor: '#F59E0B',
+                          shadowOffset: {width: 0, height: 1.5},
+                          shadowOpacity: 0.35,
+                          shadowRadius: 3,
+                          elevation: 3,
                           flexShrink: 0,
                         }}>
                         <Animated.View
                           style={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: 4,
-                            backgroundColor: AppColors.liveGreen,
-                            borderWidth: 1,
-                            borderColor: `${AppColors.white}E6`,
+                            width: 5,
+                            height: 5,
+                            borderRadius: 2.5,
+                            backgroundColor: '#FFFFFF',
                             opacity: activePulseAnim,
                             transform: [{scale: unreadPulseAnim}],
                           }}
                         />
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 9,
+                            color: '#FFFFFF',
+                            letterSpacing: 0.3,
+                          }}>
+                          UPDATE ⚡
+                        </Text>
                       </Pressable>
                     )}
                   </View>
@@ -398,11 +410,15 @@ const InspectorHeader = React.memo(() => {
                     </View>
 
                     <Pressable
-                      onPress={() =>
-                        Linking.openURL(
-                          'https://www.npmjs.com/package/react-native-inapp-inspector',
-                        ).catch(() => {})
-                      }
+                      onPress={() => {
+                        if (updateAvailable) {
+                          setShowUpdateModal(true);
+                        } else {
+                          Linking.openURL(
+                            'https://www.npmjs.com/package/react-native-inapp-inspector',
+                          ).catch(() => {});
+                        }
+                      }}
                       style={{
                         backgroundColor: '#FFFFFF',
                         borderRadius: 5,
@@ -429,6 +445,16 @@ const InspectorHeader = React.memo(() => {
                         numberOfLines={1}>
                         v{LIB_VERSION}
                       </Text>
+                      {updateAvailable && (
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 9,
+                            color: '#F59E0B',
+                          }}>
+                          ↑
+                        </Text>
+                      )}
                     </Pressable>
 
                     {isTelemetryActive && (
@@ -533,21 +559,15 @@ const InspectorHeader = React.memo(() => {
                         paddingHorizontal: 8,
                         paddingVertical: 3,
                         borderRadius: 20,
-                        backgroundColor: `${getStatusColor(
-                          selected.status,
-                        )}26`,
+                        backgroundColor: `${getStatusColor(selected.status)}26`,
                         borderWidth: 1,
-                        borderColor: `${getStatusColor(
-                          selected.status,
-                        )}55`,
+                        borderColor: `${getStatusColor(selected.status)}55`,
                       }}>
                       <View
                         style={[
                           styles.headerStatusDot,
                           {
-                            backgroundColor: getStatusColor(
-                              selected.status,
-                            ),
+                            backgroundColor: getStatusColor(selected.status),
                           },
                         ]}
                       />
@@ -611,9 +631,7 @@ const InspectorHeader = React.memo(() => {
                         },
                       ]}>
                       <Text style={styles.headerMethodText}>
-                        {selectedEvent.source === 'firebase'
-                          ? 'FB'
-                          : 'MAN'}
+                        {selectedEvent.source === 'firebase' ? 'FB' : 'MAN'}
                       </Text>
                     </View>
                     <Text
@@ -669,9 +687,7 @@ const InspectorHeader = React.memo(() => {
                       numberOfLines={1}
                       ellipsizeMode="middle">
                       console.
-                      {(selectedLog.sourceMethod) ||
-                        selectedLog.type ||
-                        'log'}
+                      {selectedLog.sourceMethod || selectedLog.type || 'log'}
                     </Text>
                   </View>
                   <View style={styles.headerDetailSubRow}>
@@ -685,10 +701,10 @@ const InspectorHeader = React.memo(() => {
                         borderRadius: 20,
                         backgroundColor: `${AppColors.white}29`,
                       }}>
-                        <ClockIcon color={AppColors.white} size={11} />
-                        <Text style={styles.headerSubTitle}>
-                          {formatTime(selectedLog.timestamp)}
-                        </Text>
+                      <ClockIcon color={AppColors.white} size={11} />
+                      <Text style={styles.headerSubTitle}>
+                        {formatTime(selectedLog.timestamp)}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -714,9 +730,7 @@ const InspectorHeader = React.memo(() => {
                               backgroundColor: `${AppColors.purple}4D`,
                             },
                           ]}>
-                          <Text style={styles.headerMethodText}>
-                            SLICE
-                          </Text>
+                          <Text style={styles.headerMethodText}>SLICE</Text>
                         </View>
                         <Text
                           style={styles.headerDetailTitle}
@@ -732,21 +746,29 @@ const InspectorHeader = React.memo(() => {
                             {backgroundColor: AppColors.liveGreen},
                           ]}
                         />
-                        <Text style={styles.headerSubTitle}>
-                          Live
+                        <Text style={styles.headerSubTitle}>Live</Text>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                          •
                         </Text>
-                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
                         <Text style={styles.headerSubTitle}>
                           {keyCount} keys
                         </Text>
-                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
-                        <Text style={styles.headerSubTitle}>
-                          {sliceSize}
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                          •
                         </Text>
+                        <Text style={styles.headerSubTitle}>{sliceSize}</Text>
                         {lastAction?.timestamp && (
                           <>
-                            <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
-                            <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+                            <Text
+                              style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                              •
+                            </Text>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 3,
+                              }}>
                               <ClockIcon color={AppColors.white} size={10} />
                               <Text style={styles.headerSubTitle}>
                                 {lastAction.timestamp}
@@ -768,9 +790,7 @@ const InspectorHeader = React.memo(() => {
                           backgroundColor: `${AppColors.brandPurple}4D`,
                         },
                       ]}>
-                      <Text style={styles.headerMethodText}>
-                        ACTION
-                      </Text>
+                      <Text style={styles.headerMethodText}>ACTION</Text>
                     </View>
                     <Text
                       style={styles.headerDetailTitle}
@@ -804,7 +824,9 @@ const InspectorHeader = React.memo(() => {
                         },
                       ]}>
                       <Text style={styles.headerMethodText}>
-                        {selectedCrash.isFatal ? 'FATAL' : selectedCrash.type.toUpperCase()}
+                        {selectedCrash.isFatal
+                          ? 'FATAL'
+                          : selectedCrash.type.toUpperCase()}
                       </Text>
                     </View>
                     <Text
@@ -826,11 +848,14 @@ const InspectorHeader = React.memo(() => {
                       ]}
                     />
                     <Text style={styles.headerSubTitle}>
-                      {selectedCrash.timeStr || new Date(selectedCrash.timestamp).toLocaleTimeString()}
+                      {selectedCrash.timeStr ||
+                        new Date(selectedCrash.timestamp).toLocaleTimeString()}
                     </Text>
                     {selectedCrash.deviceInfo?.platform && (
                       <>
-                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>•</Text>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                          •
+                        </Text>
                         <Text style={styles.headerSubTitle}>
                           {selectedCrash.deviceInfo.platform.toUpperCase()}
                         </Text>
@@ -934,6 +959,14 @@ const InspectorHeader = React.memo(() => {
         </View>
       </View>
     </LinearGradient>
+
+    {/* Dedicated Update Available Details Modal */}
+    <UpdateAvailableModal
+      visible={showUpdateModal}
+      latestVersion={latestNpmVersion}
+      onClose={() => setShowUpdateModal(false)}
+    />
+    </>
   );
 });
 
