@@ -24,6 +24,7 @@ import {
 } from '../types';
 export * from './searchQueryParser';
 export * from './telemetry';
+export * from './memoryManager';
 
 export const getDomainColor = (domain: string): string => {
   if (!domain) return DOMAIN_COLORS[0];

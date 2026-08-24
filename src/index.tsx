@@ -37,6 +37,9 @@ import {
   trackLogExport,
   GA4_MEASUREMENT_ID,
   GA4_API_SECRET,
+  setupMemoryWarningHandler,
+  pruneAllLogs,
+  subscribeMemoryWarning,
 } from './helpers';
 // #5 — settings persistence
 import {
@@ -58,6 +61,7 @@ import {
   clearNetworkLogs,
   subscribeNetworkLogs,
   setNetworkModuleEnabled,
+  setMaxNetworkLogsLimit,
 } from './customHooks/networkLogger';
 
 // Console
@@ -67,6 +71,7 @@ import {
   subscribeConsoleLogs,
   getConsoleLogs,
   setConsoleModuleEnabled,
+  setMaxConsoleLogsLimit,
 } from './customHooks/consoleLogger';
 import {IGNORED_LOG_PREFIXES} from './customHooks/logFilters';
 
@@ -90,6 +95,7 @@ import {
   autoSetupAnalyticsLogger,
   isAnalyticsConnected,
   setAnalyticsModuleEnabled,
+  setMaxAnalyticsLogsLimit,
 } from './customHooks/analyticsLogger';
 
 import {
@@ -1031,6 +1037,7 @@ const NetworkInspector = ({
     setupConsoleLogger();
     autoSetupAnalyticsLogger();
     setupGlobalCrashHandler();
+    const cleanupMemoryWarning = setupMemoryWarningHandler();
 
     const isVisibleRef = isVisibleRefObj;
 
@@ -1191,8 +1198,17 @@ const NetworkInspector = ({
       clearTimeout(consoleTimeoutId);
       unsubscribeRedux();
       unsubscribeCrash();
+      cleanupMemoryWarning();
     };
   }, []);
+
+  useEffect(() => {
+    setMaxNetworkLogsLimit(maxNetworkLogs);
+  }, [maxNetworkLogs]);
+
+  useEffect(() => {
+    setMaxCrashLogsLimit(maxCrashLogs);
+  }, [maxCrashLogs]);
 
   useEffect(() => {
     if (!isNetworkPaused && latestNetworkLogsRef.current.length > 0) {
@@ -2249,7 +2265,46 @@ export {
   trackLogExport,
   GA4_MEASUREMENT_ID,
   GA4_API_SECRET,
+  setupMemoryWarningHandler,
+  pruneAllLogs,
+  subscribeMemoryWarning,
+  type MemoryPruneSummary,
 } from './helpers';
+
+export {
+  setMaxNetworkLogsLimit,
+  getMaxNetworkLogsLimit,
+  pruneNetworkLogs,
+} from './customHooks/networkLogger';
+
+export {
+  setMaxConsoleLogsLimit,
+  getMaxConsoleLogsLimit,
+  pruneConsoleLogs,
+} from './customHooks/consoleLogger';
+
+export {
+  setMaxReduxHistoryLimit,
+  getMaxReduxHistoryLimit,
+  pruneReduxHistory,
+} from './customHooks/reduxLogger';
+
+export {
+  setMaxAnalyticsLogsLimit,
+  getMaxAnalyticsLogsLimit,
+  pruneAnalyticsLogs,
+} from './customHooks/analyticsLogger';
+
+export {
+  getMaxCrashLogsLimit,
+  pruneCrashRecords,
+} from './customHooks/crashHandler';
+
+export {
+  setMaxPerformanceEventsLimit,
+  getMaxPerformanceEventsLimit,
+  prunePerformanceEvents,
+} from './customHooks/performanceTracker';
 
 export {
   BrandSquareIcon,

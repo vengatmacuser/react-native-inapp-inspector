@@ -23,7 +23,57 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/commonjs/index.js",
       "default": "./dist/commonjs/index.js"
-    }
+    },
+    "./network": {
+      "react-native": "./dist/commonjs/network.js",
+      "types": "./dist/commonjs/network.d.ts",
+      "import": "./dist/esm/network.js",
+      "require": "./dist/commonjs/network.js",
+      "default": "./dist/commonjs/network.js"
+    },
+    "./redux": {
+      "react-native": "./dist/commonjs/redux.js",
+      "types": "./dist/commonjs/redux.d.ts",
+      "import": "./dist/esm/redux.js",
+      "require": "./dist/commonjs/redux.js",
+      "default": "./dist/commonjs/redux.js"
+    },
+    "./console": {
+      "react-native": "./dist/commonjs/console.js",
+      "types": "./dist/commonjs/console.d.ts",
+      "import": "./dist/esm/console.js",
+      "require": "./dist/commonjs/console.js",
+      "default": "./dist/commonjs/console.js"
+    },
+    "./crash": {
+      "react-native": "./dist/commonjs/crash.js",
+      "types": "./dist/commonjs/crash.d.ts",
+      "import": "./dist/esm/crash.js",
+      "require": "./dist/commonjs/crash.js",
+      "default": "./dist/commonjs/crash.js"
+    },
+    "./analytics": {
+      "react-native": "./dist/commonjs/analytics.js",
+      "types": "./dist/commonjs/analytics.d.ts",
+      "import": "./dist/esm/analytics.js",
+      "require": "./dist/commonjs/analytics.js",
+      "default": "./dist/commonjs/analytics.js"
+    },
+    "./performance": {
+      "react-native": "./dist/commonjs/performance.js",
+      "types": "./dist/commonjs/performance.d.ts",
+      "import": "./dist/esm/performance.js",
+      "require": "./dist/commonjs/performance.js",
+      "default": "./dist/commonjs/performance.js"
+    },
+    "./bundle": {
+      "react-native": "./dist/commonjs/bundle.js",
+      "types": "./dist/commonjs/bundle.d.ts",
+      "import": "./dist/esm/bundle.js",
+      "require": "./dist/commonjs/bundle.js",
+      "default": "./dist/commonjs/bundle.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",

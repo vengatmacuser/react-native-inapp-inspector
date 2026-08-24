@@ -42,6 +42,28 @@ let currentUserId: string | undefined;
 let currentDefaultEventParameters: Record<string, any> = {};
 let isCollectionEnabled = true;
 
+let maxAnalyticsLogsLimit = 75;
+
+export const setMaxAnalyticsLogsLimit = (limit: number): void => {
+  maxAnalyticsLogsLimit = Math.max(10, limit);
+  if (events.length > maxAnalyticsLogsLimit) {
+    events = events.slice(0, maxAnalyticsLogsLimit);
+    notify();
+  }
+};
+
+export const getMaxAnalyticsLogsLimit = (): number => maxAnalyticsLogsLimit;
+
+export const pruneAnalyticsLogs = (targetCount?: number): number => {
+  const countToKeep = targetCount !== undefined ? Math.max(0, targetCount) : Math.floor(events.length / 2);
+  const pruned = events.length - countToKeep;
+  if (pruned > 0) {
+    events = events.slice(0, countToKeep);
+    notify();
+  }
+  return Math.max(0, pruned);
+};
+
 // ─── Core helpers ─────────────────────────────────────────────────────────────
 
 const notify = () => {
@@ -52,7 +74,7 @@ const notify = () => {
 const addEvent = (event: AnalyticsEvent) => {
   if (!isAnalyticsModuleEnabled) return;
   events.unshift(event);
-  events = events.slice(0, 75);
+  events = events.slice(0, maxAnalyticsLogsLimit);
   notify();
 };
 

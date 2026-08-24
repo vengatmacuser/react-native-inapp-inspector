@@ -55,6 +55,20 @@ export const setMaxCrashLogsLimit = (max: number): void => {
   }
 };
 
+export const getMaxCrashLogsLimit = (): number => maxStoredCrashes;
+
+export const pruneCrashRecords = (targetCount?: number): number => {
+  const countToKeep = targetCount !== undefined ? Math.max(0, targetCount) : Math.floor(crashRecordsStore.length / 2);
+  const pruned = crashRecordsStore.length - countToKeep;
+  if (pruned > 0) {
+    crashRecordsStore = crashRecordsStore.slice(0, countToKeep);
+  }
+  if (breadcrumbsStore.length > 20) {
+    breadcrumbsStore = breadcrumbsStore.slice(0, 20);
+  }
+  return Math.max(0, pruned);
+};
+
 export const addCrashBreadcrumb = (
   type: CrashBreadcrumb['type'],
   message: string,

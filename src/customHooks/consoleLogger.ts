@@ -15,7 +15,27 @@ export const setConsoleModuleEnabled = (enabled: boolean) => {
 
 export const getConsoleModuleEnabled = () => isConsoleModuleEnabled;
 
-const MAX_LOGS = 100;
+let maxConsoleLogsLimit = 100;
+
+export const setMaxConsoleLogsLimit = (limit: number): void => {
+  maxConsoleLogsLimit = Math.max(10, limit);
+  if (logs.length > maxConsoleLogsLimit) {
+    logs = logs.slice(0, maxConsoleLogsLimit);
+    notify();
+  }
+};
+
+export const getMaxConsoleLogsLimit = (): number => maxConsoleLogsLimit;
+
+export const pruneConsoleLogs = (targetCount?: number): number => {
+  const countToKeep = targetCount !== undefined ? Math.max(0, targetCount) : Math.floor(logs.length / 2);
+  const pruned = logs.length - countToKeep;
+  if (pruned > 0) {
+    logs = logs.slice(0, countToKeep);
+    notify();
+  }
+  return Math.max(0, pruned);
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -270,7 +290,7 @@ const addLog = (
       sourceMethod,
     };
     logs.unshift(newLog);
-    logs = logs.slice(0, MAX_LOGS);
+    logs = logs.slice(0, maxConsoleLogsLimit);
     notify();
 
     // Asynchronously symbolicate stack trace via Metro in development
@@ -371,7 +391,7 @@ export const addLogFromCrash = (
     sourceMethod: 'error',
   };
   logs.unshift(newLog);
-  logs = logs.slice(0, MAX_LOGS);
+  logs = logs.slice(0, maxConsoleLogsLimit);
   notify();
 
   const stackToSym = stack || error?.stack || errorStack;

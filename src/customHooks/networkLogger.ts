@@ -147,6 +147,28 @@ export const clearNetworkLogs = () => {
 
 export const getNetworkLogs = () => [...logs];
 
+let maxNetworkLogsLimit = 100;
+
+export const setMaxNetworkLogsLimit = (limit: number): void => {
+  maxNetworkLogsLimit = Math.max(10, limit);
+  if (logs.length > maxNetworkLogsLimit) {
+    logs = logs.slice(0, maxNetworkLogsLimit);
+    notify();
+  }
+};
+
+export const getMaxNetworkLogsLimit = (): number => maxNetworkLogsLimit;
+
+export const pruneNetworkLogs = (targetCount?: number): number => {
+  const countToKeep = targetCount !== undefined ? Math.max(0, targetCount) : Math.floor(logs.length / 2);
+  const pruned = logs.length - countToKeep;
+  if (pruned > 0) {
+    logs = logs.slice(0, countToKeep);
+    notify();
+  }
+  return Math.max(0, pruned);
+};
+
 // ─── Internal ─────────────────────────────────────────────────────────────────
 
 const notify = () => {
@@ -170,7 +192,7 @@ const addOrUpdateLog = (log: NetworkLog) => {
     logs.unshift(log);
   }
 
-  logs = logs.slice(0, 100);
+  logs = logs.slice(0, maxNetworkLogsLimit);
   notify();
 };
 

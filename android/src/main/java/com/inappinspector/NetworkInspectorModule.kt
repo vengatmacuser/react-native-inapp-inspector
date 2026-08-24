@@ -217,7 +217,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun showFloatingButton(options: com.facebook.react.bridge.ReadableMap?, promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactContext.currentActivity ?: run {
             promise.resolve(false)
             return
         }
@@ -275,7 +275,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun hideFloatingButton(promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactContext.currentActivity ?: run {
             promise.resolve(false)
             return
         }
@@ -294,7 +294,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun setFloatingButtonBadge(hasBadge: Boolean, promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactContext.currentActivity ?: run {
             promise.resolve(false)
             return
         }
@@ -307,7 +307,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun setFloatingButtonPosition(x: Double, y: Double, promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactContext.currentActivity ?: run {
             promise.resolve(false)
             return
         }
@@ -387,7 +387,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun startFpsMonitoring(promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactContext.currentActivity ?: run {
             promise.resolve(false)
             return
         }
@@ -406,7 +406,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun stopFpsMonitoring(promise: Promise) {
-        val activity = currentActivity ?: run {
+        val activity = reactContext.currentActivity ?: run {
             promise.resolve(false)
             return
         }
@@ -649,6 +649,28 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     @ReactMethod
     fun removeListeners(count: Double) {
         // Required for React Native NativeEventEmitter
+    }
+
+    override fun invalidate() {
+        super.invalidate()
+        try {
+            sensorManager?.unregisterListener(shakeListener)
+            if (isFpsMonitoring) {
+                isFpsMonitoring = false
+                android.view.Choreographer.getInstance().removeFrameCallback(frameCallback)
+            }
+            floatingButton?.let { btn ->
+                val parent = btn.parent as? android.view.ViewGroup
+                parent?.post {
+                    try {
+                        parent.removeView(btn)
+                    } catch (e: Exception) {}
+                }
+                floatingButton = null
+            }
+        } catch (e: Exception) {
+            // Ignore cleanup errors
+        }
     }
 }
 

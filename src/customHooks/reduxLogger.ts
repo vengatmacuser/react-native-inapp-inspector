@@ -32,8 +32,28 @@ let lastActionForReducer: Record<string, any> = {};
 
 let actionHistory: ReduxHistoryEntry[] = [];
 
-const MAX_HISTORY = 50;
+let maxReduxHistoryLimit = 50;
 let historyIdSeq = 0;
+
+export const setMaxReduxHistoryLimit = (limit: number): void => {
+  maxReduxHistoryLimit = Math.max(10, limit);
+  if (actionHistory.length > maxReduxHistoryLimit) {
+    actionHistory = actionHistory.slice(0, maxReduxHistoryLimit);
+    notify();
+  }
+};
+
+export const getMaxReduxHistoryLimit = (): number => maxReduxHistoryLimit;
+
+export const pruneReduxHistory = (targetCount?: number): number => {
+  const countToKeep = targetCount !== undefined ? Math.max(0, targetCount) : Math.floor(actionHistory.length / 2);
+  const pruned = actionHistory.length - countToKeep;
+  if (pruned > 0) {
+    actionHistory = actionHistory.slice(0, countToKeep);
+    notify();
+  }
+  return Math.max(0, pruned);
+};
 
 // Guards against double-instrumentation (e.g. connectReduxStore called twice,
 // or middleware + connect used together) which previously produced duplicate
@@ -264,8 +284,8 @@ function recordAction(action: any, prevState: any, nextState: any, rawStack?: st
     originType: origin.originType,
     sliceName,
   });
-  if (actionHistory.length > MAX_HISTORY) {
-    actionHistory.length = MAX_HISTORY;
+  if (actionHistory.length > maxReduxHistoryLimit) {
+    actionHistory.length = maxReduxHistoryLimit;
   }
 
   if (globalReduxAutoRefresh) {

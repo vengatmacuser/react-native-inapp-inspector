@@ -936,6 +936,36 @@ export const usePerformanceTracker = (enabled: boolean = true) => {
 const globalPerformanceEvents: PerformanceEvent[] = [...INITIAL_EVENTS];
 const performanceListeners = new Set<(events: PerformanceEvent[]) => void>();
 
+let maxPerformanceEventsLimit = 100;
+
+export const setMaxPerformanceEventsLimit = (limit: number): void => {
+  maxPerformanceEventsLimit = Math.max(10, limit);
+  if (globalPerformanceEvents.length > maxPerformanceEventsLimit) {
+    globalPerformanceEvents.length = maxPerformanceEventsLimit;
+    performanceListeners.forEach(listener => {
+      try {
+        listener([...globalPerformanceEvents]);
+      } catch {}
+    });
+  }
+};
+
+export const getMaxPerformanceEventsLimit = (): number => maxPerformanceEventsLimit;
+
+export const prunePerformanceEvents = (targetCount?: number): number => {
+  const countToKeep = targetCount !== undefined ? Math.max(0, targetCount) : Math.floor(globalPerformanceEvents.length / 2);
+  const pruned = globalPerformanceEvents.length - countToKeep;
+  if (pruned > 0) {
+    globalPerformanceEvents.length = countToKeep;
+    performanceListeners.forEach(listener => {
+      try {
+        listener([...globalPerformanceEvents]);
+      } catch {}
+    });
+  }
+  return Math.max(0, pruned);
+};
+
 export const logPerformanceEvent = (
   event: Omit<PerformanceEvent, 'id' | 'timestamp'> & {
     id?: string;
@@ -951,8 +981,8 @@ export const logPerformanceEvent = (
     ...event,
   };
   globalPerformanceEvents.unshift(fullEvent);
-  if (globalPerformanceEvents.length > 100) {
-    globalPerformanceEvents.pop();
+  if (globalPerformanceEvents.length > maxPerformanceEventsLimit) {
+    globalPerformanceEvents.length = maxPerformanceEventsLimit;
   }
   performanceListeners.forEach(listener => {
     try {
