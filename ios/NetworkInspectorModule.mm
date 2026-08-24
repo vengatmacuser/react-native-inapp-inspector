@@ -411,16 +411,7 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
 - (void)safeSendEvent:(NSString *)eventName body:(id)body {
     if (!hasListeners) return;
     @try {
-        if (self.bridge != nil) {
-            [self sendEventWithName:eventName body:body];
-        } else if ([self respondsToSelector:@selector(callableJSModules)]) {
-            id callable = [self valueForKey:@"callableJSModules"];
-            if (callable && [callable respondsToSelector:@selector(invokeExpectedMethod:method:args:)]) {
-                [callable invokeExpectedMethod:@"RCTDeviceEventEmitter"
-                                        method:@"emit"
-                                          args:body ? @[eventName, body] : @[eventName]];
-            }
-        }
+        [self sendEventWithName:eventName body:body];
     } @catch (NSException *ex) {
         NSLog(@"[InAppInspector] Safe sendEvent error: %@", ex.reason);
     }
