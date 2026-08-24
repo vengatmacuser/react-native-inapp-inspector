@@ -30,13 +30,6 @@ import {
   getDomainColor,
   getEventCategory,
   matchNetworkLogQuery,
-  sendSessionTelemetryPing,
-  trackTelemetryEvent,
-  trackInspectorOpen,
-  trackTabSwitch,
-  trackLogExport,
-  GA4_MEASUREMENT_ID,
-  GA4_API_SECRET,
   setupMemoryWarningHandler,
   pruneAllLogs,
   subscribeMemoryWarning,
@@ -920,14 +913,7 @@ const NetworkInspector = ({
   const useNativeFab =
     (Platform.OS === 'ios' || Platform.OS === 'android') && isNativeModule;
 
-  // Send anonymous initialization heartbeat to GA4 Measurement Protocol
-  useEffect(() => {
-    sendSessionTelemetryPing({
-      environment,
-      hasNavigation: Boolean(navigationRef),
-      hasAppIcon: Boolean(appIcon),
-    });
-  }, [environment, navigationRef, appIcon]);
+
 
   // 100% Native Main-Thread Floating Button Lifecycle
   useEffect(() => {
@@ -989,8 +975,7 @@ const NetworkInspector = ({
           : 'apis';
       setActiveTab(target);
 
-      // Track inspector opened event in GA4
-      trackInspectorOpen({activeTab: target});
+
 
       // Instant synchronization of data collected while modal was closed
       if (latestNetworkLogsRef.current.length > 0) {
@@ -2263,13 +2248,6 @@ export {
 } from './native/NativeInspector';
 
 export {
-  sendSessionTelemetryPing,
-  trackTelemetryEvent,
-  trackInspectorOpen,
-  trackTabSwitch,
-  trackLogExport,
-  GA4_MEASUREMENT_ID,
-  GA4_API_SECRET,
   setupMemoryWarningHandler,
   pruneAllLogs,
   subscribeMemoryWarning,

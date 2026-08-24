@@ -19,7 +19,6 @@ import {METHOD_COLORS} from '../../constants';
 import {LIB_VERSION} from '../../constants';
 import {Method} from '../../types';
 import {getStatusColor, getAppName, formatTime, getSize} from '../../helpers';
-import {getTelemetryConsentStatus} from '../../helpers/telemetry';
 import {UpdateAvailableModal} from './UpdateAvailableModal';
 import {
   WhiteBackNavigation,
@@ -72,35 +71,6 @@ const InspectorHeader = React.memo(() => {
   } = useInspector();
 
   const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
-  const [isTelemetryActive, setIsTelemetryActive] =
-    React.useState<boolean>(false);
-  const telemetryPulseAnim = React.useRef(new Animated.Value(1)).current;
-
-  React.useEffect(() => {
-    getTelemetryConsentStatus().then(status => {
-      setIsTelemetryActive(status === 'granted');
-    });
-  }, [visible]);
-
-  React.useEffect(() => {
-    if (!isTelemetryActive) return;
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(telemetryPulseAnim, {
-          toValue: 2.2,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(telemetryPulseAnim, {
-          toValue: 1,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [isTelemetryActive, telemetryPulseAnim]);
 
   const envConfig = useMemo(() => {
     const rawEnv = (environment || (__DEV__ ? 'DEV' : 'PROD')).trim();
@@ -455,69 +425,6 @@ const InspectorHeader = React.memo(() => {
                         </Text>
                       )}
                     </Pressable>
-
-                    {isTelemetryActive && (
-                      <Pressable
-                        onPress={() =>
-                          Alert.alert(
-                            'Anonymous Telemetry Active',
-                            'Anonymous diagnostics (such as React Native version, JavaScript engine, and device model) are currently enabled to help improve library tooling.\n\nNo user data or network payloads are captured. You can toggle this anytime in Settings.',
-                            [{text: 'Got it'}],
-                          )
-                        }
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          backgroundColor: 'rgba(16, 185, 129, 0.22)',
-                          borderRadius: 5,
-                          paddingHorizontal: 5.5,
-                          paddingVertical: 2,
-                          gap: 4.5,
-                          borderWidth: 1,
-                          borderColor: 'rgba(52, 211, 153, 0.45)',
-                          flexShrink: 0,
-                        }}>
-                        <View
-                          style={{
-                            width: 6,
-                            height: 6,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                          <Animated.View
-                            style={{
-                              position: 'absolute',
-                              width: 6,
-                              height: 6,
-                              borderRadius: 3,
-                              backgroundColor: '#34D399',
-                              opacity: telemetryPulseAnim.interpolate({
-                                inputRange: [1, 2.2],
-                                outputRange: [0.8, 0],
-                              }),
-                              transform: [{scale: telemetryPulseAnim}],
-                            }}
-                          />
-                          <View
-                            style={{
-                              width: 4,
-                              height: 4,
-                              borderRadius: 2,
-                              backgroundColor: '#10B981',
-                            }}
-                          />
-                        </View>
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 9,
-                            color: '#6EE7B7',
-                            letterSpacing: 0.2,
-                          }}>
-                          LIVE
-                        </Text>
-                      </Pressable>
-                    )}
                   </View>
                 </View>
               </View>

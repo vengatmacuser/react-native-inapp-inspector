@@ -30,7 +30,6 @@ import CrashDetail from './CrashDetail';
 import DeviceInfoTab from './DeviceInfoTab';
 import StorageTab from './StorageTab';
 import SettingsPanel from './SettingsPanel';
-import TelemetryConsentModal from './TelemetryConsentModal';
 import NpmUpdateToast from './NpmUpdateToast';
 import Toast from '../Toast';
 import styles from '../../styles';
@@ -244,9 +243,6 @@ const MainScreen = () => {
 
               {/* NPM Version Update Toast with timeout progress bar */}
               <NpmUpdateToast />
-
-              {/* Anonymous Telemetry Consent Dialog shown ONLY when inspector is active */}
-              <TelemetryConsentModal />
             </View>
           </View>
         </ErrorBoundary>
