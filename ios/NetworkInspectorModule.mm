@@ -408,10 +408,26 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
     return YES;
 }
 
-- (void)handleMotionShakeNotification:(NSNotification *)notification {
-    if (hasListeners) {
-        [self sendEventWithName:@"onDeviceShake" body:@{}];
+- (void)safeSendEvent:(NSString *)eventName body:(id)body {
+    if (!hasListeners) return;
+    @try {
+        if (self.bridge != nil) {
+            [self sendEventWithName:eventName body:body];
+        } else if ([self respondsToSelector:@selector(callableJSModules)]) {
+            id callable = [self valueForKey:@"callableJSModules"];
+            if (callable && [callable respondsToSelector:@selector(invokeExpectedMethod:method:args:)]) {
+                [callable invokeExpectedMethod:@"RCTDeviceEventEmitter"
+                                        method:@"emit"
+                                          args:body ? @[eventName, body] : @[eventName]];
+            }
+        }
+    } @catch (NSException *ex) {
+        NSLog(@"[InAppInspector] Safe sendEvent error: %@", ex.reason);
     }
+}
+
+- (void)handleMotionShakeNotification:(NSNotification *)notification {
+    [self safeSendEvent:@"onDeviceShake" body:@{}];
 }
 
 - (void)startObserving {
@@ -445,15 +461,13 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
 }
 
 - (void)emitCrashEventWithMessage:(NSString *)message stackTrace:(NSString *)stackTrace {
-    if (hasListeners) {
-        [self sendEventWithName:@"onNativeCrash"
-                           body:@{
-                                  @"platform": @"ios",
-                                  @"message": message ?: @"Unknown iOS Native Exception",
-                                  @"stack": stackTrace ?: @"",
-                                  @"timestamp": @([[NSDate date] timeIntervalSince1970] * 1000)
-                                }];
-    }
+    [self safeSendEvent:@"onNativeCrash"
+                   body:@{
+                          @"platform": @"ios",
+                          @"message": message ?: @"Unknown iOS Native Exception",
+                          @"stack": stackTrace ?: @"",
+                          @"timestamp": @([[NSDate date] timeIntervalSince1970] * 1000)
+                        }];
 }
 
 RCT_EXPORT_METHOD(enableNativeCrashProtection:(RCTPromiseResolveBlock)resolve
@@ -586,17 +600,18 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
         if (floatingButtonView == nil) {
             floatingButtonView = [[InAppInspectorFloatingView alloc] initWithFrame:CGRectMake(initialX, initialY, size, size)];
             floatingButtonView.layer.zPosition = 999999;
-            __weak NetworkInspectorModule *weakSelf = self;
-            floatingButtonView.onTapBlock = ^{
-                NetworkInspectorModule *strongSelf = weakSelf ?: sharedInstance;
-                if (strongSelf) {
-                    [strongSelf sendEventWithName:@"onFloatingButtonPress" body:@{}];
-                }
-            };
         } else {
             floatingButtonView.layer.zPosition = 999999;
             floatingButtonView.frame = CGRectMake(initialX, initialY, size, size);
         }
+
+        __weak NetworkInspectorModule *weakSelf = self;
+        floatingButtonView.onTapBlock = ^{
+            NetworkInspectorModule *strongSelf = weakSelf ?: sharedInstance;
+            if (strongSelf) {
+                [strongSelf safeSendEvent:@"onFloatingButtonPress" body:@{}];
+            }
+        };
 
         void (^attachToWindow)(void) = ^{
             UIWindow *activeWin = GetAppActiveWindow();

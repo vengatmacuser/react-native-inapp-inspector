@@ -8,77 +8,18 @@ import {
   Animated,
   Platform,
 } from 'react-native';
-import Svg, {Path} from 'react-native-svg';
 import {BrandSquareIcon} from '../BrandSquareIcon';
+import {
+  SettingsIcon,
+  ShieldCheckIcon,
+  CheckIcon,
+  ClearIcon,
+} from '../NetworkIcons';
 import {
   getTelemetryConsentStatus,
   setTelemetryConsent,
   sendSessionTelemetryPing,
 } from '../../helpers/telemetry';
-
-// ─── Inline Crisp SVG Icons ───────────────────────────────────────────────────
-
-const ShieldCheckSvg = ({size = 15, color = '#7C3AED'}: {size?: number; color?: string}) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M9 12l2 2 4-4"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const CheckSvg = ({size = 14, color = '#FFFFFF'}: {size?: number; color?: string}) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M20 6L9 17l-5-5"
-      stroke={color}
-      strokeWidth="2.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const CloseSvg = ({size = 13, color = '#64748B'}: {size?: number; color?: string}) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M18 6L6 18M6 6l12 12"
-      stroke={color}
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const GearSvg = ({size = 13, color = '#6366F1'}: {size?: number; color?: string}) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
 
 export const TelemetryConsentModal = () => {
   const [visible, setVisible] = useState(false);
@@ -155,7 +96,7 @@ export const TelemetryConsentModal = () => {
             onPress={() => handleDecision(false)}
             hitSlop={10}
             activeOpacity={0.7}>
-            <CloseSvg size={13} color="#64748B" />
+            <ClearIcon size={12} color="#64748B" />
           </TouchableOpacity>
 
           {/* Centered Enlarged Square Brand Icon Header */}
@@ -169,7 +110,7 @@ export const TelemetryConsentModal = () => {
 
             {/* Subheading instruction hint badge */}
             <View style={styles.hintBadge}>
-              <GearSvg size={12} color="#6366F1" />
+              <SettingsIcon size={12} color="#6366F1" />
               <Text style={styles.hintBadgeText}>
                 You can enable or disable this anytime in Settings
               </Text>
@@ -186,7 +127,7 @@ export const TelemetryConsentModal = () => {
           {/* Privacy Callout Box */}
           <View style={styles.privacyBadge}>
             <View style={styles.privacyShieldWrapper}>
-              <ShieldCheckSvg size={15} color="#7C3AED" />
+              <ShieldCheckIcon size={15} color="#7C3AED" />
             </View>
             <Text style={styles.privacyText}>
               <Text style={styles.privacyHighlight}>Privacy Guaranteed:</Text> We
@@ -201,7 +142,7 @@ export const TelemetryConsentModal = () => {
               style={styles.declineButton}
               onPress={() => handleDecision(false)}
               activeOpacity={0.7}>
-              <CloseSvg size={12} color="#64748B" />
+              <ClearIcon size={12} color="#64748B" />
               <Text style={styles.declineText}>Not Now</Text>
             </TouchableOpacity>
 
@@ -209,7 +150,7 @@ export const TelemetryConsentModal = () => {
               style={styles.allowButton}
               onPress={() => handleDecision(true)}
               activeOpacity={0.85}>
-              <CheckSvg size={13} color="#FFFFFF" />
+              <CheckIcon size={13} color="#FFFFFF" />
               <Text style={styles.allowText}>Allow & Share</Text>
             </TouchableOpacity>
           </View>

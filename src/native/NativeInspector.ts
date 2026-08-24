@@ -1,4 +1,9 @@
-import {NativeModules, NativeEventEmitter, Platform} from 'react-native';
+import {
+  NativeModules,
+  NativeEventEmitter,
+  DeviceEventEmitter,
+  Platform,
+} from 'react-native';
 import NativeNetworkInspector from './NativeNetworkInspector';
 
 export interface NativeDeviceMetrics {
@@ -44,12 +49,16 @@ export const isNativeModuleAvailable = (): boolean => {
   return !!NativeModule;
 };
 
-const eventTarget: any =
-  NativeModules.NetworkInspectorModule || NativeNetworkInspector;
+const getNativeEmitter = () => {
+  try {
+    if (NativeModules && NativeModules.NetworkInspectorModule) {
+      return new NativeEventEmitter(NativeModules.NetworkInspectorModule);
+    }
+  } catch (e) {}
+  return null;
+};
 
-const nativeEmitter = eventTarget
-  ? new NativeEventEmitter(eventTarget)
-  : null;
+const nativeEmitter = getNativeEmitter();
 
 /**
  * Retrieves low-level native hardware and system metrics (RAM, Heap, Disk, Battery, CPU).
@@ -93,17 +102,27 @@ export const enableNativeCrashProtection = async (options?: {
 export const subscribeNativeCrashes = (
   callback: (event: NativeCrashEvent) => void,
 ): (() => void) => {
-  if (!nativeEmitter) {
-    return () => {};
-  }
+  const cleanups: Array<() => void> = [];
+
   try {
-    const subscription = nativeEmitter.addListener('onNativeCrash', callback);
-    return () => {
-      subscription.remove();
-    };
-  } catch (e) {
-    return () => {};
+    const sub1 = DeviceEventEmitter.addListener('onNativeCrash', callback);
+    cleanups.push(() => sub1.remove());
+  } catch (e) {}
+
+  if (nativeEmitter) {
+    try {
+      const sub2 = nativeEmitter.addListener('onNativeCrash', callback);
+      cleanups.push(() => sub2.remove());
+    } catch (e) {}
   }
+
+  return () => {
+    cleanups.forEach(fn => {
+      try {
+        fn();
+      } catch (e) {}
+    });
+  };
 };
 
 export interface FloatingButtonOptions {
@@ -168,20 +187,33 @@ export const setNativeFloatingButtonBadge = async (
 export const subscribeNativeFloatingButtonPress = (
   callback: () => void,
 ): (() => void) => {
-  if (!nativeEmitter) {
-    return () => {};
-  }
+  const cleanups: Array<() => void> = [];
+
   try {
-    const subscription = nativeEmitter.addListener(
+    const sub1 = DeviceEventEmitter.addListener(
       'onFloatingButtonPress',
       callback,
     );
-    return () => {
-      subscription.remove();
-    };
-  } catch (e) {
-    return () => {};
+    cleanups.push(() => sub1.remove());
+  } catch (e) {}
+
+  if (nativeEmitter) {
+    try {
+      const sub2 = nativeEmitter.addListener(
+        'onFloatingButtonPress',
+        callback,
+      );
+      cleanups.push(() => sub2.remove());
+    } catch (e) {}
   }
+
+  return () => {
+    cleanups.forEach(fn => {
+      try {
+        fn();
+      } catch (e) {}
+    });
+  };
 };
 
 /**
