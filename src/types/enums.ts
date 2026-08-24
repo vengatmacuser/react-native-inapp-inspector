@@ -10,6 +10,8 @@ export const ActiveTab = {
   Bundle: 'bundle',
   Performance: 'performance',
   Crash: 'crash',
+  Device: 'device',
+  Storage: 'storage',
 } as const;
 export type ActiveTab = (typeof ActiveTab)[keyof typeof ActiveTab];
 
@@ -63,6 +65,8 @@ export const SettingsPage = {
   Bundle: 'bundle',
   Performance: 'performance',
   Crash: 'crash',
+  Device: 'device',
+  Storage: 'storage',
 } as const;
 export type SettingsPage =
   | (typeof SettingsPage)[keyof typeof SettingsPage]
@@ -71,6 +75,7 @@ export type SettingsPage =
 export const SettingsSubTab = {
   Module: 'module',
   Ui: 'ui',
+  Limits: 'limits',
 } as const;
 export type SettingsSubTab =
   (typeof SettingsSubTab)[keyof typeof SettingsSubTab];

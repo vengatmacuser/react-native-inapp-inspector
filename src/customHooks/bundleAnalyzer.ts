@@ -120,8 +120,9 @@ export const getBundleModuleEnabled = () => isBundleModuleEnabled;
 const getSourceCodeModule = (): any => {
   try {
     const legacy = NativeModules?.SourceCode;
-    if (legacy && typeof legacy.scriptURL === 'string' && legacy.scriptURL.length > 0) {
-      return legacy;
+    const scriptURL = legacy?.scriptURL || legacy?.getConstants?.()?.scriptURL;
+    if (typeof scriptURL === 'string' && scriptURL.length > 0) {
+      return {scriptURL};
     }
   } catch {}
   try {
@@ -203,11 +204,11 @@ const extractHostAndPort = (
 
 const probeCandidateUrlsInParallel = async (
   scriptURL: string,
-  timeoutMs = 2500,
+  timeoutMs = 3000,
 ): Promise<{text: string; bytes: number; url: string} | null> => {
   const {host: extractedHost, port: extractedPort} = extractHostAndPort(scriptURL);
 
-  // 1. If we have a direct scriptURL, try fetching directly
+  // 1. If we have a direct HTTP scriptURL, try fetching directly
   if (scriptURL && scriptURL.startsWith('http')) {
     try {
       const controller = new AbortController();
@@ -227,7 +228,7 @@ const probeCandidateUrlsInParallel = async (
     }
   }
 
-  // 2. Dynamic Port Discovery via lightweight Metro /status probe (20 bytes per check)
+  // 2. Dynamic Port Discovery via parallel lightweight Metro /status probes
   const candidateHosts = extractedHost
     ? [extractedHost, 'localhost', '127.0.0.1', ...(Platform.OS === 'android' ? ['10.0.2.2', '10.0.3.2'] : [])]
     : ['localhost', '127.0.0.1', ...(Platform.OS === 'android' ? ['10.0.2.2', '10.0.3.2'] : [])];
@@ -237,28 +238,52 @@ const probeCandidateUrlsInParallel = async (
     ? Array.from(new Set([extractedPort, ...DYNAMIC_DEV_PORTS]))
     : DYNAMIC_DEV_PORTS;
 
-  let activeServer: {host: string; port: number} | null = null;
+  const probeTasks: Promise<{host: string; port: number}>[] = [];
 
-  // Probe lightweight /status on candidate ports (very fast 400ms timeout)
   for (const host of uniqueHosts) {
     for (const port of candidatePorts) {
-      try {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 450);
-        const res = await fetch(`http://${host}:${port}/status`, {signal: controller.signal});
-        clearTimeout(timer);
-        if (res.ok) {
-          const statusText = await res.text();
-          if (statusText && statusText.includes('packager-status:running')) {
-            activeServer = {host, port};
-            break;
+      probeTasks.push(
+        new Promise(async (resolve, reject) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 700);
+          try {
+            const res = await fetch(`http://${host}:${port}/status`, {signal: controller.signal});
+            clearTimeout(timer);
+            if (res.ok) {
+              const statusText = await res.text();
+              if (statusText && statusText.includes('packager-status:running')) {
+                resolve({host, port});
+                return;
+              }
+            }
+          } catch {
+            clearTimeout(timer);
           }
-        }
-      } catch {
-        // Continue to next port
-      }
+          reject(new Error('unreachable'));
+        }),
+      );
     }
-    if (activeServer) break;
+  }
+
+  let activeServer: {host: string; port: number} | null = null;
+  try {
+    activeServer = await new Promise<{host: string; port: number}>((resolve, reject) => {
+      let pending = probeTasks.length;
+      if (pending === 0) {
+        reject(new Error('No candidate hosts'));
+        return;
+      }
+      probeTasks.forEach(p => {
+        p.then(resolve).catch(() => {
+          pending--;
+          if (pending === 0) {
+            reject(new Error('All probes failed'));
+          }
+        });
+      });
+    });
+  } catch {
+    activeServer = null;
   }
 
   // 3. If a live Metro port was detected dynamically, fetch the bundle from it

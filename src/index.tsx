@@ -133,6 +133,7 @@ import {
   SortOrder,
   GroupedListItem,
   ActiveTab,
+  SettingsSubTab,
   ConsoleLog,
   Method,
   AnalyticsEvent,
@@ -352,7 +353,7 @@ const NetworkInspector = ({
     | 'redux'
     | null
   >(null);
-  const [settingsActiveSubTab, setSettingsActiveSubTab] = useState<'module' | 'ui'>('module');
+  const [settingsActiveSubTab, setSettingsActiveSubTab] = useState<SettingsSubTab>('module');
   const [tabVisibility, setTabVisibility] = useState<
     Record<ActiveTab, boolean>
   >({
@@ -363,6 +364,8 @@ const NetworkInspector = ({
     bundle: false,
     performance: false,
     crash: false,
+    device: true,
+    storage: true,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -423,6 +426,8 @@ const NetworkInspector = ({
       bundle: false,
       performance: false,
       crash: false,
+      device: true,
+      storage: true,
     });
     setDefaultTab('apis');
     setIsAutoRamLimitEnabled(true);
@@ -2310,6 +2315,21 @@ export {
   BrandSquareIcon,
   BrandCircleIcon,
 } from './components/NetworkIcons';
+
+export {
+  connectAsyncStorage,
+  connectMMKV,
+  isAsyncStorageConnected,
+  isMMKVConnected,
+  getRegisteredMMKVInstanceIds,
+  fetchStorageEntries,
+  setStorageEntry,
+  removeStorageEntry,
+  clearStorageDriver,
+  subscribeToStorageChanges,
+  type StorageEntry,
+  type StorageDriver,
+} from './customHooks/storageInspector';
 
 export {
   ActiveTab,

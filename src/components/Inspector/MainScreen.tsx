@@ -27,6 +27,8 @@ import BundleTab from './BundleTab';
 import PerformanceTab from './PerformanceTab';
 import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
+import DeviceInfoTab from './DeviceInfoTab';
+import StorageTab from './StorageTab';
 import SettingsPanel from './SettingsPanel';
 import TelemetryConsentModal from './TelemetryConsentModal';
 import NpmUpdateToast from './NpmUpdateToast';
@@ -167,6 +169,8 @@ const MainScreen = () => {
                       {activeTab === 'bundle' && <BundleTab />}
                       {activeTab === 'performance' && <PerformanceTab />}
                       {activeTab === 'crash' && <CrashTab />}
+                      {activeTab === 'device' && <DeviceInfoTab />}
+                      {activeTab === 'storage' && <StorageTab />}
                     </Animated.View>
 
                     {/* Detail View Layer - Rendered on top with smooth slide & spring transition */}
@@ -240,6 +244,9 @@ const MainScreen = () => {
 
               {/* NPM Version Update Toast with timeout progress bar */}
               <NpmUpdateToast />
+
+              {/* Anonymous Telemetry Consent Dialog shown ONLY when inspector is active */}
+              <TelemetryConsentModal />
             </View>
           </View>
         </ErrorBoundary>
@@ -248,9 +255,6 @@ const MainScreen = () => {
         <NavigationTracker onStateChange={setNavState} />
       )}
     </Modal>
-
-    {/* Anonymous Telemetry Consent Dialog at root viewport */}
-    <TelemetryConsentModal />
     </>
   );
 };

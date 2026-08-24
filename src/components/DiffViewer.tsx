@@ -68,7 +68,7 @@ const DiffViewer = React.memo(
               <Text key={i} selectable={true} style={styles.diffChanged}>
                 ~ <Text style={styles.codeKey}>{key}</Text>
                 {JSON.stringify(d.oldVal)}{' '}
-                <Text style={{color: AppColors.grayTextWeak}}>➔</Text>{' '}
+                <Text style={{color: AppColors.grayTextWeak}}>→</Text>{' '}
                 {JSON.stringify(d.newVal)}
               </Text>
             );

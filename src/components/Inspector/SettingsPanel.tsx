@@ -57,10 +57,15 @@ import {
   ForwardChevronIcon,
   ChevronDownIcon,
   NpmIcon,
+  BoltIcon,
+  BrainIcon,
+  SmartphoneIcon,
+  DatabaseIcon,
 } from '../NetworkIcons';
 import {LIB_VERSION} from '../../constants';
 import {copyToClipboard} from '../../helpers';
 import {showToast} from '../../helpers/toast';
+import {pruneAllLogs} from '../../helpers/memoryManager';
 
 const SettingsPanel = () => {
   const {t} = useTranslation();
@@ -196,6 +201,20 @@ const SettingsPanel = () => {
       icon: 'redux',
       desc: 'Store state diffing, action history & reducer timeline',
     },
+    {
+      key: 'device',
+      label: 'Device Info',
+      category: 'diagnostic',
+      icon: 'device',
+      desc: 'Hardware specs, IP address, screen metrics, UDID & runtime stats',
+    },
+    {
+      key: 'storage',
+      label: 'Storage Inspector',
+      category: 'telemetry',
+      icon: 'storage',
+      desc: 'AsyncStorage & MMKV key-value store viewer with full CRUD support',
+    },
   ] as const;
 
   // Staged selection state for checkboxes before clicking "Save Changes"
@@ -209,6 +228,8 @@ const SettingsPanel = () => {
     bundle: Boolean(tabVisibility?.bundle),
     performance: Boolean(tabVisibility?.performance),
     crash: Boolean(tabVisibility?.crash),
+    device: Boolean(tabVisibility?.device ?? true),
+    storage: Boolean(tabVisibility?.storage ?? true),
   }));
 
   // Synchronize staged state with tabVisibility when tabVisibility updates
@@ -221,6 +242,8 @@ const SettingsPanel = () => {
       bundle: Boolean(tabVisibility?.bundle),
       performance: Boolean(tabVisibility?.performance),
       crash: Boolean(tabVisibility?.crash),
+      device: Boolean(tabVisibility?.device ?? true),
+      storage: Boolean(tabVisibility?.storage ?? true),
     });
   }, [tabVisibility]);
 
@@ -527,7 +550,7 @@ const SettingsPanel = () => {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: 5,
               borderRadius: 9,
               backgroundColor:
                 settingsActiveSubTab === 'ui'
@@ -543,9 +566,10 @@ const SettingsPanel = () => {
               size={13}
             />
             <Text
+              numberOfLines={1}
               style={{
                 fontFamily: AppFonts.interBold,
-                fontSize: 12.5,
+                fontSize: 12,
                 lineHeight: 16,
                 color:
                   settingsActiveSubTab === 'ui'
@@ -555,9 +579,54 @@ const SettingsPanel = () => {
               {t('settings.uiPreferences')}
             </Text>
           </TouchableScale>
+
+          <TouchableScale
+            accessible={true}
+            accessibilityRole="tab"
+            accessibilityLabel={t('settings.ramLimits')}
+            accessibilityState={{selected: settingsActiveSubTab === 'limits'}}
+            onPress={() => {
+              animateNextLayout();
+              setSettingsActiveSubTab('limits');
+            }}
+            style={{
+              flex: 1,
+              paddingVertical: 9,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 5,
+              borderRadius: 9,
+              backgroundColor:
+                settingsActiveSubTab === 'limits'
+                  ? AppColors.purple
+                  : 'transparent',
+            }}>
+            <BrainIcon
+              color={
+                settingsActiveSubTab === 'limits'
+                  ? AppColors.white
+                  : AppColors.grayText
+              }
+              size={13}
+            />
+            <Text
+              numberOfLines={1}
+              style={{
+                fontFamily: AppFonts.interBold,
+                fontSize: 12,
+                lineHeight: 16,
+                color:
+                  settingsActiveSubTab === 'limits'
+                    ? AppColors.white
+                    : AppColors.grayText,
+              }}>
+              {t('settings.ramLimits')}
+            </Text>
+          </TouchableScale>
         </View>
 
-        {settingsActiveSubTab === 'module' ? (
+        {settingsActiveSubTab === 'module' && (
           <View style={{gap: 12}}>
             {/* Individual Module Cards with Left Checkboxes */}
             <View style={{gap: 10}}>
@@ -786,6 +855,26 @@ const SettingsPanel = () => {
                           )}
                           {moduleItem.icon === 'redux' && (
                             <ReduxIcon
+                              color={
+                                isChecked
+                                  ? AppColors.purple
+                                  : AppColors.grayTextWeak
+                              }
+                              size={16}
+                            />
+                          )}
+                          {moduleItem.icon === 'device' && (
+                            <SmartphoneIcon
+                              color={
+                                isChecked
+                                  ? AppColors.purple
+                                  : AppColors.grayTextWeak
+                              }
+                              size={16}
+                            />
+                          )}
+                          {moduleItem.icon === 'storage' && (
+                            <DatabaseIcon
                               color={
                                 isChecked
                                   ? AppColors.purple
@@ -1038,271 +1127,10 @@ const SettingsPanel = () => {
                 );
               })}
             </View>
-
-            {/* Section 3.5: RAM-Based Auto Limits */}
-            <View
-              style={{
-                backgroundColor: AppColors.primaryLight,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: AppColors.grayBorderSecondary,
-                overflow: 'hidden',
-                padding: 14,
-                gap: 12,
-              }}>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 11,
-                  lineHeight: 14,
-                  color: AppColors.grayTextWeak,
-                  letterSpacing: 0.8,
-                }}>
-                RAM-Based Auto Limits
-              </Text>
-
-              {/* Auto RAM Limit Toggle */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    flex: 1,
-                  }}>
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      backgroundColor: AppColors.purpleShade50,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                    <PerformanceIcon color={AppColors.purple} size={15} />
-                  </View>
-                  <View style={{flex: 1}}>
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interBold,
-                        fontSize: 13.5,
-                        lineHeight: 18,
-                        color: AppColors.primaryBlack,
-                      }}>
-                      Auto-Calculate Limits from Device RAM
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interRegular,
-                        fontSize: 11,
-                        lineHeight: 15,
-                        color: AppColors.grayText,
-                        marginTop: 1,
-                      }}>
-                      Automatically set API, Logs, Analytics & Crash limits
-                      based on available memory
-                    </Text>
-                  </View>
-                </View>
-
-                <TouchableScale
-                  accessible={true}
-                  accessibilityRole="switch"
-                  accessibilityLabel="Toggle auto RAM limit calculation"
-                  accessibilityState={{checked: isAutoRamLimitEnabled}}
-                  onPress={() => setIsAutoRamLimitEnabled(prev => !prev)}
-                  style={{
-                    width: 42,
-                    height: 24,
-                    borderRadius: 12,
-                    backgroundColor: isAutoRamLimitEnabled
-                      ? AppColors.purple
-                      : AppColors.grayBorderSecondary,
-                    padding: 2,
-                    justifyContent: 'center',
-                    alignItems: isAutoRamLimitEnabled
-                      ? 'flex-end'
-                      : 'flex-start',
-                  }}>
-                  <View
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: 10,
-                      backgroundColor: AppColors.white,
-                      shadowColor: AppColors.black,
-                      shadowOpacity: 0.18,
-                      shadowRadius: 2,
-                      shadowOffset: {width: 0, height: 1},
-                    }}
-                  />
-                </TouchableScale>
-              </View>
-
-              <View
-                style={{height: 1, backgroundColor: AppColors.dividerColor}}
-              />
-
-              {/* Device Free RAM Display */}
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    backgroundColor: isAutoRamLimitEnabled
-                      ? `${AppColors.purple}14`
-                      : AppColors.grayBackground,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <SignalIcon
-                    color={
-                      isAutoRamLimitEnabled
-                        ? AppColors.purple
-                        : AppColors.grayTextWeak
-                    }
-                    size={15}
-                  />
-                </View>
-                <View style={{flex: 1}}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 13.5,
-                      lineHeight: 18,
-                      color: isAutoRamLimitEnabled
-                        ? AppColors.primaryBlack
-                        : AppColors.grayText,
-                    }}>
-                    Detected Free RAM
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interRegular,
-                      fontSize: 11,
-                      lineHeight: 15,
-                      color: AppColors.grayText,
-                      marginTop: 1,
-                    }}>
-                    {deviceFreeRamMb} MB available
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    paddingHorizontal: 10,
-                    paddingVertical: 5,
-                    borderRadius: 8,
-                    backgroundColor: isAutoRamLimitEnabled
-                      ? `${AppColors.purple}12`
-                      : AppColors.grayBackground,
-                    borderWidth: 1,
-                    borderColor: isAutoRamLimitEnabled
-                      ? `${AppColors.purple}26`
-                      : AppColors.dividerColor,
-                  }}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 12,
-                      lineHeight: 15,
-                      color: isAutoRamLimitEnabled
-                        ? AppColors.purple
-                        : AppColors.grayText,
-                    }}>
-                    {deviceFreeRamMb} MB
-                  </Text>
-                </View>
-              </View>
-
-              {/* Current Auto-Calculated Limits Preview */}
-              {isAutoRamLimitEnabled && (
-                <View
-                  style={{
-                    marginTop: 8,
-                    paddingTop: 8,
-                    borderTopWidth: 1,
-                    borderTopColor: AppColors.dividerColor,
-                    gap: 6,
-                  }}>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 11.5,
-                      lineHeight: 15,
-                      color: AppColors.purple,
-                    }}>
-                    Auto Profile: {autoRamProfile.profileName}
-                  </Text>
-                  <View
-                    style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
-                    {[
-                      {
-                        label: 'APIs',
-                        value: autoRamProfile.maxNetworkLogs,
-                        color: AppColors.blue500,
-                      },
-                      {
-                        label: 'Logs',
-                        value: autoRamProfile.maxConsoleLogs,
-                        color: AppColors.sky500,
-                      },
-                      {
-                        label: 'Analytics',
-                        value: autoRamProfile.maxAnalyticsEvents,
-                        color: AppColors.purple,
-                      },
-                      {
-                        label: 'Crash',
-                        value: autoRamProfile.maxCrashRecords,
-                        color: AppColors.errorColor,
-                      },
-                    ].map(item => (
-                      <View
-                        key={item.label}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 4,
-                          paddingHorizontal: 8,
-                          paddingVertical: 4,
-                          borderRadius: 6,
-                          backgroundColor: `${item.color}14`,
-                          borderWidth: 1,
-                          borderColor: `${item.color}33`,
-                        }}>
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 10.5,
-                            lineHeight: 14,
-                            color: item.color,
-                          }}>
-                          {item.label}
-                        </Text>
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 10.5,
-                            lineHeight: 14,
-                            color: item.color,
-                          }}>
-                          {item.value}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
           </View>
-        ) : (
+        )}
+
+        {settingsActiveSubTab === 'ui' && (
           <View style={{gap: 14}}>
             {/* Section 1: Appearance */}
             <View
@@ -2126,6 +1954,9 @@ const SettingsPanel = () => {
                       {updateAvailable ? (
                         <View
                           style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 3,
                             backgroundColor: '#F59E0B20',
                             paddingHorizontal: 6,
                             paddingVertical: 1.5,
@@ -2139,8 +1970,9 @@ const SettingsPanel = () => {
                               fontSize: 9.5,
                               color: '#D97706',
                             }}>
-                            v{latestNpmVersion} Available ⚡
+                            v{latestNpmVersion} Available
                           </Text>
+                          <BoltIcon size={9} color="#D97706" />
                         </View>
                       ) : (
                         <View
@@ -2203,6 +2035,440 @@ const SettingsPanel = () => {
                     </Text>
                   </TouchableScale>
                 )}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {settingsActiveSubTab === 'limits' && (
+          <View style={{gap: 14}}>
+            {/* Section 1: Device RAM & Auto Profile */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                overflow: 'hidden',
+                padding: 14,
+                gap: 12,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                DEVICE MEMORY & AUTO PROFILES
+              </Text>
+
+              {/* Auto RAM Limit Toggle */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    flex: 1,
+                  }}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      backgroundColor: AppColors.purpleShade50,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <BrainIcon color={AppColors.purple} size={16} />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 13.5,
+                        lineHeight: 18,
+                        color: AppColors.primaryBlack,
+                      }}>
+                      Auto-Calculate Limits from RAM
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 11,
+                        lineHeight: 15,
+                        color: AppColors.grayText,
+                        marginTop: 1,
+                      }}>
+                      Dynamically sets log limits according to available device memory
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableScale
+                  accessible={true}
+                  accessibilityRole="switch"
+                  accessibilityLabel="Toggle auto RAM limit calculation"
+                  accessibilityState={{checked: isAutoRamLimitEnabled}}
+                  onPress={() => setIsAutoRamLimitEnabled(prev => !prev)}
+                  style={{
+                    width: 42,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: isAutoRamLimitEnabled
+                      ? AppColors.purple
+                      : AppColors.grayBorderSecondary,
+                    padding: 2,
+                    justifyContent: 'center',
+                    alignItems: isAutoRamLimitEnabled
+                      ? 'flex-end'
+                      : 'flex-start',
+                  }}>
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      backgroundColor: AppColors.white,
+                      shadowColor: AppColors.black,
+                      shadowOpacity: 0.18,
+                      shadowRadius: 2,
+                      shadowOffset: {width: 0, height: 1},
+                    }}
+                  />
+                </TouchableScale>
+              </View>
+
+              <View
+                style={{height: 1, backgroundColor: AppColors.dividerColor}}
+              />
+
+              {/* Device Free RAM Display */}
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    backgroundColor: isAutoRamLimitEnabled
+                      ? `${AppColors.purple}14`
+                      : AppColors.grayBackground,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <SignalIcon
+                    color={
+                      isAutoRamLimitEnabled
+                        ? AppColors.purple
+                        : AppColors.grayTextWeak
+                    }
+                    size={15}
+                  />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 13.5,
+                      lineHeight: 18,
+                      color: isAutoRamLimitEnabled
+                        ? AppColors.primaryBlack
+                        : AppColors.grayText,
+                    }}>
+                    Detected Available RAM
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      lineHeight: 15,
+                      color: AppColors.grayText,
+                      marginTop: 1,
+                    }}>
+                    {deviceFreeRamMb} MB available on device
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 8,
+                    backgroundColor: isAutoRamLimitEnabled
+                      ? `${AppColors.purple}12`
+                      : AppColors.grayBackground,
+                    borderWidth: 1,
+                    borderColor: isAutoRamLimitEnabled
+                      ? `${AppColors.purple}26`
+                      : AppColors.dividerColor,
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 12,
+                      lineHeight: 15,
+                      color: isAutoRamLimitEnabled
+                        ? AppColors.purple
+                        : AppColors.grayText,
+                    }}>
+                    {deviceFreeRamMb} MB
+                  </Text>
+                </View>
+              </View>
+
+              {/* Profile Overview */}
+              <View
+                style={{
+                  marginTop: 4,
+                  paddingTop: 8,
+                  borderTopWidth: 1,
+                  borderTopColor: AppColors.dividerColor,
+                  gap: 6,
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      lineHeight: 15,
+                      color: AppColors.purple,
+                    }}>
+                    Profile: {autoRamProfile.profileName}
+                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: isAutoRamLimitEnabled
+                        ? `${AppColors.emerald500}18`
+                        : `${AppColors.purple}18`,
+                      paddingHorizontal: 7,
+                      paddingVertical: 2.5,
+                      borderRadius: 4,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 9.5,
+                        color: isAutoRamLimitEnabled
+                          ? AppColors.emerald500
+                          : AppColors.purple,
+                      }}>
+                      {isAutoRamLimitEnabled ? 'AUTO-TUNED' : 'MANUAL'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View
+                  style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4}}>
+                  {[
+                    {
+                      label: 'APIs',
+                      value: isAutoRamLimitEnabled
+                        ? autoRamProfile.maxNetworkLogs
+                        : maxNetworkLogs,
+                      color: AppColors.blue500,
+                    },
+                    {
+                      label: 'Logs',
+                      value: isAutoRamLimitEnabled
+                        ? autoRamProfile.maxConsoleLogs
+                        : maxConsoleLogs,
+                      color: AppColors.sky500,
+                    },
+                    {
+                      label: 'Analytics',
+                      value: isAutoRamLimitEnabled
+                        ? autoRamProfile.maxAnalyticsEvents
+                        : maxAnalyticsEventsLimit,
+                      color: AppColors.purple,
+                    },
+                    {
+                      label: 'Crash',
+                      value: isAutoRamLimitEnabled
+                        ? autoRamProfile.maxCrashRecords
+                        : maxCrashLogs,
+                      color: AppColors.errorColor,
+                    },
+                  ].map(item => (
+                    <View
+                      key={item.label}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        borderRadius: 6,
+                        backgroundColor: `${item.color}14`,
+                        borderWidth: 1,
+                        borderColor: `${item.color}33`,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10.5,
+                          lineHeight: 14,
+                          color: item.color,
+                        }}>
+                        {item.label}:
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10.5,
+                          lineHeight: 14,
+                          color: item.color,
+                        }}>
+                        {item.value} max
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            {/* Section 2: Memory-Safe OS Pruning Shield */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                overflow: 'hidden',
+                padding: 14,
+                gap: 12,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                LOW MEMORY PRESSURE PROTECTION
+              </Text>
+
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    backgroundColor: `${AppColors.emerald500}14`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <ShieldAlertIcon color={AppColors.emerald500} size={15} />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 13.5,
+                      lineHeight: 18,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    OS Memory Warning Guard
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      lineHeight: 15,
+                      color: AppColors.grayText,
+                      marginTop: 1,
+                    }}>
+                    Automatically prunes in-memory buffers by 50% when the OS signals low memory
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 6,
+                    backgroundColor: `${AppColors.emerald500}18`,
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10,
+                      color: AppColors.emerald500,
+                    }}>
+                    ACTIVE
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={{height: 1, backgroundColor: AppColors.dividerColor}}
+              />
+
+              {/* Instant Prune Button */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                }}>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 13,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    Manual Memory Cleanup
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      color: AppColors.grayText,
+                      marginTop: 1,
+                    }}>
+                    Prune older entries across all log stores and free RAM
+                  </Text>
+                </View>
+                <TouchableScale
+                  onPress={() => {
+                    const summary = pruneAllLogs('manual', 0.5);
+                    showToast(
+                      `Pruned ${summary.totalPruned} items from memory`,
+                    );
+                  }}
+                  style={{
+                    backgroundColor: AppColors.purple,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}>
+                  <TrashIcon size={13} color={AppColors.white} />
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.white,
+                    }}>
+                    Prune Now
+                  </Text>
+                </TouchableScale>
               </View>
             </View>
           </View>

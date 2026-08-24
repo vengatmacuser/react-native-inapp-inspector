@@ -1606,6 +1606,35 @@ const BundleTab = React.memo(() => {
                     {t('bundle.liveAnalysisUnavailableSub')}
                   </Text>
                 </View>
+                <TouchableScale
+                  onPress={refreshAnalysis}
+                  style={{
+                    backgroundColor: `${AppColors.amber700}18`,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.amber700}30`,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}>
+                  {isAnalyzing ? (
+                    <ActivityIndicator size="small" color={AppColors.amber700} />
+                  ) : (
+                    <>
+                      <RefreshCcwIcon color={AppColors.amber700} size={11} />
+                      <Text
+                        style={{
+                          fontSize: 10.5,
+                          fontFamily: AppFonts.interBold,
+                          color: AppColors.amber700,
+                        }}>
+                        Retry
+                      </Text>
+                    </>
+                  )}
+                </TouchableScale>
               </View>
             </View>
           )}

@@ -29,6 +29,7 @@ import {getRuntimeDiagnostics} from '../../helpers';
 import {
   SearchIcon,
   CircleXIcon,
+  CircleAlertIcon,
   PerformanceIcon,
   BoltIcon,
   LightbulbIcon,
@@ -37,6 +38,7 @@ import {
   AtomIcon,
   BrainIcon,
   GlobeIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 import {
   getPerformanceEvents,
@@ -507,15 +509,40 @@ const PerformanceTab = React.memo(() => {
           contentContainerStyle={perfStyles.categoryScroll}>
           {(
             [
-              {key: 'ALL', label: t('performance.catAll')},
-              {key: 'JANKY', label: t('performance.catJanky')},
-              {key: 'NAVIGATION', label: t('performance.catNavigation')},
-              {key: 'RENDER', label: t('performance.catRender')},
-              {key: 'MEMORY', label: t('performance.catMemory')},
-              {key: 'IO', label: t('performance.catIo')},
+              {
+                key: 'ALL',
+                label: t('performance.catAll'),
+                icon: (color: string) => <PerformanceIcon size={12} color={color} />,
+              },
+              {
+                key: 'JANKY',
+                label: t('performance.catJanky'),
+                icon: (color: string) => <CircleAlertIcon size={12} color={color} />,
+              },
+              {
+                key: 'NAVIGATION',
+                label: t('performance.catNavigation'),
+                icon: (color: string) => <MapIcon size={12} color={color} />,
+              },
+              {
+                key: 'RENDER',
+                label: t('performance.catRender'),
+                icon: (color: string) => <AtomIcon size={12} color={color} />,
+              },
+              {
+                key: 'MEMORY',
+                label: t('performance.catMemory'),
+                icon: (color: string) => <BrainIcon size={12} color={color} />,
+              },
+              {
+                key: 'IO',
+                label: t('performance.catIo'),
+                icon: (color: string) => <GlobeIcon size={12} color={color} />,
+              },
             ] as const
           ).map(cat => {
             const isSelected = filterCategory === cat.key;
+            const iconColor = isSelected ? AppColors.white : AppColors.grayTextWeak;
             return (
               <TouchableScale
                 key={cat.key}
@@ -523,7 +550,9 @@ const PerformanceTab = React.memo(() => {
                 style={[
                   perfStyles.categoryChip,
                   isSelected && perfStyles.categoryChipActive,
+                  {flexDirection: 'row', alignItems: 'center', gap: 5},
                 ]}>
+                {cat.icon(iconColor)}
                 <Text
                   style={[
                     perfStyles.categoryChipText,
@@ -1079,12 +1108,15 @@ const PerformanceTab = React.memo(() => {
 
                     {/* Bottleneck Thread Tag */}
                     {event.bottleneckThread && (
-                      <View style={perfStyles.bottleneckTag}>
+                      <View style={[perfStyles.bottleneckTag, {flexDirection: 'row', alignItems: 'center', gap: 3}]}>
+                        {event.bottleneckThread === 'JS Thread' && (
+                          <BoltIcon size={10} color={AppColors.warningIconGold} />
+                        )}
                         <Text style={perfStyles.bottleneckTagText}>
                           {event.bottleneckThread === 'JS Thread'
-                            ? `⚡ ${t('performance.jsBound')}`
+                            ? t('performance.jsBound')
                             : event.bottleneckThread === 'UI Thread'
-                            ? `🎨 ${t('performance.uiBound')}`
+                            ? t('performance.uiBound')
                             : t('performance.balanced')}
                         </Text>
                       </View>
@@ -1096,9 +1128,11 @@ const PerformanceTab = React.memo(() => {
                       value={() => event}
                       label={t('common.copyJson')}
                     />
-                    <Text style={perfStyles.expandChevron}>
-                      {isExpanded ? '▲' : '▼'}
-                    </Text>
+                    <ChevronIcon
+                      isExpanded={isExpanded}
+                      size={14}
+                      color={AppColors.grayTextWeak}
+                    />
                   </View>
                 </View>
 

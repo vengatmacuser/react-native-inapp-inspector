@@ -96,6 +96,18 @@ const SparkleSvg = ({size = 14, color = '#F59E0B'}: {size?: number; color?: stri
   </Svg>
 );
 
+const ArrowRightSvg = ({size = 14, color = '#94A3B8'}: {size?: number; color?: string}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M5 12h14M12 5l7 7-7 7"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 interface UpdateAvailableModalProps {
   visible: boolean;
   latestVersion: string | null;
@@ -215,7 +227,7 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
             </View>
 
             <View style={styles.arrowContainer}>
-              <Text style={styles.arrowText}>➔</Text>
+              <ArrowRightSvg size={14} color="#94A3B8" />
             </View>
 
             <View style={styles.versionColumn}>

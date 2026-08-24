@@ -26,6 +26,7 @@ import {
   InfoCircleIcon,
   DocIcon,
   ExternalLinkIcon,
+  FolderIcon,
 } from '../NetworkIcons';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -1156,17 +1157,20 @@ const LogDetail = React.memo(() => {
                             paddingVertical: 4.5,
                             gap: 6,
                           }}>
-                          <Text
-                            selectable
-                            style={{
-                              fontFamily: AppFonts.interRegular,
-                              fontSize: 9.5,
-                              color: AppColors.grayTextStrong,
-                              flex: 1,
-                            }}
-                            numberOfLines={1}>
-                            📂 {frame.fullPath}
-                          </Text>
+                          <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1}}>
+                            <FolderIcon size={12} color={AppColors.grayTextWeak} />
+                            <Text
+                              selectable
+                              style={{
+                                fontFamily: AppFonts.interRegular,
+                                fontSize: 9.5,
+                                color: AppColors.grayTextStrong,
+                                flex: 1,
+                              }}
+                              numberOfLines={1}>
+                              {frame.fullPath}
+                            </Text>
+                          </View>
 
                           <View
                             style={{

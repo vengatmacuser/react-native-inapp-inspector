@@ -12,6 +12,8 @@ import {
   ReduxIcon,
   PerformanceIcon,
   CrashIcon,
+  SmartphoneIcon,
+  DatabaseIcon,
 } from '../NetworkIcons';
 
 import {isReduxConnected} from '../../customHooks/reduxLogger';
@@ -86,6 +88,18 @@ const TabBar = React.memo(() => {
               count: crashRecords?.length || 0,
               icon: 'crash',
             },
+            {
+              key: 'device',
+              label: 'Device',
+              count: 0,
+              icon: 'device',
+            },
+            {
+              key: 'storage',
+              label: 'Storage',
+              count: 0,
+              icon: 'storage',
+            },
           ] as const
         )
           .filter(tab => {
@@ -148,6 +162,12 @@ const TabBar = React.memo(() => {
                   )}
                   {tab.icon === 'crash' && (
                     <CrashIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'device' && (
+                    <SmartphoneIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'storage' && (
+                    <DatabaseIcon color={iconColor} size={14} />
                   )}
                   <Text
                     numberOfLines={1}

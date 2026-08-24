@@ -73,6 +73,13 @@
       "require": "./dist/commonjs/bundle.js",
       "default": "./dist/commonjs/bundle.js"
     },
+    "./storage": {
+      "react-native": "./dist/commonjs/storage.js",
+      "types": "./dist/commonjs/storage.d.ts",
+      "import": "./dist/esm/storage.js",
+      "require": "./dist/commonjs/storage.js",
+      "default": "./dist/commonjs/storage.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [

@@ -2116,3 +2116,106 @@ export const ChevronDownIcon = ({color = AppColors.grayTextWeak, size = 14}: Ico
   </Svg>
 );
 
+export const CpuIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="4" y="4" width="16" height="16" rx="2" stroke={color} strokeWidth="2" />
+    <Rect x="9" y="9" width="6" height="6" stroke={color} strokeWidth="2" />
+    <Path
+      d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const WifiIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const ShieldCheckIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M9 12l2 2 4-4"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const DatabaseIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Ellipse cx="12" cy="5" rx="9" ry="3" stroke={color} strokeWidth="2" />
+    <Path
+      d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <Path
+      d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const PencilIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const PlusIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 5v14M5 12h14"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+

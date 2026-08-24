@@ -36,6 +36,13 @@ import {
   LayersIcon,
   HeaderPauseIcon,
   ClockIcon,
+  GlobeIcon,
+  RequestIcon,
+  ResponseIcon,
+  HeadersIcon,
+  AtomIcon,
+  BoltIcon,
+  ShieldAlertIcon,
 } from '../NetworkIcons';
 
 const STATUS_META: Record<
@@ -277,26 +284,90 @@ const NetworkTab = React.memo(() => {
     [quickCounts],
   );
 
-  const SEARCH_SCOPES: Array<{id: SearchScope; label: string}> = [
-    {id: 'all', label: 'All'},
-    {id: 'url', label: 'URL / Path'},
-    {id: 'reqBody', label: 'Payload'},
-    {id: 'resBody', label: 'Response'},
-    {id: 'headers', label: 'Headers'},
+  const SEARCH_SCOPES: Array<{
+    id: SearchScope;
+    label: string;
+    icon: (color: string) => React.JSX.Element;
+  }> = [
+    {
+      id: 'all',
+      label: 'All',
+      icon: color => <LayersIcon size={9.5} color={color} />,
+    },
+    {
+      id: 'url',
+      label: 'URL / Path',
+      icon: color => <GlobeIcon size={9.5} color={color} />,
+    },
+    {
+      id: 'reqBody',
+      label: 'Payload',
+      icon: color => <RequestIcon size={9.5} color={color} />,
+    },
+    {
+      id: 'resBody',
+      label: 'Response',
+      icon: color => <ResponseIcon size={9.5} color={color} />,
+    },
+    {
+      id: 'headers',
+      label: 'Headers',
+      icon: color => <HeadersIcon size={9.5} color={color} />,
+    },
   ];
 
   const QUICK_API_QUERY_TAGS = useMemo(
     () => [
-      {label: '⚠️ Failed', query: 'is:error'},
-      {label: '🐢 Slow >1s', query: 'slow:>1s'},
-      {label: 'POST', query: 'm:POST'},
-      {label: 'GET', query: 'm:GET'},
-      {label: 'GraphQL', query: 'is:graphql'},
-      {label: 'Axios', query: 'client:axios'},
-      {label: '200 OK', query: 'status:200'},
-      {label: '404', query: 'status:404'},
-      {label: '500', query: 'status:500'},
-      {label: '🔒 HTTPS', query: 'is:https'},
+      {
+        label: 'Failed',
+        query: 'is:error',
+        icon: (color: string) => <CircleXIcon size={9.5} color={color} />,
+      },
+      {
+        label: 'Slow (>1s)',
+        query: 'slow:>1s',
+        icon: (color: string) => <ClockIcon size={9.5} color={color} />,
+      },
+      {
+        label: 'POST',
+        query: 'm:POST',
+        icon: (color: string) => <RequestIcon size={9.5} color={color} />,
+      },
+      {
+        label: 'GET',
+        query: 'm:GET',
+        icon: (color: string) => <ResponseIcon size={9.5} color={color} />,
+      },
+      {
+        label: 'GraphQL',
+        query: 'is:graphql',
+        icon: (color: string) => <AtomIcon size={9.5} color={color} />,
+      },
+      {
+        label: 'Axios',
+        query: 'client:axios',
+        icon: (color: string) => <BoltIcon size={9.5} color={color} />,
+      },
+      {
+        label: '200 OK',
+        query: 'status:200',
+        icon: (color: string) => <CircleCheckIcon size={9.5} color={color} />,
+      },
+      {
+        label: '404',
+        query: 'status:404',
+        icon: (color: string) => <CircleAlertIcon size={9.5} color={color} />,
+      },
+      {
+        label: '500',
+        query: 'status:500',
+        icon: (color: string) => <CircleXIcon size={9.5} color={color} />,
+      },
+      {
+        label: 'HTTPS',
+        query: 'is:https',
+        icon: (color: string) => <ShieldAlertIcon size={9.5} color={color} />,
+      },
     ],
     [],
   );
@@ -715,6 +786,7 @@ const NetworkTab = React.memo(() => {
                 {QUICK_CHIPS.map(chip => {
                   const isActive = quickFilter === chip.id;
                   const chipColor = chip.color || AppColors.purple;
+                  const iconColor = isActive ? AppColors.white : chipColor;
                   return (
                     <TouchableScale
                       key={chip.id}
@@ -737,6 +809,13 @@ const NetworkTab = React.memo(() => {
                             : `${chipColor}30`,
                           gap: 5,
                         }}>
+                        {chip.id === 'all' && <LayersIcon size={11} color={iconColor} />}
+                        {chip.id === 'errors' && <CircleXIcon size={11} color={iconColor} />}
+                        {chip.id === 'success' && <CircleCheckIcon size={11} color={iconColor} />}
+                        {chip.id === 'slow' && <ClockIcon size={11} color={iconColor} />}
+                        {chip.id === 'POST' && <RequestIcon size={11} color={iconColor} />}
+                        {chip.id === 'GET' && <ResponseIcon size={11} color={iconColor} />}
+                        {chip.id === 'graphql' && <AtomIcon size={11} color={iconColor} />}
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
@@ -802,12 +881,16 @@ const NetworkTab = React.memo(() => {
                   }}>
                   {SEARCH_SCOPES.map(s => {
                     const isSelected = searchScope === s.id;
+                    const iconColor = isSelected ? AppColors.white : AppColors.grayText;
                     return (
                       <TouchableScale
                         key={s.id}
                         onPress={() => setSearchScope(s.id)}>
                         <View
                           style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
                             paddingHorizontal: 7,
                             paddingVertical: 2.5,
                             borderRadius: 5,
@@ -819,6 +902,7 @@ const NetworkTab = React.memo(() => {
                               ? AppColors.purple
                               : AppColors.grayBorderSecondary,
                           }}>
+                          {s.icon(iconColor)}
                           <Text
                             style={{
                               fontFamily: AppFonts.interBold,
@@ -867,6 +951,9 @@ const NetworkTab = React.memo(() => {
                       }}>
                       <View
                         style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
                           paddingHorizontal: 7,
                           paddingVertical: 2.5,
                           borderRadius: 5,
@@ -878,6 +965,7 @@ const NetworkTab = React.memo(() => {
                             ? AppColors.purple
                             : `${AppColors.purple}30`,
                         }}>
+                        {item.icon(isSelected ? AppColors.white : AppColors.purple)}
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,

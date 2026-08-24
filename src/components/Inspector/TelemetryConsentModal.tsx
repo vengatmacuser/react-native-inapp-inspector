@@ -61,6 +61,25 @@ const CloseSvg = ({size = 13, color = '#64748B'}: {size?: number; color?: string
   </Svg>
 );
 
+const GearSvg = ({size = 13, color = '#6366F1'}: {size?: number; color?: string}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 export const TelemetryConsentModal = () => {
   const [visible, setVisible] = useState(false);
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -150,8 +169,9 @@ export const TelemetryConsentModal = () => {
 
             {/* Subheading instruction hint badge */}
             <View style={styles.hintBadge}>
+              <GearSvg size={12} color="#6366F1" />
               <Text style={styles.hintBadgeText}>
-                ⚙️ You can enable or disable this anytime in Settings
+                You can enable or disable this anytime in Settings
               </Text>
             </View>
           </View>
@@ -290,12 +310,16 @@ const styles = StyleSheet.create({
     ...fontStack,
   },
   hintBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
     backgroundColor: '#EDE9FE80',
     borderWidth: 1,
     borderColor: '#DDD6FE',
     borderRadius: 7,
     paddingHorizontal: 8,
-    paddingVertical: 2.5,
+    paddingVertical: 3,
     marginBottom: 8,
   },
   hintBadgeText: {

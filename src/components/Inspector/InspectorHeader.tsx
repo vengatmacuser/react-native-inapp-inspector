@@ -32,6 +32,7 @@ import {
   AndroidIcon,
   NpmIcon,
   ResetIcon,
+  BoltIcon,
 } from '../NetworkIcons';
 
 const InspectorHeader = React.memo(() => {
@@ -363,8 +364,9 @@ const InspectorHeader = React.memo(() => {
                             color: '#FFFFFF',
                             letterSpacing: 0.3,
                           }}>
-                          UPDATE ⚡
+                          UPDATE
                         </Text>
+                        <BoltIcon size={9} color="#FFFFFF" />
                       </Pressable>
                     )}
                   </View>
@@ -420,27 +422,24 @@ const InspectorHeader = React.memo(() => {
                         }
                       }}
                       style={{
-                        backgroundColor: '#FFFFFF',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: `${AppColors.white}1F`,
                         borderRadius: 5,
                         paddingHorizontal: 6,
                         paddingVertical: 2,
-                        flexDirection: 'row',
-                        alignItems: 'center',
                         gap: 4,
+                        borderWidth: 1,
+                        borderColor: `${AppColors.white}2E`,
                         flexShrink: 0,
-                        shadowColor: '#000000',
-                        shadowOffset: {width: 0, height: 1},
-                        shadowOpacity: 0.15,
-                        shadowRadius: 2,
-                        elevation: 2,
                       }}>
-                      <NpmIcon size={11} color="#CB3837" />
+                      <NpmIcon size={10} color="#FF6B6B" />
                       <Text
                         style={{
-                          fontFamily: AppFonts.interBold,
+                          fontFamily: AppFonts.interMedium,
                           fontSize: 9.5,
-                          color: '#CB3837',
-                          letterSpacing: 0.2,
+                          color: `${AppColors.white}EB`,
+                          letterSpacing: 0.1,
                         }}
                         numberOfLines={1}>
                         v{LIB_VERSION}
@@ -452,7 +451,7 @@ const InspectorHeader = React.memo(() => {
                             fontSize: 9,
                             color: '#F59E0B',
                           }}>
-                          ↑
+                          ●
                         </Text>
                       )}
                     </Pressable>

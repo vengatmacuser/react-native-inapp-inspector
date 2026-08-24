@@ -37,6 +37,7 @@ import {
   RawIcon,
   TableIcon,
   DocIcon,
+  PackageIcon,
 } from './NetworkIcons';
 
 // Type Definition
@@ -312,8 +313,9 @@ const AnalyticsDetail = ({
 
           {itemsCount !== null && (
             <View style={detailStyles.itemsPill}>
+              <PackageIcon size={12} color="#1D4ED8" />
               <Text style={detailStyles.itemsValue}>
-                📦 {itemsCount} items
+                {itemsCount} items
               </Text>
             </View>
           )}
@@ -694,6 +696,9 @@ const detailStyles = StyleSheet.create({
     color: '#047857',
   },
   itemsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#EFF6FF',
     paddingHorizontal: 7,
     paddingVertical: 3,

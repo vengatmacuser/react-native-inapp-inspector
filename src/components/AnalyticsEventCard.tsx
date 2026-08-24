@@ -230,9 +230,10 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
                     borderColor: `${AppColors.brandPurple}25`,
                   },
                 ]}>
+                <SparkleIcon color={AppColors.brandPurple} size={10} />
                 <Text
                   style={[cardStyles.chipText, {color: AppColors.brandPurple, fontFamily: AppFonts.interBold}]}>
-                  ★ {userPropCount} {t('analytics.props')}
+                  {userPropCount} {t('analytics.props')}
                 </Text>
               </View>
             )}

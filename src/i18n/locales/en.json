@@ -36,7 +36,12 @@
     "apis": "APIs",
     "logs": "Logs",
     "analytics": "Analytics",
-    "redux": "Redux"
+    "redux": "Redux",
+    "bundle": "Bundle",
+    "performance": "Performance",
+    "crash": "Crash",
+    "device": "Device",
+    "storage": "Storage"
   },
   "settings": {
     "mainTitle": "Settings & Modules",
@@ -51,7 +56,8 @@
     "dormantBadge": "DORMANT",
     "protectedBadge": "PROTECTED",
     "modulesAndTools": "Modules & Tools",
-    "uiPreferences": "UI Preferences",
+    "uiPreferences": "UI & Display",
+    "ramLimits": "RAM & Limits",
     "zeroOverheadTitle": "Zero Background Overhead",
     "zeroOverheadDesc": "Check the modules you wish to activate. Disabled modules consume 0% CPU & memory until saved.",
     "unsavedPending": "● Unsaved selections pending",
