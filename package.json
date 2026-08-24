@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "The zero-config, all-in-one in-app debugger for React Native & Expo. Inspect Network (fetch/axios), Console logs, Stack Traces, Redux State, Firebase Analytics, and JS Bundle size directly on device.",
   "repository": {
     "type": "git",
