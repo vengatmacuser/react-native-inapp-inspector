@@ -16,7 +16,7 @@ export interface Spec extends TurboModule {
   triggerHaptic(style: string): Promise<boolean>;
   getNativeSystemMetrics(): Promise<Object>;
   pushNativeLogRecord(pageKey: string, jsonPayload: string): Promise<boolean>;
-  getNativeCachedPage(pageKey: string, offset: number, limit: number, query: string): Promise<string>;
+  checkFloatingButtonPress(): Promise<boolean>;
   addListener(eventName: string): void;
   removeListeners(count: number): void;
 }

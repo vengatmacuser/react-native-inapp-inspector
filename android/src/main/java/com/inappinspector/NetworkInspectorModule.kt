@@ -206,12 +206,16 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     }
 
     private var floatingButton: InAppInspectorFloatingView? = null
+    @Volatile private var floatingButtonPressed: Boolean = false
 
     private fun emitFloatingButtonPress() {
+        floatingButtonPressed = true
         if (reactContext.hasActiveReactInstance()) {
-            reactContext
-                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                .emit("onFloatingButtonPress", null)
+            try {
+                reactContext
+                    .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                    .emit("onFloatingButtonPress", null)
+            } catch (e: Exception) {}
         }
     }
 
@@ -313,11 +317,22 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
         }
 
         activity.runOnUiThread {
-            val density = activity.resources.displayMetrics.density
-            floatingButton?.x = (x * density).toFloat()
-            floatingButton?.y = (y * density).toFloat()
-            promise.resolve(true)
+            try {
+                val density = activity.resources.displayMetrics.density
+                floatingButton?.x = (x * density).toFloat()
+                floatingButton?.y = (y * density).toFloat()
+                promise.resolve(true)
+            } catch (e: Exception) {
+                promise.reject("FLOATING_BTN_ERROR", e.message, e)
+            }
         }
+    }
+
+    @ReactMethod
+    fun checkFloatingButtonPress(promise: Promise) {
+        val pressed = floatingButtonPressed
+        floatingButtonPressed = false
+        promise.resolve(pressed)
     }
 
     private var sensorManager: android.hardware.SensorManager? = null

@@ -207,6 +207,19 @@ export const subscribeNativeFloatingButtonPress = (
     } catch (e) {}
   }
 
+  // Active Bridgeless / TurboModule tap detection
+  const interval = setInterval(async () => {
+    if (NativeModule && NativeModule.checkFloatingButtonPress) {
+      try {
+        const pressed = await NativeModule.checkFloatingButtonPress();
+        if (pressed) {
+          callback();
+        }
+      } catch (e) {}
+    }
+  }, 180);
+  cleanups.push(() => clearInterval(interval));
+
   return () => {
     cleanups.forEach(fn => {
       try {

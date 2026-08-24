@@ -5,6 +5,7 @@
 
 static NetworkInspectorModule *sharedInstance = nil;
 static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
+static BOOL g_floatingButtonPressed = NO;
 
 @interface InAppInspectorFloatingView : UIView
 @property (nonatomic, copy) void (^onTapBlock)(void);
@@ -410,6 +411,7 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
 
 - (void)safeSendEvent:(NSString *)eventName body:(id)body {
     if (!hasListeners) return;
+    if (self.bridge == nil) return;
     @try {
         [self sendEventWithName:eventName body:body];
     } @catch (NSException *ex) {
@@ -598,8 +600,9 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
 
         __weak NetworkInspectorModule *weakSelf = self;
         floatingButtonView.onTapBlock = ^{
+            g_floatingButtonPressed = YES;
             NetworkInspectorModule *strongSelf = weakSelf ?: sharedInstance;
-            if (strongSelf) {
+            if (strongSelf && strongSelf.bridge != nil) {
                 [strongSelf safeSendEvent:@"onFloatingButtonPress" body:@{}];
             }
         };
@@ -672,6 +675,13 @@ RCT_EXPORT_METHOD(setFloatingButtonPosition:(double)x y:(double)y
         }
         resolve(@(YES));
     });
+}
+
+RCT_EXPORT_METHOD(checkFloatingButtonPress:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    BOOL pressed = g_floatingButtonPressed;
+    g_floatingButtonPressed = NO;
+    resolve(@(pressed));
 }
 
 RCT_EXPORT_METHOD(startFpsMonitoring:(RCTPromiseResolveBlock)resolve
