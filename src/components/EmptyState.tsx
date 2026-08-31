@@ -12,7 +12,21 @@ import {EmptyRadarIcon} from './NetworkIcons';
 import {AppColors} from '../styles/AppColors';
 import styles from '../styles';
 
-const EmptyState = React.memo(function EmptyState({isSearch}: {isSearch?: boolean}) {
+interface EmptyStateProps {
+  isSearch?: boolean;
+  searchQuery?: string;
+  customTitle?: string;
+  customSub?: string;
+  onClearSearch?: () => void;
+}
+
+const EmptyState = React.memo(function EmptyState({
+  isSearch,
+  searchQuery,
+  customTitle,
+  customSub,
+  onClearSearch,
+}: EmptyStateProps) {
   const iconPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -54,13 +68,21 @@ const EmptyState = React.memo(function EmptyState({isSearch}: {isSearch?: boolea
         <EmptyRadarIcon color={AppColors.purple} size={32} />
       </Animated.View>
       <Text style={styles.emptyTitle}>
-        {isSearch ? 'No matching APIs' : 'No network activity'}
+        {customTitle || (isSearch ? 'No matching results' : 'No network activity')}
       </Text>
       <Text style={styles.emptySub}>
-        {isSearch
-          ? 'Try adjusting your filters or search.'
-          : 'Listening for incoming API calls...'}
+        {customSub ||
+          (isSearch
+            ? searchQuery
+              ? `No items matched "${searchQuery}"`
+              : 'Try adjusting your filters or search keywords.'
+            : 'Listening for incoming API calls...')}
       </Text>
+      {isSearch && onClearSearch && (
+        <TouchableScale style={styles.reloadBtn} onPress={onClearSearch}>
+          <Text style={styles.reloadBtnText}>Clear Search & Filters</Text>
+        </TouchableScale>
+      )}
       {!isSearch && (
         <TouchableScale style={styles.reloadBtn} onPress={handleReload}>
           <Text style={styles.reloadBtnText}>Reload App</Text>

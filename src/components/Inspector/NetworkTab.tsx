@@ -665,7 +665,7 @@ const NetworkTab = React.memo(() => {
                       style={{
                         backgroundColor: `${AppColors.purple}20`,
                         borderRadius: 10,
-                        paddingHorizontal: 5,
+                        paddingHorizontal: 6,
                         paddingVertical: 1.5,
                       }}>
                       <Text
@@ -759,17 +759,128 @@ const NetworkTab = React.memo(() => {
                       styles.toolbarBtnActive,
                   ]}
                   onPress={filtersAccordion.toggleOpen}
-                  hitSlop={10}>
+                  hitSlop={6}>
                   <FilterIcon
                     color={
                       filtersAccordion.isOpen
                         ? AppColors.purple
                         : AppColors.grayTextStrong
                     }
-                    size={18}
+                    size={16}
                   />
+                  {(statusFilters.size > 0 ||
+                    methodFilters.size > 0) && (
+                    <View style={styles.activeFilterDot} />
+                  )}
                 </TouchableScale>
               </View>
+            </View>
+
+            {/* Quick Search Scope & Filter Tags Row */}
+            <View style={{paddingBottom: 4}}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  paddingVertical: 2,
+                }}>
+                {/* Search Scopes */}
+                {SEARCH_SCOPES.map(s => {
+                  const isActive = searchScope === s.id;
+                  return (
+                    <TouchableScale
+                      key={`scope_${s.id}`}
+                      onPress={() => setSearchScope(s.id)}
+                      hitSlop={6}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 3.5,
+                        paddingHorizontal: 7.5,
+                        paddingVertical: 3.5,
+                        borderRadius: 6,
+                        backgroundColor: isActive
+                          ? AppColors.purple
+                          : AppColors.grayBackground,
+                        borderWidth: 1,
+                        borderColor: isActive
+                          ? AppColors.purple
+                          : AppColors.grayBorderSecondary,
+                      }}>
+                      {s.icon(isActive ? AppColors.white : AppColors.grayTextWeak)}
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10,
+                          color: isActive ? AppColors.white : AppColors.grayText,
+                        }}>
+                        {s.label}
+                      </Text>
+                    </TouchableScale>
+                  );
+                })}
+
+                <View
+                  style={{
+                    width: 1,
+                    height: 14,
+                    backgroundColor: AppColors.dividerColor,
+                    marginHorizontal: 3,
+                  }}
+                />
+
+                {/* Quick Query Suggestions */}
+                {QUICK_API_QUERY_TAGS.map(q => {
+                  const isActive = search.includes(q.query);
+                  return (
+                    <TouchableScale
+                      key={`quick_${q.query}`}
+                      onPress={() => {
+                        setSearch(prev => {
+                          if (prev.includes(q.query)) {
+                            return prev
+                              .replace(q.query, '')
+                              .replace(/\s+/g, ' ')
+                              .trim();
+                          }
+                          return `${prev} ${q.query}`.trim();
+                        });
+                      }}
+                      hitSlop={6}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 3.5,
+                        paddingHorizontal: 7.5,
+                        paddingVertical: 3.5,
+                        borderRadius: 6,
+                        backgroundColor: isActive
+                          ? `${AppColors.purple}20`
+                          : AppColors.grayBackground,
+                        borderWidth: 1,
+                        borderColor: isActive
+                          ? AppColors.purple
+                          : AppColors.grayBorderSecondary,
+                      }}>
+                      {q.icon(isActive ? AppColors.purple : AppColors.grayTextWeak)}
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interMedium,
+                          fontSize: 10,
+                          color: isActive
+                            ? AppColors.purple
+                            : AppColors.grayText,
+                        }}>
+                        {q.label}
+                      </Text>
+                    </TouchableScale>
+                  );
+                })}
+              </ScrollView>
             </View>
 
             {/* Quick Filter Horizontal Chips Bar with Live Counts */}
@@ -1138,8 +1249,22 @@ const NetworkTab = React.memo(() => {
         ListEmptyComponent={
           <EmptyState
             isSearch={
-              search.length > 0 || statusFilters.size > 0
+              search.length > 0 ||
+              statusFilters.size > 0 ||
+              methodFilters.size > 0
             }
+            searchQuery={search}
+            customTitle={
+              search.length > 0
+                ? 'No matching API requests'
+                : 'No network activity'
+            }
+            onClearSearch={() => {
+              setSearch('');
+              setStatusFilters(new Set());
+              setMethodFilters(new Set());
+              setSearchScope('all');
+            }}
           />
         }
         ListFooterComponent={

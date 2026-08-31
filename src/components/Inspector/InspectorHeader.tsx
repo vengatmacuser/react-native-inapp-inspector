@@ -18,7 +18,14 @@ import {AppFonts} from '../../styles/AppFonts';
 import {METHOD_COLORS} from '../../constants';
 import {LIB_VERSION} from '../../constants';
 import {Method} from '../../types';
-import {getStatusColor, getAppName, formatTime, getSize} from '../../helpers';
+import {
+  getStatusColor,
+  getAppName,
+  formatTime,
+  getSize,
+  getAppVersionAndBuild,
+} from '../../helpers';
+import {getNativeDeviceMetrics} from '../../native/NativeInspector';
 import {UpdateAvailableModal} from './UpdateAvailableModal';
 import {
   WhiteBackNavigation,
@@ -71,6 +78,21 @@ const InspectorHeader = React.memo(() => {
   } = useInspector();
 
   const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
+  const [appVersionString, setAppVersionString] = React.useState<string>(() => {
+    return getAppVersionAndBuild().formatted;
+  });
+
+  React.useEffect(() => {
+    getNativeDeviceMetrics()
+      .then(metrics => {
+        if (metrics?.appVersion) {
+          const v = metrics.appVersion;
+          const b = metrics.appBuild || '1';
+          setAppVersionString(`${v} (${b})`);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const envConfig = useMemo(() => {
     const rawEnv = (environment || (__DEV__ ? 'DEV' : 'PROD')).trim();
@@ -375,9 +397,7 @@ const InspectorHeader = React.memo(() => {
                           letterSpacing: 0.1,
                         }}
                         numberOfLines={1}>
-                        {Platform.OS === 'ios'
-                          ? `iOS ${Platform.Version}`
-                          : `Android ${Platform.Version}`}
+                        {appVersionString}
                       </Text>
                     </View>
 

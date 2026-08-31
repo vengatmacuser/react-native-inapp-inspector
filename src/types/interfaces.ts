@@ -128,6 +128,7 @@ export interface NetworkLog {
   /** Client identifier: axios, fetch, xhr, apollo, etc. */
   client?: 'axios' | 'fetch' | 'xhr' | 'apollo' | 'graphql' | string;
   caller?: string;
+  routeInfo?: RouteInfo;
 }
 
 export interface RouteInfo {

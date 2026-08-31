@@ -13,6 +13,7 @@ import TouchableScale from '../TouchableScale';
 import SegmentedTabs from '../SegmentedTabs';
 import HighlightText from '../HighlightText';
 import JsonViewer from '../JsonViewer';
+import CopyButton from '../CopyButton';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {
@@ -485,9 +486,27 @@ const CrashDetail: React.FC = React.memo(() => {
           <View style={{gap: 12}}>
             {/* Device & OS Diagnostics Card */}
             <View style={localStyles.sectionCard}>
-              <View style={localStyles.sectionCardHeader}>
-                <GlobeIcon color={AppColors.purple} size={14} />
-                <Text style={localStyles.sectionCardTitle}>{t('crash.deviceEnvironment')}</Text>
+              <View
+                style={[
+                  localStyles.sectionCardHeader,
+                  {justifyContent: 'space-between'},
+                ]}>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <GlobeIcon color={AppColors.purple} size={14} />
+                  <Text style={localStyles.sectionCardTitle}>
+                    {t('crash.deviceEnvironment')}
+                  </Text>
+                </View>
+                <CopyButton
+                  value={
+                    selectedCrash.deviceInfo || {
+                      platform: Platform.OS,
+                      osVersion: String(Platform.Version),
+                    }
+                  }
+                  label="Diagnostics"
+                />
               </View>
 
               <View style={localStyles.diagGrid}>
@@ -538,9 +557,22 @@ const CrashDetail: React.FC = React.memo(() => {
             {/* Memory Metrics Card */}
             {selectedCrash.memoryInfo && (
               <View style={localStyles.sectionCard}>
-                <View style={localStyles.sectionCardHeader}>
-                  <LayersIcon color={AppColors.purple} size={14} />
-                  <Text style={localStyles.sectionCardTitle}>{t('crash.jsHeapMemory')}</Text>
+                <View
+                  style={[
+                    localStyles.sectionCardHeader,
+                    {justifyContent: 'space-between'},
+                  ]}>
+                  <View
+                    style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    <LayersIcon color={AppColors.purple} size={14} />
+                    <Text style={localStyles.sectionCardTitle}>
+                      {t('crash.jsHeapMemory')}
+                    </Text>
+                  </View>
+                  <CopyButton
+                    value={selectedCrash.memoryInfo}
+                    label="Memory Info"
+                  />
                 </View>
 
                 <View style={localStyles.diagGrid}>
@@ -566,6 +598,19 @@ const CrashDetail: React.FC = React.memo(() => {
         {/* 3. BREADCRUMBS TAB */}
         {activeSubTab === 'breadcrumbs' && (
           <View style={{gap: 10}}>
+            {selectedCrash.breadcrumbs && selectedCrash.breadcrumbs.length > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'flex-end',
+                  marginBottom: 2,
+                }}>
+                <CopyButton
+                  value={selectedCrash.breadcrumbs}
+                  label="All Breadcrumbs"
+                />
+              </View>
+            )}
             {selectedCrash.breadcrumbs && selectedCrash.breadcrumbs.length > 0 ? (
               selectedCrash.breadcrumbs.map((b, idx) => (
                 <View key={`crumb_${idx}`} style={localStyles.breadcrumbCard}>
@@ -575,9 +620,20 @@ const CrashDetail: React.FC = React.memo(() => {
                         {b.type.toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={localStyles.breadcrumbTime}>
-                      {new Date(b.timestamp).toLocaleTimeString()}
-                    </Text>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                      }}>
+                      <Text style={localStyles.breadcrumbTime}>
+                        {new Date(b.timestamp).toLocaleTimeString()}
+                      </Text>
+                      <CopyButton
+                        value={`${new Date(b.timestamp).toLocaleTimeString()} [${b.type.toUpperCase()}] ${b.message}${b.data ? ' ' + JSON.stringify(b.data) : ''}`}
+                        label="Breadcrumb"
+                      />
+                    </View>
                   </View>
                   <Text style={localStyles.breadcrumbMessage}>{b.message}</Text>
                   {b.data && (

@@ -548,14 +548,32 @@ const ReduxTab = React.memo(() => {
               autoCapitalize="none"
             />
             {reduxSearch.length > 0 && (
-              <Pressable
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Clear search input"
-                onPress={() => setReduxSearch('')}
-                hitSlop={10}>
-                <ClearIcon color={AppColors.grayTextWeak} size={14} />
-              </Pressable>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                <View
+                  style={{
+                    backgroundColor: `${AppColors.purple}20`,
+                    borderRadius: 10,
+                    paddingHorizontal: 6,
+                    paddingVertical: 1.5,
+                  }}>
+                  <Text
+                    style={{
+                      color: AppColors.purple,
+                      fontSize: 9.5,
+                      fontFamily: AppFonts.interBold,
+                    }}>
+                    {filteredSlices.length}
+                  </Text>
+                </View>
+                <Pressable
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search input"
+                  onPress={() => setReduxSearch('')}
+                  hitSlop={10}>
+                  <ClearIcon color={AppColors.grayTextWeak} size={14} />
+                </Pressable>
+              </View>
             )}
           </View>
 

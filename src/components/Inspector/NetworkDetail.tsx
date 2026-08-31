@@ -568,10 +568,10 @@ const NetworkDetail = React.memo(() => {
             />
 
             {(() => {
-              const routeInfo = logRouteMapRef.current.get(
-                selected.id,
-              );
-              if (!routeInfo || routeInfo.path === 'Navigators')
+              const routeInfo =
+                logRouteMapRef.current.get(selected.id) ||
+                (selected as any)?.routeInfo;
+              if (!routeInfo || !routeInfo.path || routeInfo.path === 'Navigators')
                 return null;
               return <SourcePageCard routeInfo={routeInfo} />;
             })()}

@@ -433,9 +433,27 @@ const CrashTab = React.memo(() => {
                   autoCorrect={false}
                 />
                 {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
-                    <ClearIcon color={AppColors.grayTextWeak} size={14} />
-                  </TouchableOpacity>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+                    <View
+                      style={{
+                        backgroundColor: `${AppColors.purple}20`,
+                        borderRadius: 10,
+                        paddingHorizontal: 6,
+                        paddingVertical: 1.5,
+                      }}>
+                      <Text
+                        style={{
+                          color: AppColors.purple,
+                          fontSize: 9.5,
+                          fontFamily: AppFonts.interBold,
+                        }}>
+                        {filteredList.length}
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
+                      <ClearIcon color={AppColors.grayTextWeak} size={14} />
+                    </TouchableOpacity>
+                  </View>
                 )}
               </View>
 
@@ -539,6 +557,26 @@ const CrashTab = React.memo(() => {
               ? t('crash.emptySearchSubtitle')
               : t('crash.emptySubtitle')}
           </Text>
+          {searchQuery.length > 0 && (
+            <TouchableScale
+              onPress={() => setSearchQuery('')}
+              style={{
+                marginTop: 10,
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                borderRadius: 8,
+                backgroundColor: AppColors.purple,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11.5,
+                  color: AppColors.white,
+                }}>
+                Clear Search
+              </Text>
+            </TouchableScale>
+          )}
         </ScrollView>
       ) : (
         <FlatList

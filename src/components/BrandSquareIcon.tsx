@@ -8,7 +8,6 @@ import Svg, {
   RadialGradient,
   Stop,
   Rect,
-  Ellipse,
   Line,
 } from 'react-native-svg';
 
@@ -16,117 +15,167 @@ export const BrandSquareIcon = ({size = 56}: {size?: number}) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256" fill="none">
       <Defs>
+        {/* App Tile Background - Crisp Royal Deep Violet to Midnight */}
         <LinearGradient id="bs_tile" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#1E1B4B" />
-          <Stop offset="1" stopColor="#0F172A" />
+          <Stop offset="0%" stopColor="#1E1B4B" />
+          <Stop offset="50%" stopColor="#18182F" />
+          <Stop offset="100%" stopColor="#0B0F19" />
         </LinearGradient>
-        <LinearGradient id="bs_beam" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#818CF8" />
-          <Stop offset="0.5" stopColor="#A855F7" />
-          <Stop offset="1" stopColor="#EC4899" />
+
+        {/* Outer Neon Cyber Border */}
+        <LinearGradient id="bs_border" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+          <Stop offset="0%" stopColor="#818CF8" stopOpacity={0.9} />
+          <Stop offset="45%" stopColor="#C084FC" stopOpacity={0.8} />
+          <Stop offset="80%" stopColor="#F472B6" stopOpacity={0.85} />
+          <Stop offset="100%" stopColor="#38BDF8" stopOpacity={0.9} />
         </LinearGradient>
-        <LinearGradient id="bs_body" x1="0" y1="0" x2="0" y2="256" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#312E81" />
-          <Stop offset="1" stopColor="#1E1B4B" />
-        </LinearGradient>
-        <RadialGradient id="bs_iris" cx="40%" cy="40%" r="60%">
-          <Stop offset="0" stopColor="#FDE047" />
-          <Stop offset="0.7" stopColor="#F59E0B" />
-          <Stop offset="1" stopColor="#D97706" />
+
+        {/* Ambient Top Glow */}
+        <RadialGradient id="bs_top_glow" cx="50%" cy="15%" r="65%">
+          <Stop offset="0%" stopColor="#818CF8" stopOpacity={0.35} />
+          <Stop offset="60%" stopColor="#A855F7" stopOpacity={0.12} />
+          <Stop offset="100%" stopColor="#1E1B4B" stopOpacity={0} />
         </RadialGradient>
-        <LinearGradient id="bs_beak" x1="0" y1="0" x2="0" y2="20" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#FBBF24" />
-          <Stop offset="1" stopColor="#F97316" />
+
+        {/* Owl Outer Body Gradient - High Contrast */}
+        <LinearGradient id="bs_body" x1="64" y1="40" x2="192" y2="220" gradientUnits="userSpaceOnUse">
+          <Stop offset="0%" stopColor="#3730A3" />
+          <Stop offset="50%" stopColor="#2E1065" />
+          <Stop offset="100%" stopColor="#17123A" />
         </LinearGradient>
+
+        {/* Neon Cyber Beam Stroke */}
+        <LinearGradient id="bs_beam" x1="40" y1="40" x2="220" y2="220" gradientUnits="userSpaceOnUse">
+          <Stop offset="0%" stopColor="#67E8F9" />
+          <Stop offset="35%" stopColor="#818CF8" />
+          <Stop offset="70%" stopColor="#C084FC" />
+          <Stop offset="100%" stopColor="#F472B6" />
+        </LinearGradient>
+
+        {/* Eyes Radiant Iris */}
+        <RadialGradient id="bs_iris" cx="38%" cy="36%" r="65%">
+          <Stop offset="0%" stopColor="#FEF08A" />
+          <Stop offset="40%" stopColor="#FBBF24" />
+          <Stop offset="80%" stopColor="#F59E0B" />
+          <Stop offset="100%" stopColor="#D97706" />
+        </RadialGradient>
+
+        {/* Beak Gradient */}
+        <LinearGradient id="bs_beak" x1="124" y1="120" x2="132" y2="136" gradientUnits="userSpaceOnUse">
+          <Stop offset="0%" stopColor="#FDE047" />
+          <Stop offset="100%" stopColor="#EA580C" />
+        </LinearGradient>
+
+        {/* Diagnostic Lens Glass Flare */}
+        <RadialGradient id="bs_lens" cx="40%" cy="35%" r="65%">
+          <Stop offset="0%" stopColor="#A5F3FC" stopOpacity={0.4} />
+          <Stop offset="50%" stopColor="#38BDF8" stopOpacity={0.18} />
+          <Stop offset="100%" stopColor="#0284C7" stopOpacity={0.05} />
+        </RadialGradient>
       </Defs>
 
-      {/* Rounded App Tile Background */}
-      <Rect x="8" y="8" width="240" height="240" rx="54" fill="url(#bs_tile)" />
+      {/* ── 1. Rounded App Tile Base (Full Edge-to-Edge) ── */}
+      <Rect x="2" y="2" width="252" height="252" rx="58" fill="url(#bs_tile)" />
+      <Rect x="2" y="2" width="252" height="252" rx="58" fill="url(#bs_top_glow)" />
       <Rect
-        x="8"
-        y="8"
-        width="240"
-        height="240"
-        rx="54"
+        x="2"
+        y="2"
+        width="252"
+        height="252"
+        rx="58"
         fill="none"
-        stroke="url(#bs_beam)"
-        strokeWidth="3"
-        strokeOpacity={0.4}
+        stroke="url(#bs_border)"
+        strokeWidth="3.5"
       />
 
-      {/* Owl Outer Body Contour */}
+      {/* ── 2. Owl Outer Wings (Layered behind) ── */}
       <Path
-        d="M64 148 C60 102 72 68 92 56 L100 40 L118 60 Q128 55 138 60 L156 40 L164 56 C184 68 196 102 192 148 C196 178 182 202 150 210 C138 214 118 214 106 210 C74 202 60 178 64 148 Z"
+        d="M62 120 C42 152 46 194 76 210 C68 178 66 146 80 120 Z"
+        fill="#1E1B4B"
+        stroke="url(#bs_beam)"
+        strokeWidth="3"
+        strokeOpacity={0.75}
+      />
+      <Path
+        d="M194 120 C214 152 210 194 180 210 C188 178 190 146 176 120 Z"
+        fill="#1E1B4B"
+        stroke="url(#bs_beam)"
+        strokeWidth="3"
+        strokeOpacity={0.75}
+      />
+
+      {/* ── 3. Owl Body Contour ── */}
+      <Path
+        d="M58 146 C54 98 68 64 88 52 L98 34 L118 56 Q128 50 138 56 L158 34 L168 52 C188 64 202 98 198 146 C202 180 186 208 152 216 C140 220 116 220 104 216 C70 208 54 180 58 146 Z"
         fill="url(#bs_body)"
         stroke="url(#bs_beam)"
-        strokeWidth="4"
+        strokeWidth="4.5"
         strokeLinejoin="round"
       />
 
-      {/* Wings */}
-      <Path
-        d="M74 124 C58 154 60 190 86 204 C79 176 77 148 88 126 Z"
-        fill="#1E1B4B"
-        stroke="#818CF8"
-        strokeWidth="2.5"
-        strokeOpacity={0.6}
-      />
-      <Path
-        d="M182 124 C198 154 196 190 170 204 C177 176 179 148 168 126 Z"
-        fill="#1E1B4B"
-        stroke="#818CF8"
-        strokeWidth="2.5"
-        strokeOpacity={0.6}
-      />
+      {/* Inner Ear Highlights */}
+      <Path d="M98 42 L112 56 L102 57 Z" fill="#67E8F9" opacity={0.6} />
+      <Path d="M158 42 L144 56 L154 57 Z" fill="#F472B6" opacity={0.6} />
 
-      {/* Belly Screen Plate */}
+      {/* ── 4. Chest Terminal & Code Braces ── */}
       <Rect
-        x="105"
-        y="160"
-        width="46"
-        height="34"
-        rx="8"
-        fill="#0B0F19"
+        x="98"
+        y="162"
+        width="60"
+        height="38"
+        rx="10"
+        fill="#050811"
         stroke="url(#bs_beam)"
-        strokeWidth="2"
+        strokeWidth="2.5"
       />
-      {/* Code Emblem on Chest */}
-      <G stroke="#A5B4FC" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <Path d="M120 171 L114 177 L120 183" />
-        <Path d="M136 171 L142 177 L136 183" />
-        <Path d="M130 169 L126 185" stroke="#EC4899" />
+      <G strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <Path d="M116 174 L108 181 L116 188" stroke="#38BDF8" />
+        <Path d="M140 174 L148 181 L140 188" stroke="#38BDF8" />
+        <Path d="M131 171 L125 191" stroke="#F43F5E" />
       </G>
 
-      {/* Facial Disc & Mask */}
+      {/* ── 5. Facial Mask Plate ── */}
       <Path
-        d="M128 92 C148 70 186 78 186 108 C186 134 160 152 128 152 C96 152 70 134 70 108 C70 78 108 70 128 92 Z"
-        fill="#2E1065"
-        stroke="#818CF8"
-        strokeWidth="2"
-        strokeOpacity={0.6}
+        d="M128 88 C152 64 192 72 192 104 C192 132 162 152 128 152 C94 152 64 132 64 104 C64 72 104 64 128 88 Z"
+        fill="#1E1B4B"
+        stroke="url(#bs_beam)"
+        strokeWidth="2.8"
       />
 
-      {/* Right Eye (Normal Cute Eye) */}
-      <Circle cx="154" cy="108" r="17" fill="url(#bs_iris)" stroke="#0F172A" strokeWidth="2" />
-      <Circle cx="154" cy="108" r="8.5" fill="#0F172A" />
-      <Circle cx="157" cy="105" r="3" fill="#FFFFFF" />
-      <Circle cx="151" cy="111" r="1.5" fill="#FFFFFF" opacity={0.8} />
+      {/* ── 6. Right Eye (Glowing Owl Eye) ── */}
+      <Circle cx="156" cy="106" r="19" fill="url(#bs_iris)" stroke="#0F172A" strokeWidth="2.5" />
+      <Circle cx="156" cy="106" r="9.5" fill="#0B0F19" />
+      <Circle cx="159.5" cy="102.5" r="3.5" fill="#FFFFFF" />
+      <Circle cx="153" cy="109.5" r="1.8" fill="#FFFFFF" opacity={0.85} />
 
-      {/* Left Eye (Diagnostic Magnifier Lens) */}
-      <Circle cx="96" cy="104" r="20" fill="url(#bs_iris)" stroke="#0F172A" strokeWidth="2" />
-      <Circle cx="96" cy="104" r="10" fill="#0F172A" />
-      <Circle cx="99.5" cy="100.5" r="3.5" fill="#FFFFFF" />
-      <Circle cx="92" cy="107" r="1.8" fill="#FFFFFF" opacity={0.8} />
+      {/* ── 7. Left Eye (Diagnostic Magnifier Lens) ── */}
+      {/* Magnifier Glass Glow */}
+      <Circle cx="94" cy="104" r="30" fill="url(#bs_lens)" stroke="url(#bs_beam)" strokeWidth="6" />
+      <Line x1="72" y1="126" x2="48" y2="152" stroke="#0B0F19" strokeWidth="13" strokeLinecap="round" />
+      <Line x1="72" y1="126" x2="48" y2="152" stroke="url(#bs_beam)" strokeWidth="8" strokeLinecap="round" />
 
-      {/* Magnifier Glass Ring & Handle */}
-      <Line x1="76" y1="124" x2="55" y2="148" stroke="#0F172A" strokeWidth="12" strokeLinecap="round" />
-      <Line x1="76" y1="124" x2="55" y2="148" stroke="url(#bs_beam)" strokeWidth="7" strokeLinecap="round" />
-      <Circle cx="96" cy="104" r="28" fill="#38BDF8" fillOpacity={0.12} stroke="url(#bs_beam)" strokeWidth="6" />
+      {/* Eye Inside Magnifier */}
+      <Circle cx="94" cy="104" r="21" fill="url(#bs_iris)" stroke="#0F172A" strokeWidth="2.5" />
+      <Circle cx="94" cy="104" r="10.5" fill="#0B0F19" />
+      <Circle cx="98" cy="100" r="4" fill="#FFFFFF" />
+      <Circle cx="90.5" cy="107.5" r="2" fill="#FFFFFF" opacity={0.85} />
 
-      {/* Beak */}
+      {/* Lens Reflection Highlight */}
       <Path
-        d="M123.5 123 Q128 121 132.5 123 Q131 132 128 134.5 Q125 132 123.5 123 Z"
+        d="M74 94 A26 26 0 0 1 106 78"
+        stroke="#FFFFFF"
+        strokeWidth="3"
+        strokeLinecap="round"
+        opacity={0.65}
+        fill="none"
+      />
+
+      {/* ── 8. Beak ── */}
+      <Path
+        d="M123 120 Q128 118 133 120 Q131.5 133 128 137 Q124.5 133 123 120 Z"
         fill="url(#bs_beak)"
+        stroke="#78350F"
+        strokeWidth="1"
       />
     </Svg>
   );

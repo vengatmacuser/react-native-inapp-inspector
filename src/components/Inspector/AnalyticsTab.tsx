@@ -11,6 +11,7 @@ import {animateNextLayout, useInspector} from './InspectorContext';
 import AnalyticsEventCard from '../AnalyticsEventCard';
 import AnalyticsFilterModal from './AnalyticsFilterModal';
 import EndOfListFooter from '../EndOfListFooter';
+import EmptyState from '../EmptyState';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -1183,15 +1184,38 @@ const AnalyticsTab = React.memo(() => {
             autoCapitalize="none"
           />
           {analyticsSearch.length > 0 && (
-            <Pressable
-              onPress={() => setAnalyticsSearch('')}
-              hitSlop={10}
-              style={styles.clearBtn}>
-              <ClearIcon
-                color={AppColors.grayTextWeak}
-                size={14}
-              />
-            </Pressable>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}>
+              <View
+                style={{
+                  backgroundColor: `${AppColors.purple}20`,
+                  borderRadius: 10,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                }}>
+                <Text
+                  style={{
+                    color: AppColors.purple,
+                    fontSize: 9.5,
+                    fontFamily: AppFonts.interBold,
+                  }}>
+                  {filteredAnalyticsEvents.length}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setAnalyticsSearch('')}
+                hitSlop={10}
+                style={styles.clearBtn}>
+                <ClearIcon
+                  color={AppColors.grayTextWeak}
+                  size={13}
+                />
+              </Pressable>
+            </View>
           )}
         </View>
         <View style={styles.toolbarRight}>
@@ -1292,24 +1316,21 @@ const AnalyticsTab = React.memo(() => {
             removeClippedSubviews={true}
             renderToHardwareTextureAndroid={true}
             ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <View style={styles.emptyIconWrap}>
-                  <EmptyRadarIcon
-                    color={AppColors.purple}
-                    size={32}
-                  />
-                </View>
-                <Text style={styles.emptyTitle}>
-                  {analyticsSearch.length > 0
-                    ? 'No matching events'
-                    : 'No analytics events yet'}
-                </Text>
-                <Text style={styles.emptySub}>
-                  {analyticsSearch.length > 0
-                    ? 'Try adjusting your search.'
-                    : 'Call setupAnalyticsLogger(analytics()) at app start.'}
-                </Text>
-              </View>
+              <EmptyState
+                isSearch={analyticsSearch.length > 0}
+                searchQuery={analyticsSearch}
+                customTitle={
+                  analyticsSearch.length > 0
+                    ? 'No matching analytics events'
+                    : 'No analytics events yet'
+                }
+                customSub={
+                  analyticsSearch.length > 0
+                    ? `No events matched "${analyticsSearch}"`
+                    : 'Call setupAnalyticsLogger(analytics()) at app start.'
+                }
+                onClearSearch={() => setAnalyticsSearch('')}
+              />
             }
             ListFooterComponent={
               filteredAnalyticsEvents.length > 0 ? (

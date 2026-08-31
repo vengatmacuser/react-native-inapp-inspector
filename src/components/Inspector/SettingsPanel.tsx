@@ -207,8 +207,8 @@ const SettingsPanel = () => {
     bundle: Boolean(tabVisibility?.bundle),
     performance: Boolean(tabVisibility?.performance),
     crash: Boolean(tabVisibility?.crash),
-    device: Boolean(tabVisibility?.device ?? true),
-    storage: Boolean(tabVisibility?.storage ?? true),
+    device: Boolean(tabVisibility?.device),
+    storage: Boolean(tabVisibility?.storage),
   }));
 
   // Synchronize staged state with tabVisibility when tabVisibility updates
@@ -221,8 +221,8 @@ const SettingsPanel = () => {
       bundle: Boolean(tabVisibility?.bundle),
       performance: Boolean(tabVisibility?.performance),
       crash: Boolean(tabVisibility?.crash),
-      device: Boolean(tabVisibility?.device ?? true),
-      storage: Boolean(tabVisibility?.storage ?? true),
+      device: Boolean(tabVisibility?.device),
+      storage: Boolean(tabVisibility?.storage),
     });
   }, [tabVisibility]);
 

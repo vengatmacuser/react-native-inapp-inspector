@@ -1,5 +1,6 @@
 import axios from "axios";
 import {setupGlobalCrashHandler} from "./crashHandler";
+import {RouteInfo} from "../types";
 
 type NetworkLog = {
   id: number;
@@ -14,12 +15,20 @@ type NetworkLog = {
   client?: string; // ✅ Captures request client: axios, fetch, xhr, apollo, etc.
   requestHeaders?: Record<string, string>;
   responseHeaders?: Record<string, string>;
+  routeInfo?: RouteInfo;
 };
 
 let logs: NetworkLog[] = [];
 let listeners: ((logs: NetworkLog[]) => void)[] = [];
 let counter = 0;
 let isNetworkModuleEnabled = true;
+let currentRouteProvider: (() => RouteInfo | null) | null = null;
+
+export const setRouteInfoProvider = (
+  provider: (() => RouteInfo | null) | null,
+) => {
+  currentRouteProvider = provider;
+};
 
 export const setNetworkModuleEnabled = (enabled: boolean) => {
   isNetworkModuleEnabled = enabled;
@@ -232,6 +241,8 @@ export const setupNetworkLogger = () => {
           client = 'axios';
         }
 
+        const currentRoute = currentRouteProvider ? currentRouteProvider() : null;
+
         addOrUpdateLog({
           id,
           url: finalUrl,
@@ -239,6 +250,7 @@ export const setupNetworkLogger = () => {
           startTime: start,
           caller,
           client,
+          routeInfo: currentRoute || undefined,
           request: method === "GET" ? undefined : parseRequestData(options?.body),
           requestHeaders,
         });
@@ -347,6 +359,8 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
     config.__logStart = start;
     config.__logCaller = caller;
 
+    const currentRoute = currentRouteProvider ? currentRouteProvider() : null;
+
     addOrUpdateLog({
       id,
       url,
@@ -354,6 +368,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       startTime: start,
       caller,
       client: 'axios',
+      routeInfo: currentRoute || undefined,
       request: method === "GET" ? undefined : parseRequestData(config.data),
       requestHeaders: normaliseHeaders(config.headers),
     });

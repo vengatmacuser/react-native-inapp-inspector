@@ -6,6 +6,7 @@ import {useTranslation} from '../i18n';
 import TreeNode from './TreeNode';
 import SegmentedTabs from './SegmentedTabs';
 import HighlightText from './HighlightText';
+import CopyButton from './CopyButton';
 import {PrettyIcon, RawIcon, TableIcon} from './NetworkIcons';
 
 // Styles
@@ -260,6 +261,7 @@ const JsonViewer = React.memo(({
               setMode(key as 'pretty' | 'raw' | 'table')
             }
           />
+          <CopyButton value={data} label="JSON" />
         </View>
       )}
 

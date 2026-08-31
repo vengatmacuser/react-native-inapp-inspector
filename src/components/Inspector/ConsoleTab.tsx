@@ -682,6 +682,16 @@ const ConsoleTab = React.memo(() => {
             isSearch={
               logSearch.length > 0 || logFilters.size > 0
             }
+            searchQuery={logSearch}
+            customTitle={
+              logSearch.length > 0
+                ? 'No matching console logs'
+                : 'No console logs'
+            }
+            onClearSearch={() => {
+              setLogSearch('');
+              setLogFilters(new Set());
+            }}
           />
         }
         ListFooterComponent={

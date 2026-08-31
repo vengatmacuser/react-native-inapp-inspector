@@ -26,6 +26,7 @@ import {
 import {
   formatDisplayUrl,
   getNavigationInfo,
+  getLogPageName,
   deduplicateLogs,
   getDomainColor,
   getEventCategory,
@@ -55,6 +56,7 @@ import {
   subscribeNetworkLogs,
   setNetworkModuleEnabled,
   setMaxNetworkLogsLimit,
+  setRouteInfoProvider,
 } from './customHooks/networkLogger';
 
 // Console
@@ -357,8 +359,8 @@ const NetworkInspector = ({
     bundle: false,
     performance: false,
     crash: false,
-    device: true,
-    storage: true,
+    device: false,
+    storage: false,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -419,8 +421,8 @@ const NetworkInspector = ({
       bundle: false,
       performance: false,
       crash: false,
-      device: true,
-      storage: true,
+      device: false,
+      storage: false,
     });
     setDefaultTab('apis');
     setIsAutoRamLimitEnabled(true);
@@ -490,6 +492,8 @@ const NetworkInspector = ({
             bundle: false,
             performance: false,
             crash: false,
+            device: false,
+            storage: false,
           },
           ...(saved.tabVisibility || {}),
           apis: true,
@@ -708,12 +712,23 @@ const NetworkInspector = ({
   const hasNavigationContext = navigationContext !== undefined;
 
   const currentRouteRef = useRef<RouteInfo>({
-    path: 'Navigators',
+    path: '',
     params: null,
   });
+
+  useEffect(() => {
+    setRouteInfoProvider(() => currentRouteRef.current);
+    return () => {
+      setRouteInfoProvider(null);
+    };
+  }, []);
+
   useEffect(() => {
     if (navState) {
-      currentRouteRef.current = getNavigationInfo(navState);
+      const info = getNavigationInfo(navState);
+      if (info?.path) {
+        currentRouteRef.current = info;
+      }
     }
   }, [navState]);
 
@@ -723,9 +738,22 @@ const NetworkInspector = ({
     const updateState = () => {
       try {
         if (typeof navigationRef.isReady === 'function' && navigationRef.isReady()) {
+          const currentRoute = typeof navigationRef.getCurrentRoute === 'function'
+            ? navigationRef.getCurrentRoute()
+            : null;
+          if (currentRoute?.name) {
+            currentRouteRef.current = {
+              path: currentRoute.name,
+              params: currentRoute.params || null,
+            };
+          }
           const state = navigationRef.getRootState();
           if (state) {
             setNavState(state);
+            const routeInfo = getNavigationInfo(state);
+            if (routeInfo?.path) {
+              currentRouteRef.current = routeInfo;
+            }
           }
         }
       } catch (err) {
@@ -1077,7 +1105,10 @@ const NetworkInspector = ({
         if (freshIds.size > 0) {
           freshIds.forEach(id => {
             if (!logRouteMapRef.current.has(id)) {
-              logRouteMapRef.current.set(id, currentRouteRef.current);
+              const matchedLog = deduped.find(l => l.id === id);
+              const resolvedRoute =
+                (matchedLog as any)?.routeInfo || currentRouteRef.current;
+              logRouteMapRef.current.set(id, resolvedRoute);
             }
           });
           setNewLogIds(freshIds);
@@ -1091,6 +1122,13 @@ const NetworkInspector = ({
         const deduped = deduplicateLogs(raw);
         const incoming = new Set(deduped.map(l => l.id));
         prevLogIdsRef.current = incoming;
+        deduped.forEach(l => {
+          if (!logRouteMapRef.current.has(l.id)) {
+            const resolvedRoute =
+              (l as any)?.routeInfo || currentRouteRef.current;
+            logRouteMapRef.current.set(l.id, resolvedRoute);
+          }
+        });
         setLogs(deduped);
       } else {
         timeoutId = setTimeout(updateNetworkState, 250);
@@ -1378,8 +1416,9 @@ const NetworkInspector = ({
 
     for (let i = 0; i < filteredLogs.length; i++) {
       const log = filteredLogs[i];
-      const routeInfo = logRouteMapRef.current.get(log.id);
-      const pageName = routeInfo?.path || 'Navigators';
+      const routeInfo =
+        logRouteMapRef.current.get(log.id) || (log as any)?.routeInfo;
+      const pageName = getLogPageName(log, routeInfo);
 
       if (
         groups.length === 0 ||
@@ -1680,7 +1719,23 @@ const NetworkInspector = ({
           log.sourceMethod || '',
         ].join(' ').toLowerCase();
 
-        return queryTokens.every(token => searchTarget.includes(token));
+        return queryTokens.every(token => {
+          if (token.startsWith('level:') || token.startsWith('is:') || token.startsWith('type:')) {
+            const flag = token.replace(/^(level:|is:|type:)/, '').trim();
+            if (flag === 'error' || flag === 'err') return log.type === 'error';
+            if (flag === 'warn' || flag === 'warning') return log.type === 'warn';
+            if (flag === 'info') return log.type === 'info';
+            if (flag === 'log') return log.sourceMethod === 'log';
+            if (flag === 'analytics') return (log.message || '').toLowerCase().includes('[analytics');
+          }
+          if (token === 'error' || token === 'err') {
+            return log.type === 'error' || searchTarget.includes(token);
+          }
+          if (token === 'warn' || token === 'warning') {
+            return log.type === 'warn' || searchTarget.includes(token);
+          }
+          return searchTarget.includes(token);
+        });
       });
     }
 
@@ -2332,3 +2387,26 @@ export {
   CrashFilterType,
   BreadcrumbType,
 } from './types';
+
+export {
+  AppFonts,
+  setAppFonts,
+  type AppFontConfig,
+} from './styles/AppFonts';
+
+export {
+  AppColors,
+  setAppColors,
+  getThemeColors,
+  updateAppColorsTheme,
+} from './styles/AppColors';
+
+export {
+  t,
+  i18n,
+  useTranslation,
+  setLanguage,
+  addTranslations,
+  setTranslations,
+  I18nextProvider,
+} from './i18n';

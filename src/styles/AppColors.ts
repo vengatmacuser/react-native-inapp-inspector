@@ -405,4 +405,13 @@ export const updateAppColorsTheme = (isDark: boolean) => {
   Object.assign(AppColors, getThemeColors(isDark));
 };
 
+/**
+ * Configure or override specific color tokens used throughout the inspector.
+ */
+export const setAppColors = (customColors: Partial<typeof LightColors>): void => {
+  if (!customColors || typeof customColors !== 'object') return;
+  Object.assign(AppColors, customColors);
+  Object.assign(LightColors, customColors);
+};
+
 export default AppColors;

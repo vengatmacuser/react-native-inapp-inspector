@@ -198,16 +198,37 @@ export const getNavigationInfo = (
   state: any,
   path: string[] = [],
 ): RouteInfo => {
-  if (!state?.routes) {
+  if (!state) {
     return {
-      path: path.length > 0 ? path.join(' ➔ ') : 'Navigators',
+      path: path.length > 0 ? path.join(' ➔ ') : '',
       params: null,
     };
   }
-  const route = state.routes[state.index ?? 0];
+  if (state.name && !state.routes) {
+    const fullPath =
+      path.length > 0 ? [...path, state.name].join(' ➔ ') : state.name;
+    return {path: fullPath, params: state.params || null};
+  }
+  if (
+    !state.routes ||
+    !Array.isArray(state.routes) ||
+    state.routes.length === 0
+  ) {
+    return {
+      path: path.length > 0 ? path.join(' ➔ ') : '',
+      params: null,
+    };
+  }
+  const index =
+    typeof state.index === 'number' &&
+    state.index >= 0 &&
+    state.index < state.routes.length
+      ? state.index
+      : 0;
+  const route = state.routes[index];
   if (!route) {
     return {
-      path: path.length > 0 ? path.join(' ➔ ') : 'Navigators',
+      path: path.length > 0 ? path.join(' ➔ ') : '',
       params: null,
     };
   }
@@ -217,8 +238,94 @@ export const getNavigationInfo = (
     return getNavigationInfo(route.state, currentPath);
   }
   const resolved =
-    currentPath.length > 0 ? currentPath.join(' ➔ ') : 'Navigators';
+    currentPath.length > 0 ? currentPath.join(' ➔ ') : route.name || '';
   return {path: resolved, params: route.params || null};
+};
+
+export const getLogPageName = (
+  log: NetworkLog,
+  routeInfo?: RouteInfo | null,
+): string => {
+  // 1. If routeInfo has a valid path, resolve the leaf screen name
+  const effectiveRoute = routeInfo || (log as any)?.routeInfo;
+  if (
+    effectiveRoute &&
+    effectiveRoute.path &&
+    effectiveRoute.path !== 'Navigators'
+  ) {
+    const parts = effectiveRoute.path
+      .split(' ➔ ')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+    if (parts.length > 0) {
+      return parts[parts.length - 1]; // Leaf screen name, e.g. "HomeScreen", "ProfileScreen"
+    }
+    return effectiveRoute.path;
+  }
+
+  // 2. Extract screen / component name from log.caller stack trace
+  if (log.caller && log.caller !== 'Unknown') {
+    try {
+      const match = log.caller.match(/([^/\\]+)\.(tsx|jsx|ts|js)/i);
+      if (match && match[1]) {
+        const file = match[1];
+        const ignored = [
+          'networklogger',
+          'fetch',
+          'axios',
+          'apiclient',
+          'request',
+          'http',
+          'index',
+          'nativeinspector',
+          'inappinspector',
+          'bundleanalyzer',
+        ];
+        if (!ignored.includes(file.toLowerCase())) {
+          return file;
+        }
+      }
+    } catch (e) {}
+  }
+
+  // 3. Fallback to API resource / endpoint category from URL
+  if (log.url) {
+    try {
+      const cleanUrl = log.url.split('?')[0].split('#')[0];
+      const withoutProto = cleanUrl.replace(/^https?:\/\//i, '');
+      const slashIdx = withoutProto.indexOf('/');
+      if (slashIdx !== -1) {
+        const pathSegments = withoutProto
+          .substring(slashIdx + 1)
+          .split('/')
+          .filter(Boolean);
+        const ignoredSegments = [
+          'api',
+          'v1',
+          'v2',
+          'v3',
+          'v4',
+          'rest',
+          'graphql',
+          'json',
+          'data',
+          'service',
+          'app',
+        ];
+        const meaningful = pathSegments.filter(
+          s => !ignoredSegments.includes(s.toLowerCase()),
+        );
+        if (meaningful.length > 0) {
+          const seg = meaningful[0];
+          return seg.charAt(0).toUpperCase() + seg.slice(1);
+        }
+      }
+      const host = withoutProto.split('/')[0];
+      if (host) return host;
+    } catch (e) {}
+  }
+
+  return 'General';
 };
 
 export const flattenObject = (obj: any, prefix = ''): Record<string, any> => {
@@ -407,6 +514,107 @@ export const getAppName = (): string => {
   }
 
   return 'App';
+};
+
+export const getAppVersionAndBuild = (): {
+  version: string;
+  build: string;
+  formatted: string;
+} => {
+  let version = '';
+  let build = '';
+
+  // 1. Try ExpoApplication / ExponentConstants
+  const ExpoApplication = NativeModules.ExpoApplication;
+  if (ExpoApplication) {
+    if (typeof ExpoApplication.nativeAppVersion === 'string') {
+      version = ExpoApplication.nativeAppVersion;
+    }
+    if (typeof ExpoApplication.nativeBuildVersion === 'string') {
+      build = ExpoApplication.nativeBuildVersion;
+    }
+  }
+
+  const ExponentConstants = NativeModules.ExponentConstants;
+  if (ExponentConstants) {
+    const manifest = ExponentConstants.manifest || ExponentConstants.expoConfig;
+    if (manifest) {
+      if (!version && manifest.version) {
+        version = String(manifest.version);
+      }
+      if (!build) {
+        if (manifest.ios?.buildNumber) {
+          build = String(manifest.ios.buildNumber);
+        } else if (manifest.android?.versionCode) {
+          build = String(manifest.android.versionCode);
+        }
+      }
+    }
+  }
+
+  // 2. Try react-native-device-info
+  const RNDeviceInfo = NativeModules.RNDeviceInfo;
+  if (RNDeviceInfo) {
+    if (!version) {
+      if (typeof RNDeviceInfo.appVersion === 'string') {
+        version = RNDeviceInfo.appVersion;
+      } else if (typeof RNDeviceInfo.getVersion === 'function') {
+        try {
+          version = RNDeviceInfo.getVersion();
+        } catch (e) {}
+      }
+    }
+    if (!build) {
+      if (typeof RNDeviceInfo.buildNumber === 'string') {
+        build = RNDeviceInfo.buildNumber;
+      } else if (typeof RNDeviceInfo.getBuildNumber === 'function') {
+        try {
+          build = RNDeviceInfo.getBuildNumber();
+        } catch (e) {}
+      }
+    }
+  }
+
+  // 3. Try PlatformConstants / Platform.constants
+  const constants =
+    (Platform.constants as any) || NativeModules.PlatformConstants;
+  if (constants) {
+    if (
+      !version &&
+      constants.Version &&
+      typeof constants.Version === 'string' &&
+      constants.Version.includes('.')
+    ) {
+      version = constants.Version;
+    }
+    if (!version && constants.reactNativeVersion) {
+      const rnv = constants.reactNativeVersion;
+      if (rnv.major !== undefined) {
+        version = `${rnv.major}.${rnv.minor}.${rnv.patch}`;
+      }
+    }
+  }
+
+  // 4. Try Android AppInfo
+  const AppInfo = NativeModules.AppInfo;
+  if (AppInfo) {
+    if (!version && typeof AppInfo.versionName === 'string') {
+      version = AppInfo.versionName;
+    }
+    if (!build && typeof AppInfo.versionCode === 'string') {
+      build = AppInfo.versionCode;
+    }
+  }
+
+  // Fallbacks
+  if (!version) version = '1.0.0';
+  if (!build) build = '1';
+
+  return {
+    version,
+    build,
+    formatted: `${version} (${build})`,
+  };
 };
 
 export const handleOpenExternalLink = (url: string): void => {

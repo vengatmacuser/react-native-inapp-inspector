@@ -86,9 +86,9 @@ const InfoRow = React.memo(
           styles.infoRow,
           isLast && {borderBottomWidth: 0},
         ]}>
-        <View style={{flex: 1, paddingRight: 8}}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-            <Text style={styles.infoLabel}>{label}</Text>
+        <View style={{flex: 1, paddingRight: 8, minWidth: 0}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6}}>
+            <Text style={styles.infoLabel} numberOfLines={2}>{label}</Text>
             {badge && (
               <View
                 style={[
@@ -101,9 +101,17 @@ const InfoRow = React.memo(
               </View>
             )}
           </View>
-          {subtext && <Text style={styles.infoSubtext}>{subtext}</Text>}
+          {subtext && <Text style={styles.infoSubtext} numberOfLines={2}>{subtext}</Text>}
         </View>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            flexShrink: 0,
+            maxWidth: '58%',
+            justifyContent: 'flex-end',
+          }}>
           <Text
             style={[
               styles.infoValue,
@@ -111,7 +119,7 @@ const InfoRow = React.memo(
                 color: value ? AppColors.emerald500 : AppColors.errorColor,
               },
             ]}
-            numberOfLines={2}
+            numberOfLines={3}
             selectable>
             {displayValue}
           </Text>
@@ -446,6 +454,16 @@ export const DeviceInfoTab = React.memo(() => {
     return text.toLowerCase().includes(search.toLowerCase().trim());
   };
 
+  const hasAnyMatch = useMemo(() => {
+    if (!search.trim()) return true;
+    const query = search.toLowerCase().trim();
+    return (
+      JSON.stringify(fullDeviceData).toLowerCase().includes(query) ||
+      ipAddress.toLowerCase().includes(query) ||
+      pseudoUDID.toLowerCase().includes(query)
+    );
+  }, [search, fullDeviceData, ipAddress, pseudoUDID]);
+
   return (
     <View style={styles.container}>
       {/* ─── Top Sub-Tabs Navigation Bar ─── */}
@@ -527,11 +545,11 @@ export const DeviceInfoTab = React.memo(() => {
                 <AndroidIcon size={20} color={AppColors.white} />
               )}
             </View>
-            <View style={{flex: 1}}>
-              <Text style={styles.heroTitle}>
+            <View style={{flex: 1, minWidth: 0}}>
+              <Text style={styles.heroTitle} numberOfLines={1} ellipsizeMode="tail">
                 {deviceMetrics?.deviceModel || (Platform.constants as any)?.Model || (Platform.OS === 'ios' ? 'Apple iPhone' : 'Android Device')}
               </Text>
-              <Text style={styles.heroSubtitle}>
+              <Text style={styles.heroSubtitle} numberOfLines={1} ellipsizeMode="tail">
                 {Platform.OS === 'ios' ? `iOS ${Platform.Version}` : `Android ${Platform.Version} (API ${deviceMetrics?.apiLevel || Platform.Version})`}
               </Text>
             </View>
@@ -544,22 +562,22 @@ export const DeviceInfoTab = React.memo(() => {
           {/* Quick Metrics Strip */}
           <View style={styles.heroMetricsStrip}>
             <View style={styles.heroMetricItem}>
-              <Text style={styles.heroMetricLabel}>IP ADDRESS</Text>
-              <Text style={styles.heroMetricValue} numberOfLines={1}>
+              <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">IP ADDRESS</Text>
+              <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
                 {ipAddress}
               </Text>
             </View>
             <View style={styles.heroMetricDivider} />
             <View style={styles.heroMetricItem}>
-              <Text style={styles.heroMetricLabel}>RAM (USED/TOTAL)</Text>
-              <Text style={styles.heroMetricValue}>
+              <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">RAM (USED/TOTAL)</Text>
+              <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
                 {usedRamMb}/{totalRamMb} MB
               </Text>
             </View>
             <View style={styles.heroMetricDivider} />
             <View style={styles.heroMetricItem}>
-              <Text style={styles.heroMetricLabel}>UPTIME</Text>
-              <Text style={styles.heroMetricValue}>{deviceUptime}</Text>
+              <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">UPTIME</Text>
+              <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">{deviceUptime}</Text>
             </View>
           </View>
         </View>
@@ -947,6 +965,22 @@ export const DeviceInfoTab = React.memo(() => {
           </View>
         )}
 
+        {/* Empty search results state */}
+        {search.trim().length > 0 && !hasAnyMatch && (
+          <View style={styles.emptySearchCard}>
+            <SearchIcon size={26} color={AppColors.grayTextWeak} />
+            <Text style={styles.emptySearchTitle}>No matching device specifications</Text>
+            <Text style={styles.emptySearchSubtitle}>
+              No properties matched &ldquo;{search}&rdquo;
+            </Text>
+            <TouchableScale
+              onPress={() => setSearch('')}
+              style={styles.clearSearchBtn}>
+              <Text style={styles.clearSearchBtnText}>Clear Search</Text>
+            </TouchableScale>
+          </View>
+        )}
+
         <View style={{height: 48}} />
       </ScrollView>
     </View>
@@ -1120,6 +1154,8 @@ const styles = StyleSheet.create({
   heroMetricItem: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 2,
+    minWidth: 0,
   },
   heroMetricLabel: {
     fontFamily: AppFonts.interBold,
@@ -1191,13 +1227,48 @@ const styles = StyleSheet.create({
     fontFamily: AppFonts.interBold,
     fontSize: 12,
     color: AppColors.primaryBlack,
-    maxWidth: 180,
+    flexShrink: 1,
     textAlign: 'right',
   },
   rowCopyBtn: {
     padding: 4,
     borderRadius: 4,
     backgroundColor: AppColors.grayBackground,
+  },
+  emptySearchCard: {
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  emptySearchTitle: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 13.5,
+    color: AppColors.primaryBlack,
+    textAlign: 'center',
+  },
+  emptySearchSubtitle: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 11.5,
+    color: AppColors.grayTextWeak,
+    textAlign: 'center',
+  },
+  clearSearchBtn: {
+    marginTop: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6.5,
+    borderRadius: 8,
+    backgroundColor: AppColors.purple,
+  },
+  clearSearchBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 11,
+    color: AppColors.white,
   },
 });
 

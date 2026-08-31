@@ -1,7 +1,13 @@
 import React from 'react';
-import en from './locales/en.json';
+import enLocale from './locales/en.json';
 
 type TranslationParams = Record<string, any>;
+
+const localeRegistry: Record<string, Record<string, any>> = {
+  en: enLocale,
+};
+
+let currentLanguage = 'en';
 
 /**
  * Lightweight nested lookup for translation keys (e.g. "network.headers")
@@ -31,7 +37,12 @@ function interpolate(template: string, params?: TranslationParams): string {
  * Standalone zero-dependency translation function
  */
 export function t(key: string, optionsOrFallback?: TranslationParams | string): string {
-  const raw = lookupKey(en, key);
+  const activeBundle = localeRegistry[currentLanguage] || localeRegistry.en;
+  let raw = lookupKey(activeBundle, key);
+  if (raw === undefined && currentLanguage !== 'en') {
+    raw = lookupKey(localeRegistry.en, key);
+  }
+
   if (typeof raw === 'string') {
     if (typeof optionsOrFallback === 'object' && optionsOrFallback !== null) {
       return interpolate(raw, optionsOrFallback);
@@ -44,9 +55,33 @@ export function t(key: string, optionsOrFallback?: TranslationParams | string): 
   return key;
 }
 
+export function setLanguage(lang: string): void {
+  if (typeof lang === 'string' && lang.trim()) {
+    currentLanguage = lang.trim();
+    i18n.language = currentLanguage;
+  }
+}
+
+export function addTranslations(lang: string, translations: Record<string, any>): void {
+  if (!lang || !translations || typeof translations !== 'object') return;
+  localeRegistry[lang] = {
+    ...(localeRegistry[lang] || {}),
+    ...translations,
+  };
+}
+
+export function setTranslations(translations: Record<string, any>, lang: string = 'en'): void {
+  addTranslations(lang, translations);
+}
+
 export const i18n = {
   t,
-  language: 'en',
+  language: currentLanguage,
+  changeLanguage: setLanguage,
+  addResourceBundle: (lng: string, _ns: string, resources: any) => addTranslations(lng, resources),
+  setLanguage,
+  addTranslations,
+  setTranslations,
 };
 
 /**

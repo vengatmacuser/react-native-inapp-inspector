@@ -357,9 +357,27 @@ export const StorageTab = React.memo(() => {
             clearButtonMode="while-editing"
           />
           {search.length > 0 && (
-            <TouchableScale onPress={() => setSearch('')} hitSlop={8}>
-              <ClearIcon size={13} color={AppColors.grayTextWeak} />
-            </TouchableScale>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+              <View
+                style={{
+                  backgroundColor: `${AppColors.purple}20`,
+                  borderRadius: 10,
+                  paddingHorizontal: 6,
+                  paddingVertical: 1.5,
+                }}>
+                <Text
+                  style={{
+                    color: AppColors.purple,
+                    fontSize: 9.5,
+                    fontFamily: AppFonts.interBold,
+                  }}>
+                  {filteredEntries.length}
+                </Text>
+              </View>
+              <TouchableScale onPress={() => setSearch('')} hitSlop={8}>
+                <ClearIcon size={13} color={AppColors.grayTextWeak} />
+              </TouchableScale>
+            </View>
           )}
         </View>
 

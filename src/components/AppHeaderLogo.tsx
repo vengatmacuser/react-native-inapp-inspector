@@ -34,8 +34,12 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
       return (
         <View
           style={[
-            logoStyles.container,
-            {width: size, height: size, padding: 0, borderRadius: Math.round(size * 0.28)},
+            logoStyles.svgContainer,
+            {
+              width: size,
+              height: size,
+              borderRadius: Math.round(size * 0.23),
+            },
           ]}>
           {clonedIcon}
         </View>
@@ -44,8 +48,12 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
     return (
       <View
         style={[
-          logoStyles.container,
-          {width: size, height: size, borderRadius: Math.round(size * 0.28)},
+          logoStyles.imageContainer,
+          {
+            width: size,
+            height: size,
+            borderRadius: Math.round(size * 0.23),
+          },
         ]}>
         <Image
           source={customIcon as ImageSourcePropType}
@@ -65,7 +73,15 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
     });
 
     return (
-      <View style={[logoStyles.container, {width: size, height: size}]}>
+      <View
+        style={[
+          logoStyles.imageContainer,
+          {
+            width: size,
+            height: size,
+            borderRadius: Math.round(size * 0.23),
+          },
+        ]}>
         <Image
           source={nativeSource}
           style={logoStyles.image}
@@ -80,8 +96,12 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
   return (
     <View
       style={[
-        logoStyles.container,
-        {width: size, height: size, padding: 0, borderRadius: Math.round(size * 0.28)},
+        logoStyles.svgContainer,
+        {
+          width: size,
+          height: size,
+          borderRadius: Math.round(size * 0.23),
+        },
       ]}>
       <BrandSquareIcon size={size} />
     </View>
@@ -89,20 +109,34 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
 };
 
 const logoStyles = StyleSheet.create({
-  container: {
-    borderRadius: 10,
+  svgContainer: {
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  imageContainer: {
     overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.28)',
-    padding: 2.5,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    padding: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 7.5,
+    borderRadius: 8,
   },
 });
 

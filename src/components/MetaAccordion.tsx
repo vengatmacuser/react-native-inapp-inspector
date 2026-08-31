@@ -27,6 +27,7 @@ import {
 
 // Components
 import TouchableScale from './TouchableScale';
+import CopyButton from './CopyButton';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -97,9 +98,23 @@ const MetaAccordion = ({
       <Pressable onPress={toggleOpen} hitSlop={12}>
         <View style={styles.metaHeader}>
           <Text style={styles.metaTitle}>Metadata</Text>
-          <Animated.View style={chevronStyle}>
-            <ChevronIcon color={AppColors.grayTextWeak} size={14} />
-          </Animated.View>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+            <CopyButton
+              value={{
+                status: status ?? 0,
+                duration: duration != null ? `${duration} ms` : '—',
+                size: size || '—',
+                triggeredAt: triggeredAt || '',
+                method: method || 'GET',
+                contentType: contentType || 'application/json',
+                url: url || '',
+              }}
+              label="Metadata"
+            />
+            <Animated.View style={chevronStyle}>
+              <ChevronIcon color={AppColors.grayTextWeak} size={14} />
+            </Animated.View>
+          </View>
         </View>
       </Pressable>
 

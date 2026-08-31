@@ -18,8 +18,9 @@ export function matchNetworkLogQuery(
 ): boolean {
   if (!searchQuery || searchQuery.trim().length === 0) return true;
 
+  // Split tokens by spaces or commas while respecting quotes
   const rawTokens =
-    searchQuery.trim().match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+    searchQuery.trim().match(/(?:[^\s,"']+|"[^"]*"|'[^']*')+/g) || [];
 
   if (rawTokens.length === 0) return true;
 
@@ -32,27 +33,38 @@ export function matchNetworkLogQuery(
   const statusNum =
     typeof log.status === 'number'
       ? log.status
-      : parseInt(String(log.status || 0), 10);
-  const statusStr = String(log.status ?? '');
+      : log.status != null
+      ? parseInt(String(log.status), 10)
+      : null;
+  const statusStr = log.status != null ? String(log.status) : 'pending';
   const durationNum = log.duration || 0;
   const clientRaw = log.client || '';
+  const callerRaw = log.caller || '';
   const reqRaw =
     typeof log.request === 'string'
       ? log.request
-      : JSON.stringify(log.request || '');
+      : log.request != null
+      ? JSON.stringify(log.request)
+      : '';
   const resRaw =
     typeof log.response === 'string'
       ? log.response
-      : JSON.stringify(log.response || '');
-  const reqHeadersRaw = JSON.stringify(log.requestHeaders || '');
-  const resHeadersRaw = JSON.stringify(log.responseHeaders || '');
-  const pathRaw = routePath || '';
+      : log.response != null
+      ? JSON.stringify(log.response)
+      : '';
+  const reqHeadersRaw = log.requestHeaders
+    ? JSON.stringify(log.requestHeaders)
+    : '';
+  const resHeadersRaw = log.responseHeaders
+    ? JSON.stringify(log.responseHeaders)
+    : '';
+  const pathRaw = routePath || (log as any)?.routeInfo?.path || '';
 
   // Construct search corpus based on active scope
   const getScopedCorpus = (caseSens: boolean): string => {
     let parts: string[] = [];
     if (scope === 'url') {
-      parts = [methodRaw, urlRaw, pathRaw];
+      parts = [methodRaw, urlRaw, pathRaw, callerRaw];
     } else if (scope === 'reqBody') {
       parts = [reqRaw];
     } else if (scope === 'resBody') {
@@ -65,6 +77,7 @@ export function matchNetworkLogQuery(
         urlRaw,
         statusStr,
         pathRaw,
+        callerRaw,
         clientRaw,
         reqRaw,
         resRaw,
@@ -81,6 +94,7 @@ export function matchNetworkLogQuery(
   const methodStr = methodRaw.toLowerCase();
   const urlStr = urlRaw.toLowerCase();
   const clientStr = clientRaw.toLowerCase();
+  const callerStr = callerRaw.toLowerCase();
   const reqStr = reqRaw.toLowerCase();
   const resStr = resRaw.toLowerCase();
   const reqHeadersStr = reqHeadersRaw.toLowerCase();
@@ -107,18 +121,20 @@ export function matchNetworkLogQuery(
     // 2. status:<VAL> or s:<VAL>
     if (lowerToken.startsWith('status:') || lowerToken.startsWith('s:')) {
       const val = lowerToken.replace(/^(status:|s:)/, '').trim();
-      if (val.startsWith('>=')) {
+      if (val === 'pending' || val === 'loading') {
+        if (log.status != null) return false;
+      } else if (val.startsWith('>=')) {
         const threshold = parseInt(val.slice(2), 10);
-        if (isNaN(threshold) || statusNum < threshold) return false;
+        if (isNaN(threshold) || statusNum === null || statusNum < threshold) return false;
       } else if (val.startsWith('>')) {
         const threshold = parseInt(val.slice(1), 10);
-        if (isNaN(threshold) || statusNum <= threshold) return false;
+        if (isNaN(threshold) || statusNum === null || statusNum <= threshold) return false;
       } else if (val.startsWith('<=')) {
         const threshold = parseInt(val.slice(2), 10);
-        if (isNaN(threshold) || statusNum > threshold) return false;
+        if (isNaN(threshold) || statusNum === null || statusNum > threshold) return false;
       } else if (val.startsWith('<')) {
         const threshold = parseInt(val.slice(1), 10);
-        if (isNaN(threshold) || statusNum >= threshold) return false;
+        if (isNaN(threshold) || statusNum === null || statusNum >= threshold) return false;
       } else if (val.endsWith('xx') || val.endsWith('x')) {
         const prefix = val.replace(/x/g, '');
         if (!statusStr.startsWith(prefix)) return false;
@@ -143,11 +159,13 @@ export function matchNetworkLogQuery(
         flag === 'fail'
       ) {
         const isErr =
-          log.status === 0 || log.status == null || statusNum >= 400;
+          log.status === 0 || (statusNum !== null && statusNum >= 400);
         if (!isErr) return false;
       } else if (flag === 'success' || flag === 'ok' || flag === '2xx') {
-        const isSuccess = statusNum >= 200 && statusNum < 300;
+        const isSuccess = statusNum !== null && statusNum >= 200 && statusNum < 300;
         if (!isSuccess) return false;
+      } else if (flag === 'pending' || flag === 'loading') {
+        if (log.status != null) return false;
       } else if (flag === 'slow') {
         if (durationNum < 1000) return false;
       } else if (flag === 'fast') {
@@ -169,6 +187,11 @@ export function matchNetworkLogQuery(
           resHeadersStr.includes('application/json') ||
           urlStr.includes('.json');
         if (!isJson) return false;
+      } else if (flag === 'image') {
+        const isImg =
+          resHeadersStr.includes('image/') ||
+          /\.(png|jpe?g|gif|webp|svg)/i.test(urlStr);
+        if (!isImg) return false;
       }
       continue;
     }
@@ -230,10 +253,20 @@ export function matchNetworkLogQuery(
       continue;
     }
 
-    // 7. path:<PATH> or p:<PATH>
-    if (lowerToken.startsWith('path:') || lowerToken.startsWith('p:')) {
-      const targetPath = lowerToken.replace(/^(path:|p:)/, '').trim();
-      if (!urlStr.includes(targetPath) && !pathStr.includes(targetPath)) {
+    // 7. path:<PATH> or p:<PATH> or page:<PAGE>
+    if (
+      lowerToken.startsWith('path:') ||
+      lowerToken.startsWith('p:') ||
+      lowerToken.startsWith('page:')
+    ) {
+      const targetPath = lowerToken
+        .replace(/^(path:|p:|page:)/, '')
+        .trim();
+      if (
+        !urlStr.includes(targetPath) &&
+        !pathStr.includes(targetPath) &&
+        !callerStr.includes(targetPath)
+      ) {
         return false;
       }
       continue;
@@ -274,6 +307,16 @@ export function matchNetworkLogQuery(
     } else {
       const queryTerm = isCaseSensitive ? token : lowerToken;
       if (!targetCorpus.includes(queryTerm)) {
+        // Special case: if user typed "error" / "failed", check error status
+        if (
+          queryTerm === 'error' ||
+          queryTerm === 'failed' ||
+          queryTerm === 'fail'
+        ) {
+          const isErr =
+            log.status === 0 || (statusNum !== null && statusNum >= 400);
+          if (isErr) continue;
+        }
         return false;
       }
     }
