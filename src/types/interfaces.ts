@@ -186,8 +186,6 @@ export interface PersistedSettings {
 
 export interface NetworkInspectorProps {
   enabled?: boolean;
-  isEnabled?: boolean;
-  forceEnable?: boolean;
   storage?: InspectorStorage;
   navigationRef?: any;
   appIcon?: any;
@@ -206,6 +204,7 @@ export interface InspectorContextValue {
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
   isReady: boolean;
+  enabled: boolean;
   isEnabled: boolean;
   appIcon?: any;
   environment?: string;

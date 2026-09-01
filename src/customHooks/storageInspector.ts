@@ -273,13 +273,13 @@ export const calculateByteSize = (str: string): number => {
 };
 
 /**
- * Determine type and format value safely
+ * Determine type and format value safely without blocking JS thread
  */
 export const analyzeStorageValue = (
   rawVal: any,
 ): {
   strVal: string;
-  parsedVal?: any;
+  parsedValue?: any;
   type: 'json' | 'string' | 'number' | 'boolean' | 'null';
   byteSize: number;
 } => {
@@ -288,14 +288,14 @@ export const analyzeStorageValue = (
   }
 
   const strVal = typeof rawVal === 'string' ? rawVal : String(rawVal);
-  const byteSize = calculateByteSize(strVal);
+  const byteSize = strVal.length * 2;
 
   if (typeof rawVal === 'number') {
-    return {strVal, parsedVal: rawVal, type: 'number', byteSize};
+    return {strVal, parsedValue: rawVal, type: 'number', byteSize};
   }
 
   if (typeof rawVal === 'boolean') {
-    return {strVal, parsedVal: rawVal, type: 'boolean', byteSize};
+    return {strVal, parsedValue: rawVal, type: 'boolean', byteSize};
   }
 
   const trimmed = strVal.trim();
@@ -303,18 +303,22 @@ export const analyzeStorageValue = (
     (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
     (trimmed.startsWith('[') && trimmed.endsWith(']'))
   ) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      return {strVal, parsedVal: parsed, type: 'json', byteSize};
-    } catch {}
+    // For small/medium JSON, parse eagerly; for huge payloads (>10KB), parse lazily on expand
+    if (trimmed.length < 10000) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        return {strVal, parsedValue: parsed, type: 'json', byteSize};
+      } catch {}
+    }
+    return {strVal, type: 'json', byteSize};
   }
 
   if (trimmed === 'true' || trimmed === 'false') {
-    return {strVal, parsedVal: trimmed === 'true', type: 'boolean', byteSize};
+    return {strVal, parsedValue: trimmed === 'true', type: 'boolean', byteSize};
   }
 
   if (!isNaN(Number(trimmed)) && trimmed !== '') {
-    return {strVal, parsedVal: Number(trimmed), type: 'number', byteSize};
+    return {strVal, parsedValue: Number(trimmed), type: 'number', byteSize};
   }
 
   return {strVal, type: 'string', byteSize};
@@ -346,7 +350,7 @@ export const fetchStorageEntries = async (
           entries.push({
             key: k,
             value: analysis.strVal,
-            parsedValue: analysis.parsedVal,
+            parsedValue: analysis.parsedValue,
             type: analysis.type,
             byteSize: analysis.byteSize,
           });
@@ -358,7 +362,7 @@ export const fetchStorageEntries = async (
           entries.push({
             key: k,
             value: analysis.strVal,
-            parsedValue: analysis.parsedVal,
+            parsedValue: analysis.parsedValue,
             type: analysis.type,
             byteSize: analysis.byteSize,
           });
@@ -397,7 +401,7 @@ export const fetchStorageEntries = async (
         entries.push({
           key: k,
           value: analysis.strVal,
-          parsedValue: analysis.parsedVal,
+          parsedValue: analysis.parsedValue,
           type: analysis.type,
           byteSize: analysis.byteSize,
         });

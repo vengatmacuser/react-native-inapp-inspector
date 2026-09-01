@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  FlatList,
   TextInput,
   Modal,
   Alert,
@@ -42,6 +43,131 @@ import {
 } from '../../customHooks/storageInspector';
 import {copyToClipboard} from '../../helpers';
 import {showToast} from '../../helpers/toast';
+
+const getTypeBadge = (type: StorageEntry['type']) => {
+  switch (type) {
+    case 'json':
+      return {label: 'JSON', color: AppColors.purple, bg: `${AppColors.purple}16`};
+    case 'number':
+      return {label: 'NUM', color: AppColors.warningIconGold, bg: `${AppColors.warningIconGold}16`};
+    case 'boolean':
+      return {label: 'BOOL', color: AppColors.emerald500, bg: `${AppColors.emerald500}16`};
+    case 'null':
+      return {label: 'NULL', color: AppColors.grayTextWeak, bg: `${AppColors.grayTextWeak}16`};
+    default:
+      return {label: 'STR', color: AppColors.blue500, bg: `${AppColors.blue500}16`};
+  }
+};
+
+const StorageEntryCard = React.memo(function StorageEntryCard({
+  entry,
+  isExpanded,
+  onToggleExpand,
+  onCopy,
+  onEdit,
+  onDelete,
+  badge,
+}: {
+  entry: StorageEntry;
+  isExpanded: boolean;
+  onToggleExpand: (key: string) => void;
+  onCopy: (entry: StorageEntry) => void;
+  onEdit: (entry: StorageEntry) => void;
+  onDelete: (key: string) => void;
+  badge: {label: string; color: string; bg: string};
+}) {
+  const formattedBytes = useMemo(() => {
+    return entry.byteSize < 1024
+      ? `${entry.byteSize} B`
+      : `${(entry.byteSize / 1024).toFixed(1)} KB`;
+  }, [entry.byteSize]);
+
+  // Lazy compute displayed value to avoid layout thrashing on large JSON strings
+  const displayValue = useMemo(() => {
+    if (!isExpanded) {
+      if (entry.value.length > 250) {
+        return entry.value.slice(0, 250) + '...';
+      }
+      return entry.value;
+    }
+
+    if (entry.type === 'json') {
+      try {
+        const parsed = entry.parsedValue ?? JSON.parse(entry.value);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return entry.value;
+      }
+    }
+    return entry.value;
+  }, [isExpanded, entry.value, entry.type, entry.parsedValue]);
+
+  return (
+    <View style={styles.entryCard}>
+      {/* Entry Header: Key name, Type Badge, Size, Actions */}
+      <View style={styles.entryHeader}>
+        <View style={{flex: 1, marginRight: 8}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
+            <Text style={styles.entryKey} numberOfLines={1} selectable>
+              {entry.key}
+            </Text>
+            <View
+              style={[
+                styles.typeBadge,
+                {backgroundColor: badge.bg, borderColor: `${badge.color}33`},
+              ]}>
+              <Text style={[styles.typeBadgeText, {color: badge.color}]}>
+                {badge.label}
+              </Text>
+            </View>
+            <Text style={styles.sizeText}>{formattedBytes}</Text>
+          </View>
+        </View>
+
+        {/* Actions: Copy, Edit, Delete */}
+        <View style={styles.entryActions}>
+          <TouchableScale
+            hitSlop={6}
+            onPress={() => onCopy(entry)}
+            style={styles.entryActionBtn}>
+            <CopyIcon size={12} color={AppColors.grayText} />
+          </TouchableScale>
+
+          <TouchableScale
+            hitSlop={6}
+            onPress={() => onEdit(entry)}
+            style={styles.entryActionBtn}>
+            <PencilIcon size={12} color={AppColors.purple} />
+          </TouchableScale>
+
+          <TouchableScale
+            hitSlop={6}
+            onPress={() => onDelete(entry.key)}
+            style={[styles.entryActionBtn, {backgroundColor: `${AppColors.errorColor}12`}]}>
+            <TrashIcon size={12} color={AppColors.errorColor} />
+          </TouchableScale>
+        </View>
+      </View>
+
+      {/* Entry Value Preview / Viewer */}
+      <TouchableScale
+        onPress={() => onToggleExpand(entry.key)}
+        style={styles.valuePreviewBox}>
+        <Text
+          style={styles.valuePreviewText}
+          numberOfLines={isExpanded ? undefined : 3}
+          selectable={isExpanded}>
+          {displayValue}
+        </Text>
+        {entry.value.length > 80 && (
+          <Text style={styles.expandHint}>
+            {isExpanded ? '▲ Collapse' : '▼ Expand'}
+          </Text>
+        )}
+      </TouchableScale>
+    </View>
+  );
+});
 
 export const StorageTab = React.memo(() => {
   const {t} = useTranslation();
@@ -235,20 +361,25 @@ export const StorageTab = React.memo(() => {
     return `${(totalBytes / (1024 * 1024)).toFixed(2)} MB`;
   }, [totalBytes]);
 
-  const getTypeBadge = (type: StorageEntry['type']) => {
-    switch (type) {
-      case 'json':
-        return {label: 'JSON', color: AppColors.purple, bg: `${AppColors.purple}16`};
-      case 'number':
-        return {label: 'NUM', color: AppColors.warningIconGold, bg: `${AppColors.warningIconGold}16`};
-      case 'boolean':
-        return {label: 'BOOL', color: AppColors.emerald500, bg: `${AppColors.emerald500}16`};
-      case 'null':
-        return {label: 'NULL', color: AppColors.grayTextWeak, bg: `${AppColors.grayTextWeak}16`};
-      default:
-        return {label: 'STR', color: AppColors.blue500, bg: `${AppColors.blue500}16`};
-    }
-  };
+  const handleCopyEntry = useCallback((entry: StorageEntry) => {
+    copyToClipboard(entry.value, entry.key);
+    showToast(`Copied value of "${entry.key}"`);
+  }, []);
+
+  const renderItem = useCallback(
+    ({item}: {item: StorageEntry}) => (
+      <StorageEntryCard
+        entry={item}
+        isExpanded={Boolean(expandedKeys[item.key])}
+        onToggleExpand={toggleExpand}
+        onCopy={handleCopyEntry}
+        onEdit={handleOpenEdit}
+        onDelete={handleDeleteKey}
+        badge={getTypeBadge(item.type)}
+      />
+    ),
+    [expandedKeys, handleCopyEntry],
+  );
 
   const isConnected =
     activeDriver === 'asyncStorage'
@@ -423,110 +554,35 @@ export const StorageTab = React.memo(() => {
           <ActivityIndicator size="small" color={AppColors.purple} />
           <Text style={styles.loadingText}>Loading storage entries...</Text>
         </View>
-      ) : filteredEntries.length === 0 ? (
-        <ScrollView
-          contentContainerStyle={styles.emptyContainer}
-          showsVerticalScrollIndicator={false}>
-          <View style={styles.emptyIconWrap}>
-            <DatabaseIcon size={28} color={AppColors.grayTextWeak} />
-          </View>
-          <Text style={styles.emptyTitle}>
-            {search ? 'No matching keys found' : `No ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} Keys`}
-          </Text>
-          <Text style={styles.emptySubtitle}>
-            {search
-              ? 'Try modifying your search query'
-              : `Storage is auto-detected. Tap "+ Add" above to create your first ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} key!`}
-          </Text>
-        </ScrollView>
       ) : (
-        <ScrollView
+        <FlatList
+          data={filteredEntries}
+          keyExtractor={item => item.key}
+          renderItem={renderItem}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           style={styles.scrollArea}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}>
-          {filteredEntries.map(entry => {
-            const isExpanded = Boolean(expandedKeys[entry.key]);
-            const badge = getTypeBadge(entry.type);
-            const formattedBytes =
-              entry.byteSize < 1024
-                ? `${entry.byteSize} B`
-                : `${(entry.byteSize / 1024).toFixed(1)} KB`;
-
-            return (
-              <View key={entry.key} style={styles.entryCard}>
-                {/* Entry Header: Key name, Type Badge, Size, Actions */}
-                <View style={styles.entryHeader}>
-                  <View style={{flex: 1, marginRight: 8}}>
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'}}>
-                      <Text style={styles.entryKey} numberOfLines={1} selectable>
-                        {entry.key}
-                      </Text>
-                      <View
-                        style={[
-                          styles.typeBadge,
-                          {backgroundColor: badge.bg, borderColor: `${badge.color}33`},
-                        ]}>
-                        <Text style={[styles.typeBadgeText, {color: badge.color}]}>
-                          {badge.label}
-                        </Text>
-                      </View>
-                      <Text style={styles.sizeText}>{formattedBytes}</Text>
-                    </View>
-                  </View>
-
-                  {/* Actions: Copy, Edit, Delete */}
-                  <View style={styles.entryActions}>
-                    <TouchableScale
-                      hitSlop={6}
-                      onPress={() => {
-                        copyToClipboard(entry.value, entry.key);
-                        showToast(`Copied value of "${entry.key}"`);
-                      }}
-                      style={styles.entryActionBtn}>
-                      <CopyIcon size={12} color={AppColors.grayText} />
-                    </TouchableScale>
-
-                    <TouchableScale
-                      hitSlop={6}
-                      onPress={() => handleOpenEdit(entry)}
-                      style={styles.entryActionBtn}>
-                      <PencilIcon size={12} color={AppColors.purple} />
-                    </TouchableScale>
-
-                    <TouchableScale
-                      hitSlop={6}
-                      onPress={() => handleDeleteKey(entry.key)}
-                      style={[styles.entryActionBtn, {backgroundColor: `${AppColors.errorColor}12`}]}>
-                      <TrashIcon size={12} color={AppColors.errorColor} />
-                    </TouchableScale>
-                  </View>
-                </View>
-
-                {/* Entry Value Preview / Viewer */}
-                <TouchableScale
-                  onPress={() => toggleExpand(entry.key)}
-                  style={styles.valuePreviewBox}>
-                  <Text
-                    style={styles.valuePreviewText}
-                    numberOfLines={isExpanded ? undefined : 3}
-                    selectable>
-                    {entry.type === 'json' && entry.parsedValue
-                      ? isExpanded
-                        ? JSON.stringify(entry.parsedValue, null, 2)
-                        : entry.value
-                      : entry.value}
-                  </Text>
-                  {entry.value.length > 80 && (
-                    <Text style={styles.expandHint}>
-                      {isExpanded ? '▲ Collapse' : '▼ Expand'}
-                    </Text>
-                  )}
-                </TouchableScale>
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconWrap}>
+                <DatabaseIcon size={28} color={AppColors.grayTextWeak} />
               </View>
-            );
-          })}
-          <View style={{height: 60}} />
-        </ScrollView>
+              <Text style={styles.emptyTitle}>
+                {search ? 'No matching keys found' : `No ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} Keys`}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {search
+                  ? 'Try modifying your search query'
+                  : `Storage is auto-detected. Tap "+ Add" above to create your first ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} key!`}
+              </Text>
+            </View>
+          }
+          ListFooterComponent={<View style={{height: 60}} />}
+        />
       )}
 
       {/* ── Create / Edit Key Modal ── */}

@@ -21,6 +21,7 @@ import LogDetail from './LogDetail';
 import ConsoleTab from './ConsoleTab';
 import AnalyticsTab from './AnalyticsTab';
 import AnalyticsDetail from '../AnalyticsDetail';
+import SkeletonPlaceholder from '../SkeletonPlaceholder';
 import ReduxTab from './ReduxTab';
 import ReduxDetail from './ReduxDetail';
 import BundleTab from './BundleTab';
@@ -51,7 +52,7 @@ const MainScreen = () => {
     settingsPage,
     activeTab,
     isReady,
-    isEnabled,
+    enabled,
     useNativeFab,
     hasNavigationContext,
     setNavState,
@@ -104,7 +105,7 @@ const MainScreen = () => {
   return (
     <>
       {(Platform.OS === 'ios' || Platform.OS === 'android') &&
-        isEnabled &&
+        enabled &&
         !visible &&
         !useNativeFab && <FabLauncher />}
       <Modal
@@ -137,11 +138,11 @@ const MainScreen = () => {
               <InspectorHeader />
 
               <View style={{flex: 1}}>
+                {/* ─── Horizontal Scrollable Tab Bar inside Content (Always visible) ─── */}
+                {!isDetailActive && <TabBar />}
+
                 {isReady ? (
                   <View style={{flex: 1}}>
-                    {/* ─── Horizontal Scrollable Tab Bar inside Content ─── */}
-                    {!isDetailActive && <TabBar />}
-
                     {/* Persistent List Layer - Never unmounted, preserves 100% native scroll with smooth tab transition */}
                     <Animated.View
                       style={[
@@ -207,12 +208,7 @@ const MainScreen = () => {
                     )}
                   </View>
                 ) : (
-                  <View style={styles.empty}>
-                    <ActivityIndicator size="large" color={AppColors.purple} />
-                    <Text style={[styles.emptySub, {marginTop: 12}]}>
-                      Loading logs...
-                    </Text>
-                  </View>
+                  <SkeletonPlaceholder />
                 )}
 
                 {/* Settings Panel Layer - Rendered on top with smooth slide & spring transition */}

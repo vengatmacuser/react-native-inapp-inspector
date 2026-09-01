@@ -146,14 +146,13 @@ import {toggleGlobalTheme} from './styles';
 
 const NetworkInspector = ({
   enabled = true,
-  isEnabled = true,
   storage,
   navigationRef,
   appIcon,
   environment,
-  initialVisible,
+  initialVisible = false,
   visible: controlledVisible,
-}: NetworkInspectorProps): React.JSX.Element => {
+}: NetworkInspectorProps): React.JSX.Element | null => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
 
@@ -170,7 +169,7 @@ const NetworkInspector = ({
 
   const [logs, setLogs] = useState<NetworkLog[]>([]);
   const [visible, setVisible] = useState<boolean>(
-    initialVisible ?? controlledVisible ?? false,
+    controlledVisible ?? initialVisible ?? false,
   );
 
   useEffect(() => {
@@ -945,24 +944,29 @@ const NetworkInspector = ({
 
   // 100% Native Main-Thread Floating Button Lifecycle
   useEffect(() => {
-    if (!useNativeFab || !isEnabled || !enabled) {
+    if (!useNativeFab || !enabled) {
       if (useNativeFab) {
-        hideNativeFloatingButton();
+        hideNativeFloatingButton().catch(() => {});
       }
       return;
     }
 
     if (visible) {
-      hideNativeFloatingButton();
+      hideNativeFloatingButton().catch(() => {});
     } else {
-      showNativeFloatingButton();
+      showNativeFloatingButton().catch(() => {});
       setNativeFloatingButtonBadge(
         logs.length > 0 || analyticsEvents.length > 0,
-      );
+      ).catch(() => {});
     }
+
+    return () => {
+      if (useNativeFab) {
+        hideNativeFloatingButton().catch(() => {});
+      }
+    };
   }, [
     useNativeFab,
-    isEnabled,
     enabled,
     visible,
     logs.length,
@@ -1027,21 +1031,12 @@ const NetworkInspector = ({
       if (freshCrashes.length > 0) {
         setCrashRecords(freshCrashes);
       }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
 
-  useEffect(() => {
-    if (visible) {
-      const task = InteractionManager.runAfterInteractions(() => {
+      const frame = requestAnimationFrame(() => {
         setIsReady(true);
       });
-      const fallbackTimer = setTimeout(() => {
-        setIsReady(true);
-      }, 350);
       return () => {
-        task.cancel();
-        clearTimeout(fallbackTimer);
+        cancelAnimationFrame(frame);
       };
     } else {
       setIsReady(false);
@@ -1982,7 +1977,8 @@ const NetworkInspector = ({
     setVisible,
     closeModal,
     isReady,
-    isEnabled,
+    enabled,
+    isEnabled: enabled,
     appIcon,
     environment,
     modalHeightPercent,
@@ -2173,16 +2169,29 @@ const NetworkInspector = ({
 };
 
 const NetworkInspectorWrapper = (props: NetworkInspectorProps) => {
-  // If running in production release build and not explicitly force-enabled (e.g. for QA builds),
-  // return null immediately for 0-overhead production stubbing.
-  if (typeof __DEV__ !== 'undefined' && !__DEV__ && !props?.forceEnable) {
+  const enabled = props?.enabled ?? true;
+
+  useEffect(() => {
+    if (!enabled) {
+      hideNativeFloatingButton().catch(() => {});
+    }
+    return () => {
+      hideNativeFloatingButton().catch(() => {});
+    };
+  }, [enabled]);
+
+  // If enabled is false, return null immediately with 0 overhead
+  if (!enabled) {
     return null;
   }
 
   return (
     <I18nextProvider i18n={i18n}>
       <ErrorBoundary fallbackType="inline">
-        <NetworkInspector {...props} />
+        <NetworkInspector
+          {...props}
+          enabled={enabled}
+        />
       </ErrorBoundary>
     </I18nextProvider>
   );
