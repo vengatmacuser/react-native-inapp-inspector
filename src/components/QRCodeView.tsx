@@ -13,25 +13,29 @@ interface QRCodeViewProps {
 
 export const QRCodeView: React.FC<QRCodeViewProps> = ({
   value,
-  size = 180,
-  color = AppColors.primaryBlack,
-  backgroundColor = AppColors.white,
+  size = 200,
+  color = '#000000',
+  backgroundColor = '#FFFFFF',
 }) => {
-  const matrix = useMemo(() => generateQRMatrix(value), [value]);
-  const numCells = matrix.length;
-  const cellSize = size / numCells;
+  const matrix = useMemo(() => generateQRMatrix(value || 'http://localhost:8081'), [value]);
+  const numCells = matrix.length || 21;
+  // Add a 3-module quiet zone (white border) required by QR scanners
+  const margin = 3;
+  const totalCells = numCells + margin * 2;
+  const cellSize = size / totalCells;
 
   return (
     <View
       style={[
         styles.container,
         {
-          width: size + 16,
-          height: size + 16,
+          width: size + 20,
+          height: size + 20,
           backgroundColor,
         },
       ]}>
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Rect width={size} height={size} fill={backgroundColor} />
         <G>
           {matrix.map((row, r) =>
             row.map((cell, c) => {
@@ -39,10 +43,10 @@ export const QRCodeView: React.FC<QRCodeViewProps> = ({
               return (
                 <Rect
                   key={`${r}-${c}`}
-                  x={c * cellSize}
-                  y={r * cellSize}
-                  width={cellSize + 0.2}
-                  height={cellSize + 0.2}
+                  x={(c + margin) * cellSize}
+                  y={(r + margin) * cellSize}
+                  width={cellSize + 0.3}
+                  height={cellSize + 0.3}
                   fill={color}
                 />
               );
@@ -56,15 +60,15 @@ export const QRCodeView: React.FC<QRCodeViewProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 8,
+    padding: 10,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: AppColors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });
 

@@ -137,14 +137,15 @@ export const DebuggingTab: React.FC = () => {
 
   // Construct target URLs for QR codes
   const metroBundleUrl = `http://${hostIp}:${selectedPort}/index.bundle?platform=android&dev=true`;
+  const directServerUrl = `http://${hostIp}:${selectedPort}`;
   const apkDownloadUrl = `http://${hostIp}:${selectedPort}/${apkPath}`;
   const devSettingsHost = `${hostIp}:${selectedPort}`;
 
   const currentQrValue = useMemo(() => {
     if (activeQrTab === 'apk') return apkDownloadUrl;
     if (activeQrTab === 'host') return devSettingsHost;
-    return metroBundleUrl;
-  }, [activeQrTab, apkDownloadUrl, devSettingsHost, metroBundleUrl]);
+    return directServerUrl;
+  }, [activeQrTab, apkDownloadUrl, devSettingsHost, directServerUrl]);
 
   const activePortInfo = portsStatus[selectedPort];
 
