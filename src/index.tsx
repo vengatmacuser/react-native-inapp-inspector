@@ -85,6 +85,11 @@ import {
 } from './customHooks/crashHandler';
 
 import {
+  trackActiveTelemetryHeartbeat,
+  setTelemetryEnabled,
+} from './helpers/telemetry';
+
+import {
   subscribeAnalyticsEvents,
   clearAnalyticsEvents,
   autoSetupAnalyticsLogger,
@@ -2170,15 +2175,24 @@ const NetworkInspector = ({
 
 const NetworkInspectorWrapper = (props: NetworkInspectorProps) => {
   const enabled = props?.enabled ?? true;
+  const telemetry = props?.telemetry ?? true;
 
   useEffect(() => {
     if (!enabled) {
+      // When inspector is disabled: hide FAB and kill all telemetry
       hideNativeFloatingButton().catch(() => {});
+      setTelemetryEnabled(false);
+    } else if (telemetry) {
+      // Inspector is enabled and telemetry is on — fire heartbeat
+      trackActiveTelemetryHeartbeat(true, props?.environment);
+    } else {
+      // Inspector is enabled but telemetry is explicitly off
+      setTelemetryEnabled(false);
     }
     return () => {
       hideNativeFloatingButton().catch(() => {});
     };
-  }, [enabled]);
+  }, [enabled, telemetry, props?.environment]);
 
   // If enabled is false, return null immediately with 0 overhead
   if (!enabled) {

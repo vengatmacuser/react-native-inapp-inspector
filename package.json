@@ -100,7 +100,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "prebuild": "node scripts/gen-version.js",
+    "prebuild": "node scripts/gen-version.js && node scripts/gen-telemetry.js",
     "build": "npm run clean && tsc && tsc -p tsconfig.esm.json",
     "prepare": "npm run build",
     "watch": "tsc -w",

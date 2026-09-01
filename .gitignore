@@ -28,6 +28,7 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+src/constants/telemetryConfig.ts
 
 # Backups and temporary files
 node_modules_backup/

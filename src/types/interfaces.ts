@@ -180,12 +180,15 @@ export interface PersistedSettings {
   reduxExpandDepth?: number;
   showDuplicateLogs?: boolean;
   showUpdateToast?: boolean;
+  telemetryClientId?: string;
+  telemetryLastPing?: number;
 }
 
 // ─── Inspector component props / context ──────────────────────────────────────
 
 export interface NetworkInspectorProps {
   enabled?: boolean;
+  telemetry?: boolean;
   storage?: InspectorStorage;
   navigationRef?: any;
   appIcon?: any;
