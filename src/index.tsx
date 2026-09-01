@@ -2245,7 +2245,7 @@ export {
 
 export {default as CrashTab} from './components/Inspector/CrashTab';
 export {default as ErrorBoundary} from './components/ErrorBoundary';
-export {default as SkeletonPlaceholder} from './components/Inspector/SkeletonPlaceholder';
+export {default as SkeletonPlaceholder} from './components/SkeletonPlaceholder';
 
 export {
   connectReduxStore,
