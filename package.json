@@ -105,7 +105,7 @@
     "prepare": "npm run build",
     "watch": "tsc -w",
     "prepack": "npm run build",
-    "publish": "node release.cjs",
+    "release": "node release.cjs",
     "bundle-visualizer": "react-native-bundle-visualizer"
   },
   "keywords": [
