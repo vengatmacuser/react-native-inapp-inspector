@@ -12,6 +12,7 @@ export const ActiveTab = {
   Crash: 'crash',
   Device: 'device',
   Storage: 'storage',
+  Debugging: 'debugging',
 } as const;
 export type ActiveTab = (typeof ActiveTab)[keyof typeof ActiveTab];
 
@@ -70,6 +71,7 @@ export const SettingsPage = {
   Crash: 'crash',
   Device: 'device',
   Storage: 'storage',
+  Debugging: 'debugging',
 } as const;
 export type SettingsPage =
   | (typeof SettingsPage)[keyof typeof SettingsPage]

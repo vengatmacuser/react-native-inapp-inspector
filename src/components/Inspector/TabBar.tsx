@@ -14,6 +14,7 @@ import {
   CrashIcon,
   SmartphoneIcon,
   DatabaseIcon,
+  QrCodeIcon,
 } from '../NetworkIcons';
 
 import {isReduxConnected} from '../../customHooks/reduxLogger';
@@ -100,9 +101,16 @@ const TabBar = React.memo(() => {
               count: 0,
               icon: 'storage',
             },
+            {
+              key: 'debugging',
+              label: 'Debugging',
+              count: 0,
+              icon: 'debugging',
+            },
           ] as const
         )
           .filter(tab => {
+            if (tab.key === 'debugging') return true;
             if (!tabVisibility?.[tab.key]) return false;
             if (tab.key === 'redux' && !isReduxAvail) return false;
             if (tab.key === 'analytics' && !isAnalyticsAvail) return false;
@@ -168,6 +176,9 @@ const TabBar = React.memo(() => {
                   )}
                   {tab.icon === 'storage' && (
                     <DatabaseIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'debugging' && (
+                    <QrCodeIcon color={iconColor} size={14} />
                   )}
                   <Text
                     numberOfLines={1}

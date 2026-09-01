@@ -2246,3 +2246,42 @@ export const LockIcon = ({
   </Svg>
 );
 
+export const QrCodeIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect
+      x="3"
+      y="3"
+      width="7"
+      height="7"
+      rx="1.5"
+      stroke={color}
+      strokeWidth="2"
+    />
+    <Rect
+      x="14"
+      y="3"
+      width="7"
+      height="7"
+      rx="1.5"
+      stroke={color}
+      strokeWidth="2"
+    />
+    <Rect
+      x="3"
+      y="14"
+      width="7"
+      height="7"
+      rx="1.5"
+      stroke={color}
+      strokeWidth="2"
+    />
+    <Path
+      d="M14 14h3v3h-3zM18 18h3v3h-3zM14 19h3v2h-3zM19 14h2v3h-2z"
+      fill={color}
+    />
+  </Svg>
+);
+

@@ -365,6 +365,7 @@ const NetworkInspector = ({
     crash: false,
     device: false,
     storage: false,
+    debugging: true,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -427,6 +428,7 @@ const NetworkInspector = ({
       crash: false,
       device: false,
       storage: false,
+      debugging: true,
     });
     setDefaultTab('apis');
     setIsAutoRamLimitEnabled(true);

@@ -29,6 +29,7 @@ import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
 import DeviceInfoTab from './DeviceInfoTab';
 import StorageTab from './StorageTab';
+import DebuggingTab from './DebuggingTab';
 import SettingsPanel from './SettingsPanel';
 import NpmUpdateToast from './NpmUpdateToast';
 import Toast from '../Toast';
@@ -170,6 +171,7 @@ const MainScreen = () => {
                       {activeTab === 'crash' && <CrashTab />}
                       {activeTab === 'device' && <DeviceInfoTab />}
                       {activeTab === 'storage' && <StorageTab />}
+                      {activeTab === 'debugging' && <DebuggingTab />}
                     </Animated.View>
 
                     {/* Detail View Layer - Rendered on top with smooth slide & spring transition */}
