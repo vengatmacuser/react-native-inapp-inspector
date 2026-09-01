@@ -47,6 +47,8 @@ const IGNORED_URL_PATTERNS: RegExp[] = [
   /\/status(?:\?|$)/i,
   /127\.0\.0\.1:(?:8081|8082|8083|19000|19001|19002|3000|8000)/i,
   /localhost:(?:8081|8082|8083|19000|19001|19002|3000|8000)\/index\.bundle/i,
+  /google-analytics\.com\/mp\/collect/i,
+  /analytics\.google\.com/i,
 ];
 
 function shouldIgnoreUrl(url: string | undefined | null): boolean {
