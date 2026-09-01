@@ -98,7 +98,7 @@ const NetworkDetail = React.memo(() => {
   return (
     <View style={{flex: 1}}>
       {/* Non-scrollable details header */}
-      <View style={{paddingHorizontal: 6, paddingTop: 4}}>
+      <View style={{paddingHorizontal: 8, paddingTop: 4}}>
         <View style={styles.detailInfoBar}>
           {(() => {
             let schemeStr = '';
@@ -159,6 +159,7 @@ const NetworkDetail = React.memo(() => {
                       gap: 6,
                       flexWrap: 'wrap',
                       flex: 1,
+                      minWidth: 0,
                     }}>
                     {/* Method Chip */}
                     <View

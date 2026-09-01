@@ -22,6 +22,9 @@ export const Method = {
   Put: 'PUT',
   Patch: 'PATCH',
   Delete: 'DELETE',
+  Query: 'QUERY',
+  Options: 'OPTIONS',
+  Head: 'HEAD',
 } as const;
 export type Method = (typeof Method)[keyof typeof Method];
 

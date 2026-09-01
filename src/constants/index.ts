@@ -26,6 +26,9 @@ export const METHOD_COLORS: Record<Method, string> = {
   PUT: '#D97706',     // Amber Gold
   PATCH: '#7C3AED',   // Rich Violet
   DELETE: '#DC2626',  // Crimson Red
+  QUERY: '#0284C7',   // Sky Cyan (HTTP QUERY RFC 9535)
+  OPTIONS: '#475569', // Cool Slate
+  HEAD: '#0891B2',    // Cyan
 };
 
 export const DOMAIN_COLORS: string[] = AppColors.domainColors;

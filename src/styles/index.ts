@@ -575,18 +575,21 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+    minHeight: 22,
   },
   cardHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: 8,
-    gap: 6,
+    marginRight: 6,
+    gap: 5,
+    minWidth: 0,
   },
   cardHeaderRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+    flexShrink: 0,
   },
 
   smallCheckbox: {
@@ -673,6 +676,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flexDirection: 'row',
     alignItems: 'flex-start',
     flex: 1,
+    minWidth: 0,
     gap: 6,
   },
   slugTag: {
@@ -685,6 +689,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     paddingVertical: 1.5,
     borderRadius: 4,
     marginTop: 1,
+    flexShrink: 0,
   },
   slugText: {
     fontFamily: AppFonts.interMedium,
@@ -697,18 +702,21 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 0,
   },
 
   cardFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 2,
+    marginTop: 4,
+    minHeight: 18,
   },
   cardDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3.5,
+    flexShrink: 0,
   },
   cardDateText: {
     fontFamily: AppFonts.interRegular,
@@ -720,6 +728,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+    flexShrink: 0,
   },
 
   chip: {
@@ -814,9 +823,15 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 10,
+    paddingBottom: 8,
+    gap: 8,
   },
-  detailInfoRight: {flexDirection: 'row', alignItems: 'center', gap: 6},
+  detailInfoRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flexShrink: 0,
+  },
 
   metaContainer: {
     backgroundColor: colors.primaryLight,

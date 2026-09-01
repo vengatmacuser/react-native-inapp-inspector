@@ -275,33 +275,6 @@ const LogCard = React.memo(function LogCard({
                 </Text>
               </View>
             )}
-
-            {/* In-Line Duration / Latency Pill */}
-            {item.duration != null && !isFailed && (
-              <View
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: `${durationColor}12`,
-                    borderColor: `${durationColor}2E`,
-                    paddingHorizontal: 4.5,
-                    paddingVertical: 1,
-                    borderRadius: 4,
-                  },
-                ]}>
-                <Text
-                  style={[
-                    styles.chipText,
-                    {
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 8.5,
-                      color: durationColor,
-                    },
-                  ]}>
-                  {item.duration}ms
-                </Text>
-              </View>
-            )}
           </View>
 
           <View
@@ -321,6 +294,7 @@ const LogCard = React.memo(function LogCard({
                   : isLoading
                   ? `${AppColors.darkOrange}30`
                   : `${statusColor}30`,
+                flexShrink: 0,
               },
             ]}>
             {renderStatusIcon()}
@@ -359,6 +333,7 @@ const LogCard = React.memo(function LogCard({
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginRight: 4,
+                flexShrink: 0,
               }}>
               <GlobeIcon color={AppColors.skyBlue} size={11} />
             </View>
@@ -411,8 +386,8 @@ const LogCard = React.memo(function LogCard({
 
         {/* Row 3: Footer (Timestamp & Origin on Left, Response Size & Duration on Right) */}
         <View style={styles.cardFooterRow}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, minWidth: 0}}>
-            <View style={styles.cardDateRow}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, marginRight: 8}}>
+            <View style={[styles.cardDateRow, {flexShrink: 0}]}>
               <CalendarIcon color={AppColors.grayTextWeak} size={10} />
               <Text style={styles.cardDateText}>{triggeredAt}</Text>
             </View>
@@ -431,7 +406,7 @@ const LogCard = React.memo(function LogCard({
                     paddingVertical: 1,
                     borderRadius: 4,
                     flexShrink: 1,
-                    maxWidth: 160,
+                    minWidth: 0,
                   },
                 ]}>
                 <PinIcon color={AppColors.skyBlue} size={8.5} />

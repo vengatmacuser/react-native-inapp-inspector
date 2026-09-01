@@ -9,13 +9,17 @@ import {
   View,
 } from 'react-native';
 import {animateNextLayout, useInspector} from './InspectorContext';
-import useAccordion from '../../customHooks/useAccordion';
 import TouchableScale from '../TouchableScale';
 import AnimatedEntrance from '../AnimatedEntrance';
 import DomainHeader from '../DomainHeader';
 import LogCard from '../LogCard';
 import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
+import NetworkFilterModal, {
+  NetworkFilterState,
+  DEFAULT_NETWORK_FILTERS,
+  isNetworkFiltersDefault,
+} from './NetworkFilterModal';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -45,109 +49,7 @@ import {
   ShieldAlertIcon,
 } from '../NetworkIcons';
 
-const STATUS_META: Record<
-  string,
-  {color: string; Icon: (props: {color?: string; size?: number}) => React.JSX.Element}
-> = {
-  ALL: {color: AppColors.grayText, Icon: LayersIcon},
-  '2xx': {color: AppColors.greenColor, Icon: CircleCheckIcon},
-  '200': {color: AppColors.greenColor, Icon: CircleCheckIcon},
-  '3xx': {color: AppColors.warningIconGold, Icon: CircleAlertIcon},
-  '300': {color: AppColors.warningIconGold, Icon: CircleAlertIcon},
-  '4xx': {color: AppColors.darkOrange, Icon: CircleAlertIcon},
-  '400': {color: AppColors.darkOrange, Icon: CircleAlertIcon},
-  '404': {color: AppColors.darkOrange, Icon: CircleAlertIcon},
-  '5xx': {color: AppColors.errorColor, Icon: CircleXIcon},
-  '500': {color: AppColors.errorColor, Icon: CircleXIcon},
-  Failed: {color: AppColors.errorColor, Icon: CircleXIcon},
-};
 
-const getStatusMeta = (filter: string) => {
-  if (STATUS_META[filter]) return STATUS_META[filter];
-  const num = parseInt(filter, 10);
-  if (!isNaN(num)) {
-    if (num >= 200 && num < 300) return {color: AppColors.greenColor, Icon: CircleCheckIcon};
-    if (num >= 300 && num < 400) return {color: AppColors.warningIconGold, Icon: CircleAlertIcon};
-    if (num >= 400 && num < 500) return {color: AppColors.darkOrange, Icon: CircleAlertIcon};
-    if (num >= 500) return {color: AppColors.errorColor, Icon: CircleXIcon};
-  }
-  if (filter.startsWith('2')) return {color: AppColors.greenColor, Icon: CircleCheckIcon};
-  if (filter.startsWith('3')) return {color: AppColors.warningIconGold, Icon: CircleAlertIcon};
-  if (filter.startsWith('4')) return {color: AppColors.darkOrange, Icon: CircleAlertIcon};
-  if (filter.startsWith('5')) return {color: AppColors.errorColor, Icon: CircleXIcon};
-  return {color: AppColors.grayText, Icon: LayersIcon};
-};
-
-const FilterChip = React.memo(({
-  label,
-  color,
-  Icon,
-  badge,
-  active,
-  onPress,
-}: {
-  label: string;
-  color: string;
-  Icon?: (props: {color?: string; size?: number}) => React.JSX.Element;
-  badge?: string;
-  active: boolean;
-  onPress: () => void;
-}) => {
-  const iconColor = active ? color : AppColors.grayTextWeak;
-  return (
-    <TouchableScale
-      style={styles.statusFilterWrap}
-      onPress={onPress}
-      hitSlop={10}>
-      <View
-        style={[
-          styles.statusFilterChip,
-          {
-            paddingHorizontal: 9,
-            paddingVertical: 5,
-            borderRadius: 7,
-            borderWidth: 1,
-            borderColor: active ? color : `${AppColors.grayBorderSecondary}`,
-            backgroundColor: active ? `${color}14` : AppColors.grayBackground,
-          },
-          active && {
-            shadowColor: color,
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.2,
-            shadowRadius: 2,
-            elevation: 1.5,
-          },
-        ]}>
-        {badge != null ? (
-          <View
-            style={[
-              styles.methodBadgeMini,
-              {backgroundColor: badge},
-            ]}
-          />
-        ) : (
-          Icon && (
-            <Icon
-              color={iconColor}
-              size={13}
-            />
-          )
-        )}
-        <Text
-          numberOfLines={1}
-          style={[
-            styles.statusFilterText,
-            {
-              color: active ? color : AppColors.grayText,
-              fontFamily: active ? AppFonts.interBold : AppFonts.interMedium,
-            },
-          ]}>
-          {label}
-        </Text>
-      </View>
-    </TouchableScale>
-  );
-});
 
 const NetworkTab = React.memo(() => {
   const {
@@ -185,10 +87,51 @@ const NetworkTab = React.memo(() => {
   } = useInspector();
 
   const {t} = useTranslation();
-  const filtersAccordion = useAccordion(false, 300, 260);
   const apisListRef = useRef<FlatList<any>>(null);
 
+  const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+
+  const modalFilterState: NetworkFilterState = useMemo(
+    () => ({
+      statusCodes:
+        statusFilters.size > 0 ? new Set(statusFilters) : new Set(['all']),
+      methods:
+        methodFilters.size > 0 ? new Set(methodFilters) : new Set(['all']),
+      latency: 'all',
+      protocol: 'all',
+      sortBy: sortOrder === 'newest' ? 'time_desc' : 'time_asc',
+    }),
+    [statusFilters, methodFilters, sortOrder],
+  );
+
+  const handleApplyNetworkFilters = useCallback(
+    (newFilters: NetworkFilterState) => {
+      if (
+        newFilters.statusCodes.has('all') ||
+        newFilters.statusCodes.size === 0
+      ) {
+        setStatusFilters(new Set());
+      } else {
+        setStatusFilters(new Set(newFilters.statusCodes));
+      }
+
+      if (newFilters.methods.has('all') || newFilters.methods.size === 0) {
+        setMethodFilters(new Set());
+      } else {
+        setMethodFilters(
+          new Set([...newFilters.methods].map(m => m as Method)),
+        );
+      }
+
+      if (newFilters.sortBy === 'time_asc') {
+        setSortOrder('oldest');
+      } else {
+        setSortOrder('newest');
+      }
+    },
+    [setStatusFilters, setMethodFilters, setSortOrder],
+  );
 
   const quickCounts = useMemo(() => {
     let errorCount = 0;
@@ -755,14 +698,16 @@ const NetworkTab = React.memo(() => {
                 <TouchableScale
                   style={[
                     styles.toolbarBtn,
-                    filtersAccordion.isOpen &&
-                      styles.toolbarBtnActive,
+                    (statusFilters.size > 0 || methodFilters.size > 0) && {
+                      borderColor: AppColors.purple,
+                      backgroundColor: `${AppColors.purple}15`,
+                    },
                   ]}
-                  onPress={filtersAccordion.toggleOpen}
+                  onPress={() => setIsFilterModalOpen(true)}
                   hitSlop={6}>
                   <FilterIcon
                     color={
-                      filtersAccordion.isOpen
+                      statusFilters.size > 0 || methodFilters.size > 0
                         ? AppColors.purple
                         : AppColors.grayTextStrong
                     }
@@ -959,6 +904,66 @@ const NetworkTab = React.memo(() => {
                     </TouchableScale>
                   );
                 })}
+
+                <TouchableScale
+                  onPress={() => setIsFilterModalOpen(true)}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: 10,
+                      paddingVertical: 4.5,
+                      borderRadius: 8,
+                      backgroundColor:
+                        statusFilters.size > 0 || methodFilters.size > 0
+                          ? `${AppColors.purple}20`
+                          : AppColors.grayBackground,
+                      borderWidth: 1,
+                      borderColor:
+                        statusFilters.size > 0 || methodFilters.size > 0
+                          ? AppColors.purple
+                          : AppColors.grayBorderSecondary,
+                      gap: 5,
+                    }}>
+                    <FilterIcon
+                      size={11}
+                      color={
+                        statusFilters.size > 0 || methodFilters.size > 0
+                          ? AppColors.purple
+                          : AppColors.grayText
+                      }
+                    />
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10.5,
+                        color:
+                          statusFilters.size > 0 || methodFilters.size > 0
+                            ? AppColors.purple
+                            : AppColors.grayText,
+                      }}>
+                      More Filters
+                    </Text>
+                    {(statusFilters.size > 0 || methodFilters.size > 0) && (
+                      <View
+                        style={{
+                          backgroundColor: AppColors.purple,
+                          paddingHorizontal: 4.5,
+                          paddingVertical: 1,
+                          borderRadius: 6,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 8.5,
+                            color: AppColors.white,
+                          }}>
+                          {statusFilters.size + methodFilters.size}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </TouchableScale>
               </ScrollView>
             </View>
 
@@ -1141,103 +1146,10 @@ const NetworkTab = React.memo(() => {
               </View>
             )}
 
-            <Animated.View
-              style={[
-                filtersAccordion.bodyStyle,
-                {overflow: 'hidden'},
-              ]}>
-              <View style={styles.filtersContainer}>
-                <Text style={styles.filtersHeading}>
-                  STATUS
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={
-                    styles.statusRowContent
-                  }>
-                  {STATUS_FILTERS.map(filter => {
-                    const isAll = filter === 'ALL';
-                    const active = isAll
-                      ? statusFilters.size === 0
-                      : statusFilters.has(filter);
-                    const meta = getStatusMeta(filter);
-                    return (
-                      <FilterChip
-                        key={filter}
-                        label={filter}
-                        color={meta.color}
-                        Icon={meta.Icon}
-                        active={active}
-                        onPress={() => {
-                          if (isAll) {
-                            setStatusFilters(new Set());
-                          } else {
-                            setStatusFilters(prev => {
-                              const next = new Set(prev);
-                              next.has(filter)
-                                ? next.delete(filter)
-                                : next.add(filter);
-                              return next;
-                            });
-                          }
-                        }}
-                      />
-                    );
-                  })}
-                </ScrollView>
-
-                <Text
-                  style={[
-                    styles.filtersHeading,
-                    {marginTop: 16},
-                  ]}>
-                  METHOD
-                </Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={
-                    styles.statusRowContent
-                  }>
-                  {availableMethods.map(filter => {
-                    const isAll = filter === 'ALL';
-                    const active = isAll
-                      ? methodFilters.size === 0
-                      : methodFilters.has(filter as Method);
-                    const methodColor =
-                      METHOD_COLORS[filter as Method] ??
-                      METHOD_COLORS.ALL;
-                    return (
-                      <FilterChip
-                        key={filter}
-                        label={filter}
-                        color={methodColor}
-                        badge={methodColor}
-                        active={active}
-                        onPress={() => {
-                          if (isAll) {
-                            setMethodFilters(new Set());
-                          } else {
-                            setMethodFilters(prev => {
-                              const next = new Set(prev);
-                              next.has(filter as Method)
-                                ? next.delete(filter as Method)
-                                : next.add(filter as Method);
-                              return next;
-                            });
-                          }
-                        }}
-                      />
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            </Animated.View>
-
             {(search ||
               statusFilters.size > 0 ||
-              methodFilters.size > 0) && (
+              methodFilters.size > 0 ||
+              quickFilter !== 'all') && (
               <Text style={styles.resultCount}>
                 {filteredLogs.length === logs.length
                   ? `${logs.length} requests`
@@ -1251,7 +1163,8 @@ const NetworkTab = React.memo(() => {
             isSearch={
               search.length > 0 ||
               statusFilters.size > 0 ||
-              methodFilters.size > 0
+              methodFilters.size > 0 ||
+              quickFilter !== 'all'
             }
             searchQuery={search}
             customTitle={
@@ -1263,6 +1176,7 @@ const NetworkTab = React.memo(() => {
               setSearch('');
               setStatusFilters(new Set());
               setMethodFilters(new Set());
+              setQuickFilter('all');
               setSearchScope('all');
             }}
           />
@@ -1301,6 +1215,15 @@ const NetworkTab = React.memo(() => {
           <ChevronIcon color={AppColors.white} size={18} />
         </View>
       </TouchableScale>
+
+      {/* Modern Network Filter Modal */}
+      <NetworkFilterModal
+        visible={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        filters={modalFilterState}
+        onApply={handleApplyNetworkFilters}
+        searchQuery={search}
+      />
     </View>
   );
 });
