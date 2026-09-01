@@ -31,6 +31,7 @@ import {
   ExternalLinkIcon,
   RepeatIcon,
   ShieldAlertIcon,
+  InfoCircleIcon,
 } from '../NetworkIcons';
 
 interface PortStatus {
@@ -180,10 +181,10 @@ export const DebuggingTab: React.FC = () => {
               </View>
               <Text style={styles.serverSubtitle}>
                 {activePortInfo?.status === 'active'
-                  ? `🟢 Active & Bundling (${activePortInfo.latencyMs}ms)`
+                  ? `Active & Bundling (${activePortInfo.latencyMs}ms)`
                   : activePortInfo?.status === 'checking'
-                  ? '🟡 Probing Metro Ports...'
-                  : '🔴 Standby / Select active port'}
+                  ? 'Probing Metro Ports...'
+                  : 'Standby / Select active port'}
               </Text>
             </View>
           </View>
@@ -273,9 +274,12 @@ export const DebuggingTab: React.FC = () => {
           />
           <Text style={styles.inputSuffix}>:{selectedPort}</Text>
         </View>
-        <Text style={styles.inputHint}>
-          💡 Ensure your physical Android device and Mac are connected to the same Wi-Fi network.
-        </Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6}}>
+          <InfoCircleIcon size={13} color={AppColors.grayTextWeak} />
+          <Text style={[styles.inputHint, {marginTop: 0, flex: 1}]}>
+            Ensure your physical Android device and Mac are connected to the same Wi-Fi network.
+          </Text>
+        </View>
       </View>
 
       {/* ─── Interactive QR Code Generator Card ──────────────────────── */}
@@ -353,13 +357,22 @@ export const DebuggingTab: React.FC = () => {
           />
 
           <View style={styles.qrInfoBox}>
-            <Text style={styles.qrTargetTitle}>
-              {activeQrTab === 'apk'
-                ? '📦 Direct APK Download URL'
-                : activeQrTab === 'host'
-                ? '📱 Dev Settings Bundle Host'
-                : '⚡ Live Metro Fast-Refresh Endpoint'}
-            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2}}>
+              {activeQrTab === 'apk' ? (
+                <PackageIcon size={14} color={AppColors.purple} />
+              ) : activeQrTab === 'host' ? (
+                <SmartphoneIcon size={14} color={AppColors.purple} />
+              ) : (
+                <BoltIcon size={14} color={AppColors.amber500} />
+              )}
+              <Text style={styles.qrTargetTitle}>
+                {activeQrTab === 'apk'
+                  ? 'Direct APK Download URL'
+                  : activeQrTab === 'host'
+                  ? 'Dev Settings Bundle Host'
+                  : 'Live Metro Fast-Refresh Endpoint'}
+              </Text>
+            </View>
             <Text style={styles.qrTargetUrl} numberOfLines={2} ellipsizeMode="middle">
               {currentQrValue}
             </Text>
@@ -389,7 +402,10 @@ export const DebuggingTab: React.FC = () => {
 
       {/* ─── Bare React Native Multi-Device Setup Guide ───────────────── */}
       <View style={styles.guideCard}>
-        <Text style={styles.guideHeading}>📱 HOW TO CONNECT ANDROID DEVICE:</Text>
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12}}>
+          <SmartphoneIcon size={15} color={AppColors.primaryLight} />
+          <Text style={[styles.guideHeading, {marginBottom: 0}]}>HOW TO CONNECT ANDROID DEVICE:</Text>
+        </View>
 
         <View style={styles.stepRow}>
           <View style={styles.stepNumberBadge}>
@@ -420,7 +436,10 @@ export const DebuggingTab: React.FC = () => {
             <Text style={styles.stepNumberText}>3</Text>
           </View>
           <View style={{flex: 1}}>
-            <Text style={styles.stepTitle}>Simultaneous Live Fast-Refresh ⚡</Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+              <Text style={styles.stepTitle}>Simultaneous Live Fast-Refresh</Text>
+              <BoltIcon size={13} color={AppColors.amber500} />
+            </View>
             <Text style={styles.stepDesc}>
               Any changes saved in VS Code will immediately update <Text style={{fontWeight: '700'}}>both the iOS Simulator and physical Android phone</Text> in real-time!
             </Text>

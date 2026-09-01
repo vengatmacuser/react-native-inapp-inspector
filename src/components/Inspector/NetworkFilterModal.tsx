@@ -27,6 +27,11 @@ import {
   BoltIcon,
   GlobeIcon,
   LockIcon,
+  UnlockIcon,
+  RocketIcon,
+  TurtleIcon,
+  HourglassIcon,
+  PackageIcon,
 } from '../NetworkIcons';
 import TouchableScale from '../TouchableScale';
 
@@ -405,12 +410,13 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
               <Text style={styles.sectionTitle}>LATENCY & SPEED</Text>
               <View style={styles.chipsWrap}>
                 {[
-                  {key: 'all' as const, label: 'All Speeds', color: AppColors.purple},
-                  {key: 'fast' as const, label: '⚡ Fast (<200ms)', color: AppColors.greenColor, count: counts.fastCount},
-                  {key: 'normal' as const, label: '⏱️ Normal (200-500ms)', color: AppColors.skyBlue, count: counts.normalCount},
-                  {key: 'slow' as const, label: '⚠️ Slow (>500ms)', color: AppColors.errorColor, count: counts.slowCount},
+                  {key: 'all' as const, label: 'All Speeds', color: AppColors.purple, icon: LayersIcon},
+                  {key: 'fast' as const, label: 'Fast (<200ms)', color: AppColors.greenColor, icon: BoltIcon, count: counts.fastCount},
+                  {key: 'normal' as const, label: 'Normal (200-500ms)', color: AppColors.skyBlue, icon: ClockIcon, count: counts.normalCount},
+                  {key: 'slow' as const, label: 'Slow (>500ms)', color: AppColors.errorColor, icon: CircleAlertIcon, count: counts.slowCount},
                 ].map(item => {
                   const isSelected = draft.latency === item.key;
+                  const IconComp = item.icon;
                   return (
                     <TouchableOpacity
                       key={item.key}
@@ -423,6 +429,10 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
                           borderColor: item.color,
                         },
                       ]}>
+                      <IconComp
+                        size={13}
+                        color={isSelected ? item.color : AppColors.grayTextWeak}
+                      />
                       <Text
                         style={[
                           styles.chipLabel,
@@ -448,11 +458,12 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
               <Text style={styles.sectionTitle}>PROTOCOL</Text>
               <View style={styles.chipsWrap}>
                 {[
-                  {key: 'all' as const, label: 'All Protocols', color: AppColors.purple},
-                  {key: 'https' as const, label: '🔒 HTTPS Secure', color: AppColors.mintGreenText, count: counts.httpsCount},
-                  {key: 'http' as const, label: '🔓 HTTP Insecure', color: AppColors.amber700, count: counts.httpCount},
+                  {key: 'all' as const, label: 'All Protocols', color: AppColors.purple, icon: GlobeIcon},
+                  {key: 'https' as const, label: 'HTTPS Secure', color: AppColors.mintGreenText, icon: LockIcon, count: counts.httpsCount},
+                  {key: 'http' as const, label: 'HTTP Insecure', color: AppColors.amber700, icon: UnlockIcon, count: counts.httpCount},
                 ].map(item => {
                   const isSelected = draft.protocol === item.key;
+                  const IconComp = item.icon;
                   return (
                     <TouchableOpacity
                       key={item.key}
@@ -465,6 +476,10 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
                           borderColor: item.color,
                         },
                       ]}>
+                      <IconComp
+                        size={13}
+                        color={isSelected ? item.color : AppColors.grayTextWeak}
+                      />
                       <Text
                         style={[
                           styles.chipLabel,
@@ -490,13 +505,14 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
               <Text style={styles.sectionTitle}>SORT BY</Text>
               <View style={styles.chipsWrap}>
                 {[
-                  {key: 'time_desc' as const, label: '⏱️ Newest First (Default)'},
-                  {key: 'time_asc' as const, label: '⌛ Oldest First'},
-                  {key: 'duration_desc' as const, label: '🐢 Slowest Response'},
-                  {key: 'duration_asc' as const, label: '🚀 Fastest Response'},
-                  {key: 'size_desc' as const, label: '📦 Largest Response Size'},
+                  {key: 'time_desc' as const, label: 'Newest First (Default)', icon: ClockIcon},
+                  {key: 'time_asc' as const, label: 'Oldest First', icon: HourglassIcon},
+                  {key: 'duration_desc' as const, label: 'Slowest Response', icon: TurtleIcon},
+                  {key: 'duration_asc' as const, label: 'Fastest Response', icon: RocketIcon},
+                  {key: 'size_desc' as const, label: 'Largest Response Size', icon: PackageIcon},
                 ].map(item => {
                   const isSelected = draft.sortBy === item.key;
+                  const IconComp = item.icon;
                   return (
                     <TouchableOpacity
                       key={item.key}
@@ -509,6 +525,10 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
                           borderColor: AppColors.purple,
                         },
                       ]}>
+                      <IconComp
+                        size={13}
+                        color={isSelected ? AppColors.purple : AppColors.grayTextWeak}
+                      />
                       <Text
                         style={[
                           styles.chipLabel,

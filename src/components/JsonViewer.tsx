@@ -7,7 +7,7 @@ import TreeNode from './TreeNode';
 import SegmentedTabs from './SegmentedTabs';
 import HighlightText from './HighlightText';
 import CopyButton from './CopyButton';
-import {PrettyIcon, RawIcon, TableIcon} from './NetworkIcons';
+import {PrettyIcon, RawIcon, TableIcon, ChevronIcon} from './NetworkIcons';
 
 // Styles
 import {AppColors} from '../styles/AppColors';
@@ -77,10 +77,15 @@ const JsonTableRow = React.memo(({
           <TouchableOpacity
             onPress={() => setExpanded(prev => !prev)}
             hitSlop={6}
-            style={localStyles.showMoreBtn}>
+            style={[localStyles.showMoreBtn, {flexDirection: 'row', alignItems: 'center', gap: 4}]}>
             <Text style={localStyles.showMoreText}>
-              {expanded ? 'Show less ▲' : 'Show more ▼'}
+              {expanded ? 'Show less' : 'Show more'}
             </Text>
+            <ChevronIcon
+              direction={expanded ? 'up' : 'down'}
+              size={10}
+              color={AppColors.purple}
+            />
           </TouchableOpacity>
         )}
       </View>

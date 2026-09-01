@@ -432,7 +432,7 @@ const NetworkDetail = React.memo(() => {
                           letterSpacing: 0.4,
                           textTransform: 'uppercase',
                         }}>
-                        ENDPOINT URL ↗
+                        ENDPOINT URL
                       </Text>
                     </View>
 
@@ -473,7 +473,7 @@ const NetworkDetail = React.memo(() => {
                             fontSize: 9,
                             color: AppColors.sky600,
                           }}>
-                          Open ↗
+                          Open
                         </Text>
                       </View>
                     </View>

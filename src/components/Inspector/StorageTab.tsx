@@ -30,6 +30,7 @@ import {
   LayersIcon,
   ResetIcon,
   ChevronIcon,
+  WarningTriangleIcon,
 } from '../NetworkIcons';
 import {
   fetchStorageEntries,
@@ -162,9 +163,16 @@ const StorageEntryCard = React.memo(function StorageEntryCard({
           {displayValue}
         </Text>
         {entry.value.length > 80 && (
-          <Text style={styles.expandHint}>
-            {isExpanded ? '▲ Collapse' : '▼ Expand'}
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4}}>
+            <Text style={styles.expandHint}>
+              {isExpanded ? 'Collapse' : 'Expand'}
+            </Text>
+            <ChevronIcon
+              direction={isExpanded ? 'up' : 'down'}
+              size={10}
+              color={AppColors.purple}
+            />
+          </View>
         )}
       </TouchableScale>
     </View>
@@ -710,7 +718,10 @@ export const StorageTab = React.memo(() => {
                 autoCapitalize="none"
               />
               {jsonError && (
-                <Text style={styles.errorText}>⚠️ {jsonError}</Text>
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4}}>
+                  <WarningTriangleIcon size={12} color={AppColors.errorColor} />
+                  <Text style={styles.errorText}>{jsonError}</Text>
+                </View>
               )}
             </View>
 

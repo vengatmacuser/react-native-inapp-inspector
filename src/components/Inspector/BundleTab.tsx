@@ -48,6 +48,7 @@ import {
   AppleIcon,
   AndroidIcon,
   DownloadIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 
 import Svg, {
@@ -808,9 +809,13 @@ const BundleTreeNodeView: React.FC<{
           onPress={() => toggleFolder(node.fullPath)}
           style={[bundleStyles.treeFolderRow, {paddingLeft: indentLeft}]}>
           <View style={bundleStyles.treeRowLeft}>
-            <Text style={bundleStyles.treeChevron}>
-              {isCollapsed ? '▸' : '▾'}
-            </Text>
+            <View style={{marginRight: 4}}>
+              <ChevronIcon
+                direction={isCollapsed ? 'right' : 'down'}
+                size={12}
+                color={AppColors.grayTextWeak}
+              />
+            </View>
             {isCollapsed ? (
               <FolderIcon color={AppColors.amber500} size={15} />
             ) : (
@@ -1465,7 +1470,7 @@ const BundleTab = React.memo(() => {
                               letterSpacing: 0.3,
                               textTransform: 'uppercase',
                             }}>
-                            Live Metro URL ↗
+                            Live Metro URL
                           </Text>
                         </View>
                         <Text

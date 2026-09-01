@@ -79,10 +79,15 @@ const HeaderRow = React.memo(function HeaderRow({
           {value}
         </Text>
         {isLong && (
-          <View style={styles.htExpandRow}>
+          <View style={[styles.htExpandRow, {flexDirection: 'row', alignItems: 'center', gap: 4}]}>
             <Text style={styles.htExpandText}>
-              {expanded ? '▲ less' : '▼ more'}
+              {expanded ? 'less' : 'more'}
             </Text>
+            <ChevronIcon
+              direction={expanded ? 'up' : 'down'}
+              color={AppColors.purple}
+              size={10}
+            />
           </View>
         )}
       </Pressable>

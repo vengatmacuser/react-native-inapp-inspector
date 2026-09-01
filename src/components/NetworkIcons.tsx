@@ -570,11 +570,16 @@ export const SortArrowIcon = ({
 export const ChevronIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
+  direction = 'down',
 }: IconProps) => {
+  let path = 'M6 9l6 6 6-6';
+  if (direction === 'up') path = 'M18 15l-6-6-6 6';
+  else if (direction === 'right') path = 'M9 18l6-6-6-6';
+  else if (direction === 'left') path = 'M15 18l-6-6 6-6';
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M6 9l6 6 6-6"
+        d={path}
         stroke={color}
         strokeWidth="2.5"
         strokeLinecap="round"
@@ -2281,6 +2286,71 @@ export const QrCodeIcon = ({
     <Path
       d="M14 14h3v3h-3zM18 18h3v3h-3zM14 19h3v2h-3zM19 14h2v3h-2z"
       fill={color}
+    />
+  </Svg>
+);
+
+export const UnlockIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect
+      x="3"
+      y="11"
+      width="18"
+      height="11"
+      rx="2"
+      ry="2"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M7 11V7a5 5 0 0 1 9.9-1"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const RocketIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6.05 11a22.35 22.35 0 0 1-3.95 2z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M9 12l-4 4M15 6l-3 3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const TurtleIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Ellipse cx="12" cy="14" rx="7" ry="5" stroke={color} strokeWidth="2" />
+    <Circle cx="12" cy="6" r="3" stroke={color} strokeWidth="2" />
+    <Path
+      d="M5 12l-2-2M19 12l2-2M6 18l-2 2M18 18l2 2"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
     />
   </Svg>
 );
