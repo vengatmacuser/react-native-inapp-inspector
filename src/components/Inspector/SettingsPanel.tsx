@@ -457,12 +457,13 @@ const SettingsPanel = () => {
         contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 14}}
         showsVerticalScrollIndicator={false}>
         {/* Segmented Top Navigation Sub-Tabs */}
+        {/* ─── Modern Scrollable Settings Sub-Tabs Bar ─── */}
         <View
           style={{
-            flexDirection: 'row',
             backgroundColor: AppColors.primaryLight,
-            borderRadius: 12,
-            padding: 4,
+            borderRadius: 13,
+            paddingVertical: 4,
+            paddingHorizontal: 4,
             borderWidth: 1,
             borderColor: AppColors.grayBorderSecondary,
             shadowColor: AppColors.black,
@@ -470,139 +471,99 @@ const SettingsPanel = () => {
             shadowRadius: 4,
             shadowOffset: {width: 0, height: 2},
           }}>
-          <TouchableScale
-            accessible={true}
-            accessibilityRole="tab"
-            accessibilityLabel={t('settings.modulesAndTools')}
-            accessibilityState={{selected: settingsActiveSubTab === 'module'}}
-            onPress={() => {
-              animateNextLayout();
-              setSettingsActiveSubTab('module');
-            }}
-            style={{
-              flex: 1,
-              paddingVertical: 9,
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
               gap: 6,
-              borderRadius: 9,
-              backgroundColor:
-                settingsActiveSubTab === 'module'
-                  ? AppColors.purple
-                  : 'transparent',
+              paddingHorizontal: 2,
             }}>
-            <LayersIcon
-              color={
-                settingsActiveSubTab === 'module'
-                  ? AppColors.white
-                  : AppColors.grayText
-              }
-              size={13}
-            />
-            <Text
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 12.5,
-                lineHeight: 16,
-                color:
-                  settingsActiveSubTab === 'module'
-                    ? AppColors.white
-                    : AppColors.grayText,
-              }}>
-              {t('settings.modulesAndTools')}
-            </Text>
-          </TouchableScale>
-
-          <TouchableScale
-            accessible={true}
-            accessibilityRole="tab"
-            accessibilityLabel={t('settings.uiPreferences')}
-            accessibilityState={{selected: settingsActiveSubTab === 'ui'}}
-            onPress={() => {
-              animateNextLayout();
-              setSettingsActiveSubTab('ui');
-            }}
-            style={{
-              flex: 1,
-              paddingVertical: 9,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              borderRadius: 9,
-              backgroundColor:
-                settingsActiveSubTab === 'ui'
-                  ? AppColors.purple
-                  : 'transparent',
-            }}>
-            <ScreenIcon
-              color={
-                settingsActiveSubTab === 'ui'
-                  ? AppColors.white
-                  : AppColors.grayText
-              }
-              size={13}
-            />
-            <Text
-              numberOfLines={1}
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 12,
-                lineHeight: 16,
-                color:
-                  settingsActiveSubTab === 'ui'
-                    ? AppColors.white
-                    : AppColors.grayText,
-              }}>
-              {t('settings.uiPreferences')}
-            </Text>
-          </TouchableScale>
-
-          <TouchableScale
-            accessible={true}
-            accessibilityRole="tab"
-            accessibilityLabel={t('settings.ramLimits')}
-            accessibilityState={{selected: settingsActiveSubTab === 'limits'}}
-            onPress={() => {
-              animateNextLayout();
-              setSettingsActiveSubTab('limits');
-            }}
-            style={{
-              flex: 1,
-              paddingVertical: 9,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 5,
-              borderRadius: 9,
-              backgroundColor:
-                settingsActiveSubTab === 'limits'
-                  ? AppColors.purple
-                  : 'transparent',
-            }}>
-            <BrainIcon
-              color={
-                settingsActiveSubTab === 'limits'
-                  ? AppColors.white
-                  : AppColors.grayText
-              }
-              size={13}
-            />
-            <Text
-              numberOfLines={1}
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 12,
-                lineHeight: 16,
-                color:
-                  settingsActiveSubTab === 'limits'
-                    ? AppColors.white
-                    : AppColors.grayText,
-              }}>
-              {t('settings.ramLimits')}
-            </Text>
-          </TouchableScale>
+            {[
+              {
+                key: 'module' as const,
+                label: t('settings.modulesAndTools', 'Modules & Tools'),
+                Icon: LayersIcon,
+                badge: `${allModules.filter(m => stagedTabVisibility?.[m.key as ActiveTab] || m.key === 'apis').length}/${allModules.length}`,
+              },
+              {
+                key: 'ui' as const,
+                label: t('settings.uiPreferences', 'UI Preferences'),
+                Icon: ScreenIcon,
+              },
+              {
+                key: 'limits' as const,
+                label: t('settings.ramLimits', 'RAM & Limits'),
+                Icon: BrainIcon,
+              },
+            ].map(tab => {
+              const isActive = settingsActiveSubTab === tab.key;
+              const IconComp = tab.Icon;
+              return (
+                <TouchableScale
+                  key={tab.key}
+                  accessible={true}
+                  accessibilityRole="tab"
+                  accessibilityLabel={tab.label}
+                  accessibilityState={{selected: isActive}}
+                  onPress={() => {
+                    animateNextLayout();
+                    setSettingsActiveSubTab(tab.key);
+                  }}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    borderRadius: 9,
+                    backgroundColor: isActive
+                      ? AppColors.purple
+                      : 'transparent',
+                  }}>
+                  <IconComp
+                    color={isActive ? AppColors.white : AppColors.grayText}
+                    size={13}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 12.5,
+                      lineHeight: 16,
+                      color: isActive
+                        ? AppColors.white
+                        : AppColors.grayText,
+                    }}>
+                    {tab.label}
+                  </Text>
+                  {tab.badge && (
+                    <View
+                      style={{
+                        backgroundColor: isActive
+                          ? 'rgba(255,255,255,0.25)'
+                          : `${AppColors.purple}18`,
+                        paddingHorizontal: 5.5,
+                        paddingVertical: 1,
+                        borderRadius: 10,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 9.5,
+                          color: isActive
+                            ? AppColors.white
+                            : AppColors.purple,
+                        }}>
+                        {tab.badge}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableScale>
+              );
+            })}
+          </ScrollView>
         </View>
 
         {settingsActiveSubTab === 'module' && (

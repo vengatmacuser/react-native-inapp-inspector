@@ -27,6 +27,7 @@ import {
   CircleAlertIcon,
   CircleXIcon,
   RepeatIcon,
+  PinIcon,
 } from './NetworkIcons';
 import {AppFonts} from '../styles/AppFonts';
 import styles from '../styles';
@@ -408,11 +409,47 @@ const LogCard = React.memo(function LogCard({
           </View>
         </View>
 
-        {/* Row 3: Footer (Timestamp on Left, Response Size & Duration on Right) */}
+        {/* Row 3: Footer (Timestamp & Origin on Left, Response Size & Duration on Right) */}
         <View style={styles.cardFooterRow}>
-          <View style={styles.cardDateRow}>
-            <CalendarIcon color={AppColors.grayTextWeak} size={10} />
-            <Text style={styles.cardDateText}>{triggeredAt}</Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, minWidth: 0}}>
+            <View style={styles.cardDateRow}>
+              <CalendarIcon color={AppColors.grayTextWeak} size={10} />
+              <Text style={styles.cardDateText}>{triggeredAt}</Text>
+            </View>
+
+            {item.caller && item.caller !== 'Unknown' && (
+              <View
+                style={[
+                  styles.chip,
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 3,
+                    backgroundColor: `${AppColors.skyBlue}14`,
+                    borderColor: `${AppColors.skyBlue}30`,
+                    paddingHorizontal: 5,
+                    paddingVertical: 1,
+                    borderRadius: 4,
+                    flexShrink: 1,
+                    maxWidth: 160,
+                  },
+                ]}>
+                <PinIcon color={AppColors.skyBlue} size={8.5} />
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color: AppColors.skyBlue,
+                      fontSize: 8.5,
+                      fontFamily: AppFonts.interMedium,
+                    },
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="middle">
+                  {item.caller}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.cardFooterRight}>

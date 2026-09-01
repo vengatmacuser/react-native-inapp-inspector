@@ -98,6 +98,38 @@ async function getOrCreateClientId(): Promise<string> {
   }
 }
 
+function isDeviceEmulator(): boolean {
+  try {
+    if (Platform.OS === 'android') {
+      const c = (Platform.constants as any) || {};
+      const model = String(c.Model || '').toLowerCase();
+      const brand = String(c.Brand || '').toLowerCase();
+      const fingerprint = String(c.Fingerprint || '').toLowerCase();
+      const hardware = String(c.Hardware || '').toLowerCase();
+      const manufacturer = String(c.Manufacturer || '').toLowerCase();
+      return (
+        model.includes('emulator') ||
+        model.includes('sdk') ||
+        model.includes('google_sdk') ||
+        model.includes('vbox') ||
+        brand.includes('generic') ||
+        fingerprint.startsWith('generic') ||
+        hardware.includes('goldfish') ||
+        hardware.includes('ranchu') ||
+        manufacturer.includes('genymotion')
+      );
+    }
+    if (Platform.OS === 'ios') {
+      const c = (Platform.constants as any) || {};
+      const model = String(c.Model || '').toLowerCase();
+      return model.includes('simulator') || Boolean(c.isSimulator);
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 function getSystemMetadata(environment?: string) {
   const rnConstants = Platform.constants as any;
   const rnVersion = rnConstants?.reactNativeVersion
@@ -107,6 +139,7 @@ function getSystemMetadata(environment?: string) {
   const isHermes = Boolean(typeof (global as any).HermesInternal === 'object' && (global as any).HermesInternal !== null);
   const isFabric = Boolean((global as any)?.nativeFabricUIManager !== undefined);
   const isDev = Boolean(typeof __DEV__ !== 'undefined' && __DEV__);
+  const isEmulator = isDeviceEmulator();
 
   return {
     lib_version: LIB_VERSION,
@@ -116,6 +149,9 @@ function getSystemMetadata(environment?: string) {
     is_hermes: isHermes,
     is_fabric: isFabric,
     is_dev: isDev,
+    is_emulator: isEmulator,
+    device_type: isEmulator ? 'emulator' : 'real_device',
+    app_mode: isDev ? 'local_mode' : 'bundled_application',
     environment: environment || (isDev ? 'DEV' : 'PROD'),
     engagement_time_msec: 1000,
   };

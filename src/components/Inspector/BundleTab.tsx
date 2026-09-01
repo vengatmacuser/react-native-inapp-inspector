@@ -19,6 +19,7 @@ import HighlightText from '../HighlightText';
 import SegmentedTabs from '../SegmentedTabs';
 import AnimatedEntrance from '../AnimatedEntrance';
 import EndOfListFooter from '../EndOfListFooter';
+import FeatureUnderDevNotice from './FeatureUnderDevNotice';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import styles from '../../styles';
@@ -1399,6 +1400,8 @@ const BundleTab = React.memo(() => {
           )}
         </TouchableScale>
       </View>
+
+      <FeatureUnderDevNotice featureName="Metro Bundle Analyzer" />
 
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── 1. TAB: OVERVIEW & TREEMAP ───────────────────────────────────────── */}

@@ -567,6 +567,11 @@ const NetworkInspector = ({
   }, [latestNpmVersion]);
 
   useEffect(() => {
+    // Only check for npm updates when running in local development / debug mode (__DEV__)
+    // Never show or check in production / bundled application
+    if (typeof __DEV__ === 'undefined' || !__DEV__) {
+      return;
+    }
     let cancelled = false;
     fetch('https://registry.npmjs.org/react-native-inapp-inspector/latest')
       .then(res => (res.ok ? res.json() : null))

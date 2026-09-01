@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo, useCallback} from 'react';
+import React, {useState, useEffect, useMemo, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import TouchableScale from '../TouchableScale';
 import CopyButton from '../CopyButton';
+import globalStyles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
@@ -28,6 +29,7 @@ import {
   CircleAlertIcon,
   LayersIcon,
   ResetIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 import {
   fetchStorageEntries,
@@ -171,6 +173,7 @@ const StorageEntryCard = React.memo(function StorageEntryCard({
 
 export const StorageTab = React.memo(() => {
   const {t} = useTranslation();
+  const listRef = useRef<FlatList>(null);
   const [activeDriver, setActiveDriver] = useState<StorageDriver>('asyncStorage');
   const [activeMMKVId, setActiveMMKVId] = useState<string>('default');
   const [entries, setEntries] = useState<StorageEntry[]>([]);
@@ -555,34 +558,60 @@ export const StorageTab = React.memo(() => {
           <Text style={styles.loadingText}>Loading storage entries...</Text>
         </View>
       ) : (
-        <FlatList
-          data={filteredEntries}
-          keyExtractor={item => item.key}
-          renderItem={renderItem}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          removeClippedSubviews={Platform.OS === 'android'}
-          style={styles.scrollArea}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconWrap}>
-                <DatabaseIcon size={28} color={AppColors.grayTextWeak} />
+        <>
+          <FlatList
+            ref={listRef}
+            data={filteredEntries}
+            keyExtractor={item => item.key}
+            renderItem={renderItem}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            removeClippedSubviews={Platform.OS === 'android'}
+            style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <View style={styles.emptyIconWrap}>
+                  <DatabaseIcon size={28} color={AppColors.grayTextWeak} />
+                </View>
+                <Text style={styles.emptyTitle}>
+                  {search ? 'No matching keys found' : `No ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} Keys`}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  {search
+                    ? 'Try modifying your search query'
+                    : `Storage is auto-detected. Tap "+ Add" above to create your first ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} key!`}
+                </Text>
               </View>
-              <Text style={styles.emptyTitle}>
-                {search ? 'No matching keys found' : `No ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} Keys`}
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                {search
-                  ? 'Try modifying your search query'
-                  : `Storage is auto-detected. Tap "+ Add" above to create your first ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} key!`}
-              </Text>
+            }
+            ListFooterComponent={<View style={{height: 60}} />}
+          />
+
+          <TouchableScale
+            onPress={() => {
+              try {
+                listRef.current?.scrollToOffset({
+                  offset: 0,
+                  animated: true,
+                });
+              } catch {
+                try {
+                  listRef.current?.scrollToIndex({
+                    index: 0,
+                    animated: true,
+                  });
+                } catch {}
+              }
+            }}
+            hitSlop={12}
+            style={globalStyles.scrollTopBtn}>
+            <View style={{transform: [{rotate: '180deg'}]}}>
+              <ChevronIcon color={AppColors.white} size={18} />
             </View>
-          }
-          ListFooterComponent={<View style={{height: 60}} />}
-        />
+          </TouchableScale>
+        </>
       )}
 
       {/* ── Create / Edit Key Modal ── */}

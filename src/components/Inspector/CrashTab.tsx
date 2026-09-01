@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   Alert,
   FlatList,
@@ -18,6 +18,7 @@ import TouchableScale from '../TouchableScale';
 import AnimatedEntrance from '../AnimatedEntrance';
 import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
+import FeatureUnderDevNotice from './FeatureUnderDevNotice';
 import HighlightText from '../HighlightText';
 import JsonViewer from '../JsonViewer';
 import styles from '../../styles';
@@ -66,6 +67,7 @@ import {
   RepeatIcon,
   CodeBracketsIcon,
   FilterIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 
 const getRelativeTime = (timestamp: number): string => {
@@ -88,6 +90,7 @@ const CrashTab = React.memo(() => {
   const {t} = useTranslation();
   const {crashRecords, selectedCrash, setSelectedCrash} = useInspector();
 
+  const listRef = useRef<FlatList>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<CrashFilterType>('all');
   const [crashFilters, setCrashFilters] = useState<CrashFilters>(
@@ -500,6 +503,8 @@ const CrashTab = React.memo(() => {
               </TouchableScale>
             </View>
 
+            <FeatureUnderDevNotice featureName="Crash & Exception Sentinel" />
+
             {/* ─── Filter Chips ─── */}
             <ScrollView
               horizontal
@@ -579,19 +584,45 @@ const CrashTab = React.memo(() => {
           )}
         </ScrollView>
       ) : (
-        <FlatList
-          data={filteredList}
-          keyExtractor={item => item.id}
-          renderItem={renderCard}
-          initialNumToRender={12}
-          maxToRenderPerBatch={8}
-          windowSize={5}
-          removeClippedSubviews={true}
-          renderToHardwareTextureAndroid={true}
-          contentContainerStyle={localStyles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={<EndOfListFooter />}
-        />
+        <>
+          <FlatList
+            ref={listRef}
+            data={filteredList}
+            keyExtractor={item => item.id}
+            renderItem={renderCard}
+            initialNumToRender={12}
+            maxToRenderPerBatch={8}
+            windowSize={5}
+            removeClippedSubviews={true}
+            renderToHardwareTextureAndroid={true}
+            contentContainerStyle={localStyles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListFooterComponent={<EndOfListFooter />}
+          />
+
+          <TouchableScale
+            onPress={() => {
+              try {
+                listRef.current?.scrollToOffset({
+                  offset: 0,
+                  animated: true,
+                });
+              } catch {
+                try {
+                  listRef.current?.scrollToIndex({
+                    index: 0,
+                    animated: true,
+                  });
+                } catch {}
+              }
+            }}
+            hitSlop={12}
+            style={styles.scrollTopBtn}>
+            <View style={{transform: [{rotate: '180deg'}]}}>
+              <ChevronIcon color={AppColors.white} size={18} />
+            </View>
+          </TouchableScale>
+        </>
       )}
 
       {/* Filter Modal */}

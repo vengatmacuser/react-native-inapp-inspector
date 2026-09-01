@@ -169,7 +169,7 @@ export const NpmUpdateToast = () => {
     handleDismiss();
   };
 
-  if (!showUpdateToast || !visible || !updateAvailable || !latestNpmVersion) return null;
+  if (typeof __DEV__ === 'undefined' || !__DEV__ || !showUpdateToast || !visible || !updateAvailable || !latestNpmVersion) return null;
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],

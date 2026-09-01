@@ -125,6 +125,8 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
 
   const installCommand = `npm install react-native-inapp-inspector@latest`;
 
+  if (typeof __DEV__ === 'undefined' || !__DEV__) return null;
+
   useEffect(() => {
     if (visible) {
       setCopied(false);

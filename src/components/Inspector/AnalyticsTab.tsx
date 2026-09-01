@@ -1,4 +1,4 @@
-import React, {useCallback, useState, useMemo, useEffect} from 'react';
+import React, {useCallback, useState, useMemo, useEffect, useRef} from 'react';
 import {
   FlatList,
   Pressable,
@@ -55,6 +55,7 @@ import {
   PinIcon,
   MoneyIcon,
   UserCheckIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 
 const AnalyticsHeader = React.memo(() => {
@@ -1090,6 +1091,7 @@ const AnalyticsTab = React.memo(() => {
     isAnalyticsFilterApplied,
   } = useInspector();
 
+  const listRef = useRef<FlatList>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const keyExtractor = useCallback(
@@ -1305,49 +1307,75 @@ const AnalyticsTab = React.memo(() => {
         style={{flex: 1}}
         onLayout={() => setIsAnalyticsLayoutReady(true)}>
         {isAnalyticsLayoutReady ? (
-          <FlatList
-            data={filteredAnalyticsEvents}
-            keyExtractor={keyExtractor}
-            ListHeaderComponent={AnalyticsHeader}
-            renderItem={renderItem}
-            initialNumToRender={12}
-            maxToRenderPerBatch={8}
-            windowSize={5}
-            removeClippedSubviews={true}
-            renderToHardwareTextureAndroid={true}
-            ListEmptyComponent={
-              <EmptyState
-                isSearch={analyticsSearch.length > 0}
-                searchQuery={analyticsSearch}
-                customTitle={
-                  analyticsSearch.length > 0
-                    ? 'No matching analytics events'
-                    : 'No analytics events yet'
-                }
-                customSub={
-                  analyticsSearch.length > 0
-                    ? `No events matched "${analyticsSearch}"`
-                    : 'Call setupAnalyticsLogger(analytics()) at app start.'
-                }
-                onClearSearch={() => setAnalyticsSearch('')}
-              />
-            }
-            ListFooterComponent={
-              filteredAnalyticsEvents.length > 0 ? (
-                <EndOfListFooter
-                  count={filteredAnalyticsEvents.length}
-                  label="events"
+          <>
+            <FlatList
+              ref={listRef}
+              data={filteredAnalyticsEvents}
+              keyExtractor={keyExtractor}
+              ListHeaderComponent={AnalyticsHeader}
+              renderItem={renderItem}
+              initialNumToRender={12}
+              maxToRenderPerBatch={8}
+              windowSize={5}
+              removeClippedSubviews={true}
+              renderToHardwareTextureAndroid={true}
+              ListEmptyComponent={
+                <EmptyState
+                  isSearch={analyticsSearch.length > 0}
+                  searchQuery={analyticsSearch}
+                  customTitle={
+                    analyticsSearch.length > 0
+                      ? 'No matching analytics events'
+                      : 'No analytics events yet'
+                  }
+                  customSub={
+                    analyticsSearch.length > 0
+                      ? `No events matched "${analyticsSearch}"`
+                      : 'Call setupAnalyticsLogger(analytics()) at app start.'
+                  }
+                  onClearSearch={() => setAnalyticsSearch('')}
                 />
-              ) : null
-            }
-            contentContainerStyle={[
-              styles.listContent,
-              filteredAnalyticsEvents.length === 0 && {
-                flexGrow: 1,
-              },
-            ]}
-            keyboardShouldPersistTaps="handled"
-          />
+              }
+              ListFooterComponent={
+                filteredAnalyticsEvents.length > 0 ? (
+                  <EndOfListFooter
+                    count={filteredAnalyticsEvents.length}
+                    label="events"
+                  />
+                ) : null
+              }
+              contentContainerStyle={[
+                styles.listContent,
+                filteredAnalyticsEvents.length === 0 && {
+                  flexGrow: 1,
+                },
+              ]}
+              keyboardShouldPersistTaps="handled"
+            />
+
+            <TouchableScale
+              onPress={() => {
+                try {
+                  listRef.current?.scrollToOffset({
+                    offset: 0,
+                    animated: true,
+                  });
+                } catch {
+                  try {
+                    listRef.current?.scrollToIndex({
+                      index: 0,
+                      animated: true,
+                    });
+                  } catch {}
+                }
+              }}
+              hitSlop={12}
+              style={styles.scrollTopBtn}>
+              <View style={{transform: [{rotate: '180deg'}]}}>
+                <ChevronIcon color={AppColors.white} size={18} />
+              </View>
+            </TouchableScale>
+          </>
         ) : null}
       </View>
     </>

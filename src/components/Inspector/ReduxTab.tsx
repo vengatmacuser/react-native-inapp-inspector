@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {
   FlatList,
   Pressable,
@@ -42,6 +42,7 @@ import {
   TextAaIcon,
   StorageIcon,
   HeaderPauseIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 
 interface ReduxSliceItem {
@@ -120,6 +121,8 @@ const ReduxTab = React.memo(() => {
     setReduxSearch,
     setSelectedReduxSlice,
   } = useInspector();
+
+  const listRef = useRef<FlatList>(null);
 
   // Sort mode: 'latest' (newest updated first) vs 'alpha' (A-Z)
   const [sortMode, setSortMode] = useState<'latest' | 'alpha'>('latest');
@@ -656,6 +659,7 @@ const ReduxTab = React.memo(() => {
 
       {/* ─── FlatList of Slices ─── */}
       <FlatList
+        ref={listRef}
         data={filteredSlices}
         keyExtractor={item => item.id}
         renderItem={renderSliceItem}
@@ -683,6 +687,29 @@ const ReduxTab = React.memo(() => {
         ]}
         keyboardShouldPersistTaps="handled"
       />
+
+      <TouchableScale
+        onPress={() => {
+          try {
+            listRef.current?.scrollToOffset({
+              offset: 0,
+              animated: true,
+            });
+          } catch {
+            try {
+              listRef.current?.scrollToIndex({
+                index: 0,
+                animated: true,
+              });
+            } catch {}
+          }
+        }}
+        hitSlop={12}
+        style={styles.scrollTopBtn}>
+        <View style={{transform: [{rotate: '180deg'}]}}>
+          <ChevronIcon color={AppColors.white} size={18} />
+        </View>
+      </TouchableScale>
     </View>
   );
 });

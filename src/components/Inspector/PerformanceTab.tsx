@@ -22,6 +22,7 @@ import TouchableScale from '../TouchableScale';
 import CopyButton from '../CopyButton';
 import HighlightText from '../HighlightText';
 import EndOfListFooter from '../EndOfListFooter';
+import FeatureUnderDevNotice from './FeatureUnderDevNotice';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
@@ -499,6 +500,8 @@ const PerformanceTab = React.memo(() => {
           </Text>
         </TouchableScale>
       </View>
+
+      <FeatureUnderDevNotice featureName="Performance & FPS Profiler" />
 
       {/* Filter Category Tabs Carousel */}
       <View style={perfStyles.categoryScrollWrapper}>

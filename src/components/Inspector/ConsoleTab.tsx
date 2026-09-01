@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useRef} from 'react';
 import {
   FlatList,
   Pressable,
@@ -30,6 +30,7 @@ import {
   ErrorCircleIcon,
   AnalyticsIcon,
   HeaderPauseIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 
 const ConsoleTab = React.memo(() => {
@@ -48,6 +49,8 @@ const ConsoleTab = React.memo(() => {
     isConsolePaused,
     setIsConsolePaused,
   } = useInspector();
+
+  const listRef = useRef<FlatList>(null);
 
   const renderItem = useCallback(
     ({item, index}: {item: any; index: number}) => (
@@ -668,6 +671,7 @@ const ConsoleTab = React.memo(() => {
       </View>
 
       <FlatList
+        ref={listRef}
         data={filteredConsoleLogs}
         keyExtractor={keyExtractor}
         ListHeaderComponent={listHeader}
@@ -705,6 +709,29 @@ const ConsoleTab = React.memo(() => {
         ]}
         keyboardShouldPersistTaps="handled"
       />
+
+      <TouchableScale
+        onPress={() => {
+          try {
+            listRef.current?.scrollToOffset({
+              offset: 0,
+              animated: true,
+            });
+          } catch {
+            try {
+              listRef.current?.scrollToIndex({
+                index: 0,
+                animated: true,
+              });
+            } catch {}
+          }
+        }}
+        hitSlop={12}
+        style={styles.scrollTopBtn}>
+        <View style={{transform: [{rotate: '180deg'}]}}>
+          <ChevronIcon color={AppColors.white} size={18} />
+        </View>
+      </TouchableScale>
     </View>
   );
 });

@@ -5,7 +5,9 @@ import {
   Linking,
   Platform,
   Pressable,
+  ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -77,6 +79,11 @@ const InspectorHeader = React.memo(() => {
     setSelectedCrash,
   } = useInspector();
 
+  const {width: windowWidth} = useWindowDimensions();
+  const isNarrow = windowWidth < 360;
+  const isCompact = windowWidth < 400;
+  const isTablet = windowWidth >= 600;
+
   const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
   const [appVersionString, setAppVersionString] = React.useState<string>(() => {
     return getAppVersionAndBuild().formatted;
@@ -101,7 +108,7 @@ const InspectorHeader = React.memo(() => {
     if (clean === 'DEV' || clean.includes('DEV') || clean === 'LOCAL') {
       return {
         label: rawEnv,
-        bg: `${AppColors.emerald500}40`, // emerald
+        bg: `${AppColors.emerald500}40`,
         border: `${AppColors.emerald400}8C`,
         text: AppColors.mintGreenBorder,
       };
@@ -109,7 +116,7 @@ const InspectorHeader = React.memo(() => {
     if (clean === 'UAT' || clean === 'QA' || clean === 'TEST') {
       return {
         label: rawEnv,
-        bg: `${AppColors.amber500}47`, // amber
+        bg: `${AppColors.amber500}47`,
         border: `${AppColors.amber400}99`,
         text: AppColors.amberWarmBorder,
       };
@@ -117,15 +124,14 @@ const InspectorHeader = React.memo(() => {
     if (clean === 'PREPROD' || clean === 'STAGE' || clean === 'STAGING') {
       return {
         label: rawEnv,
-        bg: `${AppColors.purple500}47`, // purple
+        bg: `${AppColors.purple500}47`,
         border: `${AppColors.purple400}99`,
         text: AppColors.violetSoftBorder,
       };
     }
-    // PROD / Live
     return {
       label: rawEnv,
-      bg: `${AppColors.rose500}40`, // rose
+      bg: `${AppColors.rose500}40`,
       border: `${AppColors.roseBorder}8C`,
       text: AppColors.errorBorder,
     };
@@ -166,6 +172,9 @@ const InspectorHeader = React.memo(() => {
   const headerTopPadding =
     Platform.OS === 'ios' && modalHeightPercent >= 95 ? 44 : 0;
 
+  const buttonSize = isNarrow ? 28 : isCompact ? 30 : 32;
+  const logoSize = isNarrow ? 36 : isCompact ? 40 : 44;
+
   return (
     <>
       <LinearGradient
@@ -174,14 +183,22 @@ const InspectorHeader = React.memo(() => {
         end={{x: 1, y: 1}}
         style={styles.headerGradient}>
       <View style={{paddingTop: headerTopPadding, width: '100%'}}>
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.header,
+            {
+              paddingHorizontal: isNarrow ? 8 : 12,
+              paddingVertical: isNarrow ? 6 : 8,
+              minHeight: isNarrow ? 48 : 52,
+            },
+          ]}>
           <View
             style={[
               styles.headerLeft,
               {
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 8,
+                gap: isNarrow ? 6 : 8,
                 flex: !isDetailView ? 1 : 0,
                 minWidth: 0,
               },
@@ -208,9 +225,9 @@ const InspectorHeader = React.memo(() => {
               hitSlop={15}
               style={[
                 {
-                  width: 38,
-                  height: 38,
-                  borderRadius: 19,
+                  width: isNarrow ? 32 : 36,
+                  height: isNarrow ? 32 : 36,
+                  borderRadius: isNarrow ? 16 : 18,
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: `${AppColors.white}2E`,
@@ -219,13 +236,12 @@ const InspectorHeader = React.memo(() => {
                 },
                 !isAnySelected && {display: 'none'},
               ]}>
-              {/* Soft outer glow to fake a blurred circle */}
               <View
                 style={{
                   position: 'absolute',
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
+                  width: isNarrow ? 40 : 44,
+                  height: isNarrow ? 40 : 44,
+                  borderRadius: 22,
                   backgroundColor: `${AppColors.white}1A`,
                 }}
               />
@@ -239,7 +255,7 @@ const InspectorHeader = React.memo(() => {
                   <Text
                     style={{
                       fontFamily: AppFonts.interBold,
-                      fontSize: 16,
+                      fontSize: isNarrow ? 14 : 16,
                       color: AppColors.white,
                       letterSpacing: -0.2,
                     }}
@@ -250,7 +266,7 @@ const InspectorHeader = React.memo(() => {
                     <View
                       style={{
                         backgroundColor: `${AppColors.white}26`,
-                        paddingHorizontal: 6,
+                        paddingHorizontal: isNarrow ? 4 : 6,
                         paddingVertical: 1.5,
                         borderRadius: 10,
                         borderWidth: 1,
@@ -259,7 +275,7 @@ const InspectorHeader = React.memo(() => {
                       <Text
                         style={{
                           fontFamily: AppFonts.interBold,
-                          fontSize: 9,
+                          fontSize: isNarrow ? 8 : 9,
                           color: AppColors.white,
                         }}>
                         v{LIB_VERSION}
@@ -270,7 +286,7 @@ const InspectorHeader = React.memo(() => {
                 <Text
                   style={{
                     fontFamily: AppFonts.interRegular,
-                    fontSize: 10.5,
+                    fontSize: isNarrow ? 9.5 : 10.5,
                     color: `${AppColors.white}CC`,
                   }}
                   numberOfLines={1}>
@@ -284,22 +300,29 @@ const InspectorHeader = React.memo(() => {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 8,
+                  gap: isNarrow ? 6 : 8,
                   flex: 1,
                   minWidth: 0,
-                  marginRight: 6,
+                  marginRight: 4,
                 }}>
-                <AppHeaderLogo size={46} customIcon={appIcon} />
-                <View style={{gap: 2.5, flex: 1, minWidth: 0}}>
+                <AppHeaderLogo size={logoSize} customIcon={appIcon} />
+                <View style={{gap: 2, flex: 1, minWidth: 0}}>
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 6,
+                      gap: isNarrow ? 4 : 6,
                       minWidth: 0,
                     }}>
                     <Text
-                      style={[styles.headerTitle, {flexShrink: 1}]}
+                      style={[
+                        styles.headerTitle,
+                        {
+                          fontSize: isNarrow ? 13.5 : isCompact ? 14.5 : 15.5,
+                          flexShrink: 1,
+                          paddingBottom: 0,
+                        },
+                      ]}
                       numberOfLines={1}
                       ellipsizeMode="tail">
                       {getAppName()}
@@ -311,12 +334,19 @@ const InspectorHeader = React.memo(() => {
                           backgroundColor: envConfig.bg,
                           borderColor: envConfig.border,
                           flexShrink: 0,
+                          paddingHorizontal: isNarrow ? 4.5 : 6,
                           paddingVertical: 1.5,
                           marginBottom: 0,
                         },
                       ]}>
                       <Text
-                        style={[styles.envBadgeText, {color: envConfig.text}]}>
+                        style={[
+                          styles.envBadgeText,
+                          {
+                            color: envConfig.text,
+                            fontSize: isNarrow ? 8.5 : 9.5,
+                          },
+                        ]}>
                         {envConfig.label}
                       </Text>
                     </View>
@@ -329,9 +359,9 @@ const InspectorHeader = React.memo(() => {
                           alignItems: 'center',
                           backgroundColor: '#F59E0B',
                           borderRadius: 5,
-                          paddingHorizontal: 5.5,
+                          paddingHorizontal: isNarrow ? 4 : 5.5,
                           paddingVertical: 1.5,
-                          gap: 3.5,
+                          gap: 3,
                           shadowColor: '#F59E0B',
                           shadowOffset: {width: 0, height: 1.5},
                           shadowOpacity: 0.35,
@@ -349,16 +379,18 @@ const InspectorHeader = React.memo(() => {
                             transform: [{scale: unreadPulseAnim}],
                           }}
                         />
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 9,
-                            color: '#FFFFFF',
-                            letterSpacing: 0.3,
-                          }}>
-                          UPDATE
-                        </Text>
-                        <BoltIcon size={9} color="#FFFFFF" />
+                        {!isNarrow && (
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 8.5,
+                              color: '#FFFFFF',
+                              letterSpacing: 0.3,
+                            }}>
+                            UPDATE
+                          </Text>
+                        )}
+                        <BoltIcon size={isNarrow ? 8 : 9} color="#FFFFFF" />
                       </Pressable>
                     )}
                   </View>
@@ -368,7 +400,7 @@ const InspectorHeader = React.memo(() => {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 5,
+                      gap: isNarrow ? 4 : 5,
                       minWidth: 0,
                     }}>
                     <View
@@ -377,26 +409,28 @@ const InspectorHeader = React.memo(() => {
                         alignItems: 'center',
                         backgroundColor: `${AppColors.white}1F`,
                         borderRadius: 5,
-                        paddingHorizontal: 6,
+                        paddingHorizontal: isNarrow ? 4.5 : 6,
                         paddingVertical: 2,
-                        gap: 4,
+                        gap: 3.5,
                         borderWidth: 1,
                         borderColor: `${AppColors.white}2E`,
-                        flexShrink: 0,
+                        flexShrink: 1,
+                        minWidth: 0,
                       }}>
                       {Platform.OS === 'ios' ? (
-                        <AppleIcon color={`${AppColors.white}E6`} size={10} />
+                        <AppleIcon color={`${AppColors.white}E6`} size={isNarrow ? 9 : 10} />
                       ) : (
-                        <AndroidIcon color={`${AppColors.white}E6`} size={10} />
+                        <AndroidIcon color={`${AppColors.white}E6`} size={isNarrow ? 9 : 10} />
                       )}
                       <Text
                         style={{
                           fontFamily: AppFonts.interMedium,
-                          fontSize: 9.5,
+                          fontSize: isNarrow ? 8.5 : 9.5,
                           color: `${AppColors.white}EB`,
                           letterSpacing: 0.1,
                         }}
-                        numberOfLines={1}>
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
                         {appVersionString}
                       </Text>
                     </View>
@@ -416,18 +450,18 @@ const InspectorHeader = React.memo(() => {
                         alignItems: 'center',
                         backgroundColor: `${AppColors.white}1F`,
                         borderRadius: 5,
-                        paddingHorizontal: 6,
+                        paddingHorizontal: isNarrow ? 4.5 : 6,
                         paddingVertical: 2,
-                        gap: 4,
+                        gap: 3.5,
                         borderWidth: 1,
                         borderColor: `${AppColors.white}2E`,
                         flexShrink: 0,
                       }}>
-                      <NpmIcon size={10} color="#FF6B6B" />
+                      <NpmIcon size={isNarrow ? 9 : 10} color="#FF6B6B" />
                       <Text
                         style={{
                           fontFamily: AppFonts.interMedium,
-                          fontSize: 9.5,
+                          fontSize: isNarrow ? 8.5 : 9.5,
                           color: `${AppColors.white}EB`,
                           letterSpacing: 0.1,
                         }}
@@ -438,7 +472,7 @@ const InspectorHeader = React.memo(() => {
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
-                            fontSize: 9,
+                            fontSize: 8.5,
                             color: '#F59E0B',
                           }}>
                           ●
@@ -452,7 +486,7 @@ const InspectorHeader = React.memo(() => {
           </View>
 
           {isDetailView && (
-            <View style={styles.headerCenter}>
+            <View style={[styles.headerCenter, {paddingHorizontal: isNarrow ? 2 : 6}]}>
               {activeTab === 'apis' && selected != null ? (
                 <View style={styles.headerDetailCenter}>
                   <View style={styles.headerDetailRow}>
@@ -463,27 +497,38 @@ const InspectorHeader = React.memo(() => {
                           backgroundColor:
                             METHOD_COLORS[selected.method as Method] ??
                             AppColors.grayText,
+                          paddingHorizontal: isNarrow ? 5 : 6,
+                          paddingVertical: isNarrow ? 2 : 3,
                         },
                       ]}>
-                      <Text style={styles.headerMethodText}>
+                      <Text style={[styles.headerMethodText, {fontSize: isNarrow ? 9 : 10}]}>
                         {selected.method}
                       </Text>
                     </View>
                     <Text
-                      style={styles.headerDetailTitle}
+                      style={[styles.headerDetailTitle, {fontSize: isNarrow ? 13.5 : 15}]}
                       numberOfLines={1}
                       ellipsizeMode="middle">
                       {detailTitle}
                     </Text>
                   </View>
-                  <View style={styles.headerDetailSubRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: isNarrow ? 4 : 6,
+                      marginTop: 3,
+                      paddingVertical: 1,
+                    }}>
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 5,
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
+                        gap: 4,
+                        paddingHorizontal: isNarrow ? 6 : 8,
+                        paddingVertical: 2.5,
                         borderRadius: 20,
                         backgroundColor: `${getStatusColor(selected.status)}26`,
                         borderWidth: 1,
@@ -494,13 +539,15 @@ const InspectorHeader = React.memo(() => {
                           styles.headerStatusDot,
                           {
                             backgroundColor: getStatusColor(selected.status),
+                            width: isNarrow ? 6 : 7,
+                            height: isNarrow ? 6 : 7,
                           },
                         ]}
                       />
                       <Text
                         style={[
                           styles.headerSubTitle,
-                          {fontFamily: AppFonts.interBold},
+                          {fontFamily: AppFonts.interBold, fontSize: isNarrow ? 10 : 11},
                         ]}>
                         {selected.status === 0
                           ? 'Failed'
@@ -512,13 +559,13 @@ const InspectorHeader = React.memo(() => {
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 4,
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
+                        paddingHorizontal: isNarrow ? 6 : 8,
+                        paddingVertical: 2.5,
                         borderRadius: 20,
                         backgroundColor: `${AppColors.white}29`,
                       }}>
-                      <ClockIcon color={AppColors.white} size={11} />
-                      <Text style={styles.headerSubTitle}>
+                      <ClockIcon color={AppColors.white} size={isNarrow ? 10 : 11} />
+                      <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                         {selected.duration != null
                           ? `${selected.duration}ms`
                           : '—'}
@@ -530,18 +577,18 @@ const InspectorHeader = React.memo(() => {
                           flexDirection: 'row',
                           alignItems: 'center',
                           gap: 4,
-                          paddingHorizontal: 8,
-                          paddingVertical: 3,
+                          paddingHorizontal: isNarrow ? 6 : 8,
+                          paddingVertical: 2.5,
                           borderRadius: 20,
                           backgroundColor: `${AppColors.white}29`,
                         }}>
-                        <SizeIcon color={AppColors.white} size={11} />
-                        <Text style={styles.headerSubTitle}>
+                        <SizeIcon color={AppColors.white} size={isNarrow ? 10 : 11} />
+                        <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                           {getSize(selected.response)}
                         </Text>
                       </View>
                     )}
-                  </View>
+                  </ScrollView>
                 </View>
               ) : activeTab === 'analytics' && selectedEvent != null ? (
                 <View style={styles.headerDetailCenter}>
@@ -554,20 +601,31 @@ const InspectorHeader = React.memo(() => {
                             selectedEvent.source === 'firebase'
                               ? `${AppColors.firebaseOrange}4D`
                               : `${AppColors.purple}4D`,
+                          paddingHorizontal: isNarrow ? 5 : 6,
+                          paddingVertical: isNarrow ? 2 : 3,
                         },
                       ]}>
-                      <Text style={styles.headerMethodText}>
+                      <Text style={[styles.headerMethodText, {fontSize: isNarrow ? 9 : 10}]}>
                         {selectedEvent.source === 'firebase' ? 'FB' : 'MAN'}
                       </Text>
                     </View>
                     <Text
-                      style={styles.headerDetailTitle}
+                      style={[styles.headerDetailTitle, {fontSize: isNarrow ? 13.5 : 15}]}
                       numberOfLines={1}
                       ellipsizeMode="middle">
                       {selectedEvent.name}
                     </Text>
                   </View>
-                  <View style={styles.headerDetailSubRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: isNarrow ? 4 : 6,
+                      marginTop: 3,
+                      paddingVertical: 1,
+                    }}>
                     <View
                       style={[
                         styles.headerStatusDot,
@@ -576,10 +634,12 @@ const InspectorHeader = React.memo(() => {
                             selectedEvent.source === 'firebase'
                               ? AppColors.firebaseOrange
                               : AppColors.purple,
+                          width: isNarrow ? 6 : 7,
+                          height: isNarrow ? 6 : 7,
                         },
                       ]}
                     />
-                    <Text style={styles.headerSubTitle}>
+                    <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                       {Object.keys(selectedEvent.params).length} param
                       {Object.keys(selectedEvent.params).length !== 1
                         ? 's'
@@ -587,7 +647,7 @@ const InspectorHeader = React.memo(() => {
                       {' · '}
                       {selectedEvent.source}
                     </Text>
-                  </View>
+                  </ScrollView>
                 </View>
               ) : activeTab === 'logs' && selectedLog != null ? (
                 <View style={styles.headerDetailCenter}>
@@ -602,37 +662,48 @@ const InspectorHeader = React.memo(() => {
                               : selectedLog.type === 'warn'
                               ? `${AppColors.lightOrange}4D`
                               : `${AppColors.purple}4D`,
+                          paddingHorizontal: isNarrow ? 5 : 6,
+                          paddingVertical: isNarrow ? 2 : 3,
                         },
                       ]}>
-                      <Text style={styles.headerMethodText}>
+                      <Text style={[styles.headerMethodText, {fontSize: isNarrow ? 9 : 10}]}>
                         {selectedLog.type.toUpperCase()}
                       </Text>
                     </View>
                     <Text
-                      style={styles.headerDetailTitle}
+                      style={[styles.headerDetailTitle, {fontSize: isNarrow ? 13.5 : 15}]}
                       numberOfLines={1}
                       ellipsizeMode="middle">
                       console.
                       {selectedLog.sourceMethod || selectedLog.type || 'log'}
                     </Text>
                   </View>
-                  <View style={styles.headerDetailSubRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: isNarrow ? 4 : 6,
+                      marginTop: 3,
+                      paddingVertical: 1,
+                    }}>
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
                         gap: 4,
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
+                        paddingHorizontal: isNarrow ? 6 : 8,
+                        paddingVertical: 2.5,
                         borderRadius: 20,
                         backgroundColor: `${AppColors.white}29`,
                       }}>
-                      <ClockIcon color={AppColors.white} size={11} />
-                      <Text style={styles.headerSubTitle}>
+                      <ClockIcon color={AppColors.white} size={isNarrow ? 10 : 11} />
+                      <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                         {formatTime(selectedLog.timestamp)}
                       </Text>
                     </View>
-                  </View>
+                  </ScrollView>
                 </View>
               ) : activeTab === 'redux' && selectedReduxSlice != null ? (
                 (() => {
@@ -654,39 +725,54 @@ const InspectorHeader = React.memo(() => {
                             styles.headerMethodBadge,
                             {
                               backgroundColor: `${AppColors.purple}4D`,
+                              paddingHorizontal: isNarrow ? 5 : 6,
+                              paddingVertical: isNarrow ? 2 : 3,
                             },
                           ]}>
-                          <Text style={styles.headerMethodText}>SLICE</Text>
+                          <Text style={[styles.headerMethodText, {fontSize: isNarrow ? 9 : 10}]}>SLICE</Text>
                         </View>
                         <Text
-                          style={styles.headerDetailTitle}
+                          style={[styles.headerDetailTitle, {fontSize: isNarrow ? 13.5 : 15}]}
                           numberOfLines={1}
                           ellipsizeMode="middle">
                           {selectedReduxSlice}
                         </Text>
                       </View>
-                      <View style={styles.headerDetailSubRow}>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: isNarrow ? 4 : 6,
+                          marginTop: 3,
+                          paddingVertical: 1,
+                        }}>
                         <View
                           style={[
                             styles.headerStatusDot,
-                            {backgroundColor: AppColors.liveGreen},
+                            {
+                              backgroundColor: AppColors.liveGreen,
+                              width: isNarrow ? 6 : 7,
+                              height: isNarrow ? 6 : 7,
+                            },
                           ]}
                         />
-                        <Text style={styles.headerSubTitle}>Live</Text>
-                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                        <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>Live</Text>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6, fontSize: isNarrow ? 10 : 11}]}>
                           •
                         </Text>
-                        <Text style={styles.headerSubTitle}>
+                        <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                           {keyCount} keys
                         </Text>
-                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6, fontSize: isNarrow ? 10 : 11}]}>
                           •
                         </Text>
-                        <Text style={styles.headerSubTitle}>{sliceSize}</Text>
+                        <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>{sliceSize}</Text>
                         {lastAction?.timestamp && (
                           <>
                             <Text
-                              style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                              style={[styles.headerSubTitle, {opacity: 0.6, fontSize: isNarrow ? 10 : 11}]}>
                               •
                             </Text>
                             <View
@@ -695,14 +781,14 @@ const InspectorHeader = React.memo(() => {
                                 alignItems: 'center',
                                 gap: 3,
                               }}>
-                              <ClockIcon color={AppColors.white} size={10} />
-                              <Text style={styles.headerSubTitle}>
+                              <ClockIcon color={AppColors.white} size={isNarrow ? 9 : 10} />
+                              <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                                 {lastAction.timestamp}
                               </Text>
                             </View>
                           </>
                         )}
-                      </View>
+                      </ScrollView>
                     </View>
                   );
                 })()
@@ -714,28 +800,43 @@ const InspectorHeader = React.memo(() => {
                         styles.headerMethodBadge,
                         {
                           backgroundColor: `${AppColors.brandPurple}4D`,
+                          paddingHorizontal: isNarrow ? 5 : 6,
+                          paddingVertical: isNarrow ? 2 : 3,
                         },
                       ]}>
-                      <Text style={styles.headerMethodText}>ACTION</Text>
+                      <Text style={[styles.headerMethodText, {fontSize: isNarrow ? 9 : 10}]}>ACTION</Text>
                     </View>
                     <Text
-                      style={styles.headerDetailTitle}
+                      style={[styles.headerDetailTitle, {fontSize: isNarrow ? 13.5 : 15}]}
                       numberOfLines={1}
                       ellipsizeMode="middle">
                       {selectedReduxAction.type}
                     </Text>
                   </View>
-                  <View style={styles.headerDetailSubRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: isNarrow ? 4 : 6,
+                      marginTop: 3,
+                      paddingVertical: 1,
+                    }}>
                     <View
                       style={[
                         styles.headerStatusDot,
-                        {backgroundColor: AppColors.purple},
+                        {
+                          backgroundColor: AppColors.purple,
+                          width: isNarrow ? 6 : 7,
+                          height: isNarrow ? 6 : 7,
+                        },
                       ]}
                     />
-                    <Text style={styles.headerSubTitle}>
+                    <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                       {selectedReduxAction.timestamp || 'Dispatched'}
                     </Text>
-                  </View>
+                  </ScrollView>
                 </View>
               ) : activeTab === 'crash' && selectedCrash != null ? (
                 <View style={styles.headerDetailCenter}>
@@ -747,22 +848,33 @@ const InspectorHeader = React.memo(() => {
                           backgroundColor: selectedCrash.isFatal
                             ? AppColors.red600
                             : AppColors.amber600,
+                          paddingHorizontal: isNarrow ? 5 : 6,
+                          paddingVertical: isNarrow ? 2 : 3,
                         },
                       ]}>
-                      <Text style={styles.headerMethodText}>
+                      <Text style={[styles.headerMethodText, {fontSize: isNarrow ? 9 : 10}]}>
                         {selectedCrash.isFatal
                           ? 'FATAL'
                           : selectedCrash.type.toUpperCase()}
                       </Text>
                     </View>
                     <Text
-                      style={styles.headerDetailTitle}
+                      style={[styles.headerDetailTitle, {fontSize: isNarrow ? 13.5 : 15}]}
                       numberOfLines={1}
                       ellipsizeMode="middle">
                       {selectedCrash.name || selectedCrash.message}
                     </Text>
                   </View>
-                  <View style={styles.headerDetailSubRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: isNarrow ? 4 : 6,
+                      marginTop: 3,
+                      paddingVertical: 1,
+                    }}>
                     <View
                       style={[
                         styles.headerStatusDot,
@@ -770,24 +882,26 @@ const InspectorHeader = React.memo(() => {
                           backgroundColor: selectedCrash.isFatal
                             ? AppColors.red600
                             : AppColors.amber500,
+                          width: isNarrow ? 6 : 7,
+                          height: isNarrow ? 6 : 7,
                         },
                       ]}
                     />
-                    <Text style={styles.headerSubTitle}>
+                    <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                       {selectedCrash.timeStr ||
                         new Date(selectedCrash.timestamp).toLocaleTimeString()}
                     </Text>
                     {selectedCrash.deviceInfo?.platform && (
                       <>
-                        <Text style={[styles.headerSubTitle, {opacity: 0.6}]}>
+                        <Text style={[styles.headerSubTitle, {opacity: 0.6, fontSize: isNarrow ? 10 : 11}]}>
                           •
                         </Text>
-                        <Text style={styles.headerSubTitle}>
+                        <Text style={[styles.headerSubTitle, {fontSize: isNarrow ? 10 : 11}]}>
                           {selectedCrash.deviceInfo.platform.toUpperCase()}
                         </Text>
                       </>
                     )}
-                  </View>
+                  </ScrollView>
                 </View>
               ) : null}
             </View>
@@ -801,7 +915,7 @@ const InspectorHeader = React.memo(() => {
                 alignItems: 'center',
                 justifyContent: 'flex-end',
                 flexShrink: 0,
-                gap: 8,
+                gap: isNarrow ? 5 : 7,
               },
             ]}>
             {isSettingsView && (
@@ -821,8 +935,15 @@ const InspectorHeader = React.memo(() => {
                   );
                 }}
                 hitSlop={15}
-                style={styles.closeButtonSquare}>
-                <ResetIcon color={AppColors.white} size={14} />
+                style={[
+                  styles.closeButtonSquare,
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: isNarrow ? 6 : 7,
+                  },
+                ]}>
+                <ResetIcon color={AppColors.white} size={isNarrow ? 12 : 14} />
               </TouchableScale>
             )}
 
@@ -843,7 +964,14 @@ const InspectorHeader = React.memo(() => {
                   );
                 }}
                 hitSlop={15}
-                style={styles.closeButtonSquare}>
+                style={[
+                  styles.closeButtonSquare,
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: isNarrow ? 6 : 7,
+                  },
+                ]}>
                 <Animated.View
                   style={{
                     transform: [
@@ -861,7 +989,7 @@ const InspectorHeader = React.memo(() => {
                       },
                     ],
                   }}>
-                  <TrashIcon color={AppColors.white} size={14} />
+                  <TrashIcon color={AppColors.white} size={isNarrow ? 12 : 14} />
                 </Animated.View>
               </TouchableScale>
             )}
@@ -870,16 +998,30 @@ const InspectorHeader = React.memo(() => {
               <TouchableScale
                 onPress={() => setSettingsPage('main')}
                 hitSlop={15}
-                style={styles.closeButtonSquare}>
-                <SettingsIcon color={AppColors.white} size={14} />
+                style={[
+                  styles.closeButtonSquare,
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: isNarrow ? 6 : 7,
+                  },
+                ]}>
+                <SettingsIcon color={AppColors.white} size={isNarrow ? 12 : 14} />
               </TouchableScale>
             )}
 
             <TouchableScale
               onPress={closeModal}
               hitSlop={15}
-              style={styles.closeButtonSquare}>
-              <CloseWhite size={14} />
+              style={[
+                styles.closeButtonSquare,
+                {
+                  width: buttonSize,
+                  height: buttonSize,
+                  borderRadius: isNarrow ? 6 : 7,
+                },
+              ]}>
+              <CloseWhite size={isNarrow ? 12 : 14} />
             </TouchableScale>
           </View>
         </View>
