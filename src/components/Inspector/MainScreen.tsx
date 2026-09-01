@@ -21,7 +21,7 @@ import LogDetail from './LogDetail';
 import ConsoleTab from './ConsoleTab';
 import AnalyticsTab from './AnalyticsTab';
 import AnalyticsDetail from '../AnalyticsDetail';
-import SkeletonPlaceholder from '../SkeletonPlaceholder';
+import SkeletonPlaceholder from './SkeletonPlaceholder';
 import ReduxTab from './ReduxTab';
 import ReduxDetail from './ReduxDetail';
 import BundleTab from './BundleTab';
