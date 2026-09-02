@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "2.3.13",
+  "version": "2.3.14",
   "description": "The zero-config, all-in-one in-app debugger for React Native & Expo. Inspect Network (fetch/axios), Console logs, Stack Traces, Redux State, Firebase Analytics, and JS Bundle size directly on device.",
   "repository": {
     "type": "git",
@@ -80,11 +80,20 @@
       "require": "./dist/commonjs/storage.js",
       "default": "./dist/commonjs/storage.js"
     },
+    "./metro": {
+      "types": "./dist/commonjs/metro.d.ts",
+      "import": "./dist/esm/metro.js",
+      "require": "./dist/commonjs/metro.js",
+      "default": "./dist/commonjs/metro.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "src",
+    "bin",
+    "metro.js",
+    "metro.d.ts",
     "README.md",
     "android",
     "ios",
@@ -106,7 +115,11 @@
     "watch": "tsc -w",
     "prepack": "npm run build",
     "release": "node release.cjs",
-    "bundle-visualizer": "react-native-bundle-visualizer"
+    "bundle-visualizer": "react-native-bundle-visualizer",
+    "serve-apk": "node ./bin/cli.js 8083"
+  },
+  "bin": {
+    "react-native-inapp-inspector": "./bin/cli.js"
   },
   "keywords": [
     "react-native",
@@ -174,8 +187,6 @@
     "typescript": "5.8.3"
   },
   "dependencies": {
-    "@react-native-clipboard/clipboard": "1.16.3",
-    "@types/qrcode-generator": "^0.0.16",
-    "qrcode-generator": "^2.0.4"
+    "@react-native-clipboard/clipboard": "1.16.3"
   }
 }

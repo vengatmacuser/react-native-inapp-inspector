@@ -36,6 +36,7 @@ import Toast from '../Toast';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import NavigationTracker from './NavigationTracker';
+import {isLocalDebugEnvironment} from '../../helpers';
 
 const MainScreen = () => {
   const {
@@ -171,7 +172,9 @@ const MainScreen = () => {
                       {activeTab === 'crash' && <CrashTab />}
                       {activeTab === 'device' && <DeviceInfoTab />}
                       {activeTab === 'storage' && <StorageTab />}
-                      {activeTab === 'debugging' && <DebuggingTab />}
+                      {Platform.OS === 'android' &&
+                        isLocalDebugEnvironment() &&
+                        activeTab === 'debugging' && <DebuggingTab />}
                     </Animated.View>
 
                     {/* Detail View Layer - Rendered on top with smooth slide & spring transition */}

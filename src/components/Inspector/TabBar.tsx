@@ -1,5 +1,12 @@
 import React from 'react';
-import {Animated, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {
+  Animated,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {useInspector} from './InspectorContext';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
@@ -20,6 +27,7 @@ import {
 import {isReduxConnected} from '../../customHooks/reduxLogger';
 import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
+import {isLocalDebugEnvironment} from '../../helpers';
 
 const TabBar = React.memo(() => {
   const {
@@ -110,7 +118,13 @@ const TabBar = React.memo(() => {
           ] as const
         )
           .filter(tab => {
-            if (tab.key === 'debugging') return true;
+            if (tab.key === 'debugging') {
+              return (
+                Platform.OS === 'android' &&
+                isLocalDebugEnvironment() &&
+                Boolean(tabVisibility?.debugging)
+              );
+            }
             if (!tabVisibility?.[tab.key]) return false;
             if (tab.key === 'redux' && !isReduxAvail) return false;
             if (tab.key === 'analytics' && !isAnalyticsAvail) return false;

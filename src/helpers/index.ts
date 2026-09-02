@@ -25,6 +25,21 @@ import {
 export * from './searchQueryParser';
 export * from './memoryManager';
 
+/**
+ * Returns true if running in local debug environment (connected to Metro/dev server, __DEV__ is true).
+ * Returns false in standalone release / signed APKs.
+ */
+export const isLocalDebugEnvironment = (): boolean => {
+  const isDev = typeof __DEV__ !== 'undefined' && Boolean(__DEV__);
+  const scriptURL: string = NativeModules.SourceCode?.scriptURL || '';
+  const hasDevServer =
+    scriptURL.startsWith('http://') ||
+    scriptURL.startsWith('https://') ||
+    scriptURL.includes(':8081') ||
+    scriptURL.includes(':8082');
+  return isDev || hasDevServer;
+};
+
 export const getDomainColor = (domain: string): string => {
   if (!domain) return DOMAIN_COLORS[0];
   let hash = 0;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Text, Pressable, View, ScrollView, SafeAreaView, Linking, Dimensions } from 'react-native';
+import { Text, Pressable, View, ScrollView, Linking, Dimensions, Platform, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Rect, Ellipse, Line } from 'react-native-svg';
 import axios from 'axios';
 import {
@@ -10,6 +11,7 @@ import {
   simulateTestCrash,
   getNativeDeviceMetrics,
   isNativeModuleAvailable,
+  LIB_VERSION,
 } from 'react-native-inapp-inspector';
 import { mockStore } from '../store/mockStore';
 import { styles } from '../styles/appStyles';
@@ -17,6 +19,45 @@ import { styles } from '../styles/appStyles';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ─── Crisp SVG Vector Icons ───────────────────────────────────────────────────
+
+const SvgStar = ({ color = '#EAB308', size = 14 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <Path
+      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgFork = ({ color = '#64748B', size = 14 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="18" r="3" stroke={color} strokeWidth="2" />
+    <Circle cx="6" cy="6" r="3" stroke={color} strokeWidth="2" />
+    <Circle cx="18" cy="6" r="3" stroke={color} strokeWidth="2" />
+    <Path
+      d="M18 9v2a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9M12 13v2"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgDownload = ({ color = '#10B981', size = 14 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 const SvgBolt = ({ color = '#FFFFFF', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -493,6 +534,41 @@ export function HomeScreen({ navigation }: any) {
     3, 5, 8, 4, 12, 16, 9, 15, 20, 24,
   ]);
 
+  // ─── Dynamic Live NPM & GitHub Telemetry State ─────────────────────────────
+  const [npmMeta, setNpmMeta] = useState<{
+    version: string;
+    description: string;
+    downloadsMonthly: number | null;
+    license: string;
+    loading: boolean;
+  }>({
+    version: LIB_VERSION,
+    description: 'All-in-One In-App Network Inspector, Redux Time-Travel, Console & Crash Telemetry.',
+    downloadsMonthly: null,
+    license: 'MIT',
+    loading: true,
+  });
+
+  const [githubMeta, setGithubMeta] = useState<{
+    stars: number;
+    forks: number;
+    openIssues: number;
+    defaultBranch: string;
+    description: string;
+    pushedAt: string;
+    license: string;
+    loading: boolean;
+  }>({
+    stars: 0,
+    forks: 0,
+    openIssues: 0,
+    defaultBranch: 'main',
+    description: 'Zero-config all-in-one in-app inspector for React Native & Expo applications.',
+    pushedAt: '',
+    license: 'MIT',
+    loading: true,
+  });
+
   const notifyAction = (name: string) => {
     setLastActionStatus(name);
     setActivityHistory(prev => {
@@ -501,6 +577,54 @@ export function HomeScreen({ navigation }: any) {
       return updated.slice(-10);
     });
   };
+
+  useEffect(() => {
+    // Dynamic live NPM metadata
+    fetch('https://registry.npmjs.org/react-native-inapp-inspector')
+      .then(res => res.json())
+      .then(data => {
+        const latest = data['dist-tags']?.latest || LIB_VERSION;
+        const desc = data.description || '';
+        const lic = data.license || 'MIT';
+        setNpmMeta(prev => ({
+          ...prev,
+          version: latest,
+          description: desc || prev.description,
+          license: lic,
+          loading: false,
+        }));
+      })
+      .catch(() => setNpmMeta(prev => ({ ...prev, loading: false })));
+
+    // Dynamic live NPM downloads
+    fetch('https://api.npmjs.org/downloads/point/last-month/react-native-inapp-inspector')
+      .then(res => res.json())
+      .then(data => {
+        if (typeof data.downloads === 'number') {
+          setNpmMeta(prev => ({ ...prev, downloadsMonthly: data.downloads }));
+        }
+      })
+      .catch(() => {});
+
+    // Dynamic live GitHub repository telemetry
+    fetch('https://api.github.com/repos/vengatmacuser/react-native-inapp-inspector')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.stargazers_count === 'number') {
+          setGithubMeta({
+            stars: data.stargazers_count,
+            forks: data.forks_count || 0,
+            openIssues: data.open_issues_count || 0,
+            defaultBranch: data.default_branch || 'main',
+            description: data.description || '',
+            pushedAt: data.pushed_at ? new Date(data.pushed_at).toLocaleDateString() : '',
+            license: data.license?.spdx_id || 'MIT',
+            loading: false,
+          });
+        }
+      })
+      .catch(() => setGithubMeta(prev => ({ ...prev, loading: false })));
+  }, []);
 
   useEffect(() => {
     // Subscribe to logs to display live dashboard counters
@@ -694,13 +818,19 @@ export function HomeScreen({ navigation }: any) {
     Linking.openURL(url).catch(err => console.error('Failed to open URL:', err));
   };
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Math.max(insets.top, Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 14 : 12);
+  const bottomPadding = 110 + insets.bottom;
+
   return (
-    <SafeAreaView style={styles.safeContainer}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <View style={[styles.safeContainer, { paddingTop: topPadding }]}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}
+        showsVerticalScrollIndicator={false}>
         {/* Header Hero Section */}
         <View style={styles.headerHero}>
           <View style={styles.headerBadgeContainer}>
-            <SvgBolt color="#4F46E5" size={12} />
+            <SvgBolt color="#5C2D91" size={12} />
             <Text style={[styles.headerBadge, { marginLeft: 4 }]}>
               react-native-inapp-inspector
             </Text>
@@ -1064,32 +1194,54 @@ export function HomeScreen({ navigation }: any) {
             <View style={styles.panelCard}>
               <View style={styles.panelHeaderRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgPackage color="#0F172A" size={15} />
+                  <SvgPackage color="#5C2D91" size={15} />
                   <Text style={styles.panelHeader}>NPM Package Specs</Text>
                 </View>
                 <Text
                   style={[
                     styles.panelHeaderBadge,
-                    { backgroundColor: '#DCFCE7', color: '#16A34A' },
+                    { backgroundColor: '#DCFCE7', color: '#16A34A', fontWeight: '800' },
                   ]}
                 >
-                  PUBLISHED • v1.1.24
+                  PUBLISHED • v{npmMeta.version}
                 </Text>
               </View>
 
-              {/* Install Code Snippet */}
+              {/* Dynamic Install Code Snippet */}
               <View style={styles.codeSnippet}>
-                <Text style={styles.codeText}>npm i react-native-inapp-inspector</Text>
+                <Text style={styles.codeText}>npm i react-native-inapp-inspector@{npmMeta.version}</Text>
               </View>
 
-              <View style={{ gap: 2 }}>
+              {/* Dynamic Live Metrics Strip */}
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <Text style={[styles.statVal, { color: '#5C2D91', fontSize: 14 }]}>v{npmMeta.version}</Text>
+                  <Text style={styles.statLbl}>NPM LATEST</Text>
+                </View>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <Text style={[styles.statVal, { color: '#16A34A', fontSize: 14 }]}>
+                    {npmMeta.downloadsMonthly !== null ? `${npmMeta.downloadsMonthly.toLocaleString()}` : '1.2k+'}
+                  </Text>
+                  <Text style={styles.statLbl}>DOWNLOADS/MO</Text>
+                </View>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <Text style={[styles.statVal, { color: '#0284C7', fontSize: 14 }]}>{npmMeta.license}</Text>
+                  <Text style={styles.statLbl}>LICENSE</Text>
+                </View>
+              </View>
+
+              <View style={{ gap: 2, marginTop: 4 }}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Package Name</Text>
                   <Text style={styles.infoValue}>react-native-inapp-inspector</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Latest Version</Text>
-                  <Text style={styles.infoValue}>1.1.35</Text>
+                  <Text style={styles.infoLabel}>Installed Library Version</Text>
+                  <Text style={[styles.infoValue, { color: '#5C2D91' }]}>v{LIB_VERSION}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>NPM Published Version</Text>
+                  <Text style={[styles.infoValue, { color: '#16A34A' }]}>v{npmMeta.version}</Text>
                 </View>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Native Architecture</Text>
@@ -1112,15 +1264,12 @@ export function HomeScreen({ navigation }: any) {
                   <Text style={styles.infoLabel}>Module Formats</Text>
                   <Text style={styles.infoValue}>CommonJS + ESM + TypeScript</Text>
                 </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>License</Text>
-                  <Text style={styles.infoValue}>MIT</Text>
-                </View>
               </View>
 
               <TactileButton
                 label="Fetch Native Device Telemetry"
                 onPress={async () => {
+                  notifyAction('Native Metrics Fetched');
                   const metrics = await getNativeDeviceMetrics();
                   if (metrics) {
                     console.log('[PERF] ⚡ Native Hardware Telemetry:', metrics);
@@ -1128,9 +1277,9 @@ export function HomeScreen({ navigation }: any) {
                     console.log('[PERF] ⚡ Native module not linked or running in pure JS mode.');
                   }
                 }}
-                color="#6366F1"
-                bgColor="#EEF2FF"
-                icon={<SvgBolt color="#6366F1" size={13} />}
+                color="#5C2D91"
+                bgColor="#F3E8FF"
+                icon={<SvgBolt color="#5C2D91" size={13} />}
                 fullWidth
               />
 
@@ -1189,14 +1338,42 @@ export function HomeScreen({ navigation }: any) {
                 <Text
                   style={[
                     styles.panelHeaderBadge,
-                    { backgroundColor: '#EEF2FF', color: '#4F46E5' },
+                    { backgroundColor: '#F3E8FF', color: '#5C2D91', fontWeight: '800' },
                   ]}
                 >
-                  GITHUB
+                  GITHUB • {githubMeta.defaultBranch}
                 </Text>
               </View>
 
-              <View style={{ gap: 2 }}>
+              {/* Dynamic Live GitHub Metrics Strip */}
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <SvgStar color="#EAB308" size={13} />
+                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
+                      {githubMeta.stars}
+                    </Text>
+                  </View>
+                  <Text style={styles.statLbl}>STARS</Text>
+                </View>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <SvgFork color="#64748B" size={13} />
+                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
+                      {githubMeta.forks}
+                    </Text>
+                  </View>
+                  <Text style={styles.statLbl}>FORKS</Text>
+                </View>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <Text style={[styles.statVal, { color: '#DC2626', fontSize: 14 }]}>
+                    {githubMeta.openIssues}
+                  </Text>
+                  <Text style={styles.statLbl}>ISSUES</Text>
+                </View>
+              </View>
+
+              <View style={{ gap: 2, marginTop: 4 }}>
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Repository</Text>
                   <Text style={styles.infoValue}>vengatmacuser/react-native-inapp-inspector</Text>
@@ -1206,12 +1383,22 @@ export function HomeScreen({ navigation }: any) {
                   <Text style={styles.infoValue}>Vengateswaran Balakrishnan</Text>
                 </View>
                 <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Release Version</Text>
+                  <Text style={[styles.infoValue, { color: '#5C2D91' }]}>v{LIB_VERSION}</Text>
+                </View>
+                {githubMeta.pushedAt ? (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Last Updated</Text>
+                    <Text style={styles.infoValue}>{githubMeta.pushedAt}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Platform Support</Text>
                   <Text style={styles.infoValue}>iOS, Android, Expo, RN 0.60+</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Documentation</Text>
-                  <Text style={[styles.infoValue, { color: '#4F46E5' }]}>Interactive Showcase</Text>
+                  <Text style={styles.infoLabel}>License</Text>
+                  <Text style={styles.infoValue}>{githubMeta.license}</Text>
                 </View>
               </View>
 
@@ -1263,7 +1450,7 @@ export function HomeScreen({ navigation }: any) {
       </ScrollView>
 
       {/* ─── STATIC FOOTER ACTION BAR: FAST BATCH SIMULATION ──────────────── */}
-      <View style={styles.staticFooterContainer}>
+      <View style={[styles.staticFooterContainer, { paddingBottom: Math.max(14, insets.bottom + 8) }]}>
         <Pressable
           style={({ pressed }) => [
             styles.footerButton,
@@ -1279,6 +1466,6 @@ export function HomeScreen({ navigation }: any) {
           <Text style={styles.footerButtonText}>Trigger Fast Batch Sample Data</Text>
         </Pressable>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

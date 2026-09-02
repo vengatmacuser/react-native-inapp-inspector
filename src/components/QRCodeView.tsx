@@ -19,8 +19,8 @@ export const QRCodeView: React.FC<QRCodeViewProps> = ({
 }) => {
   const matrix = useMemo(() => generateQRMatrix(value || 'http://localhost:8081'), [value]);
   const numCells = matrix.length || 21;
-  // Add a 3-module quiet zone (white border) required by QR scanners
-  const margin = 3;
+  // Standard 4-module quiet zone (white border) for 100% instant phone camera / Google Lens recognition
+  const margin = 4;
   const totalCells = numCells + margin * 2;
   const cellSize = size / totalCells;
 

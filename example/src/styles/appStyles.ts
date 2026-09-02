@@ -19,8 +19,8 @@ export const styles = StyleSheet.create({
   headerBadgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2FF',
-    borderColor: '#C7D2FE',
+    backgroundColor: '#F3E8FF',
+    borderColor: '#D8B4FE',
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 12,
@@ -30,7 +30,7 @@ export const styles = StyleSheet.create({
   headerBadge: {
     fontSize: 10.5,
     fontWeight: '800',
-    color: '#4F46E5',
+    color: '#5C2D91',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -80,11 +80,11 @@ export const styles = StyleSheet.create({
     }),
   },
   tabItemActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
+    backgroundColor: '#5C2D91',
+    borderColor: '#5C2D91',
     ...Platform.select({
       ios: {
-        shadowColor: '#4F46E5',
+        shadowColor: '#5C2D91',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.22,
         shadowRadius: 6,
@@ -301,7 +301,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     minHeight: 46,
     borderRadius: 13,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#5C2D91',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -309,7 +309,7 @@ export const styles = StyleSheet.create({
     gap: 8,
     ...Platform.select({
       ios: {
-        shadowColor: '#4F46E5',
+        shadowColor: '#5C2D91',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.25,
         shadowRadius: 6,

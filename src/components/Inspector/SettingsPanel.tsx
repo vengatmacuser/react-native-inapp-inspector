@@ -59,7 +59,7 @@ import {
   QrCodeIcon,
 } from '../NetworkIcons';
 import {LIB_VERSION} from '../../constants';
-import {copyToClipboard} from '../../helpers';
+import {copyToClipboard, isLocalDebugEnvironment} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {pruneAllLogs} from '../../helpers/memoryManager';
 
@@ -131,78 +131,88 @@ const SettingsPanel = () => {
     Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44;
   const headerTopPadding = modalHeightPercent >= 95 ? statusBarHeight : 0;
 
-  const allModules = [
-    {
-      key: 'apis',
-      label: 'APIs (Network)',
-      category: 'core',
-      icon: 'apis',
-      desc: 'HTTP/HTTPS requests, GraphQL, Axios & WebSocket inspector',
-    },
-    {
-      key: 'logs',
-      label: 'Console Logs',
-      category: 'core',
-      icon: 'logs',
-      desc: 'Terminal console logs, warnings, errors & stack traces',
-    },
-    {
-      key: 'performance',
-      label: 'Performance Tracker',
-      category: 'diagnostic',
-      icon: 'performance',
-      desc: '60 FPS monitor, Hermes memory telemetry & re-render profiler',
-    },
-    {
-      key: 'bundle',
-      label: 'Bundle Analyzer',
-      category: 'diagnostic',
-      icon: 'bundle',
-      desc: 'Metro packager dependencies, source maps & asset breakdown',
-    },
-    {
-      key: 'crash',
-      label: 'Crash Protection',
-      category: 'diagnostic',
-      icon: 'crash',
-      desc: 'Runtime exception guard, breadcrumbs & memory snapshot',
-    },
-    {
-      key: 'analytics',
-      label: 'Analytics Logger',
-      category: 'telemetry',
-      icon: 'analytics',
-      desc: 'Firebase & custom analytics events, user properties & params',
-    },
-    {
-      key: 'redux',
-      label: 'Redux Inspector',
-      category: 'telemetry',
-      icon: 'redux',
-      desc: 'Store state diffing, action history & reducer timeline',
-    },
-    {
-      key: 'device',
-      label: 'Device Info',
-      category: 'diagnostic',
-      icon: 'device',
-      desc: 'Hardware specs, IP address, screen metrics, UDID & runtime stats',
-    },
-    {
-      key: 'storage',
-      label: 'Storage Inspector',
-      category: 'telemetry',
-      icon: 'storage',
-      desc: 'AsyncStorage & MMKV key-value store viewer with full CRUD support',
-    },
-    {
-      key: 'debugging',
-      label: 'Multi-Device Debugging',
-      category: 'diagnostic',
-      icon: 'debugging',
-      desc: 'QR Code bridge for direct Debug APK download & Metro live-reload sync',
-    },
-  ] as const;
+  const allModules = useMemo(
+    () =>
+      (
+        [
+          {
+            key: 'apis',
+            label: 'APIs (Network)',
+            category: 'core',
+            icon: 'apis',
+            desc: 'HTTP/HTTPS requests, GraphQL, Axios & WebSocket inspector',
+          },
+          {
+            key: 'logs',
+            label: 'Console Logs',
+            category: 'core',
+            icon: 'logs',
+            desc: 'Terminal console logs, warnings, errors & stack traces',
+          },
+          {
+            key: 'performance',
+            label: 'Performance Tracker',
+            category: 'diagnostic',
+            icon: 'performance',
+            desc: '60 FPS monitor, Hermes memory telemetry & re-render profiler',
+          },
+          {
+            key: 'bundle',
+            label: 'Bundle Analyzer',
+            category: 'diagnostic',
+            icon: 'bundle',
+            desc: 'Metro packager dependencies, source maps & asset breakdown',
+          },
+          {
+            key: 'crash',
+            label: 'Crash Protection',
+            category: 'diagnostic',
+            icon: 'crash',
+            desc: 'Runtime exception guard, breadcrumbs & memory snapshot',
+          },
+          {
+            key: 'analytics',
+            label: 'Analytics Logger',
+            category: 'telemetry',
+            icon: 'analytics',
+            desc: 'Firebase & custom analytics events, user properties & params',
+          },
+          {
+            key: 'redux',
+            label: 'Redux Inspector',
+            category: 'telemetry',
+            icon: 'redux',
+            desc: 'Store state diffing, action history & reducer timeline',
+          },
+          {
+            key: 'device',
+            label: 'Device Info',
+            category: 'diagnostic',
+            icon: 'device',
+            desc: 'Hardware specs, IP address, screen metrics, UDID & runtime stats',
+          },
+          {
+            key: 'storage',
+            label: 'Storage Inspector',
+            category: 'telemetry',
+            icon: 'storage',
+            desc: 'AsyncStorage & MMKV key-value store viewer with full CRUD support',
+          },
+          {
+            key: 'debugging',
+            label: 'Multi-Device Debugging',
+            category: 'diagnostic',
+            icon: 'debugging',
+            desc: 'QR Code bridge for direct Debug APK download & Metro live-reload sync',
+          },
+        ] as const
+      ).filter(m =>
+        m.key === 'debugging'
+          ? Platform.OS === 'android' && isLocalDebugEnvironment()
+          : true,
+      ),
+    [],
+  );
 
   // Staged selection state for checkboxes before clicking "Save Changes"
   const [stagedTabVisibility, setStagedTabVisibility] = useState<
@@ -217,7 +227,7 @@ const SettingsPanel = () => {
     crash: Boolean(tabVisibility?.crash),
     device: Boolean(tabVisibility?.device),
     storage: Boolean(tabVisibility?.storage),
-    debugging: Boolean(tabVisibility?.debugging ?? true),
+    debugging: Boolean(tabVisibility?.debugging),
   }));
 
   // Synchronize staged state with tabVisibility when tabVisibility updates
@@ -232,7 +242,7 @@ const SettingsPanel = () => {
       crash: Boolean(tabVisibility?.crash),
       device: Boolean(tabVisibility?.device),
       storage: Boolean(tabVisibility?.storage),
-      debugging: Boolean(tabVisibility?.debugging ?? true),
+      debugging: Boolean(tabVisibility?.debugging),
     });
   }, [tabVisibility]);
 

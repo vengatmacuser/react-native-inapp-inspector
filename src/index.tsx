@@ -365,7 +365,7 @@ const NetworkInspector = ({
     crash: false,
     device: false,
     storage: false,
-    debugging: true,
+    debugging: false,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
@@ -428,7 +428,7 @@ const NetworkInspector = ({
       crash: false,
       device: false,
       storage: false,
-      debugging: true,
+      debugging: false,
     });
     setDefaultTab('apis');
     setIsAutoRamLimitEnabled(true);
@@ -2440,3 +2440,5 @@ export {
   setTranslations,
   I18nextProvider,
 } from './i18n';
+
+export { LIB_VERSION } from './constants/version';
