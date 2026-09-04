@@ -113,8 +113,8 @@ const MainScreen = () => {
         visible={visible}
         animationType={modalAnimationType}
         transparent
-        statusBarTranslucent={true}>
-      {visible && (
+        statusBarTranslucent={true}
+        onRequestClose={closeModal}>
         <ErrorBoundary onClose={closeModal}>
           <View style={styles.modalBackdrop}>
             <Pressable
@@ -246,7 +246,6 @@ const MainScreen = () => {
             </View>
           </View>
         </ErrorBoundary>
-      )}
       {hasNavigationContext && (
         <NavigationTracker onStateChange={setNavState} />
       )}

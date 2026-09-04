@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   Text,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -1010,9 +1011,10 @@ const InspectorHeader = React.memo(() => {
               </TouchableScale>
             )}
 
-            <TouchableScale
+            <TouchableOpacity
               onPress={closeModal}
-              hitSlop={15}
+              hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+              activeOpacity={0.6}
               style={[
                 styles.closeButtonSquare,
                 {
@@ -1022,7 +1024,7 @@ const InspectorHeader = React.memo(() => {
                 },
               ]}>
               <CloseWhite size={isNarrow ? 12 : 14} />
-            </TouchableScale>
+            </TouchableOpacity>
           </View>
         </View>
       </View>

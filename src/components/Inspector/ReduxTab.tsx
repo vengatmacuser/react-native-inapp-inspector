@@ -670,7 +670,15 @@ const ReduxTab = React.memo(() => {
         renderToHardwareTextureAndroid={true}
         ListEmptyComponent={
           <EmptyState
-            isSearch={reduxSearch.length > 0}
+            isSearch={reduxSearch.trim().length > 0}
+            searchQuery={reduxSearch}
+            onClearSearch={() => setReduxSearch('')}
+            customTitle={reduxSearch.trim().length > 0 ? 'No Matching Slices' : 'No Redux State Detected'}
+            customSub={
+              reduxSearch.trim().length > 0
+                ? `No Redux slices match "${reduxSearch}"`
+                : 'Attach the Redux store or dispatch actions to see state slices.'
+            }
           />
         }
         ListFooterComponent={

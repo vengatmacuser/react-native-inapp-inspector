@@ -74,19 +74,25 @@ const ConsoleTab = React.memo(() => {
       !Array.from(logFilters).some(f => f !== 'all');
     if (isAllSelected) {
       return (
-        <Text
-          style={[
-            styles.resultCount,
-            {marginBottom: 4, marginTop: 12},
-          ]}>
-          Showing ({filtered}/{total}) logs showing
-        </Text>
+        <View style={{paddingHorizontal: 12, paddingTop: 8, paddingBottom: 3}}>
+          <Text
+            style={{
+              fontFamily: AppFonts.interMedium,
+              fontSize: 11,
+              color: AppColors.grayTextWeak,
+              letterSpacing: 0.2,
+            }}>
+            {filtered === total
+              ? `Showing ${total} logs`
+              : `Showing ${filtered} of ${total} logs`}
+          </Text>
+        </View>
       );
     } else {
       const activeFilterNames = Array.from(logFilters)
         .filter(f => f !== 'all')
         .map(f => {
-          if (f === 'user-log') return 'User Log';
+          if (f === 'user-log') return 'Log';
           if (f === 'analytics') return 'Analytics';
           return (
             (f as string).charAt(0).toUpperCase() +
@@ -94,14 +100,17 @@ const ConsoleTab = React.memo(() => {
           );
         });
       return (
-        <Text
-          style={[
-            styles.resultCount,
-            {marginBottom: 4, marginTop: 12},
-          ]}>
-          Filtering with {activeFilterNames.join(', ')} (
-          {filtered}/{total}) logs is showing
-        </Text>
+        <View style={{paddingHorizontal: 12, paddingTop: 8, paddingBottom: 3}}>
+          <Text
+            style={{
+              fontFamily: AppFonts.interMedium,
+              fontSize: 11,
+              color: AppColors.grayTextWeak,
+              letterSpacing: 0.2,
+            }}>
+            Filtered by {activeFilterNames.join(', ')} ({filtered} of {total} logs)
+          </Text>
+        </View>
       );
     }
   }, [visibleConsoleLogs.length, filteredConsoleLogs.length, logFilters]);
@@ -684,7 +693,7 @@ const ConsoleTab = React.memo(() => {
         ListEmptyComponent={
           <EmptyState
             isSearch={
-              logSearch.length > 0 || logFilters.size > 0
+              logSearch.length > 0 || !logFilters.has('all')
             }
             searchQuery={logSearch}
             customTitle={
@@ -694,7 +703,7 @@ const ConsoleTab = React.memo(() => {
             }
             onClearSearch={() => {
               setLogSearch('');
-              setLogFilters(new Set());
+              setLogFilters(new Set(['all']));
             }}
           />
         }

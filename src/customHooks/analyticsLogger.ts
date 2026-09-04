@@ -42,7 +42,7 @@ let currentUserId: string | undefined;
 let currentDefaultEventParameters: Record<string, any> = {};
 let isCollectionEnabled = true;
 
-let maxAnalyticsLogsLimit = 75;
+let maxAnalyticsLogsLimit = 150;
 
 export const setMaxAnalyticsLogsLimit = (limit: number): void => {
   maxAnalyticsLogsLimit = Math.max(10, limit);

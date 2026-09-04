@@ -15,7 +15,7 @@ export const setConsoleModuleEnabled = (enabled: boolean) => {
 
 export const getConsoleModuleEnabled = () => isConsoleModuleEnabled;
 
-let maxConsoleLogsLimit = 100;
+let maxConsoleLogsLimit = 250;
 
 export const setMaxConsoleLogsLimit = (limit: number): void => {
   maxConsoleLogsLimit = Math.max(10, limit);
@@ -293,9 +293,9 @@ const addLog = (
     logs = logs.slice(0, maxConsoleLogsLimit);
     notify();
 
-    // Asynchronously symbolicate stack trace via Metro in development
+    // Asynchronously symbolicate stack trace via Metro in development (errors only)
     const stackToSymbolicate = errorStack || stackToUse || stack;
-    if (stackToSymbolicate && typeof __DEV__ !== 'undefined' && __DEV__) {
+    if (type === 'error' && stackToSymbolicate && typeof __DEV__ !== 'undefined' && __DEV__) {
       const currentLogId = newLog.id;
       symbolicateStack(stackToSymbolicate)
         .then(symFrames => {
@@ -443,6 +443,8 @@ export const setupConsoleLogger = () => {
     info: console.info,
     warn: console.warn,
     error: console.error,
+    debug: console.debug,
+    trace: console.trace,
   };
 
   // Intercept console.log
@@ -459,6 +461,30 @@ export const setupConsoleLogger = () => {
       addLog('info', args, 'info');
     } catch {}
     originalConsole.info(...args);
+  };
+
+  // Intercept console.debug
+  console.debug = (...args: any[]) => {
+    try {
+      addLog('info', args, 'info');
+    } catch {}
+    if (typeof originalConsole.debug === 'function') {
+      originalConsole.debug(...args);
+    } else {
+      originalConsole.log(...args);
+    }
+  };
+
+  // Intercept console.trace
+  console.trace = (...args: any[]) => {
+    try {
+      addLog('info', args, 'info');
+    } catch {}
+    if (typeof originalConsole.trace === 'function') {
+      originalConsole.trace(...args);
+    } else {
+      originalConsole.log(...args);
+    }
   };
 
   // Intercept console.warn
@@ -495,3 +521,10 @@ export const setupConsoleLogger = () => {
 
   (globalThis as any).__CONSOLE_LOGGER_INITIALIZED__ = true;
 };
+
+// Auto-initialize console logger on module load
+if (typeof globalThis !== 'undefined') {
+  try {
+    setupConsoleLogger();
+  } catch {}
+}

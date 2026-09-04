@@ -23,16 +23,16 @@ const AnimatedEntrance = React.memo(function AnimatedEntrance({
   }
 
   const progress = useRef(new Animated.Value(0)).current;
+  const initialIndex = useRef(index).current;
 
   useEffect(() => {
-    progress.setValue(0);
     Animated.timing(progress, {
       toValue: 1,
       duration,
-      delay: delay + Math.min(index, 12) * 18,
+      delay: delay + Math.min(initialIndex, 8) * 12,
       useNativeDriver: true,
     }).start();
-  }, [delay, duration, index, progress]);
+  }, []);
 
   return (
     <Animated.View

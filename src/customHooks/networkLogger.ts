@@ -36,17 +36,23 @@ export const setNetworkModuleEnabled = (enabled: boolean) => {
 
 export const getNetworkModuleEnabled = () => isNetworkModuleEnabled;
 
-const ALLOWED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
+const ALLOWED_METHODS = [
+  "GET",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "HEAD",
+  "OPTIONS",
+  "CONNECT",
+  "TRACE",
+];
 
 const IGNORED_URL_PATTERNS: RegExp[] = [
-  /\/symbolicate(?:[/?#]|$)/i,
+  /\/symbolicate(?:\?|$)/i,
   /\/index\.bundle(?:\?|$)/i,
-  /\/hot(?:\?|$)/i,
-  /\/message(?:\?|$)/i,
   /\/open-debugger(?:\?|$)/i,
-  /\/status(?:\?|$)/i,
-  /127\.0\.0\.1:(?:8081|8082|8083|19000|19001|19002|3000|8000)/i,
-  /localhost:(?:8081|8082|8083|19000|19001|19002|3000|8000)\/index\.bundle/i,
+  /:(?:8081|8082|8083|19000|19001)\/(?:index\.bundle|symbolicate|hot|message|status)/i,
   /google-analytics\.com\/mp\/collect/i,
   /analytics\.google\.com/i,
 ];
@@ -57,6 +63,23 @@ function shouldIgnoreUrl(url: string | undefined | null): boolean {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function parseXHRResponseHeaders(
+  headerStr: string | null | undefined,
+): Record<string, string> | undefined {
+  if (!headerStr || typeof headerStr !== "string") return undefined;
+  const lines = headerStr.trim().split(/[\r\n]+/);
+  const result: Record<string, string> = {};
+  lines.forEach((line) => {
+    const idx = line.indexOf(":");
+    if (idx > 0) {
+      const key = line.substring(0, idx).trim().toLowerCase();
+      const val = line.substring(idx + 1).trim();
+      result[key] = val;
+    }
+  });
+  return Object.keys(result).length > 0 ? result : undefined;
+}
 
 function normaliseHeaders(
   raw: Headers | undefined | null,
@@ -158,7 +181,7 @@ export const clearNetworkLogs = () => {
 
 export const getNetworkLogs = () => [...logs];
 
-let maxNetworkLogsLimit = 100;
+let maxNetworkLogsLimit = 250;
 
 export const setMaxNetworkLogsLimit = (limit: number): void => {
   maxNetworkLogsLimit = Math.max(10, limit);
@@ -191,7 +214,7 @@ const addOrUpdateLog = (log: NetworkLog) => {
   if (!isNetworkModuleEnabled) return;
   const method = log.method?.toUpperCase();
 
-  if (!ALLOWED_METHODS.includes(method)) return;
+  if (method && !ALLOWED_METHODS.includes(method)) return;
 
   if (shouldIgnoreUrl(log.url)) return;
 
@@ -207,19 +230,167 @@ const addOrUpdateLog = (log: NetworkLog) => {
   notify();
 };
 
+let isInsideFetch = false;
+
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 export const setupNetworkLogger = () => {
   if ((globalThis as any).__NETWORK_LOGGER_INITIALIZED__) return;
   (globalThis as any).__NETWORK_LOGGER__ = addOrUpdateLog;
 
+  // 1. Hook XMLHttpRequest
+  const globalXHR = (globalThis as any).XMLHttpRequest;
+  if (globalXHR && globalXHR.prototype && !(globalThis as any).__XHR_LOGGER_INITIALIZED__) {
+    (globalThis as any).__XHR_LOGGER_INITIALIZED__ = true;
+    const originalOpen = globalXHR.prototype.open;
+    const originalSend = globalXHR.prototype.send;
+    const originalSetRequestHeader = globalXHR.prototype.setRequestHeader;
+
+    globalXHR.prototype.open = function (
+      method: string,
+      url: string | any,
+      async?: boolean,
+      user?: string | null,
+      password?: string | null,
+    ) {
+      this.__logMethod = (method || "GET").toUpperCase();
+      this.__logUrl = typeof url === "string" ? url : String(url);
+      this.__logRequestHeaders = {};
+      this.__logStartTime = Date.now();
+      this.__logCaller = getCallerFromStack();
+
+      return originalOpen.apply(this, [method, url, async !== false, user, password]);
+    };
+
+    globalXHR.prototype.setRequestHeader = function (header: string, value: string) {
+      if (header && value != null) {
+        if (!this.__logRequestHeaders) this.__logRequestHeaders = {};
+        this.__logRequestHeaders[header.toLowerCase()] = String(value);
+      }
+      return originalSetRequestHeader.apply(this, [header, value]);
+    };
+
+    globalXHR.prototype.send = function (body?: any) {
+      if (!isNetworkModuleEnabled || isInsideFetch || this.__inAppInspectorTracked) {
+        return originalSend.apply(this, [body]);
+      }
+
+      const url = this.__logUrl || "";
+      const method = this.__logMethod || "GET";
+
+      if (shouldIgnoreUrl(url)) {
+        return originalSend.apply(this, [body]);
+      }
+
+      const id = counter++;
+      this.__logId = id;
+      const start = this.__logStartTime || Date.now();
+      const caller = this.__logCaller || "Unknown";
+      const requestHeaders = this.__logRequestHeaders;
+
+      let client = "xhr";
+      if (
+        requestHeaders?.["apollographql-client-name"] ||
+        url.toLowerCase().includes("/graphql")
+      ) {
+        client = "apollo";
+      } else if (caller.toLowerCase().includes("axios")) {
+        client = "axios";
+      }
+
+      const currentRoute = currentRouteProvider ? currentRouteProvider() : null;
+
+      addOrUpdateLog({
+        id,
+        url,
+        method,
+        startTime: start,
+        caller,
+        client,
+        routeInfo: currentRoute || undefined,
+        request: method === "GET" ? undefined : parseRequestData(body),
+        requestHeaders:
+          Object.keys(requestHeaders || {}).length > 0 ? requestHeaders : undefined,
+      });
+
+      const onFinished = () => {
+        if (this.__logFinished) return;
+        this.__logFinished = true;
+        const duration = Date.now() - start;
+        let responseData: any = null;
+
+        try {
+          if (this.responseType === "" || this.responseType === "text") {
+            const raw = this.responseText;
+            try {
+              responseData = JSON.parse(raw);
+            } catch {
+              responseData = raw;
+            }
+          } else if (this.responseType === "json") {
+            responseData = this.response;
+          } else if (this.responseType === "blob") {
+            responseData = `[Blob: ${this.response?.size || 0} bytes]`;
+          } else {
+            responseData = `[${this.responseType || "Unknown"} Data]`;
+          }
+        } catch {
+          responseData = this.response || null;
+        }
+
+        const rawRespHeaders = this.getAllResponseHeaders
+          ? this.getAllResponseHeaders()
+          : "";
+        const responseHeaders = parseXHRResponseHeaders(rawRespHeaders);
+
+        addOrUpdateLog({
+          id,
+          url,
+          method,
+          status: this.status,
+          response: responseData,
+          duration,
+          startTime: start,
+          caller,
+          client,
+          responseHeaders,
+        });
+      };
+
+      const onErrorOrAbort = () => {
+        if (this.__logFinished) return;
+        this.__logFinished = true;
+        const duration = Date.now() - start;
+
+        addOrUpdateLog({
+          id,
+          url,
+          method,
+          status: this.status || 0,
+          response: "Network request failed",
+          duration,
+          startTime: start,
+          caller,
+          client,
+        });
+      };
+
+      this.addEventListener("load", onFinished);
+      this.addEventListener("error", onErrorOrAbort);
+      this.addEventListener("abort", onErrorOrAbort);
+      this.addEventListener("timeout", onErrorOrAbort);
+
+      return originalSend.apply(this, [body]);
+    };
+  }
+
+  // 2. Hook fetch
   const originalFetch = (globalThis as any).fetch;
 
   if (originalFetch) {
     (globalThis as any).fetch = async (url: any, options: any = {}) => {
       if (!isNetworkModuleEnabled) return originalFetch(url, options);
       const method = (options?.method || "GET").toUpperCase();
-      if (!ALLOWED_METHODS.includes(method)) return originalFetch(url, options);
 
       const id = counter++;
       const start = Date.now();
@@ -229,18 +400,23 @@ export const setupNetworkLogger = () => {
 
       let caller = "Unknown";
       let requestHeaders: Record<string, string> | undefined;
-      let client = 'fetch';
+      let client = "fetch";
 
       try {
         requestHeaders = normaliseHeaders(options?.headers);
         caller = getCallerFromStack(); // ✅ Capture call line
 
-        if (requestHeaders?.['apollographql-client-name'] || finalUrl?.toLowerCase().includes('/graphql')) {
-          client = 'apollo';
-        } else if (requestHeaders?.['x-requested-with']?.toLowerCase().includes('xmlhttprequest')) {
-          client = 'xhr';
-        } else if (caller?.toLowerCase().includes('axios')) {
-          client = 'axios';
+        if (
+          requestHeaders?.["apollographql-client-name"] ||
+          finalUrl?.toLowerCase().includes("/graphql")
+        ) {
+          client = "apollo";
+        } else if (
+          requestHeaders?.["x-requested-with"]?.toLowerCase().includes("xmlhttprequest")
+        ) {
+          client = "xhr";
+        } else if (caller?.toLowerCase().includes("axios")) {
+          client = "axios";
         }
 
         const currentRoute = currentRouteProvider ? currentRouteProvider() : null;
@@ -259,7 +435,13 @@ export const setupNetworkLogger = () => {
       } catch {}
 
       try {
-        const response = await originalFetch(url, options);
+        isInsideFetch = true;
+        let response: any;
+        try {
+          response = await originalFetch(url, options);
+        } finally {
+          isInsideFetch = false;
+        }
         const duration = Date.now() - start;
 
         try {
@@ -317,7 +499,7 @@ export const setupNetworkLogger = () => {
     };
   }
 
-  // Hook Axios — patches both the default instance and any future axios.create() instances
+  // 3. Hook Axios — patches default instance and future axios.create() instances
   try {
     if (axios) {
       addAxiosInterceptors(axios);
@@ -331,7 +513,7 @@ export const setupNetworkLogger = () => {
       }
     }
   } catch (_e) {
-    // Axios not available — fetch-only mode
+    // Axios not available — fetch/XHR mode
   }
 
   try {
@@ -345,7 +527,6 @@ export const setupNetworkLogger = () => {
 export const addAxiosInterceptors = (axiosInstance: any) => {
   axiosInstance.interceptors.request.use(async (config: any) => {
     const method = (config.method || "GET").toUpperCase();
-    if (!ALLOWED_METHODS.includes(method)) return config;
 
     const id = counter++;
     const start = Date.now();
@@ -369,7 +550,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       method,
       startTime: start,
       caller,
-      client: 'axios',
+      client: "axios",
       routeInfo: currentRoute || undefined,
       request: method === "GET" ? undefined : parseRequestData(config.data),
       requestHeaders: normaliseHeaders(config.headers),
@@ -386,7 +567,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       const caller = config.__logCaller;
       const method = (config.method || "GET").toUpperCase();
 
-      if (id == null || !ALLOWED_METHODS.includes(method)) return response;
+      if (id == null) return response;
 
       let url = config.url ?? "";
       if (!url.startsWith("http")) url = `${config.baseURL ?? ""}${url}`;
@@ -400,7 +581,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
         startTime: start || Date.now(),
         duration: start != null ? Date.now() - start : undefined,
         caller,
-        client: 'axios',
+        client: "axios",
         responseHeaders: normaliseHeaders(response.headers),
       });
 
@@ -413,7 +594,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       const caller = config.__logCaller;
       const method = (config.method || "GET").toUpperCase();
 
-      if (id != null && ALLOWED_METHODS.includes(method)) {
+      if (id != null) {
         let url = config.url ?? "";
         if (!url.startsWith("http")) url = `${config.baseURL ?? ""}${url}`;
 
@@ -426,7 +607,7 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
           startTime: start || Date.now(),
           duration: start != null ? Date.now() - start : undefined,
           caller,
-          client: 'axios',
+          client: "axios",
           responseHeaders: normaliseHeaders(error.response?.headers),
         });
       }
@@ -434,3 +615,10 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
     },
   );
 };
+
+// Auto-initialize logger on module load so startup requests are never missed
+if (typeof globalThis !== "undefined") {
+  try {
+    setupNetworkLogger();
+  } catch {}
+}

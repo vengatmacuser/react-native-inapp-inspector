@@ -556,15 +556,29 @@ const CrashTab = React.memo(() => {
           <View style={localStyles.emptyIconCircle}>
             <ShieldAlertIcon size={38} color={AppColors.greenColor} />
           </View>
-          <Text style={localStyles.emptyTitle}>{t('crash.emptyTitle')}</Text>
+          <Text style={localStyles.emptyTitle}>
+            {searchQuery.length > 0
+              ? 'No matching crash entries'
+              : filterType !== 'all' || !isCrashFiltersDefault(crashFilters)
+              ? 'No crashes match filters'
+              : t('crash.emptyTitle')}
+          </Text>
           <Text style={localStyles.emptySub}>
             {searchQuery
-              ? t('crash.emptySearchSubtitle')
+              ? `No crash entries matched "${searchQuery}"`
+              : filterType !== 'all' || !isCrashFiltersDefault(crashFilters)
+              ? 'Try adjusting your filters or search keywords.'
               : t('crash.emptySubtitle')}
           </Text>
-          {searchQuery.length > 0 && (
+          {(searchQuery.length > 0 ||
+            filterType !== 'all' ||
+            !isCrashFiltersDefault(crashFilters)) && (
             <TouchableScale
-              onPress={() => setSearchQuery('')}
+              onPress={() => {
+                setSearchQuery('');
+                setFilterType('all');
+                setCrashFilters(DEFAULT_CRASH_FILTERS);
+              }}
               style={{
                 marginTop: 10,
                 paddingHorizontal: 14,
@@ -578,7 +592,7 @@ const CrashTab = React.memo(() => {
                   fontSize: 11.5,
                   color: AppColors.white,
                 }}>
-                Clear Search
+                Clear Search & Filters
               </Text>
             </TouchableScale>
           )}

@@ -448,21 +448,141 @@ export const DeviceInfoTab = React.memo(() => {
     showToast('Copied Markdown Report to Clipboard!');
   };
 
-  // Filter items matching search
-  const isMatch = (text: string) => {
+  // Filter items matching search (checking label, value, and optional subtext)
+  const isMatch = useCallback(
+    (label: string, value?: any, subtext?: any) => {
+      if (!search.trim()) return true;
+      const query = search.toLowerCase().trim();
+      const strVal =
+        value != null
+          ? typeof value === 'object'
+            ? JSON.stringify(value)
+            : String(value)
+          : '';
+      const strSub = subtext != null ? String(subtext) : '';
+      return (
+        label.toLowerCase().includes(query) ||
+        strVal.toLowerCase().includes(query) ||
+        strSub.toLowerCase().includes(query)
+      );
+    },
+    [search],
+  );
+
+  const hasHeroMatch = useMemo(() => {
     if (!search.trim()) return true;
-    return text.toLowerCase().includes(search.toLowerCase().trim());
-  };
+    return (
+      isMatch('Model', deviceMetrics?.deviceModel || (Platform.constants as any)?.Model) ||
+      isMatch('OS', Platform.OS) ||
+      isMatch('IP Address', ipAddress) ||
+      isMatch('RAM', `${usedRamMb}/${totalRamMb}`) ||
+      isMatch('Uptime', deviceUptime)
+    );
+  }, [search, isMatch, deviceMetrics, ipAddress, usedRamMb, totalRamMb, deviceUptime]);
+
+  const hasOverviewMatch = useMemo(() => {
+    if (!search.trim()) return true;
+    return (
+      isMatch('Device Model', fullDeviceData.hardware.model) ||
+      isMatch('Manufacturer', fullDeviceData.hardware.brand) ||
+      isMatch('Operating System', fullDeviceData.hardware.osVersion) ||
+      isMatch('IP Address', ipAddress) ||
+      isMatch('RAM Memory', `${usedRamMb} MB / ${totalRamMb} MB (${ramUsagePct}%)`, `Free Memory: ${freeRamMb} MB`) ||
+      isMatch('Storage Capacity', `${freeStorageGb} GB Free / ${totalStorageGb} GB Total`) ||
+      isMatch('App Version', `v${fullDeviceData.runtime.appVersion} (${fullDeviceData.runtime.appBuild})`) ||
+      isMatch('JavaScript Engine', isHermes ? 'Hermes Bytecode Engine' : 'JavaScriptCore (JSC)') ||
+      isMatch('UDID Identifier', pseudoUDID)
+    );
+  }, [search, isMatch, fullDeviceData, ipAddress, usedRamMb, totalRamMb, ramUsagePct, freeRamMb, freeStorageGb, totalStorageGb, isHermes, pseudoUDID]);
+
+  const hasHardwareMatch = useMemo(() => {
+    if (!search.trim()) return true;
+    return (
+      isMatch('CPU Architecture', fullDeviceData.hardware.cpuAbi) ||
+      isMatch('Total RAM', `${totalRamMb} MB`) ||
+      isMatch('Free RAM', `${freeRamMb} MB`) ||
+      isMatch('Storage Capacity', `${totalStorageGb} GB`) ||
+      isMatch('Available Storage', `${freeStorageGb} GB`) ||
+      isMatch('Battery', `${deviceMetrics?.batteryPercent ?? 100}%`) ||
+      isMatch('API Level', `API ${deviceMetrics?.apiLevel || Platform.Version}`) ||
+      isMatch('Thermal State', 'Nominal (Cool)')
+    );
+  }, [search, isMatch, fullDeviceData, totalRamMb, freeRamMb, totalStorageGb, freeStorageGb, deviceMetrics]);
+
+  const hasNetworkMatch = useMemo(() => {
+    if (!search.trim()) return true;
+    return (
+      isMatch('IP Address', ipAddress) ||
+      isMatch('Internet Reachability', 'Connected') ||
+      isMatch('Connection Type', 'Wi-Fi / Local Area Network') ||
+      isMatch('Metro Dev Server', NativeModules?.PlatformConstants?.serverHost || NativeModules?.AndroidConstants?.serverHost || 'localhost:8081') ||
+      isMatch('WebSocket Protocol', 'Active & Enabled') ||
+      isMatch('Network Inspector Interceptor', 'Intercepting XHR & Fetch')
+    );
+  }, [search, isMatch, ipAddress]);
+
+  const hasDisplayMatch = useMemo(() => {
+    if (!search.trim()) return true;
+    return (
+      isMatch('Window Resolution', `${windowDims.width.toFixed(0)} × ${windowDims.height.toFixed(0)} pt`) ||
+      isMatch('Screen Physical Size', `${(screenDims.width * pixelRatio).toFixed(0)} × ${(screenDims.height * pixelRatio).toFixed(0)} px`) ||
+      isMatch('Pixel Density', `@${pixelRatio}x (${Math.round(pixelRatio * 160)} dpi)`) ||
+      isMatch('Font Scale', `${fontScale}x`) ||
+      isMatch('Form Factor', isTablet ? 'Tablet' : 'Smartphone') ||
+      isMatch('Orientation', isLandscape ? 'Landscape' : 'Portrait') ||
+      isMatch('Status Bar Height', `${statusBarHeight} pt`)
+    );
+  }, [search, isMatch, windowDims, screenDims, pixelRatio, fontScale, isTablet, isLandscape, statusBarHeight]);
+
+  const hasRuntimeMatch = useMemo(() => {
+    if (!search.trim()) return true;
+    return (
+      isMatch('App Name', fullDeviceData.runtime.appName) ||
+      isMatch('Bundle ID', fullDeviceData.identifiers.bundleId) ||
+      isMatch('App Version', `v${fullDeviceData.runtime.appVersion} (${fullDeviceData.runtime.appBuild})`) ||
+      isMatch('React Native', `v${reactNativeVersion}`) ||
+      isMatch('In-App Inspector Version', `v${LIB_VERSION}`) ||
+      isMatch('Hermes Engine', isHermes ? 'Enabled (AOT Bytecode)' : 'Disabled (JSC)') ||
+      isMatch('New Architecture', isTurboModule ? 'Enabled' : 'Legacy Bridge') ||
+      isMatch('Build Type', __DEV__ ? 'Debug (__DEV__ = true)' : 'Release / Production') ||
+      isMatch('Timezone', fullDeviceData.runtime.timezone) ||
+      isMatch('Locale', fullDeviceData.runtime.locale) ||
+      isMatch('Session Uptime', deviceUptime)
+    );
+  }, [search, isMatch, fullDeviceData, reactNativeVersion, isHermes, isTurboModule, deviceUptime]);
+
+  const hasSecurityMatch = useMemo(() => {
+    if (!search.trim()) return true;
+    return (
+      isMatch('Pseudo-UDID', pseudoUDID) ||
+      isMatch('Bundle ID', fullDeviceData.identifiers.bundleId) ||
+      isMatch('Root / Jailbreak', 'Clean (Standard Sandbox)') ||
+      isMatch('Simulator / Emulator', (Platform.constants as any)?.Model?.includes?.('sdk') || (Platform.constants as any)?.Model?.includes?.('Emulator') || (Platform.constants as any)?.Model?.includes?.('Simulator') ? 'Virtual Simulator' : 'Physical Device') ||
+      isMatch('Sandbox Integrity', 'Enforced by OS Kernel')
+    );
+  }, [search, isMatch, pseudoUDID, fullDeviceData]);
 
   const hasAnyMatch = useMemo(() => {
     if (!search.trim()) return true;
-    const query = search.toLowerCase().trim();
     return (
-      JSON.stringify(fullDeviceData).toLowerCase().includes(query) ||
-      ipAddress.toLowerCase().includes(query) ||
-      pseudoUDID.toLowerCase().includes(query)
+      hasHeroMatch ||
+      hasOverviewMatch ||
+      hasHardwareMatch ||
+      hasNetworkMatch ||
+      hasDisplayMatch ||
+      hasRuntimeMatch ||
+      hasSecurityMatch
     );
-  }, [search, fullDeviceData, ipAddress, pseudoUDID]);
+  }, [
+    search,
+    hasHeroMatch,
+    hasOverviewMatch,
+    hasHardwareMatch,
+    hasNetworkMatch,
+    hasDisplayMatch,
+    hasRuntimeMatch,
+    hasSecurityMatch,
+  ]);
 
   return (
     <View style={styles.container}>
@@ -536,102 +656,104 @@ export const DeviceInfoTab = React.memo(() => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         {/* Hero Card */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroHeader}>
-            <View style={styles.heroIconWrap}>
-              {Platform.OS === 'ios' ? (
-                <AppleIcon size={20} color={AppColors.white} />
-              ) : (
-                <AndroidIcon size={20} color={AppColors.white} />
-              )}
+        {(!search.trim() || hasHeroMatch) && (
+          <View style={styles.heroCard}>
+            <View style={styles.heroHeader}>
+              <View style={styles.heroIconWrap}>
+                {Platform.OS === 'ios' ? (
+                  <AppleIcon size={20} color={AppColors.white} />
+                ) : (
+                  <AndroidIcon size={20} color={AppColors.white} />
+                )}
+              </View>
+              <View style={{flex: 1, minWidth: 0}}>
+                <Text style={styles.heroTitle} numberOfLines={1} ellipsizeMode="tail">
+                  {deviceMetrics?.deviceModel || (Platform.constants as any)?.Model || (Platform.OS === 'ios' ? 'Apple iPhone' : 'Android Device')}
+                </Text>
+                <Text style={styles.heroSubtitle} numberOfLines={1} ellipsizeMode="tail">
+                  {Platform.OS === 'ios' ? `iOS ${Platform.Version}` : `Android ${Platform.Version} (API ${deviceMetrics?.apiLevel || Platform.Version})`}
+                </Text>
+              </View>
+              <View style={styles.heroBadge}>
+                <View style={styles.pulseDot} />
+                <Text style={styles.heroBadgeText}>LIVE</Text>
+              </View>
             </View>
-            <View style={{flex: 1, minWidth: 0}}>
-              <Text style={styles.heroTitle} numberOfLines={1} ellipsizeMode="tail">
-                {deviceMetrics?.deviceModel || (Platform.constants as any)?.Model || (Platform.OS === 'ios' ? 'Apple iPhone' : 'Android Device')}
-              </Text>
-              <Text style={styles.heroSubtitle} numberOfLines={1} ellipsizeMode="tail">
-                {Platform.OS === 'ios' ? `iOS ${Platform.Version}` : `Android ${Platform.Version} (API ${deviceMetrics?.apiLevel || Platform.Version})`}
-              </Text>
-            </View>
-            <View style={styles.heroBadge}>
-              <View style={styles.pulseDot} />
-              <Text style={styles.heroBadgeText}>LIVE</Text>
-            </View>
-          </View>
 
-          {/* Quick Metrics Strip */}
-          <View style={styles.heroMetricsStrip}>
-            <View style={styles.heroMetricItem}>
-              <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">IP ADDRESS</Text>
-              <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
-                {ipAddress}
-              </Text>
-            </View>
-            <View style={styles.heroMetricDivider} />
-            <View style={styles.heroMetricItem}>
-              <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">RAM (USED/TOTAL)</Text>
-              <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
-                {usedRamMb}/{totalRamMb} MB
-              </Text>
-            </View>
-            <View style={styles.heroMetricDivider} />
-            <View style={styles.heroMetricItem}>
-              <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">UPTIME</Text>
-              <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">{deviceUptime}</Text>
+            {/* Quick Metrics Strip */}
+            <View style={styles.heroMetricsStrip}>
+              <View style={styles.heroMetricItem}>
+                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">IP ADDRESS</Text>
+                <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
+                  {ipAddress}
+                </Text>
+              </View>
+              <View style={styles.heroMetricDivider} />
+              <View style={styles.heroMetricItem}>
+                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">RAM (USED/TOTAL)</Text>
+                <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
+                  {usedRamMb}/{totalRamMb} MB
+                </Text>
+              </View>
+              <View style={styles.heroMetricDivider} />
+              <View style={styles.heroMetricItem}>
+                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">UPTIME</Text>
+                <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">{deviceUptime}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* ── SUB-TAB 1: OVERVIEW ── */}
-        {(activeSubTab === 'overview' || search.length > 0) && (
+        {(activeSubTab === 'overview' || search.length > 0) && hasOverviewMatch && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>DEVICE OVERVIEW</Text>
-            {isMatch('Device Model') && (
+            {isMatch('Device Model', fullDeviceData.hardware.model) && (
               <InfoRow
                 label="Device Model"
                 value={fullDeviceData.hardware.model}
               />
             )}
-            {isMatch('Manufacturer') && (
+            {isMatch('Manufacturer', fullDeviceData.hardware.brand) && (
               <InfoRow
                 label="Manufacturer / Brand"
                 value={fullDeviceData.hardware.brand}
               />
             )}
-            {isMatch('Operating System') && (
+            {isMatch('Operating System', fullDeviceData.hardware.osVersion) && (
               <InfoRow
                 label="Operating System"
                 value={fullDeviceData.hardware.osVersion}
                 badge={{text: Platform.OS.toUpperCase(), color: AppColors.blue500, bg: `${AppColors.blue500}18`}}
               />
             )}
-            {isMatch('IP Address') && (
+            {isMatch('IP Address', ipAddress) && (
               <InfoRow
                 label="Local IP Address"
                 value={ipAddress}
                 badge={{text: 'ONLINE', color: AppColors.emerald500, bg: `${AppColors.emerald500}18`}}
               />
             )}
-            {isMatch('RAM Memory') && (
+            {isMatch('RAM Memory', `${usedRamMb} MB / ${totalRamMb} MB (${ramUsagePct}%)`, `Free Memory: ${freeRamMb} MB`) && (
               <InfoRow
                 label="RAM Memory"
                 value={`${usedRamMb} MB / ${totalRamMb} MB (${ramUsagePct}%)`}
                 subtext={`Free Memory: ${freeRamMb} MB`}
               />
             )}
-            {isMatch('Storage Capacity') && (
+            {isMatch('Storage Capacity', `${freeStorageGb} GB Free / ${totalStorageGb} GB Total`) && (
               <InfoRow
                 label="Internal Storage"
                 value={`${freeStorageGb} GB Free / ${totalStorageGb} GB Total`}
               />
             )}
-            {isMatch('App Version') && (
+            {isMatch('App Version', `v${fullDeviceData.runtime.appVersion} (${fullDeviceData.runtime.appBuild})`) && (
               <InfoRow
                 label="Host App Version"
                 value={`v${fullDeviceData.runtime.appVersion} (${fullDeviceData.runtime.appBuild})`}
               />
             )}
-            {isMatch('JavaScript Engine') && (
+            {isMatch('JavaScript Engine', isHermes ? 'Hermes Bytecode Engine' : 'JavaScriptCore (JSC)') && (
               <InfoRow
                 label="JS Runtime Engine"
                 value={isHermes ? 'Hermes Bytecode Engine' : 'JavaScriptCore (JSC)'}
@@ -642,7 +764,7 @@ export const DeviceInfoTab = React.memo(() => {
                 }
               />
             )}
-            {isMatch('UDID Identifier') && (
+            {isMatch('UDID Identifier', pseudoUDID) && (
               <InfoRow
                 label="Pseudo-UDID"
                 value={pseudoUDID}
@@ -653,23 +775,23 @@ export const DeviceInfoTab = React.memo(() => {
         )}
 
         {/* ── SUB-TAB 2: HARDWARE & SYSTEM ── */}
-        {(activeSubTab === 'hardware' || search.length > 0) && (
+        {(activeSubTab === 'hardware' || search.length > 0) && hasHardwareMatch && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>HARDWARE & SYSTEM SPECIFICATIONS</Text>
-            {isMatch('CPU Architecture') && (
+            {isMatch('CPU Architecture', fullDeviceData.hardware.cpuAbi) && (
               <InfoRow
                 label="CPU Architecture / ABI"
                 value={fullDeviceData.hardware.cpuAbi}
                 badge={{text: '64-BIT', color: AppColors.purple, bg: `${AppColors.purple}18`}}
               />
             )}
-            {isMatch('Total RAM') && (
+            {isMatch('Total RAM', `${totalRamMb} MB`) && (
               <InfoRow
                 label="Total Physical RAM"
                 value={`${totalRamMb} MB`}
               />
             )}
-            {isMatch('Free RAM') && (
+            {isMatch('Free RAM', `${freeRamMb} MB`) && (
               <InfoRow
                 label="Available Free RAM"
                 value={`${freeRamMb} MB`}
@@ -680,19 +802,19 @@ export const DeviceInfoTab = React.memo(() => {
                 }}
               />
             )}
-            {isMatch('Storage Capacity') && (
+            {isMatch('Storage Capacity', `${totalStorageGb} GB`) && (
               <InfoRow
                 label="Disk Storage Total"
                 value={`${totalStorageGb} GB`}
               />
             )}
-            {isMatch('Available Storage') && (
+            {isMatch('Available Storage', `${freeStorageGb} GB`) && (
               <InfoRow
                 label="Disk Storage Available"
                 value={`${freeStorageGb} GB`}
               />
             )}
-            {isMatch('Battery') && (
+            {isMatch('Battery', `${deviceMetrics?.batteryPercent ?? 100}%`) && (
               <InfoRow
                 label="Battery Level"
                 value={`${deviceMetrics?.batteryPercent ?? 100}%`}
@@ -703,13 +825,13 @@ export const DeviceInfoTab = React.memo(() => {
                 }}
               />
             )}
-            {isMatch('API Level') && Platform.OS === 'android' && (
+            {isMatch('API Level', `API ${deviceMetrics?.apiLevel || Platform.Version}`) && Platform.OS === 'android' && (
               <InfoRow
                 label="Android API SDK Level"
                 value={`API ${deviceMetrics?.apiLevel || Platform.Version}`}
               />
             )}
-            {isMatch('Thermal State') && (
+            {isMatch('Thermal State', 'Nominal (Cool)') && (
               <InfoRow
                 label="Thermal State"
                 value="Nominal (Cool)"
@@ -721,30 +843,30 @@ export const DeviceInfoTab = React.memo(() => {
         )}
 
         {/* ── SUB-TAB 3: NETWORK & CONNECTIVITY ── */}
-        {(activeSubTab === 'network' || search.length > 0) && (
+        {(activeSubTab === 'network' || search.length > 0) && hasNetworkMatch && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>NETWORK & CONNECTIVITY</Text>
-            {isMatch('IP Address') && (
+            {isMatch('IP Address', ipAddress) && (
               <InfoRow
                 label="Local Device IP"
                 value={ipAddress}
                 badge={{text: 'IPV4', color: AppColors.blue500, bg: `${AppColors.blue500}18`}}
               />
             )}
-            {isMatch('Internet Reachability') && (
+            {isMatch('Internet Reachability', 'Connected') && (
               <InfoRow
                 label="Internet Reachability"
                 value="Connected"
                 badge={{text: 'ONLINE', color: AppColors.emerald500, bg: `${AppColors.emerald500}18`}}
               />
             )}
-            {isMatch('Connection Type') && (
+            {isMatch('Connection Type', 'Wi-Fi / Local Area Network') && (
               <InfoRow
                 label="Active Connection Type"
                 value="Wi-Fi / Local Area Network"
               />
             )}
-            {isMatch('Metro Dev Server') && (
+            {isMatch('Metro Dev Server', NativeModules?.PlatformConstants?.serverHost || NativeModules?.AndroidConstants?.serverHost || 'localhost:8081') && (
               <InfoRow
                 label="Metro Packager Host"
                 value={
@@ -754,13 +876,13 @@ export const DeviceInfoTab = React.memo(() => {
                 }
               />
             )}
-            {isMatch('WebSocket Protocol') && (
+            {isMatch('WebSocket Protocol', 'Active & Enabled') && (
               <InfoRow
                 label="WebSocket (WSS) Support"
                 value="Active & Enabled"
               />
             )}
-            {isMatch('Network Inspector Interceptor') && (
+            {isMatch('Network Inspector Interceptor', 'Intercepting XHR & Fetch') && (
               <InfoRow
                 label="Network Interceptor Status"
                 value="Intercepting XHR & Fetch"
@@ -772,35 +894,35 @@ export const DeviceInfoTab = React.memo(() => {
         )}
 
         {/* ── SUB-TAB 4: DISPLAY & SCREEN GEOMETRY ── */}
-        {(activeSubTab === 'display' || search.length > 0) && (
+        {(activeSubTab === 'display' || search.length > 0) && hasDisplayMatch && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>DISPLAY & SCREEN GEOMETRY</Text>
-            {isMatch('Window Resolution') && (
+            {isMatch('Window Resolution', `${windowDims.width.toFixed(0)} × ${windowDims.height.toFixed(0)} pt`) && (
               <InfoRow
                 label="Window Logical Size"
                 value={`${windowDims.width.toFixed(0)} × ${windowDims.height.toFixed(0)} pt`}
               />
             )}
-            {isMatch('Screen Physical Size') && (
+            {isMatch('Screen Physical Size', `${(screenDims.width * pixelRatio).toFixed(0)} × ${(screenDims.height * pixelRatio).toFixed(0)} px`) && (
               <InfoRow
                 label="Physical Screen Size"
                 value={`${(screenDims.width * pixelRatio).toFixed(0)} × ${(screenDims.height * pixelRatio).toFixed(0)} px`}
               />
             )}
-            {isMatch('Pixel Density') && (
+            {isMatch('Pixel Density', `@${pixelRatio}x (${Math.round(pixelRatio * 160)} dpi)`) && (
               <InfoRow
                 label="Pixel Ratio (DPI Scale)"
                 value={`@${pixelRatio}x (${Math.round(pixelRatio * 160)} dpi)`}
                 badge={{text: `@${pixelRatio}x`, color: AppColors.purple, bg: `${AppColors.purple}18`}}
               />
             )}
-            {isMatch('Font Scale') && (
+            {isMatch('Font Scale', `${fontScale}x`) && (
               <InfoRow
                 label="User Font Scale"
                 value={`${fontScale}x (${fontScale === 1 ? 'Default' : fontScale > 1 ? 'Enlarged' : 'Compact'})`}
               />
             )}
-            {isMatch('Form Factor') && (
+            {isMatch('Form Factor', isTablet ? 'Tablet' : 'Smartphone') && (
               <InfoRow
                 label="Device Form Factor"
                 value={isTablet ? 'Tablet' : 'Smartphone'}
@@ -811,13 +933,13 @@ export const DeviceInfoTab = React.memo(() => {
                 }}
               />
             )}
-            {isMatch('Orientation') && (
+            {isMatch('Orientation', isLandscape ? 'Landscape' : 'Portrait') && (
               <InfoRow
                 label="Screen Orientation"
                 value={isLandscape ? 'Landscape' : 'Portrait'}
               />
             )}
-            {isMatch('Status Bar Height') && (
+            {isMatch('Status Bar Height', `${statusBarHeight} pt`) && (
               <InfoRow
                 label="Status Bar Inset"
                 value={`${statusBarHeight} pt`}
@@ -828,42 +950,42 @@ export const DeviceInfoTab = React.memo(() => {
         )}
 
         {/* ── SUB-TAB 5: RUNTIME & APPLICATION ── */}
-        {(activeSubTab === 'runtime' || search.length > 0) && (
+        {(activeSubTab === 'runtime' || search.length > 0) && hasRuntimeMatch && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>RUNTIME & APPLICATION</Text>
-            {isMatch('App Name') && (
+            {isMatch('App Name', fullDeviceData.runtime.appName) && (
               <InfoRow
                 label="Application Name"
                 value={fullDeviceData.runtime.appName}
               />
             )}
-            {isMatch('Bundle ID') && (
+            {isMatch('Bundle ID', fullDeviceData.identifiers.bundleId) && (
               <InfoRow
                 label="Bundle Identifier / Package"
                 value={fullDeviceData.identifiers.bundleId}
               />
             )}
-            {isMatch('App Version') && (
+            {isMatch('App Version', `v${fullDeviceData.runtime.appVersion} (${fullDeviceData.runtime.appBuild})`) && (
               <InfoRow
                 label="Application Version"
                 value={`v${fullDeviceData.runtime.appVersion} (${fullDeviceData.runtime.appBuild})`}
               />
             )}
-            {isMatch('React Native') && (
+            {isMatch('React Native', `v${reactNativeVersion}`) && (
               <InfoRow
                 label="React Native Framework"
                 value={`v${reactNativeVersion}`}
                 badge={{text: 'RN', color: AppColors.sky500, bg: `${AppColors.sky500}18`}}
               />
             )}
-            {isMatch('In-App Inspector Version') && (
+            {isMatch('In-App Inspector Version', `v${LIB_VERSION}`) && (
               <InfoRow
                 label="In-App Inspector Library"
                 value={`v${LIB_VERSION}`}
                 badge={{text: 'LATEST', color: AppColors.purple, bg: `${AppColors.purple}18`}}
               />
             )}
-            {isMatch('Hermes Engine') && (
+            {isMatch('Hermes Engine', isHermes ? 'Enabled (AOT Bytecode)' : 'Disabled (JSC)') && (
               <InfoRow
                 label="Hermes JavaScript Engine"
                 value={isHermes ? 'Enabled (AOT Bytecode)' : 'Disabled (JSC)'}
@@ -874,7 +996,7 @@ export const DeviceInfoTab = React.memo(() => {
                 }}
               />
             )}
-            {isMatch('New Architecture') && (
+            {isMatch('New Architecture', isTurboModule ? 'Enabled' : 'Legacy Bridge') && (
               <InfoRow
                 label="Bridgeless TurboModules (New Arch)"
                 value={isTurboModule ? 'Enabled' : 'Legacy Bridge'}
@@ -885,7 +1007,7 @@ export const DeviceInfoTab = React.memo(() => {
                 }}
               />
             )}
-            {isMatch('Build Type') && (
+            {isMatch('Build Type', __DEV__ ? 'Debug (__DEV__ = true)' : 'Release / Production') && (
               <InfoRow
                 label="Build Configuration"
                 value={__DEV__ ? 'Debug (__DEV__ = true)' : 'Release / Production'}
@@ -896,19 +1018,19 @@ export const DeviceInfoTab = React.memo(() => {
                 }}
               />
             )}
-            {isMatch('Timezone') && (
+            {isMatch('Timezone', fullDeviceData.runtime.timezone) && (
               <InfoRow
                 label="System Timezone"
                 value={fullDeviceData.runtime.timezone}
               />
             )}
-            {isMatch('Locale') && (
+            {isMatch('Locale', fullDeviceData.runtime.locale) && (
               <InfoRow
                 label="System Language & Locale"
                 value={fullDeviceData.runtime.locale}
               />
             )}
-            {isMatch('Session Uptime') && (
+            {isMatch('Session Uptime', deviceUptime) && (
               <InfoRow
                 label="Inspector Session Uptime"
                 value={deviceUptime}
@@ -919,10 +1041,10 @@ export const DeviceInfoTab = React.memo(() => {
         )}
 
         {/* ── SUB-TAB 6: SECURITY & IDENTIFIERS ── */}
-        {(activeSubTab === 'security' || search.length > 0) && (
+        {(activeSubTab === 'security' || search.length > 0) && hasSecurityMatch && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>DEVICE IDENTIFIERS & SECURITY</Text>
-            {isMatch('Pseudo-UDID') && (
+            {isMatch('Pseudo-UDID', pseudoUDID) && (
               <InfoRow
                 label="Deterministic Pseudo-UDID"
                 value={pseudoUDID}
@@ -930,20 +1052,20 @@ export const DeviceInfoTab = React.memo(() => {
                 badge={{text: 'PERSISTENT', color: AppColors.purple, bg: `${AppColors.purple}18`}}
               />
             )}
-            {isMatch('Bundle ID') && (
+            {isMatch('Bundle ID', fullDeviceData.identifiers.bundleId) && (
               <InfoRow
                 label="Application Bundle ID"
                 value={fullDeviceData.identifiers.bundleId}
               />
             )}
-            {isMatch('Root / Jailbreak') && (
+            {isMatch('Root / Jailbreak', 'Clean (Standard Sandbox)') && (
               <InfoRow
                 label="Root / Jailbreak Heuristic"
                 value="Clean (Standard Sandbox)"
                 badge={{text: 'SECURE', color: AppColors.emerald500, bg: `${AppColors.emerald500}18`}}
               />
             )}
-            {isMatch('Simulator / Emulator') && (
+            {isMatch('Simulator / Emulator', (Platform.constants as any)?.Model?.includes?.('sdk') || (Platform.constants as any)?.Model?.includes?.('Emulator') || (Platform.constants as any)?.Model?.includes?.('Simulator') ? 'Virtual Simulator' : 'Physical Device') && (
               <InfoRow
                 label="Emulator / Physical Device"
                 value={
@@ -955,7 +1077,7 @@ export const DeviceInfoTab = React.memo(() => {
                 }
               />
             )}
-            {isMatch('Sandbox Integrity') && (
+            {isMatch('Sandbox Integrity', 'Enforced by OS Kernel') && (
               <InfoRow
                 label="App Sandbox File Isolation"
                 value="Enforced by OS Kernel"

@@ -310,7 +310,7 @@ const NetworkInspector = ({
     error: boolean;
   }>({
     info: true,
-    warn: false,
+    warn: true,
     error: true,
   });
   const visibleConsoleLogs = useMemo(() => {
@@ -341,7 +341,7 @@ const NetworkInspector = ({
   const [logSearch, setLogSearch] = useState('');
   const [logFilters, setLogFilters] = useState<
     Set<'all' | 'info' | 'warn' | 'error' | 'user-log' | 'analytics'>
-  >(new Set(['user-log']));
+  >(new Set(['all']));
 
   // ─── Settings state ──────────────────────────────────────────────────────────
   const [settingsPage, setSettingsPage] = useState<
@@ -368,8 +368,8 @@ const NetworkInspector = ({
     debugging: false,
   });
 
-  const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(100);
-  const [maxAnalyticsEventsLimit, setMaxAnalyticsEventsLimit] = useState<number>(75);
+  const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(250);
+  const [maxAnalyticsEventsLimit, setMaxAnalyticsEventsLimit] = useState<number>(150);
   const [isAutoRamLimitEnabled, setIsAutoRamLimitEnabled] = useState<boolean>(true);
   const [deviceFreeRamMb, setDeviceFreeRamMb] = useState<number>(1800);
 
@@ -1715,7 +1715,7 @@ const NetworkInspector = ({
       });
     }
 
-    // Comprehensive Search bar check
+    // Straightforward keyword search
     if (logSearch && logSearch.trim().length > 0) {
       const queryTokens = logSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
       result = result.filter(log => {
@@ -1724,37 +1724,32 @@ const NetworkInspector = ({
           log.caller || '',
           log.type || '',
           log.sourceMethod || '',
+          log.stack || '',
         ].join(' ').toLowerCase();
 
         return queryTokens.every(token => {
-          if (token.startsWith('level:') || token.startsWith('is:') || token.startsWith('type:')) {
-            const flag = token.replace(/^(level:|is:|type:)/, '').trim();
-            if (flag === 'error' || flag === 'err') return log.type === 'error';
-            if (flag === 'warn' || flag === 'warning') return log.type === 'warn';
-            if (flag === 'info') return log.type === 'info';
-            if (flag === 'log') return log.sourceMethod === 'log';
-            if (flag === 'analytics') return (log.message || '').toLowerCase().includes('[analytics');
-          }
           if (token === 'error' || token === 'err') {
             return log.type === 'error' || searchTarget.includes(token);
           }
           if (token === 'warn' || token === 'warning') {
             return log.type === 'warn' || searchTarget.includes(token);
           }
+          if (token === 'info') {
+            return log.type === 'info' || searchTarget.includes(token);
+          }
           return searchTarget.includes(token);
         });
       });
     }
 
-    // #7 — apply sort order (newest/oldest first)
+    // Apply sort order (newest/oldest first)
     result = [...result].sort((a, b) =>
       logSortOrder === 'newest'
         ? b.timestamp - a.timestamp
         : a.timestamp - b.timestamp,
     );
 
-    // #9 — collapse consecutive identical messages into one row with a ×N
-    // counter unless duplicates are explicitly enabled in Settings.
+    // Collapse consecutive identical messages into one row with a ×N counter unless duplicates are explicitly enabled
     if (!showDuplicateLogs) {
       const collapsed: ConsoleLog[] = [];
       for (const log of result) {
@@ -1795,9 +1790,21 @@ const NetworkInspector = ({
           log.caller || '',
           log.type || '',
           log.sourceMethod || '',
+          log.stack || '',
         ].join(' ').toLowerCase();
 
-        return queryTokens.every(token => searchTarget.includes(token));
+        return queryTokens.every(token => {
+          if (token === 'error' || token === 'err') {
+            return log.type === 'error' || searchTarget.includes(token);
+          }
+          if (token === 'warn' || token === 'warning') {
+            return log.type === 'warn' || searchTarget.includes(token);
+          }
+          if (token === 'info') {
+            return log.type === 'info' || searchTarget.includes(token);
+          }
+          return searchTarget.includes(token);
+        });
       });
     }
 
@@ -1820,14 +1827,15 @@ const NetworkInspector = ({
   }, [visibleConsoleLogs, logSearch]);
 
   function closeModal() {
-    animateNextLayout();
     setVisible(false);
-    setSelected(null);
-    setSelectedEvent(null);
-    setSelectedLog(null);
-    setSelectedReduxSlice(null);
-    setSelectedReduxAction(null);
-    setSelectedCrash(null);
+    setTimeout(() => {
+      setSelected(null);
+      setSelectedEvent(null);
+      setSelectedLog(null);
+      setSelectedReduxSlice(null);
+      setSelectedReduxAction(null);
+      setSelectedCrash(null);
+    }, 300);
   }
 
   function handleClearAll() {
@@ -1838,15 +1846,19 @@ const NetworkInspector = ({
     setCollapsedSections(new Set());
     setStatusFilters(new Set());
     setMethodFilters(new Set());
+    setSearch('');
     prevLogIdsRef.current = new Set();
     logRouteMapRef.current = new Map();
     // Also clear analytics
     clearAnalyticsEvents();
     setAnalyticsEvents([]);
+    setAnalyticsSearch('');
     prevEventIdsRef.current = new Set();
     // Also clear console logs
     clearConsoleLogs();
     setConsoleLogs([]);
+    setLogFilters(new Set(['all']));
+    setLogSearch('');
   }
 
   function handleDelete() {
@@ -1983,195 +1995,304 @@ const NetworkInspector = ({
     });
   }, []);
 
-  const contextValue: InspectorContextValue = {
-    // ─── Modal / launcher ───────────────────────────────────────────────
-    visible,
-    setVisible,
-    closeModal,
-    isReady,
-    enabled,
-    isEnabled: enabled,
-    appIcon,
-    environment,
-    modalHeightPercent,
-    setModalHeightPercent,
-    modalAnimationType,
-    setModalAnimationType,
-    hasNavigationContext,
-    setNavState,
+  const contextValue: InspectorContextValue = useMemo(
+    () => ({
+      // ─── Modal / launcher ───────────────────────────────────────────────
+      visible,
+      setVisible,
+      closeModal,
+      isReady,
+      enabled,
+      isEnabled: enabled,
+      appIcon,
+      environment,
+      modalHeightPercent,
+      setModalHeightPercent,
+      modalAnimationType,
+      setModalAnimationType,
+      hasNavigationContext,
+      setNavState,
 
-    // ─── Tabs ───────────────────────────────────────────────────────────
-    activeTab,
-    switchActiveTab,
-    tabVisibility,
-    toggleTabVisibility,
-    lastReadApisCount,
-    lastReadLogsCount,
+      // ─── Tabs ───────────────────────────────────────────────────────────
+      activeTab,
+      switchActiveTab,
+      tabVisibility,
+      toggleTabVisibility,
+      lastReadApisCount,
+      lastReadLogsCount,
 
-    // ─── Selection / header state ───────────────────────────────────────
-    selected,
-    setSelected,
-    selectedEvent,
-    setSelectedEvent,
-    selectedLog,
-    setSelectedLog,
-    showHeaderInfo,
-    setShowHeaderInfo,
-    settingsPage,
-    setSettingsPage,
-    updateAvailable,
-    latestNpmVersion,
-    clearAnim,
-    activePulseAnim,
-    unreadPulseAnim,
-    runClearAllWithAnimation,
+      // ─── Selection / header state ───────────────────────────────────────
+      selected,
+      setSelected,
+      selectedEvent,
+      setSelectedEvent,
+      selectedLog,
+      setSelectedLog,
+      showHeaderInfo,
+      setShowHeaderInfo,
+      settingsPage,
+      setSettingsPage,
+      updateAvailable,
+      latestNpmVersion,
+      clearAnim,
+      activePulseAnim,
+      unreadPulseAnim,
+      runClearAllWithAnimation,
 
-    // ─── FAB / launcher ─────────────────────────────────────────────────
-    useNativeFab,
-    fabPan,
-    fabPanResponder,
-    fabDraggedRef,
-    pulseAnim,
-    fabShineAnim,
+      // ─── FAB / launcher ─────────────────────────────────────────────────
+      useNativeFab,
+      fabPan,
+      fabPanResponder,
+      fabDraggedRef,
+      pulseAnim,
+      fabShineAnim,
 
-    // ─── Network (APIs) ─────────────────────────────────────────────────
-    logs,
-    filteredLogs,
-    groupedData,
-    search,
-    setSearch,
-    searchScope,
-    setSearchScope,
-    isRegexSearch,
-    setIsRegexSearch,
-    isCaseSensitive,
-    setIsCaseSensitive,
-    quickFilter,
-    setQuickFilter,
-    statusFilters,
-    setStatusFilters,
-    methodFilters,
-    setMethodFilters,
-    availableMethods,
-    sortOrder,
-    setSortOrder,
-    selectedLogs,
-    toggleSelect,
-    minStart,
-    totalRange,
-    newLogIds,
-    toggleSectionFilter,
-    toggleSectionCollapse,
-    handleDelete,
-    isNetworkPaused,
-    setIsNetworkPaused,
+      // ─── Network (APIs) ─────────────────────────────────────────────────
+      logs,
+      filteredLogs,
+      groupedData,
+      search,
+      setSearch,
+      searchScope,
+      setSearchScope,
+      isRegexSearch,
+      setIsRegexSearch,
+      isCaseSensitive,
+      setIsCaseSensitive,
+      quickFilter,
+      setQuickFilter,
+      statusFilters,
+      setStatusFilters,
+      methodFilters,
+      setMethodFilters,
+      availableMethods,
+      sortOrder,
+      setSortOrder,
+      selectedLogs,
+      toggleSelect,
+      minStart,
+      totalRange,
+      newLogIds,
+      toggleSectionFilter,
+      toggleSectionCollapse,
+      handleDelete,
+      isNetworkPaused,
+      setIsNetworkPaused,
 
-    // ─── Network detail ─────────────────────────────────────────────────
-    detailTitle,
-    detailDisplayUrl,
-    apiDetailActiveTab,
-    setApiDetailActiveTab,
-    detailSearch,
-    setDetailSearch,
-    reqExpanded,
-    setReqExpanded,
-    resExpanded,
-    setResExpanded,
-    showReqDiff,
-    setShowReqDiff,
-    showResDiff,
-    setShowResDiff,
-    prevRequestData,
-    prevResponseData,
-    logRouteMapRef,
+      // ─── Network detail ─────────────────────────────────────────────────
+      detailTitle,
+      detailDisplayUrl,
+      apiDetailActiveTab,
+      setApiDetailActiveTab,
+      detailSearch,
+      setDetailSearch,
+      reqExpanded,
+      setReqExpanded,
+      resExpanded,
+      setResExpanded,
+      showReqDiff,
+      setShowReqDiff,
+      showResDiff,
+      setShowResDiff,
+      prevRequestData,
+      prevResponseData,
+      logRouteMapRef,
 
-    // ─── Console (Logs) ─────────────────────────────────────────────────
-    consoleLogs,
-    visibleConsoleLogs,
-    filteredConsoleLogs,
-    logSearch,
-    setLogSearch,
-    logFilters,
-    setLogFilters,
-    logCounts,
-    logSortOrder,
-    setLogSortOrder,
-    isConsolePaused,
-    setIsConsolePaused,
+      // ─── Console (Logs) ─────────────────────────────────────────────────
+      consoleLogs,
+      visibleConsoleLogs,
+      filteredConsoleLogs,
+      logSearch,
+      setLogSearch,
+      logFilters,
+      setLogFilters,
+      logCounts,
+      logSortOrder,
+      setLogSortOrder,
+      isConsolePaused,
+      setIsConsolePaused,
 
-    // ─── Analytics ──────────────────────────────────────────────────────
-    analyticsEvents,
-    filteredAnalyticsEvents,
-    analyticsSearch,
-    setAnalyticsSearch,
-    analyticsFilters,
-    setAnalyticsFilters,
-    isAnalyticsFilterApplied,
-    resetAnalyticsFilters,
-    newEventIds,
-    isAnalyticsLayoutReady,
-    setIsAnalyticsLayoutReady,
-    analyticsHeaderExpanded,
-    setAnalyticsHeaderExpanded,
-    isAnalyticsPaused,
-    setIsAnalyticsPaused,
+      // ─── Analytics ──────────────────────────────────────────────────────
+      analyticsEvents,
+      filteredAnalyticsEvents,
+      analyticsSearch,
+      setAnalyticsSearch,
+      analyticsFilters,
+      setAnalyticsFilters,
+      isAnalyticsFilterApplied,
+      resetAnalyticsFilters,
+      newEventIds,
+      isAnalyticsLayoutReady,
+      setIsAnalyticsLayoutReady,
+      analyticsHeaderExpanded,
+      setAnalyticsHeaderExpanded,
+      isAnalyticsPaused,
+      setIsAnalyticsPaused,
 
-    // ─── Redux ──────────────────────────────────────────────────────────
-    reduxState,
-    setReduxState,
-    reduxLastActionMap,
-    reduxSearch,
-    setReduxSearch,
-    selectedReduxSlice,
-    setSelectedReduxSlice,
-    selectedReduxAction,
-    setSelectedReduxAction,
-    reduxActiveSubTab,
-    setReduxActiveSubTab,
+      // ─── Redux ──────────────────────────────────────────────────────────
+      reduxState,
+      setReduxState,
+      reduxLastActionMap,
+      reduxSearch,
+      setReduxSearch,
+      selectedReduxSlice,
+      setSelectedReduxSlice,
+      selectedReduxAction,
+      setSelectedReduxAction,
+      reduxActiveSubTab,
+      setReduxActiveSubTab,
 
-    // ─── Crash ───────────────────────────────────────────────────────────
-    crashRecords,
-    setCrashRecords,
-    selectedCrash,
-    setSelectedCrash,
-    lastReadCrashesCount,
-    maxCrashLogs,
-    setMaxCrashLogs,
-    clearAllCrashes: () => {
-      clearCrashRecords();
-      setCrashRecords([]);
-      setSelectedCrash(null);
-    },
+      // ─── Crash ───────────────────────────────────────────────────────────
+      crashRecords,
+      setCrashRecords,
+      selectedCrash,
+      setSelectedCrash,
+      lastReadCrashesCount,
+      maxCrashLogs,
+      setMaxCrashLogs,
+      clearAllCrashes: () => {
+        clearCrashRecords();
+        setCrashRecords([]);
+        setSelectedCrash(null);
+      },
 
-    // ─── Settings ───────────────────────────────────────────────────────
-    settingsActiveSubTab,
-    setSettingsActiveSubTab,
-    defaultTab,
-    setDefaultTab,
-    isDark,
-    setIsDark,
-    showDuplicateLogs,
-    setShowDuplicateLogs,
-    showUpdateToast,
-    setShowUpdateToast,
-    showConsoleLevels,
-    setShowConsoleLevels,
-    resetToDefaults,
-    storage,
-    maxNetworkLogs,
-    setMaxNetworkLogs,
-    maxConsoleLogs,
-    setMaxConsoleLogs,
-    maxAnalyticsEventsLimit,
-    setMaxAnalyticsEventsLimit,
-    isAutoRamLimitEnabled,
-    setIsAutoRamLimitEnabled,
-    deviceFreeRamMb,
-    reduxAutoRefresh,
-    setReduxAutoRefreshState,
-    reduxExpandDepth,
-    setReduxExpandDepth,
-  };
+      // ─── Settings ───────────────────────────────────────────────────────
+      settingsActiveSubTab,
+      setSettingsActiveSubTab,
+      defaultTab,
+      setDefaultTab,
+      isDark,
+      setIsDark,
+      showDuplicateLogs,
+      setShowDuplicateLogs,
+      showUpdateToast,
+      setShowUpdateToast,
+      showConsoleLevels,
+      setShowConsoleLevels,
+      resetToDefaults,
+      storage,
+      maxNetworkLogs,
+      setMaxNetworkLogs,
+      maxConsoleLogs,
+      setMaxConsoleLogs,
+      maxAnalyticsEventsLimit,
+      setMaxAnalyticsEventsLimit,
+      isAutoRamLimitEnabled,
+      setIsAutoRamLimitEnabled,
+      deviceFreeRamMb,
+      reduxAutoRefresh,
+      setReduxAutoRefreshState,
+      reduxExpandDepth,
+      setReduxExpandDepth,
+    }),
+    [
+      visible,
+      closeModal,
+      isReady,
+      enabled,
+      appIcon,
+      environment,
+      modalHeightPercent,
+      modalAnimationType,
+      hasNavigationContext,
+      setNavState,
+      activeTab,
+      switchActiveTab,
+      tabVisibility,
+      toggleTabVisibility,
+      lastReadApisCount,
+      lastReadLogsCount,
+      selected,
+      selectedEvent,
+      selectedLog,
+      showHeaderInfo,
+      settingsPage,
+      updateAvailable,
+      latestNpmVersion,
+      clearAnim,
+      activePulseAnim,
+      unreadPulseAnim,
+      runClearAllWithAnimation,
+      useNativeFab,
+      fabPan,
+      fabPanResponder,
+      pulseAnim,
+      fabShineAnim,
+      logs,
+      filteredLogs,
+      groupedData,
+      search,
+      searchScope,
+      isRegexSearch,
+      isCaseSensitive,
+      quickFilter,
+      statusFilters,
+      methodFilters,
+      availableMethods,
+      sortOrder,
+      selectedLogs,
+      toggleSelect,
+      minStart,
+      totalRange,
+      newLogIds,
+      toggleSectionFilter,
+      toggleSectionCollapse,
+      handleDelete,
+      isNetworkPaused,
+      detailTitle,
+      detailDisplayUrl,
+      apiDetailActiveTab,
+      detailSearch,
+      reqExpanded,
+      resExpanded,
+      showReqDiff,
+      showResDiff,
+      prevRequestData,
+      prevResponseData,
+      consoleLogs,
+      visibleConsoleLogs,
+      filteredConsoleLogs,
+      logSearch,
+      logFilters,
+      logCounts,
+      logSortOrder,
+      isConsolePaused,
+      analyticsEvents,
+      filteredAnalyticsEvents,
+      analyticsSearch,
+      analyticsFilters,
+      isAnalyticsFilterApplied,
+      resetAnalyticsFilters,
+      newEventIds,
+      isAnalyticsLayoutReady,
+      analyticsHeaderExpanded,
+      isAnalyticsPaused,
+      reduxState,
+      reduxLastActionMap,
+      reduxSearch,
+      selectedReduxSlice,
+      selectedReduxAction,
+      reduxActiveSubTab,
+      crashRecords,
+      selectedCrash,
+      lastReadCrashesCount,
+      maxCrashLogs,
+      settingsActiveSubTab,
+      defaultTab,
+      isDark,
+      showDuplicateLogs,
+      showUpdateToast,
+      showConsoleLevels,
+      storage,
+      maxNetworkLogs,
+      maxConsoleLogs,
+      maxAnalyticsEventsLimit,
+      isAutoRamLimitEnabled,
+      deviceFreeRamMb,
+      reduxAutoRefresh,
+      reduxExpandDepth,
+    ],
+  );
 
   return (
     <InspectorContext.Provider value={contextValue}>

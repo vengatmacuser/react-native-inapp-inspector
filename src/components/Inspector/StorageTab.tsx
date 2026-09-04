@@ -356,10 +356,11 @@ export const StorageTab = React.memo(() => {
   // Filter entries
   const filteredEntries = useMemo(() => {
     if (!search.trim()) return entries;
-    const q = search.toLowerCase().trim();
-    return entries.filter(
-      e => e.key.toLowerCase().includes(q) || e.value.toLowerCase().includes(q),
-    );
+    const tokens = search.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    return entries.filter(e => {
+      const corpus = `${e.key} ${e.value}`.toLowerCase();
+      return tokens.every(tok => corpus.includes(tok));
+    });
   }, [entries, search]);
 
   const totalBytes = useMemo(() => {
@@ -585,13 +586,32 @@ export const StorageTab = React.memo(() => {
                   <DatabaseIcon size={28} color={AppColors.grayTextWeak} />
                 </View>
                 <Text style={styles.emptyTitle}>
-                  {search ? 'No matching keys found' : `No ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} Keys`}
+                  {search.trim().length > 0
+                    ? 'No matching keys found'
+                    : `No ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} Keys`}
                 </Text>
                 <Text style={styles.emptySubtitle}>
-                  {search
-                    ? 'Try modifying your search query'
+                  {search.trim().length > 0
+                    ? `No keys or values match "${search}"`
                     : `Storage is auto-detected. Tap "+ Add" above to create your first ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'} key!`}
                 </Text>
+                {search.trim().length > 0 && (
+                  <TouchableScale
+                    onPress={() => setSearch('')}
+                    style={{
+                      marginTop: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                      backgroundColor: AppColors.grayBackground,
+                      borderWidth: 1,
+                      borderColor: AppColors.grayBorderSecondary,
+                    }}>
+                    <Text style={{color: AppColors.brandPurple, fontSize: 12, fontFamily: AppFonts.interBold}}>
+                      Clear Search
+                    </Text>
+                  </TouchableScale>
+                )}
               </View>
             }
             ListFooterComponent={<View style={{height: 60}} />}

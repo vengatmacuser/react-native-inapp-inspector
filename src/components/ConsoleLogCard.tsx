@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {useTranslation} from '../i18n';
 import {
   Pressable,
@@ -101,8 +101,8 @@ const getLogMessageWithBadges = (
                 style={[
                   styles.prefixTag,
                   {
-                    backgroundColor: `${dec.color}15`,
-                    borderColor: `${dec.color}35`,
+                    backgroundColor: `${dec.color}14`,
+                    borderColor: `${dec.color}33`,
                   },
                 ]}>
                 <IconComp color={dec.color} size={10} />
@@ -141,6 +141,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 }: ConsoleLogCardProps) {
   const {setSelectedLog} = useInspector();
   const {t} = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
   const jsonContent = getJsonContent(item.message);
   const isAnalyticsError = item.message
     .toLowerCase()
@@ -157,52 +158,52 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
     if (isAnalyticsError || type === 'error' || method === 'error') {
       return {
         border: AppColors.errorColor,
-        badgeBg: AppColors.errorCardBg,
-        badgeText: AppColors.rose600,
+        badgeBg: `${AppColors.errorColor}18`,
+        badgeText: AppColors.errorColor,
         label: 'ERROR',
-        cardBg: AppColors.errorCardBg,
-        methodBorder: AppColors.errorBorder,
-        methodBg: AppColors.errorCardBg,
-        methodText: AppColors.rose600,
+        cardBg: '#FFF8F8',
+        methodBorder: `${AppColors.errorColor}30`,
+        methodBg: `${AppColors.errorColor}12`,
+        methodText: AppColors.errorColor,
         textColor: AppColors.redErrorText,
       };
     }
     if (type === 'warn' || method === 'warn') {
       return {
         border: AppColors.amber600,
-        badgeBg: AppColors.amberBg,
-        badgeText: AppColors.amber700,
+        badgeBg: `${AppColors.amber600}18`,
+        badgeText: AppColors.amber800,
         label: 'WARN',
-        cardBg: AppColors.amberWarmBg,
-        methodBorder: AppColors.amberWarmBorder,
-        methodBg: AppColors.amberBg,
-        methodText: AppColors.amber700,
-        textColor: AppColors.amberWarmText,
+        cardBg: '#FFFDF5',
+        methodBorder: `${AppColors.amber600}33`,
+        methodBg: `${AppColors.amber600}14`,
+        methodText: AppColors.amber800,
+        textColor: AppColors.amber800,
       };
     }
     if (type === 'debug' || method === 'debug') {
       return {
         border: AppColors.purple500,
-        badgeBg: AppColors.violetSoftBg,
-        badgeText: AppColors.violetSoftText,
+        badgeBg: `${AppColors.purple500}18`,
+        badgeText: AppColors.purple,
         label: 'DEBUG',
-        cardBg: AppColors.purpleShade50,
-        methodBorder: AppColors.violetSoftBorder,
-        methodBg: AppColors.violetSoftBg,
-        methodText: AppColors.violetSoftText,
+        cardBg: '#FAF8FD',
+        methodBorder: `${AppColors.purple500}33`,
+        methodBg: `${AppColors.purple500}12`,
+        methodText: AppColors.purple,
         textColor: AppColors.purpleText,
       };
     }
     if (type === 'info' || method === 'info') {
       return {
         border: AppColors.sky500,
-        badgeBg: AppColors.skySoftBg,
-        badgeText: AppColors.skySoftText,
+        badgeBg: `${AppColors.sky500}18`,
+        badgeText: AppColors.sky600,
         label: 'INFO',
-        cardBg: AppColors.blueBg,
-        methodBorder: AppColors.skySoftBorder,
-        methodBg: AppColors.skySoftBg,
-        methodText: AppColors.skySoftText,
+        cardBg: '#F8FAFC',
+        methodBorder: `${AppColors.sky500}33`,
+        methodBg: `${AppColors.sky500}12`,
+        methodText: AppColors.sky600,
         textColor: AppColors.blue800,
       };
     }
@@ -210,10 +211,10 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
     // Default / Standard console.log
     return {
       border: AppColors.indigo500,
-      badgeBg: AppColors.indigo50,
+      badgeBg: `${AppColors.indigo500}15`,
       badgeText: AppColors.indigo600Alt,
       label: 'LOG',
-      cardBg: AppColors.primaryLight,
+      cardBg: AppColors.white,
       methodBorder: AppColors.dividerColor,
       methodBg: AppColors.indigo50,
       methodText: AppColors.indigo600Alt,
@@ -231,6 +232,11 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
     setSelectedLog(item);
   };
 
+  const toggleExpand = (e?: any) => {
+    e?.stopPropagation?.();
+    setIsExpanded(prev => !prev);
+  };
+
   return (
     <View style={styles.container}>
       <Pressable
@@ -244,6 +250,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           },
           pressed && styles.cardPressed,
         ]}>
+        {/* Header Row */}
         <View style={styles.cardHeader}>
           <View style={styles.headerLeft}>
             <View style={[styles.typeChip, {backgroundColor: colors.badgeBg}]}>
@@ -275,12 +282,12 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                 style={[
                   styles.metaChip,
                   {
-                    backgroundColor: AppColors.mintGreenBg,
-                    borderColor: AppColors.mintGreenBorder,
+                    backgroundColor: `${AppColors.teal600}14`,
+                    borderColor: `${AppColors.teal600}33`,
                   },
                 ]}>
                 <Text
-                  style={[styles.metaChipText, {color: AppColors.mintGreenText, fontFamily: AppFonts.interBold}]}>
+                  style={[styles.metaChipText, {color: AppColors.teal600, fontFamily: AppFonts.interBold}]}>
                   {Array.isArray(jsonContent.data)
                     ? `Array[${jsonContent.data.length}]`
                     : `Object{${Object.keys(jsonContent.data).length}}`}
@@ -312,6 +319,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           </View>
         </View>
 
+        {/* Body Content */}
         <View style={styles.cardBody}>
           {jsonContent ? (
             <>
@@ -321,7 +329,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   searchStr,
                   [styles.messageText, {color: AppColors.primaryBlack}],
                   styles.highlight,
-                  2,
+                  isExpanded ? undefined : 2,
                 )
               ) : null}
               {jsonPreview && (
@@ -334,8 +342,23 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                       {color: AppColors.primaryBlack},
                     ]}
                     detectLinks={false}
-                    numberOfLines={5}
+                    numberOfLines={isExpanded ? undefined : 4}
                   />
+                  {jsonPreview.text.split('\n').length > 4 && (
+                    <Pressable
+                      onPress={toggleExpand}
+                      hitSlop={6}
+                      style={styles.expandToggle}>
+                      <Text style={styles.expandToggleText}>
+                        {isExpanded ? 'Show less' : 'Show full preview'}
+                      </Text>
+                      <ChevronIcon
+                        color={AppColors.purple}
+                        size={11}
+                        direction={isExpanded ? 'up' : 'down'}
+                      />
+                    </Pressable>
+                  )}
                 </View>
               )}
             </>
@@ -345,16 +368,17 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
               searchStr,
               [styles.messageText, {color: AppColors.primaryBlack}],
               styles.highlight,
-              3,
+              isExpanded ? undefined : 4,
             )
           )}
         </View>
 
+        {/* Footer Row */}
         <View style={styles.cardFooter}>
           <View style={styles.footerLeft}>
-            <Text style={styles.footerText}>#{item.id + 1}</Text>
+            <Text style={styles.footerId}>#{item.id + 1}</Text>
             <View style={styles.footerDot} />
-            <Text style={styles.footerText}>{formatTime(item.timestamp)}</Text>
+            <Text style={styles.footerTime}>{formatTime(item.timestamp)}</Text>
             {parsedCaller && (
               <>
                 <View style={styles.footerDot} />
@@ -364,57 +388,40 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                     openInVSCode(
                       parsedCaller.rawFilePath ||
                         parsedCaller.fullPath ||
-                        parsedCaller.fileName,
+                      parsedCaller.fileName,
                       parsedCaller.lineNumber,
                       parsedCaller.columnNumber,
                     );
                   }}
                   hitSlop={8}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                    maxWidth: 185,
-                    backgroundColor: `${AppColors.sky600}10`,
-                    borderColor: `${AppColors.sky600}2B`,
-                    borderWidth: 1,
-                    borderRadius: 5,
-                    paddingHorizontal: 5,
-                    paddingVertical: 1.5,
-                  }}>
+                  style={styles.callerPill}>
                   {parsedCaller.fileExt && parsedCaller.fileExt !== 'other' && (
                     <View
-                      style={{
-                        backgroundColor:
-                          parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
-                            ? `${AppColors.brandPurple}22`
-                            : `${AppColors.teal600}22`,
-                        borderRadius: 3,
-                        paddingHorizontal: 3.5,
-                        paddingVertical: 0.5,
-                      }}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 8,
-                          color:
+                      style={[
+                        styles.extBadge,
+                        {
+                          backgroundColor:
                             parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
-                              ? AppColors.brandPurple
-                              : AppColors.teal600,
-                        }}>
+                              ? `${AppColors.brandPurple}22`
+                              : `${AppColors.teal600}22`,
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          styles.extBadgeText,
+                          {
+                            color:
+                              parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
+                                ? AppColors.brandPurple
+                                : AppColors.teal600,
+                          },
+                        ]}>
                         {parsedCaller.fileExt.toUpperCase()}
                       </Text>
                     </View>
                   )}
                   <Text
-                    style={[
-                      styles.footerText,
-                      {
-                        fontFamily: AppFonts.interBold,
-                        color: AppColors.sky600,
-                        fontSize: 9.5,
-                      },
-                    ]}
+                    style={styles.callerFileName}
                     numberOfLines={1}
                     ellipsizeMode="middle">
                     {parsedCaller.fileName}
@@ -464,32 +471,34 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 3.5,
   },
   card: {
     alignSelf: 'stretch',
-    borderRadius: 12,
+    borderRadius: 11,
     borderWidth: 1,
     borderColor: AppColors.grayBorderSecondary,
     borderLeftWidth: 3.5,
-    padding: 12,
-    backgroundColor: AppColors.primaryLight,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 9,
+    backgroundColor: AppColors.white,
     shadowColor: AppColors.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: {width: 0, height: 2},
-    elevation: 2,
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    shadowOffset: {width: 0, height: 1.5},
+    elevation: 1.5,
   },
   cardPressed: {
-    opacity: 0.85,
-    transform: [{scale: 0.99}],
+    opacity: 0.88,
+    transform: [{scale: 0.995}],
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
     gap: 8,
   },
   headerLeft: {
@@ -502,7 +511,7 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   typeChip: {
     flexDirection: 'row',
@@ -524,7 +533,7 @@ const styles = StyleSheet.create({
   },
   metaChip: {
     paddingHorizontal: 6,
-    paddingVertical: 2.5,
+    paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
   },
@@ -534,12 +543,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   cardBody: {
-    backgroundColor: AppColors.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 9,
-    borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
+    paddingVertical: 2,
   },
   messageText: {
     fontFamily: AppFonts.interMedium,
@@ -555,10 +559,11 @@ const styles = StyleSheet.create({
   jsonPreviewContainer: {
     marginTop: 6,
     backgroundColor: AppColors.grayBackground,
-    borderRadius: 7,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: AppColors.grayBorderSecondary,
-    padding: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
   },
   jsonPreviewText: {
     fontFamily: AppFonts.interRegular,
@@ -566,11 +571,29 @@ const styles = StyleSheet.create({
     color: AppColors.primaryBlack,
     lineHeight: 16,
   },
+  expandToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    marginTop: 5,
+    paddingVertical: 2,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.dividerColor,
+  },
+  expandToggleText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.purple,
+  },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 7,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: `${AppColors.dividerColor}88`,
     gap: 6,
   },
   footerLeft: {
@@ -592,14 +615,42 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.grayTextWeak,
     opacity: 0.6,
   },
-  footerText: {
-    fontFamily: AppFonts.interRegular,
+  footerId: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+  },
+  footerTime: {
+    fontFamily: AppFonts.interMedium,
     fontSize: 10,
     color: AppColors.grayTextWeak,
     letterSpacing: 0.1,
   },
-  footerCaller: {
-    flexShrink: 1,
+  callerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    maxWidth: 185,
+    backgroundColor: `${AppColors.sky600}10`,
+    borderColor: `${AppColors.sky600}2B`,
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+  },
+  extBadge: {
+    borderRadius: 3,
+    paddingHorizontal: 3.5,
+    paddingVertical: 0.5,
+  },
+  extBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 8,
+  },
+  callerFileName: {
+    fontFamily: AppFonts.interBold,
+    color: AppColors.sky600,
+    fontSize: 9.5,
   },
   footerBadge: {
     paddingHorizontal: 6,

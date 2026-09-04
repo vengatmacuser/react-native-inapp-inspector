@@ -248,11 +248,19 @@ const PerformanceTab = React.memo(() => {
   // Filtered Events
   const filteredEvents = useMemo(() => {
     return events.filter(e => {
-      const matchSearch =
-        !search ||
-        e.label.toLowerCase().includes(search.toLowerCase()) ||
-        e.detail.toLowerCase().includes(search.toLowerCase()) ||
-        (e.source && e.source.toLowerCase().includes(search.toLowerCase()));
+      let matchSearch = true;
+      if (search && search.trim().length > 0) {
+        const queryTokens = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const corpus = [
+          e.label || '',
+          e.detail || '',
+          e.source || '',
+          e.category || '',
+          e.severity || '',
+          e.bottleneckThread || '',
+        ].join(' ').toLowerCase();
+        matchSearch = queryTokens.every(tok => corpus.includes(tok));
+      }
 
       const matchFilter =
         filterCategory === 'ALL'
@@ -1052,10 +1060,31 @@ const PerformanceTab = React.memo(() => {
         {filteredEvents.length === 0 ? (
           <View style={perfStyles.emptyCard}>
             <BoltIcon color={AppColors.amber500} size={30} />
-            <Text style={perfStyles.emptyTitle}>{t('performance.emptyTitle')}</Text>
-            <Text style={perfStyles.emptySub}>
-              {t('performance.emptySubtitle')}
+            <Text style={perfStyles.emptyTitle}>
+              {search.trim().length > 0 ? 'No Matching Events' : t('performance.emptyTitle')}
             </Text>
+            <Text style={perfStyles.emptySub}>
+              {search.trim().length > 0
+                ? `No performance events match "${search}"`
+                : t('performance.emptySubtitle')}
+            </Text>
+            {search.trim().length > 0 && (
+              <TouchableScale
+                onPress={() => setSearch('')}
+                style={{
+                  marginTop: 10,
+                  paddingHorizontal: 14,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  backgroundColor: AppColors.grayBackground,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                }}>
+                <Text style={{color: AppColors.brandPurple, fontSize: 12, fontFamily: AppFonts.interBold}}>
+                  Clear Search
+                </Text>
+              </TouchableScale>
+            )}
           </View>
         ) : (
           filteredEvents.map(event => {

@@ -186,11 +186,24 @@ const JsonViewer = React.memo(({
       );
     }
 
-    const keys = Object.keys(data as object);
+    let keys = Object.keys(data as object);
+    if (search && search.trim().length > 0) {
+      const q = search.trim().toLowerCase();
+      keys = keys.filter(key => {
+        const val = (data as any)[key];
+        const valStr = typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val);
+        return key.toLowerCase().includes(q) || valStr.toLowerCase().includes(q);
+      });
+    }
+
     if (keys.length === 0) {
       return (
         <View style={localStyles.emptyTable}>
-          <Text style={localStyles.emptyTableText}>{t('network.jsonViewer.emptyTable')}</Text>
+          <Text style={localStyles.emptyTableText}>
+            {search && search.trim().length > 0
+              ? 'No matching keys or values found'
+              : t('network.jsonViewer.emptyTable')}
+          </Text>
         </View>
       );
     }
