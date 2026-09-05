@@ -1,6 +1,6 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useTranslation} from '../i18n';
-import {View, Pressable, Text, Animated} from 'react-native';
+import {View, Pressable, Text} from 'react-native';
 
 // Components
 import CopyButton from './CopyButton';
@@ -36,32 +36,9 @@ const HeaderRow = React.memo(function HeaderRow({
   const [expanded, setExpanded] = useState(false);
   const isLong = value.length > 35;
 
-  const entryAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.timing(entryAnim, {
-      toValue: 1,
-      duration: 220,
-      delay: index * 30,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  const rowAnimStyle = {
-    opacity: entryAnim,
-    transform: [
-      {
-        translateY: entryAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [8, 0],
-        }),
-      },
-    ],
-  };
-
   return (
-    <Animated.View
-      style={[styles.htRow, !isLast && styles.htRowBorder, rowAnimStyle]}>
+    <View
+      style={[styles.htRow, !isLast && styles.htRowBorder]}>
       <View style={styles.htKeyCell}>
         <Text style={styles.htKey} numberOfLines={2}>
           {headerKey}
@@ -97,7 +74,7 @@ const HeaderRow = React.memo(function HeaderRow({
         style={styles.htCopyBtn}>
         <CopyIcon color={AppColors.grayTextWeak} size={14} />
       </TouchableScale>
-    </Animated.View>
+    </View>
   );
 });
 
@@ -108,11 +85,7 @@ const HeadersSection = ({
   resetKey,
 }: HeadersSectionProps) => {
   const {t} = useTranslation();
-  const {toggleOpen, forceOpen, chevronStyle, bodyStyle} = useAccordion(
-    false,
-    2400,
-    300,
-  );
+  const {isOpen, toggleOpen, forceOpen, chevronStyle} = useAccordion(false);
 
   useEffect(() => {
     forceOpen(false);
@@ -161,35 +134,37 @@ const HeadersSection = ({
           <View style={styles.htHeaderSpacer} />
           <CopyButton value={headers} label={title} />
           <View style={styles.htChevronBtn}>
-            <Animated.View style={chevronStyle}>
+            <View style={chevronStyle}>
               <ChevronIcon color={AppColors.grayTextStrong} size={14} />
-            </Animated.View>
+            </View>
           </View>
         </View>
       </Pressable>
 
-      <Animated.View style={bodyStyle}>
-        <View style={styles.htColHeadRow}>
-          <Text style={[styles.htColHead, {width: '30%'}]}>{t('network.jsonViewer.key')}</Text>
-          <Text style={[styles.htColHead, {flex: 1}]}>{t('network.jsonViewer.value')}</Text>
-        </View>
-
-        {filtered.length > 0 ? (
-          filtered.map(([k, v], i) => (
-            <HeaderRow
-              key={k}
-              headerKey={k}
-              value={v}
-              isLast={i === filtered.length - 1}
-              index={i}
-            />
-          ))
-        ) : (
-          <View style={styles.htEmpty}>
-            <Text style={styles.htEmptyText}>{t('network.noMatchingHeaders')}</Text>
+      {isOpen && (
+        <View>
+          <View style={styles.htColHeadRow}>
+            <Text style={[styles.htColHead, {width: '30%'}]}>{t('network.jsonViewer.key')}</Text>
+            <Text style={[styles.htColHead, {flex: 1}]}>{t('network.jsonViewer.value')}</Text>
           </View>
-        )}
-      </Animated.View>
+
+          {filtered.length > 0 ? (
+            filtered.map(([k, v], i) => (
+              <HeaderRow
+                key={k}
+                headerKey={k}
+                value={v}
+                isLast={i === filtered.length - 1}
+                index={i}
+              />
+            ))
+          ) : (
+            <View style={styles.htEmpty}>
+              <Text style={styles.htEmptyText}>{t('network.noMatchingHeaders')}</Text>
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 };

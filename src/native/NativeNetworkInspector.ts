@@ -17,8 +17,17 @@ export interface Spec extends TurboModule {
   getNativeSystemMetrics(): Promise<Object>;
   pushNativeLogRecord(pageKey: string, jsonPayload: string): Promise<boolean>;
   checkFloatingButtonPress(): Promise<boolean>;
+  takeScreenshot(options: Object): Promise<Object>;
+  startVideoRecording(options: Object): Promise<boolean>;
+  stopVideoRecording(): Promise<Object>;
+  isRecording(): Promise<boolean>;
+  convertToGif(videoUri: string, options: Object): Promise<Object>;
+  getCapturedMedia(): Promise<string>;
+  deleteCapturedMedia(uri: string): Promise<boolean>;
+  clearAllCapturedMedia(): Promise<boolean>;
   addListener(eventName: string): void;
   removeListeners(count: number): void;
 }
 
 export default TurboModuleRegistry.get<Spec>('NetworkInspectorModule');
+

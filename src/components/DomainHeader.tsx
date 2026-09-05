@@ -1,5 +1,5 @@
-import React, {useEffect, useRef} from 'react';
-import {Animated, Pressable, View, Text} from 'react-native';
+import React from 'react';
+import {Pressable, View, Text} from 'react-native';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -44,19 +44,6 @@ const DomainHeader = ({
   isFirst: boolean;
   timestamp: number;
 }) => {
-  const chevronAnim = useRef(new Animated.Value(isCollapsed ? 0 : 1)).current;
-  useEffect(() => {
-    Animated.timing(chevronAnim, {
-      toValue: isCollapsed ? 0 : 1,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
-  }, [isCollapsed]);
-
-  const chevronRotate = chevronAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['-90deg', '0deg'],
-  });
 
   const visibleStats = ['success', 'failed', 'loading'];
 
@@ -77,9 +64,9 @@ const DomainHeader = ({
       onPress={() => onToggleCollapse(pageName)}>
       <View style={styles.domainHeaderTopRow}>
         <View style={styles.domainHeaderLeft}>
-          <Animated.View style={{transform: [{rotate: chevronRotate}], flexShrink: 0}}>
+          <View style={{transform: [{rotate: isCollapsed ? '-90deg' : '0deg'}], flexShrink: 0}}>
             <ChevronIcon color={AppColors.grayTextWeak} size={13} />
-          </Animated.View>
+          </View>
           <View style={[styles.domainIconWrap, {backgroundColor: `${color}18`, flexShrink: 0}]}>
             <ScreenIcon color={color} size={14} />
           </View>

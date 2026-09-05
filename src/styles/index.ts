@@ -62,7 +62,8 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   headerDetailCenter: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
+    flex: 1,
+    minWidth: 0,
   },
   headerDetailRow: {
     flexDirection: 'row',
@@ -1403,6 +1404,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
+    flexShrink: 0,
   },
 
   // Status chip used in MetaAccordion

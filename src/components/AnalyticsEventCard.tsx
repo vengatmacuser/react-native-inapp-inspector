@@ -49,7 +49,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
       Animated.timing(flashOpacity, {
         toValue: 0,
         duration: 1200,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     }
   }, [isNew]);
@@ -88,18 +88,20 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
             borderLeftColor: tagColors.text,
           },
         ]}>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              backgroundColor: color,
-              opacity: flashOpacity.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 0.08],
-              }),
-            },
-          ]}
-        />
+        {isNew && (
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: color,
+                opacity: flashOpacity.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 0.08],
+                }),
+              },
+            ]}
+          />
+        )}
 
         {/* Top Row: Icon Badge, Event Name, Category Badge & Timestamp */}
         <View style={cardStyles.cardHeader}>

@@ -439,6 +439,7 @@ const NetworkInspector = ({
       storage: false,
       debugging: false,
     });
+
     setDefaultTab('apis');
     setIsAutoRamLimitEnabled(true);
     const profile = calculateRamBasedLimits(deviceFreeRamMb);
@@ -885,12 +886,12 @@ const NetworkInspector = ({
       Animated.timing(clearAnim, {
         toValue: 1,
         duration: 320,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(clearAnim, {
         toValue: 0,
         duration: 0,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
     handleClearAll();
@@ -903,44 +904,46 @@ const NetworkInspector = ({
   }, []);
 
   useEffect(() => {
+    if (visible) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.2,
           duration: 800,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
           duration: 800,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [pulseAnim]);
+  }, [pulseAnim, visible]);
 
   // #4 — sweep the shine streak across the launcher, pause, repeat.
   useEffect(() => {
+    if (visible) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(fabShineAnim, {
           toValue: 1,
           duration: 1100,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.delay(1600),
         Animated.timing(fabShineAnim, {
           toValue: 0,
           duration: 0,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [fabShineAnim]);
+  }, [fabShineAnim, visible]);
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -948,12 +951,12 @@ const NetworkInspector = ({
         Animated.timing(activePulseAnim, {
           toValue: 1,
           duration: 1200,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(activePulseAnim, {
           toValue: 0.4,
           duration: 1200,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]),
     );
@@ -967,12 +970,12 @@ const NetworkInspector = ({
         Animated.timing(unreadPulseAnim, {
           toValue: 1.3,
           duration: 800,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(unreadPulseAnim, {
           toValue: 0.8,
           duration: 800,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]),
     );
@@ -1021,6 +1024,7 @@ const NetworkInspector = ({
   useEffect(() => {
     if (!useNativeFab) return;
     const unsubscribe = subscribeNativeFloatingButtonPress(() => {
+      hideNativeFloatingButton().catch(() => {});
       setVisible(true);
     });
     return () => {
@@ -1032,7 +1036,13 @@ const NetworkInspector = ({
   useEffect(() => {
     if (!useNativeFab) return;
     const unsubscribe = subscribeNativeDeviceShake(() => {
-      setVisible(prev => !prev);
+      setVisible(prev => {
+        const next = !prev;
+        if (next) {
+          hideNativeFloatingButton().catch(() => {});
+        }
+        return next;
+      });
     });
     return () => {
       unsubscribe();
@@ -1453,7 +1463,10 @@ const NetworkInspector = ({
 
   const groupedData = useMemo(() => {
     const result: GroupedListItem[] = [];
-    const groups: {pageName: string; color: string; logs: NetworkLog[]}[] = [];
+    const groupMap = new Map<
+      string,
+      {pageName: string; color: string; logs: NetworkLog[]}
+    >();
 
     for (let i = 0; i < filteredLogs.length; i++) {
       const log = filteredLogs[i];
@@ -1461,16 +1474,16 @@ const NetworkInspector = ({
         logRouteMapRef.current.get(log.id) || (log as any)?.routeInfo;
       const pageName = getLogPageName(log, routeInfo);
 
-      if (
-        groups.length === 0 ||
-        groups[groups.length - 1].pageName !== pageName
-      ) {
-        groups.push({pageName, color: getDomainColor(pageName), logs: []});
+      let group = groupMap.get(pageName);
+      if (!group) {
+        group = {pageName, color: getDomainColor(pageName), logs: []};
+        groupMap.set(pageName, group);
       }
-      groups[groups.length - 1].logs.push(log);
+      group.logs.push(log);
     }
 
-    groups.forEach((g, idx) => {
+    let idx = 0;
+    groupMap.forEach(g => {
       let success = 0;
       let failed = 0;
       let loading = 0;
@@ -1489,7 +1502,7 @@ const NetworkInspector = ({
 
       result.push({
         type: 'header',
-        id: `hdr-${g.logs[0]?.id || 'empty'}-${g.pageName}`,
+        id: `hdr-${g.pageName}`,
         pageName: g.pageName,
         color: g.color,
         stats: {success, failed, loading},
@@ -1498,6 +1511,7 @@ const NetworkInspector = ({
         isCollapsed,
         isFirst: idx === 0,
       });
+      idx++;
 
       if (!isCollapsed) {
         const displayLogs = g.logs.filter(l => {
@@ -1510,7 +1524,7 @@ const NetworkInspector = ({
         displayLogs.forEach((log, index) => {
           result.push({
             type: 'log',
-            id: log.id,
+            id: `log-${log.id}`,
             log,
             isLast: index === displayLogs.length - 1,
             color: g.color,
@@ -2603,5 +2617,19 @@ export {
   fetchRemoteConfigModuleStatus,
   isFirebaseRemoteConfigAvailable,
 } from './helpers/remoteConfig';
+
+export {
+  ScreenCapture,
+  ScreenRecorder,
+  type ScreenshotOptions,
+  type ScreenshotResult,
+  type RecordingOptions,
+  type RecordingResult,
+  type GifConversionOptions,
+  type CapturedMediaItem,
+  type ImageFormat,
+  type AudioSource,
+  type RecordingFormat,
+} from './capture';
 
 export { LIB_VERSION } from './constants/version';

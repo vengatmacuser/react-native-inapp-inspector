@@ -16,6 +16,7 @@ export const ActiveTab = {
 } as const;
 export type ActiveTab = (typeof ActiveTab)[keyof typeof ActiveTab];
 
+
 export const Method = {
   All: 'ALL',
   Get: 'GET',
@@ -77,10 +78,12 @@ export type SettingsPage =
   | (typeof SettingsPage)[keyof typeof SettingsPage]
   | null;
 
+
 export const SettingsSubTab = {
   Module: 'module',
   Ui: 'ui',
   Limits: 'limits',
+  Capture: 'capture',
   About: 'about',
 } as const;
 export type SettingsSubTab =

@@ -1,5 +1,5 @@
-import React, {useRef, useEffect} from 'react';
-import {Animated, View, Pressable, Text} from 'react-native';
+import React from 'react';
+import {View, Pressable, Text} from 'react-native';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -37,18 +37,6 @@ const SectionHeader = ({
   onToggleSearch,
 }: SectionHeaderProps) => {
   const isOpen = expanded === undefined ? false : !!expanded;
-  const chevronAnim = useRef(new Animated.Value(isOpen ? 1 : 0)).current;
-  useEffect(() => {
-    Animated.timing(chevronAnim, {
-      toValue: isOpen ? 1 : 0,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
-  }, [isOpen]);
-  const chevronRotate = chevronAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
 
   return (
     <View style={styles.sectionHeaderGradient}>
@@ -100,9 +88,9 @@ const SectionHeader = ({
             onPress={onToggleExpand}
             hitSlop={12}
             style={styles.iconSquareBtn}>
-            <Animated.View style={{transform: [{rotate: chevronRotate}]}}>
+            <View style={{transform: [{rotate: isOpen ? '180deg' : '0deg'}]}}>
               <ChevronIcon color={AppColors.grayTextStrong} size={14} />
-            </Animated.View>
+            </View>
           </TouchableScale>
         </View>
       </View>

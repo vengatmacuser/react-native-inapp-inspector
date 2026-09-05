@@ -15,6 +15,8 @@ import {NpmIcon} from '../NetworkIcons';
 import {LIB_VERSION} from '../../constants';
 import {copyToClipboard} from '../../helpers';
 import {showToast} from '../../helpers/toast';
+import {AppFonts} from '../../styles/AppFonts';
+import {AppColors} from '../../styles/AppColors';
 
 // ─── Crisp SVG Icons ─────────────────────────────────────────────────────────
 
@@ -289,15 +291,9 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
   );
 };
 
-const fontStack = Platform.select({
-  ios: {
-    fontFamily: 'System',
-  },
-  android: {
-    fontFamily: 'sans-serif',
-  },
-  default: {},
-});
+const fontStack = {
+  fontFamily: AppFonts.interRegular,
+};
 
 const styles = StyleSheet.create({
   overlay: {
@@ -499,7 +495,7 @@ const styles = StyleSheet.create({
   commandText: {
     flex: 1,
     fontSize: 11,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: AppFonts.interRegular,
     color: '#38BDF8',
   },
   copyIconWrapper: {

@@ -293,89 +293,130 @@ const JsonViewer = React.memo(({
               </Text>
             </View>
           ) : (
-          wrap ? (
-            fullHeight ? (
-              <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
+            wrap ? (
+              fullHeight ? (
+                <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
+                  <View style={[styles.codeBlock, {width: '100%'}]}>{tree}</View>
+                </ScrollView>
+              ) : (
                 <View style={[styles.codeBlock, {width: '100%'}]}>{tree}</View>
-              </ScrollView>
+              )
             ) : (
-              <ScrollView style={scrollStyle} contentContainerStyle={{flexGrow: 1}}>
-                <View style={[styles.codeBlock, {width: '100%'}]}>{tree}</View>
-              </ScrollView>
-            )
-          ) : (
-            fullHeight ? (
-              <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
-                <View style={styles.codeBlock}>{tree}</View>
-              </ScrollView>
-            ) : (
-              <ScrollView style={scrollStyle}>
+              fullHeight ? (
+                <ScrollView style={{flex: 1}} contentContainerStyle={{flexGrow: 1}}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={true}
+                    style={styles.codeBlockScroll}>
+                    <View style={styles.codeBlock}>{tree}</View>
+                  </ScrollView>
+                </ScrollView>
+              ) : (
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={true}
                   style={styles.codeBlockScroll}>
                   <View style={styles.codeBlock}>{tree}</View>
                 </ScrollView>
-              </ScrollView>
+              )
             )
-          )
           )
         )}
 
         {mode === 'raw' && (
-          <ScrollView
-            style={scrollStyle}
-            contentContainerStyle={localStyles.rawContainer}
-            showsVerticalScrollIndicator={true}
-            nestedScrollEnabled={true}>
-            <HighlightText
-              text={displayRawText}
-              search={search}
-              detectLinks={rawText.length < 20000}
-              style={localStyles.rawPlainText}
-              selectable={true}
-              highlightStyle={{
-                backgroundColor: AppColors.yellowHighlight,
-                color: AppColors.primaryBlack,
-                borderRadius: 3,
-                paddingHorizontal: 2,
-              }}
-            />
-            {isTruncated && (
-              <TouchableOpacity
-                onPress={() => setShowFullRaw(true)}
-                style={{
-                  marginTop: 10,
-                  backgroundColor: `${AppColors.brandPurple}15`,
-                  paddingVertical: 8,
-                  paddingHorizontal: 12,
-                  borderRadius: 6,
-                  alignItems: 'center',
-                  borderWidth: 1,
-                  borderColor: `${AppColors.brandPurple}30`,
-                }}>
-                <Text
+          fullHeight ? (
+            <ScrollView
+              style={{flex: 1}}
+              contentContainerStyle={localStyles.rawContainer}
+              showsVerticalScrollIndicator={true}>
+              <HighlightText
+                text={displayRawText}
+                search={search}
+                detectLinks={rawText.length < 20000}
+                style={localStyles.rawPlainText}
+                selectable={true}
+                highlightStyle={{
+                  backgroundColor: AppColors.yellowHighlight,
+                  color: AppColors.primaryBlack,
+                  borderRadius: 3,
+                  paddingHorizontal: 2,
+                }}
+              />
+              {isTruncated && (
+                <TouchableOpacity
+                  onPress={() => setShowFullRaw(true)}
                   style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 11,
-                    color: AppColors.brandPurple,
+                    marginTop: 10,
+                    backgroundColor: `${AppColors.brandPurple}15`,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 6,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: `${AppColors.brandPurple}30`,
                   }}>
-                  Showing first 50 KB ({Math.round(rawText.length / 1024)} KB total) · Tap to load full
-                </Text>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11,
+                      color: AppColors.brandPurple,
+                    }}>
+                    Showing first 50 KB ({Math.round(rawText.length / 1024)} KB total) · Tap to load full
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </ScrollView>
+          ) : (
+            <View style={localStyles.rawContainer}>
+              <HighlightText
+                text={displayRawText}
+                search={search}
+                detectLinks={rawText.length < 20000}
+                style={localStyles.rawPlainText}
+                selectable={true}
+                highlightStyle={{
+                  backgroundColor: AppColors.yellowHighlight,
+                  color: AppColors.primaryBlack,
+                  borderRadius: 3,
+                  paddingHorizontal: 2,
+                }}
+              />
+              {isTruncated && (
+                <TouchableOpacity
+                  onPress={() => setShowFullRaw(true)}
+                  style={{
+                    marginTop: 10,
+                    backgroundColor: `${AppColors.brandPurple}15`,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 6,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: `${AppColors.brandPurple}30`,
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11,
+                      color: AppColors.brandPurple,
+                    }}>
+                    Showing first 50 KB ({Math.round(rawText.length / 1024)} KB total) · Tap to load full
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )
         )}
 
         {mode === 'table' && (
           fullHeight ? (
-            <ScrollView style={scrollStyle}>
+            <ScrollView style={{flex: 1}}>
               {renderTableMode()}
             </ScrollView>
           ) : (
-            <ScrollView style={scrollStyle}>
+            <View style={localStyles.tableView}>
               {renderTableMode()}
-            </ScrollView>
+            </View>
           )
         )}
       </View>

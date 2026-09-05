@@ -1,6 +1,7 @@
 import React, {useCallback, useState, useMemo, useEffect, useRef} from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   Text,
   TextInput,
@@ -1116,7 +1117,6 @@ const AnalyticsTab = React.memo(() => {
         <AnalyticsEventCard
           event={item}
           onPress={() => {
-            animateNextLayout();
             setSelectedEvent(item);
           }}
           isNew={newEventIds.has(item.id)}
@@ -1317,7 +1317,7 @@ const AnalyticsTab = React.memo(() => {
               initialNumToRender={12}
               maxToRenderPerBatch={8}
               windowSize={5}
-              removeClippedSubviews={true}
+              removeClippedSubviews={Platform.OS === 'android'}
               renderToHardwareTextureAndroid={true}
               ListEmptyComponent={
                 <EmptyState

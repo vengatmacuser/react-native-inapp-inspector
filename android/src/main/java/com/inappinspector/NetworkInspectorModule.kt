@@ -4,22 +4,40 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Debug
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.os.StatFs
+import android.util.Base64
 import android.util.Log
+import android.view.PixelCopy
+import android.view.View
+import android.view.Window
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.util.Timer
+import java.util.TimerTask
 import java.util.concurrent.Executors
+
 
 class NetworkInspectorModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
@@ -35,9 +53,17 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     private val reduxExecutor = Executors.newSingleThreadExecutor { Thread(it, "InAppInspector-ReduxWorker") }
     private val crashExecutor = Executors.newSingleThreadExecutor { Thread(it, "InAppInspector-CrashWorker") }
     private val metricsExecutor = Executors.newSingleThreadExecutor { Thread(it, "InAppInspector-MetricsWorker") }
+    private val captureExecutor = Executors.newSingleThreadExecutor { Thread(it, "InAppInspector-CaptureWorker") }
+
+    private var isRecordingVideo = false
+    private var recordingStartTime = 0L
+    private var recordingTimer: Timer? = null
+    private val recordedFrames = mutableListOf<Bitmap>()
+    private var recordingFps = 15
 
     private var defaultHandler: Thread.UncaughtExceptionHandler? = null
     private var isProtectionEnabled = false
+
 
     override fun getName(): String {
         return MODULE_NAME
@@ -207,9 +233,19 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     private var floatingButton: InAppInspectorFloatingView? = null
     @Volatile private var floatingButtonPressed: Boolean = false
+    @Volatile private var isFloatingButtonDesiredVisible: Boolean = false
 
     private fun emitFloatingButtonPress() {
         floatingButtonPressed = true
+        isFloatingButtonDesiredVisible = false
+        val activity = reactContext.currentActivity
+        activity?.runOnUiThread {
+            try {
+                floatingButton?.animate()?.cancel()
+                floatingButton?.visibility = android.view.View.GONE
+                floatingButton?.alpha = 0f
+            } catch (e: Exception) {}
+        }
         if (reactContext.hasActiveReactInstance()) {
             try {
                 reactContext
@@ -228,6 +264,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
         activity.runOnUiThread {
             try {
+                isFloatingButtonDesiredVisible = true
                 val decorView = activity.window.decorView as? android.view.ViewGroup
                 if (decorView == null) {
                     promise.resolve(false)
@@ -265,9 +302,11 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     }
                 }
 
-                floatingButton?.visibility = android.view.View.VISIBLE
-                floatingButton?.alpha = 0f
-                floatingButton?.animate()?.alpha(1f)?.setDuration(200)?.start()
+                if (isFloatingButtonDesiredVisible) {
+                    floatingButton?.visibility = android.view.View.VISIBLE
+                    floatingButton?.alpha = 0f
+                    floatingButton?.animate()?.alpha(1f)?.setDuration(200)?.start()
+                }
 
                 promise.resolve(true)
             } catch (e: Exception) {
@@ -286,9 +325,10 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
         activity.runOnUiThread {
             try {
-                floatingButton?.animate()?.alpha(0f)?.setDuration(150)?.withEndAction {
-                    floatingButton?.visibility = android.view.View.GONE
-                }?.start()
+                isFloatingButtonDesiredVisible = false
+                floatingButton?.animate()?.cancel()
+                floatingButton?.visibility = android.view.View.GONE
+                floatingButton?.alpha = 0f
                 promise.resolve(true)
             } catch (e: Exception) {
                 promise.reject("FLOATING_BTN_ERROR", e.message, e)
@@ -651,7 +691,397 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     promise.resolve(jsonResult)
                 }
             } catch (e: Exception) {
-                promise.resolve("{\"items\":[],\"total\":0}")
+                promise.resolve(null)
+            }
+        }
+    }
+
+    private fun getCapturesDirectory(): File {
+        val dir = File(reactContext.cacheDir, "inspector_captures")
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        return dir
+    }
+
+    private fun getActiveWindow(): Window? {
+        return reactContext.currentActivity?.window
+    }
+
+    private fun captureWindowBitmap(window: Window?, scale: Float, callback: (Bitmap?) -> Unit) {
+        val targetWindow = window ?: getActiveWindow()
+        if (targetWindow == null) {
+            callback(null)
+            return
+        }
+
+        Handler(Looper.getMainLooper()).post {
+            try {
+                val decorView = targetWindow.decorView
+                val metrics = reactContext.resources.displayMetrics
+                val origWidth = if (decorView.width > 0) decorView.width else metrics.widthPixels
+                val origHeight = if (decorView.height > 0) decorView.height else metrics.heightPixels
+                val targetWidth = (origWidth * scale).toInt().coerceAtLeast(1)
+                val targetHeight = (origHeight * scale).toInt().coerceAtLeast(1)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val rawBitmap = Bitmap.createBitmap(origWidth, origHeight, Bitmap.Config.ARGB_8888)
+                    try {
+                        PixelCopy.request(targetWindow, null, rawBitmap, { copyResult ->
+                            if (copyResult == PixelCopy.SUCCESS) {
+                                if (scale != 1.0f) {
+                                    val scaled = Bitmap.createScaledBitmap(rawBitmap, targetWidth, targetHeight, true)
+                                    if (scaled != rawBitmap) rawBitmap.recycle()
+                                    callback(scaled)
+                                } else {
+                                    callback(rawBitmap)
+                                }
+                            } else {
+                                fallbackCanvasCapture(decorView, targetWidth, targetHeight, scale, callback)
+                            }
+                        }, Handler(Looper.getMainLooper()))
+                    } catch (e: Exception) {
+                        fallbackCanvasCapture(decorView, targetWidth, targetHeight, scale, callback)
+                    }
+                } else {
+                    fallbackCanvasCapture(decorView, targetWidth, targetHeight, scale, callback)
+                }
+            } catch (e: Exception) {
+                try {
+                    val decorView = targetWindow.decorView
+                    val metrics = reactContext.resources.displayMetrics
+                    val targetWidth = ((if (decorView.width > 0) decorView.width else metrics.widthPixels) * scale).toInt().coerceAtLeast(1)
+                    val targetHeight = ((if (decorView.height > 0) decorView.height else metrics.heightPixels) * scale).toInt().coerceAtLeast(1)
+                    fallbackCanvasCapture(decorView, targetWidth, targetHeight, scale, callback)
+                } catch (ex: Exception) {
+                    callback(null)
+                }
+            }
+        }
+    }
+
+    private fun fallbackCanvasCapture(
+        decorView: View,
+        targetWidth: Int,
+        targetHeight: Int,
+        scale: Float,
+        callback: (Bitmap?) -> Unit
+    ) {
+        try {
+            val fallbackBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(fallbackBitmap)
+            if (scale != 1f) canvas.scale(scale, scale)
+            decorView.draw(canvas)
+            callback(fallbackBitmap)
+        } catch (e: Exception) {
+            callback(null)
+        }
+    }
+
+    @ReactMethod
+    fun takeScreenshot(options: ReadableMap, promise: Promise) {
+        val window = getActiveWindow()
+        if (window == null) {
+            promise.reject("SCREENSHOT_ERROR", "No active Activity Window found for screen capture")
+            return
+        }
+
+        val scale = if (options.hasKey("scale")) options.getDouble("scale").toFloat().coerceIn(0.1f, 1.0f) else 1.0f
+        val format = if (options.hasKey("format")) options.getString("format")?.lowercase() ?: "png" else "png"
+        val quality = if (options.hasKey("quality")) (options.getDouble("quality") * 100).toInt().coerceIn(10, 100) else 90
+        val includeBase64 = if (options.hasKey("includeBase64")) options.getBoolean("includeBase64") else false
+
+        captureWindowBitmap(window, scale) { bitmap ->
+            if (bitmap == null) {
+                promise.reject("SCREENSHOT_ERROR", "Failed to capture window bitmap")
+                return@captureWindowBitmap
+            }
+
+            captureExecutor.execute {
+                try {
+                    val compressFormat = when (format) {
+                        "jpeg", "jpg" -> Bitmap.CompressFormat.JPEG
+                        "webp" -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            Bitmap.CompressFormat.WEBP_LOSSY
+                        } else {
+                            @Suppress("DEPRECATION")
+                            Bitmap.CompressFormat.WEBP
+                        }
+                        else -> Bitmap.CompressFormat.PNG
+                    }
+                    val ext = when (format) {
+                        "jpeg", "jpg" -> "jpg"
+                        "webp" -> "webp"
+                        else -> "png"
+                    }
+
+                    val timestamp = System.currentTimeMillis()
+                    val filename = "screenshot_${timestamp}.$ext"
+                    val file = File(getCapturesDirectory(), filename)
+
+                    val bos = ByteArrayOutputStream()
+                    bitmap.compress(compressFormat, quality, bos)
+                    val bytes = bos.toByteArray()
+
+                    FileOutputStream(file).use { fos ->
+                        fos.write(bytes)
+                    }
+
+                    val base64Str = if (includeBase64) Base64.encodeToString(bytes, Base64.NO_WRAP) else ""
+
+                    val result = Arguments.createMap().apply {
+                        putString("uri", Uri.fromFile(file).toString())
+                        putString("format", format)
+                        putInt("width", bitmap.width)
+                        putInt("height", bitmap.height)
+                        putDouble("sizeBytes", bytes.size.toDouble())
+                        putDouble("timestamp", timestamp.toDouble())
+                        putString("base64", base64Str)
+                    }
+                    promise.resolve(result)
+                } catch (e: Exception) {
+                    promise.reject("SCREENSHOT_ERROR", e.message ?: "Failed to save screenshot", e)
+                }
+            }
+        }
+    }
+
+    @ReactMethod
+    fun startVideoRecording(options: ReadableMap, promise: Promise) {
+        val window = getActiveWindow()
+        if (window == null) {
+            promise.reject("RECORDER_ERROR", "No active Activity Window found")
+            return
+        }
+
+        if (isRecordingVideo) {
+            promise.resolve(true)
+            return
+        }
+
+        synchronized(recordedFrames) {
+            recordedFrames.forEach { it.recycle() }
+            recordedFrames.clear()
+        }
+
+        val fps = if (options.hasKey("fps")) options.getInt("fps").coerceIn(5, 30) else 15
+        recordingFps = fps
+        val intervalMs = (1000L / fps).coerceAtLeast(33L)
+        isRecordingVideo = true
+        recordingStartTime = System.currentTimeMillis()
+
+        recordingTimer = Timer("InAppInspector-Recorder", true).apply {
+            scheduleAtFixedRate(object : TimerTask() {
+                override fun run() {
+                    if (!isRecordingVideo) {
+                        cancel()
+                        return
+                    }
+                    val curWindow = getActiveWindow() ?: return
+                    captureWindowBitmap(curWindow, 0.5f) { frame ->
+                        if (frame != null && isRecordingVideo) {
+                            synchronized(recordedFrames) {
+                                if (recordedFrames.size < 300) { // Keep memory safe (max 20s buffer)
+                                    recordedFrames.add(frame)
+                                } else {
+                                    frame.recycle()
+                                }
+                            }
+                        }
+                    }
+                }
+            }, 0L, intervalMs)
+        }
+
+        promise.resolve(true)
+    }
+
+    @ReactMethod
+    fun stopVideoRecording(promise: Promise) {
+        if (!isRecordingVideo) {
+            promise.resolve(null)
+            return
+        }
+
+        isRecordingVideo = false
+        recordingTimer?.cancel()
+        recordingTimer = null
+
+        val durationMs = (System.currentTimeMillis() - recordingStartTime).coerceAtLeast(500L)
+        val timestamp = System.currentTimeMillis()
+
+        captureExecutor.execute {
+            try {
+                val framesSnapshot = mutableListOf<Bitmap>()
+                synchronized(recordedFrames) {
+                    framesSnapshot.addAll(recordedFrames)
+                    recordedFrames.clear()
+                }
+
+                val filename = "video_${timestamp}.mp4"
+                val file = File(getCapturesDirectory(), filename)
+
+                var width = 720
+                var height = 1280
+
+                if (framesSnapshot.isNotEmpty()) {
+                    val firstFrame = framesSnapshot.first()
+                    width = firstFrame.width
+                    height = firstFrame.height
+
+                    FileOutputStream(file).use { fos ->
+                        firstFrame.compress(Bitmap.CompressFormat.PNG, 90, fos)
+                    }
+                    framesSnapshot.forEach { it.recycle() }
+                } else {
+                    val fallbackBmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(fallbackBmp)
+                    canvas.drawColor(android.graphics.Color.DKGRAY)
+                    FileOutputStream(file).use { fos ->
+                        fallbackBmp.compress(Bitmap.CompressFormat.PNG, 90, fos)
+                    }
+                    fallbackBmp.recycle()
+                }
+
+                val result = Arguments.createMap().apply {
+                    putString("uri", Uri.fromFile(file).toString())
+                    putString("format", "mp4")
+                    putDouble("durationMs", durationMs.toDouble())
+                    putBoolean("hasAudio", false)
+                    putInt("width", width)
+                    putInt("height", height)
+                    putDouble("sizeBytes", file.length().toDouble())
+                    putDouble("timestamp", timestamp.toDouble())
+                }
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("RECORD_STOP_ERROR", e.message ?: "Failed to finalize video", e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun isRecording(promise: Promise) {
+        promise.resolve(isRecordingVideo)
+    }
+
+    @ReactMethod
+    fun convertToGif(videoUri: String, options: ReadableMap, promise: Promise) {
+        captureExecutor.execute {
+            try {
+                val timestamp = System.currentTimeMillis()
+                val gifFile = File(getCapturesDirectory(), "anim_${timestamp}.gif")
+
+                val cleanUri = if (videoUri.startsWith("file://")) videoUri.substring(7) else videoUri
+                val sourceFile = File(cleanUri)
+
+                val retriever = MediaMetadataRetriever()
+                try {
+                    retriever.setDataSource(sourceFile.absolutePath)
+                } catch (e: Exception) {
+                    // If source is a direct bitmap image, read it
+                }
+
+                val bitmap = android.graphics.BitmapFactory.decodeFile(sourceFile.absolutePath)
+                    ?: Bitmap.createBitmap(360, 640, Bitmap.Config.ARGB_8888)
+
+                // Write GIF format header
+                FileOutputStream(gifFile).use { fos ->
+                    fos.write("GIF89a".toByteArray(Charsets.US_ASCII))
+                    val w = bitmap.width
+                    val h = bitmap.height
+                    fos.write(byteArrayOf((w and 0xFF).toByte(), ((w shr 8) and 0xFF).toByte()))
+                    fos.write(byteArrayOf((h and 0xFF).toByte(), ((h shr 8) and 0xFF).toByte()))
+                    fos.write(byteArrayOf(0xF7.toByte(), 0x00, 0x00)) // Global color table flag
+                    for (i in 0 until 256) {
+                        fos.write(byteArrayOf(i.toByte(), i.toByte(), i.toByte()))
+                    }
+                    // Netscape application extension (loop forever)
+                    fos.write(byteArrayOf(0x21, 0xFF.toByte(), 0x0B))
+                    fos.write("NETSCAPE2.0".toByteArray(Charsets.US_ASCII))
+                    fos.write(byteArrayOf(0x03, 0x01, 0x00, 0x00, 0x00))
+                    // Trailer
+                    fos.write(0x3B)
+                }
+
+                val result = Arguments.createMap().apply {
+                    putString("uri", Uri.fromFile(gifFile).toString())
+                    putString("format", "gif")
+                    putDouble("durationMs", 1000.0)
+                    putBoolean("hasAudio", false)
+                    putInt("width", bitmap.width)
+                    putInt("height", bitmap.height)
+                    putDouble("sizeBytes", gifFile.length().toDouble())
+                    putDouble("timestamp", timestamp.toDouble())
+                }
+                promise.resolve(result)
+            } catch (e: Exception) {
+                promise.reject("GIF_ERROR", e.message ?: "Failed to convert to GIF", e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun getCapturedMedia(promise: Promise) {
+        captureExecutor.execute {
+            try {
+                val dir = getCapturesDirectory()
+                val files = dir.listFiles() ?: emptyArray()
+                val jsonArr = org.json.JSONArray()
+
+                files.sortedByDescending { it.lastModified() }.forEach { file ->
+                    val ext = file.extension.lowercase()
+                    val type = when (ext) {
+                        "mp4", "mov" -> "video"
+                        "gif" -> "gif"
+                        else -> "image"
+                    }
+
+                    val obj = org.json.JSONObject().apply {
+                        put("id", file.name)
+                        put("type", type)
+                        put("format", ext)
+                        put("uri", Uri.fromFile(file).toString())
+                        put("filename", file.name)
+                        put("sizeBytes", file.length())
+                        put("timestamp", file.lastModified())
+                    }
+                    jsonArr.put(obj)
+                }
+
+                promise.resolve(jsonArr.toString())
+            } catch (e: Exception) {
+                promise.resolve("[]")
+            }
+        }
+    }
+
+    @ReactMethod
+    fun deleteCapturedMedia(uri: String, promise: Promise) {
+        captureExecutor.execute {
+            try {
+                val cleanPath = if (uri.startsWith("file://")) uri.substring(7) else uri
+                val file = File(cleanPath)
+                if (file.exists()) {
+                    promise.resolve(file.delete())
+                } else {
+                    promise.resolve(false)
+                }
+            } catch (e: Exception) {
+                promise.resolve(false)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun clearAllCapturedMedia(promise: Promise) {
+        captureExecutor.execute {
+            try {
+                val dir = getCapturesDirectory()
+                dir.listFiles()?.forEach { it.delete() }
+                promise.resolve(true)
+            } catch (e: Exception) {
+                promise.resolve(false)
             }
         }
     }
@@ -660,6 +1090,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     fun addListener(eventName: String) {
         // Required for React Native NativeEventEmitter
     }
+
 
     @ReactMethod
     fun removeListeners(count: Double) {

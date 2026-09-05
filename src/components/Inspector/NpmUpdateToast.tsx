@@ -14,6 +14,7 @@ import {LIB_VERSION} from '../../constants';
 import {NpmIcon} from '../NetworkIcons';
 import {copyToClipboard} from '../../helpers';
 import {showToast} from '../../helpers/toast';
+import {AppFonts} from '../../styles/AppFonts';
 
 const CloseSvg = ({size = 13, color = '#94A3B8'}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -243,15 +244,9 @@ export const NpmUpdateToast = () => {
   );
 };
 
-const fontStack = Platform.select({
-  ios: {
-    fontFamily: 'System',
-  },
-  android: {
-    fontFamily: 'sans-serif',
-  },
-  default: {},
-});
+const fontStack = {
+  fontFamily: AppFonts.interRegular,
+};
 
 const styles = StyleSheet.create({
   container: {

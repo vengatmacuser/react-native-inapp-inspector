@@ -31,7 +31,9 @@ import CrashDetail from './CrashDetail';
 import DeviceInfoTab from './DeviceInfoTab';
 import StorageTab from './StorageTab';
 import DebuggingTab from './DebuggingTab';
+import {MediaGalleryTab} from './MediaGalleryTab';
 import SettingsPanel from './SettingsPanel';
+
 import NpmUpdateToast from './NpmUpdateToast';
 import NpmStarPrompt from './NpmStarPrompt';
 import FeedbackModal from './FeedbackModal';
@@ -74,18 +76,6 @@ const MainScreen = () => {
     (activeTab === 'crash' && selectedCrash != null);
 
   // ─── 60 FPS Transition Animations ──────────────────────────────────────────
-  const detailAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (isDetailActive) {
-      detailAnim.setValue(0);
-      Animated.spring(detailAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 65,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [isDetailActive]);
 
   const settingsAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -95,7 +85,7 @@ const MainScreen = () => {
         toValue: 1,
         friction: 8,
         tension: 65,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     }
   }, [settingsPage !== null]);
@@ -108,20 +98,10 @@ const MainScreen = () => {
         toValue: 1,
         friction: 8,
         tension: 65,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     }
   }, [isFeedbackOpen]);
-
-  const tabAnim = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    tabAnim.setValue(0);
-    Animated.timing(tabAnim, {
-      toValue: 1,
-      duration: 150,
-      useNativeDriver: true,
-    }).start();
-  }, [activeTab]);
 
   return (
     <>
@@ -159,30 +139,17 @@ const MainScreen = () => {
               <InspectorHeader />
 
               <View style={{flex: 1}}>
-                {/* ─── Horizontal Scrollable Tab Bar inside Content (Always visible unless in detail/settings/feedback) ─── */}
-                {!isDetailActive && settingsPage === null && !isFeedbackOpen && <TabBar />}
-
-                {isReady ? (
-                  <View style={{flex: 1}}>
-                    {/* Persistent List Layer - Never unmounted, preserves 100% native scroll with smooth tab transition */}
-                    <Animated.View
-                      style={[
-                        {
-                          flex: 1,
-                          opacity: tabAnim,
-                          transform: [
-                            {
-                              translateY: tabAnim.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [6, 0],
-                              }),
-                            },
-                          ],
-                        },
-                        (isDetailActive || settingsPage !== null || isFeedbackOpen) && {
-                          pointerEvents: 'none',
-                        },
-                      ]}>
+                {/* ─── Persistent Content Layer (TabBar + List, never unmounted or hidden with display:none) ─── */}
+                <View
+                  style={{flex: 1}}
+                  pointerEvents={
+                    isDetailActive || settingsPage !== null || isFeedbackOpen
+                      ? 'none'
+                      : 'auto'
+                  }>
+                  <TabBar />
+                  {isReady ? (
+                    <View style={{flex: 1}}>
                       {activeTab === 'apis' && <NetworkTab />}
                       {activeTab === 'logs' && <ConsoleTab />}
                       {activeTab === 'analytics' && <AnalyticsTab />}
@@ -195,44 +162,36 @@ const MainScreen = () => {
                       {Platform.OS === 'android' &&
                         isLocalDebugEnvironment() &&
                         activeTab === 'debugging' && <DebuggingTab />}
-                    </Animated.View>
+                    </View>
+                  ) : (
+                    <MainScreenSkeleton />
+                  )}
+                </View>
 
-                    {/* Detail View Layer - Rendered on top with smooth slide & spring transition */}
-                    {isDetailActive && (
-                      <Animated.View
-                        style={[
-                          StyleSheet.absoluteFill,
-                          {
-                            backgroundColor: AppColors.contentBg,
-                            opacity: detailAnim,
-                            transform: [
-                              {
-                                translateX: detailAnim.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: [32, 0],
-                                }),
-                              },
-                            ],
-                          },
-                        ]}>
-                        {activeTab === 'apis' && selected != null && (
-                          <NetworkDetail />
-                        )}
-                        {activeTab === 'analytics' && selectedEvent != null && (
-                          <AnalyticsDetail event={selectedEvent} />
-                        )}
-                        {activeTab === 'logs' && selectedLog != null && (
-                          <LogDetail />
-                        )}
-                        {activeTab === 'redux' && <ReduxDetail />}
-                        {activeTab === 'crash' && selectedCrash != null && (
-                          <CrashDetail />
-                        )}
-                      </Animated.View>
+                {/* ─── Detail View Layer (Solid overlay covering TabBar + Content with zero layout flicker) ─── */}
+                {isDetailActive && (
+                  <View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        backgroundColor: AppColors.contentBg,
+                        zIndex: 10,
+                      },
+                    ]}>
+                    {activeTab === 'apis' && selected != null && (
+                      <NetworkDetail />
+                    )}
+                    {activeTab === 'analytics' && selectedEvent != null && (
+                      <AnalyticsDetail event={selectedEvent} />
+                    )}
+                    {activeTab === 'logs' && selectedLog != null && (
+                      <LogDetail />
+                    )}
+                    {activeTab === 'redux' && <ReduxDetail />}
+                    {activeTab === 'crash' && selectedCrash != null && (
+                      <CrashDetail />
                     )}
                   </View>
-                ) : (
-                  <MainScreenSkeleton />
                 )}
 
                 {/* Settings Panel Layer - Rendered on top with smooth slide & spring transition */}
@@ -319,12 +278,12 @@ const MainScreenSkeleton = React.memo(function MainScreenSkeleton() {
         Animated.timing(shimmerAnim, {
           toValue: 0.85,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(shimmerAnim, {
           toValue: 0.35,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]),
     );

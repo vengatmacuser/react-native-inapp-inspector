@@ -148,14 +148,11 @@ const TabBar = React.memo(() => {
               : tab.key === 'crash' && tab.count > 0
               ? AppColors.errorColor
               : AppColors.grayText;
-            const countLabel =
-              tab.count > 9 ? '9+' : String(tab.count);
+            const countLabel = tab.count > 9 ? '9+' : String(tab.count);
             const hasUnreadApis =
-              activeTab !== 'apis' &&
-              logs.length > lastReadApisCount;
+              activeTab !== 'apis' && logs.length > lastReadApisCount;
             const hasUnreadLogs =
-              activeTab !== 'logs' &&
-              consoleLogs.length > lastReadLogsCount;
+              activeTab !== 'logs' && consoleLogs.length > lastReadLogsCount;
             const hasUnreadCrashes =
               activeTab !== 'crash' &&
               (crashRecords?.length || 0) > (lastReadCrashesCount || 0);
@@ -236,16 +233,14 @@ const TabBar = React.memo(() => {
                     ellipsizeMode="tail"
                     style={[
                       styles.contentTabButtonText,
-                      isActive &&
-                        styles.contentTabButtonTextActive,
+                      isActive && styles.contentTabButtonTextActive,
                     ]}>
-                    {tab.label}{' '}
-                    {tab.count > 0 ? `(${countLabel})` : ''}
+                    {tab.label} {tab.count > 0 ? `(${countLabel})` : ''}
                   </Text>
                   {((tab.key === 'apis' && hasUnreadApis) ||
                     (tab.key === 'logs' && hasUnreadLogs) ||
                     (tab.key === 'crash' && hasUnreadCrashes)) && (
-                    <Animated.View
+                    <View
                       style={{
                         width: 6,
                         height: 6,
@@ -253,7 +248,6 @@ const TabBar = React.memo(() => {
                         backgroundColor: AppColors.errorColor,
                         marginLeft: 4,
                         alignSelf: 'center',
-                        transform: [{scale: unreadPulseAnim}],
                       }}
                     />
                   )}

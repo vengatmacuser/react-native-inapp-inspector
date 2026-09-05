@@ -1,6 +1,7 @@
 import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -300,7 +301,9 @@ const ReduxTab = React.memo(() => {
       return (
         <AnimatedEntrance index={index} distance={8}>
           <TouchableScale
-            onPress={() => setSelectedReduxSlice(item.name)}
+            onPress={() => {
+              setSelectedReduxSlice(item.name);
+            }}
             style={[
               reduxTabStyles.card,
               isRecentlyUpdated && reduxTabStyles.cardRecentlyUpdated,
@@ -666,7 +669,7 @@ const ReduxTab = React.memo(() => {
         initialNumToRender={12}
         maxToRenderPerBatch={8}
         windowSize={5}
-        removeClippedSubviews={true}
+        removeClippedSubviews={Platform.OS === 'android'}
         renderToHardwareTextureAndroid={true}
         ListEmptyComponent={
           <EmptyState

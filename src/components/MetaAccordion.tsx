@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {useTranslation} from '../i18n';
-import {View, Pressable, Text, Animated} from 'react-native';
+import {View, Pressable, Text} from 'react-native';
 
 // Constants
 import {DURATION_FAST_MS, DURATION_SLOW_MS} from '../constants';
@@ -46,7 +46,7 @@ const MetaAccordion = ({
 }: MetaAccordionProps) => {
   const {t} = useTranslation();
   const [urlExpanded, setUrlExpanded] = useState(false);
-  const {toggleOpen, chevronStyle, bodyStyle} = useAccordion(true, 800, 390);
+  const {isOpen, toggleOpen, chevronStyle} = useAccordion(true);
   const isFailed = status === 0 || status == null;
 
   const renderFormattedUrl = (rawUrl: string) => {
@@ -111,14 +111,14 @@ const MetaAccordion = ({
               }}
               label="Metadata"
             />
-            <Animated.View style={chevronStyle}>
+            <View style={chevronStyle}>
               <ChevronIcon color={AppColors.grayTextWeak} size={14} />
-            </Animated.View>
+            </View>
           </View>
         </View>
       </Pressable>
 
-      <Animated.View style={bodyStyle}>
+      {isOpen && (
         <View style={styles.metaBody}>
           <View style={styles.metaRow}>
             <View style={styles.metaLabelRow}>
@@ -347,7 +347,7 @@ const MetaAccordion = ({
             </View>
           </View>
         </View>
-      </Animated.View>
+      )}
     </View>
   );
 };

@@ -35,12 +35,12 @@ const EmptyState = React.memo(function EmptyState({
         Animated.timing(iconPulse, {
           toValue: 1.06,
           duration: 900,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(iconPulse, {
           toValue: 1,
           duration: 900,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]),
     );

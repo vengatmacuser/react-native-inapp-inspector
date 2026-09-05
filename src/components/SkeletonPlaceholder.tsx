@@ -17,12 +17,12 @@ export const SkeletonPlaceholder = React.memo(function SkeletonPlaceholder({
         Animated.timing(shimmerAnim, {
           toValue: 0.85,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(shimmerAnim, {
           toValue: 0.35,
           duration: 750,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]),
     );

@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Pressable, Text, Animated} from 'react-native';
+import {View, Pressable, Text} from 'react-native';
 import Svg, {Rect, Path} from 'react-native-svg';
 
 // Components
@@ -19,8 +19,8 @@ import {AppColors} from '../styles/AppColors';
 import styles from '../styles';
 
 const SourcePageCard = ({routeInfo}: SourcePageCardProps) => {
-  const main = useAccordion(true, 600, 280);
-  const params = useAccordion(false, 800, 260);
+  const main = useAccordion(true);
+  const params = useAccordion(false);
 
   const hasParams =
     routeInfo.params && Object.keys(routeInfo.params).length > 0;
@@ -77,70 +77,72 @@ const SourcePageCard = ({routeInfo}: SourcePageCardProps) => {
           <View style={styles.sourcePageHeaderRight}>
             <CopyButton value={routeInfo.path} label="Source Path" />
             <View style={styles.iconSquareBtn}>
-              <Animated.View style={main.chevronStyle}>
+              <View style={main.chevronStyle}>
                 <ChevronIcon color={AppColors.grayTextStrong} size={14} />
-              </Animated.View>
+              </View>
             </View>
           </View>
         </View>
       </Pressable>
 
-      <Animated.View style={main.bodyStyle}>
-        {hasParams && (
-          <View style={styles.sourceParamsBox}>
-            <Pressable onPress={params.toggleOpen} hitSlop={10}>
-              <View style={styles.paramsAccordionHeader}>
-                <View style={styles.paramsAccordionLeft}>
-                  <Text style={styles.sourceParamsLabel}>Parameters</Text>
-                  <View style={styles.headerCountBadge}>
-                    <Text style={styles.headerCountText}>
-                      {Object.keys(routeInfo.params).length}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.paramsAccordionRight}>
-                  <CopyButton value={routeInfo.params} label="Parameters" />
-                  <View style={styles.iconSquareBtn}>
-                    <Animated.View style={params.chevronStyle}>
-                      <ChevronIcon color={AppColors.grayTextStrong} size={14} />
-                    </Animated.View>
-                  </View>
-                </View>
-              </View>
-            </Pressable>
-
-            <Animated.View style={params.bodyStyle}>
-              <View style={styles.paramsBody}>
-                {Object.entries(routeInfo.params).map(([key, val], i, arr) => (
-                  <View
-                    key={key}
-                    style={[
-                      styles.paramRow,
-                      i < arr.length - 1 ? styles.paramRowBorder : null,
-                    ]}>
-                    <Text style={styles.paramKey}>{key}</Text>
-                    <View style={styles.paramValueRow}>
-                      <Text selectable style={styles.paramValue}>
-                        {typeof val === 'object'
-                          ? JSON.stringify(val)
-                          : String(val)}
+      {main.isOpen && (
+        <View>
+          {hasParams && (
+            <View style={styles.sourceParamsBox}>
+              <Pressable onPress={params.toggleOpen} hitSlop={10}>
+                <View style={styles.paramsAccordionHeader}>
+                  <View style={styles.paramsAccordionLeft}>
+                    <Text style={styles.sourceParamsLabel}>Parameters</Text>
+                    <View style={styles.headerCountBadge}>
+                      <Text style={styles.headerCountText}>
+                        {Object.keys(routeInfo.params).length}
                       </Text>
-                      <CopyButton
-                        value={
-                          typeof val === 'object'
-                            ? JSON.stringify(val)
-                            : String(val)
-                        }
-                        label={key}
-                      />
                     </View>
                   </View>
-                ))}
-              </View>
-            </Animated.View>
-          </View>
-        )}
-      </Animated.View>
+                  <View style={styles.paramsAccordionRight}>
+                    <CopyButton value={routeInfo.params} label="Parameters" />
+                    <View style={styles.iconSquareBtn}>
+                      <View style={params.chevronStyle}>
+                        <ChevronIcon color={AppColors.grayTextStrong} size={14} />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </Pressable>
+
+              {params.isOpen && (
+                <View style={styles.paramsBody}>
+                  {Object.entries(routeInfo.params).map(([key, val], i, arr) => (
+                    <View
+                      key={key}
+                      style={[
+                        styles.paramRow,
+                        i < arr.length - 1 ? styles.paramRowBorder : null,
+                      ]}>
+                      <Text style={styles.paramKey}>{key}</Text>
+                      <View style={styles.paramValueRow}>
+                        <Text selectable style={styles.paramValue}>
+                          {typeof val === 'object'
+                            ? JSON.stringify(val)
+                            : String(val)}
+                        </Text>
+                        <CopyButton
+                          value={
+                            typeof val === 'object'
+                              ? JSON.stringify(val)
+                              : String(val)
+                          }
+                          label={key}
+                        />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 };

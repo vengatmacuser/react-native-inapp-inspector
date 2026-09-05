@@ -108,7 +108,7 @@ const LogCard = React.memo(function LogCard({
       Animated.timing(shimmerOpacity, {
         toValue: 0,
         duration: 1200,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }).start();
     }
   }, [isNew]);
@@ -423,13 +423,15 @@ const LogCard = React.memo(function LogCard({
           )}
         </View>
 
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {backgroundColor: methodColor, opacity: shimmerOpacity},
-          ]}
-        />
+        {isNew && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {backgroundColor: methodColor, opacity: shimmerOpacity},
+            ]}
+          />
+        )}
       </TouchableScale>
     </View>
   );

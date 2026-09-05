@@ -2,6 +2,7 @@ import React, {useCallback, useMemo, useRef} from 'react';
 import {
   Animated,
   FlatList,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -311,7 +312,6 @@ const NetworkTab = React.memo(() => {
               isSelected={selectedLogs.has(log.id)}
               onToggleSelect={toggleSelect}
               onPress={() => {
-                animateNextLayout();
                 setSelected(log);
               }}
               timelineMinStart={minStart}
@@ -338,18 +338,7 @@ const NetworkTab = React.memo(() => {
 
   return (
     <View style={{flex: 1}}>
-      <FlatList
-        ref={apisListRef}
-        data={groupedData}
-        keyExtractor={item => item?.id?.toString()}
-        renderItem={renderItem}
-        initialNumToRender={12}
-        maxToRenderPerBatch={8}
-        windowSize={5}
-        removeClippedSubviews={true}
-        renderToHardwareTextureAndroid={true}
-        ListHeaderComponent={
-          <View style={{marginTop: 6}}>
+      <View style={{marginTop: 6}}>
             {/* Network Health & Telemetry Strip */}
             {networkMetrics != null && networkMetrics.totalCount > 0 && (
               <View
@@ -770,8 +759,18 @@ const NetworkTab = React.memo(() => {
               </View>
             )}
           </View>
-        }
-        ListEmptyComponent={
+
+        <FlatList
+          ref={apisListRef}
+          data={groupedData}
+          keyExtractor={item => item?.id?.toString()}
+          renderItem={renderItem}
+          initialNumToRender={12}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
+          renderToHardwareTextureAndroid={true}
+          ListEmptyComponent={
           <EmptyState
             isSearch={
               search.length > 0 ||

@@ -23,13 +23,13 @@ const Toast = React.memo(() => {
         Animated.timing(opacityAnim, {
           toValue: 1,
           duration: 180,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.spring(translateYAnim, {
           toValue: 0,
           tension: 80,
           friction: 8,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start();
 
@@ -38,12 +38,12 @@ const Toast = React.memo(() => {
           Animated.timing(opacityAnim, {
             toValue: 0,
             duration: 200,
-            useNativeDriver: true,
+            useNativeDriver: false,
           }),
           Animated.timing(translateYAnim, {
             toValue: 20,
             duration: 200,
-            useNativeDriver: true,
+            useNativeDriver: false,
           }),
         ]).start(() => {
           setToastMessage(null);

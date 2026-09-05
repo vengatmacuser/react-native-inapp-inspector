@@ -1,11 +1,17 @@
 #import "NetworkInspectorModule.h"
 #import <execinfo.h>
 #import <signal.h>
+#import <objc/runtime.h>
 #import <unistd.h>
+#import <ReplayKit/ReplayKit.h>
+#import <AVFoundation/AVFoundation.h>
+#import <ImageIO/ImageIO.h>
+#import <MobileCoreServices/MobileCoreServices.h>
 
 static NetworkInspectorModule *sharedInstance = nil;
 static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
 static BOOL g_floatingButtonPressed = NO;
+
 
 @interface InAppInspectorFloatingView : UIView
 @property (nonatomic, copy) void (^onTapBlock)(void);
@@ -311,6 +317,7 @@ static BOOL g_floatingButtonPressed = NO;
 @end
 
 static InAppInspectorFloatingView *floatingButtonView = nil;
+static BOOL g_floatingButtonDesiredVisible = NO;
 
 static void NativeSignalHandler(int signalNumber) {
     void* callstack[128];
@@ -352,15 +359,125 @@ static void NativeExceptionHandler(NSException *exception) {
         [sharedInstance emitCrashEventWithMessage:message stackTrace:stackTrace];
     }
 
-    // Keep the runloop cycling so the UI thread doesn't terminate immediately
+    // Give the crash event a brief window to emit (up to 3 seconds),
+    // then delegate to the previous handler instead of freezing the UI forever.
+    // The old infinite-runloop approach permanently froze the main thread on any
+    // exception (including Fabric view recycling assertions), causing blank screens.
     CFRunLoopRef runLoop = CFRunLoopGetCurrent();
     CFArrayRef allModes = CFRunLoopCopyAllModes(runLoop);
-    while (true) {
+    NSTimeInterval deadline = [NSDate timeIntervalSinceReferenceDate] + 3.0;
+    while ([NSDate timeIntervalSinceReferenceDate] < deadline) {
         for (NSString *mode in (__bridge NSArray *)allModes) {
             CFRunLoopRunInMode((CFStringRef)mode, 0.001, false);
         }
     }
+    if (allModes) {
+        CFRelease(allModes);
+    }
+
+    // Delegate to the previous exception handler (e.g. React Native's own handler)
+    if (previousUncaughtExceptionHandler) {
+        previousUncaughtExceptionHandler(exception);
+    }
 }
+
+// ─── Fabric View Recycle Safeguard ───────────────────────────────────────────
+// Custom NSAssertionHandler that catches the specific Fabric view recycling
+// assertion ('Attempt to recycle a mounted view') and logs it as a warning
+// instead of crashing. This prevents third-party native views (like
+// BVLinearGradient from react-native-linear-gradient) from causing fatal
+// assertion failures when Fabric's view recycler encounters views whose
+// superview is still attached during conditional unmounting.
+
+@interface InAppInspectorAssertionHandler : NSAssertionHandler
+@property (nonatomic, strong) NSAssertionHandler *previousHandler;
+@end
+
+@implementation InAppInspectorAssertionHandler
+
++ (void)install {
+    NSThread *mainThread = [NSThread mainThread];
+    NSMutableDictionary *threadDict = [mainThread threadDictionary];
+    NSAssertionHandler *current = threadDict[NSAssertionHandlerKey];
+
+    InAppInspectorAssertionHandler *handler = [[InAppInspectorAssertionHandler alloc] init];
+    handler.previousHandler = current;
+    threadDict[NSAssertionHandlerKey] = handler;
+    NSLog(@"[InAppInspector] Fabric view recycle safeguard (assertion handler) installed");
+}
+
+- (void)handleFailureInMethod:(SEL)selector
+                       object:(id)object
+                         file:(NSString *)fileName
+                   lineNumber:(NSInteger)line
+                  description:(NSString *)format, ... {
+    va_list args;
+    va_start(args, format);
+    NSString *desc = [[NSString alloc] initWithFormat:format arguments:args];
+    va_end(args);
+
+    // Intercept the specific Fabric recycle assertion
+    if ([desc containsString:@"Attempt to recycle a mounted view"]) {
+        NSLog(@"[InAppInspector] ⚠️ Suppressed Fabric view recycle assertion: %@ (in %@:%ld)",
+              desc, fileName, (long)line);
+        return; // Suppress — don't crash
+    }
+
+    // Forward all other assertions to the previous handler
+    if (self.previousHandler) {
+        va_start(args, format);
+        [self.previousHandler handleFailureInMethod:selector
+                                             object:object
+                                               file:fileName
+                                         lineNumber:line
+                                        description:@"%@", desc];
+        va_end(args);
+    } else {
+        // No previous handler — raise as exception (default behavior)
+        NSString *reason = [NSString stringWithFormat:
+            @"*** Assertion failure in %@, %@:%ld: %@",
+            NSStringFromSelector(selector), fileName, (long)line, desc];
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:reason
+                                     userInfo:nil];
+    }
+}
+
+- (void)handleFailureInFunction:(NSString *)functionName
+                           file:(NSString *)fileName
+                     lineNumber:(NSInteger)line
+                    description:(NSString *)format, ... {
+    va_list args;
+    va_start(args, format);
+    NSString *desc = [[NSString alloc] initWithFormat:format arguments:args];
+    va_end(args);
+
+    // Intercept the specific Fabric recycle assertion
+    if ([desc containsString:@"Attempt to recycle a mounted view"]) {
+        NSLog(@"[InAppInspector] ⚠️ Suppressed Fabric view recycle assertion: %@ (in %@:%ld)",
+              desc, fileName, (long)line);
+        return; // Suppress — don't crash
+    }
+
+    // Forward all other assertions to the previous handler
+    if (self.previousHandler) {
+        va_start(args, format);
+        [self.previousHandler handleFailureInFunction:functionName
+                                                 file:fileName
+                                           lineNumber:line
+                                          description:@"%@", desc];
+        va_end(args);
+    } else {
+        NSString *reason = [NSString stringWithFormat:
+            @"*** Assertion failure in %@, %@:%ld: %@",
+            functionName, fileName, (long)line, desc];
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:reason
+                                     userInfo:nil];
+    }
+}
+
+@end
 
 @implementation NetworkInspectorModule {
     bool hasListeners;
@@ -378,6 +495,14 @@ static void NativeExceptionHandler(NSException *exception) {
     NSMutableArray *_nativeConsoleLogs;
     NSMutableArray *_nativeAnalyticsEvents;
     NSMutableArray *_nativeCrashRecords;
+    AVAssetWriter *_softwareAssetWriter;
+    AVAssetWriterInput *_softwareWriterInput;
+    AVAssetWriterInputPixelBufferAdaptor *_softwarePixelBufferAdaptor;
+    dispatch_source_t _softwareRecordingTimerSource;
+    BOOL _isSoftwareRecordingActive;
+    NSInteger _softwareFrameIndex;
+    NSTimeInterval _softwareRecordingStartTime;
+    NSString *_softwareRecordingFilePath;
 }
 
 RCT_EXPORT_MODULE(NetworkInspectorModule);
@@ -451,6 +576,18 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
     sigaction(SIGFPE,  &sa, NULL);
     sigaction(SIGPIPE, &sa, NULL);
     sigaction(SIGTRAP, &sa, NULL);
+
+    // Fabric view recycle safeguard: Install a custom NSAssertionHandler on the
+    // main thread that catches the specific 'Attempt to recycle a mounted view'
+    // assertion from RCTComponentViewRegistry, instead of crashing the app.
+    // This is a defense-in-depth approach — the primary fix is on the JS side
+    // (using LinearGradient as absolute background, not as a container parent).
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [InAppInspectorAssertionHandler install];
+        });
+    });
 }
 
 - (void)emitCrashEventWithMessage:(NSString *)message stackTrace:(NSString *)stackTrace {
@@ -568,6 +705,7 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
+        g_floatingButtonDesiredVisible = YES;
         UIWindow *targetWindow = GetAppActiveWindow();
         CGRect screenBounds = targetWindow ? targetWindow.bounds : [UIScreen mainScreen].bounds;
 
@@ -601,6 +739,11 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
         __weak NetworkInspectorModule *weakSelf = self;
         floatingButtonView.onTapBlock = ^{
             g_floatingButtonPressed = YES;
+            g_floatingButtonDesiredVisible = NO;
+            if (floatingButtonView != nil) {
+                floatingButtonView.hidden = YES;
+                floatingButtonView.alpha = 0.0;
+            }
             NetworkInspectorModule *strongSelf = weakSelf ?: sharedInstance;
             if (strongSelf && strongSelf.bridge != nil) {
                 [strongSelf safeSendEvent:@"onFloatingButtonPress" body:@{}];
@@ -608,6 +751,7 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
         };
 
         void (^attachToWindow)(void) = ^{
+            if (!g_floatingButtonDesiredVisible) return;
             UIWindow *activeWin = GetAppActiveWindow();
             if (!activeWin || !floatingButtonView) return;
             
@@ -644,12 +788,10 @@ RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
 RCT_EXPORT_METHOD(hideFloatingButton:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
+        g_floatingButtonDesiredVisible = NO;
         if (floatingButtonView != nil) {
-            [UIView animateWithDuration:0.15 animations:^{
-                floatingButtonView.alpha = 0.0;
-            } completion:^(BOOL finished) {
-                floatingButtonView.hidden = YES;
-            }];
+            floatingButtonView.hidden = YES;
+            floatingButtonView.alpha = 0.0;
         }
         resolve(@(YES));
     });
@@ -941,6 +1083,592 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
     });
 }
 
+#pragma mark - Screen Capture & Video Recording
+
+- (NSString *)getCapturesDirectory {
+    NSString *tempDir = NSTemporaryDirectory();
+    NSString *capturesDir = [tempDir stringByAppendingPathComponent:@"inspector_captures"];
+    BOOL isDir = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:capturesDir isDirectory:&isDir]) {
+        [[NSFileManager defaultManager] createDirectoryAtPath:capturesDir withIntermediateDirectories:YES attributes:nil error:nil];
+    }
+    return capturesDir;
+}
+
+- (UIWindow *)findActiveKeyWindow {
+    UIWindow *foundWindow = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *windowScene = (UIWindowScene *)scene;
+                for (UIWindow *w in windowScene.windows) {
+                    if (w.isKeyWindow) {
+                        return w;
+                    }
+                    if (!foundWindow && !w.hidden && w.alpha > 0.01) {
+                        foundWindow = w;
+                    }
+                }
+            }
+        }
+    }
+    if (!foundWindow) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        foundWindow = [UIApplication sharedApplication].keyWindow;
+        if (!foundWindow && [UIApplication sharedApplication].windows.count > 0) {
+            foundWindow = [UIApplication sharedApplication].windows.firstObject;
+        }
+#pragma clang diagnostic pop
+    }
+    return foundWindow;
+}
+
+- (UIImage *)captureWindowImage:(UIWindow *)window scale:(CGFloat)scale {
+    if (!window) return nil;
+    CGRect bounds = window.bounds;
+    if (bounds.size.width <= 0 || bounds.size.height <= 0) {
+        bounds = [UIScreen mainScreen].bounds;
+    }
+    CGFloat screenScale = [UIScreen mainScreen].scale;
+    CGFloat finalScale = screenScale * scale;
+    if (finalScale <= 0.0) finalScale = screenScale;
+
+    UIGraphicsBeginImageContextWithOptions(bounds.size, NO, finalScale);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    
+    BOOL drawn = NO;
+    @try {
+        drawn = [window drawViewHierarchyInRect:bounds afterScreenUpdates:NO];
+    } @catch (NSException *e) {
+        drawn = NO;
+    }
+    
+    if (!drawn && context) {
+        @try {
+            [window.layer renderInContext:context];
+        } @catch (NSException *e) {}
+    }
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    if (!image && window.rootViewController && window.rootViewController.view) {
+        UIGraphicsBeginImageContextWithOptions(bounds.size, NO, finalScale);
+        CGContextRef ctx = UIGraphicsGetCurrentContext();
+        if (ctx) {
+            @try {
+                [window.rootViewController.view.layer renderInContext:ctx];
+            } @catch (NSException *e) {}
+        }
+        image = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+    }
+    return image;
+}
+
+- (CVPixelBufferRef)createPixelBufferFromCGImage:(CGImageRef)image size:(CGSize)size {
+    NSDictionary *options = @{
+        (id)kCVPixelBufferCGImageCompatibilityKey: @(YES),
+        (id)kCVPixelBufferCGBitmapContextCompatibilityKey: @(YES)
+    };
+    CVPixelBufferRef pxbuffer = NULL;
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, (size_t)size.width, (size_t)size.height, kCVPixelFormatType_32ARGB, (__bridge CFDictionaryRef)options, &pxbuffer);
+    if (status != kCVReturnSuccess || pxbuffer == NULL) return NULL;
+
+    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
+    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(pxdata, (size_t)size.width, (size_t)size.height, 8, 4 * (size_t)size.width, rgbColorSpace, (CGBitmapInfo)kCGImageAlphaNoneSkipFirst);
+    if (context) {
+        CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), image);
+        CGContextRelease(context);
+    }
+    CGColorSpaceRelease(rgbColorSpace);
+    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
+    return pxbuffer;
+}
+
+- (void)startSoftwareRecordingWithOptions:(NSDictionary *)options
+                                  resolve:(RCTPromiseResolveBlock)resolve
+                                   reject:(RCTPromiseRejectBlock)reject {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIWindow *window = [self findActiveKeyWindow];
+        if (!window) {
+            reject(@"RECORDER_ERROR", @"Unable to find active UIWindow for screen recording", nil);
+            return;
+        }
+
+        CGRect bounds = window.bounds;
+        CGFloat screenScale = [UIScreen mainScreen].scale;
+        NSInteger width = ((NSInteger)(bounds.size.width * screenScale * 0.5) / 2) * 2;
+        NSInteger height = ((NSInteger)(bounds.size.height * screenScale * 0.5) / 2) * 2;
+        if (width <= 0) width = 360;
+        if (height <= 0) height = 640;
+
+        CGSize videoSize = CGSizeMake(width, height);
+        long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+        NSString *filename = [NSString stringWithFormat:@"video_%lld.mp4", timestamp];
+        NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
+        NSURL *outputUrl = [NSURL fileURLWithPath:filePath];
+
+        NSError *error = nil;
+        self->_softwareAssetWriter = [AVAssetWriter assetWriterWithURL:outputUrl fileType:AVFileTypeMPEG4 error:&error];
+        if (error || !self->_softwareAssetWriter) {
+            reject(@"RECORDER_ERROR", error.localizedDescription ?: @"Failed to initialize AVAssetWriter", error);
+            return;
+        }
+
+        NSDictionary *videoSettings = @{
+            AVVideoCodecKey: AVVideoCodecTypeH264,
+            AVVideoWidthKey: @(videoSize.width),
+            AVVideoHeightKey: @(videoSize.height),
+        };
+
+        self->_softwareWriterInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:videoSettings];
+        self->_softwareWriterInput.expectsMediaDataInRealTime = YES;
+
+        NSDictionary *sourcePixelBufferAttributes = @{
+            (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32ARGB),
+            (id)kCVPixelBufferWidthKey: @(videoSize.width),
+            (id)kCVPixelBufferHeightKey: @(videoSize.height)
+        };
+
+        self->_softwarePixelBufferAdaptor = [AVAssetWriterInputPixelBufferAdaptor assetWriterInputPixelBufferAdaptorWithAssetWriterInput:self->_softwareWriterInput sourcePixelBufferAttributes:sourcePixelBufferAttributes];
+
+        if ([self->_softwareAssetWriter canAddInput:self->_softwareWriterInput]) {
+            [self->_softwareAssetWriter addInput:self->_softwareWriterInput];
+        }
+
+        [self->_softwareAssetWriter startWriting];
+        [self->_softwareAssetWriter startSessionAtSourceTime:kCMTimeZero];
+
+        self->_isSoftwareRecordingActive = YES;
+        self->_softwareFrameIndex = 0;
+        self->_softwareRecordingStartTime = [[NSDate date] timeIntervalSince1970];
+        self->_softwareRecordingFilePath = filePath;
+
+        double fps = [options[@"fps"] doubleValue];
+        if (fps <= 0.0 || fps > 30.0) fps = 15.0;
+        double frameInterval = 1.0 / fps;
+
+        dispatch_queue_t queue = dispatch_queue_create("com.inappinspector.recording", DISPATCH_QUEUE_SERIAL);
+        self->_softwareRecordingTimerSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
+        dispatch_source_set_timer(self->_softwareRecordingTimerSource, dispatch_time(DISPATCH_TIME_NOW, 0), (uint64_t)(frameInterval * NSEC_PER_SEC), (uint64_t)(frameInterval * 0.1 * NSEC_PER_SEC));
+
+        __weak NetworkInspectorModule *weakSelf = self;
+        dispatch_source_set_event_handler(self->_softwareRecordingTimerSource, ^{
+            NetworkInspectorModule *strongSelf = weakSelf;
+            if (!strongSelf || !strongSelf->_isSoftwareRecordingActive) return;
+
+            dispatch_sync(dispatch_get_main_queue(), ^{
+                if (!strongSelf || !strongSelf->_isSoftwareRecordingActive) return;
+                UIWindow *w = [strongSelf findActiveKeyWindow];
+                UIImage *frameImg = [strongSelf captureWindowImage:w scale:0.5];
+                if (frameImg && frameImg.CGImage && strongSelf->_softwareWriterInput.isReadyForMoreMediaData) {
+                    CVPixelBufferRef buffer = [strongSelf createPixelBufferFromCGImage:frameImg.CGImage size:videoSize];
+                    if (buffer) {
+                        CMTime presentTime = CMTimeMake((int64_t)(strongSelf->_softwareFrameIndex * 1000 / fps), 1000);
+                        [strongSelf->_softwarePixelBufferAdaptor appendPixelBuffer:buffer withPresentationTime:presentTime];
+                        CVPixelBufferRelease(buffer);
+                        strongSelf->_softwareFrameIndex++;
+                    }
+                }
+            });
+        });
+
+        dispatch_resume(self->_softwareRecordingTimerSource);
+        resolve(@(YES));
+    });
+}
+
+RCT_EXPORT_METHOD(takeScreenshot:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            UIWindow *keyWindow = [self findActiveKeyWindow];
+            if (!keyWindow) {
+                reject(@"SCREENSHOT_ERROR", @"Unable to find active UIWindow for screen capture", nil);
+                return;
+            }
+
+            double scaleParam = [options[@"scale"] doubleValue];
+            if (scaleParam <= 0.0 || scaleParam > 1.0) {
+                scaleParam = 1.0;
+            }
+
+            UIImage *image = [self captureWindowImage:keyWindow scale:(CGFloat)scaleParam];
+            if (!image) {
+                reject(@"SCREENSHOT_ERROR", @"Failed to render window hierarchy to image context", nil);
+                return;
+            }
+
+            NSString *format = [options[@"format"] isKindOfClass:[NSString class]] ? [options[@"format"] lowercaseString] : @"png";
+            double quality = [options[@"quality"] doubleValue];
+            if (quality <= 0.0 || quality > 1.0) {
+                quality = 0.9;
+            }
+
+            NSData *data = nil;
+            NSString *ext = @"png";
+            if ([format isEqualToString:@"jpeg"] || [format isEqualToString:@"jpg"]) {
+                data = UIImageJPEGRepresentation(image, quality);
+                ext = @"jpg";
+                format = @"jpeg";
+            } else if ([format isEqualToString:@"webp"]) {
+                data = UIImageJPEGRepresentation(image, quality);
+                ext = @"webp";
+                format = @"webp";
+            } else {
+                data = UIImagePNGRepresentation(image);
+                ext = @"png";
+                format = @"png";
+            }
+
+            if (!data) {
+                reject(@"SCREENSHOT_ERROR", @"Failed to encode image data", nil);
+                return;
+            }
+
+            long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+            NSString *filename = [NSString stringWithFormat:@"screenshot_%lld.%@", timestamp, ext];
+            NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
+
+            [data writeToFile:filePath atomically:YES];
+
+            BOOL includeBase64 = [options[@"includeBase64"] boolValue];
+            NSString *base64Str = includeBase64 ? [data base64EncodedStringWithOptions:0] : @"";
+
+            NSDictionary *result = @{
+                @"uri": [NSURL fileURLWithPath:filePath].absoluteString,
+                @"format": format,
+                @"width": @((NSInteger)(image.size.width * image.scale)),
+                @"height": @((NSInteger)(image.size.height * image.scale)),
+                @"sizeBytes": @(data.length),
+                @"timestamp": @(timestamp),
+                @"base64": base64Str
+            };
+            resolve(result);
+        } @catch (NSException *exception) {
+            reject(@"SCREENSHOT_ERROR", exception.reason, nil);
+        }
+    });
+}
+
+RCT_EXPORT_METHOD(startVideoRecording:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    if (self->_isSoftwareRecordingActive || [RPScreenRecorder sharedRecorder].isRecording) {
+        resolve(@(YES));
+        return;
+    }
+
+    RPScreenRecorder *recorder = [RPScreenRecorder sharedRecorder];
+    if (recorder.isAvailable) {
+        NSString *audioSource = [options[@"audioSource"] isKindOfClass:[NSString class]] ? options[@"audioSource"] : @"none";
+        BOOL enableMic = [audioSource isEqualToString:@"mic"] || [audioSource isEqualToString:@"mixed"];
+        recorder.microphoneEnabled = enableMic;
+
+        [recorder startRecordingWithHandler:^(NSError * _Nullable error) {
+            if (error) {
+                // If ReplayKit fails to initialize (e.g. simulator or sandbox), fallback to software frame recorder
+                [self startSoftwareRecordingWithOptions:options resolve:resolve reject:reject];
+            } else {
+                resolve(@(YES));
+            }
+        }];
+    } else {
+        // Fallback to software frame recorder (works everywhere including iOS Simulators)
+        [self startSoftwareRecordingWithOptions:options resolve:resolve reject:reject];
+    }
+}
+
+RCT_EXPORT_METHOD(stopVideoRecording:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    if (self->_isSoftwareRecordingActive) {
+        self->_isSoftwareRecordingActive = NO;
+        if (self->_softwareRecordingTimerSource) {
+            dispatch_source_cancel(self->_softwareRecordingTimerSource);
+            self->_softwareRecordingTimerSource = nil;
+        }
+
+        [self->_softwareWriterInput markAsFinished];
+        NSString *filePath = self->_softwareRecordingFilePath;
+        NSTimeInterval duration = [[NSDate date] timeIntervalSince1970] - self->_softwareRecordingStartTime;
+        long long timestamp = (long long)(self->_softwareRecordingStartTime * 1000.0);
+
+        [self->_softwareAssetWriter finishWritingWithCompletionHandler:^{
+            self->_softwareAssetWriter = nil;
+            self->_softwareWriterInput = nil;
+            self->_softwarePixelBufferAdaptor = nil;
+
+            unsigned long long fileSize = 0;
+            NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+            if (attrs) {
+                fileSize = [attrs fileSize];
+            }
+
+            NSDictionary *result = @{
+                @"uri": [NSURL fileURLWithPath:filePath].absoluteString,
+                @"format": @"mp4",
+                @"durationMs": @(MAX(500.0, duration * 1000.0)),
+                @"hasAudio": @(NO),
+                @"width": @(720),
+                @"height": @(1280),
+                @"sizeBytes": @(fileSize),
+                @"timestamp": @(timestamp)
+            };
+            resolve(result);
+        }];
+        return;
+    }
+
+    RPScreenRecorder *recorder = [RPScreenRecorder sharedRecorder];
+    if (!recorder.isRecording) {
+        resolve([NSNull null]);
+        return;
+    }
+
+    long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+    NSString *filename = [NSString stringWithFormat:@"video_%lld.mp4", timestamp];
+    NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
+    NSURL *outputUrl = [NSURL fileURLWithPath:filePath];
+
+    [recorder stopRecordingWithOutputURL:outputUrl completionHandler:^(NSError * _Nullable error) {
+        if (error) {
+            reject(@"RECORD_STOP_ERROR", error.localizedDescription, error);
+            return;
+        }
+
+        AVURLAsset *asset = [AVURLAsset URLAssetWithURL:outputUrl options:nil];
+        CMTime duration = asset.duration;
+        double durationMs = CMTimeGetSeconds(duration) * 1000.0;
+        CGSize naturalSize = CGSizeMake(1080, 1920);
+        NSArray<AVAssetTrack *> *videoTracks = [asset tracksWithMediaType:AVMediaTypeVideo];
+        if (videoTracks.count > 0) {
+            naturalSize = videoTracks.firstObject.naturalSize;
+        }
+
+        unsigned long long fileSize = 0;
+        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+        if (attrs) {
+            fileSize = [attrs fileSize];
+        }
+
+        NSDictionary *result = @{
+            @"uri": outputUrl.absoluteString,
+            @"format": @"mp4",
+            @"durationMs": @(durationMs),
+            @"hasAudio": @(recorder.isMicrophoneEnabled),
+            @"width": @((NSInteger)naturalSize.width),
+            @"height": @((NSInteger)naturalSize.height),
+            @"sizeBytes": @(fileSize),
+            @"timestamp": @(timestamp)
+        };
+        resolve(result);
+    }];
+}
+
+RCT_EXPORT_METHOD(isRecording:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    BOOL active = self->_isSoftwareRecordingActive || [RPScreenRecorder sharedRecorder].isRecording;
+    resolve(@(active));
+}
+
+RCT_EXPORT_METHOD(convertToGif:(NSString *)videoUri
+                  options:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            NSURL *videoUrl = [NSURL URLWithString:videoUri];
+            if (!videoUrl || !videoUrl.scheme) {
+                videoUrl = [NSURL fileURLWithPath:videoUri];
+            }
+
+            AVURLAsset *asset = [AVURLAsset URLAssetWithURL:videoUrl options:nil];
+            NSError *error = nil;
+            AVAssetReader *reader = [AVAssetReader assetReaderWithAsset:asset error:&error];
+            if (error || !reader) {
+                reject(@"GIF_ERROR", @"Unable to initialize asset reader for video", error);
+                return;
+            }
+
+            NSArray<AVAssetTrack *> *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
+            if (tracks.count == 0) {
+                reject(@"GIF_ERROR", @"No video track found in media asset", nil);
+                return;
+            }
+            AVAssetTrack *videoTrack = tracks.firstObject;
+
+            NSDictionary *outputSettings = @{
+                (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA)
+            };
+            AVAssetReaderTrackOutput *readerOutput = [AVAssetReaderTrackOutput assetReaderTrackOutputWithTrack:videoTrack outputSettings:outputSettings];
+            [reader addOutput:readerOutput];
+            [reader startReading];
+
+            long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+            NSString *filename = [NSString stringWithFormat:@"anim_%lld.gif", timestamp];
+            NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
+            NSURL *gifUrl = [NSURL fileURLWithPath:filePath];
+
+            CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)gifUrl, kUTTypeGIF, 0, NULL);
+            if (!destination) {
+                reject(@"GIF_ERROR", @"Failed to create GIF image destination", nil);
+                return;
+            }
+
+            NSDictionary *gifProperties = @{
+                (id)kCGImagePropertyGIFDictionary: @{
+                    (id)kCGImagePropertyGIFLoopCount: @(0)
+                }
+            };
+            CGImageDestinationSetProperties(destination, (__bridge CFDictionaryRef)gifProperties);
+
+            double targetFps = [options[@"fps"] doubleValue];
+            if (targetFps <= 0.0 || targetFps > 30.0) targetFps = 12.0;
+            double frameDelay = 1.0 / targetFps;
+
+            NSDictionary *frameProperties = @{
+                (id)kCGImagePropertyGIFDictionary: @{
+                    (id)kCGImagePropertyGIFDelayTime: @(frameDelay)
+                }
+            };
+
+            NSInteger frameCount = 0;
+            NSInteger skipInterval = (NSInteger)MAX(1, (videoTrack.nominalFrameRate / targetFps));
+            NSInteger readIndex = 0;
+            CGSize outputSize = videoTrack.naturalSize;
+
+            while (reader.status == AVAssetReaderStatusReading) {
+                CMSampleBufferRef sampleBuffer = [readerOutput copyNextSampleBuffer];
+                if (!sampleBuffer) break;
+
+                if (readIndex % skipInterval == 0) {
+                    CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+                    if (pixelBuffer) {
+                        CVPixelBufferLockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+                        CIImage *ciImage = [CIImage imageWithCVPixelBuffer:pixelBuffer];
+                        CIContext *ciContext = [CIContext contextWithOptions:nil];
+                        CGImageRef cgImage = [ciContext createCGImage:ciImage fromRect:ciImage.extent];
+                        if (cgImage) {
+                            CGImageDestinationAddImage(destination, cgImage, (__bridge CFDictionaryRef)frameProperties);
+                            CGImageRelease(cgImage);
+                            frameCount++;
+                        }
+                        CVPixelBufferUnlockBaseAddress(pixelBuffer, kCVPixelBufferLock_ReadOnly);
+                    }
+                }
+                CFRelease(sampleBuffer);
+                readIndex++;
+                if (frameCount >= 150) break; // Limit GIF frames for memory safety
+            }
+
+            CGImageDestinationFinalize(destination);
+            CFRelease(destination);
+
+            unsigned long long gifSize = 0;
+            NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+            if (attrs) gifSize = [attrs fileSize];
+
+            NSDictionary *result = @{
+                @"uri": gifUrl.absoluteString,
+                @"format": @"gif",
+                @"durationMs": @(frameCount * frameDelay * 1000.0),
+                @"hasAudio": @(NO),
+                @"width": @((NSInteger)outputSize.width),
+                @"height": @((NSInteger)outputSize.height),
+                @"sizeBytes": @(gifSize),
+                @"timestamp": @(timestamp)
+            };
+            resolve(result);
+        } @catch (NSException *ex) {
+            reject(@"GIF_ERROR", ex.reason, nil);
+        }
+    });
+}
+
+RCT_EXPORT_METHOD(getCapturedMedia:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSString *dir = [self getCapturesDirectory];
+        NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil];
+        NSMutableArray *mediaItems = [NSMutableArray array];
+
+        for (NSString *file in (files ?: @[])) {
+            NSString *fullPath = [dir stringByAppendingPathComponent:file];
+            NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:nil];
+            if (!attrs) continue;
+
+            NSString *ext = [file.pathExtension lowercaseString];
+            NSString *type = @"image";
+            if ([ext isEqualToString:@"mp4"] || [ext isEqualToString:@"mov"]) {
+                type = @"video";
+            } else if ([ext isEqualToString:@"gif"]) {
+                type = @"gif";
+            }
+
+            long long sizeBytes = [attrs fileSize];
+            NSDate *modDate = [attrs fileModificationDate];
+            long long timestamp = (long long)([modDate timeIntervalSince1970] * 1000.0);
+
+            [mediaItems addObject:@{
+                @"id": file,
+                @"type": type,
+                @"format": ext,
+                @"uri": [NSURL fileURLWithPath:fullPath].absoluteString,
+                @"filename": file,
+                @"sizeBytes": @(sizeBytes),
+                @"timestamp": @(timestamp)
+            }];
+        }
+
+        [mediaItems sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+            return [obj2[@"timestamp"] compare:obj1[@"timestamp"]];
+        }];
+
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:mediaItems options:0 error:nil];
+        NSString *jsonStr = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        resolve(jsonStr ?: @"[]");
+    });
+}
+
+RCT_EXPORT_METHOD(deleteCapturedMedia:(NSString *)uri
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            NSURL *url = [NSURL URLWithString:uri];
+            NSString *path = url ? url.path : uri;
+            if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+                [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+                resolve(@(YES));
+            } else {
+                resolve(@(NO));
+            }
+        } @catch (NSException *ex) {
+            resolve(@(NO));
+        }
+    });
+}
+
+RCT_EXPORT_METHOD(clearAllCapturedMedia:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            NSString *dir = [self getCapturesDirectory];
+            NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil];
+            for (NSString *file in (files ?: @[])) {
+                [[NSFileManager defaultManager] removeItemAtPath:[dir stringByAppendingPathComponent:file] error:nil];
+            }
+            resolve(@(YES));
+        } @catch (NSException *ex) {
+            resolve(@(NO));
+        }
+    });
+}
+
 #ifdef RCT_NEW_ARCH_ENABLED
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
@@ -950,3 +1678,4 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
 #endif
 
 @end
+

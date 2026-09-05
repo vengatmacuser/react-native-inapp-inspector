@@ -64,7 +64,15 @@ import {
   GitHubIcon,
   InfoCircleIcon,
   CopyIcon,
+  FilmIcon,
+  CameraIcon,
+  VideoCameraIcon,
+  MicrophoneIcon,
+  GifIcon,
+  ImageIcon,
 } from '../NetworkIcons';
+import {ScreenCapture} from '../../capture';
+
 import {LIB_VERSION} from '../../constants';
 import {
   copyToClipboard,
@@ -270,6 +278,7 @@ const SettingsPanel = () => {
     });
   }, [tabVisibility]);
 
+
   const hasUnsavedChanges = useMemo(() => {
     return allModules.some(
       m =>
@@ -306,6 +315,7 @@ const SettingsPanel = () => {
               performance: Boolean(tabVisibility?.performance),
               debugging: Boolean(tabVisibility?.debugging),
             });
+
           },
         },
         {
@@ -578,6 +588,11 @@ const SettingsPanel = () => {
                 key: 'limits' as const,
                 label: t('settings.ramLimits', 'RAM & Limits'),
                 Icon: BrainIcon,
+              },
+              {
+                key: 'capture' as const,
+                label: t('settings.screenVideoCapture', 'Screen & Video Capture'),
+                Icon: CameraIcon,
               },
               {
                 key: 'about' as const,
@@ -2281,6 +2296,293 @@ const SettingsPanel = () => {
                   </Text>
                 </TouchableScale>
               </View>
+            </View>
+          </View>
+        )}
+        {settingsActiveSubTab === 'capture' && (
+          <View style={{gap: 12}}>
+            {/* Screenshot Preferences Card */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                padding: 16,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                gap: 12,
+              }}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: AppColors.purpleShade50,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <CameraIcon color={AppColors.purple} size={16} />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 14,
+                      lineHeight: 18,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {t('settings.media.screenshotCardTitle', 'Screenshot Capture Settings')}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      lineHeight: 15,
+                      color: AppColors.grayText,
+                      marginTop: 1,
+                    }}>
+                    {t('settings.media.screenshotCardDesc', 'Image encoding format, compression quality and overlay auto-hide')}
+                  </Text>
+                </View>
+              </View>
+
+              {renderSettingRow({
+                icon: <ImageIcon color={AppColors.purple} size={16} />,
+                label: t('settings.media.imageFormat', 'Image Format'),
+                description: t('settings.media.imageFormatDesc', 'Export formats (PNG lossless, JPEG lossy, WebP)'),
+                right: (
+                  <View style={{flexDirection: 'row', gap: 4}}>
+                    {['PNG', 'JPEG', 'WEBP'].map(fmt => (
+                      <View
+                        key={fmt}
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          backgroundColor: fmt === 'PNG' ? AppColors.purple : `${AppColors.purple}1A`,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: fmt === 'PNG' ? AppColors.white : AppColors.purple,
+                          }}>
+                          {fmt}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ),
+              })}
+
+              {renderSettingRow({
+                icon: <EyeIcon color={AppColors.purple} size={16} />,
+                label: t('settings.media.autoHide', 'Auto-Hide Inspector During Capture'),
+                description: t('settings.media.autoHideDesc', 'Temporarily hides the inspector overlay during screen capture'),
+                isLast: true,
+                right: (
+                  <View
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                      backgroundColor: `${AppColors.emerald500}26`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10,
+                        color: AppColors.emerald500,
+                      }}>
+                      {t('settings.media.enabled', 'ON')}
+                    </Text>
+                  </View>
+                ),
+              })}
+            </View>
+
+            {/* Video & GIF Recording Card */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                padding: 16,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                gap: 12,
+              }}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: AppColors.purpleShade50,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <VideoCameraIcon color={AppColors.purple} size={16} />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 14,
+                      lineHeight: 18,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {t('settings.media.videoCardTitle', 'Video Recording & GIF Conversion')}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      lineHeight: 15,
+                      color: AppColors.grayText,
+                      marginTop: 1,
+                    }}>
+                    {t('settings.media.videoCardDesc', 'ReplayKit hardware encoding, frame capture fallback and GIF generation')}
+                  </Text>
+                </View>
+              </View>
+
+              {renderSettingRow({
+                icon: <MicrophoneIcon color={AppColors.purple} size={16} />,
+                label: t('settings.media.audioMode', 'Audio Source'),
+                description: t('settings.media.audioModeDesc', 'Record video with muted, app audio, or microphone commentary'),
+                right: (
+                  <View style={{flexDirection: 'row', gap: 4}}>
+                    {['Muted', 'App', 'Mic'].map((aud, i) => (
+                      <View
+                        key={aud}
+                        style={{
+                          paddingHorizontal: 7,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          backgroundColor: i === 0 ? AppColors.purple : `${AppColors.purple}1A`,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: i === 0 ? AppColors.white : AppColors.purple,
+                          }}>
+                          {aud}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ),
+              })}
+
+              {renderSettingRow({
+                icon: <FilmIcon color={AppColors.purple} size={16} />,
+                label: t('settings.media.frameRate', 'Recording Frame Rate (FPS)'),
+                description: t('settings.media.frameRateDesc', 'Target video smoothness: 15, 24, 30, or 60 FPS'),
+                right: (
+                  <View style={{flexDirection: 'row', gap: 4}}>
+                    {['15', '24', '30', '60'].map(fps => (
+                      <View
+                        key={fps}
+                        style={{
+                          paddingHorizontal: 6,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          backgroundColor: fps === '24' ? AppColors.purple : `${AppColors.purple}1A`,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: fps === '24' ? AppColors.white : AppColors.purple,
+                          }}>
+                          {fps}fps
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ),
+              })}
+
+              {renderSettingRow({
+                icon: <GifIcon color={AppColors.purple} size={16} />,
+                label: t('settings.media.gifAutoOpt', 'Auto GIF Optimization'),
+                description: t('settings.media.gifAutoOptDesc', 'Automatic palette reduction and frame skip for lightweight animated GIFs'),
+                isLast: true,
+                right: (
+                  <View
+                    style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 6,
+                      backgroundColor: `${AppColors.emerald500}26`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10,
+                        color: AppColors.emerald500,
+                      }}>
+                      ON
+                    </Text>
+                  </View>
+                ),
+              })}
+            </View>
+
+            {/* Media Storage Cache Management */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                padding: 16,
+              }}>
+              {renderSettingRow({
+                icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+                label: t('settings.media.purgeAll', 'Purge Captured Media Cache'),
+                description: t('settings.media.purgeAllDesc', 'Delete all local screenshots, screen recordings and converted GIFs'),
+                isLast: true,
+                onPress: () => {
+                  Alert.alert(
+                    t('settings.media.purgeConfirmTitle', 'Purge Media Storage?'),
+                    t('settings.media.purgeConfirmMessage', 'This will permanently delete all captured screenshots and videos from disk.'),
+                    [
+                      {text: t('common.cancel', 'Cancel'), style: 'cancel'},
+                      {
+                        text: t('settings.media.purgeCacheBtn', 'Purge All'),
+                        style: 'destructive',
+                        onPress: async () => {
+                          await ScreenCapture.clearAllMedia();
+                          showToast(t('settings.media.purgedSuccess', 'Media cache cleared successfully'));
+                        },
+                      },
+                    ],
+                  );
+                },
+                right: (
+                  <View
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                      backgroundColor: `${AppColors.errorColor}14`,
+                      borderWidth: 1,
+                      borderColor: `${AppColors.errorColor}33`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 11,
+                        lineHeight: 14,
+                        color: AppColors.errorColor,
+                      }}>
+                      {t('settings.media.purgeCacheBtn', 'Purge All')}
+                    </Text>
+                  </View>
+                ),
+              })}
             </View>
           </View>
         )}
@@ -4220,6 +4522,7 @@ const SettingsPanel = () => {
       </ScrollView>
     );
   }
+
 
   const subPageAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {

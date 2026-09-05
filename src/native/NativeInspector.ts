@@ -87,7 +87,7 @@ export const enableNativeCrashProtection = async (options?: {
   }
   try {
     const result = await NativeModule.enableNativeCrashProtection();
-    if (options?.showFloatingButton !== false) {
+    if (options?.showFloatingButton === true) {
       await showNativeFloatingButton();
     }
     return !!result;
@@ -439,4 +439,189 @@ export const fetchNativeCachedPage = async <T = any>(
   }
 };
 
+export interface ScreenshotOptions {
+  format?: 'png' | 'jpeg' | 'webp';
+  quality?: number; // 0.1 to 1.0
+  scale?: number; // 0.5, 0.75, 1.0
+  hideInspector?: boolean;
+  includeBase64?: boolean;
+}
 
+export interface ScreenshotResult {
+  uri: string;
+  format: 'png' | 'jpeg' | 'webp';
+  width: number;
+  height: number;
+  sizeBytes: number;
+  timestamp: number;
+  base64?: string;
+}
+
+export interface RecordingOptions {
+  format?: 'mp4' | 'gif';
+  audioSource?: 'none' | 'app' | 'mic' | 'mixed';
+  fps?: number;
+  bitrate?: number;
+  maxDurationSeconds?: number;
+  hideInspector?: boolean;
+}
+
+export interface RecordingResult {
+  uri: string;
+  format: 'mp4' | 'gif';
+  durationMs: number;
+  hasAudio: boolean;
+  width: number;
+  height: number;
+  sizeBytes: number;
+  timestamp: number;
+}
+
+export interface GifConversionOptions {
+  fps?: number;
+  width?: number;
+  maxDurationSeconds?: number;
+}
+
+export interface CapturedMediaItem {
+  id: string;
+  type: 'image' | 'video' | 'gif';
+  format: string;
+  uri: string;
+  filename: string;
+  sizeBytes: number;
+  timestamp: number;
+  durationMs?: number;
+  hasAudio?: boolean;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Captures a high-resolution native screenshot of the application window.
+ */
+export const takeNativeScreenshot = async (
+  options?: ScreenshotOptions,
+): Promise<ScreenshotResult | null> => {
+  if (!NativeModule || !NativeModule.takeScreenshot) {
+    return null;
+  }
+  try {
+    const result = await NativeModule.takeScreenshot(options || {});
+    return result as ScreenshotResult;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Starts native video or GIF recording of the application.
+ */
+export const startNativeVideoRecording = async (
+  options?: RecordingOptions,
+): Promise<boolean> => {
+  if (!NativeModule || !NativeModule.startVideoRecording) {
+    return false;
+  }
+  try {
+    const result = await NativeModule.startVideoRecording(options || {});
+    return !!result;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Stops active video or GIF recording and returns the final file metadata.
+ */
+export const stopNativeVideoRecording = async (): Promise<RecordingResult | null> => {
+  if (!NativeModule || !NativeModule.stopVideoRecording) {
+    return null;
+  }
+  try {
+    const result = await NativeModule.stopVideoRecording();
+    return result as RecordingResult;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Checks if a recording session is currently active.
+ */
+export const isNativeRecordingActive = async (): Promise<boolean> => {
+  if (!NativeModule || !NativeModule.isRecording) {
+    return false;
+  }
+  try {
+    const result = await NativeModule.isRecording();
+    return !!result;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Converts a recorded MP4 video to an animated GIF.
+ */
+export const convertNativeVideoToGif = async (
+  videoUri: string,
+  options?: GifConversionOptions,
+): Promise<RecordingResult | null> => {
+  if (!NativeModule || !NativeModule.convertToGif) {
+    return null;
+  }
+  try {
+    const result = await NativeModule.convertToGif(videoUri, options || {});
+    return result as RecordingResult;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Fetches all captured screenshots, recordings, and GIFs from disk.
+ */
+export const fetchCapturedMediaList = async (): Promise<CapturedMediaItem[]> => {
+  if (!NativeModule || !NativeModule.getCapturedMedia) {
+    return [];
+  }
+  try {
+    const jsonStr: string = await NativeModule.getCapturedMedia();
+    if (!jsonStr) return [];
+    const parsed = JSON.parse(jsonStr);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Deletes a specific media file from disk.
+ */
+export const deleteCapturedMediaFile = async (uri: string): Promise<boolean> => {
+  if (!NativeModule || !NativeModule.deleteCapturedMedia) {
+    return false;
+  }
+  try {
+    const result = await NativeModule.deleteCapturedMedia(uri);
+    return !!result;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Purges all captured media files from disk.
+ */
+export const clearAllCapturedMediaFiles = async (): Promise<boolean> => {
+  if (!NativeModule || !NativeModule.clearAllCapturedMedia) {
+    return false;
+  }
+  try {
+    const result = await NativeModule.clearAllCapturedMedia();
+    return !!result;
+  } catch {
+    return false;
+  }
+};

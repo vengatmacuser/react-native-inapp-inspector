@@ -1,6 +1,7 @@
 import React, {useCallback, useMemo, useRef} from 'react';
 import {
   FlatList,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -688,7 +689,7 @@ const ConsoleTab = React.memo(() => {
         initialNumToRender={12}
         maxToRenderPerBatch={8}
         windowSize={5}
-        removeClippedSubviews={true}
+        removeClippedSubviews={Platform.OS === 'android'}
         renderToHardwareTextureAndroid={true}
         ListEmptyComponent={
           <EmptyState

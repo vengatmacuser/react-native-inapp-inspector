@@ -9,7 +9,7 @@ export * from './enums';
 export type GroupedListItem =
   | {
       type: 'header';
-      id: string;
+      id: string | number;
       pageName: string;
       color: string;
       stats: {success: number; failed: number; loading: number};
@@ -20,7 +20,7 @@ export type GroupedListItem =
     }
   | {
       type: 'log';
-      id: number;
+      id: string | number;
       log: NetworkLog;
       isLast: boolean;
       color: string;

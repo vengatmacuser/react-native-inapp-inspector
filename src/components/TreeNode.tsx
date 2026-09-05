@@ -1,5 +1,5 @@
-import React, {useState, useRef, useEffect} from 'react';
-import {Text, View, Image, Animated, Pressable} from 'react-native';
+import React, {useState, useEffect} from 'react';
+import {Text, View, Image, Pressable} from 'react-native';
 
 // Helpers
 import {escapeRegex} from '../helpers';
@@ -38,21 +38,6 @@ const TreeNode = React.memo(function TreeNode({
 
   const isObject = typeof data === 'object' && data !== null;
   const isArray = Array.isArray(data);
-
-  // Declare all hooks at the top unconditionally (prevents "Rendered fewer hooks than expected" error)
-  const treeChevronAnim = useRef(new Animated.Value(open ? 1 : 0)).current;
-  useEffect(() => {
-    Animated.timing(treeChevronAnim, {
-      toValue: open ? 1 : 0,
-      duration: 160,
-      useNativeDriver: true,
-    }).start();
-  }, [open]);
-
-  const treeChevronRotate = treeChevronAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
 
   function renderHighlighted(text: string): React.ReactNode[] {
     if (text === 'null' || text === 'undefined') {
@@ -145,10 +130,10 @@ const TreeNode = React.memo(function TreeNode({
         style={styles.treeRow}
         onPress={() => setLocalOpen(v => !v)}
         hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-        <Animated.View
-          style={{transform: [{rotate: treeChevronRotate}], marginRight: 6}}>
+        <View
+          style={{transform: [{rotate: open ? '180deg' : '0deg'}], marginRight: 6}}>
           <ChevronIcon color={AppColors.grayTextWeak} size={12} />
-        </Animated.View>
+        </View>
         {name !== undefined && (
           <Text style={[styles.codeKey, styles.treeKeyMargin]}>{`"${String(
             name,

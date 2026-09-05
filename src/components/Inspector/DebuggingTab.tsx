@@ -1008,12 +1008,12 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   consoleLogLine: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: AppFonts.interRegular,
     fontSize: 10,
     lineHeight: 14,
   },
   consoleLogPlaceholder: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: AppFonts.interRegular,
     fontSize: 10,
     color: '#64748B',
     fontStyle: 'italic',

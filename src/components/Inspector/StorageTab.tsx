@@ -949,7 +949,7 @@ const styles = StyleSheet.create({
     borderColor: `${AppColors.grayBorderSecondary}80`,
   },
   valuePreviewText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: AppFonts.interRegular,
     fontSize: 11,
     color: AppColors.primaryBlack,
     lineHeight: 16,
@@ -1014,7 +1014,7 @@ const styles = StyleSheet.create({
     color: AppColors.purple,
   },
   connectGuideCode: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: AppFonts.interRegular,
     fontSize: 10,
     color: AppColors.grayText,
     lineHeight: 15,
@@ -1079,7 +1079,7 @@ const styles = StyleSheet.create({
   textAreaInput: {
     minHeight: 90,
     maxHeight: 160,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontFamily: AppFonts.interRegular,
     fontSize: 11,
   },
   typeSelectorStrip: {

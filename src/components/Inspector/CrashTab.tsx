@@ -239,7 +239,9 @@ const CrashTab = React.memo(() => {
       return (
         <AnimatedEntrance index={index} distance={8}>
           <TouchableScale
-            onPress={() => setSelectedCrash(item)}
+            onPress={() => {
+              setSelectedCrash(item);
+            }}
             style={[
               localStyles.cardContainer,
               isFatal && localStyles.fatalCardBorder,
@@ -607,7 +609,7 @@ const CrashTab = React.memo(() => {
             initialNumToRender={12}
             maxToRenderPerBatch={8}
             windowSize={5}
-            removeClippedSubviews={true}
+            removeClippedSubviews={Platform.OS === 'android'}
             renderToHardwareTextureAndroid={true}
             contentContainerStyle={localStyles.listContent}
             showsVerticalScrollIndicator={false}

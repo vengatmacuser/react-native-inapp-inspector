@@ -99,7 +99,16 @@ export const getSize = (data: unknown): string => {
   }
 };
 
-export const copyToClipboard = (value: unknown, label: string): void => {
+export const formatBytes = (bytes: number): string => {
+  if (bytes === 0 || !bytes || isNaN(bytes)) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i] || 'B'}`;
+};
+
+export const copyToClipboard = (value: unknown, label?: string): void => {
+
   const resolved = typeof value === 'function' ? (value as Function)() : value;
   let textToCopy = '';
   if (typeof resolved === 'string') {
