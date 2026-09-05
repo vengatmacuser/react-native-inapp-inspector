@@ -616,29 +616,6 @@ export const StorageTab = React.memo(() => {
             }
             ListFooterComponent={<View style={{height: 60}} />}
           />
-
-          <TouchableScale
-            onPress={() => {
-              try {
-                listRef.current?.scrollToOffset({
-                  offset: 0,
-                  animated: true,
-                });
-              } catch {
-                try {
-                  listRef.current?.scrollToIndex({
-                    index: 0,
-                    animated: true,
-                  });
-                } catch {}
-              }
-            }}
-            hitSlop={12}
-            style={globalStyles.scrollTopBtn}>
-            <View style={{transform: [{rotate: '180deg'}]}}>
-              <ChevronIcon color={AppColors.white} size={18} />
-            </View>
-          </TouchableScale>
         </>
       )}
 

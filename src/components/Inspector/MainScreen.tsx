@@ -8,6 +8,7 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import {useInspector} from './InspectorContext';
@@ -32,7 +33,11 @@ import StorageTab from './StorageTab';
 import DebuggingTab from './DebuggingTab';
 import SettingsPanel from './SettingsPanel';
 import NpmUpdateToast from './NpmUpdateToast';
+import NpmStarPrompt from './NpmStarPrompt';
+import FeedbackModal from './FeedbackModal';
 import Toast from '../Toast';
+import TouchableScale from '../TouchableScale';
+import {HeadphonesIcon} from '../NetworkIcons';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import NavigationTracker from './NavigationTracker';
@@ -51,6 +56,8 @@ const MainScreen = () => {
     selectedReduxAction,
     selectedCrash,
     settingsPage,
+    isFeedbackOpen,
+    setIsFeedbackOpen,
     activeTab,
     isReady,
     enabled,
@@ -92,6 +99,19 @@ const MainScreen = () => {
       }).start();
     }
   }, [settingsPage !== null]);
+
+  const feedbackAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (isFeedbackOpen) {
+      feedbackAnim.setValue(0);
+      Animated.spring(feedbackAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isFeedbackOpen]);
 
   const tabAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -139,8 +159,8 @@ const MainScreen = () => {
               <InspectorHeader />
 
               <View style={{flex: 1}}>
-                {/* ─── Horizontal Scrollable Tab Bar inside Content (Always visible) ─── */}
-                {!isDetailActive && <TabBar />}
+                {/* ─── Horizontal Scrollable Tab Bar inside Content (Always visible unless in detail/settings/feedback) ─── */}
+                {!isDetailActive && settingsPage === null && !isFeedbackOpen && <TabBar />}
 
                 {isReady ? (
                   <View style={{flex: 1}}>
@@ -159,7 +179,7 @@ const MainScreen = () => {
                             },
                           ],
                         },
-                        (isDetailActive || settingsPage !== null) && {
+                        (isDetailActive || settingsPage !== null || isFeedbackOpen) && {
                           pointerEvents: 'none',
                         },
                       ]}>
@@ -236,6 +256,39 @@ const MainScreen = () => {
                     <SettingsPanel />
                   </Animated.View>
                 )}
+
+                {/* Support & Feedback Layer - Rendered inside in-app inspector covering full content card */}
+                {isFeedbackOpen && (
+                  <Animated.View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        backgroundColor: AppColors.primaryLight,
+                        opacity: feedbackAnim,
+                        transform: [
+                          {
+                            translateY: feedbackAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [24, 0],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}>
+                    <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />
+                  </Animated.View>
+                )}
+
+                {/* Floating Support & Feedback Button (in place of scroll-to-top) */}
+                {!isDetailActive && settingsPage === null && !isFeedbackOpen && (
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setIsFeedbackOpen(true)}
+                    hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+                    style={styles.supportFab}>
+                    <HeadphonesIcon color={AppColors.white} size={20} />
+                  </TouchableOpacity>
+                )}
               </View>
 
               {/* Bottom floating toast notification */}
@@ -243,6 +296,9 @@ const MainScreen = () => {
 
               {/* NPM Version Update Toast with timeout progress bar */}
               <NpmUpdateToast />
+
+              {/* 5-Day Periodic Star & Support Prompt */}
+              <NpmStarPrompt />
             </View>
           </View>
         </ErrorBoundary>

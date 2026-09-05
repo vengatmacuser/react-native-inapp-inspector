@@ -42,6 +42,7 @@ import {
   NpmIcon,
   ResetIcon,
   BoltIcon,
+  InfoCircleIcon,
 } from '../NetworkIcons';
 
 const InspectorHeader = React.memo(() => {
@@ -70,6 +71,9 @@ const InspectorHeader = React.memo(() => {
     runClearAllWithAnimation,
     settingsPage,
     setSettingsPage,
+    setSettingsActiveSubTab,
+    isFeedbackOpen,
+    setIsFeedbackOpen,
     resetToDefaults,
     closeModal,
     detailTitle,
@@ -147,7 +151,7 @@ const InspectorHeader = React.memo(() => {
     (activeTab === 'crash' && selectedCrash != null);
 
   const isSettingsView = settingsPage !== null;
-  const isAnySelected = isDetailView || isSettingsView;
+  const isAnySelected = isDetailView || isSettingsView || isFeedbackOpen;
 
   const settingsModuleTitle = useMemo(() => {
     switch (settingsPage) {
@@ -206,6 +210,10 @@ const InspectorHeader = React.memo(() => {
             ]}>
             <TouchableScale
               onPress={() => {
+                if (isFeedbackOpen) {
+                  setIsFeedbackOpen(false);
+                  return;
+                }
                 if (isSettingsView) {
                   if (settingsPage === 'main') {
                     setSettingsPage(null);
@@ -249,7 +257,50 @@ const InspectorHeader = React.memo(() => {
               <WhiteBackNavigation />
             </TouchableScale>
 
-            {isSettingsView ? (
+            {isFeedbackOpen ? (
+              <View style={{gap: 2, flex: 1, minWidth: 0}}>
+                <View
+                  style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: isNarrow ? 14 : 16,
+                      color: AppColors.white,
+                      letterSpacing: -0.2,
+                    }}
+                    numberOfLines={1}>
+                    Support & Feedback
+                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: `${AppColors.white}26`,
+                      paddingHorizontal: isNarrow ? 4 : 6,
+                      paddingVertical: 1.5,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: `${AppColors.white}20`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: isNarrow ? 8 : 9,
+                        color: AppColors.white,
+                      }}>
+                      v{LIB_VERSION}
+                    </Text>
+                  </View>
+                </View>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: isNarrow ? 9.5 : 10.5,
+                    color: `${AppColors.white}CC`,
+                  }}
+                  numberOfLines={1}>
+                  Direct line to maintainers & developers
+                </Text>
+              </View>
+            ) : isSettingsView ? (
               <View style={{gap: 2, flex: 1, minWidth: 0}}>
                 <View
                   style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
@@ -997,6 +1048,9 @@ const InspectorHeader = React.memo(() => {
 
             {!isAnySelected && (
               <TouchableScale
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
                 onPress={() => setSettingsPage('main')}
                 hitSlop={15}
                 style={[
@@ -1008,6 +1062,28 @@ const InspectorHeader = React.memo(() => {
                   },
                 ]}>
                 <SettingsIcon color={AppColors.white} size={isNarrow ? 12 : 14} />
+              </TouchableScale>
+            )}
+
+            {!isAnySelected && (
+              <TouchableScale
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="About and System Specifications"
+                onPress={() => {
+                  setSettingsActiveSubTab('about');
+                  setSettingsPage('main');
+                }}
+                hitSlop={15}
+                style={[
+                  styles.closeButtonSquare,
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: isNarrow ? 6 : 7,
+                  },
+                ]}>
+                <InfoCircleIcon color={AppColors.white} size={isNarrow ? 12 : 14} />
               </TouchableScale>
             )}
 

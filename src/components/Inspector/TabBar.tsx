@@ -10,6 +10,7 @@ import {
 import {useInspector} from './InspectorContext';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
+import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
 import {
   SignalIcon,
@@ -56,60 +57,70 @@ const TabBar = React.memo(() => {
         {(
           [
             {
+              id: 1,
               key: 'apis',
               label: 'APIs',
               count: logs.length,
               icon: 'apis',
             },
             {
+              id: 2,
               key: 'logs',
               label: 'Logs',
               count: consoleLogs.length,
               icon: 'logs',
             },
             {
+              id: 3,
               key: 'analytics',
               label: 'Analytics',
               count: analyticsEvents.length,
               icon: 'analytics',
             },
             {
+              id: 4,
               key: 'redux',
               label: 'Redux',
               count: 0,
               icon: 'redux',
             },
             {
-              key: 'bundle',
-              label: 'Bundle',
-              count: 0,
-              icon: 'bundle',
-            },
-            {
-              key: 'performance',
-              label: 'Performance',
-              count: 0,
-              icon: 'performance',
-            },
-            {
-              key: 'crash',
-              label: 'Crash',
-              count: crashRecords?.length || 0,
-              icon: 'crash',
-            },
-            {
-              key: 'device',
-              label: 'Device',
-              count: 0,
-              icon: 'device',
-            },
-            {
+              id: 5,
               key: 'storage',
               label: 'Storage',
               count: 0,
               icon: 'storage',
             },
             {
+              id: 6,
+              key: 'device',
+              label: 'Device',
+              count: 0,
+              icon: 'device',
+            },
+            {
+              id: 7,
+              key: 'crash',
+              label: 'Crash',
+              count: crashRecords?.length || 0,
+              icon: 'crash',
+            },
+            {
+              id: 8,
+              key: 'bundle',
+              label: 'Bundle',
+              count: 0,
+              icon: 'bundle',
+            },
+            {
+              id: 9,
+              key: 'performance',
+              label: 'Performance',
+              count: 0,
+              icon: 'performance',
+            },
+            {
+              id: 10,
               key: 'debugging',
               label: 'Debugging',
               count: 0,
@@ -176,24 +187,50 @@ const TabBar = React.memo(() => {
                   {tab.icon === 'redux' && (
                     <ReduxIcon color={iconColor} size={14} />
                   )}
+                  {tab.icon === 'storage' && (
+                    <DatabaseIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'device' && (
+                    <SmartphoneIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'crash' && (
+                    <CrashIcon color={iconColor} size={14} />
+                  )}
                   {tab.icon === 'bundle' && (
                     <PackageIcon color={iconColor} size={14} />
                   )}
                   {tab.icon === 'performance' && (
                     <PerformanceIcon color={iconColor} size={14} />
                   )}
-                  {tab.icon === 'crash' && (
-                    <CrashIcon color={iconColor} size={14} />
-                  )}
-                  {tab.icon === 'device' && (
-                    <SmartphoneIcon color={iconColor} size={14} />
-                  )}
-                  {tab.icon === 'storage' && (
-                    <DatabaseIcon color={iconColor} size={14} />
-                  )}
                   {tab.icon === 'debugging' && (
                     <QrCodeIcon color={iconColor} size={14} />
                   )}
+                  <View
+                    style={{
+                      minWidth: 20,
+                      height: 20,
+                      paddingHorizontal: 4,
+                      borderRadius: 10,
+                      backgroundColor: isActive
+                        ? `${AppColors.white}33`
+                        : `${AppColors.purple}1F`,
+                      borderWidth: 1,
+                      borderColor: isActive
+                        ? `${AppColors.white}66`
+                        : `${AppColors.purple}40`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 9.5,
+                        lineHeight: 12,
+                        color: isActive ? AppColors.white : AppColors.purple,
+                      }}>
+                      #{tab.id}
+                    </Text>
+                  </View>
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"

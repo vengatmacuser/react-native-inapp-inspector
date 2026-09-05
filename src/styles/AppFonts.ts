@@ -1,6 +1,7 @@
 export interface AppFontConfig {
   interRegular?: string;
   interMedium?: string;
+  interSemiBold?: string;
   interBold?: string;
   Sfprotext?: string;
 }
@@ -8,6 +9,7 @@ export interface AppFontConfig {
 export const AppFonts = {
   interRegular: 'Inter-Regular',
   interMedium: 'Inter-Medium',
+  interSemiBold: 'Inter-SemiBold',
   interBold: 'Inter-Bold',
   Sfprotext: 'Inter-Regular',
 };

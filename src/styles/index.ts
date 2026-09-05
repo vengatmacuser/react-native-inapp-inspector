@@ -140,7 +140,26 @@ export const getRawStyles = (colors: typeof AppColors) => ({
   },
 
   listContent: {paddingBottom: Platform.OS === 'ios' ? 44 : 32},
-  // #2 — scroll-to-top button, always shown at the bottom right.
+  // Floating Support & Feedback FAB, in place of scroll-to-top button
+  supportFab: {
+    position: 'absolute',
+    bottom: 22,
+    right: 16,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.purple,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.purple,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 14,
+    zIndex: 999,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
   scrollTopBtn: {
     position: 'absolute',
     bottom: 22,

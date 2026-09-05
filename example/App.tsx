@@ -53,6 +53,7 @@ function App() {
         navigationRef={navigationRef}
         environment="DEV"
         appIcon={<BrandSquareIcon />}
+        initialVisible={true}
       />
     </SafeAreaProvider>
   );

@@ -55,6 +55,7 @@ import {
   NativeSystemMetrics,
   isNativeModuleAvailable,
 } from '../../native/NativeInspector';
+import {trackInspectorScreenRecord} from '../../helpers/telemetry';
 
 export interface PerformanceEvent {
   id: string;
@@ -476,7 +477,13 @@ const PerformanceTab = React.memo(() => {
 
         {/* Live FPS Telemetry Recorder Toggle */}
         <TouchableScale
-          onPress={() => setIsRecording(prev => !prev)}
+          onPress={() => {
+            setIsRecording(prev => {
+              const next = !prev;
+              trackInspectorScreenRecord(next ? 'start' : 'stop', 'performance_fps');
+              return next;
+            });
+          }}
           style={[
             perfStyles.recordToggleBtn,
             isRecording

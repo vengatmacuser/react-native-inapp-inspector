@@ -1520,6 +1520,23 @@ export const PackageBoxIcon = ({
   );
 };
 
+export const StarIcon = ({
+  color = '#F59E0B',
+  size = 14,
+}: IconProps) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <Path
+        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
 export const GitHubIcon = ({
   color = AppColors.grayTextWeak,
   size = 14,
@@ -2352,6 +2369,81 @@ export const TurtleIcon = ({
       strokeWidth="2"
       strokeLinecap="round"
     />
+  </Svg>
+);
+
+export const HeadphonesIcon = ({
+  color = AppColors.white,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 18v-6a9 9 0 0 1 18 0v6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const HelpCircleIcon = ({
+  color = AppColors.white,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path
+      d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Line x1="12" y1="17" x2="12.01" y2="17" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const SendIcon = ({
+  color = AppColors.white,
+  size = 18,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M22 2L11 13"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M22 2L15 22L11 13L2 9L22 2Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const LifeBuoyIcon = ({
+  color = AppColors.white,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Circle cx="12" cy="12" r="4" stroke={color} strokeWidth="2" />
+    <Line x1="4.93" y1="4.93" x2="9.17" y2="9.17" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="14.83" y1="9.17" x2="19.07" y2="4.93" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="14.83" y1="14.83" x2="19.07" y2="19.07" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="4.93" y1="19.07" x2="9.17" y2="14.83" stroke={color} strokeWidth="2" strokeLinecap="round" />
   </Svg>
 );
 

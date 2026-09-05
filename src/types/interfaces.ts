@@ -180,8 +180,17 @@ export interface PersistedSettings {
   reduxExpandDepth?: number;
   showDuplicateLogs?: boolean;
   showUpdateToast?: boolean;
+  useNativeFab?: boolean;
+  shakeToOpen?: boolean;
   telemetryClientId?: string;
+  telemetryDeviceId?: string;
+  deviceRegistered?: boolean;
+  deviceFirstSeen?: number;
   telemetryLastPing?: number;
+  telemetryLastActive?: number;
+  starPromptActioned?: boolean;
+  starPromptLastShown?: number;
+  starPromptFirstSeen?: number;
 }
 
 // ─── Inspector component props / context ──────────────────────────────────────
@@ -195,6 +204,7 @@ export interface NetworkInspectorProps {
   environment?: 'DEV' | 'UAT' | 'PrePROD' | 'PROD' | 'QA' | 'Staging' | string;
   initialVisible?: boolean;
   visible?: boolean;
+  remoteConfig?: boolean | any;
 }
 
 export interface NavigationTrackerProps {
@@ -239,6 +249,8 @@ export interface InspectorContextValue {
   setShowHeaderInfo: React.Dispatch<React.SetStateAction<boolean>>;
   settingsPage: SettingsPage;
   setSettingsPage: React.Dispatch<React.SetStateAction<SettingsPage>>;
+  isFeedbackOpen: boolean;
+  setIsFeedbackOpen: React.Dispatch<React.SetStateAction<boolean>>;
   updateAvailable: boolean;
   latestNpmVersion: string | null;
   clearAnim: Animated.Value;

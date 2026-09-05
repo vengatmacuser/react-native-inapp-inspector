@@ -2,6 +2,10 @@ import React, {useMemo, useState, useEffect, useRef} from 'react';
 import {
   Alert,
   Animated,
+  DevSettings,
+  Dimensions,
+  Linking,
+  PixelRatio,
   Platform,
   ScrollView,
   StatusBar,
@@ -57,9 +61,18 @@ import {
   SmartphoneIcon,
   DatabaseIcon,
   QrCodeIcon,
+  GitHubIcon,
+  InfoCircleIcon,
+  CopyIcon,
 } from '../NetworkIcons';
 import {LIB_VERSION} from '../../constants';
-import {copyToClipboard, isLocalDebugEnvironment} from '../../helpers';
+import {
+  copyToClipboard,
+  isLocalDebugEnvironment,
+  getAppName,
+  getBundleIdentifier,
+  getAppVersionAndBuild,
+} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {pruneAllLogs} from '../../helpers/memoryManager';
 
@@ -87,6 +100,7 @@ const SettingsPanel = () => {
     showConsoleLevels,
     setShowConsoleLevels,
     resetToDefaults,
+    closeModal,
     storage,
     logs,
     consoleLogs,
@@ -136,6 +150,7 @@ const SettingsPanel = () => {
       (
         [
           {
+            id: 1,
             key: 'apis',
             label: 'APIs (Network)',
             category: 'core',
@@ -143,6 +158,7 @@ const SettingsPanel = () => {
             desc: 'HTTP/HTTPS requests, GraphQL, Axios & WebSocket inspector',
           },
           {
+            id: 2,
             key: 'logs',
             label: 'Console Logs',
             category: 'core',
@@ -150,27 +166,7 @@ const SettingsPanel = () => {
             desc: 'Terminal console logs, warnings, errors & stack traces',
           },
           {
-            key: 'performance',
-            label: 'Performance Tracker',
-            category: 'diagnostic',
-            icon: 'performance',
-            desc: '60 FPS monitor, Hermes memory telemetry & re-render profiler',
-          },
-          {
-            key: 'bundle',
-            label: 'Bundle Analyzer',
-            category: 'diagnostic',
-            icon: 'bundle',
-            desc: 'Metro packager dependencies, source maps & asset breakdown',
-          },
-          {
-            key: 'crash',
-            label: 'Crash Protection',
-            category: 'diagnostic',
-            icon: 'crash',
-            desc: 'Runtime exception guard, breadcrumbs & memory snapshot',
-          },
-          {
+            id: 3,
             key: 'analytics',
             label: 'Analytics Logger',
             category: 'telemetry',
@@ -178,6 +174,7 @@ const SettingsPanel = () => {
             desc: 'Firebase & custom analytics events, user properties & params',
           },
           {
+            id: 4,
             key: 'redux',
             label: 'Redux Inspector',
             category: 'telemetry',
@@ -185,13 +182,7 @@ const SettingsPanel = () => {
             desc: 'Store state diffing, action history & reducer timeline',
           },
           {
-            key: 'device',
-            label: 'Device Info',
-            category: 'diagnostic',
-            icon: 'device',
-            desc: 'Hardware specs, IP address, screen metrics, UDID & runtime stats',
-          },
-          {
+            id: 5,
             key: 'storage',
             label: 'Storage Inspector',
             category: 'telemetry',
@@ -199,6 +190,39 @@ const SettingsPanel = () => {
             desc: 'AsyncStorage & MMKV key-value store viewer with full CRUD support',
           },
           {
+            id: 6,
+            key: 'device',
+            label: 'Device Info',
+            category: 'diagnostic',
+            icon: 'device',
+            desc: 'Hardware specs, IP address, screen metrics, UDID & runtime stats',
+          },
+          {
+            id: 7,
+            key: 'crash',
+            label: 'Crash Protection',
+            category: 'diagnostic',
+            icon: 'crash',
+            desc: 'Runtime exception guard, breadcrumbs & memory snapshot',
+          },
+          {
+            id: 8,
+            key: 'bundle',
+            label: 'Bundle Analyzer',
+            category: 'diagnostic',
+            icon: 'bundle',
+            desc: 'Metro packager dependencies, source maps & asset breakdown',
+          },
+          {
+            id: 9,
+            key: 'performance',
+            label: 'Performance & Tracker',
+            category: 'diagnostic',
+            icon: 'performance',
+            desc: '60 FPS monitor, Hermes memory telemetry & re-render profiler',
+          },
+          {
+            id: 10,
             key: 'debugging',
             label: 'Multi-Device Debugging',
             category: 'diagnostic',
@@ -222,11 +246,11 @@ const SettingsPanel = () => {
     logs: Boolean(tabVisibility?.logs),
     analytics: Boolean(tabVisibility?.analytics),
     redux: Boolean(tabVisibility?.redux),
+    storage: Boolean(tabVisibility?.storage),
+    device: Boolean(tabVisibility?.device),
+    crash: Boolean(tabVisibility?.crash),
     bundle: Boolean(tabVisibility?.bundle),
     performance: Boolean(tabVisibility?.performance),
-    crash: Boolean(tabVisibility?.crash),
-    device: Boolean(tabVisibility?.device),
-    storage: Boolean(tabVisibility?.storage),
     debugging: Boolean(tabVisibility?.debugging),
   }));
 
@@ -237,11 +261,11 @@ const SettingsPanel = () => {
       logs: Boolean(tabVisibility?.logs),
       analytics: Boolean(tabVisibility?.analytics),
       redux: Boolean(tabVisibility?.redux),
+      storage: Boolean(tabVisibility?.storage),
+      device: Boolean(tabVisibility?.device),
+      crash: Boolean(tabVisibility?.crash),
       bundle: Boolean(tabVisibility?.bundle),
       performance: Boolean(tabVisibility?.performance),
-      crash: Boolean(tabVisibility?.crash),
-      device: Boolean(tabVisibility?.device),
-      storage: Boolean(tabVisibility?.storage),
       debugging: Boolean(tabVisibility?.debugging),
     });
   }, [tabVisibility]);
@@ -259,17 +283,55 @@ const SettingsPanel = () => {
   ).length;
 
   const handleSaveChanges = () => {
-    animateNextLayout();
-    allModules.forEach(m => {
-      if (m.key !== 'apis') {
-        const isStagedOn = Boolean(stagedTabVisibility[m.key as ActiveTab]);
-        const isCurrentOn = Boolean(tabVisibility?.[m.key as ActiveTab]);
-        if (isStagedOn !== isCurrentOn) {
-          toggleTabVisibility(m.key as ActiveTab);
-        }
-      }
-    });
-    Alert.alert(t('settings.settingsSaved'), t('settings.settingsSavedDesc'));
+    if (!hasUnsavedChanges) return;
+
+    Alert.alert(
+      'Apply Changes & Reload',
+      'Are you sure you want to save module changes? The inspector will close and reload the app to apply the new configuration.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => {
+            // Discard: Revert staged visibility back to saved tabVisibility
+            setStagedTabVisibility({
+              apis: true,
+              logs: Boolean(tabVisibility?.logs),
+              analytics: Boolean(tabVisibility?.analytics),
+              redux: Boolean(tabVisibility?.redux),
+              storage: Boolean(tabVisibility?.storage),
+              device: Boolean(tabVisibility?.device),
+              crash: Boolean(tabVisibility?.crash),
+              bundle: Boolean(tabVisibility?.bundle),
+              performance: Boolean(tabVisibility?.performance),
+              debugging: Boolean(tabVisibility?.debugging),
+            });
+          },
+        },
+        {
+          text: 'Save & Reload',
+          style: 'default',
+          onPress: () => {
+            animateNextLayout();
+            allModules.forEach(m => {
+              if (m.key !== 'apis') {
+                const isStagedOn = Boolean(stagedTabVisibility[m.key as ActiveTab]);
+                const isCurrentOn = Boolean(tabVisibility?.[m.key as ActiveTab]);
+                if (isStagedOn !== isCurrentOn) {
+                  toggleTabVisibility(m.key as ActiveTab);
+                }
+              }
+            });
+            closeModal();
+            setTimeout(() => {
+              if (__DEV__ && DevSettings && DevSettings.reload) {
+                DevSettings.reload();
+              }
+            }, 350);
+          },
+        },
+      ],
+    );
   };
 
   const [isDefaultTabDropdownOpen, setIsDefaultTabDropdownOpen] =
@@ -516,6 +578,11 @@ const SettingsPanel = () => {
                 key: 'limits' as const,
                 label: t('settings.ramLimits', 'RAM & Limits'),
                 Icon: BrainIcon,
+              },
+              {
+                key: 'about' as const,
+                label: t('settings.aboutAndSpecs', 'About & Specs'),
+                Icon: InfoCircleIcon,
               },
             ].map(tab => {
               const isActive = settingsActiveSubTab === tab.key;
@@ -864,6 +931,34 @@ const SettingsPanel = () => {
                               gap: 6,
                               flexWrap: 'wrap',
                             }}>
+                            <View
+                              style={{
+                                minWidth: 22,
+                                height: 22,
+                                paddingHorizontal: 5,
+                                borderRadius: 11,
+                                backgroundColor: isChecked
+                                  ? `${AppColors.purple}1C`
+                                  : `${AppColors.grayBorderSecondary}80`,
+                                borderWidth: 1,
+                                borderColor: isChecked
+                                  ? `${AppColors.purple}44`
+                                  : AppColors.grayBorderSecondary,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}>
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 10,
+                                  lineHeight: 13,
+                                  color: isChecked
+                                    ? AppColors.purple
+                                    : AppColors.grayText,
+                                }}>
+                                #{moduleItem.id}
+                              </Text>
+                            </View>
                             <Text
                               style={{
                                 fontFamily: AppFonts.interBold,
@@ -1531,8 +1626,9 @@ const SettingsPanel = () => {
                         lineHeight: 18,
                         color: AppColors.primaryBlack,
                       }}>
-                      {allModules.find(m => m.key === defaultTab)?.label ||
-                        'APIs (Network)'}
+                      {allModules.find(m => m.key === defaultTab)
+                        ? `#${allModules.find(m => m.key === defaultTab)?.id} ${allModules.find(m => m.key === defaultTab)?.label}`
+                        : '#1 APIs (Network)'}
                     </Text>
                     <View
                       style={{
@@ -1635,7 +1731,7 @@ const SettingsPanel = () => {
                                     ? AppColors.purple
                                     : AppColors.primaryBlack,
                                 }}>
-                                {tab.label}
+                                #{tab.id} {tab.label}
                               </Text>
                             </View>
                             {isActive && (
@@ -1750,156 +1846,6 @@ const SettingsPanel = () => {
                     }}
                   />
                 </TouchableScale>
-              </View>
-            </View>
-
-            {/* Section 5: NPM Package & Updates */}
-            <View
-              style={{
-                backgroundColor: AppColors.primaryLight,
-                borderRadius: 14,
-                borderWidth: 1,
-                borderColor: AppColors.grayBorderSecondary,
-                overflow: 'hidden',
-                padding: 14,
-                gap: 12,
-              }}>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 11,
-                  lineHeight: 14,
-                  color: AppColors.grayTextWeak,
-                  letterSpacing: 0.8,
-                }}>
-                PACKAGE VERSION & UPDATES
-              </Text>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 10,
-                    flex: 1,
-                    marginRight: 8,
-                  }}>
-                  <View
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      backgroundColor: '#CB383715',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                    <NpmIcon color="#CB3837" size={16} />
-                  </View>
-                  <View style={{flex: 1}}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 13.5,
-                          lineHeight: 18,
-                          color: AppColors.primaryBlack,
-                        }}>
-                        v{LIB_VERSION}
-                      </Text>
-                      {updateAvailable ? (
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 3,
-                            backgroundColor: '#F59E0B20',
-                            paddingHorizontal: 6,
-                            paddingVertical: 1.5,
-                            borderRadius: 5,
-                            borderWidth: 1,
-                            borderColor: '#F59E0B60',
-                          }}>
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 9.5,
-                              color: '#D97706',
-                            }}>
-                            v{latestNpmVersion} Available
-                          </Text>
-                          <BoltIcon size={9} color="#D97706" />
-                        </View>
-                      ) : (
-                        <View
-                          style={{
-                            backgroundColor: `${AppColors.emerald500}20`,
-                            paddingHorizontal: 6,
-                            paddingVertical: 1.5,
-                            borderRadius: 5,
-                            borderWidth: 1,
-                            borderColor: `${AppColors.emerald500}50`,
-                          }}>
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 9.5,
-                              color: AppColors.emerald600,
-                            }}>
-                            Up to date
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interRegular,
-                        fontSize: 11,
-                        lineHeight: 15,
-                        color: AppColors.grayText,
-                        marginTop: 1,
-                      }}>
-                      {updateAvailable
-                        ? `A newer version (v${latestNpmVersion}) is available on npm registry.`
-                        : 'You are running the latest version from npm registry.'}
-                    </Text>
-                  </View>
-                </View>
-
-                {updateAvailable && (
-                  <TouchableScale
-                    onPress={() => {
-                      copyToClipboard(
-                        'npm install react-native-inapp-inspector@latest',
-                        'Install Command',
-                      );
-                      showToast('Copied npm install command!');
-                    }}
-                    style={{
-                      backgroundColor: AppColors.purple,
-                      paddingVertical: 6,
-                      paddingHorizontal: 10,
-                      borderRadius: 8,
-                    }}>
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interBold,
-                        fontSize: 11,
-                        color: AppColors.white,
-                      }}>
-                      Copy Upgrade
-                    </Text>
-                  </TouchableScale>
-                )}
               </View>
             </View>
           </View>
@@ -2334,6 +2280,1025 @@ const SettingsPanel = () => {
                     Prune Now
                   </Text>
                 </TouchableScale>
+              </View>
+            </View>
+          </View>
+        )}
+        {settingsActiveSubTab === 'about' && (
+          <View style={{gap: 14}}>
+            {/* Header Hero Branding Card */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                padding: 16,
+                gap: 12,
+              }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    flex: 1,
+                  }}>
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      backgroundColor: `${AppColors.purple}1A`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: `${AppColors.purple}33`,
+                    }}>
+                    <PackageIcon color={AppColors.purple} size={22} />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                        flexWrap: 'wrap',
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 15,
+                          lineHeight: 20,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        In-App Inspector
+                      </Text>
+                      <View
+                        style={{
+                          backgroundColor: `${AppColors.purple}18`,
+                          paddingHorizontal: 7,
+                          paddingVertical: 2,
+                          borderRadius: 6,
+                          borderWidth: 1,
+                          borderColor: `${AppColors.purple}33`,
+                        }}>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10,
+                            color: AppColors.purple,
+                          }}>
+                          v{LIB_VERSION}
+                        </Text>
+                      </View>
+                      {updateAvailable ? (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 3,
+                            backgroundColor: '#F59E0B20',
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                            borderRadius: 6,
+                            borderWidth: 1,
+                            borderColor: '#F59E0B60',
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 9.5,
+                              color: '#D97706',
+                            }}>
+                            v{latestNpmVersion} Available
+                          </Text>
+                          <BoltIcon size={9} color="#D97706" />
+                        </View>
+                      ) : (
+                        <View
+                          style={{
+                            backgroundColor: `${AppColors.emerald500}20`,
+                            paddingHorizontal: 6,
+                            paddingVertical: 2,
+                            borderRadius: 6,
+                            borderWidth: 1,
+                            borderColor: `${AppColors.emerald500}50`,
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 9.5,
+                              color: AppColors.emerald600,
+                            }}>
+                            Up to date
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 11,
+                        lineHeight: 15,
+                        color: AppColors.grayText,
+                        marginTop: 2,
+                      }}>
+                      react-native-inapp-inspector
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 11.5,
+                  lineHeight: 16,
+                  color: AppColors.grayText,
+                }}>
+                High-performance in-app debugging, network logging, console inspection, performance profiling, storage viewer & telemetry diagnostics for React Native.
+              </Text>
+
+              {updateAvailable && (
+                <TouchableScale
+                  onPress={() => {
+                    copyToClipboard(
+                      'npm install react-native-inapp-inspector@latest',
+                      'Install Command',
+                    );
+                    showToast('Copied npm upgrade command!');
+                  }}
+                  style={{
+                    backgroundColor: AppColors.purple,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}>
+                  <BoltIcon size={12} color={AppColors.white} />
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 12,
+                      color: AppColors.white,
+                    }}>
+                    Copy Upgrade Command (v{latestNpmVersion})
+                  </Text>
+                </TouchableScale>
+              )}
+            </View>
+
+            {/* Quick Actions & Developer Community Grid */}
+            <View
+              style={{
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}>
+              <TouchableScale
+                onPress={() => {
+                  Linking.openURL(
+                    'https://github.com/vengatmacuser/react-native-inapp-inspector',
+                  ).catch(() => {});
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '47%',
+                  backgroundColor: `${AppColors.purple}0F`,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.purple}30`,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                <GitHubIcon color={AppColors.purple} size={18} />
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    ⭐ Star on GitHub
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 9.5,
+                      color: AppColors.grayText,
+                    }}>
+                    Support open source
+                  </Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={() => {
+                  Linking.openURL(
+                    'https://www.npmjs.com/package/react-native-inapp-inspector',
+                  ).catch(() => {});
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '47%',
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                <NpmIcon color="#CB3837" size={18} />
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    NPM Registry
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 9.5,
+                      color: AppColors.grayText,
+                    }}>
+                    Package repository
+                  </Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={() => {
+                  Linking.openURL(
+                    'https://github.com/vengatmacuser/react-native-inapp-inspector#readme',
+                  ).catch(() => {});
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '47%',
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                <Text style={{fontSize: 16}}>📖</Text>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    Documentation
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 9.5,
+                      color: AppColors.grayText,
+                    }}>
+                    Setup & API guide
+                  </Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={() => {
+                  Linking.openURL(
+                    'https://github.com/vengatmacuser/react-native-inapp-inspector/issues',
+                  ).catch(() => {});
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '47%',
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                <Text style={{fontSize: 16}}>🐞</Text>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    Report Issue
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 9.5,
+                      color: AppColors.grayText,
+                    }}>
+                    Bugs & feature requests
+                  </Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={() => {
+                  Linking.openURL(
+                    'https://github.com/vengatmacuser/react-native-inapp-inspector/releases',
+                  ).catch(() => {});
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '47%',
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                <Text style={{fontSize: 16}}>🏷️</Text>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    Release Notes
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 9.5,
+                      color: AppColors.grayText,
+                    }}>
+                    Version changelog
+                  </Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={() => {
+                  const win = Dimensions.get('window');
+                  const scr = Dimensions.get('screen');
+                  const rnVer = (Platform.constants as any)?.reactNativeVersion;
+                  const specsPayload = {
+                    package: {
+                      name: 'react-native-inapp-inspector',
+                      version: `v${LIB_VERSION}`,
+                      latestNpmVersion: latestNpmVersion ? `v${latestNpmVersion}` : 'Checking...',
+                      license: 'MIT',
+                      repository: 'https://github.com/vengatmacuser/react-native-inapp-inspector',
+                    },
+                    hostApp: {
+                      name: getAppName(),
+                      bundleId: getBundleIdentifier(),
+                      versionAndBuild: getAppVersionAndBuild().formatted,
+                      buildVariant: __DEV__ ? 'Development (Debug)' : 'Production (Release)',
+                      metroConnected: isLocalDebugEnvironment(),
+                    },
+                    runtime: {
+                      reactNativeVersion: rnVer ? `${rnVer.major}.${rnVer.minor}.${rnVer.patch}` : '0.74+',
+                      reactVersion: React.version,
+                      jsEngine: Boolean((global as any)?.HermesInternal) ? 'Hermes' : 'JavaScriptCore (JSC)',
+                      architecture: Boolean((global as any)?.nativeFabricUIManager) ? 'Fabric (New Architecture)' : 'Paper (Legacy Bridge)',
+                      turboModules: Boolean((global as any)?.__turboModuleProxy || (global as any)?.TurboModuleRegistry),
+                    },
+                    device: {
+                      platform: Platform.OS,
+                      osVersion: Platform.Version,
+                      deviceModel: (Platform.constants as any)?.Model || 'Unknown Device',
+                      windowDimensions: `${Math.round(win.width)}x${Math.round(win.height)} pt`,
+                      screenDimensions: `${Math.round(scr.width)}x${Math.round(scr.height)} pt`,
+                      pixelRatio: PixelRatio.get(),
+                      fontScale: PixelRatio.getFontScale(),
+                      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown',
+                      locale: Intl.DateTimeFormat().resolvedOptions().locale || 'en',
+                    },
+                    storageAndCapabilities: {
+                      storageEngine: isPersistentStorageAvailable() ? 'MMKV (Fast Native Storage)' : 'In-Memory State',
+                      hasNativeModule: Boolean((global as any)?.NativeInspectorModule || (global as any)?.__IN_APP_INSPECTOR_NATIVE__),
+                      reduxConnected: isReduxConnected(),
+                      analyticsConnected: isAnalyticsConnected(),
+                    },
+                  };
+
+                  copyToClipboard(
+                    JSON.stringify(specsPayload, null, 2),
+                    'Diagnostic Specifications',
+                  );
+                  showToast('Copied full diagnostic specs to clipboard!');
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: '47%',
+                  backgroundColor: AppColors.primaryLight,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: AppColors.grayBorderSecondary,
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                }}>
+                <CopyIcon color={AppColors.purple} size={16} />
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    Copy Specs JSON
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 9.5,
+                      color: AppColors.grayText,
+                    }}>
+                    Diagnostics payload
+                  </Text>
+                </View>
+              </TouchableScale>
+            </View>
+
+            {/* Section: Package Version & Upgrades */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                overflow: 'hidden',
+                padding: 14,
+                gap: 12,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                PACKAGE VERSION & UPGRADES
+              </Text>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    flex: 1,
+                    marginRight: 8,
+                  }}>
+                  <View
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 9,
+                      backgroundColor: '#CB383715',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <NpmIcon color="#CB3837" size={17} />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 14,
+                          lineHeight: 18,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        v{LIB_VERSION}
+                      </Text>
+                      {updateAvailable ? (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 3,
+                            backgroundColor: '#F59E0B20',
+                            paddingHorizontal: 6,
+                            paddingVertical: 1.5,
+                            borderRadius: 5,
+                            borderWidth: 1,
+                            borderColor: '#F59E0B60',
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 9.5,
+                              color: '#D97706',
+                            }}>
+                            v{latestNpmVersion} Available
+                          </Text>
+                          <BoltIcon size={9} color="#D97706" />
+                        </View>
+                      ) : (
+                        <View
+                          style={{
+                            backgroundColor: `${AppColors.emerald500}20`,
+                            paddingHorizontal: 6,
+                            paddingVertical: 1.5,
+                            borderRadius: 5,
+                            borderWidth: 1,
+                            borderColor: `${AppColors.emerald500}50`,
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 9.5,
+                              color: AppColors.emerald600,
+                            }}>
+                            Up to date
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 11,
+                        lineHeight: 15,
+                        color: AppColors.grayText,
+                        marginTop: 1,
+                      }}>
+                      {updateAvailable
+                        ? `A newer release (v${latestNpmVersion}) is available on npm registry.`
+                        : 'You are running the latest version from npm registry.'}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableScale
+                  onPress={() => {
+                    copyToClipboard(
+                      'npm install react-native-inapp-inspector@latest',
+                      'Install Command',
+                    );
+                    showToast('Copied npm install command!');
+                  }}
+                  style={{
+                    backgroundColor: updateAvailable ? AppColors.purple : `${AppColors.purple}18`,
+                    paddingVertical: 7,
+                    paddingHorizontal: 11,
+                    borderRadius: 8,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                  }}>
+                  <CopyIcon color={updateAvailable ? AppColors.white : AppColors.purple} size={12} />
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11,
+                      color: updateAvailable ? AppColors.white : AppColors.purple,
+                    }}>
+                    {updateAvailable ? 'Copy Upgrade' : 'Copy Install'}
+                  </Text>
+                </TouchableScale>
+              </View>
+            </View>
+
+            {/* Section 1: Host Application Specs */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                padding: 14,
+                gap: 10,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                HOST APPLICATION & BUILD
+              </Text>
+
+              <View style={{gap: 8}}>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Application Name
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {getAppName()}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Bundle ID / Package
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.primaryBlack}}>
+                    {getBundleIdentifier()}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Version & Build Number
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {getAppVersionAndBuild().formatted}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Build Variant
+                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: __DEV__ ? `${AppColors.amber500}20` : `${AppColors.emerald500}20`,
+                      paddingHorizontal: 6,
+                      paddingVertical: 1.5,
+                      borderRadius: 5,
+                      borderWidth: 1,
+                      borderColor: __DEV__ ? `${AppColors.amber500}50` : `${AppColors.emerald500}50`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10,
+                        color: __DEV__ ? AppColors.amber500 : AppColors.emerald600,
+                      }}>
+                      {__DEV__ ? 'Development (Debug)' : 'Production (Release)'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Metro Bundler Connection
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: isLocalDebugEnvironment() ? AppColors.emerald600 : AppColors.grayText,
+                    }}>
+                    {isLocalDebugEnvironment() ? 'Connected (Hot Reload Active)' : 'Offline / Standalone'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Section 2: React Native Engine & Runtime Specs */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                padding: 14,
+                gap: 10,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                FRAMEWORK & RUNTIME ENGINE
+              </Text>
+
+              <View style={{gap: 8}}>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    React Native Version
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    v{((Platform.constants as any)?.reactNativeVersion?.major != null)
+                      ? `${(Platform.constants as any).reactNativeVersion.major}.${(Platform.constants as any).reactNativeVersion.minor}.${(Platform.constants as any).reactNativeVersion.patch}`
+                      : '0.74+'}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    React Core Version
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    v{React.version}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    JavaScript Engine
+                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: `${AppColors.purple}15`,
+                      paddingHorizontal: 6,
+                      paddingVertical: 1.5,
+                      borderRadius: 5,
+                      borderWidth: 1,
+                      borderColor: `${AppColors.purple}40`,
+                    }}>
+                    <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.purple}}>
+                      {Boolean((global as any)?.HermesInternal) ? 'Hermes Engine (Active)' : 'JavaScriptCore (JSC)'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Rendering Architecture
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {Boolean((global as any)?.nativeFabricUIManager) ? 'Fabric (New Architecture)' : 'Paper (Legacy Bridge)'}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    TurboModules Support
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {Boolean((global as any)?.__turboModuleProxy || (global as any)?.TurboModuleRegistry)
+                      ? 'Enabled (C++ JSI)'
+                      : 'Standard Bridge'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Section 3: Device & Display Metrics */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                padding: 14,
+                gap: 10,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                DEVICE & DISPLAY METRICS
+              </Text>
+
+              <View style={{gap: 8}}>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Operating System
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {Platform.OS === 'ios' ? 'Apple iOS' : Platform.OS === 'android' ? 'Google Android' : Platform.OS}{' '}
+                    {Platform.Version}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Device Hardware Model
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {(Platform.constants as any)?.Model ||
+                      (Platform.OS === 'ios' ? 'Apple Device' : 'Android Device')}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Window Viewport (Points)
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {Math.round(Dimensions.get('window').width)} × {Math.round(Dimensions.get('window').height)} pt
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Native Physical Resolution
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {Math.round(Dimensions.get('screen').width * PixelRatio.get())} × {Math.round(Dimensions.get('screen').height * PixelRatio.get())} px
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Pixel Density & Font Scale
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {PixelRatio.get().toFixed(1)}x ({PixelRatio.get() >= 3 ? '@3x' : PixelRatio.get() >= 2 ? '@2x' : '@1x'}) • Font: {PixelRatio.getFontScale().toFixed(2)}x
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Timezone & Locale
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    {Intl.DateTimeFormat().resolvedOptions().timeZone || 'System'} ({Intl.DateTimeFormat().resolvedOptions().locale || 'en'})
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Section 4: Inspector Capabilities & Storage */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                padding: 14,
+                gap: 10,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                INSPECTOR STORAGE & CAPABILITIES
+              </Text>
+
+              <View style={{gap: 8}}>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Storage Persistence Engine
+                  </Text>
+                  <View
+                    style={{
+                      backgroundColor: isPersistentStorageAvailable() ? `${AppColors.emerald500}18` : `${AppColors.amber500}18`,
+                      paddingHorizontal: 6,
+                      paddingVertical: 1.5,
+                      borderRadius: 5,
+                      borderWidth: 1,
+                      borderColor: isPersistentStorageAvailable() ? `${AppColors.emerald500}50` : `${AppColors.amber500}50`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10.5,
+                        color: isPersistentStorageAvailable() ? AppColors.emerald600 : AppColors.amber500,
+                      }}>
+                      {isPersistentStorageAvailable() ? 'MMKV Fast Native Storage' : 'In-Memory State'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Native Module Status
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: Boolean((global as any)?.NativeInspectorModule) ? AppColors.emerald600 : AppColors.grayText,
+                    }}>
+                    {Boolean((global as any)?.NativeInspectorModule) ? 'Linked & Active' : 'JavaScript Only'}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Network Logger Interceptor
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                    Active (XMLHttpRequest & Fetch Hooked)
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Redux & Analytics Watchers
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                    Redux: {isReduxConnected() ? 'Connected' : 'Listening'} • Analytics: {isAnalyticsConnected() ? 'Connected' : 'Listening'}
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Crash & Exception Boundary
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                    Global JS Exception Handler Active
+                  </Text>
+                </View>
+
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                    Memory Management
+                  </Text>
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                    Dynamic Auto RAM Tiering Active
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Section 5: License & Copyright */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                padding: 14,
+                gap: 8,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.grayTextWeak,
+                  letterSpacing: 0.8,
+                }}>
+                LICENSE & CREDITS
+              </Text>
+
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                  License
+                </Text>
+                <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                  MIT Permissive Open Source
+                </Text>
+              </View>
+
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                  Created & Maintained By
+                </Text>
+                <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                  Vengateswaran
+                </Text>
+              </View>
+
+              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                  Repository
+                </Text>
+                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.purple}}>
+                  github.com/vengatmacuser/react-native-inapp-inspector
+                </Text>
               </View>
             </View>
           </View>

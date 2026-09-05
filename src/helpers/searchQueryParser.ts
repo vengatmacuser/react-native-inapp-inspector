@@ -1,4 +1,5 @@
 import {NetworkLog, SearchScope} from '../types';
+import {markSearchFilterUsed} from './telemetry';
 
 export interface SearchQueryOptions {
   scope?: SearchScope;
@@ -17,6 +18,8 @@ export function matchNetworkLogQuery(
   _options?: SearchQueryOptions,
 ): boolean {
   if (!searchQuery || searchQuery.trim().length === 0) return true;
+
+  markSearchFilterUsed();
 
   const rawTokens = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
   if (rawTokens.length === 0) return true;

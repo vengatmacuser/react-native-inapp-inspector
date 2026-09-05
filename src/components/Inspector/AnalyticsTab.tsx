@@ -1352,29 +1352,6 @@ const AnalyticsTab = React.memo(() => {
               ]}
               keyboardShouldPersistTaps="handled"
             />
-
-            <TouchableScale
-              onPress={() => {
-                try {
-                  listRef.current?.scrollToOffset({
-                    offset: 0,
-                    animated: true,
-                  });
-                } catch {
-                  try {
-                    listRef.current?.scrollToIndex({
-                      index: 0,
-                      animated: true,
-                    });
-                  } catch {}
-                }
-              }}
-              hitSlop={12}
-              style={styles.scrollTopBtn}>
-              <View style={{transform: [{rotate: '180deg'}]}}>
-                <ChevronIcon color={AppColors.white} size={18} />
-              </View>
-            </TouchableScale>
           </>
         ) : null}
       </View>

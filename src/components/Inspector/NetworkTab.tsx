@@ -570,16 +570,24 @@ const NetworkTab = React.memo(() => {
               </View>
             </View>
 
-            {/* Quick Filter Horizontal Chips Bar with Live Counts */}
-            <View style={{marginBottom: 8}}>
+            {/* Quick Filter Horizontal Chips Bar with Sticky "More Filters" on Right */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 8,
+                paddingHorizontal: 12,
+                gap: 6,
+              }}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                style={{flex: 1}}
                 contentContainerStyle={{
-                  paddingHorizontal: 12,
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 6,
+                  paddingRight: 6,
                 }}>
                 {QUICK_CHIPS.map(chip => {
                   const isActive = quickFilter === chip.id;
@@ -646,67 +654,73 @@ const NetworkTab = React.memo(() => {
                     </TouchableScale>
                   );
                 })}
-
-                <TouchableScale
-                  onPress={() => setIsFilterModalOpen(true)}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      paddingHorizontal: 10,
-                      paddingVertical: 4.5,
-                      borderRadius: 8,
-                      backgroundColor:
-                        statusFilters.size > 0 || methodFilters.size > 0
-                          ? `${AppColors.purple}20`
-                          : AppColors.grayBackground,
-                      borderWidth: 1,
-                      borderColor:
-                        statusFilters.size > 0 || methodFilters.size > 0
-                          ? AppColors.purple
-                          : AppColors.grayBorderSecondary,
-                      gap: 5,
-                    }}>
-                    <FilterIcon
-                      size={11}
-                      color={
-                        statusFilters.size > 0 || methodFilters.size > 0
-                          ? AppColors.purple
-                          : AppColors.grayText
-                      }
-                    />
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interBold,
-                        fontSize: 10.5,
-                        color:
-                          statusFilters.size > 0 || methodFilters.size > 0
-                            ? AppColors.purple
-                            : AppColors.grayText,
-                      }}>
-                      More Filters
-                    </Text>
-                    {(statusFilters.size > 0 || methodFilters.size > 0) && (
-                      <View
-                        style={{
-                          backgroundColor: AppColors.purple,
-                          paddingHorizontal: 4.5,
-                          paddingVertical: 1,
-                          borderRadius: 6,
-                        }}>
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 8.5,
-                            color: AppColors.white,
-                          }}>
-                          {statusFilters.size + methodFilters.size}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </TouchableScale>
               </ScrollView>
+
+              <TouchableScale
+                onPress={() => setIsFilterModalOpen(true)}
+                style={{flexShrink: 0}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 10,
+                    paddingVertical: 4.5,
+                    borderRadius: 8,
+                    backgroundColor:
+                      statusFilters.size > 0 || methodFilters.size > 0
+                        ? `${AppColors.purple}20`
+                        : AppColors.grayBackground,
+                    borderWidth: 1,
+                    borderColor:
+                      statusFilters.size > 0 || methodFilters.size > 0
+                        ? AppColors.purple
+                        : AppColors.grayBorderSecondary,
+                    gap: 5,
+                    shadowColor: AppColors.black,
+                    shadowOpacity: 0.04,
+                    shadowRadius: 2,
+                    shadowOffset: {width: 0, height: 1},
+                    elevation: 1,
+                  }}>
+                  <FilterIcon
+                    size={11}
+                    color={
+                      statusFilters.size > 0 || methodFilters.size > 0
+                        ? AppColors.purple
+                        : AppColors.grayText
+                    }
+                  />
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10.5,
+                      color:
+                        statusFilters.size > 0 || methodFilters.size > 0
+                          ? AppColors.purple
+                          : AppColors.grayText,
+                    }}>
+                    More Filters
+                  </Text>
+                  {(statusFilters.size > 0 || methodFilters.size > 0) && (
+                    <View
+                      style={{
+                        backgroundColor: AppColors.purple,
+                        paddingHorizontal: 4.5,
+                        paddingVertical: 1,
+                        borderRadius: 6,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 8.5,
+                          color: AppColors.white,
+                        }}>
+                        {statusFilters.size + methodFilters.size}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableScale>
             </View>
 
             {/* Active Filter Helper Status Bar */}
@@ -791,29 +805,6 @@ const NetworkTab = React.memo(() => {
         ]}
         keyboardShouldPersistTaps="handled"
       />
-      {/* #2 — always-visible scroll-to-top, bottom right */}
-      <TouchableScale
-        onPress={() => {
-          try {
-            apisListRef.current?.scrollToOffset({
-              offset: 0,
-              animated: true,
-            });
-          } catch {
-            try {
-              apisListRef.current?.scrollToIndex({
-                index: 0,
-                animated: true,
-              });
-            } catch {}
-          }
-        }}
-        hitSlop={12}
-        style={styles.scrollTopBtn}>
-        <View style={{transform: [{rotate: '180deg'}]}}>
-          <ChevronIcon color={AppColors.white} size={18} />
-        </View>
-      </TouchableScale>
 
       {/* Modern Network Filter Modal */}
       <NetworkFilterModal

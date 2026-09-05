@@ -87,6 +87,8 @@ import {
 import {
   trackActiveTelemetryHeartbeat,
   setTelemetryEnabled,
+  trackInspectorTabView,
+  trackInspectorScreenView,
 } from './helpers/telemetry';
 
 import {
@@ -124,6 +126,11 @@ import {
   isNativeModuleAvailable,
 } from './native/NativeInspector';
 
+import {
+  fetchRemoteConfigModuleStatus,
+  isFirebaseRemoteConfigAvailable,
+} from './helpers/remoteConfig';
+
 // Constants
 import {
   StatusFilter,
@@ -157,6 +164,7 @@ const NetworkInspector = ({
   environment,
   initialVisible = false,
   visible: controlledVisible,
+  remoteConfig,
 }: NetworkInspectorProps): React.JSX.Element | null => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
@@ -352,6 +360,7 @@ const NetworkInspector = ({
     | 'redux'
     | null
   >(null);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
   const [settingsActiveSubTab, setSettingsActiveSubTab] = useState<SettingsSubTab>('module');
   const [tabVisibility, setTabVisibility] = useState<
     Record<ActiveTab, boolean>
@@ -513,6 +522,28 @@ const NetworkInspector = ({
     };
   }, []);
 
+  // Fetch and apply module enable/disable statuses from Firebase Remote Config if configured or available
+  useEffect(() => {
+    let isMounted = true;
+    if (remoteConfig === false) return;
+
+    fetchRemoteConfigModuleStatus(typeof remoteConfig === 'object' ? remoteConfig : undefined)
+      .then(remoteModules => {
+        if (isMounted && remoteModules) {
+          setTabVisibility(prev => ({
+            ...prev,
+            ...remoteModules,
+            apis: remoteModules.apis ?? true,
+          }));
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [remoteConfig]);
+
   useEffect(() => {
     if (!settingsHydratedRef.current) return;
     saveSettings({
@@ -655,6 +686,7 @@ const NetworkInspector = ({
       setActiveTab(key);
       loadNativePage(key);
     }
+    trackInspectorTabView(key);
   }, [loadNativePage]);
 
   const [selectedEvent, setSelectedEvent] = useState<AnalyticsEvent | null>(
@@ -1013,11 +1045,13 @@ const NetworkInspector = ({
   useEffect(() => {
     isVisibleRefObj.current = visible;
     if (visible) {
+      trackInspectorScreenView('InspectorModal');
       const target =
         defaultTab === 'apis' || tabVisibility?.[defaultTab]
           ? defaultTab
           : 'apis';
       setActiveTab(target);
+      trackInspectorTabView(target);
 
 
 
@@ -2032,6 +2066,8 @@ const NetworkInspector = ({
       setShowHeaderInfo,
       settingsPage,
       setSettingsPage,
+      isFeedbackOpen,
+      setIsFeedbackOpen,
       updateAvailable,
       latestNpmVersion,
       clearAnim,
@@ -2207,6 +2243,7 @@ const NetworkInspector = ({
       selectedLog,
       showHeaderInfo,
       settingsPage,
+      isFeedbackOpen,
       updateAvailable,
       latestNpmVersion,
       clearAnim,
@@ -2561,5 +2598,10 @@ export {
   setTranslations,
   I18nextProvider,
 } from './i18n';
+
+export {
+  fetchRemoteConfigModuleStatus,
+  isFirebaseRemoteConfigAvailable,
+} from './helpers/remoteConfig';
 
 export { LIB_VERSION } from './constants/version';
