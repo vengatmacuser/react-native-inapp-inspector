@@ -3,6 +3,7 @@ import {
   startNativeVideoRecording,
   stopNativeVideoRecording,
   isNativeRecordingActive,
+  playNativeVideo,
   convertNativeVideoToGif,
   fetchCapturedMediaList,
   deleteCapturedMediaFile,
@@ -62,6 +63,13 @@ export const ScreenCapture = {
    */
   isRecording: async (): Promise<boolean> => {
     return isNativeRecordingActive();
+  },
+
+  /**
+   * Plays a recorded video in the full-screen native media player.
+   */
+  playVideo: async (videoUri: string): Promise<boolean> => {
+    return playNativeVideo(videoUri);
   },
 
   /**

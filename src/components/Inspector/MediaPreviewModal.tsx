@@ -5,7 +5,6 @@ import {
   Image,
   Modal,
   Platform,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,16 +14,18 @@ import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
 import {
-  CloseWhite,
-  CopyIcon,
+  ChevronDownIcon,
+  ExpandCollapseIcon,
   FilmIcon,
   GifIcon,
   ImageIcon,
-  SendIcon,
+  PauseIcon,
+  PlayIcon,
+  RepeatIcon,
   TrashIcon,
 } from '../NetworkIcons';
 import {CapturedMediaItem, ScreenCapture} from '../../capture';
-import {copyToClipboard, formatBytes} from '../../helpers';
+import {formatBytes} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {useTranslation} from '../../i18n';
 
@@ -46,24 +47,23 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
   const {t} = useTranslation();
   const [isConverting, setIsConverting] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<'1.0x' | '1.5x' | '2.0x'>('1.0x');
+  const [isLooping, setIsLooping] = useState(true);
+  const [scrubPosition, setScrubPosition] = useState(0.4);
 
   if (!item) return null;
 
-  const handleShare = async () => {
+  const handlePlayVideo = async () => {
     try {
-      await Share.share(
-        Platform.OS === 'ios'
-          ? {url: item.uri, title: item.filename}
-          : {message: `Captured media: ${item.filename}`, url: item.uri},
-      );
+      setIsPlaying(true);
+      await ScreenCapture.playVideo(item.uri);
     } catch {
-      showToast(t('mediaGallery.shareUnavailable'));
+      showToast(t('mediaGallery.playError', 'Unable to play video'));
+    } finally {
+      setIsPlaying(false);
     }
-  };
-
-  const handleCopyUri = () => {
-    copyToClipboard(item.uri);
-    showToast(t('mediaGallery.uriCopied'));
   };
 
   const handleDelete = () => {
@@ -100,6 +100,10 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
   const isVideo = item.type === 'video';
   const isGif = item.type === 'gif';
   const durationSec = item.durationMs ? (item.durationMs / 1000).toFixed(1) : null;
+  const formattedDuration = durationSec
+    ? `00:${Number(durationSec) < 10 ? '0' : ''}${durationSec}`
+    : '00:05.0';
+  const hasBottomToolbar = isVideo || isGif;
 
   return (
     <Modal
@@ -157,23 +161,107 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
               </Text>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={onClose}
-            style={previewStyles.closeBtn}
-            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-            <CloseWhite size={14} color={AppColors.white} />
-          </TouchableOpacity>
+
+          {/* Top Actions: Delete, Expand/Contract, Minimize */}
+          <View style={previewStyles.headerRight}>
+            <TouchableScale
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('mediaGallery.delete')}
+              onPress={handleDelete}
+              style={previewStyles.headerDeleteBtn}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <TrashIcon size={14} color={AppColors.red500} />
+            </TouchableScale>
+
+            <TouchableOpacity
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={isExpanded ? t('mediaGallery.collapse', 'Exit Fullscreen') : t('mediaGallery.expand', 'Expand Fullscreen')}
+              onPress={() => setIsExpanded(!isExpanded)}
+              style={[
+                previewStyles.headerIconBtn,
+                isExpanded && {backgroundColor: `${AppColors.sky400}30`, borderColor: `${AppColors.sky400}70`},
+              ]}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <ExpandCollapseIcon
+                size={14}
+                isExpanded={isExpanded}
+                color={isExpanded ? AppColors.sky400 : AppColors.white}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('mediaGallery.minimize', 'Minimize')}
+              onPress={onClose}
+              style={previewStyles.headerIconBtn}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <ChevronDownIcon size={15} color={AppColors.white} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Media Preview Stage */}
-        <View style={previewStyles.stage}>
-          <View style={previewStyles.previewCard}>
-            <Image
-              source={{uri: item.uri}}
-              style={previewStyles.image}
-              resizeMode="contain"
-              onError={() => setImageError(true)}
-            />
+        <View
+          style={[
+            previewStyles.stage,
+            isExpanded && previewStyles.stageExpanded,
+            !hasBottomToolbar && {
+              paddingBottom: Platform.OS === 'ios' ? 34 : 16,
+            },
+          ]}>
+          <TouchableOpacity
+            activeOpacity={isVideo ? 0.9 : 1}
+            onPress={isVideo ? handlePlayVideo : undefined}
+            style={[
+              previewStyles.previewCard,
+              isExpanded && previewStyles.previewCardExpanded,
+            ]}>
+            {isVideo ? (
+              item.thumbnailUri && !imageError ? (
+                <>
+                  <Image
+                    source={{uri: item.thumbnailUri}}
+                    style={previewStyles.image}
+                    resizeMode="contain"
+                    onError={() => setImageError(true)}
+                  />
+                  <View style={previewStyles.videoImageOverlay} />
+                </>
+              ) : (
+                <View style={previewStyles.videoFallbackBackdrop}>
+                  <View style={previewStyles.videoFallbackGlow} />
+                  <FilmIcon size={52} color={AppColors.sky400} />
+                  <Text style={previewStyles.videoFallbackTitle}>
+                    {t('mediaGallery.playVideo', 'Play Video')}
+                  </Text>
+                  <Text style={previewStyles.videoFallbackSubtitle}>
+                    {item.width && item.height ? `${item.width} × ${item.height}` : 'HD Video'} • MP4
+                  </Text>
+                </View>
+              )
+            ) : (
+              <Image
+                source={{uri: item.uri}}
+                style={previewStyles.image}
+                resizeMode="contain"
+                onError={() => setImageError(true)}
+              />
+            )}
+
+            {/* Central Play Button Overlay for Videos */}
+            {isVideo && (
+              <View style={previewStyles.centerPlayOverlay}>
+                <View style={previewStyles.centerPlayCircle}>
+                  <PlayIcon size={30} color={AppColors.white} />
+                </View>
+                <Text style={previewStyles.centerPlayText}>
+                  {t('mediaGallery.playVideo', 'Play Video')}
+                </Text>
+              </View>
+            )}
 
             {/* Video overlay badge with playback duration */}
             {isVideo && (
@@ -196,80 +284,149 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                 </View>
               </View>
             )}
-          </View>
 
-          {/* Quick Details Card */}
-          <View style={previewStyles.metaPillRow}>
-            {item.width && item.height ? (
-              <View style={previewStyles.metaPill}>
-                <Text style={previewStyles.metaPillLabel}>DIMENSIONS</Text>
-                <Text style={previewStyles.metaPillValue}>{`${item.width} × ${item.height}`}</Text>
-              </View>
-            ) : null}
-            <View style={previewStyles.metaPill}>
-              <Text style={previewStyles.metaPillLabel}>SIZE</Text>
-              <Text style={previewStyles.metaPillValue}>{formatBytes(item.sizeBytes)}</Text>
-            </View>
-            {durationSec ? (
-              <View style={previewStyles.metaPill}>
-                <Text style={previewStyles.metaPillLabel}>DURATION</Text>
-                <Text style={previewStyles.metaPillValue}>{`${durationSec}s`}</Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-
-        {/* Bottom Toolbar */}
-        <View style={previewStyles.footer}>
-          {isVideo && onConvertToGif && (
-            <TouchableScale
-              onPress={handleConvert}
-              disabled={isConverting}
-              style={[
-                previewStyles.actionBtn,
-                {
-                  backgroundColor: `${AppColors.warningAmber}25`,
-                  borderColor: `${AppColors.warningAmber}70`,
-                },
-              ]}>
-              <GifIcon size={15} color={AppColors.warningAmber} />
-              <Text style={[previewStyles.actionText, {color: AppColors.warningAmber}]}>
-                {isConverting ? t('mediaGallery.converting') : t('mediaGallery.convertToGif')}
+            {/* Floating Meta Chip inside Card */}
+            <View style={previewStyles.floatingMetaBadge}>
+              <Text style={previewStyles.floatingMetaText}>
+                {item.width && item.height ? `${item.width} × ${item.height}  •  ` : ''}
+                {formatBytes(item.sizeBytes)}
+                {durationSec ? `  •  ${durationSec}s` : ''}
               </Text>
-            </TouchableScale>
-          )}
-
-          <TouchableScale onPress={handleShare} style={previewStyles.actionBtn}>
-            <SendIcon size={15} color={AppColors.sky400} />
-            <Text style={previewStyles.actionText}>{t('mediaGallery.share')}</Text>
-          </TouchableScale>
-
-          <TouchableScale onPress={handleCopyUri} style={previewStyles.actionBtn}>
-            <CopyIcon size={15} color={AppColors.white} />
-            <Text style={previewStyles.actionText}>{t('mediaGallery.copyUri')}</Text>
-          </TouchableScale>
-
-          <TouchableScale
-            onPress={handleDelete}
-            style={[
-              previewStyles.actionBtn,
-              {
-                backgroundColor: `${AppColors.red500}25`,
-                borderColor: `${AppColors.red500}70`,
-              },
-            ]}>
-            <TrashIcon size={15} color={AppColors.red500} />
-            <Text style={[previewStyles.actionText, {color: AppColors.red500}]}>
-              {t('mediaGallery.delete')}
-            </Text>
-          </TouchableScale>
+            </View>
+          </TouchableOpacity>
         </View>
+
+        {/* Video Controls & Scrub Bar (For Videos) */}
+        {isVideo && (
+          <View style={previewStyles.videoControlsPanel}>
+            {/* Timeline Progress Bar */}
+            <View style={previewStyles.progressSection}>
+              <Text style={previewStyles.timeLabel}>
+                00:0{Math.floor(scrubPosition * (Number(durationSec) || 5))}
+              </Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setScrubPosition(pos => (pos >= 0.9 ? 0.1 : pos + 0.3))}
+                style={previewStyles.progressTrack}>
+                <View
+                  style={[
+                    previewStyles.progressFill,
+                    {width: `${Math.max(10, Math.min(100, scrubPosition * 100))}%`},
+                  ]}
+                />
+                <View
+                  style={[
+                    previewStyles.scrubberThumb,
+                    {left: `${Math.max(8, Math.min(96, scrubPosition * 100))}%`},
+                  ]}
+                />
+              </TouchableOpacity>
+              <Text style={previewStyles.timeLabel}>{formattedDuration}</Text>
+            </View>
+
+            {/* Extra Controls: Play/Pause, Speed, Loop */}
+            <View style={previewStyles.controlsRow}>
+              {/* Play / Pause toggle */}
+              <TouchableOpacity
+                onPress={handlePlayVideo}
+                style={previewStyles.controlActionPill}>
+                {isPlaying ? (
+                  <PauseIcon size={14} color={AppColors.sky400} />
+                ) : (
+                  <PlayIcon size={14} color={AppColors.sky400} />
+                )}
+                <Text style={[previewStyles.controlActionText, {color: AppColors.sky400}]}>
+                  {isPlaying ? t('mediaGallery.pause', 'Pause') : t('mediaGallery.play', 'Play')}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Playback Speed selector */}
+              <View style={previewStyles.speedGroup}>
+                {(['1.0x', '1.5x', '2.0x'] as const).map(speed => (
+                  <TouchableOpacity
+                    key={speed}
+                    onPress={() => setPlaybackSpeed(speed)}
+                    style={[
+                      previewStyles.speedBtn,
+                      playbackSpeed === speed && previewStyles.speedBtnActive,
+                    ]}>
+                    <Text
+                      style={[
+                        previewStyles.speedText,
+                        playbackSpeed === speed && previewStyles.speedTextActive,
+                      ]}>
+                      {speed}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Loop Toggle */}
+              <TouchableOpacity
+                onPress={() => setIsLooping(!isLooping)}
+                style={[
+                  previewStyles.loopPill,
+                  isLooping && previewStyles.loopPillActive,
+                ]}>
+                <RepeatIcon
+                  size={12}
+                  color={isLooping ? AppColors.sky400 : AppColors.whiteAlpha60}
+                />
+                <Text
+                  style={[
+                    previewStyles.loopText,
+                    isLooping && previewStyles.loopTextActive,
+                  ]}>
+                  {isLooping ? 'Loop: ON' : 'Loop: OFF'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Bottom Primary Actions */}
+        {hasBottomToolbar && (
+          <View style={previewStyles.footer}>
+            {isVideo && (
+              <TouchableScale
+                onPress={handlePlayVideo}
+                style={[
+                  previewStyles.actionBtn,
+                  {
+                    backgroundColor: `${AppColors.sky400}25`,
+                    borderColor: `${AppColors.sky400}70`,
+                  },
+                ]}>
+                <PlayIcon size={15} color={AppColors.sky400} />
+                <Text style={[previewStyles.actionText, {color: AppColors.sky400, fontFamily: AppFonts.interSemiBold}]}>
+                  {t('mediaGallery.playVideo', 'Play Video')}
+                </Text>
+              </TouchableScale>
+            )}
+
+            {onConvertToGif && isVideo && (
+              <TouchableScale
+                onPress={handleConvert}
+                disabled={isConverting}
+                style={[
+                  previewStyles.actionBtn,
+                  {
+                    backgroundColor: `${AppColors.warningAmber}25`,
+                    borderColor: `${AppColors.warningAmber}70`,
+                  },
+                ]}>
+                <GifIcon size={15} color={AppColors.warningAmber} />
+                <Text style={[previewStyles.actionText, {color: AppColors.warningAmber}]}>
+                  {isConverting ? t('mediaGallery.converting') : t('mediaGallery.convertToGif')}
+                </Text>
+              </TouchableScale>
+            )}
+          </View>
+        )}
       </View>
     </Modal>
   );
 };
-
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
 
 const previewStyles = StyleSheet.create({
   overlay: {
@@ -296,6 +453,11 @@ const previewStyles = StyleSheet.create({
     minWidth: 0,
     marginRight: 10,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,11 +483,23 @@ const previewStyles = StyleSheet.create({
     color: AppColors.whiteAlpha60,
     marginTop: 1,
   },
-  closeBtn: {
+  headerDeleteBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: `${AppColors.red500}20`,
+    borderWidth: 1,
+    borderColor: `${AppColors.red500}60`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIconBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
     backgroundColor: AppColors.whiteAlpha12,
+    borderWidth: 1,
+    borderColor: AppColors.whiteAlpha20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -333,13 +507,19 @@ const previewStyles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
+  stageExpanded: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   previewCard: {
-    width: SCREEN_WIDTH - 32,
-    height: SCREEN_HEIGHT * 0.60,
-    borderRadius: 12,
+    flex: 1,
+    width: '100%',
+    borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#05070D',
     borderWidth: 1,
@@ -348,9 +528,72 @@ const previewStyles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
+  previewCardExpanded: {
+    borderRadius: 0,
+    borderWidth: 0,
+  },
   image: {
     width: '100%',
     height: '100%',
+  },
+  videoImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(5, 7, 13, 0.25)',
+  },
+  videoFallbackBackdrop: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#070C18',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  videoFallbackGlow: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: `${AppColors.sky400}18`,
+  },
+  videoFallbackTitle: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 15,
+    color: AppColors.white,
+    marginTop: 8,
+  },
+  videoFallbackSubtitle: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 12,
+    color: AppColors.whiteAlpha60,
+  },
+  centerPlayOverlay: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  centerPlayCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${AppColors.sky400}E0`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 3,
+    shadowColor: AppColors.sky400,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  centerPlayText: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 13,
+    color: AppColors.white,
+    letterSpacing: 0.3,
+    textShadowColor: 'rgba(0,0,0,0.7)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 3,
   },
   videoBadgeOverlay: {
     position: 'absolute',
@@ -374,34 +617,139 @@ const previewStyles = StyleSheet.create({
     color: AppColors.white,
     letterSpacing: 0.3,
   },
-  metaPillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 14,
-    flexWrap: 'wrap',
-  },
-  metaPill: {
-    backgroundColor: AppColors.whiteAlpha08,
+  floatingMetaBadge: {
+    position: 'absolute',
+    bottom: 10,
+    backgroundColor: `${AppColors.slate900}D9`,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4.5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: AppColors.whiteAlpha12,
+    borderColor: AppColors.whiteAlpha15,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  metaPillLabel: {
+  floatingMetaText: {
     fontFamily: AppFonts.interMedium,
-    fontSize: 9,
-    color: AppColors.slate400,
-    letterSpacing: 0.4,
+    fontSize: 10.5,
+    color: AppColors.slate200,
+    letterSpacing: 0.2,
   },
-  metaPillValue: {
+  videoControlsPanel: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 6,
+    backgroundColor: AppColors.headerGlassDark,
+    borderTopWidth: 1,
+    borderTopColor: AppColors.borderGlassLight,
+    gap: 8,
+  },
+  progressSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  timeLabel: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 11,
+    color: AppColors.whiteAlpha60,
+    minWidth: 42,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: AppColors.whiteAlpha15,
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: AppColors.sky400,
+  },
+  scrubberThumb: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: AppColors.white,
+    borderWidth: 2,
+    borderColor: AppColors.sky400,
+    top: -3,
+    marginLeft: -6,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  controlActionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    backgroundColor: `${AppColors.sky400}18`,
+    borderWidth: 1,
+    borderColor: `${AppColors.sky400}50`,
+  },
+  controlActionText: {
     fontFamily: AppFonts.interSemiBold,
     fontSize: 11.5,
-    color: AppColors.white,
-    marginTop: 1,
+  },
+  speedGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.whiteAlpha08,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: AppColors.whiteAlpha12,
+    padding: 2,
+    gap: 2,
+  },
+  speedBtn: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  speedBtnActive: {
+    backgroundColor: `${AppColors.sky400}30`,
+  },
+  speedText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10.5,
+    color: AppColors.whiteAlpha60,
+  },
+  speedTextActive: {
+    color: AppColors.sky400,
+    fontFamily: AppFonts.interBold,
+  },
+  loopPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+    backgroundColor: AppColors.whiteAlpha08,
+    borderWidth: 1,
+    borderColor: AppColors.whiteAlpha12,
+  },
+  loopPillActive: {
+    backgroundColor: `${AppColors.sky400}18`,
+    borderColor: `${AppColors.sky400}50`,
+  },
+  loopText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10.5,
+    color: AppColors.whiteAlpha60,
+  },
+  loopTextActive: {
+    color: AppColors.sky400,
+    fontFamily: AppFonts.interSemiBold,
   },
   footer: {
     flexDirection: 'row',
@@ -410,8 +758,8 @@ const previewStyles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
     borderTopWidth: 1,
     borderTopColor: AppColors.borderGlassLight,
     backgroundColor: AppColors.headerGlassDark,
@@ -420,7 +768,7 @@ const previewStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 9,
     borderRadius: 8,
     backgroundColor: AppColors.whiteAlpha08,

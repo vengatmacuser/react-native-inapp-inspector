@@ -1022,6 +1022,30 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
+    fun playVideo(videoUri: String, promise: Promise) {
+        val currentActivity = currentActivity
+        if (currentActivity == null) {
+            promise.reject("PLAY_ERROR", "No active activity found to play video")
+            return
+        }
+        try {
+            val uri = if (videoUri.startsWith("file://") || videoUri.startsWith("content://")) {
+                Uri.parse(videoUri)
+            } else {
+                Uri.fromFile(File(videoUri))
+            }
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "video/*")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            currentActivity.startActivity(intent)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("PLAY_ERROR", e.message ?: "Failed to launch video player", e)
+        }
+    }
+
+    @ReactMethod
     fun getCapturedMedia(promise: Promise) {
         captureExecutor.execute {
             try {
@@ -1046,6 +1070,29 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                         put("sizeBytes", file.length())
                         put("timestamp", file.lastModified())
                     }
+
+                    if (type == "video") {
+                        val suffix = file.nameWithoutExtension.removePrefix("video_")
+                        val thumbFile = File(dir, "thumb_${suffix}.jpg")
+                        if (thumbFile.exists()) {
+                            obj.put("thumbnailUri", Uri.fromFile(thumbFile).toString())
+                        } else {
+                            try {
+                                val retriever = MediaMetadataRetriever()
+                                retriever.setDataSource(file.absolutePath)
+                                val bmp = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                                if (bmp != null) {
+                                    FileOutputStream(thumbFile).use { fos ->
+                                        bmp.compress(Bitmap.CompressFormat.JPEG, 80, fos)
+                                    }
+                                    bmp.recycle()
+                                    obj.put("thumbnailUri", Uri.fromFile(thumbFile).toString())
+                                }
+                                retriever.release()
+                            } catch (e: Exception) {}
+                        }
+                    }
+
                     jsonArr.put(obj)
                 }
 

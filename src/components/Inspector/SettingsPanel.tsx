@@ -65,6 +65,7 @@ import {
   InfoCircleIcon,
   CopyIcon,
   FilmIcon,
+  ScreencastIcon,
   CameraIcon,
   VideoCameraIcon,
   MicrophoneIcon,
@@ -237,6 +238,14 @@ const SettingsPanel = () => {
             icon: 'debugging',
             desc: 'QR Code bridge for direct Debug APK download & Metro live-reload sync',
           },
+          {
+            id: 11,
+            key: 'media',
+            label: 'Screencast',
+            category: 'diagnostic',
+            icon: 'media',
+            desc: 'Screenshots, video recordings, audio narration & animated GIFs',
+          },
         ] as const
       ).filter(m =>
         m.key === 'debugging'
@@ -260,6 +269,7 @@ const SettingsPanel = () => {
     bundle: Boolean(tabVisibility?.bundle),
     performance: Boolean(tabVisibility?.performance),
     debugging: Boolean(tabVisibility?.debugging),
+    media: Boolean(tabVisibility?.media ?? true),
   }));
 
   // Synchronize staged state with tabVisibility when tabVisibility updates
@@ -275,9 +285,9 @@ const SettingsPanel = () => {
       bundle: Boolean(tabVisibility?.bundle),
       performance: Boolean(tabVisibility?.performance),
       debugging: Boolean(tabVisibility?.debugging),
+      media: Boolean(tabVisibility?.media ?? true),
     });
   }, [tabVisibility]);
-
 
   const hasUnsavedChanges = useMemo(() => {
     return allModules.some(
@@ -314,8 +324,8 @@ const SettingsPanel = () => {
               bundle: Boolean(tabVisibility?.bundle),
               performance: Boolean(tabVisibility?.performance),
               debugging: Boolean(tabVisibility?.debugging),
+              media: Boolean(tabVisibility?.media ?? true),
             });
-
           },
         },
         {
@@ -325,8 +335,12 @@ const SettingsPanel = () => {
             animateNextLayout();
             allModules.forEach(m => {
               if (m.key !== 'apis') {
-                const isStagedOn = Boolean(stagedTabVisibility[m.key as ActiveTab]);
-                const isCurrentOn = Boolean(tabVisibility?.[m.key as ActiveTab]);
+                const isStagedOn = Boolean(
+                  stagedTabVisibility[m.key as ActiveTab],
+                );
+                const isCurrentOn = Boolean(
+                  tabVisibility?.[m.key as ActiveTab],
+                );
                 if (isStagedOn !== isCurrentOn) {
                   toggleTabVisibility(m.key as ActiveTab);
                 }
@@ -577,7 +591,13 @@ const SettingsPanel = () => {
                 key: 'module' as const,
                 label: t('settings.modulesAndTools', 'Modules & Tools'),
                 Icon: LayersIcon,
-                badge: `${allModules.filter(m => stagedTabVisibility?.[m.key as ActiveTab] || m.key === 'apis').length}/${allModules.length}`,
+                badge: `${
+                  allModules.filter(
+                    m =>
+                      stagedTabVisibility?.[m.key as ActiveTab] ||
+                      m.key === 'apis',
+                  ).length
+                }/${allModules.length}`,
               },
               {
                 key: 'ui' as const,
@@ -591,7 +611,10 @@ const SettingsPanel = () => {
               },
               {
                 key: 'capture' as const,
-                label: t('settings.screenVideoCapture', 'Screen & Video Capture'),
+                label: t(
+                  'settings.screenVideoCapture',
+                  'Screen & Video Capture',
+                ),
                 Icon: CameraIcon,
               },
               {
@@ -634,9 +657,7 @@ const SettingsPanel = () => {
                       fontFamily: AppFonts.interBold,
                       fontSize: 12.5,
                       lineHeight: 16,
-                      color: isActive
-                        ? AppColors.white
-                        : AppColors.grayText,
+                      color: isActive ? AppColors.white : AppColors.grayText,
                     }}>
                     {tab.label}
                   </Text>
@@ -654,9 +675,7 @@ const SettingsPanel = () => {
                         style={{
                           fontFamily: AppFonts.interBold,
                           fontSize: 9.5,
-                          color: isActive
-                            ? AppColors.white
-                            : AppColors.purple,
+                          color: isActive ? AppColors.white : AppColors.purple,
                         }}>
                         {tab.badge}
                       </Text>
@@ -927,6 +946,16 @@ const SettingsPanel = () => {
                           )}
                           {moduleItem.icon === 'debugging' && (
                             <QrCodeIcon
+                              color={
+                                isChecked
+                                  ? AppColors.purple
+                                  : AppColors.grayTextWeak
+                              }
+                              size={16}
+                            />
+                          )}
+                          {moduleItem.icon === 'media' && (
+                            <ScreencastIcon
                               color={
                                 isChecked
                                   ? AppColors.purple
@@ -1642,7 +1671,9 @@ const SettingsPanel = () => {
                         color: AppColors.primaryBlack,
                       }}>
                       {allModules.find(m => m.key === defaultTab)
-                        ? `#${allModules.find(m => m.key === defaultTab)?.id} ${allModules.find(m => m.key === defaultTab)?.label}`
+                        ? `#${allModules.find(m => m.key === defaultTab)?.id} ${
+                            allModules.find(m => m.key === defaultTab)?.label
+                          }`
                         : '#1 APIs (Network)'}
                     </Text>
                     <View
@@ -1933,7 +1964,8 @@ const SettingsPanel = () => {
                         color: AppColors.grayText,
                         marginTop: 1,
                       }}>
-                      Dynamically sets log limits according to available device memory
+                      Dynamically sets log limits according to available device
+                      memory
                     </Text>
                   </View>
                 </View>
@@ -2096,7 +2128,12 @@ const SettingsPanel = () => {
                 </View>
 
                 <View
-                  style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4}}>
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                    marginTop: 4,
+                  }}>
                   {[
                     {
                       label: 'APIs',
@@ -2217,7 +2254,8 @@ const SettingsPanel = () => {
                       color: AppColors.grayText,
                       marginTop: 1,
                     }}>
-                    Automatically prunes in-memory buffers by 50% when the OS signals low memory
+                    Automatically prunes in-memory buffers by 50% when the OS
+                    signals low memory
                   </Text>
                 </View>
                 <View
@@ -2311,7 +2349,8 @@ const SettingsPanel = () => {
                 borderColor: AppColors.grayBorderSecondary,
                 gap: 12,
               }}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
                 <View
                   style={{
                     width: 36,
@@ -2331,7 +2370,10 @@ const SettingsPanel = () => {
                       lineHeight: 18,
                       color: AppColors.primaryBlack,
                     }}>
-                    {t('settings.media.screenshotCardTitle', 'Screenshot Capture Settings')}
+                    {t(
+                      'settings.media.screenshotCardTitle',
+                      'Screenshot Capture Settings',
+                    )}
                   </Text>
                   <Text
                     style={{
@@ -2341,7 +2383,10 @@ const SettingsPanel = () => {
                       color: AppColors.grayText,
                       marginTop: 1,
                     }}>
-                    {t('settings.media.screenshotCardDesc', 'Image encoding format, compression quality and overlay auto-hide')}
+                    {t(
+                      'settings.media.screenshotCardDesc',
+                      'Image encoding format, compression quality and overlay auto-hide',
+                    )}
                   </Text>
                 </View>
               </View>
@@ -2349,7 +2394,10 @@ const SettingsPanel = () => {
               {renderSettingRow({
                 icon: <ImageIcon color={AppColors.purple} size={16} />,
                 label: t('settings.media.imageFormat', 'Image Format'),
-                description: t('settings.media.imageFormatDesc', 'Export formats (PNG lossless, JPEG lossy, WebP)'),
+                description: t(
+                  'settings.media.imageFormatDesc',
+                  'Export formats (PNG lossless, JPEG lossy, WebP)',
+                ),
                 right: (
                   <View style={{flexDirection: 'row', gap: 4}}>
                     {['PNG', 'JPEG', 'WEBP'].map(fmt => (
@@ -2359,13 +2407,19 @@ const SettingsPanel = () => {
                           paddingHorizontal: 8,
                           paddingVertical: 4,
                           borderRadius: 6,
-                          backgroundColor: fmt === 'PNG' ? AppColors.purple : `${AppColors.purple}1A`,
+                          backgroundColor:
+                            fmt === 'PNG'
+                              ? AppColors.purple
+                              : `${AppColors.purple}1A`,
                         }}>
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
                             fontSize: 10,
-                            color: fmt === 'PNG' ? AppColors.white : AppColors.purple,
+                            color:
+                              fmt === 'PNG'
+                                ? AppColors.white
+                                : AppColors.purple,
                           }}>
                           {fmt}
                         </Text>
@@ -2377,8 +2431,14 @@ const SettingsPanel = () => {
 
               {renderSettingRow({
                 icon: <EyeIcon color={AppColors.purple} size={16} />,
-                label: t('settings.media.autoHide', 'Auto-Hide Inspector During Capture'),
-                description: t('settings.media.autoHideDesc', 'Temporarily hides the inspector overlay during screen capture'),
+                label: t(
+                  'settings.media.autoHide',
+                  'Auto-Hide Inspector During Capture',
+                ),
+                description: t(
+                  'settings.media.autoHideDesc',
+                  'Temporarily hides the inspector overlay during screen capture',
+                ),
                 isLast: true,
                 right: (
                   <View
@@ -2411,7 +2471,8 @@ const SettingsPanel = () => {
                 borderColor: AppColors.grayBorderSecondary,
                 gap: 12,
               }}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
                 <View
                   style={{
                     width: 36,
@@ -2431,7 +2492,10 @@ const SettingsPanel = () => {
                       lineHeight: 18,
                       color: AppColors.primaryBlack,
                     }}>
-                    {t('settings.media.videoCardTitle', 'Video Recording & GIF Conversion')}
+                    {t(
+                      'settings.media.videoCardTitle',
+                      'Video Recording & GIF Conversion',
+                    )}
                   </Text>
                   <Text
                     style={{
@@ -2441,7 +2505,10 @@ const SettingsPanel = () => {
                       color: AppColors.grayText,
                       marginTop: 1,
                     }}>
-                    {t('settings.media.videoCardDesc', 'ReplayKit hardware encoding, frame capture fallback and GIF generation')}
+                    {t(
+                      'settings.media.videoCardDesc',
+                      'ReplayKit hardware encoding, frame capture fallback and GIF generation',
+                    )}
                   </Text>
                 </View>
               </View>
@@ -2449,7 +2516,10 @@ const SettingsPanel = () => {
               {renderSettingRow({
                 icon: <MicrophoneIcon color={AppColors.purple} size={16} />,
                 label: t('settings.media.audioMode', 'Audio Source'),
-                description: t('settings.media.audioModeDesc', 'Record video with muted, app audio, or microphone commentary'),
+                description: t(
+                  'settings.media.audioModeDesc',
+                  'Record video with muted, app audio, or microphone commentary',
+                ),
                 right: (
                   <View style={{flexDirection: 'row', gap: 4}}>
                     {['Muted', 'App', 'Mic'].map((aud, i) => (
@@ -2459,7 +2529,10 @@ const SettingsPanel = () => {
                           paddingHorizontal: 7,
                           paddingVertical: 4,
                           borderRadius: 6,
-                          backgroundColor: i === 0 ? AppColors.purple : `${AppColors.purple}1A`,
+                          backgroundColor:
+                            i === 0
+                              ? AppColors.purple
+                              : `${AppColors.purple}1A`,
                         }}>
                         <Text
                           style={{
@@ -2477,8 +2550,14 @@ const SettingsPanel = () => {
 
               {renderSettingRow({
                 icon: <FilmIcon color={AppColors.purple} size={16} />,
-                label: t('settings.media.frameRate', 'Recording Frame Rate (FPS)'),
-                description: t('settings.media.frameRateDesc', 'Target video smoothness: 15, 24, 30, or 60 FPS'),
+                label: t(
+                  'settings.media.frameRate',
+                  'Recording Frame Rate (FPS)',
+                ),
+                description: t(
+                  'settings.media.frameRateDesc',
+                  'Target video smoothness: 15, 24, 30, or 60 FPS',
+                ),
                 right: (
                   <View style={{flexDirection: 'row', gap: 4}}>
                     {['15', '24', '30', '60'].map(fps => (
@@ -2488,13 +2567,17 @@ const SettingsPanel = () => {
                           paddingHorizontal: 6,
                           paddingVertical: 4,
                           borderRadius: 6,
-                          backgroundColor: fps === '24' ? AppColors.purple : `${AppColors.purple}1A`,
+                          backgroundColor:
+                            fps === '24'
+                              ? AppColors.purple
+                              : `${AppColors.purple}1A`,
                         }}>
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
                             fontSize: 10,
-                            color: fps === '24' ? AppColors.white : AppColors.purple,
+                            color:
+                              fps === '24' ? AppColors.white : AppColors.purple,
                           }}>
                           {fps}fps
                         </Text>
@@ -2507,7 +2590,10 @@ const SettingsPanel = () => {
               {renderSettingRow({
                 icon: <GifIcon color={AppColors.purple} size={16} />,
                 label: t('settings.media.gifAutoOpt', 'Auto GIF Optimization'),
-                description: t('settings.media.gifAutoOptDesc', 'Automatic palette reduction and frame skip for lightweight animated GIFs'),
+                description: t(
+                  'settings.media.gifAutoOptDesc',
+                  'Automatic palette reduction and frame skip for lightweight animated GIFs',
+                ),
                 isLast: true,
                 right: (
                   <View
@@ -2541,13 +2627,25 @@ const SettingsPanel = () => {
               }}>
               {renderSettingRow({
                 icon: <TrashIcon color={AppColors.errorColor} size={16} />,
-                label: t('settings.media.purgeAll', 'Purge Captured Media Cache'),
-                description: t('settings.media.purgeAllDesc', 'Delete all local screenshots, screen recordings and converted GIFs'),
+                label: t(
+                  'settings.media.purgeAll',
+                  'Purge Captured Media Cache',
+                ),
+                description: t(
+                  'settings.media.purgeAllDesc',
+                  'Delete all local screenshots, screen recordings and converted GIFs',
+                ),
                 isLast: true,
                 onPress: () => {
                   Alert.alert(
-                    t('settings.media.purgeConfirmTitle', 'Purge Media Storage?'),
-                    t('settings.media.purgeConfirmMessage', 'This will permanently delete all captured screenshots and videos from disk.'),
+                    t(
+                      'settings.media.purgeConfirmTitle',
+                      'Purge Media Storage?',
+                    ),
+                    t(
+                      'settings.media.purgeConfirmMessage',
+                      'This will permanently delete all captured screenshots and videos from disk.',
+                    ),
                     [
                       {text: t('common.cancel', 'Cancel'), style: 'cancel'},
                       {
@@ -2555,7 +2653,12 @@ const SettingsPanel = () => {
                         style: 'destructive',
                         onPress: async () => {
                           await ScreenCapture.clearAllMedia();
-                          showToast(t('settings.media.purgedSuccess', 'Media cache cleared successfully'));
+                          showToast(
+                            t(
+                              'settings.media.purgedSuccess',
+                              'Media cache cleared successfully',
+                            ),
+                          );
                         },
                       },
                     ],
@@ -2724,7 +2827,9 @@ const SettingsPanel = () => {
                   lineHeight: 16,
                   color: AppColors.grayText,
                 }}>
-                High-performance in-app debugging, network logging, console inspection, performance profiling, storage viewer & telemetry diagnostics for React Native.
+                High-performance in-app debugging, network logging, console
+                inspection, performance profiling, storage viewer & telemetry
+                diagnostics for React Native.
               </Text>
 
               {updateAvailable && (
@@ -2975,38 +3080,67 @@ const SettingsPanel = () => {
                     package: {
                       name: 'react-native-inapp-inspector',
                       version: `v${LIB_VERSION}`,
-                      latestNpmVersion: latestNpmVersion ? `v${latestNpmVersion}` : 'Checking...',
+                      latestNpmVersion: latestNpmVersion
+                        ? `v${latestNpmVersion}`
+                        : 'Checking...',
                       license: 'MIT',
-                      repository: 'https://github.com/vengatmacuser/react-native-inapp-inspector',
+                      repository:
+                        'https://github.com/vengatmacuser/react-native-inapp-inspector',
                     },
                     hostApp: {
                       name: getAppName(),
                       bundleId: getBundleIdentifier(),
                       versionAndBuild: getAppVersionAndBuild().formatted,
-                      buildVariant: __DEV__ ? 'Development (Debug)' : 'Production (Release)',
+                      buildVariant: __DEV__
+                        ? 'Development (Debug)'
+                        : 'Production (Release)',
                       metroConnected: isLocalDebugEnvironment(),
                     },
                     runtime: {
-                      reactNativeVersion: rnVer ? `${rnVer.major}.${rnVer.minor}.${rnVer.patch}` : '0.74+',
+                      reactNativeVersion: rnVer
+                        ? `${rnVer.major}.${rnVer.minor}.${rnVer.patch}`
+                        : '0.74+',
                       reactVersion: React.version,
-                      jsEngine: Boolean((global as any)?.HermesInternal) ? 'Hermes' : 'JavaScriptCore (JSC)',
-                      architecture: Boolean((global as any)?.nativeFabricUIManager) ? 'Fabric (New Architecture)' : 'Paper (Legacy Bridge)',
-                      turboModules: Boolean((global as any)?.__turboModuleProxy || (global as any)?.TurboModuleRegistry),
+                      jsEngine: Boolean((global as any)?.HermesInternal)
+                        ? 'Hermes'
+                        : 'JavaScriptCore (JSC)',
+                      architecture: Boolean(
+                        (global as any)?.nativeFabricUIManager,
+                      )
+                        ? 'Fabric (New Architecture)'
+                        : 'Paper (Legacy Bridge)',
+                      turboModules: Boolean(
+                        (global as any)?.__turboModuleProxy ||
+                          (global as any)?.TurboModuleRegistry,
+                      ),
                     },
                     device: {
                       platform: Platform.OS,
                       osVersion: Platform.Version,
-                      deviceModel: (Platform.constants as any)?.Model || 'Unknown Device',
-                      windowDimensions: `${Math.round(win.width)}x${Math.round(win.height)} pt`,
-                      screenDimensions: `${Math.round(scr.width)}x${Math.round(scr.height)} pt`,
+                      deviceModel:
+                        (Platform.constants as any)?.Model || 'Unknown Device',
+                      windowDimensions: `${Math.round(win.width)}x${Math.round(
+                        win.height,
+                      )} pt`,
+                      screenDimensions: `${Math.round(scr.width)}x${Math.round(
+                        scr.height,
+                      )} pt`,
                       pixelRatio: PixelRatio.get(),
                       fontScale: PixelRatio.getFontScale(),
-                      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown',
-                      locale: Intl.DateTimeFormat().resolvedOptions().locale || 'en',
+                      timezone:
+                        Intl.DateTimeFormat().resolvedOptions().timeZone ||
+                        'Unknown',
+                      locale:
+                        Intl.DateTimeFormat().resolvedOptions().locale || 'en',
                     },
                     storageAndCapabilities: {
-                      storageEngine: isPersistentStorageAvailable() ? 'MMKV (Fast Native Storage)' : 'In-Memory State',
-                      hasNativeModule: Boolean((global as any)?.NativeInspectorModule || (global as any)?.__IN_APP_INSPECTOR_NATIVE__),
+                      storageEngine: isPersistentStorageAvailable()
+                        ? 'MMKV (Fast Native Storage)'
+                        : 'In-Memory State',
+                      hasNativeModule: Boolean(
+                        (global as any)?.NativeInspectorModule ||
+                          (global as any)?.__IN_APP_INSPECTOR_NATIVE__,
+                      ),
                       reduxConnected: isReduxConnected(),
                       analyticsConnected: isAnalyticsConnected(),
                     },
@@ -3184,7 +3318,9 @@ const SettingsPanel = () => {
                     showToast('Copied npm install command!');
                   }}
                   style={{
-                    backgroundColor: updateAvailable ? AppColors.purple : `${AppColors.purple}18`,
+                    backgroundColor: updateAvailable
+                      ? AppColors.purple
+                      : `${AppColors.purple}18`,
                     paddingVertical: 7,
                     paddingHorizontal: 11,
                     borderRadius: 8,
@@ -3192,12 +3328,17 @@ const SettingsPanel = () => {
                     alignItems: 'center',
                     gap: 5,
                   }}>
-                  <CopyIcon color={updateAvailable ? AppColors.white : AppColors.purple} size={12} />
+                  <CopyIcon
+                    color={updateAvailable ? AppColors.white : AppColors.purple}
+                    size={12}
+                  />
                   <Text
                     style={{
                       fontFamily: AppFonts.interBold,
                       fontSize: 11,
-                      color: updateAvailable ? AppColors.white : AppColors.purple,
+                      color: updateAvailable
+                        ? AppColors.white
+                        : AppColors.purple,
                     }}>
                     {updateAvailable ? 'Copy Upgrade' : 'Copy Install'}
                   </Text>
@@ -3227,68 +3368,143 @@ const SettingsPanel = () => {
               </Text>
 
               <View style={{gap: 8}}>
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Application Name
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
                     {getAppName()}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Bundle ID / Package
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.primaryBlack}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      color: AppColors.primaryBlack,
+                    }}>
                     {getBundleIdentifier()}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Version & Build Number
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
                     {getAppVersionAndBuild().formatted}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Build Variant
                   </Text>
                   <View
                     style={{
-                      backgroundColor: __DEV__ ? `${AppColors.amber500}20` : `${AppColors.emerald500}20`,
+                      backgroundColor: __DEV__
+                        ? `${AppColors.amber500}20`
+                        : `${AppColors.emerald500}20`,
                       paddingHorizontal: 6,
                       paddingVertical: 1.5,
                       borderRadius: 5,
                       borderWidth: 1,
-                      borderColor: __DEV__ ? `${AppColors.amber500}50` : `${AppColors.emerald500}50`,
+                      borderColor: __DEV__
+                        ? `${AppColors.amber500}50`
+                        : `${AppColors.emerald500}50`,
                     }}>
                     <Text
                       style={{
                         fontFamily: AppFonts.interBold,
                         fontSize: 10,
-                        color: __DEV__ ? AppColors.amber500 : AppColors.emerald600,
+                        color: __DEV__
+                          ? AppColors.amber500
+                          : AppColors.emerald600,
                       }}>
                       {__DEV__ ? 'Development (Debug)' : 'Production (Release)'}
                     </Text>
                   </View>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Metro Bundler Connection
                   </Text>
                   <Text
                     style={{
                       fontFamily: AppFonts.interBold,
                       fontSize: 11.5,
-                      color: isLocalDebugEnvironment() ? AppColors.emerald600 : AppColors.grayText,
+                      color: isLocalDebugEnvironment()
+                        ? AppColors.emerald600
+                        : AppColors.grayText,
                     }}>
-                    {isLocalDebugEnvironment() ? 'Connected (Hot Reload Active)' : 'Offline / Standalone'}
+                    {isLocalDebugEnvironment()
+                      ? 'Connected (Hot Reload Active)'
+                      : 'Offline / Standalone'}
                   </Text>
                 </View>
               </View>
@@ -3316,28 +3532,76 @@ const SettingsPanel = () => {
               </Text>
 
               <View style={{gap: 8}}>
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     React Native Version
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    v{((Platform.constants as any)?.reactNativeVersion?.major != null)
-                      ? `${(Platform.constants as any).reactNativeVersion.major}.${(Platform.constants as any).reactNativeVersion.minor}.${(Platform.constants as any).reactNativeVersion.patch}`
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    v
+                    {(Platform.constants as any)?.reactNativeVersion?.major !=
+                    null
+                      ? `${
+                          (Platform.constants as any).reactNativeVersion.major
+                        }.${
+                          (Platform.constants as any).reactNativeVersion.minor
+                        }.${
+                          (Platform.constants as any).reactNativeVersion.patch
+                        }`
                       : '0.74+'}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     React Core Version
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
                     v{React.version}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     JavaScript Engine
                   </Text>
                   <View
@@ -3349,27 +3613,69 @@ const SettingsPanel = () => {
                       borderWidth: 1,
                       borderColor: `${AppColors.purple}40`,
                     }}>
-                    <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.purple}}>
-                      {Boolean((global as any)?.HermesInternal) ? 'Hermes Engine (Active)' : 'JavaScriptCore (JSC)'}
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10.5,
+                        color: AppColors.purple,
+                      }}>
+                      {Boolean((global as any)?.HermesInternal)
+                        ? 'Hermes Engine (Active)'
+                        : 'JavaScriptCore (JSC)'}
                     </Text>
                   </View>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Rendering Architecture
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    {Boolean((global as any)?.nativeFabricUIManager) ? 'Fabric (New Architecture)' : 'Paper (Legacy Bridge)'}
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {Boolean((global as any)?.nativeFabricUIManager)
+                      ? 'Fabric (New Architecture)'
+                      : 'Paper (Legacy Bridge)'}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     TurboModules Support
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    {Boolean((global as any)?.__turboModuleProxy || (global as any)?.TurboModuleRegistry)
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {Boolean(
+                      (global as any)?.__turboModuleProxy ||
+                        (global as any)?.TurboModuleRegistry,
+                    )
                       ? 'Enabled (C++ JSI)'
                       : 'Standard Bridge'}
                   </Text>
@@ -3399,59 +3705,171 @@ const SettingsPanel = () => {
               </Text>
 
               <View style={{gap: 8}}>
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Operating System
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    {Platform.OS === 'ios' ? 'Apple iOS' : Platform.OS === 'android' ? 'Google Android' : Platform.OS}{' '}
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {Platform.OS === 'ios'
+                      ? 'Apple iOS'
+                      : Platform.OS === 'android'
+                      ? 'Google Android'
+                      : Platform.OS}{' '}
                     {Platform.Version}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Device Hardware Model
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
                     {(Platform.constants as any)?.Model ||
-                      (Platform.OS === 'ios' ? 'Apple Device' : 'Android Device')}
+                      (Platform.OS === 'ios'
+                        ? 'Apple Device'
+                        : 'Android Device')}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Window Viewport (Points)
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    {Math.round(Dimensions.get('window').width)} × {Math.round(Dimensions.get('window').height)} pt
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {Math.round(Dimensions.get('window').width)} ×{' '}
+                    {Math.round(Dimensions.get('window').height)} pt
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Native Physical Resolution
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    {Math.round(Dimensions.get('screen').width * PixelRatio.get())} × {Math.round(Dimensions.get('screen').height * PixelRatio.get())} px
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {Math.round(
+                      Dimensions.get('screen').width * PixelRatio.get(),
+                    )}{' '}
+                    ×{' '}
+                    {Math.round(
+                      Dimensions.get('screen').height * PixelRatio.get(),
+                    )}{' '}
+                    px
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Pixel Density & Font Scale
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    {PixelRatio.get().toFixed(1)}x ({PixelRatio.get() >= 3 ? '@3x' : PixelRatio.get() >= 2 ? '@2x' : '@1x'}) • Font: {PixelRatio.getFontScale().toFixed(2)}x
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {PixelRatio.get().toFixed(1)}x (
+                    {PixelRatio.get() >= 3
+                      ? '@3x'
+                      : PixelRatio.get() >= 2
+                      ? '@2x'
+                      : '@1x'}
+                    ) • Font: {PixelRatio.getFontScale().toFixed(2)}x
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Timezone & Locale
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    {Intl.DateTimeFormat().resolvedOptions().timeZone || 'System'} ({Intl.DateTimeFormat().resolvedOptions().locale || 'en'})
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {Intl.DateTimeFormat().resolvedOptions().timeZone ||
+                      'System'}{' '}
+                    ({Intl.DateTimeFormat().resolvedOptions().locale || 'en'})
                   </Text>
                 </View>
               </View>
@@ -3479,76 +3897,170 @@ const SettingsPanel = () => {
               </Text>
 
               <View style={{gap: 8}}>
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Storage Persistence Engine
                   </Text>
                   <View
                     style={{
-                      backgroundColor: isPersistentStorageAvailable() ? `${AppColors.emerald500}18` : `${AppColors.amber500}18`,
+                      backgroundColor: isPersistentStorageAvailable()
+                        ? `${AppColors.emerald500}18`
+                        : `${AppColors.amber500}18`,
                       paddingHorizontal: 6,
                       paddingVertical: 1.5,
                       borderRadius: 5,
                       borderWidth: 1,
-                      borderColor: isPersistentStorageAvailable() ? `${AppColors.emerald500}50` : `${AppColors.amber500}50`,
+                      borderColor: isPersistentStorageAvailable()
+                        ? `${AppColors.emerald500}50`
+                        : `${AppColors.amber500}50`,
                     }}>
                     <Text
                       style={{
                         fontFamily: AppFonts.interBold,
                         fontSize: 10.5,
-                        color: isPersistentStorageAvailable() ? AppColors.emerald600 : AppColors.amber500,
+                        color: isPersistentStorageAvailable()
+                          ? AppColors.emerald600
+                          : AppColors.amber500,
                       }}>
-                      {isPersistentStorageAvailable() ? 'MMKV Fast Native Storage' : 'In-Memory State'}
+                      {isPersistentStorageAvailable()
+                        ? 'MMKV Fast Native Storage'
+                        : 'In-Memory State'}
                     </Text>
                   </View>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Native Module Status
                   </Text>
                   <Text
                     style={{
                       fontFamily: AppFonts.interBold,
                       fontSize: 11.5,
-                      color: Boolean((global as any)?.NativeInspectorModule) ? AppColors.emerald600 : AppColors.grayText,
+                      color: Boolean((global as any)?.NativeInspectorModule)
+                        ? AppColors.emerald600
+                        : AppColors.grayText,
                     }}>
-                    {Boolean((global as any)?.NativeInspectorModule) ? 'Linked & Active' : 'JavaScript Only'}
+                    {Boolean((global as any)?.NativeInspectorModule)
+                      ? 'Linked & Active'
+                      : 'JavaScript Only'}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Network Logger Interceptor
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.emerald600,
+                    }}>
                     Active (XMLHttpRequest & Fetch Hooked)
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Redux & Analytics Watchers
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
-                    Redux: {isReduxConnected() ? 'Connected' : 'Listening'} • Analytics: {isAnalyticsConnected() ? 'Connected' : 'Listening'}
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    Redux: {isReduxConnected() ? 'Connected' : 'Listening'} •
+                    Analytics:{' '}
+                    {isAnalyticsConnected() ? 'Connected' : 'Listening'}
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Crash & Exception Boundary
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.emerald600,
+                    }}>
                     Global JS Exception Handler Active
                   </Text>
                 </View>
 
-                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11.5,
+                      color: AppColors.grayText,
+                    }}>
                     Memory Management
                   </Text>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 11.5,
+                      color: AppColors.emerald600,
+                    }}>
                     Dynamic Auto RAM Tiering Active
                   </Text>
                 </View>
@@ -3576,29 +4088,74 @@ const SettingsPanel = () => {
                 LICENSE & CREDITS
               </Text>
 
-              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 11.5,
+                    color: AppColors.grayText,
+                  }}>
                   License
                 </Text>
-                <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.emerald600}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11.5,
+                    color: AppColors.emerald600,
+                  }}>
                   MIT Permissive Open Source
                 </Text>
               </View>
 
-              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 11.5,
+                    color: AppColors.grayText,
+                  }}>
                   Created & Maintained By
                 </Text>
-                <Text style={{fontFamily: AppFonts.interBold, fontSize: 11.5, color: AppColors.primaryBlack}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11.5,
+                    color: AppColors.primaryBlack,
+                  }}>
                   Vengateswaran
                 </Text>
               </View>
 
-              <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11.5, color: AppColors.grayText}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 11.5,
+                    color: AppColors.grayText,
+                  }}>
                   Repository
                 </Text>
-                <Text style={{fontFamily: AppFonts.interRegular, fontSize: 11, color: AppColors.purple}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 11,
+                    color: AppColors.purple,
+                  }}>
                   github.com/vengatmacuser/react-native-inapp-inspector
                 </Text>
               </View>
@@ -4522,7 +5079,6 @@ const SettingsPanel = () => {
       </ScrollView>
     );
   }
-
 
   const subPageAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {

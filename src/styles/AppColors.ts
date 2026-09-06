@@ -1,49 +1,49 @@
 const LightColors = {
-  // ─── Core (Thai Airways Royal Palette) ───
+  // ─── Core (Modern Indigo / Violet Header Gradient Palette) ───
   primaryLight: '#FFFFFF',
-  purple: '#5C2D91',             // Thai Royal Purple
-  purpleShade50: '#F8F4FC',      // Orchid Silk Tint
-  offerPurple: '#9B2677',        // Thai Orchid Magenta
-  grayBorderSecondary: '#E2DFEB',
-  grayBackground: '#F8F7FB',     // Pearl White Surface
-  grayText: '#625D73',
-  grayTextWeak: '#8F8A9E',
+  purple: '#4F46E5',             // Vibrant Header Indigo
+  purpleShade50: '#EEF2FF',      // Indigo Silk Tint
+  offerPurple: '#7C3AED',        // Vibrant Header Violet
+  grayBorderSecondary: '#E2E8F0',
+  grayBackground: '#F8FAFC',     // Clean Pearl Slate Surface
+  grayText: '#475569',
+  grayTextWeak: '#64748B',
   greenColor: '#10B981',
-  graySurface: '#E2DFEB',
+  graySurface: '#F1F5F9',
   skyBlue: '#2563EB',
-  primaryBlack: '#211B30',       // Royal Midnight Dark
-  grayTextStrong: '#211B30',
-  dividerColor: '#EBE7F2',
-  warningIconGold: '#C5A059',    // Thai Orchid Gold
-  shadowColorString: '#211B30',
+  primaryBlack: '#0F172A',       // Slate Midnight Dark
+  grayTextStrong: '#0F172A',
+  dividerColor: '#E2E8F0',
+  warningIconGold: '#D97706',    // Warm Amber Gold
+  shadowColorString: '#0F172A',
   errorColor: '#E11D48',
-  lightOrange: '#E5C158',        // Thai Warm Gold Light
-  darkOrange: '#B89758',         // Thai Silk Gold
+  lightOrange: '#F59E0B',
+  darkOrange: '#D97706',
   successGreen: '#10B981',
-  purpleShade700: '#481E78',     // Thai Deep Violet
+  purpleShade700: '#3730A3',     // Deep Indigo
   greenStatus: '#D1FAE5',
   greenBaggageText: '#059669',
-  paleYellow: '#F7E9C4',         // Thai Pale Gold
+  paleYellow: '#FEF3C7',
 
   // ─── Brand / UI ───
   white: '#FFFFFF',
   black: '#000000',
-  brandPurple: '#4B1B7D',        // Iconic Thai Airways Purple
+  brandPurple: '#4F46E5',        // Iconic Indigo 600
   liveGreen: '#10B981',
   firebaseOrange: '#D97706',
   greenA400: '#00E676',
 
   // ─── Code / Slate ───
-  slate900: '#171226',
-  slate700: '#332C4A',
-  slate600: '#4D446B',
-  slate500: '#6E648D',
-  slate400: '#948BAF',
-  slate200: '#E4DFEE',
-  slate100: '#F3F0F8',
-  slate50: '#F9F7FC',
-  gray700: '#373147',
-  gray300: '#D5D0E0',
+  slate900: '#0F172A',
+  slate700: '#334155',
+  slate600: '#475569',
+  slate500: '#64748B',
+  slate400: '#94A3B8',
+  slate200: '#E2E8F0',
+  slate100: '#F1F5F9',
+  slate50: '#F8FAFC',
+  gray700: '#334155',
+  gray300: '#CBD5E1',
   highlightYellow: '#FDE047',
   yellowHighlight: '#FFE44D',
 
@@ -58,28 +58,28 @@ const LightColors = {
   indigo600: '#4F46E5',
   violet600: '#7C3AED',
   violet500: '#8B5CF6',
-  purpleText: '#5C2D91',
-  pink600: '#9B2677',
+  purpleText: '#4F46E5',
+  pink600: '#DB2777',
   rose600: '#E11D48',
   orange600: '#EA580C',
-  amber500: '#C5A059',
-  amber600: '#B89758',
-  amber700: '#A17D3B',
-  amber800: '#785A1D',
+  amber500: '#F59E0B',
+  amber600: '#D97706',
+  amber700: '#B45309',
+  amber800: '#92400E',
   green500: '#22C55E',
   green600: '#16A34A',
   green700: '#15803D',
   green800: '#166534',
   emerald500: '#10B981',
   emerald600: '#059669',
-  grey600: '#616161',
+  grey600: '#64748B',
   redErrorText: '#991B1B',
   materialGreen: '#2E7D32',
   googleBlue: '#4285F4',
   googleGreen: '#34A853',
   googleOrange: '#F57C00',
   googleRed: '#E53935',
-  googlePurple: '#5C2D91',
+  googlePurple: '#4F46E5',
   googleTeal: '#00897B',
 
   // ─── NPM / Package / Tailwind Spectrum Helpers ───
@@ -116,11 +116,11 @@ const LightColors = {
   cyan500: '#06B6D4',
   indigo400: '#818CF8',
   indigo600Alt: '#4F46E5',
-  purple800: '#6B21A8',
-  purple900: '#581C87',
-  purple50: '#FAF5FF',
-  purple100: '#F3E8FF',
-  purple200: '#E9D5FF',
+  purple800: '#4338CA',
+  purple900: '#312E81',
+  purple50: '#EEF2FF',
+  purple100: '#E0E7FF',
+  purple200: '#C7D2FE',
   rose700: '#BE123C',
   red600: '#DC2626',
   red50: '#FFFBFB',
@@ -137,19 +137,19 @@ const LightColors = {
   sky100: '#E0F2FE',
   teal100: '#CCFBF1',
   teal700: '#0F766E',
-  purple700: '#6D28D9',
+  purple700: '#4338CA',
   indigo50: '#EEF2FF',
-  gray100: '#F3F4F6',
-  gray200: '#E5E7EB',
-  gray500: '#6B7280',
-  gray600: '#4B5563',
+  gray100: '#F1F5F9',
+  gray200: '#E2E8F0',
+  gray500: '#64748B',
+  gray600: '#475569',
 
   // ─── Tint Backgrounds / Borders (Theme-Aware) ───
   errorCardBg: '#FFF1F3',
   warnCardBg: '#FDFBF4',
   blueTintBg: '#EFF6FF',
-  purpleTintBg: '#F6F0FA',
-  purpleTint2: '#EFE7F7',
+  purpleTintBg: '#EEF2FF',
+  purpleTint2: '#E0E7FF',
   roseBg: '#FDF2F8',
   roseBorder: '#FBCFE8',
   errorBorder: '#FECDD3',
@@ -161,12 +161,12 @@ const LightColors = {
   blueBorder: '#BFDBFE',
   greenBg: '#F0FDF4',
   greenBorder: '#BBF7D0',
-  purpleBg: '#F6F0FA',
-  purpleBorder: '#E4D5F2',
-  greyBg: '#F5F4F8',
-  greyBorder: '#E3DFEC',
-  paperBg: '#FBF9FC',
-  contentBg: '#F8F7FB',
+  purpleBg: '#EEF2FF',
+  purpleBorder: '#C7D2FE',
+  greyBg: '#F8FAFC',
+  greyBorder: '#E2E8F0',
+  paperBg: '#F8FAFC',
+  contentBg: '#F8FAFC',
 
   // ─── Toast / Glass / Chip Tokens ───
   toastBg: '#0F172AEE',
@@ -203,50 +203,50 @@ const LightColors = {
   whiteAlpha33: 'rgba(255, 255, 255, 0.33)',
   whiteAlpha60: 'rgba(255, 255, 255, 0.6)',
 
-  // ─── Domain Colors (Thai Airways Themed) ───
+  // ─── Domain Colors (Header Gradient Spectrum) ───
   domainColors: [
-    '#5C2D91',
-    '#9B2677',
-    '#C5A059',
-    '#4B1B7D',
-    '#0D9488',
+    '#4F46E5',
+    '#7C3AED',
     '#2563EB',
-    '#B89758',
+    '#0D9488',
+    '#EA580C',
     '#059669',
-    '#3B1359',
-    '#D1208A',
+    '#6366F1',
+    '#8B5CF6',
+    '#3B82F6',
+    '#D97706',
   ],
 };
 
 const DarkColors = {
-  primaryLight: '#1C1628',        // Thai Dark Card
-  purple: '#B68FE8',              // Luminous Thai Orchid
-  purpleShade50: '#2A1C3E',
-  offerPurple: '#F472B6',
-  grayBorderSecondary: '#362C4E',
-  grayBackground: '#130F1F',      // Thai Airways Midnight Sky
-  grayText: '#A197B8',
-  grayTextWeak: '#756C8C',
+  primaryLight: '#1E1B4B',        // Deep Indigo Dark Card
+  purple: '#818CF8',              // Luminous Indigo
+  purpleShade50: '#1E1B4B',
+  offerPurple: '#A78BFA',
+  grayBorderSecondary: '#312E81',
+  grayBackground: '#0F172A',      // Slate Midnight Sky
+  grayText: '#94A3B8',
+  grayTextWeak: '#64748B',
   greenColor: '#34D399',
-  graySurface: '#362C4E',
+  graySurface: '#1E293B',
   skyBlue: '#60A5FA',
-  primaryBlack: '#F7F5FC',
-  grayTextStrong: '#F7F5FC',
-  dividerColor: '#2B2240',
-  warningIconGold: '#E5C158',     // Thai Luminous Gold
+  primaryBlack: '#F8FAFC',
+  grayTextStrong: '#F8FAFC',
+  dividerColor: '#1E293B',
+  warningIconGold: '#FBBF24',
   shadowColorString: '#000000',
   errorColor: '#F87171',
   lightOrange: '#FDE68A',
-  darkOrange: '#D4AF37',
+  darkOrange: '#F59E0B',
   successGreen: '#34D399',
-  purpleShade700: '#8E4DBE',
+  purpleShade700: '#4338CA',
   greenStatus: '#064E3B',
   greenBaggageText: '#34D399',
   paleYellow: '#78350F',
 
   white: '#FFFFFF',
   black: '#000000',
-  brandPurple: '#7B3DB8',
+  brandPurple: '#6366F1',
   liveGreen: '#34D399',
   firebaseOrange: '#F59E0B',
   greenA400: '#00E676',

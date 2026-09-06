@@ -242,6 +242,7 @@ const JsonViewer = React.memo(({
       {!hideTabs && (
         <View style={localStyles.toolbar}>
           <SegmentedTabs
+            style={{flex: 1, minWidth: 0, marginRight: 8}}
             tabs={[
               {
                 key: 'pretty',
@@ -445,8 +446,9 @@ const localStyles = StyleSheet.create({
     backgroundColor: AppColors.slate50,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.slate200,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 8,
   },
   contentWrapper: {
     backgroundColor: AppColors.white,

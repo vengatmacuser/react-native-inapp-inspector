@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   s.source       = { :git => "https://github.com/vengatmacuser/react-native-inapp-inspector.git", :tag => "v#{s.version}" }
   s.source_files = "ios/**/*.{h,m,mm,swift}"
   s.requires_arc = true
-  s.frameworks   = "AVFoundation", "ReplayKit", "CoreMedia", "CoreVideo", "ImageIO", "MobileCoreServices", "QuartzCore"
+  s.frameworks   = "AVFoundation", "AVKit", "ReplayKit", "CoreMedia", "CoreVideo", "ImageIO", "MobileCoreServices", "QuartzCore"
 
   # React Native New Architecture (TurboModules & Codegen) support
   if respond_to?(:install_modules_dependencies, true)

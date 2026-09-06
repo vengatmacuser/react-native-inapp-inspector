@@ -22,6 +22,7 @@ export interface Spec extends TurboModule {
   stopVideoRecording(): Promise<Object>;
   isRecording(): Promise<boolean>;
   convertToGif(videoUri: string, options: Object): Promise<Object>;
+  playVideo(videoUri: string): Promise<boolean>;
   getCapturedMedia(): Promise<string>;
   deleteCapturedMedia(uri: string): Promise<boolean>;
   clearAllCapturedMedia(): Promise<boolean>;

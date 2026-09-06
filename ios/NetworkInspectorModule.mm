@@ -5,6 +5,7 @@
 #import <unistd.h>
 #import <ReplayKit/ReplayKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import <AVKit/AVKit.h>
 #import <ImageIO/ImageIO.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 
@@ -502,7 +503,11 @@ static void NativeExceptionHandler(NSException *exception) {
     BOOL _isSoftwareRecordingActive;
     NSInteger _softwareFrameIndex;
     NSTimeInterval _softwareRecordingStartTime;
+    long long _softwareRecordingTimestamp;
     NSString *_softwareRecordingFilePath;
+    NSString *_softwareRecordingThumbnailPath;
+    NSInteger _softwareVideoWidth;
+    NSInteger _softwareVideoHeight;
 }
 
 RCT_EXPORT_MODULE(NetworkInspectorModule);
@@ -1124,63 +1129,101 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
     return foundWindow;
 }
 
-- (UIImage *)captureWindowImage:(UIWindow *)window scale:(CGFloat)scale {
-    if (!window) return nil;
-    CGRect bounds = window.bounds;
-    if (bounds.size.width <= 0 || bounds.size.height <= 0) {
-        bounds = [UIScreen mainScreen].bounds;
+- (UIImage *)captureScreenHierarchyWithScale:(CGFloat)scale {
+    // Restrict capture strictly to active foreground app
+    if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) {
+        return nil;
     }
+
+    CGRect screenBounds = [UIScreen mainScreen].bounds;
     CGFloat screenScale = [UIScreen mainScreen].scale;
     CGFloat finalScale = screenScale * scale;
     if (finalScale <= 0.0) finalScale = screenScale;
 
-    UIGraphicsBeginImageContextWithOptions(bounds.size, NO, finalScale);
+    UIGraphicsBeginImageContextWithOptions(screenBounds.size, NO, finalScale);
     CGContextRef context = UIGraphicsGetCurrentContext();
-    
-    BOOL drawn = NO;
-    @try {
-        drawn = [window drawViewHierarchyInRect:bounds afterScreenUpdates:NO];
-    } @catch (NSException *e) {
-        drawn = NO;
-    }
-    
-    if (!drawn && context) {
-        @try {
-            [window.layer renderInContext:context];
-        } @catch (NSException *e) {}
-    }
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
 
-    if (!image && window.rootViewController && window.rootViewController.view) {
-        UIGraphicsBeginImageContextWithOptions(bounds.size, NO, finalScale);
-        CGContextRef ctx = UIGraphicsGetCurrentContext();
-        if (ctx) {
+    NSArray<UIWindow *> *windows = @[];
+    if (@available(iOS 13.0, *)) {
+        NSMutableArray *allWindows = [NSMutableArray array];
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                [allWindows addObjectsFromArray:((UIWindowScene *)scene).windows];
+            }
+        }
+        windows = allWindows;
+    }
+    if (windows.count == 0) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        windows = [UIApplication sharedApplication].windows;
+#pragma clang diagnostic pop
+    }
+
+    NSArray<UIWindow *> *sortedWindows = [windows sortedArrayUsingComparator:^NSComparisonResult(UIWindow *w1, UIWindow *w2) {
+        if (w1.windowLevel < w2.windowLevel) return NSOrderedAscending;
+        if (w1.windowLevel > w2.windowLevel) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+
+    BOOL drewAny = NO;
+    for (UIWindow *w in sortedWindows) {
+        if (w.hidden || w.alpha <= 0.01 || w.bounds.size.width <= 0) continue;
+        @try {
+            BOOL ok = [w drawViewHierarchyInRect:w.bounds afterScreenUpdates:NO];
+            if (ok) {
+                drewAny = YES;
+            } else if (context) {
+                [w.layer renderInContext:context];
+                drewAny = YES;
+            }
+        } @catch (NSException *e) {
+            if (context) {
+                @try {
+                    [w.layer renderInContext:context];
+                    drewAny = YES;
+                } @catch (NSException *ex) {}
+            }
+        }
+    }
+
+    if (!drewAny) {
+        UIWindow *fallback = [self findActiveKeyWindow];
+        if (fallback && fallback.rootViewController && fallback.rootViewController.view && context) {
             @try {
-                [window.rootViewController.view.layer renderInContext:ctx];
+                [fallback.rootViewController.view.layer renderInContext:context];
             } @catch (NSException *e) {}
         }
-        image = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
     }
+
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
     return image;
 }
 
-- (CVPixelBufferRef)createPixelBufferFromCGImage:(CGImageRef)image size:(CGSize)size {
+- (UIImage *)captureWindowImage:(UIWindow *)window scale:(CGFloat)scale {
+    return [self captureScreenHierarchyWithScale:scale];
+}
+
+- (CVPixelBufferRef)createPixelBufferFromUIImage:(UIImage *)image size:(CGSize)size {
+    if (!image) return NULL;
     NSDictionary *options = @{
         (id)kCVPixelBufferCGImageCompatibilityKey: @(YES),
         (id)kCVPixelBufferCGBitmapContextCompatibilityKey: @(YES)
     };
     CVPixelBufferRef pxbuffer = NULL;
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, (size_t)size.width, (size_t)size.height, kCVPixelFormatType_32ARGB, (__bridge CFDictionaryRef)options, &pxbuffer);
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, (size_t)size.width, (size_t)size.height, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pxbuffer);
     if (status != kCVReturnSuccess || pxbuffer == NULL) return NULL;
 
     CVPixelBufferLockBaseAddress(pxbuffer, 0);
     void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
+    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(pxbuffer);
     CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(pxdata, (size_t)size.width, (size_t)size.height, 8, 4 * (size_t)size.width, rgbColorSpace, (CGBitmapInfo)kCGImageAlphaNoneSkipFirst);
+    CGContextRef context = CGBitmapContextCreate(pxdata, (size_t)size.width, (size_t)size.height, 8, bytesPerRow, rgbColorSpace, (CGBitmapInfo)kCGBitmapByteOrder32Little | (CGBitmapInfo)kCGImageAlphaPremultipliedFirst);
     if (context) {
-        CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), image);
+        CGContextTranslateCTM(context, 0, size.height);
+        CGContextScaleCTM(context, 1.0, -1.0);
+        CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), image.CGImage);
         CGContextRelease(context);
     }
     CGColorSpaceRelease(rgbColorSpace);
@@ -1192,21 +1235,21 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
                                   resolve:(RCTPromiseResolveBlock)resolve
                                    reject:(RCTPromiseRejectBlock)reject {
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = [self findActiveKeyWindow];
-        if (!window) {
-            reject(@"RECORDER_ERROR", @"Unable to find active UIWindow for screen recording", nil);
-            return;
+        CGRect bounds = [UIScreen mainScreen].bounds;
+        CGFloat screenScale = [UIScreen mainScreen].scale;
+        double scaleParam = [options[@"scale"] doubleValue];
+        if (scaleParam <= 0.0 || scaleParam > 1.0) {
+            scaleParam = 0.5;
         }
 
-        CGRect bounds = window.bounds;
-        CGFloat screenScale = [UIScreen mainScreen].scale;
-        NSInteger width = ((NSInteger)(bounds.size.width * screenScale * 0.5) / 2) * 2;
-        NSInteger height = ((NSInteger)(bounds.size.height * screenScale * 0.5) / 2) * 2;
+        NSInteger width = ((NSInteger)(bounds.size.width * screenScale * scaleParam) / 2) * 2;
+        NSInteger height = ((NSInteger)(bounds.size.height * screenScale * scaleParam) / 2) * 2;
         if (width <= 0) width = 360;
         if (height <= 0) height = 640;
 
         CGSize videoSize = CGSizeMake(width, height);
         long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+        self->_softwareRecordingTimestamp = timestamp;
         NSString *filename = [NSString stringWithFormat:@"video_%lld.mp4", timestamp];
         NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
         NSURL *outputUrl = [NSURL fileURLWithPath:filePath];
@@ -1228,7 +1271,7 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
         self->_softwareWriterInput.expectsMediaDataInRealTime = YES;
 
         NSDictionary *sourcePixelBufferAttributes = @{
-            (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32ARGB),
+            (id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA),
             (id)kCVPixelBufferWidthKey: @(videoSize.width),
             (id)kCVPixelBufferHeightKey: @(videoSize.height)
         };
@@ -1246,14 +1289,37 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
         self->_softwareFrameIndex = 0;
         self->_softwareRecordingStartTime = [[NSDate date] timeIntervalSince1970];
         self->_softwareRecordingFilePath = filePath;
+        self->_softwareVideoWidth = width;
+        self->_softwareVideoHeight = height;
 
         double fps = [options[@"fps"] doubleValue];
         if (fps <= 0.0 || fps > 30.0) fps = 15.0;
         double frameInterval = 1.0 / fps;
 
+        // Immediately capture frame 0 & save thumbnail
+        UIImage *firstImg = [self captureScreenHierarchyWithScale:(CGFloat)scaleParam];
+        if (firstImg) {
+            NSData *thumbData = UIImageJPEGRepresentation(firstImg, 0.8);
+            if (thumbData) {
+                NSString *thumbFilename = [NSString stringWithFormat:@"thumb_%lld.jpg", timestamp];
+                NSString *thumbFilePath = [[self getCapturesDirectory] stringByAppendingPathComponent:thumbFilename];
+                [thumbData writeToFile:thumbFilePath atomically:YES];
+                self->_softwareRecordingThumbnailPath = thumbFilePath;
+            }
+
+            if (self->_softwareWriterInput.isReadyForMoreMediaData) {
+                CVPixelBufferRef buffer = [self createPixelBufferFromUIImage:firstImg size:videoSize];
+                if (buffer) {
+                    [self->_softwarePixelBufferAdaptor appendPixelBuffer:buffer withPresentationTime:kCMTimeZero];
+                    CVPixelBufferRelease(buffer);
+                    self->_softwareFrameIndex = 1;
+                }
+            }
+        }
+
         dispatch_queue_t queue = dispatch_queue_create("com.inappinspector.recording", DISPATCH_QUEUE_SERIAL);
         self->_softwareRecordingTimerSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
-        dispatch_source_set_timer(self->_softwareRecordingTimerSource, dispatch_time(DISPATCH_TIME_NOW, 0), (uint64_t)(frameInterval * NSEC_PER_SEC), (uint64_t)(frameInterval * 0.1 * NSEC_PER_SEC));
+        dispatch_source_set_timer(self->_softwareRecordingTimerSource, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(frameInterval * NSEC_PER_SEC)), (uint64_t)(frameInterval * NSEC_PER_SEC), (uint64_t)(frameInterval * 0.1 * NSEC_PER_SEC));
 
         __weak NetworkInspectorModule *weakSelf = self;
         dispatch_source_set_event_handler(self->_softwareRecordingTimerSource, ^{
@@ -1262,10 +1328,11 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
 
             dispatch_sync(dispatch_get_main_queue(), ^{
                 if (!strongSelf || !strongSelf->_isSoftwareRecordingActive) return;
-                UIWindow *w = [strongSelf findActiveKeyWindow];
-                UIImage *frameImg = [strongSelf captureWindowImage:w scale:0.5];
-                if (frameImg && frameImg.CGImage && strongSelf->_softwareWriterInput.isReadyForMoreMediaData) {
-                    CVPixelBufferRef buffer = [strongSelf createPixelBufferFromCGImage:frameImg.CGImage size:videoSize];
+                if (!strongSelf->_softwareAssetWriter || strongSelf->_softwareAssetWriter.status != AVAssetWriterStatusWriting) return;
+
+                UIImage *frameImg = [strongSelf captureScreenHierarchyWithScale:(CGFloat)scaleParam];
+                if (frameImg && strongSelf->_softwareWriterInput.isReadyForMoreMediaData) {
+                    CVPixelBufferRef buffer = [strongSelf createPixelBufferFromUIImage:frameImg size:videoSize];
                     if (buffer) {
                         CMTime presentTime = CMTimeMake((int64_t)(strongSelf->_softwareFrameIndex * 1000 / fps), 1000);
                         [strongSelf->_softwarePixelBufferAdaptor appendPixelBuffer:buffer withPresentationTime:presentTime];
@@ -1286,18 +1353,12 @@ RCT_EXPORT_METHOD(takeScreenshot:(NSDictionary *)options
                   reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         @try {
-            UIWindow *keyWindow = [self findActiveKeyWindow];
-            if (!keyWindow) {
-                reject(@"SCREENSHOT_ERROR", @"Unable to find active UIWindow for screen capture", nil);
-                return;
-            }
-
             double scaleParam = [options[@"scale"] doubleValue];
             if (scaleParam <= 0.0 || scaleParam > 1.0) {
                 scaleParam = 1.0;
             }
 
-            UIImage *image = [self captureWindowImage:keyWindow scale:(CGFloat)scaleParam];
+            UIImage *image = [self captureScreenHierarchyWithScale:(CGFloat)scaleParam];
             if (!image) {
                 reject(@"SCREENSHOT_ERROR", @"Failed to render window hierarchy to image context", nil);
                 return;
@@ -1358,96 +1419,40 @@ RCT_EXPORT_METHOD(takeScreenshot:(NSDictionary *)options
 RCT_EXPORT_METHOD(startVideoRecording:(NSDictionary *)options
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
-    if (self->_isSoftwareRecordingActive || [RPScreenRecorder sharedRecorder].isRecording) {
+    if (self->_isSoftwareRecordingActive) {
         resolve(@(YES));
         return;
     }
 
-    RPScreenRecorder *recorder = [RPScreenRecorder sharedRecorder];
-    if (recorder.isAvailable) {
-        NSString *audioSource = [options[@"audioSource"] isKindOfClass:[NSString class]] ? options[@"audioSource"] : @"none";
-        BOOL enableMic = [audioSource isEqualToString:@"mic"] || [audioSource isEqualToString:@"mixed"];
-        recorder.microphoneEnabled = enableMic;
-
-        [recorder startRecordingWithHandler:^(NSError * _Nullable error) {
-            if (error) {
-                // If ReplayKit fails to initialize (e.g. simulator or sandbox), fallback to software frame recorder
-                [self startSoftwareRecordingWithOptions:options resolve:resolve reject:reject];
-            } else {
-                resolve(@(YES));
-            }
-        }];
-    } else {
-        // Fallback to software frame recorder (works everywhere including iOS Simulators)
-        [self startSoftwareRecordingWithOptions:options resolve:resolve reject:reject];
-    }
+    [self startSoftwareRecordingWithOptions:options resolve:resolve reject:reject];
 }
 
 RCT_EXPORT_METHOD(stopVideoRecording:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
-    if (self->_isSoftwareRecordingActive) {
-        self->_isSoftwareRecordingActive = NO;
-        if (self->_softwareRecordingTimerSource) {
-            dispatch_source_cancel(self->_softwareRecordingTimerSource);
-            self->_softwareRecordingTimerSource = nil;
-        }
-
-        [self->_softwareWriterInput markAsFinished];
-        NSString *filePath = self->_softwareRecordingFilePath;
-        NSTimeInterval duration = [[NSDate date] timeIntervalSince1970] - self->_softwareRecordingStartTime;
-        long long timestamp = (long long)(self->_softwareRecordingStartTime * 1000.0);
-
-        [self->_softwareAssetWriter finishWritingWithCompletionHandler:^{
-            self->_softwareAssetWriter = nil;
-            self->_softwareWriterInput = nil;
-            self->_softwarePixelBufferAdaptor = nil;
-
-            unsigned long long fileSize = 0;
-            NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
-            if (attrs) {
-                fileSize = [attrs fileSize];
-            }
-
-            NSDictionary *result = @{
-                @"uri": [NSURL fileURLWithPath:filePath].absoluteString,
-                @"format": @"mp4",
-                @"durationMs": @(MAX(500.0, duration * 1000.0)),
-                @"hasAudio": @(NO),
-                @"width": @(720),
-                @"height": @(1280),
-                @"sizeBytes": @(fileSize),
-                @"timestamp": @(timestamp)
-            };
-            resolve(result);
-        }];
-        return;
-    }
-
-    RPScreenRecorder *recorder = [RPScreenRecorder sharedRecorder];
-    if (!recorder.isRecording) {
+    if (!self->_isSoftwareRecordingActive) {
         resolve([NSNull null]);
         return;
     }
 
-    long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
-    NSString *filename = [NSString stringWithFormat:@"video_%lld.mp4", timestamp];
-    NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
-    NSURL *outputUrl = [NSURL fileURLWithPath:filePath];
+    self->_isSoftwareRecordingActive = NO;
+    if (self->_softwareRecordingTimerSource) {
+        dispatch_source_cancel(self->_softwareRecordingTimerSource);
+        self->_softwareRecordingTimerSource = nil;
+    }
 
-    [recorder stopRecordingWithOutputURL:outputUrl completionHandler:^(NSError * _Nullable error) {
-        if (error) {
-            reject(@"RECORD_STOP_ERROR", error.localizedDescription, error);
-            return;
-        }
+    [self->_softwareWriterInput markAsFinished];
+    NSString *filePath = self->_softwareRecordingFilePath;
+    NSString *thumbPath = self->_softwareRecordingThumbnailPath;
+    NSTimeInterval duration = [[NSDate date] timeIntervalSince1970] - self->_softwareRecordingStartTime;
+    long long timestamp = self->_softwareRecordingTimestamp > 0 ? self->_softwareRecordingTimestamp : (long long)(self->_softwareRecordingStartTime * 1000.0);
+    NSInteger vidWidth = self->_softwareVideoWidth > 0 ? self->_softwareVideoWidth : 720;
+    NSInteger vidHeight = self->_softwareVideoHeight > 0 ? self->_softwareVideoHeight : 1280;
 
-        AVURLAsset *asset = [AVURLAsset URLAssetWithURL:outputUrl options:nil];
-        CMTime duration = asset.duration;
-        double durationMs = CMTimeGetSeconds(duration) * 1000.0;
-        CGSize naturalSize = CGSizeMake(1080, 1920);
-        NSArray<AVAssetTrack *> *videoTracks = [asset tracksWithMediaType:AVMediaTypeVideo];
-        if (videoTracks.count > 0) {
-            naturalSize = videoTracks.firstObject.naturalSize;
-        }
+    [self->_softwareAssetWriter finishWritingWithCompletionHandler:^{
+        self->_softwareAssetWriter = nil;
+        self->_softwareWriterInput = nil;
+        self->_softwarePixelBufferAdaptor = nil;
+        self->_softwareRecordingThumbnailPath = nil;
 
         unsigned long long fileSize = 0;
         NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
@@ -1455,24 +1460,71 @@ RCT_EXPORT_METHOD(stopVideoRecording:(RCTPromiseResolveBlock)resolve
             fileSize = [attrs fileSize];
         }
 
-        NSDictionary *result = @{
-            @"uri": outputUrl.absoluteString,
+        NSMutableDictionary *result = [NSMutableDictionary dictionaryWithDictionary:@{
+            @"uri": [NSURL fileURLWithPath:filePath].absoluteString,
             @"format": @"mp4",
-            @"durationMs": @(durationMs),
-            @"hasAudio": @(recorder.isMicrophoneEnabled),
-            @"width": @((NSInteger)naturalSize.width),
-            @"height": @((NSInteger)naturalSize.height),
+            @"durationMs": @(MAX(500.0, duration * 1000.0)),
+            @"hasAudio": @(NO),
+            @"width": @(vidWidth),
+            @"height": @(vidHeight),
             @"sizeBytes": @(fileSize),
             @"timestamp": @(timestamp)
-        };
+        }];
+
+        if (thumbPath && [[NSFileManager defaultManager] fileExistsAtPath:thumbPath]) {
+            result[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbPath].absoluteString;
+        }
+
         resolve(result);
     }];
 }
 
 RCT_EXPORT_METHOD(isRecording:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
-    BOOL active = self->_isSoftwareRecordingActive || [RPScreenRecorder sharedRecorder].isRecording;
-    resolve(@(active));
+    resolve(@(self->_isSoftwareRecordingActive));
+}
+
+RCT_EXPORT_METHOD(playVideo:(NSString *)videoUri
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            if (!videoUri || videoUri.length == 0) {
+                reject(@"PLAY_ERROR", @"Invalid video URI", nil);
+                return;
+            }
+            NSURL *url = [NSURL URLWithString:videoUri];
+            if (!url || !url.scheme) {
+                url = [NSURL fileURLWithPath:videoUri];
+            }
+
+            AVPlayer *player = [AVPlayer playerWithURL:url];
+            AVPlayerViewController *playerController = [[AVPlayerViewController alloc] init];
+            playerController.player = player;
+            playerController.showsPlaybackControls = YES;
+            playerController.modalPresentationStyle = UIModalPresentationFullScreen;
+
+            UIWindow *keyWindow = [self findActiveKeyWindow];
+            UIViewController *rootVC = keyWindow.rootViewController;
+            if (!rootVC) {
+                rootVC = [UIApplication sharedApplication].delegate.window.rootViewController;
+            }
+            while (rootVC.presentedViewController) {
+                rootVC = rootVC.presentedViewController;
+            }
+
+            if (rootVC) {
+                [rootVC presentViewController:playerController animated:YES completion:^{
+                    [player play];
+                    resolve(@(YES));
+                }];
+            } else {
+                reject(@"PLAY_ERROR", @"Unable to find view controller to present video player", nil);
+            }
+        } @catch (NSException *ex) {
+            reject(@"PLAY_ERROR", ex.reason, nil);
+        }
+    });
 }
 
 RCT_EXPORT_METHOD(convertToGif:(NSString *)videoUri
@@ -1597,6 +1649,9 @@ RCT_EXPORT_METHOD(getCapturedMedia:(RCTPromiseResolveBlock)resolve
         NSMutableArray *mediaItems = [NSMutableArray array];
 
         for (NSString *file in (files ?: @[])) {
+            // Skip standalone thumbnail files
+            if ([file hasPrefix:@"thumb_"]) continue;
+
             NSString *fullPath = [dir stringByAppendingPathComponent:file];
             NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:nil];
             if (!attrs) continue;
@@ -1613,7 +1668,7 @@ RCT_EXPORT_METHOD(getCapturedMedia:(RCTPromiseResolveBlock)resolve
             NSDate *modDate = [attrs fileModificationDate];
             long long timestamp = (long long)([modDate timeIntervalSince1970] * 1000.0);
 
-            [mediaItems addObject:@{
+            NSMutableDictionary *item = [NSMutableDictionary dictionaryWithDictionary:@{
                 @"id": file,
                 @"type": type,
                 @"format": ext,
@@ -1622,6 +1677,43 @@ RCT_EXPORT_METHOD(getCapturedMedia:(RCTPromiseResolveBlock)resolve
                 @"sizeBytes": @(sizeBytes),
                 @"timestamp": @(timestamp)
             }];
+
+            if ([type isEqualToString:@"video"]) {
+                // Check if matching thumbnail exists
+                NSString *nameWithoutExt = [file stringByDeletingPathExtension];
+                NSString *timestampSuffix = [nameWithoutExt stringByReplacingOccurrencesOfString:@"video_" withString:@""];
+                NSString *thumbFile = [NSString stringWithFormat:@"thumb_%@.jpg", timestampSuffix];
+                NSString *thumbFullPath = [dir stringByAppendingPathComponent:thumbFile];
+                if ([[NSFileManager defaultManager] fileExistsAtPath:thumbFullPath]) {
+                    item[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbFullPath].absoluteString;
+                } else {
+                    @try {
+                        NSURL *vidUrl = [NSURL fileURLWithPath:fullPath];
+                        AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:vidUrl options:nil];
+                        AVAssetImageGenerator *gen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+                        gen.appliesPreferredTrackTransform = YES;
+                        gen.maximumSize = CGSizeMake(480, 480);
+                        CMTime time = CMTimeMake(1, 10);
+                        NSError *err = nil;
+                        CGImageRef imgRef = [gen copyCGImageAtTime:time actualTime:NULL error:&err];
+                        if (!imgRef) {
+                            time = kCMTimeZero;
+                            imgRef = [gen copyCGImageAtTime:time actualTime:NULL error:&err];
+                        }
+                        if (imgRef) {
+                            UIImage *thumbImg = [UIImage imageWithCGImage:imgRef];
+                            CGImageRelease(imgRef);
+                            NSData *tData = UIImageJPEGRepresentation(thumbImg, 0.8);
+                            if (tData) {
+                                [tData writeToFile:thumbFullPath atomically:YES];
+                                item[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbFullPath].absoluteString;
+                            }
+                        }
+                    } @catch (NSException *e) {}
+                }
+            }
+
+            [mediaItems addObject:item];
         }
 
         [mediaItems sortUsingComparator:^NSComparisonResult(id obj1, id obj2) {
@@ -1643,6 +1735,19 @@ RCT_EXPORT_METHOD(deleteCapturedMedia:(NSString *)uri
             NSString *path = url ? url.path : uri;
             if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
                 [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+
+                // Also remove any related thumbnail
+                NSString *filename = [path lastPathComponent];
+                if ([filename hasPrefix:@"video_"]) {
+                    NSString *nameWithoutExt = [filename stringByDeletingPathExtension];
+                    NSString *timestampSuffix = [nameWithoutExt stringByReplacingOccurrencesOfString:@"video_" withString:@""];
+                    NSString *thumbFile = [NSString stringWithFormat:@"thumb_%@.jpg", timestampSuffix];
+                    NSString *thumbPath = [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent:thumbFile];
+                    if ([[NSFileManager defaultManager] fileExistsAtPath:thumbPath]) {
+                        [[NSFileManager defaultManager] removeItemAtPath:thumbPath error:nil];
+                    }
+                }
+
                 resolve(@(YES));
             } else {
                 resolve(@(NO));

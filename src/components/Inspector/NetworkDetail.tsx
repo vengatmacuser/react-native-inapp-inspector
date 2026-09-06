@@ -151,17 +151,27 @@ const NetworkDetail = React.memo(() => {
 
             return (
               <>
-                <View style={styles.detailInfoTop}>
+                {/* Status & Metrics Badges Row */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 6,
+                    paddingBottom: 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: AppColors.dividerColor,
+                  }}>
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 6,
+                      gap: 5,
                       flexWrap: 'wrap',
                       flex: 1,
-                      minWidth: 0,
                     }}>
-                    {/* Method Chip */}
+                    {/* Method Badge */}
                     <View
                       style={[
                         styles.methodBadge,
@@ -171,8 +181,8 @@ const NetworkDetail = React.memo(() => {
                               selected.method as Method
                             ] ?? METHOD_COLORS.ALL,
                           paddingHorizontal: 8,
-                          paddingVertical: 4,
-                          borderRadius: 7,
+                          paddingVertical: 3.5,
+                          borderRadius: 6,
                         },
                       ]}>
                       <Text
@@ -181,6 +191,7 @@ const NetworkDetail = React.memo(() => {
                           {
                             color: AppColors.white,
                             fontSize: 10.5,
+                            fontFamily: AppFonts.interBold,
                           },
                         ]}>
                         {selected.method}
@@ -254,8 +265,8 @@ const NetworkDetail = React.memo(() => {
                                     selected.status,
                                   )}40`,
                             paddingHorizontal: 7,
-                            paddingVertical: 3.5,
-                            borderRadius: 7,
+                            paddingVertical: 3,
+                            borderRadius: 6,
                           },
                         ]}>
                         {selected.status === 0 ? (
@@ -305,8 +316,8 @@ const NetworkDetail = React.memo(() => {
                             backgroundColor: `${AppColors.brandPurple}14`,
                             borderColor: `${AppColors.brandPurple}30`,
                             paddingHorizontal: 7,
-                            paddingVertical: 3.5,
-                            borderRadius: 7,
+                            paddingVertical: 3,
+                            borderRadius: 6,
                             gap: 4,
                           },
                         ]}>
@@ -334,8 +345,8 @@ const NetworkDetail = React.memo(() => {
                             backgroundColor: `${AppColors.sky600}14`,
                             borderColor: `${AppColors.sky600}30`,
                             paddingHorizontal: 7,
-                            paddingVertical: 3.5,
-                            borderRadius: 7,
+                            paddingVertical: 3,
+                            borderRadius: 6,
                             gap: 4,
                           },
                         ]}>
@@ -354,36 +365,10 @@ const NetworkDetail = React.memo(() => {
                       </View>
                     )}
                   </View>
-
-                  <View style={styles.detailInfoRight}>
-                    <TouchableScale
-                      style={[styles.iconSquareBtn, {backgroundColor: `${AppColors.sky600}15`}]}
-                      onPress={handleOpenUrl}
-                      hitSlop={12}>
-                      <ExternalLinkIcon
-                        color={AppColors.sky600}
-                        size={14}
-                      />
-                    </TouchableScale>
-                    <CopyButton
-                      value={getFetchCommand(selected)}
-                      label="fetch()"
-                      iconType="fetch"
-                    />
-                    <CopyButton
-                      value={getCurlCommand(selected)}
-                      label="cURL"
-                      iconType="terminal"
-                    />
-                    <CopyButton
-                      value={detailDisplayUrl}
-                      label="URL"
-                    />
-                  </View>
                 </View>
 
-                {/* Full Live URL Analysis Card */}
-                <Pressable
+                {/* Full Live URL & Quick Actions Card */}
+                <View
                   style={{
                     backgroundColor: AppColors.grayBackground,
                     borderRadius: 10,
@@ -391,16 +376,18 @@ const NetworkDetail = React.memo(() => {
                     borderColor: AppColors.dividerColor,
                     padding: 10,
                     marginTop: 8,
-                    gap: 6,
-                  }}
-                  onPress={handleOpenUrl}>
+                    gap: 8,
+                  }}>
+                  {/* Endpoint Header Bar with Action Buttons */}
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       justifyContent: 'space-between',
+                      flexWrap: 'nowrap',
+                      gap: 6,
                     }}>
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1, minWidth: 0}}>
                       {schemeStr ? (
                         <View
                           style={{
@@ -431,67 +418,63 @@ const NetworkDetail = React.memo(() => {
                           color: AppColors.grayTextWeak,
                           letterSpacing: 0.4,
                           textTransform: 'uppercase',
-                        }}>
+                        }}
+                        numberOfLines={1}>
                         ENDPOINT URL
                       </Text>
                     </View>
 
-                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
-                      {queryStr ? (
-                        <View
-                          style={{
-                            backgroundColor: `${AppColors.purple}14`,
-                            paddingHorizontal: 6,
-                            paddingVertical: 2,
-                            borderRadius: 4,
-                          }}>
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 8.5,
-                              color: AppColors.purple,
-                            }}>
-                            {t('network.queryParams')}
-                          </Text>
-                        </View>
-                      ) : null}
-
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 3,
-                          backgroundColor: `${AppColors.sky600}14`,
-                          paddingHorizontal: 6,
-                          paddingVertical: 2,
-                          borderRadius: 4,
-                        }}>
-                        <ExternalLinkIcon color={AppColors.sky600} size={10} />
-                        <Text
-                          style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 9,
-                            color: AppColors.sky600,
-                          }}>
-                          Open
-                        </Text>
-                      </View>
+                    {/* Action Buttons: cURL, fetch, Copy URL, Open */}
+                    <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 0}}>
+                      <CopyButton
+                        value={getCurlCommand(selected)}
+                        label="cURL"
+                        iconType="terminal"
+                      />
+                      <CopyButton
+                        value={getFetchCommand(selected)}
+                        label="fetch()"
+                        iconType="fetch"
+                      />
+                      <CopyButton
+                        value={detailDisplayUrl}
+                        label="URL"
+                        iconType="copy"
+                      />
+                      <TouchableScale
+                        style={[
+                          styles.iconSquareBtn,
+                          {
+                            backgroundColor: `${AppColors.sky600}15`,
+                            borderColor: `${AppColors.sky600}35`,
+                          },
+                        ]}
+                        onPress={handleOpenUrl}
+                        hitSlop={10}
+                        accessibilityLabel="Open in Browser">
+                        <ExternalLinkIcon
+                          color={AppColors.sky600}
+                          size={13}
+                        />
+                      </TouchableScale>
                     </View>
                   </View>
 
                   {/* Full Clickable Hyperlink */}
-                  <Text
-                    selectable={true}
-                    style={{
-                      fontFamily: AppFonts.interMedium,
-                      fontSize: 12.5,
-                      color: AppColors.skyBlue,
-                      textDecorationLine: 'underline',
-                      lineHeight: 18,
-                    }}>
-                    {detailDisplayUrl}
-                  </Text>
-                </Pressable>
+                  <Pressable onPress={handleOpenUrl}>
+                    <Text
+                      selectable={true}
+                      style={{
+                        fontFamily: AppFonts.interMedium,
+                        fontSize: 12.5,
+                        color: AppColors.skyBlue,
+                        textDecorationLine: 'underline',
+                        lineHeight: 18,
+                      }}>
+                      {detailDisplayUrl}
+                    </Text>
+                  </Pressable>
+                </View>
               </>
             );
           })()}

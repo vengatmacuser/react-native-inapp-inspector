@@ -468,6 +468,7 @@ export interface RecordingOptions {
 
 export interface RecordingResult {
   uri: string;
+  thumbnailUri?: string;
   format: 'mp4' | 'gif';
   durationMs: number;
   hasAudio: boolean;
@@ -488,6 +489,7 @@ export interface CapturedMediaItem {
   type: 'image' | 'video' | 'gif';
   format: string;
   uri: string;
+  thumbnailUri?: string;
   filename: string;
   sizeBytes: number;
   timestamp: number;
@@ -555,6 +557,21 @@ export const isNativeRecordingActive = async (): Promise<boolean> => {
   }
   try {
     const result = await NativeModule.isRecording();
+    return !!result;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Plays a recorded video file using the native system media player.
+ */
+export const playNativeVideo = async (videoUri: string): Promise<boolean> => {
+  if (!NativeModule || !NativeModule.playVideo) {
+    return false;
+  }
+  try {
+    const result = await NativeModule.playVideo(videoUri);
     return !!result;
   } catch {
     return false;

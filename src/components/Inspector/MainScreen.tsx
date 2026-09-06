@@ -48,6 +48,7 @@ import {isLocalDebugEnvironment} from '../../helpers';
 const MainScreen = () => {
   const {
     visible,
+    isMinimized,
     modalAnimationType,
     closeModal,
     modalHeightPercent,
@@ -107,8 +108,7 @@ const MainScreen = () => {
     <>
       {(Platform.OS === 'ios' || Platform.OS === 'android') &&
         enabled &&
-        !visible &&
-        !useNativeFab && <FabLauncher />}
+        !visible && <FabLauncher />}
       <Modal
         visible={visible}
         animationType={modalAnimationType}
@@ -159,6 +159,7 @@ const MainScreen = () => {
                       {activeTab === 'crash' && <CrashTab />}
                       {activeTab === 'device' && <DeviceInfoTab />}
                       {activeTab === 'storage' && <StorageTab />}
+                      {activeTab === 'media' && <MediaGalleryTab />}
                       {Platform.OS === 'android' &&
                         isLocalDebugEnvironment() &&
                         activeTab === 'debugging' && <DebuggingTab />}

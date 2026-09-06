@@ -13,6 +13,7 @@ export const ActiveTab = {
   Device: 'device',
   Storage: 'storage',
   Debugging: 'debugging',
+  Media: 'media',
 } as const;
 export type ActiveTab = (typeof ActiveTab)[keyof typeof ActiveTab];
 
@@ -73,6 +74,7 @@ export const SettingsPage = {
   Device: 'device',
   Storage: 'storage',
   Debugging: 'debugging',
+  Media: 'media',
 } as const;
 export type SettingsPage =
   | (typeof SettingsPage)[keyof typeof SettingsPage]

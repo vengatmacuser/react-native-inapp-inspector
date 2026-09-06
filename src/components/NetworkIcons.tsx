@@ -2596,4 +2596,60 @@ export const FilmIcon = ({
   </Svg>
 );
 
+export const ScreencastIcon = ({
+  color = AppColors.white,
+  size = 18,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 20h.01"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ListIcon = ({color = AppColors.white, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Line x1="8" y1="6" x2="21" y2="6" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="8" y1="12" x2="21" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="8" y1="18" x2="21" y2="18" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Circle cx="4" cy="6" r="1.5" fill={color} />
+    <Circle cx="4" cy="12" r="1.5" fill={color} />
+    <Circle cx="4" cy="18" r="1.5" fill={color} />
+  </Svg>
+);
+
+export const GridIcon = ({color = AppColors.white, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="3" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
+    <Rect x="14" y="3" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
+    <Rect x="14" y="14" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
+    <Rect x="3" y="14" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+export const MinimizeWindowIcon = ({color = AppColors.white, size = 14}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+
+
 

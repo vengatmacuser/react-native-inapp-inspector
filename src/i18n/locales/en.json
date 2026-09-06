@@ -16,6 +16,8 @@
     "viewOnNpm": "View on NPM",
     "later": "Later",
     "source": "SOURCE",
+    "minimize": "Minimize",
+    "tapToExpand": "Tap to expand",
     "open": "Open",
     "openInBrowser": "Open in Browser",
     "openInBrowserPrompt": "Are you sure you want to open this URL in your external browser?"
@@ -54,7 +56,7 @@
     "crash": "Crash",
     "device": "Device",
     "storage": "Storage",
-    "media": "Media"
+    "media": "Screencast"
   },
 
   "settings": {
@@ -203,7 +205,6 @@
       "purgedSuccess": "Media storage purged"
     },
     "general": {
-
       "darkMode": "Dark Mode Theme",
       "darkModeDescription": "Toggle sleek dark aesthetic or light contrast",
       "modalHeight": "Inspector Window Height",
@@ -1111,15 +1112,30 @@
     "allPurged": "All captured media purged",
     "converting": "Converting...",
     "convertToGif": "Convert to GIF",
+    "playVideo": "Play Video",
+    "playError": "Unable to play video",
     "convertedSuccess": "Converted to Animated GIF successfully!",
     "convertFailed": "Failed to convert to GIF",
     "share": "Share",
     "copyUri": "Copy URI",
     "uriCopied": "File URI copied to clipboard",
     "delete": "Delete",
+    "deleteSelected": "Delete ({{count}})",
+    "deleteSelectedTitle": "Delete Selected",
+    "deleteSelectedMessage": "Are you sure you want to delete {{count}} selected media items?",
+    "deletedCount": "Deleted {{count}} media items",
     "deleteTitle": "Delete Media",
     "deleteMessage": "Are you sure you want to delete {{filename}}?",
-    "shareUnavailable": "Sharing not available on this device"
+    "shareUnavailable": "Sharing not available on this device",
+    "showingResults": "Showing {{count}} results",
+    "showingFilteredResults": "Showing {{count}} of {{total}} results",
+    "selectedOfResults": "Selected {{selected}} of {{total}} results",
+    "minimize": "Minimize",
+    "expand": "Expand Fullscreen",
+    "collapse": "Exit Fullscreen",
+    "speed": "Speed",
+    "loop": "Loop",
+    "pause": "Pause",
+    "play": "Play"
   }
 }
-

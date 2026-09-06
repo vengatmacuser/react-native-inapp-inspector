@@ -18,6 +18,7 @@ interface EmptyStateProps {
   customTitle?: string;
   customSub?: string;
   onClearSearch?: () => void;
+  showReload?: boolean;
 }
 
 const EmptyState = React.memo(function EmptyState({
@@ -26,6 +27,7 @@ const EmptyState = React.memo(function EmptyState({
   customTitle,
   customSub,
   onClearSearch,
+  showReload = true,
 }: EmptyStateProps) {
   const iconPulse = useRef(new Animated.Value(1)).current;
 
@@ -83,7 +85,7 @@ const EmptyState = React.memo(function EmptyState({
           <Text style={styles.reloadBtnText}>Clear Search & Filters</Text>
         </TouchableScale>
       )}
-      {!isSearch && (
+      {!isSearch && showReload && (
         <TouchableScale style={styles.reloadBtn} onPress={handleReload}>
           <Text style={styles.reloadBtnText}>Reload App</Text>
         </TouchableScale>

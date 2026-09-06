@@ -216,6 +216,9 @@ export interface InspectorContextValue {
   visible: boolean;
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
   closeModal: () => void;
+  isMinimized: boolean;
+  setIsMinimized: React.Dispatch<React.SetStateAction<boolean>>;
+  minimizeInspector: () => void;
   isReady: boolean;
   enabled: boolean;
   isEnabled: boolean;
@@ -237,6 +240,8 @@ export interface InspectorContextValue {
   toggleTabVisibility: (key: ActiveTab) => void;
   lastReadApisCount: number;
   lastReadLogsCount: number;
+  mediaCount: number;
+  refreshMediaCount: () => Promise<number>;
 
   // ─── Selection / header state ──────────────────────────────────────────────
   selected: NetworkLog | null;

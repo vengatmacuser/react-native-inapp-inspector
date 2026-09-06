@@ -1,6 +1,7 @@
-import React from 'react';
+import React, {useRef, useState} from 'react';
 import {
-  Animated,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   ScrollView,
   Text,
@@ -23,11 +24,12 @@ import {
   SmartphoneIcon,
   DatabaseIcon,
   QrCodeIcon,
+  ScreencastIcon,
+  ChevronIcon,
 } from '../NetworkIcons';
 
 import {isReduxConnected} from '../../customHooks/reduxLogger';
 import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
-import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {isLocalDebugEnvironment} from '../../helpers';
 
 const TabBar = React.memo(() => {
@@ -42,18 +44,85 @@ const TabBar = React.memo(() => {
     lastReadApisCount,
     lastReadLogsCount,
     lastReadCrashesCount,
-    unreadPulseAnim,
+    mediaCount,
   } = useInspector();
 
   const isReduxAvail = isReduxConnected();
   const isAnalyticsAvail = isAnalyticsConnected();
 
+  const isMediaActive = activeTab === 'media';
+  const showMediaTab = (tabVisibility?.media ?? true) && mediaCount > 0;
+
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const scrollOffsetRef = useRef(0);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const {contentOffset, layoutMeasurement, contentSize} = event.nativeEvent;
+    const x = contentOffset.x;
+    scrollOffsetRef.current = x;
+    const hasLeft = x > 8;
+    const hasRight = x < contentSize.width - layoutMeasurement.width - 8;
+    if (canScrollLeft !== hasLeft) setCanScrollLeft(hasLeft);
+    if (canScrollRight !== hasRight) setCanScrollRight(hasRight);
+  };
+
+  const scrollTabs = (offset: number) => {
+    scrollViewRef.current?.scrollTo({
+      x: Math.max(0, scrollOffsetRef.current + offset),
+      animated: true,
+    });
+  };
+
   return (
-    <View style={styles.tabBarContainer}>
+    <View
+      style={[
+        styles.tabBarContainer,
+        {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 0,
+        },
+      ]}>
+      {/* Scroll Left Arrow Icon — Initially hidden until scrolled */}
+      {canScrollLeft && (
+        <TouchableOpacity
+          onPress={() => scrollTabs(-160)}
+          hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}
+          activeOpacity={0.7}
+          style={{
+            paddingLeft: 6,
+            paddingRight: 2,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <View
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 11,
+              backgroundColor: '#E5E7EB',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <ChevronIcon direction="left" size={13} color={AppColors.purple} />
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Scrollable Main Tabs (#1 - #10) */}
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{paddingRight: 16}}>
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        style={{flex: 1}}
+        contentContainerStyle={{
+          paddingLeft: canScrollLeft ? 4 : 12,
+          paddingRight: showMediaTab ? 6 : 12,
+        }}>
         {(
           [
             {
@@ -256,6 +325,105 @@ const TabBar = React.memo(() => {
             );
           })}
       </ScrollView>
+
+      {/* Scroll Right Arrow Icon */}
+      {canScrollRight && (
+        <TouchableOpacity
+          onPress={() => scrollTabs(160)}
+          hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}
+          activeOpacity={0.7}
+          style={{
+            paddingLeft: 2,
+            paddingRight: showMediaTab ? 4 : 8,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+          <View
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 11,
+              backgroundColor: '#E5E7EB',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <ChevronIcon direction="right" size={13} color={AppColors.purple} />
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Sticky Right Screencast Tab — Visible only when mediaCount > 0 */}
+      {showMediaTab && (
+        <View
+          style={{
+            paddingLeft: 6,
+            paddingRight: 10,
+            borderLeftWidth: 1,
+            borderLeftColor: '#E5E7EB',
+            backgroundColor: '#ffffff',
+            justifyContent: 'center',
+            shadowColor: '#000000',
+            shadowOffset: {width: -3, height: 0},
+            shadowOpacity: 0.12,
+            shadowRadius: 4,
+            elevation: 4,
+            zIndex: 10,
+          }}>
+          <TouchableScale
+            key="media"
+            onPress={() => {
+              switchActiveTab('media');
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Media Gallery"
+            style={[
+              styles.contentTabButton,
+              {
+                marginRight: 0,
+                borderRadius: 8,
+                backgroundColor: isMediaActive ? AppColors.purple : '#eeeeee',
+                borderColor: isMediaActive ? AppColors.purple : '#E5E7EB',
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 7,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+              isMediaActive && styles.contentTabButtonActive,
+            ]}>
+            <View
+              style={{
+                position: 'relative',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <ScreencastIcon
+                color={isMediaActive ? AppColors.white : AppColors.grayText}
+                size={15}
+              />
+              {mediaCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -3,
+                    right: -4,
+                    width: 7,
+                    height: 7,
+                    borderRadius: 3.5,
+                    backgroundColor: isMediaActive
+                      ? AppColors.emerald400
+                      : AppColors.purple,
+                    borderWidth: 1.2,
+                    borderColor: isMediaActive
+                      ? AppColors.purple
+                      : AppColors.white,
+                  }}
+                />
+              )}
+            </View>
+          </TouchableScale>
+        </View>
+      )}
     </View>
   );
 });

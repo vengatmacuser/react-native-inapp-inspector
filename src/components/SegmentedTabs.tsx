@@ -27,6 +27,7 @@ const SegmentedTabs = React.memo(({tabs, activeKey, onChange, style}: SegmentedT
         borderWidth: 1,
         borderColor: AppColors.dividerColor,
         gap: 3,
+        minWidth: 0,
       },
       style,
     ]}>

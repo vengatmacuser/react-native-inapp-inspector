@@ -2,6 +2,7 @@ import React, {useEffect, useMemo, useRef, useState, useCallback} from 'react';
 import {
   Alert,
   Animated,
+  Easing,
   PanResponder,
   Platform,
   UIManager,
@@ -130,6 +131,7 @@ import {
   fetchRemoteConfigModuleStatus,
   isFirebaseRemoteConfigAvailable,
 } from './helpers/remoteConfig';
+import {ScreenCapture} from './capture';
 
 // Constants
 import {
@@ -184,6 +186,12 @@ const NetworkInspector = ({
   const [visible, setVisible] = useState<boolean>(
     controlledVisible ?? initialVisible ?? false,
   );
+  const [isMinimized, setIsMinimized] = useState<boolean>(false);
+
+  const minimizeInspector = useCallback(() => {
+    setIsMinimized(true);
+    setVisible(false);
+  }, []);
 
   useEffect(() => {
     if (controlledVisible !== undefined) {
@@ -267,6 +275,25 @@ const NetworkInspector = ({
   const [lastReadLogsCount, setLastReadLogsCount] = useState(0);
   const [lastReadApisCount, setLastReadApisCount] = useState(0);
   const [lastReadCrashesCount, setLastReadCrashesCount] = useState(0);
+  const [mediaCount, setMediaCount] = useState(0);
+
+  const refreshMediaCount = useCallback(async () => {
+    try {
+      const items = await ScreenCapture.getMediaList();
+      const count = items ? items.length : 0;
+      setMediaCount(count);
+      return count;
+    } catch {
+      setMediaCount(0);
+      return 0;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (visible) {
+      refreshMediaCount();
+    }
+  }, [visible, refreshMediaCount]);
 
   // ─── Crash state ───────────────────────────────────────────────────────────
   const [crashRecords, setCrashRecords] = useState<CrashRecord[]>(() =>
@@ -375,6 +402,7 @@ const NetworkInspector = ({
     device: false,
     storage: false,
     debugging: false,
+    media: true,
   });
 
   const [maxNetworkLogs, setMaxNetworkLogs] = useState<number>(250);
@@ -438,6 +466,7 @@ const NetworkInspector = ({
       device: false,
       storage: false,
       debugging: false,
+      media: true,
     });
 
     setDefaultTab('apis');
@@ -930,10 +959,11 @@ const NetworkInspector = ({
       Animated.sequence([
         Animated.timing(fabShineAnim, {
           toValue: 1,
-          duration: 1100,
+          duration: 3200,
+          easing: Easing.inOut(Easing.ease),
           useNativeDriver: false,
         }),
-        Animated.delay(1600),
+        Animated.delay(3500),
         Animated.timing(fabShineAnim, {
           toValue: 0,
           duration: 0,
@@ -989,36 +1019,12 @@ const NetworkInspector = ({
 
 
 
-  // 100% Native Main-Thread Floating Button Lifecycle
+  // Always hide legacy native circular button in favor of the React Native music-player dock
   useEffect(() => {
-    if (!useNativeFab || !enabled) {
-      if (useNativeFab) {
-        hideNativeFloatingButton().catch(() => {});
-      }
-      return;
-    }
-
-    if (visible) {
+    if (useNativeFab) {
       hideNativeFloatingButton().catch(() => {});
-    } else {
-      showNativeFloatingButton().catch(() => {});
-      setNativeFloatingButtonBadge(
-        logs.length > 0 || analyticsEvents.length > 0,
-      ).catch(() => {});
     }
-
-    return () => {
-      if (useNativeFab) {
-        hideNativeFloatingButton().catch(() => {});
-      }
-    };
-  }, [
-    useNativeFab,
-    enabled,
-    visible,
-    logs.length,
-    analyticsEvents.length,
-  ]);
+  }, [useNativeFab, visible]);
 
   // Subscribe to native UI-thread floating button tap events
   useEffect(() => {
@@ -1874,8 +1880,9 @@ const NetworkInspector = ({
     };
   }, [visibleConsoleLogs, logSearch]);
 
-  function closeModal() {
+  const closeModal = useCallback(() => {
     setVisible(false);
+    setIsMinimized(false);
     setTimeout(() => {
       setSelected(null);
       setSelectedEvent(null);
@@ -1884,7 +1891,7 @@ const NetworkInspector = ({
       setSelectedReduxAction(null);
       setSelectedCrash(null);
     }, 300);
-  }
+  }, []);
 
   function handleClearAll() {
     clearNetworkLogs();
@@ -2049,6 +2056,9 @@ const NetworkInspector = ({
       visible,
       setVisible,
       closeModal,
+      isMinimized,
+      setIsMinimized,
+      minimizeInspector,
       isReady,
       enabled,
       isEnabled: enabled,
@@ -2068,6 +2078,8 @@ const NetworkInspector = ({
       toggleTabVisibility,
       lastReadApisCount,
       lastReadLogsCount,
+      mediaCount,
+      refreshMediaCount,
 
       // ─── Selection / header state ───────────────────────────────────────
       selected,
@@ -2252,6 +2264,8 @@ const NetworkInspector = ({
       toggleTabVisibility,
       lastReadApisCount,
       lastReadLogsCount,
+      mediaCount,
+      refreshMediaCount,
       selected,
       selectedEvent,
       selectedLog,
@@ -2342,6 +2356,7 @@ const NetworkInspector = ({
       deviceFreeRamMb,
       reduxAutoRefresh,
       reduxExpandDepth,
+      isMinimized,
     ],
   );
 

@@ -41,6 +41,7 @@ import {
   TrashIcon,
   SettingsIcon,
   CloseWhite,
+  ChevronDownIcon,
   ClockIcon,
   SizeIcon,
   AppleIcon,
@@ -86,12 +87,14 @@ const InspectorHeader = React.memo(() => {
     setIsFeedbackOpen,
     resetToDefaults,
     closeModal,
+    minimizeInspector,
     detailTitle,
     activeTab,
     environment,
     visible,
     selectedCrash,
     setSelectedCrash,
+    refreshMediaCount,
   } = useInspector();
 
   const {width: windowWidth} = useWindowDimensions();
@@ -162,6 +165,7 @@ const InspectorHeader = React.memo(() => {
           height: result.height,
         };
         setPreviewMediaItem(newItem);
+        refreshMediaCount?.().catch(() => {});
         showToast(t('header.screenshotCaptured'));
       } else {
         showToast(t('header.screenshotFailed'));
@@ -169,7 +173,7 @@ const InspectorHeader = React.memo(() => {
     } catch {
       showToast(t('header.screenshotError'));
     }
-  }, [t]);
+  }, [refreshMediaCount, t]);
 
   const handleToggleVideoRecording = React.useCallback(async () => {
     try {
@@ -195,6 +199,7 @@ const InspectorHeader = React.memo(() => {
             hasAudio: result.hasAudio,
           };
           setPreviewMediaItem(newItem);
+          refreshMediaCount?.().catch(() => {});
           showToast(
             t('header.recordingSaved', {
               duration: (result.durationMs / 1000).toFixed(1),
@@ -334,7 +339,9 @@ const InspectorHeader = React.memo(() => {
             style={[
               styles.header,
               {
-                paddingHorizontal: isNarrow ? 8 : 12,
+                width: '100%',
+                justifyContent: 'space-between',
+                paddingHorizontal: isNarrow ? 10 : 14,
                 paddingVertical: isNarrow ? 6 : 8,
                 minHeight: isNarrow ? 48 : 52,
               },
@@ -344,9 +351,9 @@ const InspectorHeader = React.memo(() => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: isNarrow ? 6 : 8,
-                flexShrink: 0,
-                flex: isAnySelected ? undefined : 1,
-                minWidth: isAnySelected ? (isNarrow ? 32 : 36) : 0,
+                flex: isDetailView ? undefined : 1,
+                flexShrink: isDetailView ? 0 : 1,
+                minWidth: 0,
               }}>
               {isAnySelected && (
                 <TouchableScale
@@ -1301,10 +1308,31 @@ const InspectorHeader = React.memo(() => {
                 </TouchableScale>
               )}
 
+              {/* Minimize button */}
+              <TouchableOpacity
+                onPress={minimizeInspector || closeModal}
+                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+                activeOpacity={0.6}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.minimize', 'Minimize')}
+                style={[
+                  styles.closeButtonSquare,
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: isNarrow ? 6 : 7,
+                  },
+                ]}>
+                <ChevronDownIcon size={isNarrow ? 14 : 16} color={AppColors.white} />
+              </TouchableOpacity>
+
+              {/* Close button */}
               <TouchableOpacity
                 onPress={closeModal}
                 hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
                 activeOpacity={0.6}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', 'Close')}
                 style={[
                   styles.closeButtonSquare,
                   {
@@ -1408,8 +1436,11 @@ const InspectorHeader = React.memo(() => {
 
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                {/* Clear All Action */}
+                {/* Clear / Trash Button with label */}
                 <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.clearAll')}
                   onPress={() => {
                     Alert.alert(
                       t('header.clearEverythingTitle'),
@@ -1424,16 +1455,17 @@ const InspectorHeader = React.memo(() => {
                       ],
                     );
                   }}
+                  hitSlop={10}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 4,
-                    backgroundColor: `${AppColors.white}1A`,
-                    paddingHorizontal: isNarrow ? 7 : 9,
+                    gap: 4.5,
+                    backgroundColor: `${AppColors.white}24`,
+                    paddingHorizontal: isNarrow ? 8 : 10,
                     paddingVertical: isNarrow ? 4 : 5,
                     borderRadius: 6,
                     borderWidth: 1,
-                    borderColor: `${AppColors.white}26`,
+                    borderColor: `${AppColors.white}33`,
                   }}>
                   <Animated.View
                     style={{
@@ -1454,45 +1486,49 @@ const InspectorHeader = React.memo(() => {
                     }}>
                     <TrashIcon
                       color={AppColors.white}
-                      size={isNarrow ? 11 : 12}
+                      size={isNarrow ? 12 : 13}
                     />
                   </Animated.View>
                   <Text
                     style={{
-                      fontFamily: AppFonts.interMedium,
+                      fontFamily: AppFonts.interSemiBold,
                       fontSize: isNarrow ? 10 : 11,
-                      color: `${AppColors.white}E6`,
+                      color: AppColors.white,
                     }}>
-                    {t('header.clear')}
+                    {t('common.clearAll')}
                   </Text>
                 </TouchableScale>
 
-                {/* About Action */}
+                {/* About Button with label */}
                 <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('header.about')}
                   onPress={() => {
                     setSettingsActiveSubTab('about');
                     setSettingsPage('main');
                   }}
+                  hitSlop={10}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 4,
-                    backgroundColor: `${AppColors.white}1A`,
-                    paddingHorizontal: isNarrow ? 7 : 9,
+                    gap: 4.5,
+                    backgroundColor: `${AppColors.white}24`,
+                    paddingHorizontal: isNarrow ? 8 : 10,
                     paddingVertical: isNarrow ? 4 : 5,
                     borderRadius: 6,
                     borderWidth: 1,
-                    borderColor: `${AppColors.white}26`,
+                    borderColor: `${AppColors.white}33`,
                   }}>
                   <InfoCircleIcon
                     color={AppColors.white}
-                    size={isNarrow ? 11 : 12}
+                    size={isNarrow ? 12 : 13}
                   />
                   <Text
                     style={{
-                      fontFamily: AppFonts.interMedium,
+                      fontFamily: AppFonts.interSemiBold,
                       fontSize: isNarrow ? 10 : 11,
-                      color: `${AppColors.white}E6`,
+                      color: AppColors.white,
                     }}>
                     {t('header.about')}
                   </Text>
@@ -1517,6 +1553,7 @@ const InspectorHeader = React.memo(() => {
         onClose={() => setPreviewMediaItem(null)}
         onDelete={async item => {
           await ScreenCapture.deleteMedia(item.uri);
+          refreshMediaCount?.().catch(() => {});
           setPreviewMediaItem(null);
         }}
         onConvertToGif={async item => {
@@ -1525,6 +1562,7 @@ const InspectorHeader = React.memo(() => {
             width: 480,
           });
           if (gif) {
+            refreshMediaCount?.().catch(() => {});
             setPreviewMediaItem({
               id: `anim_${gif.timestamp}.gif`,
               type: 'gif',
