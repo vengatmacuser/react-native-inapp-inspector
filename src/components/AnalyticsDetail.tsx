@@ -43,7 +43,7 @@ import {
 // Type Definition
 import {AnalyticsEvent} from '../types';
 
-type DetailViewTab = 'overview' | 'tree' | 'raw';
+type DetailViewTab = 'overview' | 'json';
 
 const AnalyticsDetail = ({
   event,
@@ -170,20 +170,10 @@ const AnalyticsDetail = ({
       ),
     },
     {
-      key: 'tree',
-      label: t('analytics.jsonTreeTab'),
+      key: 'json',
+      label: 'JSON Payload',
       icon: (isActive: boolean) => (
         <PrettyIcon
-          color={isActive ? AppColors.white : AppColors.grayText}
-          size={12}
-        />
-      ),
-    },
-    {
-      key: 'raw',
-      label: t('analytics.rawPayloadTab'),
-      icon: (isActive: boolean) => (
-        <RawIcon
           color={isActive ? AppColors.white : AppColors.grayText}
           size={12}
         />
@@ -204,6 +194,13 @@ const AnalyticsDetail = ({
         {/* Top Badges Row */}
         <View style={detailStyles.heroTopRow}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1}}>
+            {/* ID Badge */}
+            <View style={detailStyles.idBadge}>
+              <Text style={detailStyles.idBadgeText}>
+                #{event.id != null ? event.id + 1 : 1}
+              </Text>
+            </View>
+
             {/* Source Badge */}
             <View
               style={[
@@ -512,24 +509,12 @@ const AnalyticsDetail = ({
         </View>
       )}
 
-      {/* ── JSON Tree View ────────────────────────────────────────────────── */}
-      {activeViewTab === 'tree' && (
+      {/* ── JSON Payload View (Code Snippet UI with Pretty, Raw, Table) ── */}
+      {activeViewTab === 'json' && (
         <View style={detailStyles.jsonContainer}>
           <JsonViewer
             data={fullJsonData}
-            defaultExpandDepth={1}
-            mode="pretty"
-            fullHeight
-          />
-        </View>
-      )}
-
-      {/* ── Raw Payload View ──────────────────────────────────────────────── */}
-      {activeViewTab === 'raw' && (
-        <View style={detailStyles.jsonContainer}>
-          <JsonViewer
-            data={fullJsonData}
-            mode="raw"
+            defaultExpandDepth={2}
             fullHeight
           />
         </View>
@@ -566,6 +551,20 @@ const detailStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  idBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    backgroundColor: `${AppColors.slate500}12`,
+    borderWidth: 1,
+    borderColor: `${AppColors.slate500}22`,
+  },
+  idBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+    letterSpacing: 0.2,
   },
   sourceBadge: {
     flexDirection: 'row',

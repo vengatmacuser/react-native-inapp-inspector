@@ -2,12 +2,10 @@ import React, {useState} from 'react';
 import {
   Image,
   ImageSourcePropType,
-  Platform,
   StyleSheet,
   View,
 } from 'react-native';
 import BrandSquareIcon from './BrandSquareIcon';
-import {AppColors} from '../styles/AppColors';
 
 interface AppHeaderLogoProps {
   size?: number;
@@ -18,9 +16,9 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
   size = 46,
   customIcon,
 }) => {
-  const [loadError, setLoadError] = useState(false);
+  const cornerRadius = Math.round(size * 0.23);
 
-  // 1. If customIcon is explicitly provided, render it directly edge-to-edge
+  // 1. If customIcon is explicitly provided, render it with smooth squircle edges
   if (customIcon) {
     if (React.isValidElement(customIcon)) {
       const clonedIcon = React.cloneElement(
@@ -34,11 +32,11 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
       return (
         <View
           style={[
-            logoStyles.svgContainer,
+            logoStyles.container,
             {
               width: size,
               height: size,
-              borderRadius: Math.round(size * 0.23),
+              borderRadius: cornerRadius,
             },
           ]}>
           {clonedIcon}
@@ -52,55 +50,27 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
           {
             width: size,
             height: size,
-            borderRadius: Math.round(size * 0.23),
+            borderRadius: cornerRadius,
           },
         ]}>
         <Image
           source={customIcon as ImageSourcePropType}
-          style={logoStyles.image}
+          style={[logoStyles.image, {borderRadius: cornerRadius - 2}]}
           resizeMode="cover"
         />
       </View>
     );
   }
 
-  // 2. Dynamically query installed native app icon (AppIcon on iOS, ic_launcher on Android)
-  if (!loadError && Platform.OS !== 'web') {
-    const nativeSource: ImageSourcePropType = Platform.select({
-      ios: {uri: 'AppIcon'},
-      android: {uri: 'ic_launcher'},
-      default: {uri: 'AppIcon'},
-    });
-
-    return (
-      <View
-        style={[
-          logoStyles.imageContainer,
-          {
-            width: size,
-            height: size,
-            borderRadius: Math.round(size * 0.23),
-          },
-        ]}>
-        <Image
-          source={nativeSource}
-          style={logoStyles.image}
-          resizeMode="cover"
-          onError={() => setLoadError(true)}
-        />
-      </View>
-    );
-  }
-
-  // 3. Fallback: Inspector's Signature Owl Brand Logo
+  // 2. Default: Inspector's Signature Cyber Owl Square Brand App Icon
   return (
     <View
       style={[
-        logoStyles.svgContainer,
+        logoStyles.container,
         {
           width: size,
           height: size,
-          borderRadius: Math.round(size * 0.23),
+          borderRadius: cornerRadius,
         },
       ]}>
       <BrandSquareIcon size={size} />
@@ -109,35 +79,38 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
 };
 
 const logoStyles = StyleSheet.create({
-  svgContainer: {
+  container: {
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: '#000000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
   },
   imageContainer: {
     overflow: 'hidden',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
-    padding: 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#000000',
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     elevation: 3,
+    padding: 1.5,
   },
   image: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
   },
 });
 
 export default AppHeaderLogo;
+

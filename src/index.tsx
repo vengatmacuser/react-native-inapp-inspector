@@ -388,6 +388,7 @@ const NetworkInspector = ({
     | null
   >(null);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
+  const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
   const [settingsActiveSubTab, setSettingsActiveSubTab] = useState<SettingsSubTab>('module');
   const [tabVisibility, setTabVisibility] = useState<
     Record<ActiveTab, boolean>
@@ -1757,14 +1758,34 @@ const NetworkInspector = ({
     // Filters check
     if (logFilters.size > 0 && !logFilters.has('all')) {
       result = result.filter(log => {
-        if (logFilters.has(log.type)) return true;
-        if (logFilters.has('user-log') && log.sourceMethod === 'log')
+        if (logFilters.has('user-log') && log.sourceMethod === 'log') {
           return true;
+        }
+        if (
+          logFilters.has('info') &&
+          (log.sourceMethod === 'info' ||
+            (log.type === 'info' && log.sourceMethod !== 'log'))
+        ) {
+          return true;
+        }
+        if (
+          logFilters.has('warn') &&
+          (log.type === 'warn' || log.sourceMethod === 'warn')
+        ) {
+          return true;
+        }
+        if (
+          logFilters.has('error') &&
+          (log.type === 'error' || log.sourceMethod === 'error')
+        ) {
+          return true;
+        }
         if (
           logFilters.has('analytics') &&
           log.message?.toLowerCase().includes('[analytics error]')
-        )
+        ) {
           return true;
+        }
         return false;
       });
     }
@@ -1866,9 +1887,22 @@ const NetworkInspector = ({
 
     return {
       all: `${searchedLogs.length}/${total}`,
-      info: `${searchedLogs.filter(l => l.type === 'info').length}/${total}`,
-      warn: `${searchedLogs.filter(l => l.type === 'warn').length}/${total}`,
-      error: `${searchedLogs.filter(l => l.type === 'error').length}/${total}`,
+      info: `${
+        searchedLogs.filter(
+          l =>
+            l.sourceMethod === 'info' ||
+            (l.type === 'info' && l.sourceMethod !== 'log'),
+        ).length
+      }/${total}`,
+      warn: `${
+        searchedLogs.filter(l => l.type === 'warn' || l.sourceMethod === 'warn')
+          .length
+      }/${total}`,
+      error: `${
+        searchedLogs.filter(
+          l => l.type === 'error' || l.sourceMethod === 'error',
+        ).length
+      }/${total}`,
       'user-log': `${
         searchedLogs.filter(l => l.sourceMethod === 'log').length
       }/${total}`,
@@ -2094,6 +2128,8 @@ const NetworkInspector = ({
       setSettingsPage,
       isFeedbackOpen,
       setIsFeedbackOpen,
+      isAboutOpen,
+      setIsAboutOpen,
       updateAvailable,
       latestNpmVersion,
       clearAnim,
@@ -2272,6 +2308,7 @@ const NetworkInspector = ({
       showHeaderInfo,
       settingsPage,
       isFeedbackOpen,
+      isAboutOpen,
       updateAvailable,
       latestNpmVersion,
       clearAnim,

@@ -103,9 +103,16 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
           />
         )}
 
-        {/* Top Row: Icon Badge, Event Name, Category Badge & Timestamp */}
+        {/* Top Row: ID Badge, Icon Badge, Event Name, Category Badge & Timestamp */}
         <View style={cardStyles.cardHeader}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 7, flex: 1}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1}}>
+            {/* ID Badge */}
+            <View style={cardStyles.idBadge}>
+              <Text style={cardStyles.idBadgeText}>
+                #{event.id != null ? event.id + 1 : 1}
+              </Text>
+            </View>
+
             {/* Category Icon Badge */}
             <View
               style={[
@@ -426,6 +433,20 @@ const cardStyles = StyleSheet.create({
     fontSize: 9,
     color: AppColors.rose600,
     textTransform: 'uppercase',
+  },
+  idBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: `${AppColors.slate500}12`,
+    borderWidth: 1,
+    borderColor: `${AppColors.slate500}22`,
+  },
+  idBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+    letterSpacing: 0.2,
   },
   categoryBadge: {
     borderWidth: 1,

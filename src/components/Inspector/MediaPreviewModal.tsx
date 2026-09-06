@@ -5,6 +5,7 @@ import {
   Image,
   Modal,
   Platform,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,6 +16,7 @@ import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
 import {
   ChevronDownIcon,
+  CopyIcon,
   ExpandCollapseIcon,
   FilmIcon,
   GifIcon,
@@ -22,10 +24,11 @@ import {
   PauseIcon,
   PlayIcon,
   RepeatIcon,
+  ShareIcon,
   TrashIcon,
 } from '../NetworkIcons';
 import {CapturedMediaItem, ScreenCapture} from '../../capture';
-import {formatBytes} from '../../helpers';
+import {copyToClipboard, formatBytes} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {useTranslation} from '../../i18n';
 
@@ -54,6 +57,12 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
   const [scrubPosition, setScrubPosition] = useState(0.4);
 
   if (!item) return null;
+
+  const handleCopyUri = () => {
+    if (!item?.uri) return;
+    copyToClipboard(item.uri, item.filename || 'File URI');
+    showToast(t('mediaGallery.uriCopied', 'File URI copied to clipboard'));
+  };
 
   const handlePlayVideo = async () => {
     try {
@@ -97,13 +106,47 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
     }
   };
 
+  const handleShare = async () => {
+    try {
+      const shareUri =
+        item.uri.startsWith('file://') ||
+        item.uri.startsWith('content://') ||
+        item.uri.startsWith('http')
+          ? item.uri
+          : `file://${item.uri}`;
+
+      const shareOptions = Platform.select({
+        ios: {
+          url: shareUri,
+          title: item.filename,
+        },
+        default: {
+          title: item.filename,
+          message: item.filename,
+          url: shareUri,
+        },
+      });
+
+      const result = await Share.share(shareOptions);
+      if (result.action === Share.sharedAction) {
+        showToast(t('mediaGallery.shareSuccess', 'Shared successfully'));
+      }
+    } catch (err: any) {
+      if (err?.message !== 'User did not share') {
+        showToast(
+          t('mediaGallery.shareUnavailable', 'Sharing not available on this device'),
+        );
+      }
+    }
+  };
+
   const isVideo = item.type === 'video';
   const isGif = item.type === 'gif';
   const durationSec = item.durationMs ? (item.durationMs / 1000).toFixed(1) : null;
   const formattedDuration = durationSec
     ? `00:${Number(durationSec) < 10 ? '0' : ''}${durationSec}`
     : '00:05.0';
-  const hasBottomToolbar = isVideo || isGif;
+  const hasBottomToolbar = true;
 
   return (
     <Modal
@@ -114,7 +157,10 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
       <View style={previewStyles.overlay}>
         {/* Header Bar */}
         <View style={previewStyles.header}>
-          <View style={previewStyles.headerLeft}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={handleCopyUri}
+            style={previewStyles.headerLeft}>
             <View
               style={[
                 previewStyles.badge,
@@ -160,10 +206,36 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                 {formatBytes(item.sizeBytes)} • {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'})}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
-          {/* Top Actions: Delete, Expand/Contract, Minimize */}
+          {/* Top Actions: Copy, Share, Delete, Expand/Contract, Minimize */}
           <View style={previewStyles.headerRight}>
+            <TouchableScale
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('mediaGallery.copyUri', 'Copy URI')}
+              onPress={handleCopyUri}
+              style={previewStyles.headerActionBtn}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <CopyIcon size={14} color={AppColors.slate200} />
+            </TouchableScale>
+
+            <TouchableScale
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={t('mediaGallery.share', 'Share')}
+              onPress={handleShare}
+              style={[
+                previewStyles.headerActionBtn,
+                {
+                  backgroundColor: `${AppColors.sky400}20`,
+                  borderColor: `${AppColors.sky400}60`,
+                },
+              ]}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+              <ShareIcon size={14} color={AppColors.sky400} />
+            </TouchableScale>
+
             <TouchableScale
               accessible={true}
               accessibilityRole="button"
@@ -233,10 +305,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
               ) : (
                 <View style={previewStyles.videoFallbackBackdrop}>
                   <View style={previewStyles.videoFallbackGlow} />
-                  <FilmIcon size={52} color={AppColors.sky400} />
-                  <Text style={previewStyles.videoFallbackTitle}>
-                    {t('mediaGallery.playVideo', 'Play Video')}
-                  </Text>
+                  <FilmIcon size={44} color={AppColors.sky400} />
                   <Text style={previewStyles.videoFallbackSubtitle}>
                     {item.width && item.height ? `${item.width} × ${item.height}` : 'HD Video'} • MP4
                   </Text>
@@ -255,7 +324,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
             {isVideo && (
               <View style={previewStyles.centerPlayOverlay}>
                 <View style={previewStyles.centerPlayCircle}>
-                  <PlayIcon size={30} color={AppColors.white} />
+                  <PlayIcon size={28} color={AppColors.white} />
                 </View>
                 <Text style={previewStyles.centerPlayText}>
                   {t('mediaGallery.playVideo', 'Play Video')}
@@ -267,7 +336,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
             {isVideo && (
               <View style={previewStyles.videoBadgeOverlay}>
                 <View style={previewStyles.playPill}>
-                  <FilmIcon size={13} color={AppColors.white} />
+                  <FilmIcon size={12} color={AppColors.sky400} />
                   <Text style={previewStyles.playPillText}>
                     {durationSec ? `${durationSec}s` : 'VIDEO'}
                   </Text>
@@ -279,20 +348,23 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
             {isGif && (
               <View style={previewStyles.videoBadgeOverlay}>
                 <View style={[previewStyles.playPill, {backgroundColor: `${AppColors.warningAmber}CC`}]}>
-                  <GifIcon size={13} color={AppColors.white} />
+                  <GifIcon size={12} color={AppColors.white} />
                   <Text style={previewStyles.playPillText}>ANIMATED GIF</Text>
                 </View>
               </View>
             )}
 
-            {/* Floating Meta Chip inside Card */}
-            <View style={previewStyles.floatingMetaBadge}>
+            {/* Floating Meta Chip inside Card (Tap to Copy URI) */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleCopyUri}
+              style={previewStyles.floatingMetaBadge}>
+              <CopyIcon size={11} color={AppColors.sky400} />
               <Text style={previewStyles.floatingMetaText}>
                 {item.width && item.height ? `${item.width} × ${item.height}  •  ` : ''}
                 {formatBytes(item.sizeBytes)}
-                {durationSec ? `  •  ${durationSec}s` : ''}
               </Text>
-            </View>
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
@@ -326,7 +398,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
 
             {/* Extra Controls: Play/Pause, Speed, Loop */}
             <View style={previewStyles.controlsRow}>
-              {/* Play / Pause toggle */}
+              {/* Play in Fullscreen Player */}
               <TouchableOpacity
                 onPress={handlePlayVideo}
                 style={previewStyles.controlActionPill}>
@@ -387,22 +459,20 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
         {/* Bottom Primary Actions */}
         {hasBottomToolbar && (
           <View style={previewStyles.footer}>
-            {isVideo && (
-              <TouchableScale
-                onPress={handlePlayVideo}
-                style={[
-                  previewStyles.actionBtn,
-                  {
-                    backgroundColor: `${AppColors.sky400}25`,
-                    borderColor: `${AppColors.sky400}70`,
-                  },
-                ]}>
-                <PlayIcon size={15} color={AppColors.sky400} />
-                <Text style={[previewStyles.actionText, {color: AppColors.sky400, fontFamily: AppFonts.interSemiBold}]}>
-                  {t('mediaGallery.playVideo', 'Play Video')}
-                </Text>
-              </TouchableScale>
-            )}
+            <TouchableScale
+              onPress={handleCopyUri}
+              style={[
+                previewStyles.actionBtn,
+                {
+                  backgroundColor: AppColors.whiteAlpha08,
+                  borderColor: AppColors.whiteAlpha15,
+                },
+              ]}>
+              <CopyIcon size={14} color={AppColors.slate200} />
+              <Text style={[previewStyles.actionText, {color: AppColors.slate200}]}>
+                {t('mediaGallery.copyUri', 'Copy URI')}
+              </Text>
+            </TouchableScale>
 
             {onConvertToGif && isVideo && (
               <TouchableScale
@@ -411,7 +481,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                 style={[
                   previewStyles.actionBtn,
                   {
-                    backgroundColor: `${AppColors.warningAmber}25`,
+                    backgroundColor: `${AppColors.warningAmber}22`,
                     borderColor: `${AppColors.warningAmber}70`,
                   },
                 ]}>
@@ -421,6 +491,21 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                 </Text>
               </TouchableScale>
             )}
+
+            <TouchableScale
+              onPress={handleShare}
+              style={[
+                previewStyles.actionBtn,
+                {
+                  backgroundColor: `${AppColors.sky400}22`,
+                  borderColor: `${AppColors.sky400}70`,
+                },
+              ]}>
+              <ShareIcon size={14} color={AppColors.sky400} />
+              <Text style={[previewStyles.actionText, {color: AppColors.sky400, fontFamily: AppFonts.interSemiBold}]}>
+                {t('mediaGallery.share', 'Share')}
+              </Text>
+            </TouchableScale>
           </View>
         )}
       </View>
@@ -482,6 +567,26 @@ const previewStyles = StyleSheet.create({
     fontSize: 11,
     color: AppColors.whiteAlpha60,
     marginTop: 1,
+  },
+  headerActionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: AppColors.whiteAlpha12,
+    borderWidth: 1,
+    borderColor: AppColors.whiteAlpha20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerShareBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: `${AppColors.sky400}20`,
+    borderWidth: 1,
+    borderColor: `${AppColors.sky400}60`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerDeleteBtn: {
     width: 32,

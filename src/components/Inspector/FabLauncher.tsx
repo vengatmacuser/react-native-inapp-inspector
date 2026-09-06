@@ -18,6 +18,8 @@ import {
   AndroidIcon,
   AppleIcon,
   CameraIcon,
+  CloseWhite,
+  MaximizeIcon,
   NpmIcon,
   VideoCameraIcon,
 } from '../NetworkIcons';
@@ -226,6 +228,13 @@ const FabLauncher = () => {
     setVisible(true);
   }, [setIsMinimized, setVisible]);
 
+  const handleCollapsePlayer = useCallback(() => {
+    if (playerDraggedRef.current) return;
+    triggerNativeHaptic('light');
+    setIsMinimized?.(false);
+    setVisible(false);
+  }, [setIsMinimized, setVisible]);
+
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
     const remainingSecs = secs % 60;
@@ -328,14 +337,14 @@ const FabLauncher = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Action Buttons: Photo & Record (Matching Header Toolbar Style) */}
+          {/* Action Buttons: Photo, Record, Expand, Collapse */}
           <View style={fabStyles.actionsRow}>
             {/* Photo Action */}
             <TouchableScale
               onPress={handleTakeScreenshot}
-              hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}
+              hitSlop={{top: 6, bottom: 6, left: 4, right: 4}}
               style={fabStyles.actionBtn}>
-              <CameraIcon size={13} color={AppColors.white} />
+              <CameraIcon size={12} color={AppColors.white} />
               <Text style={fabStyles.actionText}>
                 {t('header.photo', 'Photo')}
               </Text>
@@ -344,7 +353,7 @@ const FabLauncher = () => {
             {/* Record Action */}
             <TouchableScale
               onPress={handleToggleVideoRecording}
-              hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}
+              hitSlop={{top: 6, bottom: 6, left: 4, right: 4}}
               style={[
                 fabStyles.actionBtn,
                 isRecording && fabStyles.recordingBtnActive,
@@ -352,7 +361,7 @@ const FabLauncher = () => {
               {isRecording ? (
                 <View style={fabStyles.recordingDot} />
               ) : (
-                <VideoCameraIcon size={13} color={AppColors.white} />
+                <VideoCameraIcon size={12} color={AppColors.white} />
               )}
               <Text
                 style={[
@@ -363,6 +372,26 @@ const FabLauncher = () => {
                   ? `${t('header.rec', 'REC')} ${formatTime(recordingSeconds)}`
                   : t('header.record', 'Record')}
               </Text>
+            </TouchableScale>
+
+            {/* Expand Action */}
+            <TouchableScale
+              onPress={handleExpandInspector}
+              hitSlop={{top: 6, bottom: 6, left: 4, right: 4}}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.expand', 'Expand')}
+              style={fabStyles.actionBtnSquare}>
+              <MaximizeIcon size={12} color={AppColors.white} />
+            </TouchableScale>
+
+            {/* Collapse / Close Action */}
+            <TouchableScale
+              onPress={handleCollapsePlayer}
+              hitSlop={{top: 6, bottom: 6, left: 4, right: 6}}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.close', 'Close')}
+              style={fabStyles.actionBtnSquare}>
+              <CloseWhite size={10} color={AppColors.white} />
             </TouchableScale>
           </View>
         </Animated.View>
@@ -557,15 +586,26 @@ const fabStyles = StyleSheet.create({
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4.5,
+    flexShrink: 0,
   },
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4.5,
+    gap: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5.5,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.32)',
+  },
+  actionBtnSquare: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 27,
+    height: 27,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     borderRadius: 7,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.32)',
@@ -582,7 +622,7 @@ const fabStyles = StyleSheet.create({
   },
   actionText: {
     fontFamily: AppFonts.interSemiBold,
-    fontSize: 11,
+    fontSize: 10.5,
     color: AppColors.white,
   },
 });

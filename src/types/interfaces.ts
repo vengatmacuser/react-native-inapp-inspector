@@ -256,6 +256,8 @@ export interface InspectorContextValue {
   setSettingsPage: React.Dispatch<React.SetStateAction<SettingsPage>>;
   isFeedbackOpen: boolean;
   setIsFeedbackOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isAboutOpen: boolean;
+  setIsAboutOpen: React.Dispatch<React.SetStateAction<boolean>>;
   updateAvailable: boolean;
   latestNpmVersion: string | null;
   clearAnim: Animated.Value;

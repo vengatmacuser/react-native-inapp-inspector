@@ -119,7 +119,28 @@ const ConsoleTab = React.memo(() => {
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
 
   const QUICK_TAG_SUGGESTIONS = useMemo(
-    () => ['[AXIOS]', '[API]', '[REDUX]', '[ANALYTICS]', '[AUTH]', '[WARN]', '[ERROR]'],
+    () => [
+      '[AXIOS]',
+      '[API]',
+      '[GRAPHQL]',
+      '[REDUX]',
+      '[ANALYTICS]',
+      '[AUTH]',
+      '[NAV]',
+      '[STORAGE]',
+      '[PERF]',
+      '[WS]',
+      '[PUSH]',
+      '[PAYMENT]',
+      '[SYNC]',
+      '[BLE]',
+      '[LOCATION]',
+      '[TEST]',
+      '[DEBUG]',
+      '[WARN]',
+      '[ERROR]',
+      '[SUCCESS]',
+    ],
     [],
   );
 

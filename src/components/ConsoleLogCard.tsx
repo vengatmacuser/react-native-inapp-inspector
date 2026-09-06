@@ -33,6 +33,21 @@ import {
   AlertTriangleIcon,
   BugIcon,
   TagIcon,
+  MapPinIcon,
+  StorageIcon,
+  SignalIcon,
+  FlameIcon,
+  MoneyIcon,
+  CircleCheckIcon,
+  RefreshCcwIcon,
+  PerformanceIcon,
+  ChipIcon,
+  SettingsIcon,
+  TerminalIcon,
+  InfoCircleIcon,
+  ShieldAlertIcon,
+  LayoutIcon,
+  ClockIcon,
 } from './NetworkIcons';
 import {useInspector} from './Inspector/InspectorContext';
 
@@ -53,39 +68,253 @@ const getLogMessageWithBadges = (
 
     const getTagDecorator = (tag: string) => {
       const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
+
+      // Network / HTTP / API
       if (clean === 'AXIOS') {
         return { color: AppColors.emerald600, Icon: ZapIcon, label: 'AXIOS' };
       }
-      if (clean === 'API' || clean === 'FETCH' || clean === 'HTTP' || clean === 'NETWORK') {
+      if (
+        clean === 'API' ||
+        clean === 'FETCH' ||
+        clean === 'HTTP' ||
+        clean === 'REST' ||
+        clean === 'NETWORK'
+      ) {
         return { color: AppColors.sky600, Icon: GlobeIcon, label: clean };
       }
-      if (clean === 'SAMPLE' || clean === 'BATCH') {
-        return { color: AppColors.indigo600Alt, Icon: DiceIcon, label: clean };
+      if (
+        clean === 'GRAPHQL' ||
+        clean === 'GQL' ||
+        clean === 'APOLLO' ||
+        clean === 'MUTATION' ||
+        clean === 'QUERY'
+      ) {
+        return { color: AppColors.pink500, Icon: AtomIcon, label: clean };
       }
-      if (clean === 'REDUX' || clean === 'STORE' || clean === 'STATE') {
+      if (
+        clean === 'WS' ||
+        clean === 'WEBSOCKET' ||
+        clean === 'SOCKET' ||
+        clean === 'SOCKET.IO' ||
+        clean === 'REALTIME'
+      ) {
+        return { color: AppColors.cyan600, Icon: SignalIcon, label: clean };
+      }
+
+      // State Management
+      if (
+        clean === 'REDUX' ||
+        clean === 'STORE' ||
+        clean === 'STATE' ||
+        clean === 'ZUSTAND' ||
+        clean === 'MOBX' ||
+        clean === 'RECOIL' ||
+        clean === 'ACTION' ||
+        clean === 'DISPATCH'
+      ) {
         return { color: AppColors.violet600, Icon: AtomIcon, label: clean };
       }
-      if (clean === 'ANALYTICS' || clean === 'FIREBASE' || clean === 'GA4' || clean === 'GA') {
+
+      // Analytics & Tracking
+      if (
+        clean === 'ANALYTICS' ||
+        clean === 'FIREBASE' ||
+        clean === 'GA4' ||
+        clean === 'GA' ||
+        clean === 'SEGMENT' ||
+        clean === 'MIXPANEL' ||
+        clean === 'POSTHOG' ||
+        clean === 'TRACK' ||
+        clean === 'EVENT'
+      ) {
         return { color: AppColors.teal600, Icon: BarChartIcon, label: clean };
       }
-      if (clean === 'AUTH' || clean === 'TOKEN' || clean === 'SESSION') {
+
+      // Auth & Security & User
+      if (
+        clean === 'AUTH' ||
+        clean === 'TOKEN' ||
+        clean === 'SESSION' ||
+        clean === 'JWT' ||
+        clean === 'LOGIN' ||
+        clean === 'LOGOUT' ||
+        clean === 'USER'
+      ) {
         return { color: AppColors.amber600, Icon: KeyIcon, label: clean };
+      }
+      if (
+        clean === 'SECURITY' ||
+        clean === 'SHIELD' ||
+        clean === 'PERMISSION' ||
+        clean === 'PERMISSIONS'
+      ) {
+        return { color: AppColors.indigo600Alt, Icon: ShieldAlertIcon, label: clean };
+      }
+
+      // Navigation & Routing & Screen
+      if (
+        clean === 'NAV' ||
+        clean === 'NAVIGATION' ||
+        clean === 'ROUTE' ||
+        clean === 'SCREEN' ||
+        clean === 'ROUTER' ||
+        clean === 'DEEPLINK'
+      ) {
+        return { color: AppColors.indigo600Alt, Icon: MapPinIcon, label: clean };
+      }
+
+      // Storage & Database & Cache
+      if (
+        clean === 'STORAGE' ||
+        clean === 'ASYNCSTORAGE' ||
+        clean === 'MMKV' ||
+        clean === 'SQLITE' ||
+        clean === 'DB' ||
+        clean === 'DATABASE' ||
+        clean === 'REALM' ||
+        clean === 'CACHE'
+      ) {
+        return { color: AppColors.purple500, Icon: StorageIcon, label: clean };
+      }
+
+      // Performance & Lifecycle
+      if (
+        clean === 'PERF' ||
+        clean === 'RENDER' ||
+        clean === 'PERFORMANCE' ||
+        clean === 'FPS' ||
+        clean === 'MEMORY'
+      ) {
+        return { color: AppColors.violet500, Icon: PerformanceIcon, label: clean };
+      }
+      if (
+        clean === 'INIT' ||
+        clean === 'BOOT' ||
+        clean === 'STARTUP' ||
+        clean === 'LIFECYCLE' ||
+        clean === 'MOUNT' ||
+        clean === 'UNMOUNT'
+      ) {
+        return { color: AppColors.blue600, Icon: ZapIcon, label: clean };
+      }
+
+      // Sync & Background & Workers
+      if (
+        clean === 'SYNC' ||
+        clean === 'REFRESH' ||
+        clean === 'BACKGROUND' ||
+        clean === 'JOB' ||
+        clean === 'WORKER'
+      ) {
+        return { color: AppColors.sky600, Icon: RefreshCcwIcon, label: clean };
+      }
+
+      // Push Notifications
+      if (
+        clean === 'PUSH' ||
+        clean === 'NOTIF' ||
+        clean === 'NOTIFICATION' ||
+        clean === 'FCM' ||
+        clean === 'APNS'
+      ) {
+        return { color: AppColors.darkOrange, Icon: FlameIcon, label: clean };
+      }
+
+      // Payment & Commerce
+      if (
+        clean === 'PAY' ||
+        clean === 'PAYMENT' ||
+        clean === 'STRIPE' ||
+        clean === 'IAP' ||
+        clean === 'BILLING' ||
+        clean === 'CHECKOUT' ||
+        clean === 'CART'
+      ) {
+        return { color: AppColors.emerald600, Icon: MoneyIcon, label: clean };
+      }
+
+      // Device & Hardware & BLE
+      if (
+        clean === 'DEVICE' ||
+        clean === 'HARDWARE' ||
+        clean === 'BLE' ||
+        clean === 'BLUETOOTH' ||
+        clean === 'NFC' ||
+        clean === 'SENSOR'
+      ) {
+        return { color: AppColors.slate600, Icon: ChipIcon, label: clean };
+      }
+      if (clean === 'LOCATION' || clean === 'GPS' || clean === 'GEO') {
+        return { color: AppColors.emerald600, Icon: MapPinIcon, label: clean };
       }
       if (clean === 'APP') {
         return { color: AppColors.indigo600Alt, Icon: SmartphoneIcon, label: 'APP' };
       }
-      if (clean === 'TEST') {
+
+      // UI & Theme
+      if (
+        clean === 'UI' ||
+        clean === 'VIEW' ||
+        clean === 'THEME' ||
+        clean === 'STYLE' ||
+        clean === 'LAYOUT'
+      ) {
+        return { color: AppColors.pink600, Icon: LayoutIcon, label: clean };
+      }
+
+      // Testing & Samples
+      if (clean === 'TEST' || clean === 'MOCK' || clean === 'SPEC') {
         return { color: AppColors.emerald500, Icon: FlaskIcon, label: 'TEST' };
+      }
+      if (clean === 'SAMPLE' || clean === 'BATCH') {
+        return { color: AppColors.indigo600Alt, Icon: DiceIcon, label: clean };
+      }
+
+      // Debug / Config
+      if (clean === 'CONFIG' || clean === 'ENV' || clean === 'SETTINGS') {
+        return { color: AppColors.slate700, Icon: SettingsIcon, label: clean };
+      }
+      if (clean === 'DEBUG' || clean === 'TRACE') {
+        return { color: AppColors.purpleText, Icon: TerminalIcon, label: clean };
+      }
+      if (clean === 'INFO') {
+        return { color: AppColors.sky600, Icon: InfoCircleIcon, label: 'INFO' };
+      }
+
+      // Statuses & Warnings / Errors
+      if (
+        clean === 'SUCCESS' ||
+        clean === 'OK' ||
+        clean === 'DONE' ||
+        clean === 'PASSED'
+      ) {
+        return { color: AppColors.green600, Icon: CircleCheckIcon, label: clean };
       }
       if (clean === 'WARN' || clean === 'WARNING') {
         return { color: AppColors.amber600, Icon: AlertTriangleIcon, label: 'WARN' };
       }
-      if (clean === 'ERROR' || clean === 'CRASH' || clean === 'BUG') {
-        return { color: AppColors.red600, Icon: BugIcon, label: 'ERROR' };
+      if (
+        clean === 'ERROR' ||
+        clean === 'CRASH' ||
+        clean === 'BUG' ||
+        clean === 'FATAL' ||
+        clean === 'EXCEPTION' ||
+        clean === 'FAIL'
+      ) {
+        return {
+          color: AppColors.red600,
+          Icon: BugIcon,
+          label:
+            clean === 'CRASH' ||
+            clean === 'BUG' ||
+            clean === 'FATAL' ||
+            clean === 'EXCEPTION' ||
+            clean === 'FAIL'
+              ? clean
+              : 'ERROR',
+        };
       }
-      if (clean === 'PERF' || clean === 'RENDER') {
-        return { color: AppColors.violet500, Icon: ZapIcon, label: clean };
-      }
+
       return { color: AppColors.slate600, Icon: TagIcon, label: clean };
     };
 
@@ -194,7 +423,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
         textColor: AppColors.purpleText,
       };
     }
-    if (type === 'info' || method === 'info') {
+    if (method === 'info' || (type === 'info' && method !== 'log')) {
       return {
         border: AppColors.sky500,
         badgeBg: `${AppColors.sky500}18`,
@@ -253,6 +482,11 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
         {/* Header Row */}
         <View style={styles.cardHeader}>
           <View style={styles.headerLeft}>
+            <View style={styles.idBadge}>
+              <Text style={styles.idBadgeText}>
+                #{item.id != null ? item.id + 1 : 1}
+              </Text>
+            </View>
             <View style={[styles.typeChip, {backgroundColor: colors.badgeBg}]}>
               <View
                 style={[styles.typeDot, {backgroundColor: colors.badgeText}]}
@@ -376,8 +610,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
         {/* Footer Row */}
         <View style={styles.cardFooter}>
           <View style={styles.footerLeft}>
-            <Text style={styles.footerId}>#{item.id + 1}</Text>
-            <View style={styles.footerDot} />
+            <ClockIcon color={AppColors.grayTextWeak} size={11} />
             <Text style={styles.footerTime}>{formatTime(item.timestamp)}</Text>
             {parsedCaller && (
               <>
@@ -433,8 +666,8 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
             )}
           </View>
 
-          <View style={styles.footerRight}>
-            {isAnalyticsError && (
+          {isAnalyticsError && (
+            <View style={styles.footerRight}>
               <View
                 style={[
                   styles.footerBadge,
@@ -447,22 +680,8 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   {t('console.analyticsBadge')}
                 </Text>
               </View>
-            )}
-            {isUserLog && (
-              <View
-                style={[
-                  styles.footerBadge,
-                  {
-                    backgroundColor: `${AppColors.slate600}12`,
-                    borderColor: `${AppColors.slate600}26`,
-                  },
-                ]}>
-                <Text style={[styles.footerBadgeText, {color: AppColors.grayTextStrong}]}>
-                  {t('console.userLogBadge')}
-                </Text>
-              </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
       </Pressable>
     </View>
@@ -507,6 +726,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     flex: 1,
+  },
+  idBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: `${AppColors.slate500}12`,
+    borderWidth: 1,
+    borderColor: `${AppColors.slate500}22`,
+  },
+  idBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.grayTextWeak,
+    letterSpacing: 0.2,
   },
   headerRight: {
     flexDirection: 'row',
@@ -562,7 +795,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: AppColors.grayBorderSecondary,
-    paddingHorizontal: 9,
+    borderLeftWidth: 3,
+    borderLeftColor: AppColors.teal600,
+    paddingHorizontal: 10,
     paddingVertical: 7,
   },
   jsonPreviewText: {
@@ -577,13 +812,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
     marginTop: 5,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderTopWidth: 1,
     borderTopColor: AppColors.dividerColor,
   },
   expandToggleText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 10,
+    fontSize: 10.5,
     color: AppColors.purple,
   },
   cardFooter: {

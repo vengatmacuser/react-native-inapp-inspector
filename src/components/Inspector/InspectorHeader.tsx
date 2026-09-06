@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -82,9 +83,10 @@ const InspectorHeader = React.memo(() => {
     runClearAllWithAnimation,
     settingsPage,
     setSettingsPage,
-    setSettingsActiveSubTab,
     isFeedbackOpen,
     setIsFeedbackOpen,
+    isAboutOpen,
+    setIsAboutOpen,
     resetToDefaults,
     closeModal,
     minimizeInspector,
@@ -278,7 +280,8 @@ const InspectorHeader = React.memo(() => {
     (activeTab === 'crash' && selectedCrash != null);
 
   const isSettingsView = settingsPage !== null;
-  const isAnySelected = isDetailView || isSettingsView || isFeedbackOpen;
+  const isAnySelected =
+    isDetailView || isSettingsView || isFeedbackOpen || isAboutOpen;
 
   const settingsModuleTitle = useMemo(() => {
     switch (settingsPage) {
@@ -301,11 +304,21 @@ const InspectorHeader = React.memo(() => {
     }
   }, [settingsPage]);
 
-  const headerTopPadding =
-    Platform.OS === 'ios' && modalHeightPercent >= 95 ? 44 : 0;
+  const headerTopPadding = useMemo(() => {
+    if (Platform.OS === 'ios') {
+      if (modalHeightPercent >= 98) {
+        return windowWidth >= 390 ? 50 : 44;
+      }
+      return 0;
+    }
+    if (Platform.OS === 'android' && modalHeightPercent >= 98) {
+      return StatusBar.currentHeight || 24;
+    }
+    return 0;
+  }, [modalHeightPercent, windowWidth]);
 
   const buttonSize = isNarrow ? 28 : isCompact ? 30 : 32;
-  const logoSize = isNarrow ? 36 : isCompact ? 40 : 44;
+  const logoSize = isNarrow ? 42 : isCompact ? 46 : 50;
 
   return (
     <>
@@ -313,7 +326,7 @@ const InspectorHeader = React.memo(() => {
         style={[
           styles.headerGradient,
           {
-            minHeight: (isNarrow ? 48 : 52) + headerTopPadding,
+            minHeight: (isNarrow ? 58 : 62) + headerTopPadding,
           },
         ]}>
         {/* LinearGradient as absolute background layer to avoid Fabric view recycling crash.
@@ -341,16 +354,16 @@ const InspectorHeader = React.memo(() => {
               {
                 width: '100%',
                 justifyContent: 'space-between',
-                paddingHorizontal: isNarrow ? 10 : 14,
-                paddingVertical: isNarrow ? 6 : 8,
-                minHeight: isNarrow ? 48 : 52,
+                paddingHorizontal: isNarrow ? 12 : 16,
+                paddingVertical: isNarrow ? 8 : 10,
+                minHeight: isNarrow ? 52 : 56,
               },
             ]}>
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: isNarrow ? 6 : 8,
+                gap: isNarrow ? 8 : 10,
                 flex: isDetailView ? undefined : 1,
                 flexShrink: isDetailView ? 0 : 1,
                 minWidth: 0,
@@ -358,6 +371,10 @@ const InspectorHeader = React.memo(() => {
               {isAnySelected && (
                 <TouchableScale
                   onPress={() => {
+                    if (isAboutOpen) {
+                      setIsAboutOpen(false);
+                      return;
+                    }
                     if (isFeedbackOpen) {
                       setIsFeedbackOpen(false);
                       return;
@@ -401,8 +418,14 @@ const InspectorHeader = React.memo(() => {
                 </TouchableScale>
               )}
 
-              {isFeedbackOpen ? (
-                <View style={{gap: 2, flex: 1, minWidth: 0}}>
+              {isAboutOpen ? (
+                <View
+                  style={{
+                    gap: 3,
+                    flex: 1,
+                    minWidth: 0,
+                    justifyContent: 'center',
+                  }}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -412,26 +435,28 @@ const InspectorHeader = React.memo(() => {
                     <Text
                       style={{
                         fontFamily: AppFonts.interBold,
-                        fontSize: isNarrow ? 14 : 16,
+                        fontSize: isNarrow ? 15 : 16.5,
+                        lineHeight: isNarrow ? 19 : 21,
                         color: AppColors.white,
                         letterSpacing: -0.2,
                       }}
                       numberOfLines={1}>
-                      Support & Feedback
+                      About & Specs
                     </Text>
                     <View
                       style={{
                         backgroundColor: `${AppColors.white}26`,
-                        paddingHorizontal: isNarrow ? 4 : 6,
-                        paddingVertical: 1.5,
-                        borderRadius: 10,
+                        paddingHorizontal: isNarrow ? 5 : 6,
+                        paddingVertical: 2,
+                        borderRadius: 8,
                         borderWidth: 1,
                         borderColor: `${AppColors.white}20`,
                       }}>
                       <Text
                         style={{
                           fontFamily: AppFonts.interBold,
-                          fontSize: isNarrow ? 8 : 9,
+                          fontSize: isNarrow ? 8.5 : 9.5,
+                          lineHeight: 12,
                           color: AppColors.white,
                         }}>
                         v{LIB_VERSION}
@@ -441,15 +466,17 @@ const InspectorHeader = React.memo(() => {
                   <Text
                     style={{
                       fontFamily: AppFonts.interRegular,
-                      fontSize: isNarrow ? 9.5 : 10.5,
+                      fontSize: isNarrow ? 10 : 11,
+                      lineHeight: isNarrow ? 14 : 15,
                       color: `${AppColors.white}CC`,
+                      marginTop: 1,
                     }}
                     numberOfLines={1}>
-                    Direct line to maintainers & developers
+                    Package info, runtime specs & diagnostic payload
                   </Text>
                 </View>
-              ) : isSettingsView ? (
-                <View style={{gap: 2, flex: 1, minWidth: 0}}>
+              ) : isFeedbackOpen ? (
+                <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -459,7 +486,59 @@ const InspectorHeader = React.memo(() => {
                     <Text
                       style={{
                         fontFamily: AppFonts.interBold,
-                        fontSize: isNarrow ? 14 : 16,
+                        fontSize: isNarrow ? 15 : 16.5,
+                        lineHeight: isNarrow ? 19 : 21,
+                        color: AppColors.white,
+                        letterSpacing: -0.2,
+                      }}
+                      numberOfLines={1}>
+                      Support & Feedback
+                    </Text>
+                    <View
+                      style={{
+                        backgroundColor: `${AppColors.white}26`,
+                        paddingHorizontal: isNarrow ? 5 : 6,
+                        paddingVertical: 2,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: `${AppColors.white}20`,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: isNarrow ? 8.5 : 9.5,
+                          lineHeight: 12,
+                          color: AppColors.white,
+                        }}>
+                        v{LIB_VERSION}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: isNarrow ? 10 : 11,
+                      lineHeight: isNarrow ? 14 : 15,
+                      color: `${AppColors.white}CC`,
+                      marginTop: 1,
+                    }}
+                    numberOfLines={1}>
+                    Direct line to maintainers & developers
+                  </Text>
+                </View>
+              ) : isSettingsView ? (
+                <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: isNarrow ? 15 : 16.5,
+                        lineHeight: isNarrow ? 19 : 21,
                         color: AppColors.white,
                         letterSpacing: -0.2,
                       }}
@@ -470,16 +549,17 @@ const InspectorHeader = React.memo(() => {
                       <View
                         style={{
                           backgroundColor: `${AppColors.white}26`,
-                          paddingHorizontal: isNarrow ? 4 : 6,
-                          paddingVertical: 1.5,
-                          borderRadius: 10,
+                          paddingHorizontal: isNarrow ? 5 : 6,
+                          paddingVertical: 2,
+                          borderRadius: 8,
                           borderWidth: 1,
                           borderColor: `${AppColors.white}20`,
                         }}>
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
-                            fontSize: isNarrow ? 8 : 9,
+                            fontSize: isNarrow ? 8.5 : 9.5,
+                            lineHeight: 12,
                             color: AppColors.white,
                           }}>
                           v{LIB_VERSION}
@@ -490,8 +570,10 @@ const InspectorHeader = React.memo(() => {
                   <Text
                     style={{
                       fontFamily: AppFonts.interRegular,
-                      fontSize: isNarrow ? 9.5 : 10.5,
+                      fontSize: isNarrow ? 10 : 11,
+                      lineHeight: isNarrow ? 14 : 15,
                       color: `${AppColors.white}CC`,
+                      marginTop: 1,
                     }}
                     numberOfLines={1}>
                     {settingsPage === 'main'
@@ -504,25 +586,26 @@ const InspectorHeader = React.memo(() => {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: isNarrow ? 6 : 8,
+                    gap: isNarrow ? 10 : 12,
                     flex: 1,
                     minWidth: 0,
                     marginRight: 4,
                   }}>
                   <AppHeaderLogo size={logoSize} customIcon={appIcon} />
-                  <View style={{gap: 2, flex: 1, minWidth: 0}}>
+                  <View style={{gap: 4, flex: 1, minWidth: 0, justifyContent: 'center'}}>
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: isNarrow ? 4 : 6,
+                        gap: isNarrow ? 6 : 7,
                         minWidth: 0,
                       }}>
                       <Text
                         style={[
                           styles.headerTitle,
                           {
-                            fontSize: isNarrow ? 13.5 : isCompact ? 14.5 : 15.5,
+                            fontSize: isNarrow ? 15 : isCompact ? 16 : 17,
+                            lineHeight: isNarrow ? 20 : isCompact ? 22 : 23,
                             flexShrink: 1,
                             paddingBottom: 0,
                           },
@@ -538,8 +621,9 @@ const InspectorHeader = React.memo(() => {
                             backgroundColor: envConfig.bg,
                             borderColor: envConfig.border,
                             flexShrink: 0,
-                            paddingHorizontal: isNarrow ? 4.5 : 6,
-                            paddingVertical: 1.5,
+                            paddingHorizontal: isNarrow ? 6 : 7,
+                            paddingVertical: 2.5,
+                            borderRadius: 6,
                             marginBottom: 0,
                           },
                         ]}>
@@ -548,7 +632,8 @@ const InspectorHeader = React.memo(() => {
                             styles.envBadgeText,
                             {
                               color: envConfig.text,
-                              fontSize: isNarrow ? 8.5 : 9.5,
+                              fontSize: isNarrow ? 9 : 10,
+                              lineHeight: 13,
                             },
                           ]}>
                           {envConfig.label}
@@ -562,10 +647,10 @@ const InspectorHeader = React.memo(() => {
                             flexDirection: 'row',
                             alignItems: 'center',
                             backgroundColor: AppColors.warningAmber,
-                            borderRadius: 5,
-                            paddingHorizontal: isNarrow ? 4 : 5.5,
-                            paddingVertical: 1.5,
-                            gap: 3,
+                            borderRadius: 6,
+                            paddingHorizontal: isNarrow ? 5 : 6.5,
+                            paddingVertical: 2.5,
+                            gap: 3.5,
                             shadowColor: AppColors.warningAmber,
                             shadowOffset: {width: 0, height: 1.5},
                             shadowOpacity: 0.35,
@@ -588,6 +673,7 @@ const InspectorHeader = React.memo(() => {
                               style={{
                                 fontFamily: AppFonts.interBold,
                                 fontSize: 8.5,
+                                lineHeight: 11,
                                 color: AppColors.white,
                                 letterSpacing: 0.3,
                               }}>
@@ -607,18 +693,19 @@ const InspectorHeader = React.memo(() => {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: isNarrow ? 4 : 5,
+                        gap: isNarrow ? 5 : 6,
                         minWidth: 0,
+                        marginTop: 2,
                       }}>
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
                           backgroundColor: `${AppColors.white}1F`,
-                          borderRadius: 5,
-                          paddingHorizontal: isNarrow ? 4.5 : 6,
-                          paddingVertical: 2,
-                          gap: 3.5,
+                          borderRadius: 6,
+                          paddingHorizontal: isNarrow ? 6 : 7,
+                          paddingVertical: 3,
+                          gap: 4,
                           borderWidth: 1,
                           borderColor: `${AppColors.white}2E`,
                           flexShrink: 1,
@@ -627,18 +714,19 @@ const InspectorHeader = React.memo(() => {
                         {Platform.OS === 'ios' ? (
                           <AppleIcon
                             color={`${AppColors.white}E6`}
-                            size={isNarrow ? 9 : 10}
+                            size={isNarrow ? 9.5 : 10.5}
                           />
                         ) : (
                           <AndroidIcon
                             color={`${AppColors.white}E6`}
-                            size={isNarrow ? 9 : 10}
+                            size={isNarrow ? 9.5 : 10.5}
                           />
                         )}
                         <Text
                           style={{
                             fontFamily: AppFonts.interMedium,
-                            fontSize: isNarrow ? 8.5 : 9.5,
+                            fontSize: isNarrow ? 9 : 10,
+                            lineHeight: 13,
                             color: `${AppColors.white}EB`,
                             letterSpacing: 0.1,
                           }}
@@ -662,22 +750,23 @@ const InspectorHeader = React.memo(() => {
                           flexDirection: 'row',
                           alignItems: 'center',
                           backgroundColor: `${AppColors.white}1F`,
-                          borderRadius: 5,
-                          paddingHorizontal: isNarrow ? 4.5 : 6,
-                          paddingVertical: 2,
-                          gap: 3.5,
+                          borderRadius: 6,
+                          paddingHorizontal: isNarrow ? 6 : 7,
+                          paddingVertical: 3,
+                          gap: 4,
                           borderWidth: 1,
                           borderColor: `${AppColors.white}2E`,
                           flexShrink: 0,
                         }}>
                         <NpmIcon
-                          size={isNarrow ? 9 : 10}
+                          size={isNarrow ? 9.5 : 10.5}
                           color={AppColors.npmRedLight}
                         />
                         <Text
                           style={{
                             fontFamily: AppFonts.interMedium,
-                            fontSize: isNarrow ? 8.5 : 9.5,
+                            fontSize: isNarrow ? 9 : 10,
+                            lineHeight: 13,
                             color: `${AppColors.white}EB`,
                             letterSpacing: 0.1,
                           }}
@@ -864,6 +953,7 @@ const InspectorHeader = React.memo(() => {
                         ]}
                         numberOfLines={1}
                         ellipsizeMode="middle">
+                        #{selectedEvent.id != null ? selectedEvent.id + 1 : 1}{' '}
                         {selectedEvent.name}
                       </Text>
                     </View>
@@ -934,6 +1024,7 @@ const InspectorHeader = React.memo(() => {
                         ]}
                         numberOfLines={1}
                         ellipsizeMode="middle">
+                        #{selectedLog.id != null ? selectedLog.id + 1 : 1}{' '}
                         console.
                         {selectedLog.sourceMethod || selectedLog.type || 'log'}
                       </Text>
@@ -1251,9 +1342,73 @@ const InspectorHeader = React.memo(() => {
                   alignItems: 'center',
                   justifyContent: 'flex-end',
                   flexShrink: 0,
-                  gap: isNarrow ? 5 : 7,
+                  gap: isNarrow ? 4 : 5,
                 },
               ]}>
+              {/* On inner detail pages: place Photo & Video capture in the top right cluster */}
+              {isAnySelected && (
+                <>
+                  {/* Photo Capture Icon Button */}
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('header.photo', 'Photo')}
+                    onPress={handleTakeScreenshot}
+                    hitSlop={10}
+                    style={[
+                      styles.closeButtonSquare,
+                      {
+                        width: buttonSize,
+                        height: buttonSize,
+                        borderRadius: isNarrow ? 6 : 7,
+                      },
+                    ]}>
+                    <CameraIcon
+                      size={isNarrow ? 12 : 13}
+                      color={AppColors.white}
+                    />
+                  </TouchableScale>
+
+                  {/* Video / Record Capture Icon Button */}
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('header.record', 'Record')}
+                    onPress={handleToggleVideoRecording}
+                    hitSlop={10}
+                    style={[
+                      styles.closeButtonSquare,
+                      {
+                        width: buttonSize,
+                        height: buttonSize,
+                        borderRadius: isNarrow ? 6 : 7,
+                        backgroundColor: isRecording
+                          ? `${AppColors.red500}40`
+                          : `${AppColors.white}24`,
+                        borderColor: isRecording
+                          ? AppColors.red500
+                          : `${AppColors.white}33`,
+                      },
+                    ]}>
+                    {isRecording ? (
+                      <Animated.View
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: 3,
+                          backgroundColor: AppColors.red500,
+                        }}
+                      />
+                    ) : (
+                      <VideoCameraIcon
+                        size={isNarrow ? 12 : 13}
+                        color={AppColors.white}
+                      />
+                    )}
+                  </TouchableScale>
+                </>
+              )}
+
               {isSettingsView && (
                 <TouchableScale
                   onPress={() => {
@@ -1346,97 +1501,99 @@ const InspectorHeader = React.memo(() => {
             </View>
           </View>
 
-          {/* Secondary Action Header (Sub-Toolbar) */}
+          {/* Secondary Action Header (Sub-Toolbar) only on main views */}
           {!isAnySelected && (
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                paddingHorizontal: isNarrow ? 8 : 12,
-                paddingBottom: isNarrow ? 6 : 8,
-                paddingTop: 0,
+                paddingHorizontal: isNarrow ? 10 : 14,
+                paddingBottom: isNarrow ? 8 : 10,
+                paddingTop: 2,
                 gap: 6,
               }}>
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                {/* Photo Capture Button */}
-                <TouchableScale
-                  onPress={handleTakeScreenshot}
+            <View
+              style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              {/* Photo Capture Button */}
+              <TouchableScale
+                onPress={handleTakeScreenshot}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  backgroundColor: `${AppColors.white}24`,
+                  paddingHorizontal: isNarrow ? 9 : 11,
+                  paddingVertical: isNarrow ? 5 : 6,
+                  borderRadius: 7,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.white}33`,
+                }}>
+                <CameraIcon
+                  size={isNarrow ? 12 : 13}
+                  color={AppColors.white}
+                />
+                <Text
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4.5,
-                    backgroundColor: `${AppColors.white}24`,
-                    paddingHorizontal: isNarrow ? 8 : 10,
-                    paddingVertical: isNarrow ? 4 : 5,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: `${AppColors.white}33`,
+                    fontFamily: AppFonts.interSemiBold,
+                    fontSize: isNarrow ? 10.5 : 11.5,
+                    lineHeight: isNarrow ? 13 : 14,
+                    color: AppColors.white,
                   }}>
-                  <CameraIcon
+                  {t('header.photo')}
+                </Text>
+              </TouchableScale>
+
+              {/* Video / GIF Record Button */}
+              <TouchableScale
+                onPress={handleToggleVideoRecording}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                  backgroundColor: isRecording
+                    ? `${AppColors.red500}33`
+                    : `${AppColors.white}24`,
+                  paddingHorizontal: isNarrow ? 9 : 11,
+                  paddingVertical: isNarrow ? 5 : 6,
+                  borderRadius: 7,
+                  borderWidth: 1,
+                  borderColor: isRecording
+                    ? AppColors.red500
+                    : `${AppColors.white}33`,
+                }}>
+                {isRecording ? (
+                  <Animated.View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: AppColors.red500,
+                    }}
+                  />
+                ) : (
+                  <VideoCameraIcon
                     size={isNarrow ? 12 : 13}
                     color={AppColors.white}
                   />
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interSemiBold,
-                      fontSize: isNarrow ? 10 : 11,
-                      color: AppColors.white,
-                    }}>
-                    {t('header.photo')}
-                  </Text>
-                </TouchableScale>
-
-                {/* Video / GIF Record Button */}
-                <TouchableScale
-                  onPress={handleToggleVideoRecording}
+                )}
+                <Text
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4.5,
-                    backgroundColor: isRecording
-                      ? `${AppColors.red500}33`
-                      : `${AppColors.white}24`,
-                    paddingHorizontal: isNarrow ? 8 : 10,
-                    paddingVertical: isNarrow ? 4 : 5,
-                    borderRadius: 6,
-                    borderWidth: 1,
-                    borderColor: isRecording
-                      ? AppColors.red500
-                      : `${AppColors.white}33`,
+                    fontFamily: AppFonts.interSemiBold,
+                    fontSize: isNarrow ? 10.5 : 11.5,
+                    lineHeight: isNarrow ? 13 : 14,
+                    color: isRecording ? AppColors.red300 : AppColors.white,
                   }}>
-                  {isRecording ? (
-                    <Animated.View
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: AppColors.red500,
-                      }}
-                    />
-                  ) : (
-                    <VideoCameraIcon
-                      size={isNarrow ? 12 : 13}
-                      color={AppColors.white}
-                    />
-                  )}
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interSemiBold,
-                      fontSize: isNarrow ? 10 : 11,
-                      color: isRecording ? AppColors.red300 : AppColors.white,
-                    }}>
-                    {isRecording
-                      ? `${t('header.rec')} ${formatTimer(recordingSeconds)}`
-                      : t('header.record')}
-                  </Text>
-                </TouchableScale>
-              </View>
+                  {isRecording
+                    ? `${t('header.rec')} ${formatTimer(recordingSeconds)}`
+                    : t('header.record')}
+                </Text>
+              </TouchableScale>
+            </View>
 
-              <View
-                style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                {/* Clear / Trash Button with label */}
+            <View
+              style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              {/* Clear / Trash Button with label */}
                 <TouchableScale
                   accessible={true}
                   accessibilityRole="button"
@@ -1459,11 +1616,11 @@ const InspectorHeader = React.memo(() => {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 4.5,
+                    gap: 5,
                     backgroundColor: `${AppColors.white}24`,
-                    paddingHorizontal: isNarrow ? 8 : 10,
-                    paddingVertical: isNarrow ? 4 : 5,
-                    borderRadius: 6,
+                    paddingHorizontal: isNarrow ? 9 : 11,
+                    paddingVertical: isNarrow ? 5 : 6,
+                    borderRadius: 7,
                     borderWidth: 1,
                     borderColor: `${AppColors.white}33`,
                   }}>
@@ -1492,7 +1649,8 @@ const InspectorHeader = React.memo(() => {
                   <Text
                     style={{
                       fontFamily: AppFonts.interSemiBold,
-                      fontSize: isNarrow ? 10 : 11,
+                      fontSize: isNarrow ? 10.5 : 11.5,
+                      lineHeight: isNarrow ? 13 : 14,
                       color: AppColors.white,
                     }}>
                     {t('common.clearAll')}
@@ -1505,18 +1663,17 @@ const InspectorHeader = React.memo(() => {
                   accessibilityRole="button"
                   accessibilityLabel={t('header.about')}
                   onPress={() => {
-                    setSettingsActiveSubTab('about');
-                    setSettingsPage('main');
+                    setIsAboutOpen(true);
                   }}
                   hitSlop={10}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 4.5,
+                    gap: 5,
                     backgroundColor: `${AppColors.white}24`,
-                    paddingHorizontal: isNarrow ? 8 : 10,
-                    paddingVertical: isNarrow ? 4 : 5,
-                    borderRadius: 6,
+                    paddingHorizontal: isNarrow ? 9 : 11,
+                    paddingVertical: isNarrow ? 5 : 6,
+                    borderRadius: 7,
                     borderWidth: 1,
                     borderColor: `${AppColors.white}33`,
                   }}>
@@ -1527,7 +1684,8 @@ const InspectorHeader = React.memo(() => {
                   <Text
                     style={{
                       fontFamily: AppFonts.interSemiBold,
-                      fontSize: isNarrow ? 10 : 11,
+                      fontSize: isNarrow ? 10.5 : 11.5,
+                      lineHeight: isNarrow ? 13 : 14,
                       color: AppColors.white,
                     }}>
                     {t('header.about')}

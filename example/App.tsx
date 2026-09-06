@@ -26,25 +26,10 @@ enableNativeCrashProtection();
 // Connect mock store to the inspector
 connectReduxStore(mockStore);
 
-import { ScreenCapture } from 'react-native-inapp-inspector/capture';
-
 const Stack = createNativeStackNavigator();
 const navigationRef = createNavigationContainerRef();
 
 function App() {
-  React.useEffect(() => {
-    setTimeout(async () => {
-      try {
-        console.log('[TEST] Calling ScreenCapture.takeScreenshot...');
-        const res = await ScreenCapture.takeScreenshot({ format: 'png', quality: 0.9 });
-        console.log('[TEST] ScreenCapture.takeScreenshot result:', JSON.stringify(res));
-        const list = await ScreenCapture.getMediaList();
-        console.log('[TEST] ScreenCapture.getMediaList:', JSON.stringify(list));
-      } catch (err) {
-        console.log('[TEST] ScreenCapture error:', err);
-      }
-    }, 1500);
-  }, []);
 
   return (
     <SafeAreaProvider>

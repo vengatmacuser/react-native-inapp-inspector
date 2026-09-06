@@ -86,7 +86,6 @@ export const SettingsSubTab = {
   Ui: 'ui',
   Limits: 'limits',
   Capture: 'capture',
-  About: 'about',
 } as const;
 export type SettingsSubTab =
   (typeof SettingsSubTab)[keyof typeof SettingsSubTab];

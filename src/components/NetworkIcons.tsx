@@ -478,6 +478,23 @@ export const ExportIcon = ({
   );
 };
 
+export const ShareIcon = ({
+  color = AppColors.white,
+  size = 14,
+}: IconProps) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
 export const SignalIcon = ({
   color = AppColors.primaryLight,
   size = 18,
@@ -2130,6 +2147,36 @@ export const ChevronDownIcon = ({color = AppColors.grayTextWeak, size = 14}: Ico
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M6 9l6 6 6-6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const MaximizeIcon = ({
+  color = AppColors.white,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const MinimizeIcon = ({
+  color = AppColors.white,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"
       stroke={color}
       strokeWidth="2"
       strokeLinecap="round"

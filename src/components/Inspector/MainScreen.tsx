@@ -33,6 +33,7 @@ import StorageTab from './StorageTab';
 import DebuggingTab from './DebuggingTab';
 import {MediaGalleryTab} from './MediaGalleryTab';
 import SettingsPanel from './SettingsPanel';
+import AboutModal from './AboutModal';
 
 import NpmUpdateToast from './NpmUpdateToast';
 import NpmStarPrompt from './NpmStarPrompt';
@@ -61,6 +62,8 @@ const MainScreen = () => {
     settingsPage,
     isFeedbackOpen,
     setIsFeedbackOpen,
+    isAboutOpen,
+    setIsAboutOpen,
     activeTab,
     isReady,
     enabled,
@@ -104,6 +107,19 @@ const MainScreen = () => {
     }
   }, [isFeedbackOpen]);
 
+  const aboutAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (isAboutOpen) {
+      aboutAnim.setValue(0);
+      Animated.spring(aboutAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [isAboutOpen]);
+
   return (
     <>
       {(Platform.OS === 'ios' || Platform.OS === 'android') &&
@@ -143,7 +159,10 @@ const MainScreen = () => {
                 <View
                   style={{flex: 1}}
                   pointerEvents={
-                    isDetailActive || settingsPage !== null || isFeedbackOpen
+                    isDetailActive ||
+                    settingsPage !== null ||
+                    isFeedbackOpen ||
+                    isAboutOpen
                       ? 'none'
                       : 'auto'
                   }>
@@ -239,8 +258,30 @@ const MainScreen = () => {
                   </Animated.View>
                 )}
 
+                {/* About & Specs Layer - Rendered inside in-app inspector covering full content card */}
+                {isAboutOpen && (
+                  <Animated.View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        backgroundColor: AppColors.primaryLight,
+                        opacity: aboutAnim,
+                        transform: [
+                          {
+                            translateY: aboutAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [24, 0],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}>
+                    <AboutModal onClose={() => setIsAboutOpen(false)} />
+                  </Animated.View>
+                )}
+
                 {/* Floating Support & Feedback Button (in place of scroll-to-top) */}
-                {!isDetailActive && settingsPage === null && !isFeedbackOpen && (
+                {!isDetailActive && settingsPage === null && !isFeedbackOpen && !isAboutOpen && (
                   <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => setIsFeedbackOpen(true)}

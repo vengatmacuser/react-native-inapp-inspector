@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   RefreshControl,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +17,7 @@ import TouchableScale from '../TouchableScale';
 import EmptyState from '../EmptyState';
 import {
   CheckIcon,
+  CopyIcon,
   FilmIcon,
   GifIcon,
   GridIcon,
@@ -23,6 +25,7 @@ import {
   ListIcon,
   PlayIcon,
   ScreencastIcon,
+  ShareIcon,
   TrashIcon,
 } from '../NetworkIcons';
 import {MediaPreviewModal} from './MediaPreviewModal';
@@ -30,7 +33,7 @@ import {
   ScreenCapture,
   CapturedMediaItem,
 } from '../../capture';
-import {formatBytes} from '../../helpers';
+import {copyToClipboard, formatBytes} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {useTranslation} from '../../i18n';
 
@@ -100,6 +103,69 @@ export const MediaGalleryTab: React.FC = () => {
       switchActiveTab('apis');
     }
     showToast(t('mediaGallery.deleted'));
+  };
+
+  const handleCopyItemUri = (item: CapturedMediaItem) => {
+    if (!item?.uri) return;
+    copyToClipboard(item.uri, item.filename || 'File URI');
+    showToast(t('mediaGallery.uriCopied', 'File URI copied to clipboard'));
+  };
+
+  const handleCopySelectedUris = () => {
+    const itemsToCopy = mediaList.filter(item => selectedIds.has(item.id));
+    if (itemsToCopy.length === 0) return;
+    const urisText = itemsToCopy.map(i => i.uri).join('\n');
+    copyToClipboard(urisText, `${itemsToCopy.length} Media URIs`);
+    showToast(`${itemsToCopy.length} file URIs copied to clipboard`);
+  };
+
+  const handleShareItem = async (item: CapturedMediaItem) => {
+    try {
+      const shareUri =
+        item.uri.startsWith('file://') ||
+        item.uri.startsWith('content://') ||
+        item.uri.startsWith('http')
+          ? item.uri
+          : `file://${item.uri}`;
+
+      await Share.share({
+        url: shareUri,
+        title: item.filename,
+        message: item.filename,
+      });
+    } catch {
+      showToast(
+        t('mediaGallery.shareUnavailable', 'Sharing not available on this device'),
+      );
+    }
+  };
+
+  const handleShareSelected = async () => {
+    const itemsToShare = mediaList.filter(item => selectedIds.has(item.id));
+    if (itemsToShare.length === 0) return;
+
+    try {
+      const firstItem = itemsToShare[0];
+      const shareUri =
+        firstItem.uri.startsWith('file://') ||
+        firstItem.uri.startsWith('content://') ||
+        firstItem.uri.startsWith('http')
+          ? firstItem.uri
+          : `file://${firstItem.uri}`;
+
+      await Share.share({
+        url: shareUri,
+        title: firstItem.filename,
+        message:
+          itemsToShare.length === 1
+            ? firstItem.filename
+            : `${itemsToShare.length} items: ${itemsToShare.map(i => i.filename).join(', ')}`,
+      });
+    } catch {
+      showToast(
+        t('mediaGallery.shareUnavailable', 'Sharing not available on this device'),
+      );
+    }
   };
 
   const handleDeleteSelected = () => {
@@ -240,13 +306,21 @@ export const MediaGalleryTab: React.FC = () => {
             {item.filename}
           </Text>
           <View style={galleryStyles.cardMetaRow}>
-            <Text style={galleryStyles.cardMeta}>
-              {formatBytes(item.sizeBytes)}
-            </Text>
-            <Text style={galleryStyles.cardMetaDot}>•</Text>
-            <Text style={galleryStyles.cardMeta}>
-              {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, minWidth: 0}}>
+              <Text style={galleryStyles.cardMeta} numberOfLines={1}>
+                {formatBytes(item.sizeBytes)}
+              </Text>
+              <Text style={galleryStyles.cardMetaDot}>•</Text>
+              <Text style={galleryStyles.cardMeta} numberOfLines={1}>
+                {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => handleCopyItemUri(item)}
+              style={galleryStyles.gridCopyBtn}
+              hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
+              <CopyIcon size={11} color={AppColors.slate400} />
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableScale>
@@ -327,13 +401,29 @@ export const MediaGalleryTab: React.FC = () => {
           </View>
         </View>
 
-        {/* Delete button */}
-        <TouchableOpacity
-          onPress={() => handleDeleteItem(item)}
-          style={galleryStyles.listDeleteBtn}
-          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <TrashIcon size={14} color={AppColors.red500} />
-        </TouchableOpacity>
+        {/* Actions: Copy, Share & Delete */}
+        <View style={galleryStyles.listActionsRow}>
+          <TouchableOpacity
+            onPress={() => handleCopyItemUri(item)}
+            style={galleryStyles.listCopyBtn}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            <CopyIcon size={13} color={AppColors.slate200} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleShareItem(item)}
+            style={galleryStyles.listShareBtn}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            <ShareIcon size={13} color={AppColors.sky400} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => handleDeleteItem(item)}
+            style={galleryStyles.listDeleteBtn}
+            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            <TrashIcon size={13} color={AppColors.red500} />
+          </TouchableOpacity>
+        </View>
       </TouchableScale>
     );
   };
@@ -426,15 +516,37 @@ export const MediaGalleryTab: React.FC = () => {
 
           <View style={galleryStyles.actionsGroup}>
             {selectedIds.size > 0 && (
-              <TouchableOpacity
-                onPress={handleDeleteSelected}
-                style={galleryStyles.deleteBtn}
-                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                <TrashIcon size={13} color={AppColors.red500} />
-                <Text style={galleryStyles.deleteBtnText}>
-                  {t('mediaGallery.deleteSelected', {count: selectedIds.size})}
-                </Text>
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  onPress={handleCopySelectedUris}
+                  style={galleryStyles.copySelectedBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                  <CopyIcon size={12} color={AppColors.slate200} />
+                  <Text style={galleryStyles.copySelectedBtnText}>
+                    {t('mediaGallery.copyUri', 'Copy URI')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleShareSelected}
+                  style={galleryStyles.shareSelectedBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                  <ShareIcon size={12} color={AppColors.sky400} />
+                  <Text style={galleryStyles.shareSelectedBtnText}>
+                    {t('mediaGallery.share', 'Share')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleDeleteSelected}
+                  style={galleryStyles.deleteBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                  <TrashIcon size={13} color={AppColors.red500} />
+                  <Text style={galleryStyles.deleteBtnText}>
+                    {t('mediaGallery.deleteSelected', {count: selectedIds.size})}
+                  </Text>
+                </TouchableOpacity>
+              </>
             )}
 
             <TouchableOpacity
@@ -818,12 +930,68 @@ const galleryStyles = StyleSheet.create({
     fontSize: 8.5,
     color: AppColors.slate200,
   },
+  gridCopyBtn: {
+    padding: 3,
+    borderRadius: 4,
+    backgroundColor: AppColors.whiteAlpha08,
+  },
+  listActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  listCopyBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: AppColors.whiteAlpha10,
+    borderWidth: 1,
+    borderColor: AppColors.whiteAlpha15,
+  },
+  listShareBtn: {
+    padding: 6,
+    borderRadius: 6,
+    backgroundColor: `${AppColors.sky400}18`,
+    borderWidth: 1,
+    borderColor: `${AppColors.sky400}40`,
+  },
   listDeleteBtn: {
     padding: 6,
     borderRadius: 6,
     backgroundColor: `${AppColors.red500}14`,
     borderWidth: 1,
     borderColor: `${AppColors.red500}33`,
+  },
+  copySelectedBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: AppColors.whiteAlpha10,
+    borderWidth: 1,
+    borderColor: AppColors.whiteAlpha20,
+  },
+  copySelectedBtnText: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 10.5,
+    color: AppColors.slate200,
+  },
+  shareSelectedBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: `${AppColors.sky400}20`,
+    borderWidth: 1,
+    borderColor: `${AppColors.sky400}60`,
+  },
+  shareSelectedBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10.5,
+    color: AppColors.sky400,
   },
 });
 

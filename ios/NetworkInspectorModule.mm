@@ -1207,23 +1207,37 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
 
 - (CVPixelBufferRef)createPixelBufferFromUIImage:(UIImage *)image size:(CGSize)size {
     if (!image) return NULL;
+    CGImageRef cgImage = image.CGImage;
+    if (!cgImage) return NULL;
+
     NSDictionary *options = @{
         (id)kCVPixelBufferCGImageCompatibilityKey: @(YES),
         (id)kCVPixelBufferCGBitmapContextCompatibilityKey: @(YES)
     };
     CVPixelBufferRef pxbuffer = NULL;
-    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, (size_t)size.width, (size_t)size.height, kCVPixelFormatType_32BGRA, (__bridge CFDictionaryRef)options, &pxbuffer);
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault,
+                                          (size_t)size.width,
+                                          (size_t)size.height,
+                                          kCVPixelFormatType_32BGRA,
+                                          (__bridge CFDictionaryRef)options,
+                                          &pxbuffer);
     if (status != kCVReturnSuccess || pxbuffer == NULL) return NULL;
 
     CVPixelBufferLockBaseAddress(pxbuffer, 0);
     void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
     size_t bytesPerRow = CVPixelBufferGetBytesPerRow(pxbuffer);
     CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(pxdata, (size_t)size.width, (size_t)size.height, 8, bytesPerRow, rgbColorSpace, (CGBitmapInfo)kCGBitmapByteOrder32Little | (CGBitmapInfo)kCGImageAlphaPremultipliedFirst);
+    CGContextRef context = CGBitmapContextCreate(pxdata,
+                                                 (size_t)size.width,
+                                                 (size_t)size.height,
+                                                 8,
+                                                 bytesPerRow,
+                                                 rgbColorSpace,
+                                                 (CGBitmapInfo)kCGBitmapByteOrder32Little | (CGBitmapInfo)kCGImageAlphaPremultipliedFirst);
     if (context) {
         CGContextTranslateCTM(context, 0, size.height);
         CGContextScaleCTM(context, 1.0, -1.0);
-        CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), image.CGImage);
+        CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), cgImage);
         CGContextRelease(context);
     }
     CGColorSpaceRelease(rgbColorSpace);
@@ -1692,18 +1706,16 @@ RCT_EXPORT_METHOD(getCapturedMedia:(RCTPromiseResolveBlock)resolve
                         AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:vidUrl options:nil];
                         AVAssetImageGenerator *gen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
                         gen.appliesPreferredTrackTransform = YES;
-                        gen.maximumSize = CGSizeMake(480, 480);
-                        CMTime time = CMTimeMake(1, 10);
+                        gen.requestedTimeToleranceBefore = kCMTimePositiveInfinity;
+                        gen.requestedTimeToleranceAfter = kCMTimePositiveInfinity;
+                        gen.maximumSize = CGSizeMake(720, 720);
+                        CMTime time = kCMTimeZero;
                         NSError *err = nil;
                         CGImageRef imgRef = [gen copyCGImageAtTime:time actualTime:NULL error:&err];
-                        if (!imgRef) {
-                            time = kCMTimeZero;
-                            imgRef = [gen copyCGImageAtTime:time actualTime:NULL error:&err];
-                        }
                         if (imgRef) {
                             UIImage *thumbImg = [UIImage imageWithCGImage:imgRef];
                             CGImageRelease(imgRef);
-                            NSData *tData = UIImageJPEGRepresentation(thumbImg, 0.8);
+                            NSData *tData = UIImageJPEGRepresentation(thumbImg, 0.85);
                             if (tData) {
                                 [tData writeToFile:thumbFullPath atomically:YES];
                                 item[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbFullPath].absoluteString;

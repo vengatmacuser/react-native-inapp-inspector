@@ -255,6 +255,30 @@ const LogDetail = React.memo(() => {
                 flex: 1,
                 flexWrap: 'wrap',
               }}>
+              {/* Log ID Badge */}
+              <View
+                style={[
+                  styles.metaChip,
+                  {
+                    backgroundColor: `${AppColors.grayTextWeak}15`,
+                    borderColor: `${AppColors.grayTextWeak}33`,
+                    paddingHorizontal: 7,
+                    paddingVertical: 3,
+                  },
+                ]}>
+                <Text
+                  style={[
+                    styles.metaChipText,
+                    {
+                      color: AppColors.grayTextStrong,
+                      fontSize: 10,
+                      fontFamily: AppFonts.interBold,
+                    },
+                  ]}>
+                  #{selectedLog.id != null ? selectedLog.id + 1 : 1}
+                </Text>
+              </View>
+
               {/* Type Badge */}
               <View
                 style={[

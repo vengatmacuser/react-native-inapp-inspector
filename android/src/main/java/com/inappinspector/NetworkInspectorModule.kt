@@ -923,11 +923,18 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
                 var width = 720
                 var height = 1280
+                var thumbnailUri: String? = null
 
                 if (framesSnapshot.isNotEmpty()) {
                     val firstFrame = framesSnapshot.first()
                     width = firstFrame.width
                     height = firstFrame.height
+
+                    val thumbFile = File(getCapturesDirectory(), "thumb_${timestamp}.jpg")
+                    FileOutputStream(thumbFile).use { fos ->
+                        firstFrame.compress(Bitmap.CompressFormat.JPEG, 85, fos)
+                    }
+                    thumbnailUri = Uri.fromFile(thumbFile).toString()
 
                     FileOutputStream(file).use { fos ->
                         firstFrame.compress(Bitmap.CompressFormat.PNG, 90, fos)
@@ -945,6 +952,9 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
                 val result = Arguments.createMap().apply {
                     putString("uri", Uri.fromFile(file).toString())
+                    if (thumbnailUri != null) {
+                        putString("thumbnailUri", thumbnailUri)
+                    }
                     putString("format", "mp4")
                     putDouble("durationMs", durationMs.toDouble())
                     putBoolean("hasAudio", false)

@@ -24,7 +24,6 @@ import {
   CalendarIcon,
   ClockIcon,
   SizeIcon,
-  GlobeIcon,
   CircleCheckIcon,
   CircleAlertIcon,
   CircleXIcon,
@@ -64,6 +63,13 @@ const LogCard = React.memo(function LogCard({
       return {host, path: path || item.url, isHttps};
     }
   }, [item.url]);
+
+  const cleanCaller = useMemo(() => {
+    if (!item.caller || item.caller === 'Unknown') return null;
+    const parts = item.caller.split(/[\/\\]/);
+    const lastPart = parts[parts.length - 1] || item.caller;
+    return lastPart.replace(/\?.*$/, '').replace(/^[a-zA-Z0-9_$]+@/, '');
+  }, [item.caller]);
 
   const handleOpenUrl = (e?: any) => {
     e?.stopPropagation?.();
@@ -164,7 +170,7 @@ const LogCard = React.memo(function LogCard({
           },
         ]}>
         <View style={styles.cardBody}>
-          {/* Row 1: Header (Checkbox, Serial, Method Badge, Client Tag, Protocol, Status Pill) */}
+          {/* Row 1: Header (Checkbox, Serial, Method Badge, Client Tag, Status Pill) */}
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
               <Pressable
@@ -358,7 +364,7 @@ const LogCard = React.memo(function LogCard({
             ) : null}
           </Pressable>
 
-          {/* Row 3: Footer (Timestamp & Origin on Left, Response Size & Duration on Right) */}
+          {/* Row 3: Footer (Timestamp & Clean Caller on Left, Response Size & Duration on Right) */}
           <View style={styles.cardFooterRow}>
             <View style={styles.footerLeft}>
               <View style={styles.cardDateRow}>
@@ -366,14 +372,14 @@ const LogCard = React.memo(function LogCard({
                 <Text style={styles.cardDateText}>{triggeredAt}</Text>
               </View>
 
-              {item.caller && item.caller !== 'Unknown' && (
+              {cleanCaller && (
                 <View style={styles.callerChip}>
                   <PinIcon color={AppColors.sky600} size={8.5} />
                   <Text
                     style={styles.callerChipText}
                     numberOfLines={1}
                     ellipsizeMode="middle">
-                    {item.caller}
+                    {cleanCaller}
                   </Text>
                 </View>
               )}
@@ -439,48 +445,48 @@ const LogCard = React.memo(function LogCard({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 10,
-    paddingVertical: 3.5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   card: {
     alignSelf: 'stretch',
-    borderRadius: 11,
+    borderRadius: 10,
     overflow: 'hidden',
     shadowColor: AppColors.black,
-    shadowOffset: {width: 0, height: 1.5},
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.04,
     shadowRadius: 3,
-    elevation: 1.5,
+    elevation: 1,
     borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
+    borderColor: '#E2E8F0',
     backgroundColor: AppColors.white,
   },
   cardBody: {
-    paddingHorizontal: 12,
-    paddingTop: 9,
-    paddingBottom: 8,
+    paddingHorizontal: 11,
+    paddingTop: 8,
+    paddingBottom: 7,
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
-    minHeight: 22,
+    marginBottom: 5,
+    minHeight: 20,
   },
   cardHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     marginRight: 6,
-    gap: 5.5,
+    gap: 5,
     minWidth: 0,
     flexWrap: 'wrap',
   },
   smallCheckbox: {
-    width: 15,
-    height: 15,
-    borderRadius: 4,
-    borderWidth: 1.6,
+    width: 14,
+    height: 14,
+    borderRadius: 3.5,
+    borderWidth: 1.5,
     borderColor: AppColors.grayTextWeak,
     alignItems: 'center',
     justifyContent: 'center',
@@ -493,10 +499,10 @@ const styles = StyleSheet.create({
   serialNumber: {
     fontFamily: AppFonts.interBold,
     color: AppColors.grayTextWeak,
-    fontSize: 10,
+    fontSize: 9.5,
   },
   methodBadge: {
-    paddingHorizontal: 6.5,
+    paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 5,
     alignItems: 'center',
@@ -504,7 +510,8 @@ const styles = StyleSheet.create({
   },
   methodBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 9.5,
+    fontSize: 9,
+    lineHeight: 11,
     letterSpacing: 0.5,
     color: AppColors.white,
   },
@@ -517,13 +524,14 @@ const styles = StyleSheet.create({
   chipText: {
     fontFamily: AppFonts.interBold,
     fontSize: 8.5,
+    lineHeight: 11,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
+    gap: 3.5,
+    paddingHorizontal: 6.5,
+    paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
     flexShrink: 0,
@@ -531,16 +539,17 @@ const styles = StyleSheet.create({
   statusPillText: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
+    lineHeight: 12,
   },
   urlBox: {
-    backgroundColor: AppColors.grayBackground,
-    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 7,
     borderWidth: 1,
-    borderColor: AppColors.dividerColor,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    marginVertical: 4,
-    gap: 4,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    marginVertical: 3,
+    gap: 3,
   },
   urlMainRow: {
     flexDirection: 'row',
@@ -551,8 +560,8 @@ const styles = StyleSheet.create({
   pathText: {
     fontFamily: AppFonts.interBold,
     fontSize: 12,
-    lineHeight: 16.5,
-    color: AppColors.primaryBlack,
+    lineHeight: 16,
+    color: '#0F172A',
     flex: 1,
   },
   urlBadgeRow: {
@@ -590,7 +599,7 @@ const styles = StyleSheet.create({
   hostRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4.5,
   },
   protoBadge: {
     paddingHorizontal: 4,
@@ -601,11 +610,13 @@ const styles = StyleSheet.create({
   protoBadgeText: {
     fontFamily: AppFonts.interBold,
     fontSize: 7.5,
+    lineHeight: 9,
   },
   hostText: {
     fontFamily: AppFonts.interMedium,
-    fontSize: 10.5,
-    color: AppColors.grayText,
+    fontSize: 10,
+    lineHeight: 13,
+    color: '#64748B',
     flex: 1,
   },
   highlight: {
@@ -617,56 +628,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 4,
+    marginTop: 3,
     gap: 6,
   },
   footerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     flex: 1,
     minWidth: 0,
   },
   footerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
     flexShrink: 0,
   },
   cardDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3.5,
+    gap: 3,
   },
   cardDateText: {
     fontFamily: AppFonts.interRegular,
     fontSize: 9.5,
-    color: AppColors.grayTextWeak,
+    lineHeight: 12,
+    color: '#94A3B8',
   },
   callerChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: `${AppColors.sky600}10`,
-    borderColor: `${AppColors.sky600}2B`,
+    gap: 2.5,
+    backgroundColor: '#F0F9FF',
+    borderColor: '#BAE6FD',
     borderWidth: 1,
-    paddingHorizontal: 5,
+    paddingHorizontal: 4.5,
     paddingVertical: 1,
     borderRadius: 4,
     flexShrink: 1,
     minWidth: 0,
   },
   callerChipText: {
-    color: AppColors.sky600,
+    color: '#0284C7',
     fontSize: 8.5,
+    lineHeight: 11,
     fontFamily: AppFonts.interBold,
   },
   metaStatChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: `${AppColors.purple}10`,
-    borderColor: `${AppColors.purple}28`,
+    gap: 2.5,
+    backgroundColor: '#F5F3FF',
+    borderColor: '#DDD6FE',
     borderWidth: 1,
     paddingHorizontal: 5,
     paddingVertical: 1.5,
@@ -674,20 +687,21 @@ const styles = StyleSheet.create({
   },
   metaStatText: {
     fontFamily: AppFonts.interBold,
-    color: AppColors.purple,
+    color: '#7C3AED',
     fontSize: 9,
+    lineHeight: 11,
   },
   waterfallContainer: {
-    height: 2.5,
+    height: 2,
     width: '100%',
-    backgroundColor: AppColors.grayBorderSecondary,
-    borderRadius: 1.5,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 1,
     overflow: 'hidden',
-    marginTop: 6,
+    marginTop: 5,
   },
   waterfallBar: {
     height: '100%',
-    borderRadius: 1.5,
+    borderRadius: 1,
   },
 });
 
