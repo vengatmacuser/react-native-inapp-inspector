@@ -30,20 +30,20 @@ The **zero-config, all-in-one in-app debugging overlay for React Native & Expo**
 
 ## ⚡ Why Choose `react-native-inapp-inspector`?
 
-| Capability | **react-native-inapp-inspector** | react-native-network-logger | Flipper / RN Debugger |
-| :--- | :---: | :---: | :---: |
-| **Native Module (Kotlin & iOS Bridge)** | ✅ | ❌ | ⚠️ |
-| **Low-Level Hardware & RAM Telemetry** | ✅ | ❌ | ⚠️ |
-| **Zero-Render Inactive Mode (0% Background Overhead)** | ✅ | ❌ | ❌ |
-| **Network Timing Waterfall & P95 Telemetry** | ✅ | ❌ | ✅ |
-| **Network Inspector (Fetch & Axios)** | ✅ | ✅ | ✅ |
-| **cURL & Fetch Snippet Export** | ✅ | ❌ | ⚠️ |
-| **Console Logger + Stack Traces** | ✅ (Metro Symbolicated) | ❌ | ✅ |
-| **Redux State & Action Diffs** | ✅ | ❌ | ⚠️ |
-| **Firebase Analytics Tracker** | ✅ | ❌ | ❌ |
-| **JS Bundle Size & Hermes Analyzer** | ✅ | ❌ | ❌ |
-| **Live Traffic Stream Freeze** | ✅ | ❌ | ❌ |
-| **Expo & Bare React Native** | ✅ | ✅ | ⚠️ |
+| Capability | **react-native-inapp-inspector** | Flipper / RN Debugger |
+| :--- | :---: | :---: |
+| **Native Module (Kotlin & iOS Bridge)** | ✅ | ⚠️ |
+| **Low-Level Hardware & RAM Telemetry** | ✅ | ⚠️ |
+| **Zero-Render Inactive Mode (0% Background Overhead)** | ✅ | ❌ |
+| **Network Timing Waterfall & P95 Telemetry** | ✅ | ✅ |
+| **Network Inspector (Fetch & Axios)** | ✅ | ✅ |
+| **cURL & Fetch Snippet Export** | ✅ | ⚠️ |
+| **Console Logger + Stack Traces** | ✅ (Metro Symbolicated) | ✅ |
+| **Redux State & Action Diffs** | ✅ | ⚠️ |
+| **Firebase Analytics Tracker** | ✅ | ❌ |
+| **JS Bundle Size & Hermes Analyzer** | ✅ | ❌ |
+| **Live Traffic Stream Freeze** | ✅ | ❌ |
+| **Expo & Bare React Native** | ✅ | ⚠️ |
 
 ---
 

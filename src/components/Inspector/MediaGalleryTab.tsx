@@ -33,7 +33,7 @@ import {
   ScreenCapture,
   CapturedMediaItem,
 } from '../../capture';
-import {copyToClipboard, formatBytes} from '../../helpers';
+import {copyImageOrMediaToClipboard, copyToClipboard, formatBytes} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {useTranslation} from '../../i18n';
 
@@ -107,8 +107,10 @@ export const MediaGalleryTab: React.FC = () => {
 
   const handleCopyItemUri = (item: CapturedMediaItem) => {
     if (!item?.uri) return;
-    copyToClipboard(item.uri, item.filename || 'File URI');
-    showToast(t('mediaGallery.uriCopied', 'File URI copied to clipboard'));
+    copyImageOrMediaToClipboard(
+      item.uri,
+      item.type === 'image' ? 'Image' : 'Media',
+    );
   };
 
   const handleCopySelectedUris = () => {

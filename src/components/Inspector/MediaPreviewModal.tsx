@@ -28,7 +28,7 @@ import {
   TrashIcon,
 } from '../NetworkIcons';
 import {CapturedMediaItem, ScreenCapture} from '../../capture';
-import {copyToClipboard, formatBytes} from '../../helpers';
+import {copyImageOrMediaToClipboard, formatBytes} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {useTranslation} from '../../i18n';
 
@@ -60,8 +60,10 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
 
   const handleCopyUri = () => {
     if (!item?.uri) return;
-    copyToClipboard(item.uri, item.filename || 'File URI');
-    showToast(t('mediaGallery.uriCopied', 'File URI copied to clipboard'));
+    copyImageOrMediaToClipboard(
+      item.uri,
+      item.type === 'image' ? 'Image' : 'Media',
+    );
   };
 
   const handlePlayVideo = async () => {

@@ -3,6 +3,7 @@ import {Text, Linking} from 'react-native';
 
 // Helpers
 import {escapeRegex, handleOpenExternalLink} from '../helpers';
+import {AppColors} from '../styles/AppColors';
 
 const HighlightText = React.memo(function HighlightText({
   text,
@@ -56,7 +57,7 @@ const HighlightText = React.memo(function HighlightText({
               <Text
                 key={`link-${i}`}
                 style={{
-                  color: '#007AFF', // skyBlue link color
+                  color: AppColors.skyBlue,
                   textDecorationLine: 'underline',
                 }}
                 onPress={() => {

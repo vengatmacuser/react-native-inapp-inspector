@@ -1235,9 +1235,9 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
                                                  rgbColorSpace,
                                                  (CGBitmapInfo)kCGBitmapByteOrder32Little | (CGBitmapInfo)kCGImageAlphaPremultipliedFirst);
     if (context) {
-        CGContextTranslateCTM(context, 0, size.height);
-        CGContextScaleCTM(context, 1.0, -1.0);
-        CGContextDrawImage(context, CGRectMake(0, 0, size.width, size.height), cgImage);
+        UIGraphicsPushContext(context);
+        [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
+        UIGraphicsPopContext();
         CGContextRelease(context);
     }
     CGColorSpaceRelease(rgbColorSpace);
@@ -1770,6 +1770,41 @@ RCT_EXPORT_METHOD(deleteCapturedMedia:(NSString *)uri
     });
 }
 
+RCT_EXPORT_METHOD(copyMediaToClipboard:(NSString *)filePath
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    if (!filePath || filePath.length == 0) {
+        resolve(@{@"success": @(NO), @"error": @"File path is empty"});
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            NSString *cleanPath = filePath;
+            if ([cleanPath hasPrefix:@"file://"]) {
+                cleanPath = [cleanPath substringFromIndex:7];
+            }
+            cleanPath = [cleanPath stringByRemovingPercentEncoding];
+
+            UIImage *img = [UIImage imageWithContentsOfFile:cleanPath];
+            if (img) {
+                [UIPasteboard generalPasteboard].image = img;
+                resolve(@{@"success": @(YES), @"type": @"image"});
+            } else {
+                NSURL *fileURL = [NSURL fileURLWithPath:cleanPath];
+                if (fileURL) {
+                    [UIPasteboard generalPasteboard].URL = fileURL;
+                    resolve(@{@"success": @(YES), @"type": @"url"});
+                } else {
+                    [UIPasteboard generalPasteboard].string = filePath;
+                    resolve(@{@"success": @(YES), @"type": @"string"});
+                }
+            }
+        } @catch (NSException *ex) {
+            resolve(@{@"success": @(NO), @"error": ex.reason ?: @"Copy failed"});
+        }
+    });
+}
+
 RCT_EXPORT_METHOD(clearAllCapturedMedia:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -1785,6 +1820,7 @@ RCT_EXPORT_METHOD(clearAllCapturedMedia:(RCTPromiseResolveBlock)resolve
         }
     });
 }
+
 
 #ifdef RCT_NEW_ARCH_ENABLED
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:

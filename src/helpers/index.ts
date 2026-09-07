@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import {showToast} from './toast';
+import {copyMediaToClipboard as copyMediaToClipboardNative} from '../native/NativeInspector';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -144,6 +145,37 @@ export const copyToClipboard = (value: unknown, label?: string): void => {
     if (Platform.OS === 'android' && ToastAndroid?.show) {
       ToastAndroid.show(
         label ? `${label} copied to clipboard` : 'Copied to clipboard',
+        ToastAndroid.SHORT,
+      );
+    }
+  } catch {}
+};
+
+export const copyImageOrMediaToClipboard = async (
+  uri: string,
+  label: string = 'Image',
+): Promise<void> => {
+  if (!uri) return;
+  let copiedNative = false;
+  try {
+    copiedNative = await copyMediaToClipboardNative(uri);
+  } catch {
+    copiedNative = false;
+  }
+
+  if (!copiedNative) {
+    copyToClipboard(uri, label);
+    return;
+  }
+
+  try {
+    showToast(`${label} copied to clipboard`);
+  } catch {}
+
+  try {
+    if (Platform.OS === 'android' && ToastAndroid?.show) {
+      ToastAndroid.show(
+        `${label} copied to clipboard`,
         ToastAndroid.SHORT,
       );
     }

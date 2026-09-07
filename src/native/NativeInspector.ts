@@ -642,3 +642,21 @@ export const clearAllCapturedMediaFiles = async (): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Copies a media file (image/video) to the system clipboard as media data if supported.
+ */
+export const copyMediaToClipboard = async (filePath: string): Promise<boolean> => {
+  if (!filePath) return false;
+  if (!NativeModule || !NativeModule.copyMediaToClipboard) {
+    return false;
+  }
+  try {
+    const result = await NativeModule.copyMediaToClipboard(filePath);
+    return Boolean(result?.success);
+  } catch {
+    return false;
+  }
+};
+
+

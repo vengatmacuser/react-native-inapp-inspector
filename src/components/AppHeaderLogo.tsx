@@ -6,6 +6,7 @@ import {
   View,
 } from 'react-native';
 import BrandSquareIcon from './BrandSquareIcon';
+import {AppColors} from '../styles/AppColors';
 
 interface AppHeaderLogoProps {
   size?: number;
@@ -84,9 +85,9 @@ const logoStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    shadowColor: '#000000',
+    borderColor: AppColors.whiteAlpha33,
+    backgroundColor: AppColors.whiteAlpha12,
+    shadowColor: AppColors.shadowColorString,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.35,
     shadowRadius: 5,
@@ -94,12 +95,12 @@ const logoStyles = StyleSheet.create({
   },
   imageContainer: {
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: AppColors.whiteAlpha15,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: AppColors.whiteAlpha33,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: AppColors.shadowColorString,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.3,
     shadowRadius: 4,

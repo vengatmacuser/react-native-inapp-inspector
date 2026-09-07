@@ -387,7 +387,6 @@ const NetworkInspector = ({
     | 'redux'
     | null
   >(null);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState<boolean>(false);
   const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
   const [settingsActiveSubTab, setSettingsActiveSubTab] = useState<SettingsSubTab>('module');
   const [tabVisibility, setTabVisibility] = useState<
@@ -2126,8 +2125,6 @@ const NetworkInspector = ({
       setShowHeaderInfo,
       settingsPage,
       setSettingsPage,
-      isFeedbackOpen,
-      setIsFeedbackOpen,
       isAboutOpen,
       setIsAboutOpen,
       updateAvailable,
@@ -2307,7 +2304,6 @@ const NetworkInspector = ({
       selectedLog,
       showHeaderInfo,
       settingsPage,
-      isFeedbackOpen,
       isAboutOpen,
       updateAvailable,
       latestNpmVersion,

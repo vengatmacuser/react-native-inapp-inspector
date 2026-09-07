@@ -31,6 +31,7 @@ import {
   SparkleIcon,
   AndroidIcon,
   RepeatIcon,
+  WrenchIcon,
 } from '../NetworkIcons';
 import Svg, {Path} from 'react-native-svg';
 
@@ -431,13 +432,23 @@ export const DebuggingTab: React.FC = () => {
               styles.subTabItem,
               selectedScheme === 'assembleRelease' && styles.subTabItemActive,
             ]}>
-            <Text
-              style={[
-                styles.subTabText,
-                selectedScheme === 'assembleRelease' && styles.subTabTextActive,
-              ]}>
-              ⚡ Release (assembleRelease)
-            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+              <BoltIcon
+                size={12}
+                color={
+                  selectedScheme === 'assembleRelease'
+                    ? AppColors.white
+                    : AppColors.grayText
+                }
+              />
+              <Text
+                style={[
+                  styles.subTabText,
+                  selectedScheme === 'assembleRelease' && styles.subTabTextActive,
+                ]}>
+                Release (assembleRelease)
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -451,13 +462,23 @@ export const DebuggingTab: React.FC = () => {
               styles.subTabItem,
               selectedScheme === 'assembleDebug' && styles.subTabItemActive,
             ]}>
-            <Text
-              style={[
-                styles.subTabText,
-                selectedScheme === 'assembleDebug' && styles.subTabTextActive,
-              ]}>
-              🛠 Debug (assembleDebug)
-            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+              <WrenchIcon
+                size={12}
+                color={
+                  selectedScheme === 'assembleDebug'
+                    ? AppColors.white
+                    : AppColors.grayText
+                }
+              />
+              <Text
+                style={[
+                  styles.subTabText,
+                  selectedScheme === 'assembleDebug' && styles.subTabTextActive,
+                ]}>
+                Debug (assembleDebug)
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 

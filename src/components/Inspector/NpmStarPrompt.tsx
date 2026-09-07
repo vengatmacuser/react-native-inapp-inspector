@@ -307,7 +307,7 @@ export const NpmStarPrompt: React.FC = () => {
             style={styles.primaryButton}>
             <View style={styles.primaryButtonContent}>
               <StarIcon size={16} color={AppColors.white} />
-              <Text style={styles.primaryButtonText}>⭐ Star on GitHub & npm</Text>
+              <Text style={styles.primaryButtonText}>Star on GitHub & npm</Text>
             </View>
           </TouchableScale>
 

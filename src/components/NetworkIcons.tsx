@@ -2117,10 +2117,10 @@ export const TagIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) 
   </Svg>
 );
 
-export const NpmIcon = ({color = '#CB3837', size = 14}: IconProps) => (
+export const NpmIcon = ({color = AppColors.npmRed, size = 14}: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 256 256" fill="none">
     <Rect width="256" height="256" rx="32" fill={color} />
-    <Path d="M48 48h160v160h-32V96h-32v112H48V48z" fill="#FFFFFF" />
+    <Path d="M48 48h160v160h-32V96h-32v112H48V48z" fill={AppColors.white} />
   </Svg>
 );
 
@@ -2696,6 +2696,195 @@ export const MinimizeWindowIcon = ({color = AppColors.white, size = 14}: IconPro
     />
   </Svg>
 );
+
+export const BookOpenIcon = ({
+  color = AppColors.purple,
+  size = 18,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const WrenchIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ChevronUpIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M18 15l-6-6-6 6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const MessageSquareIcon = ({
+  color = AppColors.grayTextWeak,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const SparklesIcon = ({
+  color = AppColors.amber500,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 2L14.4 7.6L20 10L14.4 12.4L12 18L9.6 12.4L4 10L9.6 7.6L12 2Z"
+      fill={color}
+      stroke={color}
+      strokeWidth="1"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M19 15L20.2 17.8L23 19L20.2 20.2L19 23L17.8 20.2L15 19L17.8 17.8L19 15Z"
+      fill={color}
+    />
+    <Path
+      d="M5 16L5.9 18.1L8 19L5.9 19.9L5 22L4.1 19.9L2 19L4.1 18.1L5 16Z"
+      fill={color}
+    />
+  </Svg>
+);
+
+export const AngryFaceIcon = ({
+  color = AppColors.red500,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
+    <Path
+      d="M7.5 8.5L10.5 10M16.5 8.5L13.5 10"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <Circle cx="9" cy="11.5" r="1" fill={color} />
+    <Circle cx="15" cy="11.5" r="1" fill={color} />
+    <Path
+      d="M8.5 16.5C9.5 15.3 10.7 14.7 12 14.7C13.3 14.7 14.5 15.3 15.5 16.5"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const NeutralFaceIcon = ({
+  color = AppColors.amber500,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
+    <Circle cx="9" cy="10" r="1.2" fill={color} />
+    <Circle cx="15" cy="10" r="1.2" fill={color} />
+    <Path
+      d="M8 15.5H16"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const SmileFaceIcon = ({
+  color = AppColors.emerald500,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
+    <Circle cx="9" cy="9.5" r="1.2" fill={color} />
+    <Circle cx="15" cy="9.5" r="1.2" fill={color} />
+    <Path
+      d="M8 14C8 14 9.5 17 12 17C14.5 17 16 14 16 14"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const StarFaceIcon = ({
+  color = AppColors.purple500,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
+    {/* Star Eye Left */}
+    <Path
+      d="M9 7.8L9.6 9.4L11.2 9.5L10 10.5L10.4 12.1L9 11.1L7.6 12.1L8 10.5L6.8 9.5L8.4 9.4L9 7.8Z"
+      fill={color}
+    />
+    {/* Star Eye Right */}
+    <Path
+      d="M15 7.8L15.6 9.4L17.2 9.5L16 10.5L16.4 12.1L15 11.1L13.6 12.1L14 10.5L12.8 9.5L14.4 9.4L15 7.8Z"
+      fill={color}
+    />
+    <Path
+      d="M8 14.2C8.5 16.5 10.1 17.5 12 17.5C13.9 17.5 15.5 16.5 16 14.2H8Z"
+      fill={color}
+    />
+  </Svg>
+);
+
+export const HeartFaceIcon = ({
+  color = AppColors.pink500,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
+    {/* Heart Eye Left */}
+    <Path
+      d="M9 8.2C8.3 7.4 7.2 7.5 6.7 8.2C6.1 9 6.4 10.1 9 11.6C11.6 10.1 11.9 9 11.3 8.2C10.8 7.5 9.7 7.4 9 8.2Z"
+      fill={color}
+    />
+    {/* Heart Eye Right */}
+    <Path
+      d="M15 8.2C14.3 7.4 13.2 7.5 12.7 8.2C12.1 9 12.4 10.1 15 11.6C17.6 10.1 17.9 9 17.3 8.2C16.8 7.5 15.7 7.4 15 8.2Z"
+      fill={color}
+    />
+    <Path
+      d="M8 14.5C8 14.5 9.5 17.5 12 17.5C14.5 17.5 16 14.5 16 14.5"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
 
 
 

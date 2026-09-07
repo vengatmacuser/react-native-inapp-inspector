@@ -254,8 +254,6 @@ export interface InspectorContextValue {
   setShowHeaderInfo: React.Dispatch<React.SetStateAction<boolean>>;
   settingsPage: SettingsPage;
   setSettingsPage: React.Dispatch<React.SetStateAction<SettingsPage>>;
-  isFeedbackOpen: boolean;
-  setIsFeedbackOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isAboutOpen: boolean;
   setIsAboutOpen: React.Dispatch<React.SetStateAction<boolean>>;
   updateAvailable: boolean;

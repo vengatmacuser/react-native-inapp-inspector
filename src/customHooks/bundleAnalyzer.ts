@@ -759,8 +759,8 @@ export const parseBundleSource = (
   const getPackageColor = (name: string): string => {
     const colors = [
       AppColors.indigo500, AppColors.sky500, AppColors.pink500, AppColors.purple500, AppColors.emerald500,
-      AppColors.amber500, AppColors.red500, AppColors.teal500, '#3B82F6', AppColors.fuchsia500,
-      AppColors.orange500, AppColors.lime500, '#06B6D4', '#A855F7', AppColors.errorColor,
+      AppColors.amber500, AppColors.red500, AppColors.teal500, AppColors.blue500, AppColors.fuchsia500,
+      AppColors.orange500, AppColors.lime500, AppColors.cyan500, AppColors.purple900, AppColors.errorColor,
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) {

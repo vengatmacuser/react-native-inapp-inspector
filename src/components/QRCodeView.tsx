@@ -14,8 +14,8 @@ interface QRCodeViewProps {
 export const QRCodeView: React.FC<QRCodeViewProps> = ({
   value,
   size = 200,
-  color = '#000000',
-  backgroundColor = '#FFFFFF',
+  color = AppColors.black,
+  backgroundColor = AppColors.white,
 }) => {
   const matrix = useMemo(() => generateQRMatrix(value || 'http://localhost:8081'), [value]);
   const numCells = matrix.length || 21;

@@ -20,7 +20,7 @@ import {AppColors} from '../../styles/AppColors';
 
 // ─── Crisp SVG Icons ─────────────────────────────────────────────────────────
 
-const CopySvg = ({size = 14, color = '#64748B'}: {size?: number; color?: string}) => (
+const CopySvg = ({size = 14, color = AppColors.grayTextWeak}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M8 4v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2z"
@@ -39,7 +39,7 @@ const CopySvg = ({size = 14, color = '#64748B'}: {size?: number; color?: string}
   </Svg>
 );
 
-const CheckSvg = ({size = 14, color = '#10B981'}: {size?: number; color?: string}) => (
+const CheckSvg = ({size = 14, color = AppColors.emerald500}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M20 6L9 17l-5-5"
@@ -51,7 +51,7 @@ const CheckSvg = ({size = 14, color = '#10B981'}: {size?: number; color?: string
   </Svg>
 );
 
-const ExternalLinkSvg = ({size = 13, color = '#FFFFFF'}: {size?: number; color?: string}) => (
+const ExternalLinkSvg = ({size = 13, color = AppColors.white}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
@@ -77,7 +77,7 @@ const ExternalLinkSvg = ({size = 13, color = '#FFFFFF'}: {size?: number; color?:
   </Svg>
 );
 
-const CloseSvg = ({size = 13, color = '#64748B'}: {size?: number; color?: string}) => (
+const CloseSvg = ({size = 13, color = AppColors.grayTextWeak}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M18 6L6 18M6 6l12 12"
@@ -89,7 +89,7 @@ const CloseSvg = ({size = 13, color = '#64748B'}: {size?: number; color?: string
   </Svg>
 );
 
-const SparkleSvg = ({size = 14, color = '#F59E0B'}: {size?: number; color?: string}) => (
+const SparkleSvg = ({size = 14, color = AppColors.amber500}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z"
@@ -98,7 +98,7 @@ const SparkleSvg = ({size = 14, color = '#F59E0B'}: {size?: number; color?: stri
   </Svg>
 );
 
-const ArrowRightSvg = ({size = 14, color = '#94A3B8'}: {size?: number; color?: string}) => (
+const ArrowRightSvg = ({size = 14, color = AppColors.slate400}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M5 12h14M12 5l7 7-7 7"
@@ -203,25 +203,24 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
             onPress={handleClose}
             hitSlop={10}
             activeOpacity={0.7}>
-            <CloseSvg size={13} color="#64748B" />
+            <CloseSvg size={13} color={AppColors.grayTextWeak} />
           </TouchableOpacity>
 
-          {/* Header section with brand square icon & sparkle */}
+          {/* Icon Halo + Sparkle */}
           <View style={styles.headerSection}>
             <View style={styles.iconHaloRing}>
-              <BrandSquareIcon size={52} />
+              <BrandSquareIcon size={38} />
               <View style={styles.sparkleBadge}>
-                <SparkleSvg size={13} color="#F59E0B" />
+                <SparkleSvg size={13} color={AppColors.amber500} />
               </View>
             </View>
-
             <Text style={styles.title}>Update Available</Text>
             <Text style={styles.subtitle}>
-              A newer release of react-native-inapp-inspector is ready
+              A new version of react-native-inapp-inspector is ready to install
             </Text>
           </View>
 
-          {/* Version Comparison Card */}
+          {/* Version Diff Card */}
           <View style={styles.versionComparisonCard}>
             <View style={styles.versionColumn}>
               <Text style={styles.versionLabel}>INSTALLED</Text>
@@ -231,39 +230,39 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
             </View>
 
             <View style={styles.arrowContainer}>
-              <ArrowRightSvg size={14} color="#94A3B8" />
+              <ArrowRightSvg size={14} color={AppColors.slate400} />
             </View>
 
             <View style={styles.versionColumn}>
-              <Text style={styles.versionLabel}>LATEST ON NPM</Text>
+              <Text style={styles.versionLabel}>LATEST</Text>
               <View style={styles.latestChip}>
-                <NpmIcon size={12} color="#CB3837" />
-                <Text style={styles.latestText}>v{latestVersion || 'latest'}</Text>
+                <NpmIcon size={12} color={AppColors.npmRed} />
+                <Text style={styles.latestText}>v{latestVersion}</Text>
               </View>
             </View>
           </View>
 
-          {/* Quick Install Snippet Box */}
+          {/* Terminal / Code Snippet */}
           <View style={styles.codeSnippetBox}>
             <View style={styles.codeSnippetHeader}>
               <Text style={styles.codeSnippetLabel}>UPGRADE COMMAND</Text>
               {copied && (
                 <View style={styles.copiedIndicator}>
-                  <CheckSvg size={11} color="#10B981" />
+                  <CheckSvg size={11} color={AppColors.emerald500} />
                   <Text style={styles.copiedText}>Copied</Text>
                 </View>
               )}
             </View>
 
             <TouchableOpacity
-              style={styles.commandRow}
+              activeOpacity={0.75}
               onPress={handleCopyCommand}
-              activeOpacity={0.75}>
+              style={styles.commandRow}>
               <Text style={styles.commandText} numberOfLines={1}>
                 {installCommand}
               </Text>
               <View style={styles.copyIconWrapper}>
-                {copied ? <CheckSvg size={14} color="#10B981" /> : <CopySvg size={14} color="#64748B" />}
+                {copied ? <CheckSvg size={14} color={AppColors.emerald500} /> : <CopySvg size={14} color={AppColors.grayTextWeak} />}
               </View>
             </TouchableOpacity>
           </View>
@@ -271,18 +270,18 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
             <TouchableOpacity
-              style={styles.secondaryButton}
+              activeOpacity={0.7}
               onPress={handleClose}
-              activeOpacity={0.7}>
+              style={styles.secondaryButton}>
               <Text style={styles.secondaryButtonText}>Later</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.primaryButton}
+              activeOpacity={0.8}
               onPress={handleOpenNpm}
-              activeOpacity={0.85}>
+              style={styles.primaryButton}>
               <Text style={styles.primaryButtonText}>View on NPM</Text>
-              <ExternalLinkSvg size={12} color="#FFFFFF" />
+              <ExternalLinkSvg size={12} color={AppColors.white} />
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -298,7 +297,7 @@ const fontStack = {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.62)',
+    backgroundColor: AppColors.overlayDark,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -307,15 +306,15 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.primaryLight,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.dividerColor,
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 20,
     alignItems: 'center',
-    shadowColor: '#0F172A',
+    shadowColor: AppColors.shadowColorString,
     shadowOffset: {width: 0, height: 18},
     shadowOpacity: 0.24,
     shadowRadius: 36,
@@ -328,11 +327,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.grayBackground,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.dividerColor,
     zIndex: 10,
   },
   headerSection: {
@@ -344,13 +343,13 @@ const styles = StyleSheet.create({
     width: 66,
     height: 66,
     borderRadius: 20,
-    backgroundColor: '#FAF5FF',
+    backgroundColor: AppColors.purple50,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#F3E8FF',
+    borderColor: AppColors.purple100,
     marginBottom: 8,
-    shadowColor: '#7C3AED',
+    shadowColor: AppColors.offerPurple,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.16,
     shadowRadius: 10,
@@ -363,16 +362,16 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: AppColors.paleYellow,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    borderColor: AppColors.white,
   },
   title: {
     fontSize: 17.5,
     fontWeight: '800',
-    color: '#0F172A',
+    color: AppColors.primaryBlack,
     letterSpacing: -0.4,
     textAlign: 'center',
     lineHeight: 22,
@@ -382,7 +381,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#64748B',
+    color: AppColors.grayTextWeak,
     textAlign: 'center',
     lineHeight: 16,
     paddingHorizontal: 8,
@@ -392,10 +391,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: AppColors.grayBackground,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.dividerColor,
     paddingVertical: 10,
     paddingHorizontal: 14,
     marginBottom: 12,
@@ -408,12 +407,12 @@ const styles = StyleSheet.create({
   versionLabel: {
     fontSize: 9.5,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: AppColors.slate400,
     letterSpacing: 0.6,
     ...fontStack,
   },
   installedChip: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.grayBorderSecondary,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -421,7 +420,7 @@ const styles = StyleSheet.create({
   installedText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#475569',
+    color: AppColors.grayText,
     ...fontStack,
   },
   arrowContainer: {
@@ -429,34 +428,34 @@ const styles = StyleSheet.create({
   },
   arrowText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: AppColors.slate400,
     fontWeight: '700',
   },
   latestChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDE9FE',
+    backgroundColor: AppColors.violetSoftBg,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#DDD6FE',
+    borderColor: AppColors.violetSoftBorder,
   },
   latestText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#6D28D9',
+    color: AppColors.offerPurple,
     ...fontStack,
   },
   codeSnippetBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: AppColors.slate900,
     borderRadius: 12,
     padding: 10,
     width: '100%',
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: AppColors.slate800,
   },
   codeSnippetHeader: {
     flexDirection: 'row',
@@ -467,7 +466,7 @@ const styles = StyleSheet.create({
   codeSnippetLabel: {
     fontSize: 9.5,
     fontWeight: '700',
-    color: '#64748B',
+    color: AppColors.grayTextWeak,
     letterSpacing: 0.6,
     ...fontStack,
   },
@@ -479,14 +478,14 @@ const styles = StyleSheet.create({
   copiedText: {
     fontSize: 9.5,
     fontWeight: '600',
-    color: '#10B981',
+    color: AppColors.emerald500,
     ...fontStack,
   },
   commandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1E293B',
+    backgroundColor: AppColors.slate800,
     borderRadius: 8,
     paddingVertical: 7,
     paddingHorizontal: 9,
@@ -496,13 +495,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 11,
     fontFamily: AppFonts.interRegular,
-    color: '#38BDF8',
+    color: AppColors.sky400,
   },
   copyIconWrapper: {
     width: 22,
     height: 22,
     borderRadius: 6,
-    backgroundColor: '#334155',
+    backgroundColor: AppColors.slate700,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -519,14 +518,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 11,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.graySurface,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.dividerColor,
   },
   secondaryButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#475569',
+    color: AppColors.grayText,
     ...fontStack,
   },
   primaryButton: {
@@ -537,8 +536,8 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 11,
     borderRadius: 12,
-    backgroundColor: '#7C3AED',
-    shadowColor: '#7C3AED',
+    backgroundColor: AppColors.offerPurple,
+    shadowColor: AppColors.offerPurple,
     shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.28,
     shadowRadius: 6,
@@ -547,7 +546,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: AppColors.white,
     ...fontStack,
   },
 });

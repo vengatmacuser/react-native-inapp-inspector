@@ -37,10 +37,8 @@ import AboutModal from './AboutModal';
 
 import NpmUpdateToast from './NpmUpdateToast';
 import NpmStarPrompt from './NpmStarPrompt';
-import FeedbackModal from './FeedbackModal';
 import Toast from '../Toast';
 import TouchableScale from '../TouchableScale';
-import {HeadphonesIcon} from '../NetworkIcons';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import NavigationTracker from './NavigationTracker';
@@ -60,8 +58,6 @@ const MainScreen = () => {
     selectedReduxAction,
     selectedCrash,
     settingsPage,
-    isFeedbackOpen,
-    setIsFeedbackOpen,
     isAboutOpen,
     setIsAboutOpen,
     activeTab,
@@ -93,19 +89,6 @@ const MainScreen = () => {
       }).start();
     }
   }, [settingsPage !== null]);
-
-  const feedbackAnim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    if (isFeedbackOpen) {
-      feedbackAnim.setValue(0);
-      Animated.spring(feedbackAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 65,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [isFeedbackOpen]);
 
   const aboutAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -161,7 +144,6 @@ const MainScreen = () => {
                   pointerEvents={
                     isDetailActive ||
                     settingsPage !== null ||
-                    isFeedbackOpen ||
                     isAboutOpen
                       ? 'none'
                       : 'auto'
@@ -236,28 +218,6 @@ const MainScreen = () => {
                   </Animated.View>
                 )}
 
-                {/* Support & Feedback Layer - Rendered inside in-app inspector covering full content card */}
-                {isFeedbackOpen && (
-                  <Animated.View
-                    style={[
-                      StyleSheet.absoluteFill,
-                      {
-                        backgroundColor: AppColors.primaryLight,
-                        opacity: feedbackAnim,
-                        transform: [
-                          {
-                            translateY: feedbackAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [24, 0],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}>
-                    <FeedbackModal onClose={() => setIsFeedbackOpen(false)} />
-                  </Animated.View>
-                )}
-
                 {/* About & Specs Layer - Rendered inside in-app inspector covering full content card */}
                 {isAboutOpen && (
                   <Animated.View
@@ -278,17 +238,6 @@ const MainScreen = () => {
                     ]}>
                     <AboutModal onClose={() => setIsAboutOpen(false)} />
                   </Animated.View>
-                )}
-
-                {/* Floating Support & Feedback Button (in place of scroll-to-top) */}
-                {!isDetailActive && settingsPage === null && !isFeedbackOpen && !isAboutOpen && (
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => setIsFeedbackOpen(true)}
-                    hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-                    style={styles.supportFab}>
-                    <HeadphonesIcon color={AppColors.white} size={20} />
-                  </TouchableOpacity>
                 )}
               </View>
 

@@ -164,7 +164,7 @@ const TreeNode = React.memo(function TreeNode({
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
           <View
             style={{transform: [{rotate: open ? '180deg' : '0deg'}], marginRight: 6}}>
-            <ChevronIcon color="#64748B" size={11} />
+            <ChevronIcon color={AppColors.grayTextWeak} size={11} />
           </View>
           {name !== undefined && (
             <Text style={[nodeStyles.codeKey, nodeStyles.treeKeyMargin]}>{`"${String(
@@ -226,7 +226,7 @@ const nodeStyles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 1,
-    backgroundColor: '#E2E8F0', // subtle editor guide line
+    backgroundColor: AppColors.dividerColor,
   },
   leafRow: {
     paddingVertical: 2,
@@ -245,50 +245,50 @@ const nodeStyles = StyleSheet.create({
     fontFamily: monoFont,
     fontSize: 12,
     lineHeight: 18,
-    color: '#0F172A', // Slate 900
+    color: AppColors.primaryBlack,
   },
   codeKey: {
     fontFamily: monoFont,
     fontSize: 12,
-    color: '#4F46E5', // Indigo 600
+    color: AppColors.brandPurple,
     fontWeight: '600',
   },
   codeSyntax: {
     fontFamily: monoFont,
     fontSize: 12,
-    color: '#64748B', // Slate 500
+    color: AppColors.grayTextWeak,
   },
   syntaxString: {
     fontFamily: monoFont,
     fontSize: 12,
-    color: '#059669', // Emerald 600
+    color: AppColors.emerald600,
   },
   syntaxNumber: {
     fontFamily: monoFont,
     fontSize: 12,
-    color: '#D97706', // Warm Amber 600
+    color: AppColors.amber600,
   },
   syntaxBoolean: {
     fontFamily: monoFont,
     fontSize: 12,
-    color: '#DB2777', // Fuchsia / Pink 600
+    color: AppColors.pink600,
   },
   syntaxNull: {
     fontFamily: monoFont,
     fontSize: 12,
-    color: '#E11D48', // Rose 600
+    color: AppColors.rose600,
     fontStyle: 'italic',
   },
   highlight: {
-    backgroundColor: '#FEF08A',
-    color: '#854D0E',
+    backgroundColor: AppColors.yellow200,
+    color: AppColors.yellow800,
     fontFamily: monoFont,
     fontWeight: '700',
     borderRadius: 2,
   },
   arrayBadge: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#C7D2FE',
+    backgroundColor: AppColors.purple50,
+    borderColor: AppColors.purple200,
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 5,
@@ -297,13 +297,13 @@ const nodeStyles = StyleSheet.create({
   },
   arrayBadgeText: {
     fontFamily: monoFont,
-    color: '#4F46E5',
+    color: AppColors.brandPurple,
     fontSize: 10,
     fontWeight: '600',
   },
   objectBadge: {
-    backgroundColor: '#F1F5F9',
-    borderColor: '#CBD5E1',
+    backgroundColor: AppColors.graySurface,
+    borderColor: AppColors.grayBorderSecondary,
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 5,
@@ -312,7 +312,7 @@ const nodeStyles = StyleSheet.create({
   },
   objectBadgeText: {
     fontFamily: monoFont,
-    color: '#475569',
+    color: AppColors.grayText,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -322,10 +322,10 @@ const nodeStyles = StyleSheet.create({
   filePreviewCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.primaryLight,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.dividerColor,
     padding: 8,
     gap: 8,
     marginTop: 2,
@@ -339,19 +339,19 @@ const nodeStyles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 4,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.graySurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   filePreviewName: {
     fontFamily: monoFont,
     fontSize: 11.5,
-    color: '#0F172A',
+    color: AppColors.primaryBlack,
   },
   filePreviewType: {
     fontFamily: monoFont,
     fontSize: 10,
-    color: '#64748B',
+    color: AppColors.grayTextWeak,
     marginTop: 2,
   },
 });

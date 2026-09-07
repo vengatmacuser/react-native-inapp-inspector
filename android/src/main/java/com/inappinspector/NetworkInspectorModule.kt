@@ -1144,6 +1144,63 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
+    fun copyMediaToClipboard(filePath: String, promise: Promise) {
+        val activity = currentActivity ?: reactApplicationContext
+        try {
+            val clipboard = activity.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+            if (clipboard == null) {
+                promise.resolve(com.facebook.react.bridge.Arguments.createMap().apply {
+                    putBoolean("success", false)
+                    putString("error", "Clipboard manager unavailable")
+                })
+                return
+            }
+            var cleanPath = filePath
+            if (cleanPath.startsWith("file://")) {
+                cleanPath = cleanPath.substring(7)
+            }
+            val file = java.io.File(cleanPath)
+            if (file.exists()) {
+                val uri = try {
+                    androidx.core.content.FileProvider.getUriForFile(
+                        reactApplicationContext,
+                        "${reactApplicationContext.packageName}.provider",
+                        file
+                    )
+                } catch (e: Exception) {
+                    android.net.Uri.fromFile(file)
+                }
+                val clip = android.content.ClipData.newUri(
+                    reactApplicationContext.contentResolver,
+                    "Media",
+                    uri
+                )
+                clipboard.setPrimaryClip(clip)
+                val map = com.facebook.react.bridge.Arguments.createMap().apply {
+                    putBoolean("success", true)
+                    putString("type", "uri")
+                }
+                promise.resolve(map)
+            } else {
+                val clip = android.content.ClipData.newPlainText("Path", filePath)
+                clipboard.setPrimaryClip(clip)
+                val map = com.facebook.react.bridge.Arguments.createMap().apply {
+                    putBoolean("success", true)
+                    putString("type", "string")
+                }
+                promise.resolve(map)
+            }
+        } catch (e: Exception) {
+            val map = com.facebook.react.bridge.Arguments.createMap().apply {
+                putBoolean("success", false)
+                putString("error", e.message ?: "Copy failed")
+            }
+            promise.resolve(map)
+        }
+    }
+
+
+    @ReactMethod
     fun addListener(eventName: String) {
         // Required for React Native NativeEventEmitter
     }

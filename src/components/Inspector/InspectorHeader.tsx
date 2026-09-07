@@ -83,8 +83,6 @@ const InspectorHeader = React.memo(() => {
     runClearAllWithAnimation,
     settingsPage,
     setSettingsPage,
-    isFeedbackOpen,
-    setIsFeedbackOpen,
     isAboutOpen,
     setIsAboutOpen,
     resetToDefaults,
@@ -281,7 +279,7 @@ const InspectorHeader = React.memo(() => {
 
   const isSettingsView = settingsPage !== null;
   const isAnySelected =
-    isDetailView || isSettingsView || isFeedbackOpen || isAboutOpen;
+    isDetailView || isSettingsView || isAboutOpen;
 
   const settingsModuleTitle = useMemo(() => {
     switch (settingsPage) {
@@ -373,10 +371,6 @@ const InspectorHeader = React.memo(() => {
                   onPress={() => {
                     if (isAboutOpen) {
                       setIsAboutOpen(false);
-                      return;
-                    }
-                    if (isFeedbackOpen) {
-                      setIsFeedbackOpen(false);
                       return;
                     }
                     if (isSettingsView) {
@@ -473,57 +467,6 @@ const InspectorHeader = React.memo(() => {
                     }}
                     numberOfLines={1}>
                     Package info, runtime specs & diagnostic payload
-                  </Text>
-                </View>
-              ) : isFeedbackOpen ? (
-                <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                    <Text
-                      style={{
-                        fontFamily: AppFonts.interBold,
-                        fontSize: isNarrow ? 15 : 16.5,
-                        lineHeight: isNarrow ? 19 : 21,
-                        color: AppColors.white,
-                        letterSpacing: -0.2,
-                      }}
-                      numberOfLines={1}>
-                      Support & Feedback
-                    </Text>
-                    <View
-                      style={{
-                        backgroundColor: `${AppColors.white}26`,
-                        paddingHorizontal: isNarrow ? 5 : 6,
-                        paddingVertical: 2,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: `${AppColors.white}20`,
-                      }}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: isNarrow ? 8.5 : 9.5,
-                          lineHeight: 12,
-                          color: AppColors.white,
-                        }}>
-                        v{LIB_VERSION}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interRegular,
-                      fontSize: isNarrow ? 10 : 11,
-                      lineHeight: isNarrow ? 14 : 15,
-                      color: `${AppColors.white}CC`,
-                      marginTop: 1,
-                    }}
-                    numberOfLines={1}>
-                    Direct line to maintainers & developers
                   </Text>
                 </View>
               ) : isSettingsView ? (
@@ -1345,69 +1288,6 @@ const InspectorHeader = React.memo(() => {
                   gap: isNarrow ? 4 : 5,
                 },
               ]}>
-              {/* On inner detail pages: place Photo & Video capture in the top right cluster */}
-              {isAnySelected && (
-                <>
-                  {/* Photo Capture Icon Button */}
-                  <TouchableScale
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('header.photo', 'Photo')}
-                    onPress={handleTakeScreenshot}
-                    hitSlop={10}
-                    style={[
-                      styles.closeButtonSquare,
-                      {
-                        width: buttonSize,
-                        height: buttonSize,
-                        borderRadius: isNarrow ? 6 : 7,
-                      },
-                    ]}>
-                    <CameraIcon
-                      size={isNarrow ? 12 : 13}
-                      color={AppColors.white}
-                    />
-                  </TouchableScale>
-
-                  {/* Video / Record Capture Icon Button */}
-                  <TouchableScale
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('header.record', 'Record')}
-                    onPress={handleToggleVideoRecording}
-                    hitSlop={10}
-                    style={[
-                      styles.closeButtonSquare,
-                      {
-                        width: buttonSize,
-                        height: buttonSize,
-                        borderRadius: isNarrow ? 6 : 7,
-                        backgroundColor: isRecording
-                          ? `${AppColors.red500}40`
-                          : `${AppColors.white}24`,
-                        borderColor: isRecording
-                          ? AppColors.red500
-                          : `${AppColors.white}33`,
-                      },
-                    ]}>
-                    {isRecording ? (
-                      <Animated.View
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: 3,
-                          backgroundColor: AppColors.red500,
-                        }}
-                      />
-                    ) : (
-                      <VideoCameraIcon
-                        size={isNarrow ? 12 : 13}
-                        color={AppColors.white}
-                      />
-                    )}
-                  </TouchableScale>
-                </>
-              )}
 
               {isSettingsView && (
                 <TouchableScale
