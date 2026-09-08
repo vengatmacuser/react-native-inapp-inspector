@@ -8,7 +8,6 @@ import NetworkInspector, {
   connectReduxStore,
   setupNetworkLogger,
   setupConsoleLogger,
-  enableNativeCrashProtection,
   BrandSquareIcon,
 } from 'react-native-inapp-inspector';
 
@@ -20,10 +19,9 @@ import { DetailsScreen } from './src/screens/DetailsScreen';
 setupNetworkLogger();
 setupConsoleLogger();
 
-// ⚡ Enable Native Kotlin (Android) & iOS Signal/Exception Crash Protection
-enableNativeCrashProtection();
-
-// Connect mock store to the inspector
+// Keep the inspector launcher to a single entry point: the JS floating button.
+// The native crash-protection FAB is optional and should not be enabled alongside
+// the component-level launcher to avoid duplicate floating icons.
 connectReduxStore(mockStore);
 
 const Stack = createNativeStackNavigator();
@@ -54,8 +52,8 @@ function App() {
         navigationRef={navigationRef}
         environment="DEV"
         appIcon={<BrandSquareIcon />}
-        initialVisible={true}
-        defaultTab="media"
+        enabled={false}
+        initialVisible={false}
       />
     </SafeAreaProvider>
   );

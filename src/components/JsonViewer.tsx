@@ -164,7 +164,7 @@ const JsonViewer = React.memo(({
   hideTabs?: boolean;
 }) => {
   const {t} = useTranslation();
-  const [internalMode, setInternalMode] = useState<'pretty' | 'raw' | 'table'>(externalMode ?? 'pretty');
+  const [internalMode, setInternalMode] = useState<'pretty' | 'raw' | 'table'>(externalMode ?? 'raw');
   const [copied, setCopied] = useState(false);
   const [isWrap, setIsWrap] = useState(wrap ?? false);
   const [allExpanded, setAllExpanded] = useState<boolean | undefined>(forceOpen);
@@ -189,7 +189,7 @@ const JsonViewer = React.memo(({
     }
   }, [forceOpen]);
 
-  const rawText = useMemo(() => {
+  const prettyText = useMemo(() => {
     if (data === undefined || data === null) {
       return '';
     }
@@ -203,7 +203,7 @@ const JsonViewer = React.memo(({
     }
   }, [data]);
 
-  const rawCompactText = useMemo(() => {
+  const rawText = useMemo(() => {
     if (typeof data === 'string') return data;
     try {
       return JSON.stringify(data) ?? '';
@@ -212,11 +212,14 @@ const JsonViewer = React.memo(({
     }
   }, [data]);
 
+  const rawCompactText = rawText;
+
   const [showFullRaw, setShowFullRaw] = useState(false);
   const RAW_LIMIT = 50000;
   const safeRawText = typeof rawText === 'string' ? rawText : '';
   const isTruncated = safeRawText.length > RAW_LIMIT && !showFullRaw;
   const displayRawText = isTruncated ? safeRawText.slice(0, RAW_LIMIT) : safeRawText;
+  const safePrettyText = typeof prettyText === 'string' ? prettyText : '';
 
   // Split lines for gutter numbers in Raw mode
   const rawLines = useMemo(() => {

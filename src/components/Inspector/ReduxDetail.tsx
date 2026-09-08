@@ -124,7 +124,7 @@ const ReduxDetail = React.memo(() => {
   const [sliceTab, setSliceTab] = useState<SliceDetailSubTab>('live');
   const [actionTab, setActionTab] = useState<ActionDetailSubTab>('payload');
   const [viewMode, setViewMode] = useState<'pretty' | 'raw' | 'table'>(
-    'pretty',
+    'raw',
   );
 
   // Selected Action inside Timeline

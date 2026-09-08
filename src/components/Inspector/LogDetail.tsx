@@ -61,7 +61,7 @@ const LogDetail = React.memo(() => {
   const {selectedLog} = useInspector();
   const [activeTab, setActiveTab] = useState<DetailSubTab>('output');
   const [detailSearch, setDetailSearch] = useState('');
-  const [viewMode, setViewMode] = useState<'pretty' | 'raw' | 'table'>('pretty');
+  const [viewMode, setViewMode] = useState<'pretty' | 'raw' | 'table'>('raw');
 
   const jsonContent = useMemo(
     () => (selectedLog ? getJsonContent(selectedLog.message) : null),
