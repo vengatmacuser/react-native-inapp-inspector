@@ -116,6 +116,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
+    "version": "node scripts/gen-version.js && git add src/constants/version.ts",
     "prebuild": "node scripts/gen-version.js && node scripts/gen-telemetry.js",
     "build": "tsc && tsc -p tsconfig.esm.json && node scripts/minify-dist.js",
     "clean-build": "npm run clean && npm run build",
