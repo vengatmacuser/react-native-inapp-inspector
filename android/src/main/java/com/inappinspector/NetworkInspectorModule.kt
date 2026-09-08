@@ -1033,7 +1033,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun playVideo(videoUri: String, promise: Promise) {
-        val currentActivity = currentActivity
+        val currentActivity = reactContext.currentActivity
         if (currentActivity == null) {
             promise.reject("PLAY_ERROR", "No active activity found to play video")
             return
@@ -1145,7 +1145,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun copyMediaToClipboard(filePath: String, promise: Promise) {
-        val activity = currentActivity ?: reactApplicationContext
+        val activity = reactContext.currentActivity ?: reactContext
         try {
             val clipboard = activity.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
             if (clipboard == null) {
@@ -1163,15 +1163,15 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
             if (file.exists()) {
                 val uri = try {
                     androidx.core.content.FileProvider.getUriForFile(
-                        reactApplicationContext,
-                        "${reactApplicationContext.packageName}.provider",
+                        reactContext,
+                        "${reactContext.packageName}.provider",
                         file
                     )
                 } catch (e: Exception) {
                     android.net.Uri.fromFile(file)
                 }
                 val clip = android.content.ClipData.newUri(
-                    reactApplicationContext.contentResolver,
+                    reactContext.contentResolver,
                     "Media",
                     uri
                 )
