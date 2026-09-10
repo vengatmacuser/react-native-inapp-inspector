@@ -196,6 +196,203 @@ const SvgExternalLink = ({ color = '#FFFFFF', size = 12 }: { color?: string; siz
   </Svg>
 );
 
+const SvgCheckCircle = ({ color = '#059669', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path
+      d="M8 12l3 3 6-6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgAlertCircle = ({ color = '#E11D48', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path d="M12 8v4M12 16h.01" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+const SvgPlus = ({ color = '#7C3AED', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 5v14M5 12h14"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgRefresh = ({ color = '#D97706', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M23 4v6h-6M1 20v-6h6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgEdit = ({ color = '#0284C7', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgTrash = ({ color = '#DC2626', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgLayers = ({ color = '#FFFFFF', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgCode = ({ color = '#7C3AED', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M16 18l6-6-6-6M8 6l-6 6 6 6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgAlertTriangle = ({ color = '#DC2626', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgEye = ({ color = '#0284C7', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+const SvgShoppingBag = ({ color = '#059669', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M16 10a4 4 0 0 1-8 0"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgSidebar = ({ color = '#059669', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="3" width="18" height="18" rx="2" stroke={color} strokeWidth="2" />
+    <Path d="M9 3v18" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+const SvgMoon = ({ color = '#0891B2', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const SvgCpu = ({ color = '#DC2626', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="4" y="4" width="16" height="16" rx="2" stroke={color} strokeWidth="2" />
+    <Rect x="9" y="9" width="6" height="6" stroke={color} strokeWidth="2" />
+    <Path
+      d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+const SvgHeart = ({ color = '#FFFFFF', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <Path
+      d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+      stroke={color}
+      strokeWidth="1.5"
+    />
+  </Svg>
+);
+
+const SvgBug = ({ color = '#FFFFFF', size = 13 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="8" y="9" width="8" height="10" rx="4" stroke={color} strokeWidth="2" />
+    <Path
+      d="M6 3l3 3M18 3l-3 3M4 13h4M16 13h4M5 19l3-2M19 19l-3-2M12 6v3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
 // ─── Tactile Interactive Button Component ─────────────────────────────────────
 interface TactileButtonProps {
   label: string;
@@ -218,6 +415,8 @@ const TactileButton = ({ label, onPress, color, bgColor, fullWidth, icon }: Tact
           opacity: pressed ? 0.75 : 1,
           transform: [{ scale: pressed ? 0.96 : 1 }],
           flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
           gap: 6,
         },
       ]}
@@ -225,9 +424,12 @@ const TactileButton = ({ label, onPress, color, bgColor, fullWidth, icon }: Tact
     >
       {icon}
       <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
         style={[
           fullWidth ? styles.fullWidthBtnText : styles.btnText,
           !fullWidth ? { color } : undefined,
+          { flexShrink: 1 },
         ]}
       >
         {label}
@@ -900,12 +1102,14 @@ export function HomeScreen({ navigation }: any) {
                   onPress={triggerNetworkRequest}
                   color="#0284C7"
                   bgColor="#F0F9FF"
+                  icon={<SvgCheckCircle color="#0284C7" size={13} />}
                 />
                 <TactileButton
                   label="Fetch (404 Error)"
                   onPress={triggerFailedNetworkRequest}
                   color="#E11D48"
                   bgColor="#FFF1F2"
+                  icon={<SvgAlertCircle color="#E11D48" size={13} />}
                 />
               </View>
             </View>
@@ -926,12 +1130,14 @@ export function HomeScreen({ navigation }: any) {
                     onPress={triggerAxiosGet}
                     color="#059669"
                     bgColor="#ECFDF5"
+                    icon={<SvgCheckCircle color="#059669" size={13} />}
                   />
                   <TactileButton
                     label="POST (Create)"
                     onPress={triggerAxiosPost}
                     color="#7C3AED"
                     bgColor="#F5F3FF"
+                    icon={<SvgPlus color="#7C3AED" size={13} />}
                   />
                 </View>
                 <View style={styles.btnRow}>
@@ -940,20 +1146,24 @@ export function HomeScreen({ navigation }: any) {
                     onPress={triggerAxiosPut}
                     color="#D97706"
                     bgColor="#FFFBEB"
+                    icon={<SvgRefresh color="#D97706" size={13} />}
                   />
                   <TactileButton
                     label="PATCH (Update)"
                     onPress={triggerAxiosPatch}
                     color="#0284C7"
                     bgColor="#F0F9FF"
-                  />
-                  <TactileButton
-                    label="DELETE"
-                    onPress={triggerAxiosDelete}
-                    color="#DC2626"
-                    bgColor="#FEF2F2"
+                    icon={<SvgEdit color="#0284C7" size={13} />}
                   />
                 </View>
+                <TactileButton
+                  label="DELETE (Remove Resource)"
+                  onPress={triggerAxiosDelete}
+                  color="#DC2626"
+                  bgColor="#FEF2F2"
+                  icon={<SvgTrash color="#DC2626" size={13} />}
+                  fullWidth
+                />
               </View>
             </View>
 
@@ -971,6 +1181,7 @@ export function HomeScreen({ navigation }: any) {
                 onPress={triggerConsoleLogs}
                 color="#4F46E5"
                 bgColor="#4F46E5"
+                icon={<SvgTerminal color="#FFFFFF" size={13} />}
                 fullWidth
               />
 
@@ -996,6 +1207,7 @@ export function HomeScreen({ navigation }: any) {
                   }}
                   color="#7C3AED"
                   bgColor="#F5F3FF"
+                  icon={<SvgCode color="#7C3AED" size={13} />}
                 />
                 <TactileButton
                   label="Deep Error Stack"
@@ -1011,6 +1223,7 @@ export function HomeScreen({ navigation }: any) {
                   }}
                   color="#DC2626"
                   bgColor="#FEF2F2"
+                  icon={<SvgAlertTriangle color="#DC2626" size={13} />}
                 />
               </View>
             </View>
@@ -1038,6 +1251,7 @@ export function HomeScreen({ navigation }: any) {
                   }}
                   color="#0284C7"
                   bgColor="#F0F9FF"
+                  icon={<SvgEye color="#0284C7" size={13} />}
                 />
                 <TactileButton
                   label="Ecommerce Purchase"
@@ -1067,6 +1281,7 @@ export function HomeScreen({ navigation }: any) {
                   }}
                   color="#059669"
                   bgColor="#ECFDF5"
+                  icon={<SvgShoppingBag color="#059669" size={13} />}
                 />
               </View>
             </View>
@@ -1086,6 +1301,7 @@ export function HomeScreen({ navigation }: any) {
                   onPress={handleToggleSidebar}
                   color="#059669"
                   bgColor="#ECFDF5"
+                  icon={<SvgSidebar color="#059669" size={13} />}
                 />
                 <TactileButton
                   label="Toggle Theme"
@@ -1098,6 +1314,7 @@ export function HomeScreen({ navigation }: any) {
                   }}
                   color="#0891B2"
                   bgColor="#ECFEFF"
+                  icon={<SvgMoon color="#0891B2" size={13} />}
                 />
               </View>
               <TactileButton
@@ -1112,6 +1329,7 @@ export function HomeScreen({ navigation }: any) {
                 }}
                 color="#7C3AED"
                 bgColor="#F5F3FF"
+                icon={<SvgBolt color="#7C3AED" size={13} />}
                 fullWidth
               />
               <TactileButton
@@ -1126,6 +1344,7 @@ export function HomeScreen({ navigation }: any) {
                 }}
                 color="#D97706"
                 bgColor="#FFFBEB"
+                icon={<SvgAtom color="#D97706" size={13} />}
                 fullWidth
               />
               <TactileButton
@@ -1133,6 +1352,7 @@ export function HomeScreen({ navigation }: any) {
                 onPress={handleToggleSidebar}
                 color="#7C3AED"
                 bgColor="#7C3AED"
+                icon={<SvgRefresh color="#FFFFFF" size={13} />}
                 fullWidth
               />
             </View>
@@ -1174,6 +1394,7 @@ export function HomeScreen({ navigation }: any) {
                   }}
                   color="#E11D48"
                   bgColor="#FFF1F2"
+                  icon={<SvgAlertTriangle color="#E11D48" size={13} />}
                 />
                 <TactileButton
                   label="Simulate Native Exception"
@@ -1182,6 +1403,7 @@ export function HomeScreen({ navigation }: any) {
                   }}
                   color="#DC2626"
                   bgColor="#FEF2F2"
+                  icon={<SvgCpu color="#DC2626" size={13} />}
                 />
               </View>
             </View>
@@ -1290,9 +1512,148 @@ export function HomeScreen({ navigation }: any) {
                 }
                 color="#CC3534"
                 bgColor="#CC3534"
-                icon={<SvgExternalLink color="#FFFFFF" size={13} />}
+                icon={<SvgPackage color="#FFFFFF" size={13} />}
                 fullWidth
               />
+            </View>
+
+            <View style={styles.panelCard}>
+              <View style={styles.panelHeaderRow}>
+                <Text style={styles.panelHeader}>Key Features</Text>
+                <Text style={styles.panelHeaderBadge}>ALL-IN-ONE</Text>
+              </View>
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Network Inspector:</Text> Auto-intercepts
+                  Axios, Fetch, and XMLHttpRequest with cURL copy and headers.
+                </Text>
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Console & Stack Trace:</Text> Symbolicated
+                  source line and column coordinates directly from Metro.
+                </Text>
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Redux Time-Travel:</Text> Dispatched action
+                  timeline, slice diff viewer, and state inspection.
+                </Text>
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Firebase & GA4 Analytics:</Text> Automatic
+                  screen and ecommerce event category detection.
+                </Text>
+                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
+                  • <Text style={{ fontWeight: '700' }}>Bundle & Performance Analyzer:</Text>{' '}
+                  Real-time FPS monitor and JS asset ratio treemaps.
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* ─── TAB 3: GITHUB & DOCS ─────────────────────────────────────────── */}
+        {activeTab === 'github' && (
+          <>
+            <View style={styles.panelCard}>
+              <View style={styles.panelHeaderRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <SvgGitHub color="#0F172A" size={15} />
+                  <Text style={styles.panelHeader}>Open Source Repository</Text>
+                </View>
+                <Text
+                  style={[
+                    styles.panelHeaderBadge,
+                    { backgroundColor: '#F3E8FF', color: '#5C2D91', fontWeight: '800' },
+                  ]}
+                >
+                  GITHUB • {githubMeta.defaultBranch}
+                </Text>
+              </View>
+
+              {/* Dynamic Live GitHub Metrics Strip */}
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <SvgStar color="#EAB308" size={13} />
+                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
+                      {githubMeta.stars}
+                    </Text>
+                  </View>
+                  <Text style={styles.statLbl}>STARS</Text>
+                </View>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <SvgFork color="#64748B" size={13} />
+                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
+                      {githubMeta.forks}
+                    </Text>
+                  </View>
+                  <Text style={styles.statLbl}>FORKS</Text>
+                </View>
+                <View style={[styles.statBox, { paddingVertical: 8 }]}>
+                  <Text style={[styles.statVal, { color: '#DC2626', fontSize: 14 }]}>
+                    {githubMeta.openIssues}
+                  </Text>
+                  <Text style={styles.statLbl}>ISSUES</Text>
+                </View>
+              </View>
+
+              <View style={{ gap: 2, marginTop: 4 }}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Repository</Text>
+                  <Text style={styles.infoValue}>vengatmacuser/react-native-inapp-inspector</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Author / Creator</Text>
+                  <Text style={styles.infoValue}>Vengateswaran Balakrishnan</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Release Version</Text>
+                  <Text style={[styles.infoValue, { color: '#5C2D91' }]}>v{LIB_VERSION}</Text>
+                </View>
+                {githubMeta.pushedAt ? (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Last Updated</Text>
+                    <Text style={styles.infoValue}>{githubMeta.pushedAt}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Platform Support</Text>
+                  <Text style={styles.infoValue}>iOS, Android, Expo, RN 0.60+</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>License</Text>
+                  <Text style={styles.infoValue}>{githubMeta.license}</Text>
+                </View>
+              </View>
+
+              <View style={{ gap: 8, marginTop: 4 }}>
+                <TactileButton
+                  label="Star & View on GitHub"
+                  onPress={() =>
+                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector')
+                  }
+                  color="#24292F"
+                  bgColor="#24292F"
+                  icon={<SvgStar color="#FACC15" size={13} />}
+                  fullWidth
+                />
+                <TactileButton
+                  label="Report Issue / Request Feature"
+                  onPress={() =>
+                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector/issues')
+                  }
+                  color="#0284C7"
+                  bgColor="#0284C7"
+                  icon={<SvgBug color="#FFFFFF" size={13} />}
+                  fullWidth
+                />
+                <TactileButton
+                  label="Sponsor on GitHub ❤️"
+                  onPress={() => openUrl('https://github.com/sponsors/vengatmacuser')}
+                  color="#DB2777"
+                  bgColor="#DB2777"
+                  icon={<SvgHeart color="#FFFFFF" size={13} />}
+                  fullWidth
+                />
+              </View>
             </View>
 
             <View style={styles.panelCard}>

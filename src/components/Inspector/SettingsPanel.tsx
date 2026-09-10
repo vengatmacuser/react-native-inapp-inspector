@@ -29,8 +29,6 @@ import {clearNetworkLogs} from '../../customHooks/networkLogger';
 import {clearConsoleLogs} from '../../customHooks/consoleLogger';
 import {clearAnalyticsEvents} from '../../customHooks/analyticsLogger';
 import {clearCrashRecords} from '../../customHooks/crashHandler';
-import {clearCachedBundleAnalysis} from '../../customHooks/bundleAnalyzer';
-import {clearPerformanceEvents} from '../../customHooks/performanceTracker';
 import {isReduxConnected} from '../../customHooks/reduxLogger';
 import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
 import {useTranslation} from '../../i18n';
@@ -215,22 +213,6 @@ const SettingsPanel = () => {
           },
           {
             id: 8,
-            key: 'bundle',
-            label: 'Bundle Analyzer',
-            category: 'diagnostic',
-            icon: 'bundle',
-            desc: 'Metro packager dependencies, source maps & asset breakdown',
-          },
-          {
-            id: 9,
-            key: 'performance',
-            label: 'Performance & Tracker',
-            category: 'diagnostic',
-            icon: 'performance',
-            desc: '60 FPS monitor, Hermes memory telemetry & re-render profiler',
-          },
-          {
-            id: 10,
             key: 'debugging',
             label: 'Multi-Device Debugging',
             category: 'diagnostic',
@@ -238,7 +220,7 @@ const SettingsPanel = () => {
             desc: 'QR Code bridge for direct Debug APK download & Metro live-reload sync',
           },
           {
-            id: 11,
+            id: 9,
             key: 'media',
             label: 'Screencast',
             category: 'diagnostic',
@@ -265,8 +247,6 @@ const SettingsPanel = () => {
     storage: Boolean(tabVisibility?.storage),
     device: Boolean(tabVisibility?.device),
     crash: Boolean(tabVisibility?.crash),
-    bundle: Boolean(tabVisibility?.bundle),
-    performance: Boolean(tabVisibility?.performance),
     debugging: Boolean(tabVisibility?.debugging),
     media: Boolean(tabVisibility?.media ?? true),
   }));
@@ -281,8 +261,6 @@ const SettingsPanel = () => {
       storage: Boolean(tabVisibility?.storage),
       device: Boolean(tabVisibility?.device),
       crash: Boolean(tabVisibility?.crash),
-      bundle: Boolean(tabVisibility?.bundle),
-      performance: Boolean(tabVisibility?.performance),
       debugging: Boolean(tabVisibility?.debugging),
       media: Boolean(tabVisibility?.media ?? true),
     });
@@ -320,8 +298,6 @@ const SettingsPanel = () => {
               storage: Boolean(tabVisibility?.storage),
               device: Boolean(tabVisibility?.device),
               crash: Boolean(tabVisibility?.crash),
-              bundle: Boolean(tabVisibility?.bundle),
-              performance: Boolean(tabVisibility?.performance),
               debugging: Boolean(tabVisibility?.debugging),
               media: Boolean(tabVisibility?.media ?? true),
             });
@@ -704,10 +680,6 @@ const SettingsPanel = () => {
                     ? `${logs.length} requests • Limit: ${maxNetworkLogs}`
                     : moduleItem.key === 'logs'
                     ? `${consoleLogs.length} logs • Limit: ${maxConsoleLogs}`
-                    : moduleItem.key === 'performance'
-                    ? '60 FPS Target • Memory Telemetry'
-                    : moduleItem.key === 'bundle'
-                    ? 'Metro Packager • Dependency Map'
                     : moduleItem.key === 'crash'
                     ? `${
                         crashRecords?.length || 0
@@ -860,26 +832,6 @@ const SettingsPanel = () => {
                           )}
                           {moduleItem.icon === 'logs' && (
                             <TerminalIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'performance' && (
-                            <PerformanceIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'bundle' && (
-                            <PackageIcon
                               color={
                                 isChecked
                                   ? AppColors.purple
@@ -3373,204 +3325,6 @@ const SettingsPanel = () => {
               Alert.alert(
                 t('common.success'),
                 t('settings.crash.historyCleared'),
-              );
-            },
-            right: (
-              <View
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                  backgroundColor: `${AppColors.errorColor}14`,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.errorColor}33`,
-                }}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 11,
-                    lineHeight: 14,
-                    color: AppColors.errorColor,
-                  }}>
-                  {t('common.clear')}
-                </Text>
-              </View>
-            ),
-          })}
-        </View>
-        <View style={{height: 48}} />
-      </ScrollView>
-    );
-  } else if (settingsPage === 'bundle') {
-    title = t('settings.bundle.title');
-    icon = <PackageIcon color={AppColors.white} size={16} />;
-    rightInfo = 'Metro';
-    content = (
-      <ScrollView
-        style={{flex: 1}}
-        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            padding: 16,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            gap: 8,
-          }}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: AppColors.purpleShade50,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <PackageIcon color={AppColors.purple} size={16} />
-            </View>
-            <View style={{flex: 1}}>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 14,
-                  lineHeight: 18,
-                  color: AppColors.primaryBlack,
-                }}>
-                {t('settings.bundle.sourceBundler')}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interRegular,
-                  fontSize: 11,
-                  lineHeight: 15,
-                  color: AppColors.grayText,
-                  marginTop: 1,
-                }}>
-                {t('settings.bundle.sourceBundlerDesc')}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            padding: 16,
-          }}>
-          {renderSettingRow({
-            icon: <TrashIcon color={AppColors.errorColor} size={16} />,
-            label: t('settings.bundle.clearCache'),
-            description: t('settings.bundle.clearCacheDesc'),
-            isLast: true,
-            onPress: () => {
-              clearCachedBundleAnalysis();
-              Alert.alert(
-                t('common.success'),
-                t('settings.bundle.cacheCleared'),
-              );
-            },
-            right: (
-              <View
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 8,
-                  backgroundColor: `${AppColors.errorColor}14`,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.errorColor}33`,
-                }}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 11,
-                    lineHeight: 14,
-                    color: AppColors.errorColor,
-                  }}>
-                  {t('common.clear')}
-                </Text>
-              </View>
-            ),
-          })}
-        </View>
-        <View style={{height: 48}} />
-      </ScrollView>
-    );
-  } else if (settingsPage === 'performance') {
-    title = t('settings.performance.title');
-    icon = <PerformanceIcon color={AppColors.white} size={16} />;
-    rightInfo = '60 FPS Target';
-    content = (
-      <ScrollView
-        style={{flex: 1}}
-        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            padding: 16,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            gap: 8,
-          }}>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 10,
-                backgroundColor: AppColors.purpleShade50,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <PerformanceIcon color={AppColors.purple} size={16} />
-            </View>
-            <View style={{flex: 1}}>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interBold,
-                  fontSize: 14,
-                  lineHeight: 18,
-                  color: AppColors.primaryBlack,
-                }}>
-                {t('settings.performance.frameMeasurement')}
-              </Text>
-              <Text
-                style={{
-                  fontFamily: AppFonts.interRegular,
-                  fontSize: 11,
-                  lineHeight: 15,
-                  color: AppColors.grayText,
-                  marginTop: 1,
-                }}>
-                {t('settings.performance.frameMeasurementDesc')}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            padding: 16,
-          }}>
-          {renderSettingRow({
-            icon: <TrashIcon color={AppColors.errorColor} size={16} />,
-            label: t('settings.performance.clearEvents'),
-            description: t('settings.performance.clearEventsDesc'),
-            isLast: true,
-            onPress: () => {
-              clearPerformanceEvents();
-              Alert.alert(
-                t('common.success'),
-                t('settings.performance.eventsCleared'),
               );
             },
             right: (

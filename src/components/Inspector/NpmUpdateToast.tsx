@@ -14,9 +14,11 @@ import {LIB_VERSION} from '../../constants';
 import {NpmIcon} from '../NetworkIcons';
 import {copyToClipboard} from '../../helpers';
 import {showToast} from '../../helpers/toast';
+import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {useTranslation} from '../../i18n';
 
-const CloseSvg = ({size = 13, color = '#94A3B8'}: {size?: number; color?: string}) => (
+const CloseSvg = ({size = 13, color = AppColors.slate400}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M18 6L6 18M6 6l12 12"
@@ -28,7 +30,7 @@ const CloseSvg = ({size = 13, color = '#94A3B8'}: {size?: number; color?: string
   </Svg>
 );
 
-const CopySvg = ({size = 11, color = '#94A3B8'}: {size?: number; color?: string}) => (
+const CopySvg = ({size = 11, color = AppColors.slate400}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M8 4v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2z"
@@ -47,7 +49,7 @@ const CopySvg = ({size = 11, color = '#94A3B8'}: {size?: number; color?: string}
   </Svg>
 );
 
-const CheckSvg = ({size = 11, color = '#10B981'}: {size?: number; color?: string}) => (
+const CheckSvg = ({size = 11, color = AppColors.greenColor}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M20 6L9 17l-5-5"
@@ -59,7 +61,7 @@ const CheckSvg = ({size = 11, color = '#10B981'}: {size?: number; color?: string
   </Svg>
 );
 
-const ExternalLinkSvg = ({size = 11, color = '#FFFFFF'}: {size?: number; color?: string}) => (
+const ExternalLinkSvg = ({size = 11, color = AppColors.white}: {size?: number; color?: string}) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
       d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
@@ -88,6 +90,7 @@ const ExternalLinkSvg = ({size = 11, color = '#FFFFFF'}: {size?: number; color?:
 const TOAST_TIMEOUT_MS = 7000;
 
 export const NpmUpdateToast = () => {
+  const {t} = useTranslation();
   const {updateAvailable, latestNpmVersion, showUpdateToast} = useInspector();
   const [dismissed, setDismissed] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -189,50 +192,50 @@ export const NpmUpdateToast = () => {
       <View style={styles.contentRow}>
         {/* Left NPM Badge Icon */}
         <View style={styles.npmIconContainer}>
-          <NpmIcon size={15} color="#CB3837" />
+          <NpmIcon size={15} color={AppColors.npmRed} />
         </View>
 
-        {/* Text Details */}
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
-            <Text style={styles.titleText}>Update Available</Text>
+            <Text style={styles.titleText}>{t('header.newVersionAvailable', 'Update Available')}</Text>
             <View style={styles.versionPill}>
               <Text style={styles.versionPillText}>v{latestNpmVersion}</Text>
             </View>
           </View>
-          <Text style={styles.subtitleText} numberOfLines={1}>
-            Installed: v{LIB_VERSION} • New version is ready
+          <Text style={styles.subtitleText}>
+            {t('header.updateAvailable', {latestVersion: latestNpmVersion, currentVersion: LIB_VERSION, defaultValue: `react-native-inapp-inspector v${latestNpmVersion} is available on NPM.`})}
           </Text>
         </View>
 
-        {/* Copy command quick button */}
+        {/* Copy command button */}
         <TouchableOpacity
           style={styles.copyButton}
           onPress={handleCopyCommand}
-          hitSlop={6}
-          activeOpacity={0.75}>
-          {copied ? <CheckSvg size={11} color="#10B981" /> : <CopySvg size={11} color="#94A3B8" />}
-          <Text style={[styles.copyButtonText, copied && {color: '#10B981'}]}>
-            {copied ? 'Copied' : 'Copy'}
+          activeOpacity={0.7}
+          hitSlop={{top: 8, bottom: 8, left: 4, right: 4}}>
+          {copied ? <CheckSvg size={11} color={AppColors.greenColor} /> : <CopySvg size={11} color={AppColors.slate400} />}
+          <Text style={[styles.copyButtonText, copied && {color: AppColors.greenColor}]}>
+            {copied ? t('common.copied', 'Copied') : t('header.copyCommand', 'Copy')}
           </Text>
         </TouchableOpacity>
 
-        {/* Action Button: View */}
+        {/* View on npm button */}
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleOpenNpm}
-          activeOpacity={0.8}>
-          <Text style={styles.actionButtonText}>View</Text>
-          <ExternalLinkSvg size={10} color="#FFFFFF" />
+          activeOpacity={0.8}
+          hitSlop={{top: 8, bottom: 8, left: 4, right: 4}}>
+          <Text style={styles.actionButtonText}>{t('header.viewNpm', 'View')}</Text>
+          <ExternalLinkSvg size={10} color={AppColors.white} />
         </TouchableOpacity>
 
-        {/* Close Button */}
+        {/* Dismiss button */}
         <TouchableOpacity
           style={styles.closeButton}
           onPress={handleDismiss}
-          hitSlop={8}
-          activeOpacity={0.7}>
-          <CloseSvg size={12} color="#94A3B8" />
+          activeOpacity={0.7}
+          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+          <CloseSvg size={12} color={AppColors.slate400} />
         </TouchableOpacity>
       </View>
 
@@ -254,11 +257,11 @@ const styles = StyleSheet.create({
     bottom: 24,
     left: 14,
     right: 14,
-    backgroundColor: '#0F172A',
+    backgroundColor: AppColors.slate900,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#334155',
-    shadowColor: '#000000',
+    borderColor: AppColors.slate700,
+    shadowColor: AppColors.black,
     shadowOffset: {width: 0, height: 12},
     shadowOpacity: 0.4,
     shadowRadius: 24,
@@ -277,13 +280,13 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.slate200,
     flexShrink: 0,
-    shadowColor: '#000000',
+    shadowColor: AppColors.black,
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.15,
     shadowRadius: 2,
@@ -301,27 +304,27 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: AppColors.slate50,
     letterSpacing: -0.2,
     ...fontStack,
   },
   versionPill: {
-    backgroundColor: '#7C3AED33',
+    backgroundColor: `${AppColors.offerPurple}33`,
     paddingHorizontal: 5.5,
     paddingVertical: 1.5,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#8B5CF680',
+    borderColor: `${AppColors.violet500}80`,
   },
   versionPillText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#C4B5FD',
+    color: AppColors.purpleLightMuted,
     ...fontStack,
   },
   subtitleText: {
     fontSize: 10.5,
-    color: '#94A3B8',
+    color: AppColors.slate400,
     marginTop: 1,
     ...fontStack,
   },
@@ -329,30 +332,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3.5,
-    backgroundColor: '#1E293B',
+    backgroundColor: AppColors.slate800,
     paddingVertical: 5.5,
     paddingHorizontal: 8,
     borderRadius: 7,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: AppColors.slate700,
     flexShrink: 0,
   },
   copyButtonText: {
     fontSize: 10.5,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: AppColors.slate400,
     ...fontStack,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3.5,
-    backgroundColor: '#7C3AED',
+    backgroundColor: AppColors.offerPurple,
     paddingVertical: 5.5,
     paddingHorizontal: 9,
     borderRadius: 7,
     flexShrink: 0,
-    shadowColor: '#7C3AED',
+    shadowColor: AppColors.offerPurple,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.35,
     shadowRadius: 4,
@@ -361,14 +364,14 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: AppColors.white,
     ...fontStack,
   },
   closeButton: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#1E293B',
+    backgroundColor: AppColors.slate800,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
@@ -376,11 +379,11 @@ const styles = StyleSheet.create({
   progressBarTrack: {
     height: 2.5,
     width: '100%',
-    backgroundColor: '#1E293B',
+    backgroundColor: AppColors.slate800,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: AppColors.violet500,
   },
 });
 

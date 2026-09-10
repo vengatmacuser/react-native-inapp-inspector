@@ -297,36 +297,42 @@ export const DeviceInfoTab = React.memo(() => {
     () => [
       {
         key: 'overview',
-        label: 'Overview',
+        label: t('device.subTabs.overview', 'Overview'),
+        themeColor: AppColors.sky600,
         icon: (c: string) => <LayersIcon size={12} color={c} />,
       },
       {
         key: 'hardware',
-        label: 'Hardware',
+        label: t('device.subTabs.hardware', 'Hardware'),
+        themeColor: AppColors.orange600,
         icon: (c: string) => <CpuIcon size={12} color={c} />,
       },
       {
         key: 'network',
-        label: 'Network & IP',
+        label: t('device.subTabs.network', 'Network & IP'),
+        themeColor: AppColors.teal600,
         icon: (c: string) => <WifiIcon size={12} color={c} />,
       },
       {
         key: 'display',
-        label: 'Display',
+        label: t('device.subTabs.display', 'Display'),
+        themeColor: AppColors.pink600,
         icon: (c: string) => <ScreenIcon size={12} color={c} />,
       },
       {
         key: 'runtime',
-        label: 'Runtime & App',
+        label: t('device.subTabs.runtime', 'Runtime & App'),
+        themeColor: AppColors.amber600,
         icon: (c: string) => <BoltIcon size={12} color={c} />,
       },
       {
         key: 'security',
-        label: 'Security & IDs',
+        label: t('device.subTabs.security', 'Security & IDs'),
+        themeColor: AppColors.errorColor,
         icon: (c: string) => <KeyIcon size={12} color={c} />,
       },
     ],
-    [],
+    [t],
   );
 
   // Full device JSON export
@@ -406,7 +412,7 @@ export const DeviceInfoTab = React.memo(() => {
 
   const handleExportJson = () => {
     copyToClipboard(JSON.stringify(fullDeviceData, null, 2), 'Device Full Report');
-    showToast('Copied Full Device JSON Report!');
+    showToast(t('device.copiedJson', 'Copied Full Device JSON Report!'));
   };
 
   const handleExportMarkdown = () => {
@@ -445,7 +451,7 @@ export const DeviceInfoTab = React.memo(() => {
 - **Bundle ID:** \`${fullDeviceData.identifiers.bundleId}\`
 `;
     copyToClipboard(md, 'Device Markdown Report');
-    showToast('Copied Markdown Report to Clipboard!');
+    showToast(t('device.copiedMarkdown', 'Copied Markdown Report to Clipboard!'));
   };
 
   // Filter items matching search (checking label, value, and optional subtext)
@@ -586,34 +592,6 @@ export const DeviceInfoTab = React.memo(() => {
 
   return (
     <View style={styles.container}>
-      {/* ─── Top Sub-Tabs Navigation Bar ─── */}
-      <View style={styles.subTabsWrapper}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.subTabsContainer}>
-          {subTabs.map(tab => {
-            const isActive = activeSubTab === tab.key;
-            const color = isActive ? AppColors.white : AppColors.grayText;
-            return (
-              <TouchableScale
-                key={tab.key}
-                onPress={() => setActiveSubTab(tab.key as DeviceSubTab)}
-                style={[styles.subTabPill, isActive && styles.subTabPillActive]}>
-                {tab.icon(color)}
-                <Text
-                  style={[
-                    styles.subTabPillText,
-                    isActive && styles.subTabPillTextActive,
-                  ]}>
-                  {tab.label}
-                </Text>
-              </TouchableScale>
-            );
-          })}
-        </ScrollView>
-      </View>
-
       {/* ─── Search & Export Action Bar ─── */}
       <View style={styles.actionBar}>
         <View style={styles.searchBar}>
@@ -621,7 +599,7 @@ export const DeviceInfoTab = React.memo(() => {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search specs, UDID, IP, screen..."
+            placeholder={t('device.searchPlaceholder', 'Search specs, UDID, IP, screen...')}
             placeholderTextColor={AppColors.grayTextWeak}
             style={styles.searchInput}
             clearButtonMode="while-editing"
@@ -648,6 +626,67 @@ export const DeviceInfoTab = React.memo(() => {
           <CopyIcon size={12} color={AppColors.emerald500} />
           <Text style={[styles.exportButtonText, {color: AppColors.emerald500}]}>MD</Text>
         </TouchableScale>
+      </View>
+
+      {/* ─── Top Sub-Tabs Navigation Bar (Styled exactly like API Tab) ─── */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 8,
+          paddingHorizontal: 12,
+          gap: 6,
+        }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{flex: 1}}
+          contentContainerStyle={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingRight: 6,
+          }}>
+          {subTabs.map(tab => {
+            const isActive = activeSubTab === tab.key;
+            const chipColor = tab.themeColor || AppColors.purple;
+            const iconColor = isActive ? AppColors.white : chipColor;
+            return (
+              <TouchableScale
+                key={tab.key}
+                onPress={() => setActiveSubTab(tab.key as DeviceSubTab)}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 9,
+                    paddingVertical: 4.5,
+                    borderRadius: 8,
+                    backgroundColor: isActive
+                      ? chipColor
+                      : `${chipColor}12`,
+                    borderWidth: 1,
+                    borderColor: isActive
+                      ? chipColor
+                      : `${chipColor}30`,
+                    gap: 5,
+                  }}>
+                  {tab.icon(iconColor)}
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 10.5,
+                      color: isActive
+                        ? AppColors.white
+                        : AppColors.primaryBlack,
+                    }}>
+                    {tab.label}
+                  </Text>
+                </View>
+              </TouchableScale>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {/* ─── Main Content Scroll View ─── */}
@@ -683,21 +722,21 @@ export const DeviceInfoTab = React.memo(() => {
             {/* Quick Metrics Strip */}
             <View style={styles.heroMetricsStrip}>
               <View style={styles.heroMetricItem}>
-                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">IP ADDRESS</Text>
+                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">{t('device.ipAddress', 'IP ADDRESS')}</Text>
                 <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
                   {ipAddress}
                 </Text>
               </View>
               <View style={styles.heroMetricDivider} />
               <View style={styles.heroMetricItem}>
-                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">RAM (USED/TOTAL)</Text>
+                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">{t('device.ramUsedTotal', 'RAM (USED/TOTAL)')}</Text>
                 <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
                   {usedRamMb}/{totalRamMb} MB
                 </Text>
               </View>
               <View style={styles.heroMetricDivider} />
               <View style={styles.heroMetricItem}>
-                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">UPTIME</Text>
+                <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">{t('device.uptime', 'UPTIME')}</Text>
                 <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">{deviceUptime}</Text>
               </View>
             </View>

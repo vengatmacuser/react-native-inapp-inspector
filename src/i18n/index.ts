@@ -1,10 +1,46 @@
 import React from 'react';
 import enLocale from './locales/en.json';
+import esLocale from './locales/es.json';
+import frLocale from './locales/fr.json';
+import deLocale from './locales/de.json';
+import zhLocale from './locales/zh.json';
+import jaLocale from './locales/ja.json';
+import koLocale from './locales/ko.json';
+import ptLocale from './locales/pt.json';
+import ruLocale from './locales/ru.json';
+import hiLocale from './locales/hi.json';
+import arLocale from './locales/ar.json';
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Español' },
+  { code: 'fr', name: 'Français' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'zh', name: '中文' },
+  { code: 'ja', name: '日本語' },
+  { code: 'ko', name: '한국어' },
+  { code: 'pt', name: 'Português' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'hi', name: 'हिन्दी' },
+  { code: 'ar', name: 'العربية' },
+] as const;
+
+export type SupportedLanguageCode = (typeof SUPPORTED_LANGUAGES)[number]['code'];
 
 type TranslationParams = Record<string, any>;
 
 const localeRegistry: Record<string, Record<string, any>> = {
   en: enLocale,
+  es: esLocale,
+  fr: frLocale,
+  de: deLocale,
+  zh: zhLocale,
+  ja: jaLocale,
+  ko: koLocale,
+  pt: ptLocale,
+  ru: ruLocale,
+  hi: hiLocale,
+  ar: arLocale,
 };
 
 let currentLanguage = 'en';

@@ -4,7 +4,6 @@ import {pruneConsoleLogs} from '../customHooks/consoleLogger';
 import {pruneReduxHistory} from '../customHooks/reduxLogger';
 import {pruneAnalyticsLogs} from '../customHooks/analyticsLogger';
 import {pruneCrashRecords, addCrashBreadcrumb} from '../customHooks/crashHandler';
-import {prunePerformanceEvents} from '../customHooks/performanceTracker';
 import {showToast} from './toast';
 
 export interface MemoryPruneSummary {
@@ -14,7 +13,6 @@ export interface MemoryPruneSummary {
   prunedRedux: number;
   prunedAnalytics: number;
   prunedCrashes: number;
-  prunedPerformance: number;
   totalPruned: number;
   triggeredBy: 'memory-warning' | 'manual' | 'ram-threshold';
 }
@@ -41,15 +39,13 @@ export const pruneAllLogs = (
   const prunedRedux = pruneReduxHistory(undefined);
   const prunedAnalytics = pruneAnalyticsLogs(undefined);
   const prunedCrashes = pruneCrashRecords(undefined);
-  const prunedPerformance = prunePerformanceEvents(undefined);
 
   const totalPruned =
     prunedNetwork +
     prunedConsole +
     prunedRedux +
     prunedAnalytics +
-    prunedCrashes +
-    prunedPerformance;
+    prunedCrashes;
 
   lastPruneTimestamp = Date.now();
 
@@ -67,7 +63,6 @@ export const pruneAllLogs = (
     prunedRedux,
     prunedAnalytics,
     prunedCrashes,
-    prunedPerformance,
     totalPruned,
     triggeredBy,
   };

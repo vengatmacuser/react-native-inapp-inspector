@@ -394,15 +394,15 @@ const CrashDetail: React.FC = React.memo(() => {
                           style={[
                             localStyles.frameTypeBadge,
                             frame.isAppCode
-                              ? {backgroundColor: '#ECFDF5', borderColor: '#A7F3D0'}
-                              : {backgroundColor: '#F1F5F9', borderColor: '#E2E8F0'},
+                              ? {backgroundColor: AppColors.greenSuccessBg, borderColor: AppColors.greenSuccessBorder}
+                              : {backgroundColor: AppColors.slate100, borderColor: AppColors.slate200},
                           ]}>
                           <Text
                             style={[
                               localStyles.frameTypeBadgeText,
                               frame.isAppCode
-                                ? {color: '#059669'}
-                                : {color: '#64748B'},
+                                ? {color: AppColors.emerald600}
+                                : {color: AppColors.slate500},
                             ]}>
                             {frame.isAppCode ? t('crash.frameApp') : t('crash.frameLib')}
                           </Text>
@@ -808,8 +808,8 @@ const localStyles = StyleSheet.create({
     gap: 4,
   },
   originFrameCard: {
-    borderColor: '#6EE7B7',
-    backgroundColor: '#F0FDF4',
+    borderColor: AppColors.greenMintBorder,
+    backgroundColor: AppColors.greenMintBg,
   },
   frameCardHeader: {
     flexDirection: 'row',

@@ -20,15 +20,15 @@ export const STATUS_FILTERS: string[] = [
 ];
 
 export const METHOD_COLORS: Record<Method, string> = {
-  ALL: '#64748B',     // Slate
-  GET: '#059669',     // Emerald
-  POST: '#2563EB',    // Royal Blue
-  PUT: '#D97706',     // Amber Gold
-  PATCH: '#7C3AED',   // Rich Violet
-  DELETE: '#DC2626',  // Crimson Red
-  QUERY: '#0284C7',   // Sky Cyan (HTTP QUERY RFC 9535)
-  OPTIONS: '#475569', // Cool Slate
-  HEAD: '#0891B2',    // Cyan
+  ALL: AppColors.slate500,     // Slate
+  GET: AppColors.emerald600,   // Emerald
+  POST: AppColors.blue600,     // Royal Blue
+  PUT: AppColors.amber600,     // Amber Gold
+  PATCH: AppColors.violet600,  // Rich Violet
+  DELETE: AppColors.red600,    // Crimson Red
+  QUERY: AppColors.sky600,     // Sky Cyan (HTTP QUERY RFC 9535)
+  OPTIONS: AppColors.slate600, // Cool Slate
+  HEAD: AppColors.cyan600,     // Cyan
 };
 
 export const DOMAIN_COLORS: string[] = AppColors.domainColors;

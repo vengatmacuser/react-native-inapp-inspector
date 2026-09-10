@@ -68,6 +68,7 @@ import {
   CodeBracketsIcon,
   FilterIcon,
   ChevronIcon,
+  ForwardChevronIcon,
 } from '../NetworkIcons';
 
 const getRelativeTime = (timestamp: number): string => {
@@ -91,6 +92,7 @@ const CrashTab = React.memo(() => {
   const {crashRecords, selectedCrash, setSelectedCrash} = useInspector();
 
   const listRef = useRef<FlatList>(null);
+  const [displayLimit, setDisplayLimit] = useState<number>(100);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<CrashFilterType>('all');
   const [crashFilters, setCrashFilters] = useState<CrashFilters>(
@@ -287,6 +289,7 @@ const CrashTab = React.memo(() => {
                 <Text style={localStyles.relativeTimeText}>
                   {getRelativeTime(item.timestamp)}
                 </Text>
+                <ForwardChevronIcon size={13} color={AppColors.grayTextWeak} />
               </View>
             </View>
 
@@ -507,45 +510,132 @@ const CrashTab = React.memo(() => {
 
             <FeatureUnderDevNotice featureName="Crash & Exception Sentinel" />
 
-            {/* ─── Filter Chips ─── */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={localStyles.filterScrollContent}>
-              {(
-                [
-                  {key: 'all', label: t('crash.filterAll'), Icon: LayersIcon},
-                  {key: 'fatal', label: t('crash.filterFatal'), Icon: SkullIcon},
-                  {key: 'js', label: t('crash.filterJsError'), Icon: JsIcon},
-                  {key: 'promise', label: t('crash.filterPromise'), Icon: HourglassIcon},
-                  {key: 'render', label: t('crash.filterRender'), Icon: LayoutIcon},
-                  {key: 'native', label: t('crash.filterNative'), Icon: ChipIcon},
-                ] as const
-              ).map(chip => {
-                const isActive = filterType === chip.key;
-                return (
-                  <TouchableOpacity
-                    key={chip.key}
-                    onPress={() => setFilterType(chip.key)}
-                    style={[
-                      localStyles.filterChip,
-                      isActive && localStyles.filterChipActive,
-                    ]}>
-                    <chip.Icon
-                      size={12}
-                      color={isActive ? AppColors.white : AppColors.grayTextStrong}
-                    />
-                    <Text
-                      style={[
-                        localStyles.filterChipText,
-                        isActive && localStyles.filterChipTextActive,
-                      ]}>
-                      {chip.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            {/* ─── Filter Chips (Styled exactly like API Tab) ─── */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 8,
+                paddingHorizontal: 12,
+                gap: 6,
+              }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{flex: 1}}
+                contentContainerStyle={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingRight: 6,
+                }}>
+                {(
+                  [
+                    {
+                      key: 'all' as const,
+                      label: t('crash.filterAll'),
+                      Icon: LayersIcon,
+                      count: stats.total,
+                      themeColor: AppColors.purple,
+                    },
+                    {
+                      key: 'fatal' as const,
+                      label: t('crash.filterFatal'),
+                      Icon: SkullIcon,
+                      count: stats.fatalCount,
+                      themeColor: AppColors.errorColor,
+                    },
+                    {
+                      key: 'js' as const,
+                      label: t('crash.filterJsError'),
+                      Icon: JsIcon,
+                      count: stats.jsCount,
+                      themeColor: AppColors.amber600,
+                    },
+                    {
+                      key: 'promise' as const,
+                      label: t('crash.filterPromise'),
+                      Icon: HourglassIcon,
+                      count: stats.promiseCount,
+                      themeColor: AppColors.orange600,
+                    },
+                    {
+                      key: 'render' as const,
+                      label: t('crash.filterRender'),
+                      Icon: LayoutIcon,
+                      count: stats.renderCount,
+                      themeColor: AppColors.violet600,
+                    },
+                    {
+                      key: 'native' as const,
+                      label: t('crash.filterNative'),
+                      Icon: ChipIcon,
+                      count: stats.nativeCount,
+                      themeColor: AppColors.cyan600,
+                    },
+                  ] as const
+                ).map(chip => {
+                  const isActive = filterType === chip.key;
+                  const chipColor = chip.themeColor || AppColors.purple;
+                  const iconColor = isActive ? AppColors.white : chipColor;
+                  const ChipIcon = chip.Icon;
+                  return (
+                    <TouchableScale
+                      key={chip.key}
+                      onPress={() => setFilterType(chip.key)}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingHorizontal: 9,
+                          paddingVertical: 4.5,
+                          borderRadius: 8,
+                          backgroundColor: isActive
+                            ? chipColor
+                            : `${chipColor}12`,
+                          borderWidth: 1,
+                          borderColor: isActive
+                            ? chipColor
+                            : `${chipColor}30`,
+                          gap: 5,
+                        }}>
+                        <ChipIcon size={11} color={iconColor} />
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 10.5,
+                            color: isActive
+                              ? AppColors.white
+                              : AppColors.primaryBlack,
+                          }}>
+                          {chip.label}
+                        </Text>
+                        <View
+                          style={{
+                            backgroundColor: isActive
+                              ? 'rgba(255,255,255,0.25)'
+                              : `${chipColor}20`,
+                            paddingHorizontal: 5,
+                            paddingVertical: 1,
+                            borderRadius: 8,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 9.5,
+                              color: isActive ? AppColors.white : chipColor,
+                            }}>
+                            {chip.count}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableScale>
+                  );
+                })}
+              </ScrollView>
+            </View>
           </View>
         </>
       )}
@@ -603,7 +693,7 @@ const CrashTab = React.memo(() => {
         <>
           <FlatList
             ref={listRef}
-            data={filteredList}
+            data={filteredList.slice(0, displayLimit)}
             keyExtractor={item => item.id}
             renderItem={renderCard}
             initialNumToRender={12}
@@ -613,7 +703,17 @@ const CrashTab = React.memo(() => {
             renderToHardwareTextureAndroid={true}
             contentContainerStyle={localStyles.listContent}
             showsVerticalScrollIndicator={false}
-            ListFooterComponent={<EndOfListFooter />}
+            ListFooterComponent={
+              filteredList.length > 0 ? (
+                <EndOfListFooter
+                  count={Math.min(displayLimit, filteredList.length)}
+                  totalCount={filteredList.length}
+                  label="crashes"
+                  hasMore={filteredList.length > displayLimit}
+                  onLoadMore={() => setDisplayLimit(p => p + 10)}
+                />
+              ) : null
+            }
           />
         </>
       )}

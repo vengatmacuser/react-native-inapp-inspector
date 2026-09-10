@@ -144,6 +144,32 @@ const LightColors = {
   gray500: '#64748B',
   gray600: '#475569',
 
+  // ─── GraphQL & Special API ───
+  graphqlPink: '#E10098',
+
+  // ─── Syntax Highlighting & JSON Colors ───
+  syntaxKey: '#4F46E5',
+  syntaxColon: '#64748B',
+  syntaxString: '#059669',
+  syntaxNumber: '#D97706',
+  syntaxBoolean: '#DB2777',
+  syntaxNull: '#E11D48',
+  syntaxBracket: '#64748B',
+  syntaxPunctuation: '#94A3B8',
+
+  // ─── Extended Status / Debug / Terminal ───
+  buildSuccessGreen: '#4ADE80',
+  buildFailureRed: '#F87171',
+  purpleLightMuted: '#C4B5FD',
+  greenSuccessDark: '#047857',
+  greenSuccessBg: '#ECFDF5',
+  greenSuccessBorder: '#A7F3D0',
+  greenMintBorder: '#6EE7B7',
+  greenMintBg: '#F0FDF4',
+  mediaModalBg: '#090D16FA',
+  mediaDarkTile: '#05070D',
+  mediaPlayerBg: '#070C18',
+
   // ─── Tint Backgrounds / Borders (Theme-Aware) ───
   errorCardBg: '#FFF1F3',
   warnCardBg: '#FDFBF4',
@@ -218,7 +244,8 @@ const LightColors = {
   ],
 };
 
-const DarkColors = {
+const DarkColors: typeof LightColors = {
+  ...LightColors,
   primaryLight: '#1E1B4B',        // Deep Indigo Dark Card
   purple: '#818CF8',              // Luminous Indigo
   purpleShade50: '#1E1B4B',

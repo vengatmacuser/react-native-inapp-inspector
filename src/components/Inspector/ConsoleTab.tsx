@@ -18,6 +18,7 @@ import EndOfListFooter from '../EndOfListFooter';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {LogFilter} from '../../types';
 import {
   SearchIcon,
   ClearIcon,
@@ -52,6 +53,12 @@ const ConsoleTab = React.memo(() => {
   } = useInspector();
 
   const listRef = useRef<FlatList>(null);
+  const [displayLimit, setDisplayLimit] = React.useState<number>(100);
+
+  const displayedConsoleLogs = useMemo(
+    () => filteredConsoleLogs.slice(0, displayLimit),
+    [filteredConsoleLogs, displayLimit],
+  );
 
   const renderItem = useCallback(
     ({item, index}: {item: any; index: number}) => (
@@ -60,6 +67,15 @@ const ConsoleTab = React.memo(() => {
       </AnimatedEntrance>
     ),
     [logSearch],
+  );
+
+  const getItemLayout = useCallback(
+    (_: any, index: number) => ({
+      length: 148,
+      offset: 148 * index,
+      index,
+    }),
+    [],
   );
 
   const keyExtractor = useCallback(
@@ -137,11 +153,62 @@ const ConsoleTab = React.memo(() => {
       '[LOCATION]',
       '[TEST]',
       '[DEBUG]',
-      '[WARN]',
-      '[ERROR]',
-      '[SUCCESS]',
     ],
     [],
+  );
+
+  const LOG_QUICK_CHIPS: {
+    id: LogFilter;
+    label: string;
+    count: string;
+    color: string;
+    Icon: any;
+  }[] = useMemo(
+    () => [
+      {
+        id: LogFilter.All,
+        label: t('common.all', 'All'),
+        count: logCounts.all?.split('/')?.[0] ?? '0',
+        color: AppColors.purple,
+        Icon: LayersIcon,
+      },
+      {
+        id: LogFilter.UserLog,
+        label: t('console.log', 'Log'),
+        count: logCounts['user-log']?.split('/')?.[0] ?? '0',
+        color: AppColors.teal600,
+        Icon: UserIcon,
+      },
+      {
+        id: LogFilter.Info,
+        label: t('console.info', 'Info'),
+        count: logCounts.info?.split('/')?.[0] ?? '0',
+        color: AppColors.sky600,
+        Icon: InfoCircleIcon,
+      },
+      {
+        id: LogFilter.Warn,
+        label: t('console.warning', 'Warn'),
+        count: logCounts.warn?.split('/')?.[0] ?? '0',
+        color: AppColors.amber600,
+        Icon: WarningTriangleIcon,
+      },
+      {
+        id: LogFilter.Error,
+        label: t('console.error', 'Error'),
+        count: logCounts.error?.split('/')?.[0] ?? '0',
+        color: AppColors.errorColor,
+        Icon: ErrorCircleIcon,
+      },
+      {
+        id: LogFilter.Analytics,
+        label: t('console.analytics', 'Analytics'),
+        count: logCounts.analytics?.split('/')?.[0] ?? '0',
+        color: AppColors.violet600,
+        Icon: AnalyticsIcon,
+      },
+    ],
+    [logCounts, t],
   );
 
   return (
@@ -330,386 +397,117 @@ const ConsoleTab = React.memo(() => {
           </ScrollView>
         )}
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{marginVertical: 4, maxHeight: 46}}
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: 4,
+        {/* Quick Filter Horizontal Chips Bar (Styled exactly like API Tab) */}
+        <View
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 8,
+            marginBottom: 8,
+            paddingHorizontal: 12,
+            gap: 6,
           }}>
-          {/* All Filter */}
-          {(() => {
-            const active = logFilters.has('all');
-            return (
-              <TouchableScale
-                onPress={() => {
-                  setLogFilters(new Set(['all']));
-                }}>
-                <View
-                  style={[
-                    styles.statusFilterChip,
-                    {
-                      backgroundColor: active ? AppColors.indigo600Alt : AppColors.indigo50,
-                      borderColor: active ? AppColors.indigo600 : AppColors.indigo400,
-                      borderRadius: 8,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                    },
-                    active && {
-                      shadowColor: AppColors.indigo600Alt,
-                      shadowOffset: {width: 0, height: 1},
-                      shadowOpacity: 0.28,
-                      shadowRadius: 2.5,
-                      elevation: 2,
-                    },
-                  ]}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                    <LayersIcon
-                      size={13}
-                      color={active ? AppColors.white : AppColors.indigo600Alt}
-                    />
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.statusFilterText,
-                        {
-                          color: active ? AppColors.white : AppColors.indigo600Alt,
-                          fontFamily: AppFonts.interBold,
-                        },
-                      ]}>
-                      {t('common.all', 'All')} ({logCounts.all})
-                    </Text>
-                  </View>
-                </View>
-              </TouchableScale>
-            );
-          })()}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{flex: 1}}
+            contentContainerStyle={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingRight: 6,
+            }}>
+            {LOG_QUICK_CHIPS.map(chip => {
+              const isActive =
+                chip.id === 'all'
+                  ? logFilters.has('all')
+                  : logFilters.has(chip.id) && !logFilters.has('all');
+              const chipColor = chip.color || AppColors.purple;
+              const iconColor = isActive ? AppColors.white : chipColor;
+              const ChipIcon = chip.Icon;
 
-          {/* User Log / Standard Log Filter */}
-          {(() => {
-            const active = logFilters.has('user-log');
-            return (
-              <TouchableScale
-                onPress={() => {
-                  setLogFilters(prev => {
-                    const next = new Set(prev);
-                    next.delete('all');
-                    next.has('user-log')
-                      ? next.delete('user-log')
-                      : next.add('user-log');
-                    if (next.size === 0) next.add('all');
-                    return next;
-                  });
-                }}>
-                <View
-                  style={[
-                    styles.statusFilterChip,
-                    {
-                      backgroundColor: active ? AppColors.teal600 : AppColors.teal100,
-                      borderColor: active ? AppColors.teal600 : AppColors.teal400,
-                      borderRadius: 8,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                    },
-                    active && {
-                      shadowColor: AppColors.teal600,
-                      shadowOffset: {width: 0, height: 1},
-                      shadowOpacity: 0.28,
-                      shadowRadius: 2.5,
-                      elevation: 2,
-                    },
-                  ]}>
+              return (
+                <TouchableScale
+                  key={chip.id}
+                  onPress={() => {
+                    if (chip.id === 'all') {
+                      setLogFilters(new Set(['all']));
+                    } else {
+                      setLogFilters(prev => {
+                        const next = new Set(prev);
+                        next.delete('all');
+                        if (next.has(chip.id)) {
+                          next.delete(chip.id);
+                        } else {
+                          next.add(chip.id);
+                        }
+                        if (next.size === 0) next.add('all');
+                        return next;
+                      });
+                    }
+                  }}>
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: 6,
-                    }}>
-                    <UserIcon
-                      size={13}
-                      color={active ? AppColors.white : AppColors.teal600}
-                    />
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.statusFilterText,
-                        {
-                          color: active ? AppColors.white : AppColors.teal600,
-                          fontFamily: AppFonts.interBold,
-                        },
-                      ]}>
-                      {t('console.log', 'Log')} ({logCounts['user-log']})
-                    </Text>
-                  </View>
-                </View>
-              </TouchableScale>
-            );
-          })()}
-
-          {/* Info Filter */}
-          {(() => {
-            const active = logFilters.has('info');
-            return (
-              <TouchableScale
-                onPress={() => {
-                  setLogFilters(prev => {
-                    const next = new Set(prev);
-                    next.delete('all');
-                    next.has('info')
-                      ? next.delete('info')
-                      : next.add('info');
-                    if (next.size === 0) next.add('all');
-                    return next;
-                  });
-                }}>
-                <View
-                  style={[
-                    styles.statusFilterChip,
-                    {
-                      backgroundColor: active ? AppColors.sky600 : AppColors.sky100,
-                      borderColor: active ? AppColors.blue700 : AppColors.sky400,
+                      paddingHorizontal: 9,
+                      paddingVertical: 4.5,
                       borderRadius: 8,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                    },
-                    active && {
-                      shadowColor: AppColors.sky600,
-                      shadowOffset: {width: 0, height: 1},
-                      shadowOpacity: 0.28,
-                      shadowRadius: 2.5,
-                      elevation: 2,
-                    },
-                  ]}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
+                      backgroundColor: isActive
+                        ? chipColor
+                        : `${chipColor}12`,
+                      borderWidth: 1,
+                      borderColor: isActive
+                        ? chipColor
+                        : `${chipColor}30`,
+                      gap: 5,
                     }}>
-                    <InfoCircleIcon
-                      size={13}
-                      color={active ? AppColors.white : AppColors.sky600}
-                    />
+                    <ChipIcon size={11} color={iconColor} />
                     <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.statusFilterText,
-                        {
-                          color: active ? AppColors.white : AppColors.sky600,
-                          fontFamily: AppFonts.interBold,
-                        },
-                      ]}>
-                      {t('console.info', 'Info')} ({logCounts.info})
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10.5,
+                        color: isActive
+                          ? AppColors.white
+                          : AppColors.primaryBlack,
+                      }}>
+                      {chip.label}
                     </Text>
-                  </View>
-                </View>
-              </TouchableScale>
-            );
-          })()}
-
-          {/* Warning Filter */}
-          {(() => {
-            const active = logFilters.has('warn');
-            return (
-              <TouchableScale
-                onPress={() => {
-                  setLogFilters(prev => {
-                    const next = new Set(prev);
-                    next.delete('all');
-                    next.has('warn')
-                      ? next.delete('warn')
-                      : next.add('warn');
-                    if (next.size === 0) next.add('all');
-                    return next;
-                  });
-                }}>
-                <View
-                  style={[
-                    styles.statusFilterChip,
-                    {
-                      backgroundColor: active ? AppColors.amber600 : AppColors.amber100,
-                      borderColor: active ? AppColors.amber700 : AppColors.amber200,
-                      borderRadius: 8,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                    },
-                    active && {
-                      shadowColor: AppColors.amber600,
-                      shadowOffset: {width: 0, height: 1},
-                      shadowOpacity: 0.28,
-                      shadowRadius: 2.5,
-                      elevation: 2,
-                    },
-                  ]}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                    <WarningTriangleIcon
-                      size={13}
-                      color={active ? AppColors.white : AppColors.amber700}
-                    />
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.statusFilterText,
-                        {
-                          color: active ? AppColors.white : AppColors.amber800Warm,
+                    <View
+                      style={{
+                        backgroundColor: isActive
+                          ? 'rgba(255,255,255,0.25)'
+                          : `${chipColor}20`,
+                        paddingHorizontal: 5,
+                        paddingVertical: 1,
+                        borderRadius: 8,
+                      }}>
+                      <Text
+                        style={{
                           fontFamily: AppFonts.interBold,
-                        },
-                      ]}>
-                      {t('console.warning', 'Warn')} ({logCounts.warn})
-                    </Text>
+                          fontSize: 9,
+                          color: isActive ? AppColors.white : chipColor,
+                        }}>
+                        {chip.count}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              </TouchableScale>
-            );
-          })()}
-
-          {/* Error Filter */}
-          {(() => {
-            const active = logFilters.has('error');
-            return (
-              <TouchableScale
-                onPress={() => {
-                  setLogFilters(prev => {
-                    const next = new Set(prev);
-                    next.delete('all');
-                    next.has('error')
-                      ? next.delete('error')
-                      : next.add('error');
-                    if (next.size === 0) next.add('all');
-                    return next;
-                  });
-                }}>
-                <View
-                  style={[
-                    styles.statusFilterChip,
-                    {
-                      backgroundColor: active ? AppColors.red500 : AppColors.red100,
-                      borderColor: active ? AppColors.red600 : AppColors.errorBorder,
-                      borderRadius: 8,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                    },
-                    active && {
-                      shadowColor: AppColors.red500,
-                      shadowOffset: {width: 0, height: 1},
-                      shadowOpacity: 0.28,
-                      shadowRadius: 2.5,
-                      elevation: 2,
-                    },
-                  ]}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                    <ErrorCircleIcon
-                      size={13}
-                      color={active ? AppColors.white : AppColors.red500}
-                    />
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.statusFilterText,
-                        {
-                          color: active ? AppColors.white : AppColors.redErrorText,
-                          fontFamily: AppFonts.interBold,
-                        },
-                      ]}>
-                      {t('console.error', 'Error')} ({logCounts.error})
-                    </Text>
-                  </View>
-                </View>
-              </TouchableScale>
-            );
-          })()}
-
-          {/* Analytics Filter */}
-          {(() => {
-            const active = logFilters.has('analytics');
-            return (
-              <TouchableScale
-                onPress={() => {
-                  setLogFilters(prev => {
-                    const next = new Set(prev);
-                    next.delete('all');
-                    next.has('analytics')
-                      ? next.delete('analytics')
-                      : next.add('analytics');
-                    if (next.size === 0) next.add('all');
-                    return next;
-                  });
-                }}>
-                <View
-                  style={[
-                    styles.statusFilterChip,
-                    {
-                      backgroundColor: active ? AppColors.violet600 : AppColors.purple100,
-                      borderColor: active ? AppColors.purple700 : AppColors.purple200,
-                      borderRadius: 8,
-                      paddingHorizontal: 10,
-                      paddingVertical: 6,
-                    },
-                    active && {
-                      shadowColor: AppColors.violet600,
-                      shadowOffset: {width: 0, height: 1},
-                      shadowOpacity: 0.28,
-                      shadowRadius: 2.5,
-                      elevation: 2,
-                    },
-                  ]}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}>
-                    <AnalyticsIcon
-                      size={13}
-                      color={active ? AppColors.white : AppColors.violet600}
-                    />
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.statusFilterText,
-                        {
-                          color: active ? AppColors.white : AppColors.purpleText,
-                          fontFamily: AppFonts.interBold,
-                        },
-                      ]}>
-                      {t('console.analytics', 'Analytics')} ({logCounts.analytics})
-                    </Text>
-                  </View>
-                </View>
-              </TouchableScale>
-            );
-          })()}
-        </ScrollView>
+                </TouchableScale>
+              );
+            })}
+          </ScrollView>
+        </View>
       </View>
 
       <FlatList
         ref={listRef}
-        data={filteredConsoleLogs}
+        data={displayedConsoleLogs}
         keyExtractor={keyExtractor}
         ListHeaderComponent={listHeader}
         renderItem={renderItem}
-        initialNumToRender={12}
-        maxToRenderPerBatch={8}
-        windowSize={5}
+        getItemLayout={getItemLayout}
+        initialNumToRender={15}
+        maxToRenderPerBatch={10}
+        windowSize={9}
         removeClippedSubviews={Platform.OS === 'android'}
         renderToHardwareTextureAndroid={true}
         ListEmptyComponent={
@@ -731,7 +529,13 @@ const ConsoleTab = React.memo(() => {
         }
         ListFooterComponent={
           filteredConsoleLogs.length > 0 ? (
-            <EndOfListFooter count={filteredConsoleLogs.length} label="logs" />
+            <EndOfListFooter
+              count={displayedConsoleLogs.length}
+              totalCount={filteredConsoleLogs.length}
+              label="logs"
+              hasMore={displayedConsoleLogs.length < filteredConsoleLogs.length}
+              onLoadMore={() => setDisplayLimit(prev => prev + 10)}
+            />
           ) : null
         }
         contentContainerStyle={[

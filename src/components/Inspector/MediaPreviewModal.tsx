@@ -518,7 +518,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
 const previewStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: '#090D16FA',
+    backgroundColor: AppColors.mediaModalBg,
     justifyContent: 'space-between',
   },
   header: {
@@ -628,7 +628,7 @@ const previewStyles = StyleSheet.create({
     width: '100%',
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#05070D',
+    backgroundColor: AppColors.mediaDarkTile,
     borderWidth: 1,
     borderColor: AppColors.borderGlassLight,
     alignItems: 'center',
@@ -650,7 +650,7 @@ const previewStyles = StyleSheet.create({
   videoFallbackBackdrop: {
     flex: 1,
     width: '100%',
-    backgroundColor: '#070C18',
+    backgroundColor: AppColors.mediaPlayerBg,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,

@@ -89,6 +89,25 @@ const NetworkTab = React.memo(() => {
 
   const {t} = useTranslation();
   const apisListRef = useRef<FlatList<any>>(null);
+  const [displayLimit, setDisplayLimit] = React.useState<number>(100);
+
+  const displayedGroupedData = useMemo(() => {
+    let logCount = 0;
+    const result: GroupedListItem[] = [];
+
+    for (const item of groupedData) {
+      if (item.type === 'header') {
+        result.push(item);
+      } else if (item.type === 'log') {
+        if (logCount < displayLimit) {
+          result.push(item);
+          logCount++;
+        }
+      }
+    }
+
+    return result;
+  }, [groupedData, displayLimit]);
 
   const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
@@ -222,7 +241,7 @@ const NetworkTab = React.memo(() => {
         id: 'graphql',
         label: 'GraphQL',
         count: quickCounts.graphql,
-        color: '#E10098',
+        color: AppColors.graphqlPink,
       },
     ],
     [quickCounts],
@@ -762,12 +781,12 @@ const NetworkTab = React.memo(() => {
 
         <FlatList
           ref={apisListRef}
-          data={groupedData}
+          data={displayedGroupedData}
           keyExtractor={item => item?.id?.toString()}
           renderItem={renderItem}
-          initialNumToRender={12}
-          maxToRenderPerBatch={8}
-          windowSize={5}
+          initialNumToRender={15}
+          maxToRenderPerBatch={10}
+          windowSize={9}
           removeClippedSubviews={Platform.OS === 'android'}
           renderToHardwareTextureAndroid={true}
           ListEmptyComponent={
@@ -795,7 +814,13 @@ const NetworkTab = React.memo(() => {
         }
         ListFooterComponent={
           groupedData.length > 0 ? (
-            <EndOfListFooter count={filteredLogs.length} label="requests" />
+            <EndOfListFooter
+              count={Math.min(displayLimit, filteredLogs.length)}
+              totalCount={filteredLogs.length}
+              label="requests"
+              hasMore={filteredLogs.length > displayLimit}
+              onLoadMore={() => setDisplayLimit(p => p + 10)}
+            />
           ) : null
         }
         contentContainerStyle={[

@@ -20,6 +20,7 @@ import {
   BoltIcon,
   SparkleIcon,
   ClockIcon,
+  ForwardChevronIcon,
 } from './NetworkIcons';
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -172,12 +173,15 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
             ) : null}
           </View>
 
-          {/* Timestamp */}
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
-            <ClockIcon color={AppColors.grayTextWeak} size={10} />
-            <Text style={[cardStyles.timestamp, {color: AppColors.grayTextWeak}]}>
-              {formatTime(event.timestamp)}
-            </Text>
+          {/* Timestamp & Chevron */}
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 3}}>
+              <ClockIcon color={AppColors.grayTextWeak} size={10} />
+              <Text style={[cardStyles.timestamp, {color: AppColors.grayTextWeak}]}>
+                {formatTime(event.timestamp)}
+              </Text>
+            </View>
+            <ForwardChevronIcon color={AppColors.grayTextWeak} size={13} />
           </View>
         </View>
 
@@ -326,13 +330,15 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
 const cardStyles = StyleSheet.create({
   container: {
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
+    height: 86,
+    justifyContent: 'center',
   },
   gapContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 6,
+    marginVertical: 4,
     gap: 8,
   },
   gapLine: {
@@ -351,19 +357,22 @@ const cardStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
-    padding: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     shadowColor: AppColors.black,
     shadowOpacity: 0.03,
     shadowRadius: 3,
     shadowOffset: {width: 0, height: 1},
     elevation: 1,
     overflow: 'hidden',
-    gap: 8,
+    height: 78,
+    justifyContent: 'space-between',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    height: 24,
   },
   iconBadge: {
     width: 22,
@@ -376,12 +385,14 @@ const cardStyles = StyleSheet.create({
   eventName: {
     fontFamily: AppFonts.interBold,
     fontSize: 13,
+    lineHeight: 17,
     letterSpacing: 0.1,
     color: AppColors.primaryBlack,
   },
   timestamp: {
     fontFamily: AppFonts.interMedium,
-    fontSize: 10,
+    fontSize: 10.5,
+    lineHeight: 14,
     color: AppColors.grayTextWeak,
   },
   highlight: {
@@ -393,26 +404,30 @@ const cardStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 24,
+    overflow: 'hidden',
   },
   chipsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     gap: 6,
     flex: 1,
+    overflow: 'hidden',
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 6,
     paddingVertical: 2.5,
-    borderRadius: 5,
+    borderRadius: 4.5,
     borderWidth: 1,
     gap: 3.5,
   },
   chipText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 10,
+    lineHeight: 13,
     color: AppColors.grayText,
   },
   screenDot: {
@@ -430,21 +445,21 @@ const cardStyles = StyleSheet.create({
   },
   duplicateText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 9,
+    fontSize: 8.5,
     color: AppColors.rose600,
     textTransform: 'uppercase',
   },
   idBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 5.5,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 5,
     backgroundColor: `${AppColors.slate500}12`,
     borderWidth: 1,
     borderColor: `${AppColors.slate500}22`,
   },
   idBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 10,
+    fontSize: 9.5,
     color: AppColors.grayTextWeak,
     letterSpacing: 0.2,
   },

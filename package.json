@@ -59,20 +59,6 @@
       "require": "./dist/commonjs/analytics.js",
       "default": "./dist/commonjs/analytics.js"
     },
-    "./performance": {
-      "react-native": "./dist/commonjs/performance.js",
-      "types": "./dist/commonjs/performance.d.ts",
-      "import": "./dist/esm/performance.js",
-      "require": "./dist/commonjs/performance.js",
-      "default": "./dist/commonjs/performance.js"
-    },
-    "./bundle": {
-      "react-native": "./dist/commonjs/bundle.js",
-      "types": "./dist/commonjs/bundle.d.ts",
-      "import": "./dist/esm/bundle.js",
-      "require": "./dist/commonjs/bundle.js",
-      "default": "./dist/commonjs/bundle.js"
-    },
     "./storage": {
       "react-native": "./dist/commonjs/storage.js",
       "types": "./dist/commonjs/storage.d.ts",

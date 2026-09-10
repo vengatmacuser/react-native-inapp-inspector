@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import TouchableScale from '../TouchableScale';
 import CopyButton from '../CopyButton';
+import EndOfListFooter from '../EndOfListFooter';
 import globalStyles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -187,6 +188,7 @@ export const StorageTab = React.memo(() => {
   const [entries, setEntries] = useState<StorageEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
+  const [displayLimit, setDisplayLimit] = useState<number>(100);
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
 
   // Modal State for Create / Edit
@@ -249,12 +251,12 @@ export const StorageTab = React.memo(() => {
   // Delete single key
   const handleDeleteKey = (key: string) => {
     Alert.alert(
-      'Delete Storage Key',
-      `Are you sure you want to permanently delete "${key}" from ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'}?`,
+      t('storage.deleteKeyTitle', 'Delete Key'),
+      t('storage.deleteKeyMessage', {key, defaultValue: `Are you sure you want to delete key "${key}"?`}),
       [
-        {text: 'Cancel', style: 'cancel'},
+        {text: t('common.cancel', 'Cancel'), style: 'cancel'},
         {
-          text: 'Delete',
+          text: t('common.clear', 'Delete'),
           style: 'destructive',
           onPress: async () => {
             const ok = await removeStorageEntry(
@@ -277,12 +279,15 @@ export const StorageTab = React.memo(() => {
   // Clear all keys
   const handleClearAll = () => {
     Alert.alert(
-      'Wipe All Storage Keys',
-      `Are you sure you want to clear all ${entries.length} keys in ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'}? This cannot be undone.`,
+      t('storage.clearTitle', 'Clear Storage Driver'),
+      t('storage.clearMessage', {
+        driver: activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV',
+        defaultValue: `Are you sure you want to delete all keys in ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'}?`,
+      }),
       [
-        {text: 'Cancel', style: 'cancel'},
+        {text: t('common.cancel', 'Cancel'), style: 'cancel'},
         {
-          text: 'Wipe All',
+          text: t('storage.clearConfirm', 'Clear All'),
           style: 'destructive',
           onPress: async () => {
             const ok = await clearStorageDriver(
@@ -410,26 +415,60 @@ export const StorageTab = React.memo(() => {
             onPress={() => setActiveDriver('asyncStorage')}
             style={[
               styles.driverTabPill,
-              activeDriver === 'asyncStorage' && styles.driverTabPillActive,
+              {
+                backgroundColor:
+                  activeDriver === 'asyncStorage'
+                    ? AppColors.brandPurple
+                    : `${AppColors.brandPurple}0D`,
+                borderColor:
+                  activeDriver === 'asyncStorage'
+                    ? AppColors.brandPurple
+                    : `${AppColors.brandPurple}2B`,
+              },
+              activeDriver === 'asyncStorage' && {
+                shadowColor: AppColors.brandPurple,
+                shadowOffset: {width: 0, height: 1.5},
+                shadowOpacity: 0.25,
+                shadowRadius: 3,
+                elevation: 3,
+              },
             ]}>
             <DatabaseIcon
               size={13}
               color={
                 activeDriver === 'asyncStorage'
                   ? AppColors.white
-                  : AppColors.grayText
+                  : AppColors.brandPurple
               }
             />
             <Text
               style={[
                 styles.driverTabText,
-                activeDriver === 'asyncStorage' && styles.driverTabTextActive,
+                {
+                  color:
+                    activeDriver === 'asyncStorage'
+                      ? AppColors.white
+                      : AppColors.brandPurple,
+                  fontFamily:
+                    activeDriver === 'asyncStorage'
+                      ? AppFonts.interBold
+                      : AppFonts.interSemiBold,
+                },
               ]}>
-              AsyncStorage
+              {t('storage.subTabs.asyncStorage', 'AsyncStorage')}
             </Text>
-            {activeDriver === 'asyncStorage' && entries.length > 0 && (
-              <View style={styles.driverCountBadge}>
-                <Text style={styles.driverCountText}>{entries.length}</Text>
+            {entries.length > 0 && activeDriver === 'asyncStorage' && (
+              <View
+                style={[
+                  styles.driverCountBadge,
+                  {
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    borderColor: 'rgba(255,255,255,0.45)',
+                  },
+                ]}>
+                <Text style={[styles.driverCountText, {color: AppColors.white}]}>
+                  {entries.length}
+                </Text>
               </View>
             )}
           </TouchableScale>
@@ -438,26 +477,60 @@ export const StorageTab = React.memo(() => {
             onPress={() => setActiveDriver('mmkv')}
             style={[
               styles.driverTabPill,
-              activeDriver === 'mmkv' && styles.driverTabPillActive,
+              {
+                backgroundColor:
+                  activeDriver === 'mmkv'
+                    ? AppColors.teal600
+                    : `${AppColors.teal600}0D`,
+                borderColor:
+                  activeDriver === 'mmkv'
+                    ? AppColors.teal600
+                    : `${AppColors.teal600}2B`,
+              },
+              activeDriver === 'mmkv' && {
+                shadowColor: AppColors.teal600,
+                shadowOffset: {width: 0, height: 1.5},
+                shadowOpacity: 0.25,
+                shadowRadius: 3,
+                elevation: 3,
+              },
             ]}>
             <LayersIcon
               size={13}
               color={
                 activeDriver === 'mmkv'
                   ? AppColors.white
-                  : AppColors.grayText
+                  : AppColors.teal600
               }
             />
             <Text
               style={[
                 styles.driverTabText,
-                activeDriver === 'mmkv' && styles.driverTabTextActive,
+                {
+                  color:
+                    activeDriver === 'mmkv'
+                      ? AppColors.white
+                      : AppColors.teal600,
+                  fontFamily:
+                    activeDriver === 'mmkv'
+                      ? AppFonts.interBold
+                      : AppFonts.interSemiBold,
+                },
               ]}>
-              MMKV
+              {t('storage.subTabs.mmkv', 'MMKV')}
             </Text>
-            {activeDriver === 'mmkv' && entries.length > 0 && (
-              <View style={styles.driverCountBadge}>
-                <Text style={styles.driverCountText}>{entries.length}</Text>
+            {entries.length > 0 && activeDriver === 'mmkv' && (
+              <View
+                style={[
+                  styles.driverCountBadge,
+                  {
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    borderColor: 'rgba(255,255,255,0.45)',
+                  },
+                ]}>
+                <Text style={[styles.driverCountText, {color: AppColors.white}]}>
+                  {entries.length}
+                </Text>
               </View>
             )}
           </TouchableScale>
@@ -494,7 +567,7 @@ export const StorageTab = React.memo(() => {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder={`Search ${entries.length} keys & values...`}
+            placeholder={t('storage.searchPlaceholder', 'Search keys, values, types...')}
             placeholderTextColor={AppColors.grayTextWeak}
             style={styles.searchInput}
             clearButtonMode="while-editing"
@@ -530,7 +603,7 @@ export const StorageTab = React.memo(() => {
           style={styles.addKeyBtn}
           hitSlop={6}>
           <PlusIcon size={13} color={AppColors.white} />
-          <Text style={styles.addKeyBtnText}>Add</Text>
+          <Text style={styles.addKeyBtnText}>{t('storage.add', 'Add')}</Text>
         </TouchableScale>
 
         <TouchableScale
@@ -564,13 +637,13 @@ export const StorageTab = React.memo(() => {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color={AppColors.purple} />
-          <Text style={styles.loadingText}>Loading storage entries...</Text>
+          <Text style={styles.loadingText}>{t('storage.loading', 'Loading storage entries...')}</Text>
         </View>
       ) : (
         <>
           <FlatList
             ref={listRef}
-            data={filteredEntries}
+            data={filteredEntries.slice(0, displayLimit)}
             keyExtractor={item => item.key}
             renderItem={renderItem}
             initialNumToRender={10}
@@ -614,7 +687,19 @@ export const StorageTab = React.memo(() => {
                 )}
               </View>
             }
-            ListFooterComponent={<View style={{height: 60}} />}
+            ListFooterComponent={
+              filteredEntries.length > 0 ? (
+                <EndOfListFooter
+                  count={Math.min(displayLimit, filteredEntries.length)}
+                  totalCount={filteredEntries.length}
+                  label="keys"
+                  hasMore={filteredEntries.length > displayLimit}
+                  onLoadMore={() => setDisplayLimit(p => p + 10)}
+                />
+              ) : (
+                <View style={{height: 60}} />
+              )
+            }
           />
         </>
       )}
@@ -638,7 +723,7 @@ export const StorageTab = React.memo(() => {
 
             {/* Key Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>KEY NAME</Text>
+              <Text style={styles.inputLabel}>{t('storage.keyName', 'KEY NAME').toUpperCase()}</Text>
               <TextInput
                 value={editKeyName}
                 onChangeText={setEditKeyName}
@@ -656,10 +741,10 @@ export const StorageTab = React.memo(() => {
             {/* Type Selector Strip */}
             <View style={styles.inputGroup}>
               <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4}}>
-                <Text style={styles.inputLabel}>VALUE TYPE</Text>
+                <Text style={styles.inputLabel}>{t('storage.type', 'VALUE TYPE').toUpperCase()}</Text>
                 {editType === 'json' && (
                   <TouchableScale onPress={handleBeautifyJson} hitSlop={6}>
-                    <Text style={styles.formatJsonBtn}>Beautify JSON</Text>
+                    <Text style={styles.formatJsonBtn}>{t('storage.beautifyJson', 'Beautify JSON')}</Text>
                   </TouchableScale>
                 )}
               </View>
@@ -692,7 +777,7 @@ export const StorageTab = React.memo(() => {
 
             {/* Value Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>VALUE CONTENT</Text>
+              <Text style={styles.inputLabel}>{t('storage.valueContent', 'VALUE CONTENT').toUpperCase()}</Text>
               <TextInput
                 value={editValue}
                 onChangeText={v => {
@@ -727,13 +812,13 @@ export const StorageTab = React.memo(() => {
               <TouchableScale
                 onPress={() => setModalVisible(false)}
                 style={styles.cancelBtn}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Text style={styles.cancelBtnText}>{t('common.cancel', 'Cancel')}</Text>
               </TouchableScale>
               <TouchableScale
                 onPress={handleSaveModal}
                 style={styles.saveBtn}>
                 <CheckIcon size={14} color={AppColors.white} />
-                <Text style={styles.saveBtnText}>Save Key</Text>
+                <Text style={styles.saveBtnText}>{t('storage.saveKey', 'Save Key')}</Text>
               </TouchableScale>
             </View>
           </View>
@@ -763,9 +848,9 @@ const styles = StyleSheet.create({
   driverTabPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
     borderRadius: 8,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
@@ -777,7 +862,7 @@ const styles = StyleSheet.create({
   },
   driverTabText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 11.5,
+    fontSize: 10.5,
     color: AppColors.grayText,
   },
   driverTabTextActive: {
@@ -787,11 +872,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
     paddingHorizontal: 5,
     paddingVertical: 1,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   driverCountText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 9,
+    fontSize: 9.5,
     color: AppColors.white,
   },
   instancePill: {

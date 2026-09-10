@@ -111,8 +111,6 @@ import {
   setReduxModuleEnabled,
 } from './customHooks/reduxLogger';
 
-import {setPerformanceModuleEnabled} from './customHooks/performanceTracker';
-import {setBundleModuleEnabled} from './customHooks/bundleAnalyzer';
 import {
   showNativeFloatingButton,
   hideNativeFloatingButton,
@@ -338,7 +336,7 @@ const NetworkInspector = ({
     }
   }, [activeTab, crashRecords.length]);
 
-  const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(100);
+  const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(300);
   const [showConsoleLevels, setShowConsoleLevels] = useState<{
     info: boolean;
     warn: boolean;
@@ -396,8 +394,6 @@ const NetworkInspector = ({
     logs: true,
     analytics: false,
     redux: false,
-    bundle: false,
-    performance: false,
     crash: false,
     device: false,
     storage: false,
@@ -424,9 +420,7 @@ const NetworkInspector = ({
     setConsoleModuleEnabled(!!tabVisibility.logs);
     setAnalyticsModuleEnabled(!!tabVisibility.analytics);
     setReduxModuleEnabled(!!tabVisibility.redux);
-    setPerformanceModuleEnabled(!!tabVisibility.performance);
     setCrashModuleEnabled(!!tabVisibility.crash);
-    setBundleModuleEnabled(!!tabVisibility.bundle);
   }, [tabVisibility]);
 
   // Query native hardware RAM and auto-tune limits if auto-RAM is active
@@ -460,8 +454,6 @@ const NetworkInspector = ({
       logs: true,
       analytics: false,
       redux: false,
-      bundle: false,
-      performance: false,
       crash: false,
       device: false,
       storage: false,
@@ -534,8 +526,6 @@ const NetworkInspector = ({
             logs: true,
             analytics: false,
             redux: false,
-            bundle: false,
-            performance: false,
             crash: false,
             device: false,
             storage: false,
@@ -2504,27 +2494,6 @@ export {
 } from './helpers/gaAnalyticsRegistry';
 
 export {
-  usePerformanceTracker,
-  useComponentProfiler,
-  useNavigationProfiler,
-  trackComponentRender,
-  trackNavigationTransition,
-  trackHeavyTask,
-  measureAsync,
-  getHermesMemoryStats,
-  registerComponentProfile,
-  subscribeRenderProfiles,
-  getRenderProfiles,
-  logPerformanceEvent,
-  clearPerformanceEvents,
-  subscribePerformanceEvents,
-  getPerformanceEvents,
-  getInitialRenderProfiles,
-  getInitialPerformanceEvents,
-  generateFixSnippet,
-} from './customHooks/performanceTracker';
-
-export {
   InspectLog,
   InspectTrackTime,
   InspectCatch,
@@ -2589,12 +2558,6 @@ export {
 } from './customHooks/crashHandler';
 
 export {
-  setMaxPerformanceEventsLimit,
-  getMaxPerformanceEventsLimit,
-  prunePerformanceEvents,
-} from './customHooks/performanceTracker';
-
-export {
   BrandSquareIcon,
   BrandCircleIcon,
 } from './components/NetworkIcons';
@@ -2629,8 +2592,6 @@ export {
   GAEventCategory,
   StackFrameType,
   DiffResultType,
-  BundleSubTab,
-  PerformanceSubTab,
   CrashType,
   CrashExportFormat,
   CrashDetailSubTab,
@@ -2659,6 +2620,8 @@ export {
   addTranslations,
   setTranslations,
   I18nextProvider,
+  SUPPORTED_LANGUAGES,
+  type SupportedLanguageCode,
 } from './i18n';
 
 export {

@@ -15,33 +15,33 @@ export const BrandSquareIcon = ({size = 56}: {size?: number}) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256" fill="none">
       <Defs>
-        {/* App Tile Background - Crisp Royal Deep Violet to Midnight */}
+        {/* App Tile Background - Vibrant High-Contrast Indigo to Violet Gradient */}
         <LinearGradient id="bs_tile" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-          <Stop offset="0%" stopColor="#1E1B4B" />
-          <Stop offset="50%" stopColor="#18182F" />
-          <Stop offset="100%" stopColor="#0B0F19" />
+          <Stop offset="0%" stopColor="#4F46E5" />
+          <Stop offset="50%" stopColor="#4338CA" />
+          <Stop offset="100%" stopColor="#312E81" />
         </LinearGradient>
 
         {/* Outer Neon Cyber Border */}
         <LinearGradient id="bs_border" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
-          <Stop offset="0%" stopColor="#818CF8" stopOpacity={0.9} />
-          <Stop offset="45%" stopColor="#C084FC" stopOpacity={0.8} />
-          <Stop offset="80%" stopColor="#F472B6" stopOpacity={0.85} />
-          <Stop offset="100%" stopColor="#38BDF8" stopOpacity={0.9} />
+          <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={0.95} />
+          <Stop offset="30%" stopColor="#A5B4FC" stopOpacity={0.9} />
+          <Stop offset="70%" stopColor="#C084FC" stopOpacity={0.9} />
+          <Stop offset="100%" stopColor="#67E8F9" stopOpacity={0.95} />
         </LinearGradient>
 
         {/* Ambient Top Glow */}
         <RadialGradient id="bs_top_glow" cx="50%" cy="15%" r="65%">
-          <Stop offset="0%" stopColor="#818CF8" stopOpacity={0.35} />
-          <Stop offset="60%" stopColor="#A855F7" stopOpacity={0.12} />
-          <Stop offset="100%" stopColor="#1E1B4B" stopOpacity={0} />
+          <Stop offset="0%" stopColor="#A5B4FC" stopOpacity={0.5} />
+          <Stop offset="60%" stopColor="#818CF8" stopOpacity={0.2} />
+          <Stop offset="100%" stopColor="#312E81" stopOpacity={0} />
         </RadialGradient>
 
         {/* Owl Outer Body Gradient - High Contrast */}
         <LinearGradient id="bs_body" x1="64" y1="40" x2="192" y2="220" gradientUnits="userSpaceOnUse">
           <Stop offset="0%" stopColor="#3730A3" />
-          <Stop offset="50%" stopColor="#2E1065" />
-          <Stop offset="100%" stopColor="#17123A" />
+          <Stop offset="50%" stopColor="#1E1B4B" />
+          <Stop offset="100%" stopColor="#0F172A" />
         </LinearGradient>
 
         {/* Neon Cyber Beam Stroke */}

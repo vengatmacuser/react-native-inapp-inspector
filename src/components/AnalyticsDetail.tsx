@@ -310,7 +310,7 @@ const AnalyticsDetail = ({
 
           {itemsCount !== null && (
             <View style={detailStyles.itemsPill}>
-              <PackageIcon size={12} color="#1D4ED8" />
+              <PackageIcon size={12} color={AppColors.blue700} />
               <Text style={detailStyles.itemsValue}>
                 {itemsCount} items
               </Text>
@@ -692,23 +692,23 @@ const detailStyles = StyleSheet.create({
   revenueValue: {
     fontFamily: AppFonts.interBold,
     fontSize: 10.5,
-    color: '#047857',
+    color: AppColors.greenSuccessDark,
   },
   itemsPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: AppColors.blueTintBg,
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: AppColors.sky100,
   },
   itemsValue: {
     fontFamily: AppFonts.interBold,
     fontSize: 10.5,
-    color: '#1D4ED8',
+    color: AppColors.blue700,
   },
   tabsWrap: {
     marginBottom: 12,
@@ -831,7 +831,7 @@ const detailStyles = StyleSheet.create({
     color: AppColors.brandPurple,
   },
   typeBadge: {
-    backgroundColor: '#E2E8F0',
+    backgroundColor: AppColors.slate200,
     paddingHorizontal: 5,
     paddingVertical: 1.5,
     borderRadius: 3,
@@ -860,8 +860,8 @@ const detailStyles = StyleSheet.create({
     minHeight: 300,
   },
   highlight: {
-    backgroundColor: '#FEF08A',
-    color: '#854D0E',
+    backgroundColor: AppColors.yellow200,
+    color: AppColors.yellow800,
     fontFamily: AppFonts.interBold,
   },
 });

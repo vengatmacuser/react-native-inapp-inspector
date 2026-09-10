@@ -1,11 +1,6 @@
 import React, {useState} from 'react';
 import {useTranslation} from '../i18n';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import {ConsoleLogCardProps} from '../types';
@@ -15,12 +10,14 @@ import {
   getJsonPreviewText,
   parseStackLine,
   openInVSCode,
+  getSize,
+  getCleanCallerDisplay,
 } from '../helpers';
-import HighlightText from './HighlightText';
+import TouchableScale from './TouchableScale';
 import CopyButton from './CopyButton';
 import LogSyntaxHighlighter from './LogSyntaxHighlighter';
 import {
-  ChevronIcon,
+  ForwardChevronIcon,
   ExternalLinkIcon,
   FlaskIcon,
   ZapIcon,
@@ -39,6 +36,8 @@ import {
   FlameIcon,
   MoneyIcon,
   CircleCheckIcon,
+  CircleAlertIcon,
+  CircleXIcon,
   RefreshCcwIcon,
   PerformanceIcon,
   ChipIcon,
@@ -48,6 +47,8 @@ import {
   ShieldAlertIcon,
   LayoutIcon,
   ClockIcon,
+  SizeIcon,
+  PinIcon,
 } from './NetworkIcons';
 import {useInspector} from './Inspector/InspectorContext';
 
@@ -67,11 +68,14 @@ const getLogMessageWithBadges = (
     const tags = fullPrefix.match(/\[[^\]]+\]/g) || [];
 
     const getTagDecorator = (tag: string) => {
-      const clean = tag.replace(/[\[\]]/g, '').trim().toUpperCase();
+      const clean = tag
+        .replace(/[\[\]]/g, '')
+        .trim()
+        .toUpperCase();
 
       // Network / HTTP / API
       if (clean === 'AXIOS') {
-        return { color: AppColors.emerald600, Icon: ZapIcon, label: 'AXIOS' };
+        return {color: AppColors.emerald600, Icon: ZapIcon, label: 'AXIOS'};
       }
       if (
         clean === 'API' ||
@@ -80,7 +84,7 @@ const getLogMessageWithBadges = (
         clean === 'REST' ||
         clean === 'NETWORK'
       ) {
-        return { color: AppColors.sky600, Icon: GlobeIcon, label: clean };
+        return {color: AppColors.sky600, Icon: GlobeIcon, label: clean};
       }
       if (
         clean === 'GRAPHQL' ||
@@ -89,7 +93,7 @@ const getLogMessageWithBadges = (
         clean === 'MUTATION' ||
         clean === 'QUERY'
       ) {
-        return { color: AppColors.pink500, Icon: AtomIcon, label: clean };
+        return {color: AppColors.pink500, Icon: AtomIcon, label: clean};
       }
       if (
         clean === 'WS' ||
@@ -98,7 +102,7 @@ const getLogMessageWithBadges = (
         clean === 'SOCKET.IO' ||
         clean === 'REALTIME'
       ) {
-        return { color: AppColors.cyan600, Icon: SignalIcon, label: clean };
+        return {color: AppColors.cyan600, Icon: SignalIcon, label: clean};
       }
 
       // State Management
@@ -112,7 +116,7 @@ const getLogMessageWithBadges = (
         clean === 'ACTION' ||
         clean === 'DISPATCH'
       ) {
-        return { color: AppColors.violet600, Icon: AtomIcon, label: clean };
+        return {color: AppColors.violet600, Icon: AtomIcon, label: clean};
       }
 
       // Analytics & Tracking
@@ -127,7 +131,7 @@ const getLogMessageWithBadges = (
         clean === 'TRACK' ||
         clean === 'EVENT'
       ) {
-        return { color: AppColors.teal600, Icon: BarChartIcon, label: clean };
+        return {color: AppColors.teal600, Icon: BarChartIcon, label: clean};
       }
 
       // Auth & Security & User
@@ -140,7 +144,7 @@ const getLogMessageWithBadges = (
         clean === 'LOGOUT' ||
         clean === 'USER'
       ) {
-        return { color: AppColors.amber600, Icon: KeyIcon, label: clean };
+        return {color: AppColors.amber600, Icon: KeyIcon, label: clean};
       }
       if (
         clean === 'SECURITY' ||
@@ -148,7 +152,11 @@ const getLogMessageWithBadges = (
         clean === 'PERMISSION' ||
         clean === 'PERMISSIONS'
       ) {
-        return { color: AppColors.indigo600Alt, Icon: ShieldAlertIcon, label: clean };
+        return {
+          color: AppColors.indigo600Alt,
+          Icon: ShieldAlertIcon,
+          label: clean,
+        };
       }
 
       // Navigation & Routing & Screen
@@ -160,7 +168,7 @@ const getLogMessageWithBadges = (
         clean === 'ROUTER' ||
         clean === 'DEEPLINK'
       ) {
-        return { color: AppColors.indigo600Alt, Icon: MapPinIcon, label: clean };
+        return {color: AppColors.indigo600Alt, Icon: MapPinIcon, label: clean};
       }
 
       // Storage & Database & Cache
@@ -174,7 +182,7 @@ const getLogMessageWithBadges = (
         clean === 'REALM' ||
         clean === 'CACHE'
       ) {
-        return { color: AppColors.purple500, Icon: StorageIcon, label: clean };
+        return {color: AppColors.purple500, Icon: StorageIcon, label: clean};
       }
 
       // Performance & Lifecycle
@@ -185,7 +193,11 @@ const getLogMessageWithBadges = (
         clean === 'FPS' ||
         clean === 'MEMORY'
       ) {
-        return { color: AppColors.violet500, Icon: PerformanceIcon, label: clean };
+        return {
+          color: AppColors.violet500,
+          Icon: PerformanceIcon,
+          label: clean,
+        };
       }
       if (
         clean === 'INIT' ||
@@ -195,7 +207,7 @@ const getLogMessageWithBadges = (
         clean === 'MOUNT' ||
         clean === 'UNMOUNT'
       ) {
-        return { color: AppColors.blue600, Icon: ZapIcon, label: clean };
+        return {color: AppColors.blue600, Icon: ZapIcon, label: clean};
       }
 
       // Sync & Background & Workers
@@ -206,7 +218,7 @@ const getLogMessageWithBadges = (
         clean === 'JOB' ||
         clean === 'WORKER'
       ) {
-        return { color: AppColors.sky600, Icon: RefreshCcwIcon, label: clean };
+        return {color: AppColors.sky600, Icon: RefreshCcwIcon, label: clean};
       }
 
       // Push Notifications
@@ -217,7 +229,7 @@ const getLogMessageWithBadges = (
         clean === 'FCM' ||
         clean === 'APNS'
       ) {
-        return { color: AppColors.darkOrange, Icon: FlameIcon, label: clean };
+        return {color: AppColors.darkOrange, Icon: FlameIcon, label: clean};
       }
 
       // Payment & Commerce
@@ -230,7 +242,7 @@ const getLogMessageWithBadges = (
         clean === 'CHECKOUT' ||
         clean === 'CART'
       ) {
-        return { color: AppColors.emerald600, Icon: MoneyIcon, label: clean };
+        return {color: AppColors.emerald600, Icon: MoneyIcon, label: clean};
       }
 
       // Device & Hardware & BLE
@@ -242,13 +254,17 @@ const getLogMessageWithBadges = (
         clean === 'NFC' ||
         clean === 'SENSOR'
       ) {
-        return { color: AppColors.slate600, Icon: ChipIcon, label: clean };
+        return {color: AppColors.slate600, Icon: ChipIcon, label: clean};
       }
       if (clean === 'LOCATION' || clean === 'GPS' || clean === 'GEO') {
-        return { color: AppColors.emerald600, Icon: MapPinIcon, label: clean };
+        return {color: AppColors.emerald600, Icon: MapPinIcon, label: clean};
       }
       if (clean === 'APP') {
-        return { color: AppColors.indigo600Alt, Icon: SmartphoneIcon, label: 'APP' };
+        return {
+          color: AppColors.indigo600Alt,
+          Icon: SmartphoneIcon,
+          label: 'APP',
+        };
       }
 
       // UI & Theme
@@ -259,26 +275,26 @@ const getLogMessageWithBadges = (
         clean === 'STYLE' ||
         clean === 'LAYOUT'
       ) {
-        return { color: AppColors.pink600, Icon: LayoutIcon, label: clean };
+        return {color: AppColors.pink600, Icon: LayoutIcon, label: clean};
       }
 
       // Testing & Samples
       if (clean === 'TEST' || clean === 'MOCK' || clean === 'SPEC') {
-        return { color: AppColors.emerald500, Icon: FlaskIcon, label: 'TEST' };
+        return {color: AppColors.emerald500, Icon: FlaskIcon, label: 'TEST'};
       }
       if (clean === 'SAMPLE' || clean === 'BATCH') {
-        return { color: AppColors.indigo600Alt, Icon: DiceIcon, label: clean };
+        return {color: AppColors.indigo600Alt, Icon: DiceIcon, label: clean};
       }
 
       // Debug / Config
       if (clean === 'CONFIG' || clean === 'ENV' || clean === 'SETTINGS') {
-        return { color: AppColors.slate700, Icon: SettingsIcon, label: clean };
+        return {color: AppColors.slate700, Icon: SettingsIcon, label: clean};
       }
       if (clean === 'DEBUG' || clean === 'TRACE') {
-        return { color: AppColors.purpleText, Icon: TerminalIcon, label: clean };
+        return {color: AppColors.purpleText, Icon: TerminalIcon, label: clean};
       }
       if (clean === 'INFO') {
-        return { color: AppColors.sky600, Icon: InfoCircleIcon, label: 'INFO' };
+        return {color: AppColors.sky600, Icon: InfoCircleIcon, label: 'INFO'};
       }
 
       // Statuses & Warnings / Errors
@@ -288,10 +304,14 @@ const getLogMessageWithBadges = (
         clean === 'DONE' ||
         clean === 'PASSED'
       ) {
-        return { color: AppColors.green600, Icon: CircleCheckIcon, label: clean };
+        return {color: AppColors.green600, Icon: CircleCheckIcon, label: clean};
       }
       if (clean === 'WARN' || clean === 'WARNING') {
-        return { color: AppColors.amber600, Icon: AlertTriangleIcon, label: 'WARN' };
+        return {
+          color: AppColors.amber600,
+          Icon: AlertTriangleIcon,
+          label: 'WARN',
+        };
       }
       if (
         clean === 'ERROR' ||
@@ -314,14 +334,13 @@ const getLogMessageWithBadges = (
               : 'ERROR',
         };
       }
-
-      return { color: AppColors.slate600, Icon: TagIcon, label: clean };
+      return {color: AppColors.slate600, Icon: TagIcon, label: clean};
     };
 
     return (
-      <View style={{flexDirection: 'column', gap: 6}}>
-        <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 5}}>
-          {tags.map((tag, i) => {
+      <View style={{flexDirection: 'column', gap: 2}}>
+        <View style={{flexDirection: 'row', gap: 4, overflow: 'hidden'}}>
+          {tags.slice(0, 2).map((tag, i) => {
             const dec = getTagDecorator(tag);
             const IconComp = dec.Icon;
             return (
@@ -330,11 +349,11 @@ const getLogMessageWithBadges = (
                 style={[
                   styles.prefixTag,
                   {
-                    backgroundColor: `${dec.color}14`,
-                    borderColor: `${dec.color}33`,
+                    backgroundColor: `${dec.color}12`,
+                    borderColor: `${dec.color}30`,
                   },
                 ]}>
-                <IconComp color={dec.color} size={10} />
+                <IconComp color={dec.color} size={8.5} />
                 <Text style={[styles.prefixTagText, {color: dec.color}]}>
                   {dec.label}
                 </Text>
@@ -346,8 +365,8 @@ const getLogMessageWithBadges = (
           text={remainingText}
           search={searchStr}
           style={textStyle}
-          numberOfLines={numberOfLines}
-          detectLinks={true}
+          numberOfLines={1}
+          detectLinks={false}
         />
       </View>
     );
@@ -358,8 +377,8 @@ const getLogMessageWithBadges = (
       text={message}
       search={searchStr}
       style={textStyle}
-      numberOfLines={numberOfLines}
-      detectLinks={true}
+      numberOfLines={numberOfLines || 2}
+      detectLinks={false}
     />
   );
 };
@@ -370,15 +389,21 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 }: ConsoleLogCardProps) {
   const {setSelectedLog} = useInspector();
   const {t} = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(false);
   const jsonContent = getJsonContent(item.message);
   const isAnalyticsError = item.message
     .toLowerCase()
     .includes('[analytics error]');
-  const isUserLog = item.sourceMethod === 'log';
-  const parsedCaller = item.caller && item.caller !== 'Unknown'
-    ? parseStackLine(item.caller, true)
-    : null;
+  const parsedCaller = React.useMemo(() => {
+    const info = getCleanCallerDisplay(item.caller);
+    if (!info) return null;
+    const parsed = parseStackLine(item.caller, true);
+    return {
+      ...parsed,
+      display: info.display,
+      fileName: info.fileName,
+      lineNumber: info.lineNumber || parsed.lineNumber,
+    };
+  }, [item.caller]);
 
   const getLogColors = () => {
     const type = (item.type || 'log').toLowerCase();
@@ -386,255 +411,249 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
 
     if (isAnalyticsError || type === 'error' || method === 'error') {
       return {
+        badgeColor: AppColors.errorColor,
         border: AppColors.errorColor,
         badgeBg: `${AppColors.errorColor}18`,
         badgeText: AppColors.errorColor,
         label: 'ERROR',
         cardBg: AppColors.errorCardBg,
-        methodBorder: `${AppColors.errorColor}30`,
-        methodBg: `${AppColors.errorColor}12`,
-        methodText: AppColors.errorColor,
-        textColor: AppColors.redErrorText,
+        statusPillBg: `${AppColors.errorColor}14`,
+        statusPillBorder: `${AppColors.errorColor}33`,
+        statusPillText: AppColors.errorColor,
+        StatusIcon: CircleXIcon,
       };
     }
     if (type === 'warn' || method === 'warn') {
       return {
-        border: AppColors.amber600,
-        badgeBg: `${AppColors.amber600}18`,
-        badgeText: AppColors.amber800,
+        badgeColor: AppColors.darkOrange,
+        border: AppColors.darkOrange,
+        badgeBg: `${AppColors.darkOrange}18`,
+        badgeText: AppColors.darkOrange,
         label: 'WARN',
         cardBg: AppColors.warnCardBg,
-        methodBorder: `${AppColors.amber600}33`,
-        methodBg: `${AppColors.amber600}14`,
-        methodText: AppColors.amber800,
-        textColor: AppColors.amber800,
+        statusPillBg: `${AppColors.darkOrange}14`,
+        statusPillBorder: `${AppColors.darkOrange}33`,
+        statusPillText: AppColors.darkOrange,
+        StatusIcon: CircleAlertIcon,
       };
     }
     if (type === 'debug' || method === 'debug') {
       return {
-        border: AppColors.purple500,
-        badgeBg: `${AppColors.purple500}18`,
+        badgeColor: AppColors.purple,
+        border: AppColors.purple,
+        badgeBg: `${AppColors.purple}18`,
         badgeText: AppColors.purple,
         label: 'DEBUG',
         cardBg: AppColors.purpleTintBg,
-        methodBorder: `${AppColors.purple500}33`,
-        methodBg: `${AppColors.purple500}12`,
-        methodText: AppColors.purple,
-        textColor: AppColors.purpleText,
+        statusPillBg: `${AppColors.purple}14`,
+        statusPillBorder: `${AppColors.purple}33`,
+        statusPillText: AppColors.purple,
+        StatusIcon: ZapIcon,
       };
     }
     if (method === 'info' || (type === 'info' && method !== 'log')) {
       return {
-        border: AppColors.sky500,
-        badgeBg: `${AppColors.sky500}18`,
+        badgeColor: AppColors.sky600,
+        border: AppColors.sky600,
+        badgeBg: `${AppColors.sky600}18`,
         badgeText: AppColors.sky600,
         label: 'INFO',
         cardBg: AppColors.blueTintBg,
-        methodBorder: `${AppColors.sky500}33`,
-        methodBg: `${AppColors.sky500}12`,
-        methodText: AppColors.sky600,
-        textColor: AppColors.blue800,
+        statusPillBg: `${AppColors.sky600}14`,
+        statusPillBorder: `${AppColors.sky600}33`,
+        statusPillText: AppColors.sky600,
+        StatusIcon: InfoCircleIcon,
       };
     }
 
     // Default / Standard console.log
     return {
-      border: AppColors.indigo500,
-      badgeBg: `${AppColors.indigo500}15`,
-      badgeText: AppColors.indigo600Alt,
+      badgeColor: AppColors.brandPurple,
+      border: AppColors.brandPurple,
+      badgeBg: `${AppColors.brandPurple}15`,
+      badgeText: AppColors.brandPurple,
       label: 'LOG',
       cardBg: AppColors.white,
-      methodBorder: AppColors.dividerColor,
-      methodBg: AppColors.indigo50,
-      methodText: AppColors.indigo600Alt,
-      textColor: AppColors.primaryBlack,
+      statusPillBg: `${AppColors.brandPurple}12`,
+      statusPillBorder: `${AppColors.brandPurple}2E`,
+      statusPillText: AppColors.brandPurple,
+      StatusIcon: CircleCheckIcon,
     };
   };
 
   const colors = getLogColors();
+  const StatusIconComp = colors.StatusIcon;
 
-  const jsonPreview = jsonContent
-    ? getJsonPreviewText(jsonContent.data)
-    : null;
+  const jsonPreview = jsonContent ? getJsonPreviewText(jsonContent.data) : null;
 
   const openDetail = () => {
     setSelectedLog(item);
   };
 
-  const toggleExpand = (e?: any) => {
-    e?.stopPropagation?.();
-    setIsExpanded(prev => !prev);
-  };
+  const sourceMethodName =
+    ('sourceMethod' in item ? item.sourceMethod : undefined) ||
+    item.type ||
+    'log';
 
   return (
     <View style={styles.container}>
-      <Pressable
+      <TouchableScale
         onPress={openDetail}
-        style={({pressed}) => [
+        style={[
           styles.card,
           {
-            borderLeftColor: colors.border,
             borderLeftWidth: 3.5,
+            borderLeftColor: colors.border,
             backgroundColor: colors.cardBg,
           },
-          pressed && styles.cardPressed,
         ]}>
-        {/* Header Row */}
-        <View style={styles.cardHeader}>
-          <View style={styles.headerLeft}>
-            <View style={styles.idBadge}>
-              <Text style={styles.idBadgeText}>
+        <View style={styles.cardBody}>
+          {/* Row 1: Header Row (Serial, Method Badge, Source Chip, JSON Type, Duplicate Badge, Status Pill) */}
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <Text style={styles.serialNumber}>
                 #{item.id != null ? item.id + 1 : 1}
               </Text>
-            </View>
-            <View style={[styles.typeChip, {backgroundColor: colors.badgeBg}]}>
-              <View
-                style={[styles.typeDot, {backgroundColor: colors.badgeText}]}
-              />
-              <Text style={[styles.typeChipText, {color: colors.badgeText, fontFamily: AppFonts.interBold}]}>
-                {colors.label}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.metaChip,
-                {
-                  backgroundColor: colors.methodBg,
-                  borderColor: colors.methodBorder,
-                },
-              ]}>
-              <Text
-                style={[styles.metaChipText, {color: colors.methodText, fontFamily: AppFonts.interBold}]}>
-                console.
-                {('sourceMethod' in item ? item.sourceMethod : undefined) ||
-                  item.type ||
-                  'log'}
-              </Text>
-            </View>
-            {jsonContent && (
+
+              {/* Vibrant Method Badge (like GET/POST in API list card) */}
               <View
                 style={[
-                  styles.metaChip,
+                  styles.methodBadge,
+                  {backgroundColor: colors.badgeColor},
+                ]}>
+                <Text style={styles.methodBadgeText}>{colors.label}</Text>
+              </View>
+
+              {/* Source Method Chip */}
+              <View
+                style={[
+                  styles.chip,
                   {
-                    backgroundColor: `${AppColors.teal600}14`,
-                    borderColor: `${AppColors.teal600}33`,
+                    backgroundColor: `${colors.badgeColor}12`,
+                    borderColor: `${colors.badgeColor}2E`,
                   },
                 ]}>
-                <Text
-                  style={[styles.metaChipText, {color: AppColors.teal600, fontFamily: AppFonts.interBold}]}>
-                  {Array.isArray(jsonContent.data)
-                    ? `Array[${jsonContent.data.length}]`
-                    : `Object{${Object.keys(jsonContent.data).length}}`}
+                <Text style={[styles.chipText, {color: colors.badgeColor}]} numberOfLines={1}>
+                  console.{sourceMethodName}
                 </Text>
               </View>
-            )}
-            {'duplicateCount' in item &&
-              item.duplicateCount != null &&
-              item.duplicateCount > 1 && (
+
+              {/* Structured JSON Payload Type Badge */}
+              {jsonContent && (
                 <View
                   style={[
-                    styles.metaChip,
+                    styles.chip,
                     {
-                      backgroundColor: `${AppColors.purple}1A`,
-                      borderColor: `${AppColors.purple}3D`,
+                      backgroundColor: `${AppColors.teal600}14`,
+                      borderColor: `${AppColors.teal600}33`,
                     },
                   ]}>
-                  <Text
-                    style={[styles.metaChipText, {color: AppColors.purple, fontFamily: AppFonts.interBold}]}>
-                    ×{item.duplicateCount}
+                  <Text style={[styles.chipText, {color: AppColors.teal600}]}>
+                    {Array.isArray(jsonContent.data)
+                      ? `Array[${jsonContent.data.length}]`
+                      : `Object{${Object.keys(jsonContent.data).length}}`}
                   </Text>
                 </View>
               )}
+
+              {/* Duplicate Count Badge */}
+              {'duplicateCount' in item &&
+                item.duplicateCount != null &&
+                item.duplicateCount > 1 && (
+                  <View style={styles.dupBadge}>
+                    <Text style={styles.dupBadgeText}>
+                      ×{item.duplicateCount}
+                    </Text>
+                  </View>
+                )}
+            </View>
+
+            {/* Right Status Pill & Chevron */}
+            <View style={styles.cardHeaderRight}>
+              <View
+                style={[
+                  styles.statusPill,
+                  {
+                    backgroundColor: colors.statusPillBg,
+                    borderColor: colors.statusPillBorder,
+                  },
+                ]}>
+                <StatusIconComp color={colors.statusPillText} size={9.5} />
+                <Text
+                  style={[styles.statusPillText, {color: colors.statusPillText}]}>
+                  {colors.label}
+                </Text>
+              </View>
+              <ForwardChevronIcon color={AppColors.grayTextWeak} size={13} />
+            </View>
           </View>
 
-          <View style={styles.headerRight}>
-            <CopyButton value={item.message} label={t('console.logMessage')} />
-            <ChevronIcon color={AppColors.grayTextWeak} size={14} />
-          </View>
-        </View>
-
-        {/* Body Content */}
-        <View style={styles.cardBody}>
-          {jsonContent ? (
-            <>
-              {jsonContent.header ? (
-                getLogMessageWithBadges(
-                  jsonContent.header,
-                  searchStr,
-                  [styles.messageText, {color: AppColors.primaryBlack}],
-                  styles.highlight,
-                  isExpanded ? undefined : 2,
-                )
-              ) : null}
-              {jsonPreview && (
-                <View style={styles.jsonPreviewContainer}>
+          {/* Row 2: Message Box (Spacious 68px static height for 3 lines) */}
+          <View style={styles.messageBox}>
+            {jsonContent ? (
+              <View style={styles.jsonPreviewRow}>
+                {jsonContent.header ? (
                   <LogSyntaxHighlighter
-                    text={jsonPreview.text}
+                    text={jsonContent.header}
                     search={searchStr}
-                    style={[
-                      styles.jsonPreviewText,
-                      {color: AppColors.primaryBlack},
-                    ]}
+                    style={styles.messageText}
                     detectLinks={false}
-                    numberOfLines={isExpanded ? undefined : 4}
+                    numberOfLines={1}
                   />
-                  {jsonPreview.text.split('\n').length > 4 && (
-                    <Pressable
-                      onPress={toggleExpand}
-                      hitSlop={6}
-                      style={styles.expandToggle}>
-                      <Text style={styles.expandToggleText}>
-                        {isExpanded ? 'Show less' : 'Show full preview'}
-                      </Text>
-                      <ChevronIcon
-                        color={AppColors.purple}
-                        size={11}
-                        direction={isExpanded ? 'up' : 'down'}
-                      />
-                    </Pressable>
-                  )}
-                </View>
-              )}
-            </>
-          ) : (
-            getLogMessageWithBadges(
-              item.message,
-              searchStr,
-              [styles.messageText, {color: AppColors.primaryBlack}],
-              styles.highlight,
-              isExpanded ? undefined : 4,
-            )
-          )}
-        </View>
+                ) : null}
+                {jsonPreview && (
+                  <LogSyntaxHighlighter
+                    text={jsonPreview.text.replace(/\s+/g, ' ')}
+                    search={searchStr}
+                    style={styles.jsonPreviewText}
+                    detectLinks={false}
+                    numberOfLines={jsonContent.header ? 2 : 3}
+                  />
+                )}
+              </View>
+            ) : (
+              getLogMessageWithBadges(
+                item.message,
+                searchStr,
+                styles.messageText,
+                styles.highlight,
+                3,
+              )
+            )}
+          </View>
 
-        {/* Footer Row */}
-        <View style={styles.cardFooter}>
-          <View style={styles.footerLeft}>
-            <ClockIcon color={AppColors.grayTextWeak} size={11} />
-            <Text style={styles.footerTime}>{formatTime(item.timestamp)}</Text>
-            {parsedCaller && (
-              <>
-                <View style={styles.footerDot} />
+          {/* Row 3: Footer Row (Timestamp & File Caller on Left, JSON Size & Badges on Right) */}
+          <View style={styles.cardFooterRow}>
+            <View style={styles.footerLeft}>
+              <View style={styles.cardDateRow}>
+                <ClockIcon color={AppColors.grayTextWeak} size={10} />
+                <Text style={styles.cardDateText} numberOfLines={1}>
+                  {formatTime(item.timestamp)}
+                </Text>
+              </View>
+
+              {parsedCaller && (
                 <Pressable
                   onPress={e => {
                     e.stopPropagation?.();
                     openInVSCode(
                       parsedCaller.rawFilePath ||
                         parsedCaller.fullPath ||
-                      parsedCaller.fileName,
+                        parsedCaller.fileName,
                       parsedCaller.lineNumber,
                       parsedCaller.columnNumber,
                     );
                   }}
                   hitSlop={8}
-                  style={styles.callerPill}>
+                  style={styles.callerChip}>
                   {parsedCaller.fileExt && parsedCaller.fileExt !== 'other' && (
                     <View
                       style={[
                         styles.extBadge,
                         {
                           backgroundColor:
-                            parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
+                            parsedCaller.fileExt === 'tsx' ||
+                            parsedCaller.fileExt === 'ts'
                               ? `${AppColors.brandPurple}22`
                               : `${AppColors.teal600}22`,
                         },
@@ -644,7 +663,8 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                           styles.extBadgeText,
                           {
                             color:
-                              parsedCaller.fileExt === 'tsx' || parsedCaller.fileExt === 'ts'
+                              parsedCaller.fileExt === 'tsx' ||
+                              parsedCaller.fileExt === 'ts'
                                 ? AppColors.brandPurple
                                 : AppColors.teal600,
                           },
@@ -654,261 +674,295 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                     </View>
                   )}
                   <Text
-                    style={styles.callerFileName}
+                    style={styles.callerChipText}
                     numberOfLines={1}
                     ellipsizeMode="middle">
-                    {parsedCaller.fileName}
-                    {parsedCaller.lineNumber ? `:${parsedCaller.lineNumber}` : ''}
+                    {parsedCaller.display}
                   </Text>
-                  <ExternalLinkIcon color={AppColors.sky600} size={8.5} />
+                  <ExternalLinkIcon color={AppColors.sky600} size={8} />
                 </Pressable>
-              </>
-            )}
+              )}
+            </View>
+
+            <View style={styles.footerRight}>
+              {jsonContent && (
+                <View style={styles.metaStatChip}>
+                  <SizeIcon color={AppColors.purple} size={8.5} />
+                  <Text style={styles.metaStatText}>
+                    {getSize(jsonContent.data)}
+                  </Text>
+                </View>
+              )}
+
+              {isAnalyticsError && (
+                <View
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: `${AppColors.skyBlue}15`,
+                      borderColor: `${AppColors.skyBlue}30`,
+                    },
+                  ]}>
+                  <Text style={[styles.chipText, {color: AppColors.skyBlue}]}>
+                    {t('console.analyticsBadge') || 'ANALYTICS'}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
 
-          {isAnalyticsError && (
-            <View style={styles.footerRight}>
-              <View
-                style={[
-                  styles.footerBadge,
-                  {
-                    backgroundColor: `${AppColors.skyBlue}15`,
-                    borderColor: `${AppColors.skyBlue}30`,
-                  },
-                ]}>
-                <Text style={[styles.footerBadgeText, {color: AppColors.skyBlue}]}>
-                  {t('console.analyticsBadge')}
-                </Text>
-              </View>
-            </View>
-          )}
+          {/* Bottom Accent Bar (matching LogCard waterfall bar height) */}
+          <View
+            style={[
+              styles.bottomAccentBar,
+              {backgroundColor: `${colors.border}35`},
+            ]}
+          />
         </View>
-      </Pressable>
+      </TouchableScale>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 10,
-    paddingVertical: 3.5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    height: 148,
+    justifyContent: 'center',
   },
   card: {
+    height: 140,
     alignSelf: 'stretch',
-    borderRadius: 11,
+    borderRadius: 10,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
-    borderLeftWidth: 3.5,
+    borderColor: AppColors.dividerColor,
+    shadowColor: AppColors.shadowColorString,
+  },
+  cardBody: {
+    height: '100%',
     paddingHorizontal: 12,
     paddingTop: 10,
-    paddingBottom: 9,
-    backgroundColor: AppColors.white,
-    shadowColor: AppColors.black,
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    shadowOffset: {width: 0, height: 1.5},
-    elevation: 1.5,
-  },
-  cardPressed: {
-    opacity: 0.88,
-    transform: [{scale: 0.995}],
-  },
-  cardHeader: {
-    flexDirection: 'row',
+    paddingBottom: 8,
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-    gap: 8,
   },
-  headerLeft: {
+  cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-    flex: 1,
+    justifyContent: 'space-between',
+    height: 22,
+    minHeight: 22,
+    maxHeight: 22,
   },
-  idBadge: {
+  cardHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+    gap: 6,
+    minWidth: 0,
+    overflow: 'hidden',
+  },
+  cardHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 0,
+  },
+  serialNumber: {
+    fontFamily: AppFonts.interBold,
+    color: AppColors.grayTextWeak,
+    fontSize: 10,
+  },
+  methodBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  methodBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
+    lineHeight: 12,
+    letterSpacing: 0.5,
+    color: AppColors.white,
+  },
+  chip: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: `${AppColors.slate500}12`,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: `${AppColors.slate500}22`,
   },
-  idBadgeText: {
+  chipText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-    letterSpacing: 0.2,
+    fontSize: 9,
+    lineHeight: 12,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  dupBadge: {
+    backgroundColor: `${AppColors.purple}14`,
+    borderColor: `${AppColors.purple}2E`,
+    borderWidth: 1,
+    paddingHorizontal: 4.5,
+    paddingVertical: 1,
+    borderRadius: 3.5,
   },
-  typeChip: {
+  dupBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 8.5,
+    color: AppColors.purple,
+  },
+  statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: 6,
-  },
-  typeDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  typeChipText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 9.5,
-    letterSpacing: 0.5,
-  },
-  metaChip: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
     borderWidth: 1,
+    flexShrink: 0,
   },
-  metaChipText: {
+  statusPillText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 9.5,
-    letterSpacing: 0.2,
+    fontSize: 10,
+    lineHeight: 13,
   },
-  cardBody: {
-    paddingVertical: 2,
+  messageBox: {
+    backgroundColor: AppColors.grayBackground,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: AppColors.dividerColor,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    height: 68,
+    minHeight: 68,
+    maxHeight: 68,
+    justifyContent: 'center',
+    gap: 2,
+    overflow: 'hidden',
   },
   messageText: {
     fontFamily: AppFonts.interMedium,
-    fontSize: 12.5,
+    fontSize: 12,
     color: AppColors.primaryBlack,
-    lineHeight: 18,
+    lineHeight: 17,
   },
   highlight: {
     backgroundColor: AppColors.yellowHighlight,
     color: AppColors.primaryBlack,
     borderRadius: 2,
   },
-  jsonPreviewContainer: {
-    marginTop: 6,
-    backgroundColor: AppColors.grayBackground,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
-    borderLeftWidth: 3,
-    borderLeftColor: AppColors.teal600,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+  jsonPreviewRow: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: 2,
   },
   jsonPreviewText: {
-    fontFamily: AppFonts.interRegular,
+    fontFamily: AppFonts.interMedium,
     fontSize: 11,
-    color: AppColors.primaryBlack,
-    lineHeight: 16,
+    color: AppColors.teal700,
+    lineHeight: 15,
   },
-  expandToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    marginTop: 5,
-    paddingVertical: 3,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.dividerColor,
-  },
-  expandToggleText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 10.5,
-    color: AppColors.purple,
-  },
-  cardFooter: {
+  cardFooterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 7,
-    paddingTop: 6,
-    borderTopWidth: 1,
-    borderTopColor: `${AppColors.dividerColor}88`,
+    height: 18,
+    minHeight: 18,
+    maxHeight: 18,
     gap: 6,
   },
   footerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
     flex: 1,
-    flexWrap: 'wrap',
+    minWidth: 0,
+    overflow: 'hidden',
   },
   footerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
+    flexShrink: 0,
   },
-  footerDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: AppColors.grayTextWeak,
-    opacity: 0.6,
-  },
-  footerId: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-  },
-  footerTime: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 10,
-    color: AppColors.grayTextWeak,
-    letterSpacing: 0.1,
-  },
-  callerPill: {
+  cardDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    maxWidth: 185,
-    backgroundColor: `${AppColors.sky600}10`,
-    borderColor: `${AppColors.sky600}2B`,
+    gap: 3.5,
+  },
+  cardDateText: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 10,
+    lineHeight: 13,
+    color: AppColors.slate400,
+  },
+  callerChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: AppColors.skySoftBg,
+    borderColor: AppColors.skySoftBorder,
     borderWidth: 1,
-    borderRadius: 5,
     paddingHorizontal: 5,
     paddingVertical: 1.5,
+    borderRadius: 4,
+    flexShrink: 1,
+    minWidth: 0,
   },
   extBadge: {
     borderRadius: 3,
-    paddingHorizontal: 3.5,
+    paddingHorizontal: 3,
     paddingVertical: 0.5,
   },
   extBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 8,
+    fontSize: 7.5,
   },
-  callerFileName: {
-    fontFamily: AppFonts.interBold,
-    color: AppColors.sky600,
-    fontSize: 9.5,
-  },
-  footerBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1.5,
-    borderRadius: 5,
-    borderWidth: 1,
-  },
-  footerBadgeText: {
-    fontFamily: AppFonts.interBold,
+  callerChipText: {
+    color: AppColors.skySoftText,
     fontSize: 9,
+    lineHeight: 12,
+    fontFamily: AppFonts.interBold,
+  },
+  metaStatChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: AppColors.violetSoftBg,
+    borderColor: AppColors.violetSoftBorder,
+    borderWidth: 1,
+    paddingHorizontal: 5.5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  metaStatText: {
+    fontFamily: AppFonts.interBold,
+    color: AppColors.violetSoftText,
+    fontSize: 9,
+    lineHeight: 12,
   },
   prefixTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3.5,
-    paddingHorizontal: 6.5,
-    paddingVertical: 2,
-    borderRadius: 5,
+    gap: 2.5,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 3.5,
     borderWidth: 1,
   },
   prefixTagText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 9.5,
+    fontSize: 8.5,
     letterSpacing: 0.3,
   },
+  bottomAccentBar: {
+    height: 2.5,
+    width: '100%',
+    borderRadius: 1.5,
+    marginTop: 2,
+  },
 });
+
+export default ConsoleLogCard;

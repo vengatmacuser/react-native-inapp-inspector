@@ -483,7 +483,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
-    backgroundColor: '#E2E8F0',
+    backgroundColor: colors.grayBorderSecondary,
     width: '100%',
   },
   domainProgressSegment: {

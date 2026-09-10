@@ -287,10 +287,6 @@ const InspectorHeader = React.memo(() => {
         return 'APIs (Network)';
       case 'logs':
         return 'Console Logs';
-      case 'performance':
-        return 'Performance Tracker';
-      case 'bundle':
-        return 'Bundle Analyzer';
       case 'crash':
         return 'Crash Protection';
       case 'analytics':

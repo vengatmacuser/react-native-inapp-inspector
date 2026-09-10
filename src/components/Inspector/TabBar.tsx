@@ -17,9 +17,7 @@ import {
   SignalIcon,
   TerminalIcon,
   AnalyticsIcon,
-  PackageIcon,
   ReduxIcon,
-  PerformanceIcon,
   CrashIcon,
   SmartphoneIcon,
   DatabaseIcon,
@@ -31,6 +29,39 @@ import {
 import {isReduxConnected} from '../../customHooks/reduxLogger';
 import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
 import {isLocalDebugEnvironment} from '../../helpers';
+
+const HEADER_TAB_THEME = {
+  themeColor: AppColors.brandPurple, // #4F46E5 Header Brand Purple
+  bgInactive: `${AppColors.brandPurple}0D`,
+  borderInactive: `${AppColors.brandPurple}2B`,
+  iconInactive: AppColors.brandPurple,
+  idBadgeBg: `${AppColors.brandPurple}1C`,
+  idBadgeBorder: `${AppColors.brandPurple}3D`,
+  idBadgeText: AppColors.brandPurple,
+};
+
+const TAB_THEMES: Record<
+  string,
+  {
+    themeColor: string;
+    bgInactive: string;
+    borderInactive: string;
+    iconInactive: string;
+    idBadgeBg: string;
+    idBadgeBorder: string;
+    idBadgeText: string;
+  }
+> = {
+  apis: HEADER_TAB_THEME,
+  logs: HEADER_TAB_THEME,
+  analytics: HEADER_TAB_THEME,
+  redux: HEADER_TAB_THEME,
+  storage: HEADER_TAB_THEME,
+  device: HEADER_TAB_THEME,
+  crash: HEADER_TAB_THEME,
+  debugging: HEADER_TAB_THEME,
+  media: HEADER_TAB_THEME,
+};
 
 const TabBar = React.memo(() => {
   const {
@@ -106,7 +137,7 @@ const TabBar = React.memo(() => {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-            <ChevronIcon direction="left" size={13} color={AppColors.purple} />
+            <ChevronIcon direction="left" size={13} color={AppColors.grayTextStrong} />
           </View>
         </TouchableOpacity>
       )}
@@ -176,20 +207,6 @@ const TabBar = React.memo(() => {
             },
             {
               id: 8,
-              key: 'bundle',
-              label: 'Bundle',
-              count: 0,
-              icon: 'bundle',
-            },
-            {
-              id: 9,
-              key: 'performance',
-              label: 'Performance',
-              count: 0,
-              icon: 'performance',
-            },
-            {
-              id: 10,
               key: 'debugging',
               label: 'Debugging',
               count: 0,
@@ -212,12 +229,9 @@ const TabBar = React.memo(() => {
           })
           .map(tab => {
             const isActive = activeTab === tab.key;
-            const iconColor = isActive
-              ? AppColors.white
-              : tab.key === 'crash' && tab.count > 0
-              ? AppColors.errorColor
-              : AppColors.grayText;
-            const countLabel = tab.count > 9 ? '9+' : String(tab.count);
+            const theme = TAB_THEMES[tab.key] || TAB_THEMES.apis;
+            const iconColor = isActive ? AppColors.white : theme.iconInactive;
+            const countLabel = tab.count > 99 ? '99+' : String(tab.count);
             const hasUnreadApis =
               activeTab !== 'apis' && logs.length > lastReadApisCount;
             const hasUnreadLogs =
@@ -225,6 +239,7 @@ const TabBar = React.memo(() => {
             const hasUnreadCrashes =
               activeTab !== 'crash' &&
               (crashRecords?.length || 0) > (lastReadCrashesCount || 0);
+
             return (
               <TouchableScale
                 key={tab.key}
@@ -233,7 +248,17 @@ const TabBar = React.memo(() => {
                 }}
                 style={[
                   styles.contentTabButton,
-                  isActive && styles.contentTabButtonActive,
+                  {
+                    backgroundColor: isActive ? theme.themeColor : theme.bgInactive,
+                    borderColor: isActive ? theme.themeColor : theme.borderInactive,
+                  },
+                  isActive && {
+                    shadowColor: theme.themeColor,
+                    shadowOffset: {width: 0, height: 2},
+                    shadowOpacity: 0.28,
+                    shadowRadius: 3.5,
+                    elevation: 3,
+                  },
                 ]}>
                 <View
                   style={{
@@ -262,12 +287,6 @@ const TabBar = React.memo(() => {
                   {tab.icon === 'crash' && (
                     <CrashIcon color={iconColor} size={14} />
                   )}
-                  {tab.icon === 'bundle' && (
-                    <PackageIcon color={iconColor} size={14} />
-                  )}
-                  {tab.icon === 'performance' && (
-                    <PerformanceIcon color={iconColor} size={14} />
-                  )}
                   {tab.icon === 'debugging' && (
                     <QrCodeIcon color={iconColor} size={14} />
                   )}
@@ -279,11 +298,11 @@ const TabBar = React.memo(() => {
                       borderRadius: 10,
                       backgroundColor: isActive
                         ? `${AppColors.white}33`
-                        : `${AppColors.purple}1F`,
+                        : theme.idBadgeBg,
                       borderWidth: 1,
                       borderColor: isActive
                         ? `${AppColors.white}66`
-                        : `${AppColors.purple}40`,
+                        : theme.idBadgeBorder,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
@@ -292,7 +311,7 @@ const TabBar = React.memo(() => {
                         fontFamily: AppFonts.interBold,
                         fontSize: 9.5,
                         lineHeight: 12,
-                        color: isActive ? AppColors.white : AppColors.purple,
+                        color: isActive ? AppColors.white : theme.idBadgeText,
                       }}>
                       #{tab.id}
                     </Text>
@@ -302,10 +321,41 @@ const TabBar = React.memo(() => {
                     ellipsizeMode="tail"
                     style={[
                       styles.contentTabButtonText,
-                      isActive && styles.contentTabButtonTextActive,
+                      {
+                        color: isActive ? AppColors.white : AppColors.grayTextStrong,
+                        fontFamily: isActive ? AppFonts.interBold : AppFonts.interSemiBold,
+                      },
                     ]}>
-                    {tab.label} {tab.count > 0 ? `(${countLabel})` : ''}
+                    {tab.label}
                   </Text>
+                  {tab.count > 0 && (
+                    <View
+                      style={{
+                        paddingHorizontal: 5,
+                        paddingVertical: 1,
+                        borderRadius: 8,
+                        backgroundColor: isActive
+                          ? 'rgba(255,255,255,0.25)'
+                          : theme.idBadgeBg,
+                        borderWidth: 0.5,
+                        borderColor: isActive
+                          ? 'rgba(255,255,255,0.45)'
+                          : theme.idBadgeBorder,
+                        marginLeft: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 9.5,
+                          lineHeight: 12,
+                          color: isActive ? AppColors.white : theme.themeColor,
+                        }}>
+                        {countLabel}
+                      </Text>
+                    </View>
+                  )}
                   {((tab.key === 'apis' && hasUnreadApis) ||
                     (tab.key === 'logs' && hasUnreadLogs) ||
                     (tab.key === 'crash' && hasUnreadCrashes)) && (
@@ -347,7 +397,7 @@ const TabBar = React.memo(() => {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-            <ChevronIcon direction="right" size={13} color={AppColors.purple} />
+            <ChevronIcon direction="right" size={13} color={AppColors.grayTextStrong} />
           </View>
         </TouchableOpacity>
       )}
@@ -381,15 +431,25 @@ const TabBar = React.memo(() => {
               {
                 marginRight: 0,
                 borderRadius: 8,
-                backgroundColor: isMediaActive ? AppColors.purple : AppColors.graySurface,
-                borderColor: isMediaActive ? AppColors.purple : AppColors.dividerColor,
+                backgroundColor: isMediaActive
+                  ? AppColors.brandPurple
+                  : `${AppColors.brandPurple}0D`,
+                borderColor: isMediaActive
+                  ? AppColors.brandPurple
+                  : `${AppColors.brandPurple}2B`,
                 borderWidth: 1,
                 paddingHorizontal: 10,
                 paddingVertical: 7,
                 alignItems: 'center',
                 justifyContent: 'center',
               },
-              isMediaActive && styles.contentTabButtonActive,
+              isMediaActive && {
+                shadowColor: AppColors.brandPurple,
+                shadowOffset: {width: 0, height: 2},
+                shadowOpacity: 0.28,
+                shadowRadius: 3.5,
+                elevation: 3,
+              },
             ]}>
             <View
               style={{
@@ -398,7 +458,7 @@ const TabBar = React.memo(() => {
                 justifyContent: 'center',
               }}>
               <ScreencastIcon
-                color={isMediaActive ? AppColors.white : AppColors.grayText}
+                color={isMediaActive ? AppColors.white : AppColors.brandPurple}
                 size={15}
               />
               {mediaCount > 0 && (
@@ -411,11 +471,11 @@ const TabBar = React.memo(() => {
                     height: 7,
                     borderRadius: 3.5,
                     backgroundColor: isMediaActive
-                      ? AppColors.emerald400
-                      : AppColors.purple,
+                      ? AppColors.white
+                      : AppColors.brandPurple,
                     borderWidth: 1.2,
                     borderColor: isMediaActive
-                      ? AppColors.purple
+                      ? AppColors.brandPurple
                       : AppColors.white,
                   }}
                 />

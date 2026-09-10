@@ -63,24 +63,24 @@ export const tokenizeText = (input: string): Token[] => {
 const getTokenColor = (type: Token['type']): string => {
   switch (type) {
     case 'key':
-      return AppColors.sky600 || '#0369a1';
+      return AppColors.sky600;
     case 'string':
-      return AppColors.emerald600 || '#059669';
+      return AppColors.emerald600;
     case 'number':
-      return AppColors.amber600 || '#d97706';
+      return AppColors.amber600;
     case 'boolean':
-      return AppColors.purple || '#7c3aed';
+      return AppColors.purple;
     case 'null':
-      return AppColors.red600 || '#dc2626';
+      return AppColors.red600;
     case 'url':
-      return '#0284c7';
+      return AppColors.sky600;
     case 'tag':
-      return AppColors.violet600 || '#7c3aed';
+      return AppColors.violet600;
     case 'bracket':
-      return AppColors.slate500 || '#64748b';
+      return AppColors.slate500;
     case 'plain':
     default:
-      return AppColors.primaryBlack || '#1e293b';
+      return AppColors.primaryBlack;
   }
 };
 

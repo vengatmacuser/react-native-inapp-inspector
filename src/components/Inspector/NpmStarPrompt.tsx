@@ -257,7 +257,7 @@ export const NpmStarPrompt: React.FC = () => {
               ]}
             />
             <View style={styles.iconCircle}>
-              <StarIcon size={26} color="#F59E0B" />
+              <StarIcon size={26} color={AppColors.amber500} />
             </View>
           </View>
 
@@ -289,7 +289,7 @@ export const NpmStarPrompt: React.FC = () => {
             </View>
             <View style={styles.metricDot} />
             <View style={styles.metricItem}>
-              <NpmIcon size={13} color="#CB3837" />
+              <NpmIcon size={13} color={AppColors.npmRed} />
               <Text style={styles.metricText}>npm Package</Text>
             </View>
             <View style={styles.metricDot} />
@@ -381,15 +381,15 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#F59E0B22',
+    backgroundColor: `${AppColors.amber500}22`,
   },
   iconCircle: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: AppColors.amber100,
     borderWidth: 2,
-    borderColor: '#FDE68A',
+    borderColor: AppColors.amber200,
     alignItems: 'center',
     justifyContent: 'center',
   },

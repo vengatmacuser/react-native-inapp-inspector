@@ -28,8 +28,6 @@ const MODULE_KEYS: ActiveTab[] = [
   'storage',
   'device',
   'crash',
-  'bundle',
-  'performance',
   'debugging',
 ];
 

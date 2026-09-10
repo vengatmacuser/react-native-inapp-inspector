@@ -1,8 +1,11 @@
 import React from 'react';
-import { StatusBar } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {StatusBar} from 'react-native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import NetworkInspector, {
   ErrorBoundary,
   connectReduxStore,
@@ -11,9 +14,9 @@ import NetworkInspector, {
   BrandSquareIcon,
 } from 'react-native-inapp-inspector';
 
-import { mockStore } from './src/store/mockStore';
-import { HomeScreen } from './src/screens/HomeScreen';
-import { DetailsScreen } from './src/screens/DetailsScreen';
+import {mockStore} from './src/store/mockStore';
+import {HomeScreen} from './src/screens/HomeScreen';
+import {DetailsScreen} from './src/screens/DetailsScreen';
 
 // ⚡ Call BEFORE any component renders so axios.create() is already patched
 setupNetworkLogger();
@@ -28,7 +31,6 @@ const Stack = createNativeStackNavigator();
 const navigationRef = createNavigationContainerRef();
 
 function App() {
-
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -40,8 +42,7 @@ function App() {
               contentStyle: {
                 backgroundColor: '#F8FAFC',
               },
-            }}
-          >
+            }}>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Details" component={DetailsScreen} />
           </Stack.Navigator>
@@ -52,7 +53,7 @@ function App() {
         navigationRef={navigationRef}
         environment="DEV"
         appIcon={<BrandSquareIcon />}
-        enabled={false}
+        enabled={true}
         initialVisible={false}
       />
     </SafeAreaProvider>

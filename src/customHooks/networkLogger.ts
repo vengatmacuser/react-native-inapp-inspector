@@ -139,28 +139,6 @@ function parseRequestData(data: any): any {
   return data;
 }
 
-// ✅ Magic function to extract file and line number from the call stack
-function getCallerFromStack(): string {
-  try {
-    const stack = new Error().stack;
-    if (!stack) return "Unknown";
-    const lines = stack.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      // Skip internal react-native network modules and the logger itself
-      if (
-        line.includes("networkLogger") ||
-        line.includes("node_modules") ||
-        line.includes("Error") ||
-        line.includes("regeneratorRuntime")
-      ) {
-        continue;
-      }
-      return line.trim().replace(/^at /, "");
-    }
-  } catch (e) {}
-  return "Unknown";
-}
 
 // ─── Subscribe ────────────────────────────────────────────────────────────────
 
@@ -257,7 +235,6 @@ export const setupNetworkLogger = () => {
       this.__logUrl = typeof url === "string" ? url : String(url);
       this.__logRequestHeaders = {};
       this.__logStartTime = Date.now();
-      this.__logCaller = getCallerFromStack();
 
       return originalOpen.apply(this, [method, url, async !== false, user, password]);
     };
@@ -285,7 +262,6 @@ export const setupNetworkLogger = () => {
       const id = counter++;
       this.__logId = id;
       const start = this.__logStartTime || Date.now();
-      const caller = this.__logCaller || "Unknown";
       const requestHeaders = this.__logRequestHeaders;
 
       let client = "xhr";
@@ -294,8 +270,6 @@ export const setupNetworkLogger = () => {
         url.toLowerCase().includes("/graphql")
       ) {
         client = "apollo";
-      } else if (caller.toLowerCase().includes("axios")) {
-        client = "axios";
       }
 
       const currentRoute = currentRouteProvider ? currentRouteProvider() : null;
@@ -305,7 +279,6 @@ export const setupNetworkLogger = () => {
         url,
         method,
         startTime: start,
-        caller,
         client,
         routeInfo: currentRoute || undefined,
         request: method === "GET" ? undefined : parseRequestData(body),
@@ -351,7 +324,6 @@ export const setupNetworkLogger = () => {
           response: responseData,
           duration,
           startTime: start,
-          caller,
           client,
           responseHeaders,
         });
@@ -370,7 +342,6 @@ export const setupNetworkLogger = () => {
           response: "Network request failed",
           duration,
           startTime: start,
-          caller,
           client,
         });
       };
@@ -398,13 +369,11 @@ export const setupNetworkLogger = () => {
 
       if (shouldIgnoreUrl(finalUrl)) return originalFetch(url, options);
 
-      let caller = "Unknown";
       let requestHeaders: Record<string, string> | undefined;
       let client = "fetch";
 
       try {
         requestHeaders = normaliseHeaders(options?.headers);
-        caller = getCallerFromStack(); // ✅ Capture call line
 
         if (
           requestHeaders?.["apollographql-client-name"] ||
@@ -415,8 +384,6 @@ export const setupNetworkLogger = () => {
           requestHeaders?.["x-requested-with"]?.toLowerCase().includes("xmlhttprequest")
         ) {
           client = "xhr";
-        } else if (caller?.toLowerCase().includes("axios")) {
-          client = "axios";
         }
 
         const currentRoute = currentRouteProvider ? currentRouteProvider() : null;
@@ -426,7 +393,6 @@ export const setupNetworkLogger = () => {
           url: finalUrl,
           method,
           startTime: start,
-          caller,
           client,
           routeInfo: currentRoute || undefined,
           request: method === "GET" ? undefined : parseRequestData(options?.body),
@@ -473,7 +439,6 @@ export const setupNetworkLogger = () => {
             response: data,
             duration,
             startTime: start,
-            caller,
             client,
             responseHeaders,
           });
@@ -489,7 +454,6 @@ export const setupNetworkLogger = () => {
             status: 0,
             startTime: start,
             response: error,
-            caller,
             client,
             duration: Date.now() - start,
           });
@@ -530,7 +494,6 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
 
     const id = counter++;
     const start = Date.now();
-    const caller = getCallerFromStack(); // ✅ Capture call line
 
     let url = config.url ?? "";
     if (!url.startsWith("http")) url = `${config.baseURL ?? ""}${url}`;
@@ -540,7 +503,6 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
 
     config.__logId = id;
     config.__logStart = start;
-    config.__logCaller = caller;
 
     const currentRoute = currentRouteProvider ? currentRouteProvider() : null;
 
@@ -549,7 +511,6 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       url,
       method,
       startTime: start,
-      caller,
       client: "axios",
       routeInfo: currentRoute || undefined,
       request: method === "GET" ? undefined : parseRequestData(config.data),
@@ -564,7 +525,6 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       const config = response.config || {};
       const id = config.__logId;
       const start = config.__logStart;
-      const caller = config.__logCaller;
       const method = (config.method || "GET").toUpperCase();
 
       if (id == null) return response;
@@ -580,7 +540,6 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
         response: response.data,
         startTime: start || Date.now(),
         duration: start != null ? Date.now() - start : undefined,
-        caller,
         client: "axios",
         responseHeaders: normaliseHeaders(response.headers),
       });
@@ -591,7 +550,6 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
       const config = error.config || {};
       const id = config.__logId;
       const start = config.__logStart;
-      const caller = config.__logCaller;
       const method = (config.method || "GET").toUpperCase();
 
       if (id != null) {
@@ -606,7 +564,6 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
           response: error.response?.data ?? error.message,
           startTime: start || Date.now(),
           duration: start != null ? Date.now() - start : undefined,
-          caller,
           client: "axios",
           responseHeaders: normaliseHeaders(error.response?.headers),
         });

@@ -7,8 +7,6 @@ export const ActiveTab = {
   Analytics: 'analytics',
   Logs: 'logs',
   Redux: 'redux',
-  Bundle: 'bundle',
-  Performance: 'performance',
   Crash: 'crash',
   Device: 'device',
   Storage: 'storage',
@@ -68,8 +66,6 @@ export const SettingsPage = {
   Logs: 'logs',
   Analytics: 'analytics',
   Redux: 'redux',
-  Bundle: 'bundle',
-  Performance: 'performance',
   Crash: 'crash',
   Device: 'device',
   Storage: 'storage',
@@ -140,25 +136,6 @@ export const DiffResultType = {
 } as const;
 export type DiffResultType =
   (typeof DiffResultType)[keyof typeof DiffResultType];
-
-export const BundleSubTab = {
-  Overview: 'overview',
-  Production: 'production',
-  Files: 'files',
-  Packages: 'packages',
-  Media: 'media',
-  Optimizer: 'optimizer',
-} as const;
-export type BundleSubTab = (typeof BundleSubTab)[keyof typeof BundleSubTab];
-
-export const PerformanceSubTab = {
-  Overview: 'overview',
-  Renders: 'renders',
-  Interactions: 'interactions',
-  Memory: 'memory',
-} as const;
-export type PerformanceSubTab =
-  (typeof PerformanceSubTab)[keyof typeof PerformanceSubTab];
 
 export const CrashType = {
   Native: 'native',

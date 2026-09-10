@@ -837,8 +837,7 @@ export const parseStackLine = (
 
   // Clean file name (remove query strings, packager urls, and parent paths)
   let cleanPath = fullPath
-    .split('?')[0]
-    .split('&')[0]
+    .replace(/[?&].*$/, '')
     .replace(/[)]+$/, '')
     .replace(/\/\/+$/, '');
   // Remove protocol prefixes
@@ -846,7 +845,21 @@ export const parseStackLine = (
     /^(?:https?:\/\/[^\/]+\/|file:\/\/\/|webpack:\/\/\/?)/,
     '',
   );
-  const fileName = cleanPath.split('/').filter(Boolean).pop() || cleanPath;
+  let fileName = cleanPath.split('/').filter(Boolean).pop() || cleanPath;
+  fileName = fileName.replace(/[?&].*$/, '').replace(/[)]+$/, '');
+
+  // If fileName starts with & or ? or is empty or contains platform=
+  if (
+    fileName.startsWith('&') ||
+    fileName.startsWith('?') ||
+    fileName.startsWith('platform=') ||
+    fileName.includes('platform=') ||
+    fileName.startsWith('dev=') ||
+    fileName.includes('dev=')
+  ) {
+    fileName = 'Unknown';
+    cleanPath = 'Unknown';
+  }
 
   // Determine file extension (.tsx, .jsx, .ts, .js)
   const extMatch = fileName.match(/\.([a-z0-9]+)$/i);
@@ -880,7 +893,7 @@ export const parseStackLine = (
       fileExt === 'jsx' ||
       fileExt === 'ts' ||
       fileExt === 'js' ||
-      !fileName.includes('.bundle'));
+      (!fileName.includes('.bundle') && fileName !== 'Unknown'));
 
   const frameType: 'app' | 'dependency' | 'runtime' | 'native' = isUserCode
     ? 'app'
@@ -928,6 +941,74 @@ export const parseStackLine = (
     columnNumber,
     isOrigin,
     copyableLocation,
+  };
+};
+
+/** Extracts a clean human-readable caller label (file:line or function name) and removes &platform noise */
+export const getCleanCallerDisplay = (
+  caller?: string,
+): { fileName: string; lineNumber?: string; functionName?: string; display: string } | null => {
+  if (!caller || caller === 'Unknown' || caller.trim() === '') return null;
+  const trimmed = caller.trim();
+
+  // Strip query noise
+  if (
+    trimmed.startsWith('&platform') ||
+    trimmed.startsWith('?platform') ||
+    trimmed.startsWith('&') ||
+    trimmed.includes('&platform=') ||
+    trimmed.includes('?platform=')
+  ) {
+    const paren = trimmed.match(/^(.*?)\s*[\(@]/);
+    if (paren && paren[1] && !paren[1].includes('&') && !paren[1].includes('platform')) {
+      const fn = paren[1].trim();
+      if (fn && fn !== '<anonymous>' && fn !== 'anonymous' && !fn.startsWith('?anon_')) {
+        return { fileName: fn, functionName: fn, display: fn };
+      }
+    }
+    return null;
+  }
+
+  const parsed = parseStackLine(caller, true);
+  if (!parsed) return null;
+
+  const isBundleNoise =
+    parsed.fileName.includes('.bundle') ||
+    parsed.fileName.includes('platform=') ||
+    parsed.fileName.startsWith('&') ||
+    parsed.fileName.startsWith('?') ||
+    parsed.fileName === 'index.bundle' ||
+    parsed.fileName === 'bundle' ||
+    parsed.fileName === 'Unknown';
+
+  if (isBundleNoise) {
+    if (
+      parsed.functionName &&
+      parsed.functionName !== '<anonymous>' &&
+      parsed.functionName !== 'anonymous' &&
+      !parsed.functionName.startsWith('?') &&
+      !parsed.functionName.startsWith('_callee') &&
+      !parsed.functionName.includes('regeneratorRuntime')
+    ) {
+      return {
+        fileName: parsed.functionName,
+        lineNumber: parsed.lineNumber,
+        functionName: parsed.functionName,
+        display: parsed.functionName,
+      };
+    }
+    return null;
+  }
+
+  const display = parsed.lineNumber
+    ? `${parsed.fileName}:${parsed.lineNumber}`
+    : parsed.fileName;
+
+  return {
+    fileName: parsed.fileName,
+    lineNumber: parsed.lineNumber,
+    functionName: parsed.functionName,
+    display,
   };
 };
 

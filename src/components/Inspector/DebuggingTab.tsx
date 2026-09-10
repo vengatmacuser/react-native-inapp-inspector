@@ -550,7 +550,7 @@ export const DebuggingTab: React.FC = () => {
           <View style={styles.consoleContainer}>
             <View style={styles.consoleHeaderRow}>
               <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                <TerminalConsoleIcon color="#38BDF8" size={12} />
+                <TerminalConsoleIcon color={AppColors.sky400} size={12} />
                 <Text style={styles.consoleHeaderTitle}>GRADLE VERBOSE OUTPUT</Text>
               </View>
               <TouchableOpacity
@@ -572,11 +572,11 @@ export const DebuggingTab: React.FC = () => {
                 showsVerticalScrollIndicator>
                 {buildStatus.logs && buildStatus.logs.length > 0 ? (
                   buildStatus.logs.map((logLine, idx) => {
-                    let logColor = '#94A3B8';
-                    if (logLine.startsWith('> Task :')) logColor = '#38BDF8';
-                    else if (logLine.includes('BUILD SUCCESSFUL')) logColor = '#4ADE80';
-                    else if (logLine.includes('FAILURE') || logLine.includes('error:')) logColor = '#F87171';
-                    else if (logLine.includes('UP-TO-DATE')) logColor = '#A78BFA';
+                    let logColor = AppColors.slate400;
+                    if (logLine.startsWith('> Task :')) logColor = AppColors.sky400;
+                    else if (logLine.includes('BUILD SUCCESSFUL')) logColor = AppColors.buildSuccessGreen;
+                    else if (logLine.includes('FAILURE') || logLine.includes('error:')) logColor = AppColors.buildFailureRed;
+                    else if (logLine.includes('UP-TO-DATE')) logColor = AppColors.purple400;
 
                     return (
                       <Text key={idx} style={[styles.consoleLogLine, {color: logColor}]}>
@@ -988,10 +988,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   consoleContainer: {
-    backgroundColor: '#0F172A',
+    backgroundColor: AppColors.slate900,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: AppColors.slate800,
     overflow: 'hidden',
     marginTop: 4,
   },
@@ -999,14 +999,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1E293B',
+    backgroundColor: AppColors.slate800,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   consoleHeaderTitle: {
     fontFamily: AppFonts.interBold,
     fontSize: 10,
-    color: '#38BDF8',
+    color: AppColors.sky400,
     letterSpacing: 0.5,
   },
   consoleToggleBtn: {
@@ -1018,7 +1018,7 @@ const styles = StyleSheet.create({
   consoleToggleText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 9.5,
-    color: '#94A3B8',
+    color: AppColors.slate400,
   },
   consoleLogBox: {
     maxHeight: 140,
@@ -1036,7 +1036,7 @@ const styles = StyleSheet.create({
   consoleLogPlaceholder: {
     fontFamily: AppFonts.interRegular,
     fontSize: 10,
-    color: '#64748B',
+    color: AppColors.slate500,
     fontStyle: 'italic',
   },
   generateBtn: {

@@ -24,8 +24,6 @@ import AnalyticsTab from './AnalyticsTab';
 import AnalyticsDetail from '../AnalyticsDetail';
 import ReduxTab from './ReduxTab';
 import ReduxDetail from './ReduxDetail';
-import BundleTab from './BundleTab';
-import PerformanceTab from './PerformanceTab';
 import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
 import DeviceInfoTab from './DeviceInfoTab';
@@ -155,8 +153,6 @@ const MainScreen = () => {
                       {activeTab === 'logs' && <ConsoleTab />}
                       {activeTab === 'analytics' && <AnalyticsTab />}
                       {activeTab === 'redux' && <ReduxTab />}
-                      {activeTab === 'bundle' && <BundleTab />}
-                      {activeTab === 'performance' && <PerformanceTab />}
                       {activeTab === 'crash' && <CrashTab />}
                       {activeTab === 'device' && <DeviceInfoTab />}
                       {activeTab === 'storage' && <StorageTab />}

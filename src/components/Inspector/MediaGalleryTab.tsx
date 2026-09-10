@@ -793,7 +793,7 @@ const galleryStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: 2,
-    shadowColor: '#000',
+    shadowColor: AppColors.black,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.4,
     shadowRadius: 4,
