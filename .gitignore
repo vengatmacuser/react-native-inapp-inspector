@@ -35,6 +35,8 @@ node_modules_backup/
 .eslintcache
 coverage/
 .npmrc
+node
+version
 
 # Internal developer docs (not published)
 developerReadme.md
