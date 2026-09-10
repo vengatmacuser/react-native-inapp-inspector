@@ -345,8 +345,10 @@ async function main() {
   let newVersion;
   newVersion = step(`Bump version (${BUMP})`, () => {
     if (FLAGS.dryRun) return preview;
-    const out = run(`npm version ${BUMP} -m "chore(release): v%s"`);
-    return out.replace(/^v/, '').trim();
+    run(`npm version ${BUMP} -m "chore(release): v%s"`);
+    return JSON.parse(
+      fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'),
+    ).version;
   });
   const tag = `v${newVersion}`;
 
