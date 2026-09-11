@@ -20,7 +20,6 @@ import {
   CheckIcon,
   GitHubIcon,
   NpmIcon,
-  ClockIcon,
 } from '../NetworkIcons';
 
 // 5-day interval in milliseconds

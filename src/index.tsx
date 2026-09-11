@@ -7,7 +7,6 @@ import {
   Platform,
   UIManager,
   LogBox,
-  InteractionManager,
 } from 'react-native';
 import {NavigationContext} from '@react-navigation/native';
 
@@ -33,8 +32,6 @@ import {
   getEventCategory,
   matchNetworkLogQuery,
   setupMemoryWarningHandler,
-  pruneAllLogs,
-  subscribeMemoryWarning,
 } from './helpers';
 // #5 — settings persistence
 import {
@@ -65,9 +62,7 @@ import {
   setupConsoleLogger,
   clearConsoleLogs,
   subscribeConsoleLogs,
-  getConsoleLogs,
   setConsoleModuleEnabled,
-  setMaxConsoleLogsLimit,
 } from './customHooks/consoleLogger';
 import {IGNORED_LOG_PREFIXES} from './customHooks/logFilters';
 
@@ -75,12 +70,8 @@ import {IGNORED_LOG_PREFIXES} from './customHooks/logFilters';
 import {
   setupGlobalCrashHandler,
   subscribeCrashEvents,
-  emitCrashEvent,
   getCrashRecords,
   clearCrashRecords,
-  simulateTestCrash,
-  exportCrashReport,
-  parseCrashStackTrace,
   setMaxCrashLogsLimit,
   setCrashModuleEnabled,
 } from './customHooks/crashHandler';
@@ -98,7 +89,6 @@ import {
   autoSetupAnalyticsLogger,
   isAnalyticsConnected,
   setAnalyticsModuleEnabled,
-  setMaxAnalyticsLogsLimit,
 } from './customHooks/analyticsLogger';
 
 import {
@@ -112,22 +102,14 @@ import {
 } from './customHooks/reduxLogger';
 
 import {
-  showNativeFloatingButton,
   hideNativeFloatingButton,
-  setNativeFloatingButtonBadge,
   subscribeNativeFloatingButtonPress,
   subscribeNativeDeviceShake,
-  startNativeFpsMonitoring,
-  stopNativeFpsMonitoring,
-  getNativeFpsMetrics,
-  getNativeStorageItem,
-  setNativeStorageItem,
   isNativeModuleAvailable,
 } from './native/NativeInspector';
 
 import {
   fetchRemoteConfigModuleStatus,
-  isFirebaseRemoteConfigAvailable,
 } from './helpers/remoteConfig';
 import {ScreenCapture} from './capture';
 
@@ -147,8 +129,6 @@ import {
   AnalyticsFilters,
   NetworkInspectorProps,
   CrashRecord,
-  ParsedStackFrame,
-  CrashBreadcrumb,
   SearchScope,
 } from './types';
 import {LIB_VERSION} from './constants';
@@ -235,8 +215,11 @@ const NetworkInspector = ({
   const [sectionFilters, setSectionFilters] = useState<
     Record<string, Set<LocalFilter>>
   >({});
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
-    new Set(),
+  const [sectionExpandOverrides, setSectionExpandOverrides] = useState<
+    Map<string, boolean>
+  >(() => new Map());
+  const [sectionLimits, setSectionLimits] = useState<Record<string, number>>(
+    {},
   );
   const [showHeaderInfo, setShowHeaderInfo] = useState(true);
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
@@ -253,23 +236,10 @@ const NetworkInspector = ({
 
   // ─── Logs state ────────────────────────────────────────────────────────────
   const [consoleLogs, setConsoleLogs] = useState<ConsoleLog[]>([]);
-  const [selectedLog, setSelectedLog] = useState<ConsoleLog | null>(null);
-  // ─── Pause states ─────────────────────────────────────────────────────────
-  const [isNetworkPaused, setIsNetworkPaused] = useState<boolean>(false);
-  const isNetworkPausedRef = useRef(isNetworkPaused);
-  isNetworkPausedRef.current = isNetworkPaused;
   const latestNetworkLogsRef = useRef<NetworkLog[]>([]);
-
-  const [isConsolePaused, setIsConsolePaused] = useState<boolean>(false);
-  const isConsolePausedRef = useRef(isConsolePaused);
-  isConsolePausedRef.current = isConsolePaused;
   const latestConsoleLogsRef = useRef<ConsoleLog[]>([]);
-
-  const [isAnalyticsPaused, setIsAnalyticsPaused] = useState<boolean>(false);
-  const isAnalyticsPausedRef = useRef(isAnalyticsPaused);
-  isAnalyticsPausedRef.current = isAnalyticsPaused;
   const latestAnalyticsEventsRef = useRef<AnalyticsEvent[]>([]);
-
+  const [selectedLog, setSelectedLog] = useState<ConsoleLog | null>(null);
   const [lastReadLogsCount, setLastReadLogsCount] = useState(0);
   const [lastReadApisCount, setLastReadApisCount] = useState(0);
   const [lastReadCrashesCount, setLastReadCrashesCount] = useState(0);
@@ -1137,7 +1107,6 @@ const NetworkInspector = ({
       if (raw.length > 0) {
         pushNativeLogRecord('apis', JSON.stringify(raw[0]));
       }
-      if (isNetworkPausedRef.current) return;
       if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
 
       clearTimeout(timeoutId);
@@ -1192,7 +1161,6 @@ const NetworkInspector = ({
         if (raw.length > 0) {
           pushNativeLogRecord('analytics', JSON.stringify(raw[0]));
         }
-        if (isAnalyticsPausedRef.current) return;
         if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
 
         clearTimeout(analyticsTimeoutId);
@@ -1238,7 +1206,6 @@ const NetworkInspector = ({
       if (raw.length > 0) {
         pushNativeLogRecord('logs', JSON.stringify(raw[0]));
       }
-      if (isConsolePausedRef.current) return;
       if (!isVisibleRef.current) return; // ZERO-RENDER INACTIVE MODE
 
       clearTimeout(consoleTimeoutId);
@@ -1284,25 +1251,6 @@ const NetworkInspector = ({
   useEffect(() => {
     setMaxCrashLogsLimit(maxCrashLogs);
   }, [maxCrashLogs]);
-
-  useEffect(() => {
-    if (!isNetworkPaused && latestNetworkLogsRef.current.length > 0) {
-      const deduped = deduplicateLogs(latestNetworkLogsRef.current);
-      setLogs(deduped);
-    }
-  }, [isNetworkPaused]);
-
-  useEffect(() => {
-    if (!isAnalyticsPaused && latestAnalyticsEventsRef.current.length > 0) {
-      setAnalyticsEvents(latestAnalyticsEventsRef.current);
-    }
-  }, [isAnalyticsPaused]);
-
-  useEffect(() => {
-    if (!isConsolePaused && latestConsoleLogsRef.current.length > 0) {
-      setConsoleLogs(latestConsoleLogsRef.current);
-    }
-  }, [isConsolePaused]);
 
   useEffect(() => {
     setReqExpanded(true);
@@ -1406,7 +1354,7 @@ const NetworkInspector = ({
       result = collapsed;
     }
 
-    return result.slice(0, maxNetworkLogs);
+    return result;
   }, [
     logs,
     search,
@@ -1417,7 +1365,6 @@ const NetworkInspector = ({
     statusFilters,
     methodFilters,
     sortOrder,
-    maxNetworkLogs,
     showDuplicateLogs,
   ]);
 
@@ -1448,13 +1395,43 @@ const NetworkInspector = ({
     [],
   );
 
-  const toggleSectionCollapse = useCallback((pageName: string) => {
-    setCollapsedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(pageName)) next.delete(pageName);
-      else next.add(pageName);
-      return next;
-    });
+  const activePageName = useMemo(() => {
+    if (currentRouteRef.current?.path) {
+      const parts = currentRouteRef.current.path
+        .split(' ➔ ')
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      if (parts.length > 0) return parts[parts.length - 1];
+      return currentRouteRef.current.path;
+    }
+    if (filteredLogs.length > 0) {
+      const firstLog = filteredLogs[0];
+      const routeInfo =
+        logRouteMapRef.current.get(firstLog.id) || (firstLog as any)?.routeInfo;
+      return getLogPageName(firstLog, routeInfo);
+    }
+    return '';
+  }, [filteredLogs, navState]);
+
+  const toggleSectionCollapse = useCallback(
+    (pageName: string) => {
+      setSectionExpandOverrides(prev => {
+        const next = new Map(prev);
+        const isCurrentlyExpanded = next.has(pageName)
+          ? next.get(pageName)!
+          : pageName === activePageName;
+        next.set(pageName, !isCurrentlyExpanded);
+        return next;
+      });
+    },
+    [activePageName],
+  );
+
+  const loadMoreSection = useCallback((pageName: string, step = 50) => {
+    setSectionLimits(prev => ({
+      ...prev,
+      [pageName]: (prev[pageName] || 50) + step,
+    }));
   }, []);
 
   const groupedData = useMemo(() => {
@@ -1493,7 +1470,9 @@ const NetworkInspector = ({
       const activeFilters =
         sectionFilters[g.pageName] || new Set(['success', 'failed', 'loading']);
 
-      const isCollapsed = collapsedSections.has(g.pageName);
+      const isCollapsed = sectionExpandOverrides.has(g.pageName)
+        ? !sectionExpandOverrides.get(g.pageName)
+        : g.pageName !== activePageName;
       const timestamp = g.logs[0]?.startTime || 0;
 
       result.push({
@@ -1517,20 +1496,45 @@ const NetworkInspector = ({
           return activeFilters.has('success');
         });
 
-        displayLogs.forEach((log, index) => {
+        const limit = sectionLimits[g.pageName] || 50;
+        const visibleLogs = displayLogs.slice(0, limit);
+        const hasMore = displayLogs.length > limit;
+
+        visibleLogs.forEach(log => {
           result.push({
             type: 'log',
             id: `log-${log.id}`,
             log,
-            isLast: index === displayLogs.length - 1,
+            isLast: false,
             color: g.color,
           });
+        });
+
+        const remaining = Math.max(0, displayLogs.length - limit);
+        const step = Math.min(remaining || 50, 50);
+        result.push({
+          type: 'loadMore',
+          id: `loadmore-${g.pageName}`,
+          pageName: g.pageName,
+          color: g.color,
+          remainingCount: remaining,
+          totalCount: displayLogs.length,
+          loadedCount: visibleLogs.length,
+          loadMoreStep: step,
+          hasMore,
         });
       }
     });
 
     return result;
-  }, [filteredLogs, logs, sectionFilters, collapsedSections]);
+  }, [
+    filteredLogs,
+    logs,
+    sectionFilters,
+    sectionExpandOverrides,
+    activePageName,
+    sectionLimits,
+  ]);
 
   const {minStart, totalRange} = useMemo(() => {
     if (filteredLogs.length === 0) return {minStart: 0, totalRange: 0};
@@ -1921,7 +1925,8 @@ const NetworkInspector = ({
     setLogs([]);
     setSelectedLogs(new Set());
     setSectionFilters({});
-    setCollapsedSections(new Set());
+    setSectionExpandOverrides(new Map());
+    setSectionLimits({});
     setStatusFilters(new Set());
     setMethodFilters(new Set());
     setSearch('');
@@ -2041,7 +2046,8 @@ const NetworkInspector = ({
     setLogs([]);
     setSelectedLogs(new Set());
     setSectionFilters({});
-    setCollapsedSections(new Set());
+    setSectionExpandOverrides(new Map());
+    setSectionLimits({});
     setStatusFilters(new Set());
     setMethodFilters(new Set());
     prevLogIdsRef.current = new Set();
@@ -2160,9 +2166,8 @@ const NetworkInspector = ({
       newLogIds,
       toggleSectionFilter,
       toggleSectionCollapse,
+      loadMoreSection,
       handleDelete,
-      isNetworkPaused,
-      setIsNetworkPaused,
 
       // ─── Network detail ─────────────────────────────────────────────────
       detailTitle,
@@ -2194,8 +2199,6 @@ const NetworkInspector = ({
       logCounts,
       logSortOrder,
       setLogSortOrder,
-      isConsolePaused,
-      setIsConsolePaused,
 
       // ─── Analytics ──────────────────────────────────────────────────────
       analyticsEvents,
@@ -2211,8 +2214,6 @@ const NetworkInspector = ({
       setIsAnalyticsLayoutReady,
       analyticsHeaderExpanded,
       setAnalyticsHeaderExpanded,
-      isAnalyticsPaused,
-      setIsAnalyticsPaused,
 
       // ─── Redux ──────────────────────────────────────────────────────────
       reduxState,
@@ -2325,8 +2326,8 @@ const NetworkInspector = ({
       newLogIds,
       toggleSectionFilter,
       toggleSectionCollapse,
+      loadMoreSection,
       handleDelete,
-      isNetworkPaused,
       detailTitle,
       detailDisplayUrl,
       apiDetailActiveTab,
@@ -2344,7 +2345,6 @@ const NetworkInspector = ({
       logFilters,
       logCounts,
       logSortOrder,
-      isConsolePaused,
       analyticsEvents,
       filteredAnalyticsEvents,
       analyticsSearch,
@@ -2354,7 +2354,6 @@ const NetworkInspector = ({
       newEventIds,
       isAnalyticsLayoutReady,
       analyticsHeaderExpanded,
-      isAnalyticsPaused,
       reduxState,
       reduxLastActionMap,
       reduxSearch,
@@ -2558,9 +2557,13 @@ export {
 } from './customHooks/crashHandler';
 
 export {
-  BrandSquareIcon,
   BrandCircleIcon,
 } from './components/NetworkIcons';
+
+export {
+  ModuleErrorBoundary,
+  type ModuleErrorBoundaryProps,
+} from './components/ModuleErrorBoundary';
 
 export {
   connectAsyncStorage,

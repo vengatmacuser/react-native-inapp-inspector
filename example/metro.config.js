@@ -1,3 +1,4 @@
+/* eslint-disable no-extend-native */
 if (!Array.prototype.toReversed) {
   Array.prototype.toReversed = function () {
     return [...this].reverse();

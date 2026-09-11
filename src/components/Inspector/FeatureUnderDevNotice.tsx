@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {StyleSheet, Text, View, Pressable} from 'react-native';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
-import {WarningTriangleIcon, SparkleIcon, ClearIcon} from '../NetworkIcons';
+import {WarningTriangleIcon, ClearIcon} from '../NetworkIcons';
 
 interface FeatureUnderDevNoticeProps {
   featureName?: string;

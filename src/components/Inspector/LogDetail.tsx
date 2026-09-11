@@ -19,7 +19,6 @@ import {
   PrettyIcon,
   RawIcon,
   TableIcon,
-  HeadersIcon,
   LayersIcon,
   TerminalIcon,
   RequestIcon,

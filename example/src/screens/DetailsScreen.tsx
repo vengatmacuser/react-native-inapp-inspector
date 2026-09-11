@@ -56,17 +56,7 @@ export function DetailsScreen({ navigation }: any) {
             <Text style={styles.panelHeaderBadge}>ROUTE ACTIVE</Text>
           </View>
           <TouchableOpacity
-            style={[
-              styles.fullWidthBtn,
-              {
-                backgroundColor: '#059669',
-                marginBottom: 10,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              },
-            ]}
+            style={styles.detailsLogBtn}
             onPress={triggerDetailLogs}
           >
             <SvgTerminal color="#FFFFFF" size={14} />
@@ -74,16 +64,7 @@ export function DetailsScreen({ navigation }: any) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.fullWidthBtn,
-              {
-                backgroundColor: '#475569',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              },
-            ]}
+            style={styles.detailsBackBtn}
             onPress={() => navigation.goBack()}
           >
             <SvgArrowLeft color="#FFFFFF" size={14} />

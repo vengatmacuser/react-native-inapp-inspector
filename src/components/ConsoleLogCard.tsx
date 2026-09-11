@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {useTranslation} from '../i18n';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {AppColors} from '../styles/AppColors';
@@ -14,7 +14,6 @@ import {
   getCleanCallerDisplay,
 } from '../helpers';
 import TouchableScale from './TouchableScale';
-import CopyButton from './CopyButton';
 import LogSyntaxHighlighter from './LogSyntaxHighlighter';
 import {
   ForwardChevronIcon,
@@ -48,7 +47,6 @@ import {
   LayoutIcon,
   ClockIcon,
   SizeIcon,
-  PinIcon,
 } from './NetworkIcons';
 import {useInspector} from './Inspector/InspectorContext';
 

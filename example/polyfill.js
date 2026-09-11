@@ -1,3 +1,4 @@
+/* eslint-disable no-extend-native */
 const util = require('util');
 
 if (!util.styleText) {
@@ -11,3 +12,4 @@ if (!Array.prototype.toReversed) {
     return [...this].reverse();
   };
 }
+

@@ -5,7 +5,6 @@ import {
   Linking,
   Platform,
   Pressable,
-  ScrollView,
   StatusBar,
   Text,
   TouchableOpacity,
@@ -30,7 +29,6 @@ import {
   getAppVersionAndBuild,
 } from '../../helpers';
 import {
-  getNativeDeviceMetrics,
   triggerNativeHaptic,
 } from '../../native/NativeInspector';
 import {ScreenCapture, CapturedMediaItem} from '../../capture';
@@ -73,8 +71,6 @@ const InspectorHeader = React.memo(() => {
     setSelectedReduxAction,
     reduxState,
     reduxLastActionMap,
-    showHeaderInfo,
-    setShowHeaderInfo,
     updateAvailable,
     latestNpmVersion,
     clearAnim,
@@ -91,7 +87,6 @@ const InspectorHeader = React.memo(() => {
     detailTitle,
     activeTab,
     environment,
-    visible,
     selectedCrash,
     setSelectedCrash,
     refreshMediaCount,
@@ -100,10 +95,9 @@ const InspectorHeader = React.memo(() => {
   const {width: windowWidth} = useWindowDimensions();
   const isNarrow = windowWidth < 360;
   const isCompact = windowWidth < 400;
-  const isTablet = windowWidth >= 600;
 
   const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
-  const [appVersionString, setAppVersionString] = React.useState<string>(() => {
+  const [appVersionString] = React.useState<string>(() => {
     return getAppVersionAndBuild().formatted;
   });
 
@@ -312,7 +306,7 @@ const InspectorHeader = React.memo(() => {
   }, [modalHeightPercent, windowWidth]);
 
   const buttonSize = isNarrow ? 28 : isCompact ? 30 : 32;
-  const logoSize = isNarrow ? 42 : isCompact ? 46 : 50;
+  const logoSize = isNarrow ? 48 : isCompact ? 52 : 56;
 
   return (
     <>
@@ -320,7 +314,7 @@ const InspectorHeader = React.memo(() => {
         style={[
           styles.headerGradient,
           {
-            minHeight: (isNarrow ? 58 : 62) + headerTopPadding,
+            minHeight: (isNarrow ? 62 : 66) + headerTopPadding,
           },
         ]}>
         {/* LinearGradient as absolute background layer to avoid Fabric view recycling crash.

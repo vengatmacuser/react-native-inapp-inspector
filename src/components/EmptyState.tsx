@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {Animated, DevSettings, Alert, View, Text} from 'react-native';
+import {Animated, DevSettings, Alert, Text} from 'react-native';
 
 // Components
 import TouchableScale from './TouchableScale';

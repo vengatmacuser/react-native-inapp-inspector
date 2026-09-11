@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useEffect, useCallback} from 'react';
+import React, {useState, useMemo, useEffect} from 'react';
 import {
   Alert,
   Platform,
@@ -42,10 +42,7 @@ import {
   ScreenIcon,
   ListenerIcon,
   DocIcon,
-  LoadingSpinnerIcon,
-  CircleAlertIcon,
   ExternalLinkIcon,
-  SizeIcon,
   CodeBracketsIcon,
 } from '../NetworkIcons';
 
@@ -58,7 +55,7 @@ const getOriginBadge = (originType?: string) => {
       return {
         label: 'SAGA',
         renderIcon: (color: string, size = 9) => (
-          <BoltIcon color={color} size={size} />
+          <AtomIcon color={color} size={size} />
         ),
         bg: AppColors.purple100,
         text: AppColors.brandPurple,
@@ -68,17 +65,17 @@ const getOriginBadge = (originType?: string) => {
       return {
         label: 'THUNK',
         renderIcon: (color: string, size = 9) => (
-          <AtomIcon color={color} size={size} />
+          <BoltIcon color={color} size={size} />
         ),
         bg: AppColors.amber100,
         text: AppColors.amber800Warm,
         border: AppColors.amber200,
       };
-    case 'ui':
+    case 'epic':
       return {
-        label: 'UI',
+        label: 'EPIC',
         renderIcon: (color: string, size = 9) => (
-          <ScreenIcon color={color} size={size} />
+          <TerminalIcon color={color} size={size} />
         ),
         bg: AppColors.sky100,
         text: AppColors.sky600,
@@ -94,9 +91,19 @@ const getOriginBadge = (originType?: string) => {
         text: AppColors.teal700,
         border: AppColors.teal400,
       };
+    case 'component':
+      return {
+        label: 'UI DISPATCH',
+        renderIcon: (color: string, size = 9) => (
+          <ScreenIcon color={color} size={size} />
+        ),
+        bg: AppColors.sky100,
+        text: AppColors.sky600,
+        border: AppColors.sky400,
+      };
     default:
       return {
-        label: 'DIRECT',
+        label: 'DISPATCH',
         renderIcon: (color: string, size = 9) => (
           <BoltIcon color={color} size={size} />
         ),
@@ -114,7 +121,6 @@ const ReduxDetail = React.memo(() => {
     reduxLastActionMap,
     selectedReduxSlice,
     selectedReduxAction,
-    setSelectedReduxSlice,
   } = useInspector();
 
   // Search filter within details

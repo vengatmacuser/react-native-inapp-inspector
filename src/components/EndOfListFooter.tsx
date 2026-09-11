@@ -2,7 +2,7 @@ import React from 'react';
 import {Platform, StyleSheet, Text, View} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
-import {CheckIcon, ChevronIcon, PlusIcon} from './NetworkIcons';
+import {CheckIcon, ChevronIcon} from './NetworkIcons';
 import TouchableScale from './TouchableScale';
 import {useTranslation} from '../i18n';
 

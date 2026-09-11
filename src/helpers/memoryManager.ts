@@ -1,4 +1,4 @@
-import {AppState, NativeEventSubscription, Platform} from 'react-native';
+import {AppState, NativeEventSubscription} from 'react-native';
 import {pruneNetworkLogs} from '../customHooks/networkLogger';
 import {pruneConsoleLogs} from '../customHooks/consoleLogger';
 import {pruneReduxHistory} from '../customHooks/reduxLogger';
@@ -30,10 +30,8 @@ let lastPruneTimestamp = 0;
  */
 export const pruneAllLogs = (
   triggeredBy: MemoryPruneSummary['triggeredBy'] = 'manual',
-  targetRetentionPct: number = 0.5,
+  _targetRetentionPct: number = 0.5,
 ): MemoryPruneSummary => {
-  const targetPct = Math.max(0.1, Math.min(1.0, targetRetentionPct));
-
   const prunedNetwork = pruneNetworkLogs(undefined);
   const prunedConsole = pruneConsoleLogs(undefined);
   const prunedRedux = pruneReduxHistory(undefined);

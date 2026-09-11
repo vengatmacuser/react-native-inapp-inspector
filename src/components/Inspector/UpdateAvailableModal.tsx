@@ -6,11 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
-  Platform,
   Linking,
 } from 'react-native';
 import Svg, {Path} from 'react-native-svg';
-import {BrandSquareIcon} from '../BrandSquareIcon';
+import {BrandCircleIcon} from '../BrandCircleIcon';
 import {NpmIcon} from '../NetworkIcons';
 import {LIB_VERSION} from '../../constants';
 import {copyToClipboard} from '../../helpers';
@@ -209,7 +208,7 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
           {/* Icon Halo + Sparkle */}
           <View style={styles.headerSection}>
             <View style={styles.iconHaloRing}>
-              <BrandSquareIcon size={38} />
+              <BrandCircleIcon size={38} />
               <View style={styles.sparkleBadge}>
                 <SparkleSvg size={13} color={AppColors.amber500} />
               </View>

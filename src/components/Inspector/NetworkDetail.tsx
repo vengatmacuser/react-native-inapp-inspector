@@ -10,7 +10,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, {Circle} from 'react-native-svg';
 import {animateNextLayout, useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
 import SegmentedTabs from '../SegmentedTabs';
@@ -35,7 +34,6 @@ import {
 } from '../../helpers';
 import {
   FailIcon,
-  GlobeIcon,
   StatusIcon,
   HeadersIcon,
   RequestIcon,
@@ -101,54 +99,11 @@ const NetworkDetail = React.memo(() => {
       <View style={{paddingHorizontal: 8, paddingTop: 4}}>
         <View style={styles.detailInfoBar}>
           {(() => {
-            let schemeStr = '';
-            let hostStr = '';
-            let pathStr = detailDisplayUrl;
-            let queryStr = '';
-            try {
-              // Simple parsing fallback for React Native environments
-              const qIndex = detailDisplayUrl.indexOf('?');
-              let cleanUrlForParsing = detailDisplayUrl;
-              if (qIndex !== -1) {
-                pathStr = detailDisplayUrl.substring(0, qIndex);
-                queryStr = detailDisplayUrl.substring(qIndex);
-                cleanUrlForParsing = pathStr;
-              }
-              const schemeIndex =
-                cleanUrlForParsing.indexOf('://');
-              if (schemeIndex !== -1) {
-                schemeStr = cleanUrlForParsing.substring(
-                  0,
-                  schemeIndex + 3,
-                );
-                const withoutScheme =
-                  cleanUrlForParsing.substring(schemeIndex + 3);
-                const firstSlash = withoutScheme.indexOf('/');
-                if (firstSlash !== -1) {
-                  hostStr = withoutScheme.substring(
-                    0,
-                    firstSlash,
-                  );
-                  pathStr = withoutScheme.substring(firstSlash);
-                } else {
-                  hostStr = withoutScheme;
-                  pathStr = '/';
-                }
-              } else {
-                const firstSlash = cleanUrlForParsing.indexOf('/');
-                if (firstSlash !== -1) {
-                  hostStr = cleanUrlForParsing.substring(
-                    0,
-                    firstSlash,
-                  );
-                  pathStr = cleanUrlForParsing.substring(firstSlash);
-                } else if (cleanUrlForParsing) {
-                  hostStr = cleanUrlForParsing;
-                  pathStr = '/';
-                }
-              }
-            } catch (e) {}
-
+            const schemeIndex = detailDisplayUrl.indexOf('://');
+            const schemeStr =
+              schemeIndex !== -1
+                ? detailDisplayUrl.substring(0, schemeIndex + 3)
+                : '';
             return (
               <>
                 {/* Status & Metrics Badges Row */}

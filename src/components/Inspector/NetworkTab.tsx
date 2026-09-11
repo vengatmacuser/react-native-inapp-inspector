@@ -1,6 +1,5 @@
 import React, {useCallback, useMemo, useRef} from 'react';
 import {
-  Animated,
   FlatList,
   Platform,
   Pressable,
@@ -9,7 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import {animateNextLayout, useInspector} from './InspectorContext';
+import {useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
 import AnimatedEntrance from '../AnimatedEntrance';
 import DomainHeader from '../DomainHeader';
@@ -18,14 +17,12 @@ import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
 import NetworkFilterModal, {
   NetworkFilterState,
-  DEFAULT_NETWORK_FILTERS,
-  isNetworkFiltersDefault,
 } from './NetworkFilterModal';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
-import {STATUS_FILTERS, METHOD_COLORS} from '../../constants';
-import {GroupedListItem, Method, SearchScope} from '../../types';
+import {METHOD_COLORS} from '../../constants';
+import {GroupedListItem, Method} from '../../types';
 import {useTranslation} from '../../i18n';
 import {
   SearchIcon,
@@ -37,32 +34,20 @@ import {
   CheckIcon,
   CircleCheckIcon,
   CircleXIcon,
-  CircleAlertIcon,
   LayersIcon,
-  HeaderPauseIcon,
   ClockIcon,
-  GlobeIcon,
   RequestIcon,
   ResponseIcon,
-  HeadersIcon,
   AtomIcon,
-  BoltIcon,
-  ShieldAlertIcon,
 } from '../NetworkIcons';
-
-
 
 const NetworkTab = React.memo(() => {
   const {
     groupedData,
+    loadMoreSection,
     search,
     setSearch,
-    searchScope,
     setSearchScope,
-    isRegexSearch,
-    setIsRegexSearch,
-    isCaseSensitive,
-    setIsCaseSensitive,
     quickFilter,
     setQuickFilter,
     handleDelete,
@@ -73,7 +58,6 @@ const NetworkTab = React.memo(() => {
     setStatusFilters,
     methodFilters,
     setMethodFilters,
-    availableMethods,
     filteredLogs,
     logs,
     toggleSectionFilter,
@@ -83,31 +67,10 @@ const NetworkTab = React.memo(() => {
     newLogIds,
     toggleSelect,
     setSelected,
-    isNetworkPaused,
-    setIsNetworkPaused,
   } = useInspector();
 
   const {t} = useTranslation();
   const apisListRef = useRef<FlatList<any>>(null);
-  const [displayLimit, setDisplayLimit] = React.useState<number>(100);
-
-  const displayedGroupedData = useMemo(() => {
-    let logCount = 0;
-    const result: GroupedListItem[] = [];
-
-    for (const item of groupedData) {
-      if (item.type === 'header') {
-        result.push(item);
-      } else if (item.type === 'log') {
-        if (logCount < displayLimit) {
-          result.push(item);
-          logCount++;
-        }
-      }
-    }
-
-    return result;
-  }, [groupedData, displayLimit]);
 
   const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
@@ -247,42 +210,7 @@ const NetworkTab = React.memo(() => {
     [quickCounts],
   );
 
-  const networkMetrics = useMemo(() => {
-    if (!logs || logs.length === 0) return null;
-    let successCount = 0;
-    let completedCount = 0;
-    let totalDuration = 0;
-    let totalBytes = 0;
-    const durations: number[] = [];
 
-    logs.forEach(log => {
-      if (log.status != null) {
-        completedCount++;
-        const s = typeof log.status === 'number' ? log.status : parseInt(String(log.status), 10);
-        if (!isNaN(s)) {
-          if (s >= 200 && s < 400) {
-            successCount++;
-          }
-        }
-      }
-      if (typeof log.duration === 'number' && log.duration > 0) {
-        durations.push(log.duration);
-        totalDuration += log.duration;
-      }
-    });
-
-    durations.sort((a, b) => a - b);
-    const avgDuration = durations.length > 0 ? Math.round(totalDuration / durations.length) : 0;
-    const p95 = durations.length > 0 ? durations[Math.floor(durations.length * 0.95)] : 0;
-    const successRate = completedCount > 0 ? Math.round((successCount / completedCount) * 100) : 100;
-
-    return {
-      successRate,
-      avgDuration,
-      p95,
-      totalCount: logs.length,
-    };
-  }, [logs]);
 
   const renderItem = useCallback(
     ({item, index}: {item: GroupedListItem; index: number}) => {
@@ -301,6 +229,202 @@ const NetworkTab = React.memo(() => {
               timestamp={item.timestamp}
             />
           </AnimatedEntrance>
+        );
+      }
+
+      if (item.type === 'loadMore') {
+        const {
+          pageName,
+          color,
+          remainingCount,
+          totalCount,
+          loadedCount,
+          loadMoreStep,
+          hasMore,
+        } = item;
+        return (
+          <View
+            style={[
+              styles.treeNodeRow,
+              styles.treeNodeRowLast,
+            ]}>
+            <View style={styles.treeLines}>
+              <View
+                style={[
+                  styles.modernTreeLine,
+                  {borderColor: color},
+                  styles.modernTreeLineLast,
+                ]}
+              />
+            </View>
+            <View style={styles.treeCardWrapper}>
+              {hasMore ? (
+                <TouchableScale
+                  onPress={() => loadMoreSection(pageName, 50)}
+                  hitSlop={6}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 9,
+                    paddingHorizontal: 12,
+                    marginVertical: 3,
+                    marginRight: 2,
+                    borderRadius: 10,
+                    backgroundColor: `${color}14`,
+                    borderWidth: 1.5,
+                    borderColor: `${color}40`,
+                    shadowColor: color,
+                    shadowOffset: {width: 0, height: 1.5},
+                    shadowOpacity: 0.1,
+                    shadowRadius: 3,
+                    elevation: 2,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}>
+                    <View
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        backgroundColor: color,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        shadowColor: color,
+                        shadowOffset: {width: 0, height: 1},
+                        shadowOpacity: 0.25,
+                        shadowRadius: 2,
+                        elevation: 1,
+                      }}>
+                      <ChevronIcon
+                        color={AppColors.white}
+                        size={9}
+                        direction="down"
+                      />
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 12,
+                          color: color,
+                        }}>
+                        {t('footer.loadMoreRequests', {
+                          count: loadMoreStep,
+                          defaultValue: `Load ${loadMoreStep} More Requests`,
+                        })}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 9.5,
+                          color: AppColors.grayTextWeak,
+                          marginTop: 1,
+                        }}>
+                        Showing {loadedCount} of {totalCount} requests
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: `${color}25`,
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: `${color}40`,
+                      gap: 3,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10.5,
+                        color: color,
+                      }}>
+                      +{remainingCount}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 9,
+                        color: color,
+                      }}>
+                      more
+                    </Text>
+                  </View>
+                </TouchableScale>
+              ) : (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingVertical: 7,
+                    paddingHorizontal: 11,
+                    marginVertical: 3,
+                    marginRight: 2,
+                    borderRadius: 9,
+                    backgroundColor: `${color}0A`,
+                    borderWidth: 1,
+                    borderColor: `${color}25`,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 7,
+                    }}>
+                    <View
+                      style={{
+                        width: 17,
+                        height: 17,
+                        borderRadius: 8.5,
+                        backgroundColor: `${color}25`,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <CheckIcon color={color} size={8} />
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interMedium,
+                        fontSize: 11,
+                        color: AppColors.grayTextStrong,
+                      }}>
+                      {t('footer.allLoaded', {
+                        count: totalCount,
+                        defaultValue: `All ${totalCount} requests loaded`,
+                      })}
+                    </Text>
+                  </View>
+
+                  <View
+                    style={{
+                      backgroundColor: `${color}18`,
+                      paddingHorizontal: 7,
+                      paddingVertical: 2,
+                      borderRadius: 6,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 9.5,
+                        color: color,
+                      }}>
+                      {totalCount}/{totalCount}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </View>
         );
       }
 
@@ -351,79 +475,15 @@ const NetworkTab = React.memo(() => {
       search,
       toggleSectionFilter,
       toggleSectionCollapse,
+      loadMoreSection,
       setSelected,
+      t,
     ],
   );
 
   return (
     <View style={{flex: 1}}>
       <View style={{marginTop: 6}}>
-            {/* Network Health & Telemetry Strip */}
-            {networkMetrics != null && networkMetrics.totalCount > 0 && (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  backgroundColor: AppColors.grayBackground,
-                  borderRadius: 8,
-                  paddingHorizontal: 10,
-                  paddingVertical: 5.5,
-                  marginHorizontal: 12,
-                  marginBottom: 6,
-                  borderWidth: 1,
-                  borderColor: AppColors.dividerColor,
-                }}>
-                {/* Success Rate */}
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4.5}}>
-                  <View
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor:
-                        networkMetrics.successRate >= 95
-                          ? AppColors.greenColor
-                          : networkMetrics.successRate >= 80
-                          ? AppColors.amber500
-                          : AppColors.errorColor,
-                    }}
-                  />
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
-                    {networkMetrics.successRate}%
-                  </Text>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak}}>
-                    {t('network.successRate')}
-                  </Text>
-                </View>
-
-                <View style={{width: 1, height: 11, backgroundColor: AppColors.dividerColor}} />
-
-                {/* Avg Latency */}
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
-                  <ClockIcon color={AppColors.purple} size={10} />
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.purple}}>
-                    {networkMetrics.avgDuration}ms
-                  </Text>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak}}>
-                    {t('network.avgLatency')}
-                  </Text>
-                </View>
-
-                <View style={{width: 1, height: 11, backgroundColor: AppColors.dividerColor}} />
-
-                {/* P95 Latency */}
-                <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
-                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
-                    {networkMetrics.p95}ms
-                  </Text>
-                  <Text style={{fontFamily: AppFonts.interRegular, fontSize: 10, color: AppColors.grayTextWeak}}>
-                    P95
-                  </Text>
-                </View>
-              </View>
-            )}
-
             {/* Toolbar Row with Search & Actions */}
             <View style={styles.toolbarRow}>
               <View
@@ -491,27 +551,6 @@ const NetworkTab = React.memo(() => {
               </View>
 
               <View style={styles.toolbarRight}>
-                <TouchableScale
-                  style={[
-                    styles.toolbarBtn,
-                    isNetworkPaused && {
-                      borderColor: `${AppColors.darkOrange}50`,
-                      backgroundColor: `${AppColors.darkOrange}18`,
-                    },
-                  ]}
-                  onPress={() => setIsNetworkPaused(p => !p)}
-                  hitSlop={6}>
-                  <HeaderPauseIcon
-                    isPaused={isNetworkPaused}
-                    color={
-                      isNetworkPaused
-                        ? AppColors.darkOrange
-                        : AppColors.grayTextStrong
-                    }
-                    size={16}
-                  />
-                </TouchableScale>
-
                 <TouchableScale
                   style={[
                     styles.toolbarBtn,
@@ -781,7 +820,7 @@ const NetworkTab = React.memo(() => {
 
         <FlatList
           ref={apisListRef}
-          data={displayedGroupedData}
+          data={groupedData}
           keyExtractor={item => item?.id?.toString()}
           renderItem={renderItem}
           initialNumToRender={15}
@@ -815,11 +854,9 @@ const NetworkTab = React.memo(() => {
         ListFooterComponent={
           groupedData.length > 0 ? (
             <EndOfListFooter
-              count={Math.min(displayLimit, filteredLogs.length)}
+              count={filteredLogs.length}
               totalCount={filteredLogs.length}
               label="requests"
-              hasMore={filteredLogs.length > displayLimit}
-              onLoadMore={() => setDisplayLimit(p => p + 10)}
             />
           ) : null
         }

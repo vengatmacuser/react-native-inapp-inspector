@@ -265,7 +265,7 @@ export const parseCrashStackTrace = (stack?: string): ParsedStackFrame[] => {
       /^\d+\s+([^\s]+)\s+(0x[0-9a-fA-F]+)\s+(.+)$/,
     );
     if (machOMatch) {
-      const [, binaryName, address, symbol] = machOMatch;
+      const [, binaryName, , symbol] = machOMatch;
       const isAppCode =
         !binaryName.startsWith('lib') &&
         !binaryName.startsWith('Core') &&
@@ -925,8 +925,6 @@ export const setupGlobalCrashHandler = (): void => {
       try {
         const reason =
           eventOrError?.reason || eventOrError?.detail?.reason || eventOrError;
-        const message =
-          reason?.message || String(reason || t('crash.unhandledPromiseRejection'));
         const stack =
           reason?.stack || (eventOrError?.stack ?? new Error().stack);
 

@@ -9,31 +9,22 @@ import {
   PixelRatio,
   StatusBar,
   StyleSheet,
-  ActivityIndicator,
   NativeModules,
 } from 'react-native';
 import TouchableScale from '../TouchableScale';
-import CopyButton from '../CopyButton';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
 import {
-  SmartphoneIcon,
   CpuIcon,
   WifiIcon,
   ScreenIcon,
   LayersIcon,
   KeyIcon,
-  ShieldCheckIcon,
   SearchIcon,
   ClearIcon,
   CopyIcon,
-  CircleCheckIcon,
-  CircleAlertIcon,
   BoltIcon,
-  CheckIcon,
-  SignalIcon,
-  BrainIcon,
   AppleIcon,
   AndroidIcon,
   ExportIcon,
@@ -144,7 +135,6 @@ export const DeviceInfoTab = React.memo(() => {
   const {t} = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<DeviceSubTab>('overview');
   const [search, setSearch] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [deviceMetrics, setDeviceMetrics] = useState<NativeDeviceMetrics | null>(null);
   const [systemMetrics, setSystemMetrics] = useState<NativeSystemMetrics | null>(null);
   const [ipAddress, setIpAddress] = useState<string>('Detecting...');
@@ -163,8 +153,6 @@ export const DeviceInfoTab = React.memo(() => {
       setSystemMetrics(sysMetrics);
     } catch {
       // Fallback
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 

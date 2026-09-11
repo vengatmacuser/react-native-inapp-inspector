@@ -11,7 +11,6 @@ import NetworkInspector, {
   connectReduxStore,
   setupNetworkLogger,
   setupConsoleLogger,
-  BrandSquareIcon,
 } from 'react-native-inapp-inspector';
 
 import {mockStore} from './src/store/mockStore';
@@ -52,7 +51,6 @@ function App() {
       <NetworkInspector
         navigationRef={navigationRef}
         environment="DEV"
-        appIcon={<BrandSquareIcon />}
         enabled={true}
         initialVisible={false}
       />

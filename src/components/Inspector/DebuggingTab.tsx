@@ -5,29 +5,21 @@ import {
   ScrollView,
   StyleSheet,
   NativeModules,
-  Share,
   TouchableOpacity,
   ActivityIndicator,
   Animated,
-  Platform,
 } from 'react-native';
-import {useInspector} from './InspectorContext';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import QRCodeView from '../QRCodeView';
 import TouchableScale from '../TouchableScale';
-import CopyButton from '../CopyButton';
-import {copyToClipboard} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {
-  PackageIcon,
   InfoCircleIcon,
   CheckIcon,
   BoltIcon,
   CircleXIcon,
-  CopyIcon,
-  ExternalLinkIcon,
   SparkleIcon,
   AndroidIcon,
   RepeatIcon,
@@ -304,14 +296,6 @@ export const DebuggingTab: React.FC = () => {
 
   // Construct target download URL
   const apkDownloadUrl = `http://${hostIp}:${port}/${apkFileName.replace(/^\/+/, '')}`;
-
-  const handleShare = () => {
-    triggerNativeHaptic('light');
-    Share.share({
-      message: apkDownloadUrl,
-      title: 'Install Android APK',
-    });
-  };
 
   const isBuilding = buildStatus.status === 'running';
 

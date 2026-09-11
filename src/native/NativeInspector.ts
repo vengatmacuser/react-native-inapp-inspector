@@ -2,7 +2,6 @@ import {
   NativeModules,
   NativeEventEmitter,
   DeviceEventEmitter,
-  Platform,
 } from 'react-native';
 import NativeNetworkInspector from './NativeNetworkInspector';
 

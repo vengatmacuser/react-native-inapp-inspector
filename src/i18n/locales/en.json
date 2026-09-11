@@ -531,6 +531,8 @@
   "footer": {
     "endOfList": "You've reached the end of the list",
     "loadMore": "Load {{count}} More",
+    "loadMoreRequests": "Load {{count}} More Requests",
+    "allLoaded": "All {{count}} requests loaded",
     "showingOf": "Showing {{count}} of {{total}} {{label}}"
   },
   "performance": {

@@ -9,7 +9,6 @@ export interface IconProps {
   size?: number;
   strokeWidth?: number;
   isExpanded?: boolean;
-  isPaused?: boolean;
   active?: boolean;
   direction?: 'up' | 'down' | string;
   ascending?: boolean;
@@ -445,21 +444,7 @@ export const TrashIcon = ({color = AppColors.primaryLight, size = 18}: IconProps
   );
 };
 
-export const HeaderPauseIcon = ({
-  isPaused,
-  color = AppColors.primaryLight,
-  size = 20,
-}: IconProps) => {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      {isPaused ? (
-        <Path d="M5 3l14 9-14 9V3z" fill={color} />
-      ) : (
-        <Path d="M6 5h3v14H6V5zm9 0h3v14h-3V5z" fill={color} />
-      )}
-    </Svg>
-  );
-};
+
 
 export const ExportIcon = ({
   color = AppColors.primaryLight,
@@ -778,7 +763,6 @@ export const MoonIcon = ({color = AppColors.white, size = 16}: IconProps) => {
 };
 
 export {BrandCircleIcon} from './BrandCircleIcon';
-export {BrandSquareIcon} from './BrandSquareIcon';
 
 export const HtmlIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (

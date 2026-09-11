@@ -25,14 +25,11 @@ import {
   SortArrowIcon,
   TrashIcon,
   LayersIcon,
-  CheckIcon,
   UserIcon,
   InfoCircleIcon,
   WarningTriangleIcon,
   ErrorCircleIcon,
   AnalyticsIcon,
-  HeaderPauseIcon,
-  ChevronIcon,
 } from '../NetworkIcons';
 
 const ConsoleTab = React.memo(() => {
@@ -48,8 +45,6 @@ const ConsoleTab = React.memo(() => {
     logCounts,
     filteredConsoleLogs,
     visibleConsoleLogs,
-    isConsolePaused,
-    setIsConsolePaused,
   } = useInspector();
 
   const listRef = useRef<FlatList>(null);
@@ -285,26 +280,6 @@ const ConsoleTab = React.memo(() => {
           </View>
 
           <View style={styles.toolbarRight}>
-            <TouchableScale
-              style={[
-                styles.toolbarBtn,
-                isConsolePaused && {
-                  borderColor: `${AppColors.darkOrange}50`,
-                  backgroundColor: `${AppColors.darkOrange}18`,
-                },
-              ]}
-              onPress={() => setIsConsolePaused(p => !p)}
-              hitSlop={6}>
-              <HeaderPauseIcon
-                isPaused={isConsolePaused}
-                color={
-                  isConsolePaused
-                    ? AppColors.darkOrange
-                    : AppColors.grayTextStrong
-                }
-                size={16}
-              />
-            </TouchableScale>
             <TouchableScale
               style={styles.toolbarBtn}
               onPress={() =>

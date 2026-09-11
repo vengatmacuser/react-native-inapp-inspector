@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import {useInspector} from './InspectorContext';
-import {AnalyticsFilters, AnalyticsEvent} from '../../types';
+import {AnalyticsFilters} from '../../types';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {getEventCategory} from '../../helpers';
@@ -39,22 +39,6 @@ interface AnalyticsFilterModalProps {
   visible: boolean;
   onClose: () => void;
 }
-
-const DEFAULT_FILTERS: AnalyticsFilters = {
-  categories: new Set(['all']),
-  screens: new Set(),
-  sources: new Set(['all']),
-  userTypes: new Set(['all']),
-  timeWindow: 'all',
-  payloadComplexity: 'all',
-  hasRevenue: false,
-  hasItems: false,
-  hasUserProps: false,
-  hasParams: false,
-  onlyDuplicates: false,
-  onlyConversions: false,
-  sortBy: 'time_desc',
-};
 
 const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
   visible,

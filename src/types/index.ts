@@ -24,6 +24,17 @@ export type GroupedListItem =
       log: NetworkLog;
       isLast: boolean;
       color: string;
+    }
+  | {
+      type: 'loadMore';
+      id: string | number;
+      pageName: string;
+      color: string;
+      remainingCount: number;
+      totalCount: number;
+      loadedCount: number;
+      loadMoreStep: number;
+      hasMore: boolean;
     };
 
 export type DiffResult = {

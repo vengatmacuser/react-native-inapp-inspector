@@ -299,9 +299,8 @@ export interface InspectorContextValue {
   newLogIds: Set<number>;
   toggleSectionFilter: (pageName: string, filter: LocalFilter) => void;
   toggleSectionCollapse: (pageName: string) => void;
+  loadMoreSection: (pageName: string, step?: number) => void;
   handleDelete: () => void;
-  isNetworkPaused: boolean;
-  setIsNetworkPaused: React.Dispatch<React.SetStateAction<boolean>>;
 
   // ─── Network detail ────────────────────────────────────────────────────────
   detailTitle: string;
@@ -335,8 +334,6 @@ export interface InspectorContextValue {
   logCounts: Record<string, string>;
   logSortOrder: SortOrder;
   setLogSortOrder: React.Dispatch<React.SetStateAction<SortOrder>>;
-  isConsolePaused: boolean;
-  setIsConsolePaused: React.Dispatch<React.SetStateAction<boolean>>;
 
   // ─── Analytics ─────────────────────────────────────────────────────────────
   analyticsEvents: AnalyticsEvent[];
@@ -352,8 +349,6 @@ export interface InspectorContextValue {
   setIsAnalyticsLayoutReady: React.Dispatch<React.SetStateAction<boolean>>;
   analyticsHeaderExpanded: boolean;
   setAnalyticsHeaderExpanded: React.Dispatch<React.SetStateAction<boolean>>;
-  isAnalyticsPaused: boolean;
-  setIsAnalyticsPaused: React.Dispatch<React.SetStateAction<boolean>>;
 
   // ─── Redux ─────────────────────────────────────────────────────────────────
   reduxState: any;

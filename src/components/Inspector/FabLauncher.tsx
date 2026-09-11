@@ -45,9 +45,6 @@ const FabLauncher = () => {
     fabDraggedRef,
     pulseAnim,
     fabShineAnim,
-    unreadPulseAnim,
-    logs,
-    analyticsEvents,
     refreshMediaCount,
   } = useInspector();
   const {width: screenWidth} = useWindowDimensions();
@@ -444,14 +441,6 @@ const FabLauncher = () => {
                 />
               </Animated.View>
             </View>
-            {(logs.length > 0 || analyticsEvents.length > 0) && (
-              <Animated.View
-                style={[
-                  styles.fabGreenDot,
-                  {transform: [{scale: unreadPulseAnim}]},
-                ]}
-              />
-            )}
           </TouchableScale>
         </Animated.View>
       )}

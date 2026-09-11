@@ -22,8 +22,6 @@ import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {
   getActionHistory,
-  getReduxAutoRefresh,
-  setReduxAutoRefresh,
 } from '../../customHooks/reduxLogger';
 import {
   TerminalIcon,
@@ -42,9 +40,6 @@ import {
   LoadingSpinnerIcon,
   CircleAlertIcon,
   TextAaIcon,
-  StorageIcon,
-  HeaderPauseIcon,
-  ChevronIcon,
 } from '../NetworkIcons';
 
 interface ReduxSliceItem {
@@ -129,19 +124,6 @@ const ReduxTab = React.memo(() => {
 
   // Sort mode: 'latest' (newest updated first) vs 'alpha' (A-Z)
   const [sortMode, setSortMode] = useState<'latest' | 'alpha'>('latest');
-
-  // Pause / Live Auto-Refresh State
-  const [isReduxPaused, setIsReduxPaused] = useState<boolean>(
-    !getReduxAutoRefresh(),
-  );
-
-  const handleTogglePause = useCallback(() => {
-    setIsReduxPaused(prev => {
-      const next = !prev;
-      setReduxAutoRefresh(!next);
-      return next;
-    });
-  }, []);
 
   // Total state size calculation
   const totalStateSize = useMemo(() => {
@@ -685,36 +667,6 @@ const ReduxTab = React.memo(() => {
             )}
           </View>
 
-          {/* Pause / Resume Live Updates Button */}
-          <TouchableOpacity
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isReduxPaused
-                ? 'Resume live Redux updates'
-                : 'Pause live Redux updates'
-            }
-            accessibilityHint="Toggles automatic recording of Redux state updates"
-            style={[
-              styles.toolbarBtn,
-              isReduxPaused && {
-                backgroundColor: `${AppColors.darkOrange}1F`,
-                borderColor: AppColors.darkOrange,
-              },
-            ]}
-            onPress={handleTogglePause}
-            hitSlop={6}>
-            <HeaderPauseIcon
-              isPaused={isReduxPaused}
-              color={
-                isReduxPaused
-                  ? AppColors.darkOrange
-                  : AppColors.grayTextStrong
-              }
-              size={16}
-            />
-          </TouchableOpacity>
-
           {/* Sort Button */}
           <TouchableOpacity
             accessible={true}
@@ -742,22 +694,15 @@ const ReduxTab = React.memo(() => {
           <Text style={reduxTabStyles.resultCount}>
             Showing {filteredSlices.length} of {sliceItems.length} state slices
           </Text>
-          <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
-            {isReduxPaused && (
-              <View style={reduxTabStyles.pausedBannerPill}>
-                <Text style={reduxTabStyles.pausedBannerText}>PAUSED</Text>
-              </View>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
+            {sortMode === 'latest' ? (
+              <BoltIcon color={AppColors.brandPurple} size={11} />
+            ) : (
+              <TextAaIcon color={AppColors.brandPurple} size={11} />
             )}
-            <View style={{flexDirection: 'row', alignItems: 'center', gap: 4}}>
-              {sortMode === 'latest' ? (
-                <BoltIcon color={AppColors.brandPurple} size={11} />
-              ) : (
-                <TextAaIcon color={AppColors.brandPurple} size={11} />
-              )}
-              <Text style={reduxTabStyles.sortLabel}>
-                {sortMode === 'latest' ? 'Newest Updates First' : 'Alphabetical (A-Z)'}
-              </Text>
-            </View>
+            <Text style={reduxTabStyles.sortLabel}>
+              {sortMode === 'latest' ? 'Newest Updates First' : 'Alphabetical (A-Z)'}
+            </Text>
           </View>
         </View>
       </View>
@@ -1139,20 +1084,6 @@ const reduxTabStyles = StyleSheet.create({
     backgroundColor: AppColors.yellowHighlight,
     color: AppColors.primaryBlack,
     borderRadius: 2,
-  },
-  pausedBannerPill: {
-    backgroundColor: AppColors.amber100,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: AppColors.amber200,
-  },
-  pausedBannerText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 9,
-    color: AppColors.amber800Warm,
-    letterSpacing: 0.5,
   },
 });
 

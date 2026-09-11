@@ -1,10 +1,8 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {
   Alert,
   FlatList,
-  Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,22 +14,16 @@ import {useTranslation} from '../../i18n';
 import {useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
 import AnimatedEntrance from '../AnimatedEntrance';
-import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
 import FeatureUnderDevNotice from './FeatureUnderDevNotice';
 import HighlightText from '../HighlightText';
-import JsonViewer from '../JsonViewer';
-import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {
   CrashRecord,
-  ParsedStackFrame,
-  CrashBreadcrumb,
 } from '../../types';
 import {
   CrashFilterType,
-  CrashType,
 } from '../../types/enums';
 import {
   clearCrashRecords,
@@ -42,20 +34,13 @@ import CrashFilterModal, {
   isCrashFiltersDefault,
 } from './CrashFilterModal';
 import {
-  CrashIcon,
   SearchIcon,
   ClearIcon,
   TrashIcon,
-  WarningTriangleIcon,
   TerminalIcon,
   LayersIcon,
   ClockIcon,
   ShieldAlertIcon,
-  CircleAlertIcon,
-  CircleCheckIcon,
-  CloseWhite,
-  WhiteBackNavigation,
-  GlobeIcon,
   FlameIcon,
   JsIcon,
   HourglassIcon,
@@ -67,7 +52,6 @@ import {
   RepeatIcon,
   CodeBracketsIcon,
   FilterIcon,
-  ChevronIcon,
   ForwardChevronIcon,
 } from '../NetworkIcons';
 
@@ -85,11 +69,9 @@ const getRelativeTime = (timestamp: number): string => {
   return `${days}d ago`;
 };
 
-
-
 const CrashTab = React.memo(() => {
   const {t} = useTranslation();
-  const {crashRecords, selectedCrash, setSelectedCrash} = useInspector();
+  const {crashRecords, setSelectedCrash} = useInspector();
 
   const listRef = useRef<FlatList>(null);
   const [displayLimit, setDisplayLimit] = useState<number>(100);
@@ -99,9 +81,6 @@ const CrashTab = React.memo(() => {
     DEFAULT_CRASH_FILTERS,
   );
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [detailSubTab, setDetailSubTab] = useState<
-    'stack' | 'device' | 'breadcrumbs' | 'raw'
-  >('stack');
 
   // Calculate statistics
   const stats = useMemo(() => {

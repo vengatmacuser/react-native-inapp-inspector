@@ -12,14 +12,13 @@ import {
 import CopyButton from './CopyButton';
 import JsonViewer from './JsonViewer';
 import SegmentedTabs from './SegmentedTabs';
-import TouchableScale from './TouchableScale';
 import HighlightText from './HighlightText';
 import AnimatedEntrance from './AnimatedEntrance';
 
 // Helpers & Icons
 import {AppFonts} from '../styles/AppFonts';
 import {AppColors} from '../styles/AppColors';
-import {getSize, formatDateTime, formatTime} from '../helpers';
+import {getSize, formatDateTime} from '../helpers';
 import {getEventCategory} from '../helpers/gaAnalyticsRegistry';
 import {useTranslation} from '../i18n';
 import {
@@ -34,7 +33,6 @@ import {
   PinIcon,
   MoneyIcon,
   PrettyIcon,
-  RawIcon,
   TableIcon,
   DocIcon,
   PackageIcon,

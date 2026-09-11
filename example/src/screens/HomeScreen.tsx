@@ -11,12 +11,20 @@ import {
   simulateTestCrash,
   getNativeDeviceMetrics,
   isNativeModuleAvailable,
+  ModuleErrorBoundary,
   LIB_VERSION,
 } from 'react-native-inapp-inspector';
 import { mockStore } from '../store/mockStore';
 import { styles } from '../styles/appStyles';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+const FaultySimulatedModule = ({ shouldFail }: { shouldFail: boolean }) => {
+  if (shouldFail) {
+    throw new Error('Simulated Micro-Frontend Crash: Module failed during render. Other modules continue unaffected!');
+  }
+  return null;
+};
 
 // ─── Crisp SVG Vector Icons ───────────────────────────────────────────────────
 
@@ -47,17 +55,7 @@ const SvgFork = ({ color = '#64748B', size = 14 }: { color?: string; size?: numb
   </Svg>
 );
 
-const SvgDownload = ({ color = '#10B981', size = 14 }: { color?: string; size?: number }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
+
 
 const SvgBolt = ({ color = '#FFFFFF', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -271,17 +269,7 @@ const SvgTrash = ({ color = '#DC2626', size = 13 }: { color?: string; size?: num
   </Svg>
 );
 
-const SvgLayers = ({ color = '#FFFFFF', size = 13 }: { color?: string; size?: number }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
+
 
 const SvgCode = ({ color = '#7C3AED', size = 13 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -429,7 +417,7 @@ const TactileButton = ({ label, onPress, color, bgColor, fullWidth, icon }: Tact
         style={[
           fullWidth ? styles.fullWidthBtnText : styles.btnText,
           !fullWidth ? { color } : undefined,
-          { flexShrink: 1 },
+          styles.flexShrink1,
         ]}
       >
         {label}
@@ -482,7 +470,7 @@ const ActivityGraphicsCard = ({
     <View style={styles.statsCard}>
       {/* Header: Title + Live Status Badge */}
       <View style={styles.sectionTitleRow}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View style={styles.rowAlignCenterGap6}>
           <SvgAnalytics color="#4F46E5" size={15} />
           <Text style={styles.sectionTitle}>Live Event Telemetry</Text>
         </View>
@@ -500,29 +488,14 @@ const ActivityGraphicsCard = ({
             setMeasuredWidth(w);
           }
         }}
-        style={{
-          backgroundColor: '#F8FAFC',
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: '#E2E8F0',
-          paddingTop: 8,
-          paddingBottom: 4,
-          paddingHorizontal: 8,
-          overflow: 'hidden',
-        }}
+        style={styles.telemetryBox}
       >
         {/* Top rate indicator */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: 4,
-          }}
-        >
-          <Text style={{ fontSize: 10, fontWeight: '700', color: '#64748B' }}>
-            Throughput: <Text style={{ color: '#4F46E5' }}>{totalEvents} Total Events</Text>
+        <View style={styles.telemetryTopRow}>
+          <Text style={styles.telemetryTextLeft}>
+            Throughput: <Text style={styles.telemetryTextIndigo}>{totalEvents} Total Events</Text>
           </Text>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: '#16A34A' }}>
+          <Text style={styles.telemetryTextGreen}>
             ⚡ Live Activity Stream
           </Text>
         </View>
@@ -571,129 +544,90 @@ const ActivityGraphicsCard = ({
         </Svg>
 
         {/* X-Axis Time Labels */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            paddingTop: 2,
-            borderTopWidth: 1,
-            borderTopColor: '#E2E8F0',
-          }}
-        >
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-18s</Text>
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-12s</Text>
-          <Text style={{ fontSize: 9, color: '#94A3B8', fontWeight: '700' }}>-6s</Text>
-          <Text style={{ fontSize: 9, color: '#4F46E5', fontWeight: '800' }}>NOW ●</Text>
+        <View style={styles.telemetryAxisRow}>
+          <Text style={styles.telemetryAxisLabel}>-18s</Text>
+          <Text style={styles.telemetryAxisLabel}>-12s</Text>
+          <Text style={styles.telemetryAxisLabel}>-6s</Text>
+          <Text style={styles.telemetryAxisLabelNow}>NOW ●</Text>
         </View>
       </View>
 
       {/* Proportional Category Distribution Bar */}
-      <View style={{ gap: 6 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 10.5,
-              fontWeight: '800',
-              color: '#0F172A',
-              textTransform: 'uppercase',
-            }}
-          >
+      <View style={styles.gap6}>
+        <View style={styles.rowBetweenCenter}>
+          <Text style={styles.eventBreakdownTitle}>
             Event Breakdown
           </Text>
-          <Text style={{ fontSize: 10, color: '#64748B', fontWeight: '600' }}>
+          <Text style={styles.eventBreakdownSubtitle}>
             {totalEvents} Captured
           </Text>
         </View>
 
-        <View
-          style={{
-            flexDirection: 'row',
-            height: 8,
-            borderRadius: 4,
-            overflow: 'hidden',
-            backgroundColor: '#E2E8F0',
-          }}
-        >
-          {apiPct > 0 ? <View style={{ flex: apiPct, backgroundColor: '#4F46E5' }} /> : null}
-          {logPct > 0 ? <View style={{ flex: logPct, backgroundColor: '#F59E0B' }} /> : null}
-          {analyticsPct > 0 ? (
-            <View
-              style={{
-                flex: analyticsPct,
-                backgroundColor: '#0D9488',
-              }}
-            />
-          ) : null}
-          {totalEvents === 0 && <View style={{ flex: 1, backgroundColor: '#CBD5E1' }} />}
-        </View>
+        <Svg width={chartWidth} height={8}>
+          <Rect x="0" y="0" width={chartWidth} height={8} rx={4} fill="#E2E8F0" />
+          {totalEvents === 0 ? (
+            <Rect x="0" y="0" width={chartWidth} height={8} rx={4} fill="#CBD5E1" />
+          ) : (
+            <>
+              {apiPct > 0 && (
+                <Rect
+                  x="0"
+                  y="0"
+                  width={(apiPct / 100) * chartWidth}
+                  height={8}
+                  rx={4}
+                  fill="#4F46E5"
+                />
+              )}
+              {logPct > 0 && (
+                <Rect
+                  x={(apiPct / 100) * chartWidth}
+                  y="0"
+                  width={(logPct / 100) * chartWidth}
+                  height={8}
+                  fill="#F59E0B"
+                />
+              )}
+              {analyticsPct > 0 && (
+                <Rect
+                  x={((apiPct + logPct) / 100) * chartWidth}
+                  y="0"
+                  width={(analyticsPct / 100) * chartWidth}
+                  height={8}
+                  rx={4}
+                  fill="#0D9488"
+                />
+              )}
+            </>
+          )}
+        </Svg>
 
         {/* Legend Ratio Breakdown */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 2,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: 3.5,
-                backgroundColor: '#4F46E5',
-              }}
-            />
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#4F46E5' }}>
+        <View style={styles.legendRow}>
+          <View style={styles.rowAlignCenterGap4}>
+            <View style={styles.legendDotApi} />
+            <Text style={styles.legendTextApi}>
               APIs {apiPct}%
             </Text>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: 3.5,
-                backgroundColor: '#F59E0B',
-              }}
-            />
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#D97706' }}>
+          <View style={styles.rowAlignCenterGap4}>
+            <View style={styles.legendDotLog} />
+            <Text style={styles.legendTextLog}>
               Logs {logPct}%
             </Text>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: 3.5,
-                backgroundColor: '#0D9488',
-              }}
-            />
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#0D9488' }}>
+          <View style={styles.rowAlignCenterGap4}>
+            <View style={styles.legendDotAnalytics} />
+            <Text style={styles.legendTextAnalytics}>
               Events {analyticsPct}%
             </Text>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <View
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: 3.5,
-                backgroundColor: '#7C3AED',
-              }}
-            />
-            <Text style={{ fontSize: 10, fontWeight: '700', color: '#7C3AED' }}>
+          <View style={styles.rowAlignCenterGap4}>
+            <View style={styles.legendDotStore} />
+            <Text style={styles.legendTextStore}>
               {sidebarOpen ? 'Open' : 'Closed'}
             </Text>
           </View>
@@ -703,19 +637,19 @@ const ActivityGraphicsCard = ({
       {/* KPI Counters Grid */}
       <View style={styles.statsGrid}>
         <View style={styles.statBox}>
-          <Text style={[styles.statVal, { color: '#4F46E5' }]}>{apiCount}</Text>
+          <Text style={[styles.statVal, styles.textApiColor]}>{apiCount}</Text>
           <Text style={styles.statLbl}>APIs</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={[styles.statVal, { color: '#D97706' }]}>{logCount}</Text>
+          <Text style={[styles.statVal, styles.textLogColor]}>{logCount}</Text>
           <Text style={styles.statLbl}>Logs</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={[styles.statVal, { color: '#0D9488' }]}>{analyticsCount}</Text>
+          <Text style={[styles.statVal, styles.textAnalyticsColor]}>{analyticsCount}</Text>
           <Text style={styles.statLbl}>Events</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={[styles.statVal, { color: '#7C3AED' }]}>
+          <Text style={[styles.statVal, styles.textStoreColor]}>
             {sidebarOpen ? 'Open' : 'Closed'}
           </Text>
           <Text style={styles.statLbl}>Store</Text>
@@ -732,6 +666,7 @@ export function HomeScreen({ navigation }: any) {
   const [analyticsCount, setAnalyticsCount] = useState(0);
   const [reduxState, setReduxState] = useState(mockStore.getState());
   const [lastActionStatus, setLastActionStatus] = useState<string | null>(null);
+  const [faultyModuleBroken, setFaultyModuleBroken] = useState(false);
   const [activityHistory, setActivityHistory] = useState<number[]>([
     3, 5, 8, 4, 12, 16, 9, 15, 20, 24,
   ]);
@@ -1033,7 +968,7 @@ export function HomeScreen({ navigation }: any) {
         <View style={styles.headerHero}>
           <View style={styles.headerBadgeContainer}>
             <SvgBolt color="#5C2D91" size={12} />
-            <Text style={[styles.headerBadge, { marginLeft: 4 }]}>
+            <Text style={[styles.headerBadge, styles.headerBadgeText]}>
               react-native-inapp-inspector
             </Text>
           </View>
@@ -1078,734 +1013,643 @@ export function HomeScreen({ navigation }: any) {
         {activeTab === 'tests' && (
           <>
             {/* Live Activity Telemetry Card */}
-            <ActivityGraphicsCard
-              apiCount={apiCount}
-              logCount={logCount}
-              analyticsCount={analyticsCount}
-              sidebarOpen={Boolean(reduxState.ui?.sidebarOpen)}
-              history={activityHistory}
-              status={lastActionStatus}
-            />
+            <ModuleErrorBoundary moduleName="Live Telemetry Module">
+              <ActivityGraphicsCard
+                apiCount={apiCount}
+                logCount={logCount}
+                analyticsCount={analyticsCount}
+                sidebarOpen={Boolean(reduxState.ui?.sidebarOpen)}
+                history={activityHistory}
+                status={lastActionStatus}
+              />
+            </ModuleErrorBoundary>
 
             {/* API & Network Tests */}
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgGlobe color="#0284C7" size={14} />
-                  <Text style={styles.panelHeader}>Standard Fetch Requests</Text>
-                </View>
-                <Text style={styles.panelHeaderBadge}>HTTP / REST</Text>
-              </View>
-              <View style={styles.btnRow}>
-                <TactileButton
-                  label="Fetch (200 OK)"
-                  onPress={triggerNetworkRequest}
-                  color="#0284C7"
-                  bgColor="#F0F9FF"
-                  icon={<SvgCheckCircle color="#0284C7" size={13} />}
-                />
-                <TactileButton
-                  label="Fetch (404 Error)"
-                  onPress={triggerFailedNetworkRequest}
-                  color="#E11D48"
-                  bgColor="#FFF1F2"
-                  icon={<SvgAlertCircle color="#E11D48" size={13} />}
-                />
-              </View>
-            </View>
-
-            {/* Axios Interception */}
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgBolt color="#059669" size={14} />
-                  <Text style={styles.panelHeader}>Axios Auto-Interception</Text>
-                </View>
-                <Text style={styles.panelHeaderBadge}>AXIOS METHODS</Text>
-              </View>
-              <View style={{ gap: 8 }}>
-                <View style={styles.btnRow}>
-                  <TactileButton
-                    label="GET (200 OK)"
-                    onPress={triggerAxiosGet}
-                    color="#059669"
-                    bgColor="#ECFDF5"
-                    icon={<SvgCheckCircle color="#059669" size={13} />}
-                  />
-                  <TactileButton
-                    label="POST (Create)"
-                    onPress={triggerAxiosPost}
-                    color="#7C3AED"
-                    bgColor="#F5F3FF"
-                    icon={<SvgPlus color="#7C3AED" size={13} />}
-                  />
+            <ModuleErrorBoundary moduleName="Standard Fetch Module">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgGlobe color="#0284C7" size={14} />
+                    <Text style={styles.panelHeader}>Standard Fetch Requests</Text>
+                  </View>
+                  <Text style={styles.panelHeaderBadge}>HTTP / REST</Text>
                 </View>
                 <View style={styles.btnRow}>
                   <TactileButton
-                    label="PUT (Replace)"
-                    onPress={triggerAxiosPut}
-                    color="#D97706"
-                    bgColor="#FFFBEB"
-                    icon={<SvgRefresh color="#D97706" size={13} />}
-                  />
-                  <TactileButton
-                    label="PATCH (Update)"
-                    onPress={triggerAxiosPatch}
+                    label="Fetch (200 OK)"
+                    onPress={triggerNetworkRequest}
                     color="#0284C7"
                     bgColor="#F0F9FF"
-                    icon={<SvgEdit color="#0284C7" size={13} />}
+                    icon={<SvgCheckCircle color="#0284C7" size={13} />}
+                  />
+                  <TactileButton
+                    label="Fetch (404 Error)"
+                    onPress={triggerFailedNetworkRequest}
+                    color="#E11D48"
+                    bgColor="#FFF1F2"
+                    icon={<SvgAlertCircle color="#E11D48" size={13} />}
+                  />
+                </View>
+              </View>
+            </ModuleErrorBoundary>
+
+            {/* Axios Interception */}
+            <ModuleErrorBoundary moduleName="Axios Suite Module">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgBolt color="#059669" size={14} />
+                    <Text style={styles.panelHeader}>Axios Auto-Interception</Text>
+                  </View>
+                  <Text style={styles.panelHeaderBadge}>AXIOS METHODS</Text>
+                </View>
+                <View style={styles.gap8}>
+                  <View style={styles.btnRow}>
+                    <TactileButton
+                      label="GET (200 OK)"
+                      onPress={triggerAxiosGet}
+                      color="#059669"
+                      bgColor="#ECFDF5"
+                      icon={<SvgCheckCircle color="#059669" size={13} />}
+                    />
+                    <TactileButton
+                      label="POST (Create)"
+                      onPress={triggerAxiosPost}
+                      color="#7C3AED"
+                      bgColor="#F5F3FF"
+                      icon={<SvgPlus color="#7C3AED" size={13} />}
+                    />
+                  </View>
+                  <View style={styles.btnRow}>
+                    <TactileButton
+                      label="PUT (Replace)"
+                      onPress={triggerAxiosPut}
+                      color="#D97706"
+                      bgColor="#FFFBEB"
+                      icon={<SvgRefresh color="#D97706" size={13} />}
+                    />
+                    <TactileButton
+                      label="PATCH (Update)"
+                      onPress={triggerAxiosPatch}
+                      color="#0284C7"
+                      bgColor="#F0F9FF"
+                      icon={<SvgEdit color="#0284C7" size={13} />}
+                    />
+                  </View>
+                  <TactileButton
+                    label="DELETE (Remove Resource)"
+                    onPress={triggerAxiosDelete}
+                    color="#DC2626"
+                    bgColor="#FEF2F2"
+                    icon={<SvgTrash color="#DC2626" size={13} />}
+                    fullWidth
+                  />
+                </View>
+              </View>
+            </ModuleErrorBoundary>
+
+            {/* Console & Stack Traces */}
+            <ModuleErrorBoundary moduleName="Console & Stack Logger Module">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgTerminal color="#4F46E5" size={14} />
+                    <Text style={styles.panelHeader}>Console Logs & Stack Traces</Text>
+                  </View>
+                  <Text style={styles.panelHeaderBadge}>CALL STACK</Text>
+                </View>
+                <TactileButton
+                  label="Trigger Log, Warn & Error Levels"
+                  onPress={triggerConsoleLogs}
+                  color="#4F46E5"
+                  bgColor="#4F46E5"
+                  icon={<SvgTerminal color="#FFFFFF" size={13} />}
+                  fullWidth
+                />
+
+                <View style={[styles.btnRow, styles.mt4]}>
+                  <TactileButton
+                    label="Multi-Arg Object"
+                    onPress={() => {
+                      notifyAction('Multi-Arg Logged');
+                      console.log(
+                        'Multi-argument payload inspection:',
+                        {
+                          userId: 101,
+                          username: 'venkatesh',
+                          role: 'Lead Architect',
+                        },
+                        ['permissions.read', 'permissions.write', 'permissions.admin'],
+                        {
+                          device: 'iPhone 15 Pro',
+                          os: 'iOS 18.0',
+                          battery: '92%',
+                        },
+                      );
+                    }}
+                    color="#7C3AED"
+                    bgColor="#F5F3FF"
+                    icon={<SvgCode color="#7C3AED" size={13} />}
+                  />
+                  <TactileButton
+                    label="Deep Error Stack"
+                    onPress={() => {
+                      notifyAction('Error Stack Logged');
+                      try {
+                        throw new TypeError(
+                          'Cannot read properties of undefined (reading "authToken")',
+                        );
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    color="#DC2626"
+                    bgColor="#FEF2F2"
+                    icon={<SvgAlertTriangle color="#DC2626" size={13} />}
+                  />
+                </View>
+              </View>
+            </ModuleErrorBoundary>
+
+            {/* Analytics Events */}
+            <ModuleErrorBoundary moduleName="Analytics & GA4 Events Module">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgAnalytics color="#0D9488" size={14} />
+                    <Text style={styles.panelHeader}>Analytics & GA4 Events</Text>
+                  </View>
+                  <Text style={styles.panelHeaderBadge}>GA4 / FIREBASE</Text>
+                </View>
+                <View style={styles.btnRow}>
+                  <TactileButton
+                    label="Screen View"
+                    onPress={() => {
+                      notifyAction('Screen View Logged');
+                      console.log('[App] Logged custom analytics event: screen_view');
+                      logAnalyticsEvent('screen_view', {
+                        screen_name: 'HomeScreen',
+                        screen_class: 'HomeScreenComponent',
+                        viewed_at: new Date().toLocaleTimeString(),
+                      });
+                    }}
+                    color="#0284C7"
+                    bgColor="#F0F9FF"
+                    icon={<SvgEye color="#0284C7" size={13} />}
+                  />
+                  <TactileButton
+                    label="Ecommerce Purchase"
+                    onPress={() => {
+                      notifyAction('Purchase Logged');
+                      console.log('[App] Logged analytics ecommerce event: item_purchase');
+                      logAnalyticsEvent(
+                        'item_purchase',
+                        {
+                          item_id: 'prod_999',
+                          item_name: 'Premium Debug Kit',
+                          price: 29.99,
+                          currency: 'USD',
+                          items: [
+                            {
+                              id: 'prod_999',
+                              name: 'Premium Debug Kit',
+                              price: 29.99,
+                            },
+                          ],
+                        },
+                        {
+                          user_tier: 'gold_member',
+                          signup_platform: 'ios_app',
+                        },
+                      );
+                    }}
+                    color="#059669"
+                    bgColor="#ECFDF5"
+                    icon={<SvgShoppingBag color="#059669" size={13} />}
+                  />
+                </View>
+              </View>
+            </ModuleErrorBoundary>
+
+            {/* Redux State Actions */}
+            <ModuleErrorBoundary moduleName="Redux Store & Time-Travel Module">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgAtom color="#7C3AED" size={14} />
+                    <Text style={styles.panelHeader}>Redux Store & Time-Travel</Text>
+                  </View>
+                  <Text style={styles.panelHeaderBadge}>STATE TIMELINE</Text>
+                </View>
+                <View style={styles.btnRow}>
+                  <TactileButton
+                    label="Toggle Sidebar"
+                    onPress={handleToggleSidebar}
+                    color="#059669"
+                    bgColor="#ECFDF5"
+                    icon={<SvgSidebar color="#059669" size={13} />}
+                  />
+                  <TactileButton
+                    label="Toggle Theme"
+                    onPress={() => {
+                      notifyAction('Theme Toggled');
+                      mockStore.dispatch({
+                        type: 'SET_THEME',
+                        payload: mockStore.getState().settings.theme === 'dark' ? 'light' : 'dark',
+                      });
+                    }}
+                    color="#0891B2"
+                    bgColor="#ECFEFF"
+                    icon={<SvgMoon color="#0891B2" size={13} />}
                   />
                 </View>
                 <TactileButton
-                  label="DELETE (Remove Resource)"
-                  onPress={triggerAxiosDelete}
-                  color="#DC2626"
-                  bgColor="#FEF2F2"
-                  icon={<SvgTrash color="#DC2626" size={13} />}
-                  fullWidth
-                />
-              </View>
-            </View>
-
-            {/* Console & Stack Traces */}
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgTerminal color="#4F46E5" size={14} />
-                  <Text style={styles.panelHeader}>Console Logs & Stack Traces</Text>
-                </View>
-                <Text style={styles.panelHeaderBadge}>CALL STACK</Text>
-              </View>
-              <TactileButton
-                label="Trigger Log, Warn & Error Levels"
-                onPress={triggerConsoleLogs}
-                color="#4F46E5"
-                bgColor="#4F46E5"
-                icon={<SvgTerminal color="#FFFFFF" size={13} />}
-                fullWidth
-              />
-
-              <View style={[styles.btnRow, { marginTop: 4 }]}>
-                <TactileButton
-                  label="Multi-Arg Object"
+                  label="⚡ Dispatch Saga Action: auth/loginWithSaga"
                   onPress={() => {
-                    notifyAction('Multi-Arg Logged');
-                    console.log(
-                      'Multi-argument payload inspection:',
-                      {
-                        userId: 101,
-                        username: 'venkatesh',
-                        role: 'Lead Architect',
-                      },
-                      ['permissions.read', 'permissions.write', 'permissions.admin'],
-                      {
-                        device: 'iPhone 15 Pro',
-                        os: 'iOS 18.0',
-                        battery: '92%',
-                      },
-                    );
+                    notifyAction('Saga Action Dispatched');
+                    mockStore.dispatch({
+                      type: 'auth/loginWithSaga',
+                      payload: { user: 'Venkatesh', authType: 'OAuth2' },
+                      __origin: 'saga',
+                    });
                   }}
                   color="#7C3AED"
                   bgColor="#F5F3FF"
-                  icon={<SvgCode color="#7C3AED" size={13} />}
+                  icon={<SvgBolt color="#7C3AED" size={13} />}
+                  fullWidth
                 />
                 <TactileButton
-                  label="Deep Error Stack"
+                  label="⚛️ Dispatch Thunk Action: users/fetch/fulfilled"
                   onPress={() => {
-                    notifyAction('Error Stack Logged');
-                    try {
-                      throw new TypeError(
-                        'Cannot read properties of undefined (reading "authToken")',
-                      );
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
-                  color="#DC2626"
-                  bgColor="#FEF2F2"
-                  icon={<SvgAlertTriangle color="#DC2626" size={13} />}
-                />
-              </View>
-            </View>
-
-            {/* Analytics Events */}
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgAnalytics color="#0D9488" size={14} />
-                  <Text style={styles.panelHeader}>Analytics & GA4 Events</Text>
-                </View>
-                <Text style={styles.panelHeaderBadge}>GA4 / FIREBASE</Text>
-              </View>
-              <View style={styles.btnRow}>
-                <TactileButton
-                  label="Screen View"
-                  onPress={() => {
-                    notifyAction('Screen View Logged');
-                    console.log('[App] Logged custom analytics event: screen_view');
-                    logAnalyticsEvent('screen_view', {
-                      screen_name: 'HomeScreen',
-                      screen_class: 'HomeScreenComponent',
-                      viewed_at: new Date().toLocaleTimeString(),
-                    });
-                  }}
-                  color="#0284C7"
-                  bgColor="#F0F9FF"
-                  icon={<SvgEye color="#0284C7" size={13} />}
-                />
-                <TactileButton
-                  label="Ecommerce Purchase"
-                  onPress={() => {
-                    notifyAction('Purchase Logged');
-                    console.log('[App] Logged analytics ecommerce event: item_purchase');
-                    logAnalyticsEvent(
-                      'item_purchase',
-                      {
-                        item_id: 'prod_999',
-                        item_name: 'Premium Debug Kit',
-                        price: 29.99,
-                        currency: 'USD',
-                        items: [
-                          {
-                            id: 'prod_999',
-                            name: 'Premium Debug Kit',
-                            price: 29.99,
-                          },
-                        ],
-                      },
-                      {
-                        user_tier: 'gold_member',
-                        signup_platform: 'ios_app',
-                      },
-                    );
-                  }}
-                  color="#059669"
-                  bgColor="#ECFDF5"
-                  icon={<SvgShoppingBag color="#059669" size={13} />}
-                />
-              </View>
-            </View>
-
-            {/* Redux State Actions */}
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgAtom color="#7C3AED" size={14} />
-                  <Text style={styles.panelHeader}>Redux Store & Time-Travel</Text>
-                </View>
-                <Text style={styles.panelHeaderBadge}>STATE TIMELINE</Text>
-              </View>
-              <View style={styles.btnRow}>
-                <TactileButton
-                  label="Toggle Sidebar"
-                  onPress={handleToggleSidebar}
-                  color="#059669"
-                  bgColor="#ECFDF5"
-                  icon={<SvgSidebar color="#059669" size={13} />}
-                />
-                <TactileButton
-                  label="Toggle Theme"
-                  onPress={() => {
-                    notifyAction('Theme Toggled');
+                    notifyAction('Thunk Action Dispatched');
                     mockStore.dispatch({
-                      type: 'SET_THEME',
-                      payload: mockStore.getState().settings.theme === 'dark' ? 'light' : 'dark',
+                      type: 'users/fetch/fulfilled',
+                      payload: { id: 101, status: 'synced', role: 'Architect' },
+                      __origin: 'thunk',
                     });
                   }}
-                  color="#0891B2"
-                  bgColor="#ECFEFF"
-                  icon={<SvgMoon color="#0891B2" size={13} />}
+                  color="#D97706"
+                  bgColor="#FFFBEB"
+                  icon={<SvgAtom color="#D97706" size={13} />}
+                  fullWidth
+                />
+                <TactileButton
+                  label="Dispatch: Toggle Sidebar & Update Timestamp"
+                  onPress={handleToggleSidebar}
+                  color="#7C3AED"
+                  bgColor="#7C3AED"
+                  icon={<SvgRefresh color="#FFFFFF" size={13} />}
+                  fullWidth
                 />
               </View>
-              <TactileButton
-                label="⚡ Dispatch Saga Action: auth/loginWithSaga"
-                onPress={() => {
-                  notifyAction('Saga Action Dispatched');
-                  mockStore.dispatch({
-                    type: 'auth/loginWithSaga',
-                    payload: { user: 'Venkatesh', authType: 'OAuth2' },
-                    __origin: 'saga',
-                  });
-                }}
-                color="#7C3AED"
-                bgColor="#F5F3FF"
-                icon={<SvgBolt color="#7C3AED" size={13} />}
-                fullWidth
-              />
-              <TactileButton
-                label="⚛️ Dispatch Thunk Action: users/fetch/fulfilled"
-                onPress={() => {
-                  notifyAction('Thunk Action Dispatched');
-                  mockStore.dispatch({
-                    type: 'users/fetch/fulfilled',
-                    payload: { id: 101, status: 'synced', role: 'Architect' },
-                    __origin: 'thunk',
-                  });
-                }}
-                color="#D97706"
-                bgColor="#FFFBEB"
-                icon={<SvgAtom color="#D97706" size={13} />}
-                fullWidth
-              />
-              <TactileButton
-                label="Dispatch: Toggle Sidebar & Update Timestamp"
-                onPress={handleToggleSidebar}
-                color="#7C3AED"
-                bgColor="#7C3AED"
-                icon={<SvgRefresh color="#FFFFFF" size={13} />}
-                fullWidth
-              />
-            </View>
+            </ModuleErrorBoundary>
 
             {/* Navigation Routing */}
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <Text style={styles.panelHeader}>Screen Navigation</Text>
-                <Text style={styles.panelHeaderBadge}>BREADCRUMBS</Text>
+            <ModuleErrorBoundary moduleName="Screen Navigation Module">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <Text style={styles.panelHeader}>Screen Navigation</Text>
+                  <Text style={styles.panelHeaderBadge}>BREADCRUMBS</Text>
+                </View>
+                <TactileButton
+                  label="Go to Details Screen"
+                  onPress={() => navigation.navigate('Details')}
+                  color="#059669"
+                  bgColor="#059669"
+                  icon={<SvgExternalLink color="#FFFFFF" size={12} />}
+                  fullWidth
+                />
               </View>
-              <TactileButton
-                label="Go to Details Screen"
-                onPress={() => navigation.navigate('Details')}
-                color="#059669"
-                bgColor="#059669"
-                icon={<SvgExternalLink color="#FFFFFF" size={12} />}
-                fullWidth
-              />
-            </View>
+            </ModuleErrorBoundary>
 
-            {/* Crash Exception Simulation */}
-            <View style={[styles.panelCard, { borderColor: '#FECDD3' }]}>
-              <View style={styles.panelHeaderRow}>
-                <Text style={[styles.panelHeader, { color: '#E11D48' }]}>Exception Simulation</Text>
-                <Text
-                  style={[
-                    styles.panelHeaderBadge,
-                    { backgroundColor: '#FFE4E6', color: '#BE123C' },
-                  ]}
-                >
-                  CRASH TESTING
-                </Text>
-              </View>
-              <View style={styles.btnRow}>
+            {/* Crash Exception Simulation with Fault Isolation */}
+            <ModuleErrorBoundary
+              moduleName="Fault-Isolated Simulation Module"
+              onRetry={() => setFaultyModuleBroken(false)}
+            >
+              <FaultySimulatedModule shouldFail={faultyModuleBroken} />
+              <View style={[styles.panelCard, styles.panelCardCrash]}>
+                <View style={styles.panelHeaderRow}>
+                  <Text style={[styles.panelHeader, styles.panelHeaderCrash]}>Exception Simulation</Text>
+                  <Text
+                    style={[
+                      styles.panelHeaderBadge,
+                      styles.panelHeaderBadgeCrash,
+                    ]}
+                  >
+                    CRASH TESTING
+                  </Text>
+                </View>
+                <View style={styles.btnRow}>
+                  <TactileButton
+                    label="Simulate JS Exception"
+                    onPress={() => {
+                      simulateTestCrash('js');
+                    }}
+                    color="#E11D48"
+                    bgColor="#FFF1F2"
+                    icon={<SvgAlertTriangle color="#E11D48" size={13} />}
+                  />
+                  <TactileButton
+                    label="Simulate Native Exception"
+                    onPress={() => {
+                      simulateTestCrash('native');
+                    }}
+                    color="#DC2626"
+                    bgColor="#FEF2F2"
+                    icon={<SvgCpu color="#DC2626" size={13} />}
+                  />
+                </View>
                 <TactileButton
-                  label="Simulate JS Exception"
+                  label={
+                    faultyModuleBroken
+                      ? 'Recover Fault-Isolated Module'
+                      : '💥 Trigger Fault-Isolated Module Crash'
+                  }
                   onPress={() => {
-                    simulateTestCrash('js');
+                    const nextState = !faultyModuleBroken;
+                    setFaultyModuleBroken(nextState);
+                    notifyAction(
+                      nextState
+                        ? 'Micro-UI Crashed (Isolated)'
+                        : 'Micro-UI Recovered',
+                    );
                   }}
-                  color="#E11D48"
-                  bgColor="#FFF1F2"
-                  icon={<SvgAlertTriangle color="#E11D48" size={13} />}
-                />
-                <TactileButton
-                  label="Simulate Native Exception"
-                  onPress={() => {
-                    simulateTestCrash('native');
-                  }}
-                  color="#DC2626"
+                  color="#B91C1C"
                   bgColor="#FEF2F2"
-                  icon={<SvgCpu color="#DC2626" size={13} />}
+                  icon={<SvgAlertTriangle color="#B91C1C" size={13} />}
+                  fullWidth
                 />
               </View>
-            </View>
+            </ModuleErrorBoundary>
           </>
         )}
 
         {/* ─── TAB 2: NPM REGISTRY ───────────────────────────────────────────── */}
         {activeTab === 'npm' && (
           <>
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgPackage color="#5C2D91" size={15} />
-                  <Text style={styles.panelHeader}>NPM Package Specs</Text>
-                </View>
-                <Text
-                  style={[
-                    styles.panelHeaderBadge,
-                    { backgroundColor: '#DCFCE7', color: '#16A34A', fontWeight: '800' },
-                  ]}
-                >
-                  PUBLISHED • v{npmMeta.version}
-                </Text>
-              </View>
-
-              {/* Dynamic Install Code Snippet */}
-              <View style={styles.codeSnippet}>
-                <Text style={styles.codeText}>npm i react-native-inapp-inspector@{npmMeta.version}</Text>
-              </View>
-
-              {/* Dynamic Live Metrics Strip */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <Text style={[styles.statVal, { color: '#5C2D91', fontSize: 14 }]}>v{npmMeta.version}</Text>
-                  <Text style={styles.statLbl}>NPM LATEST</Text>
-                </View>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <Text style={[styles.statVal, { color: '#16A34A', fontSize: 14 }]}>
-                    {npmMeta.downloadsMonthly !== null ? `${npmMeta.downloadsMonthly.toLocaleString()}` : '1.2k+'}
-                  </Text>
-                  <Text style={styles.statLbl}>DOWNLOADS/MO</Text>
-                </View>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <Text style={[styles.statVal, { color: '#0284C7', fontSize: 14 }]}>{npmMeta.license}</Text>
-                  <Text style={styles.statLbl}>LICENSE</Text>
-                </View>
-              </View>
-
-              <View style={{ gap: 2, marginTop: 4 }}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Package Name</Text>
-                  <Text style={styles.infoValue}>react-native-inapp-inspector</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Installed Library Version</Text>
-                  <Text style={[styles.infoValue, { color: '#5C2D91' }]}>v{LIB_VERSION}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>NPM Published Version</Text>
-                  <Text style={[styles.infoValue, { color: '#16A34A' }]}>v{npmMeta.version}</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Native Architecture</Text>
-                  <Text style={[styles.infoValue, { color: '#6366F1' }]}>
-                    Kotlin (Android) + Obj-C (iOS)
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Native Module Linked</Text>
+            <ModuleErrorBoundary moduleName="NPM Package Registry Specs">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgPackage color="#5C2D91" size={15} />
+                    <Text style={styles.panelHeader}>NPM Package Specs</Text>
+                  </View>
                   <Text
                     style={[
-                      styles.infoValue,
-                      { color: isNativeModuleAvailable() ? '#16A34A' : '#D97706' },
+                      styles.panelHeaderBadge,
+                      styles.panelHeaderBadgeNpm,
                     ]}
                   >
-                    {isNativeModuleAvailable() ? 'YES (Active)' : 'NO (JS Fallback)'}
+                    PUBLISHED • v{npmMeta.version}
                   </Text>
                 </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Module Formats</Text>
-                  <Text style={styles.infoValue}>CommonJS + ESM + TypeScript</Text>
+
+                {/* Dynamic Install Code Snippet */}
+                <View style={styles.codeSnippet}>
+                  <Text style={styles.codeText}>npm i react-native-inapp-inspector@{npmMeta.version}</Text>
+                </View>
+
+                {/* Dynamic Live Metrics Strip */}
+                <View style={styles.metricsStrip}>
+                  <View style={[styles.statBox, styles.statBoxPv8]}>
+                    <Text style={[styles.statVal, styles.statValPurple]}>v{npmMeta.version}</Text>
+                    <Text style={styles.statLbl}>NPM LATEST</Text>
+                  </View>
+                  <View style={[styles.statBox, styles.statBoxPv8]}>
+                    <Text style={[styles.statVal, styles.statValGreen]}>
+                      {npmMeta.downloadsMonthly !== null ? `${npmMeta.downloadsMonthly.toLocaleString()}` : '1.2k+'}
+                    </Text>
+                    <Text style={styles.statLbl}>DOWNLOADS/MO</Text>
+                  </View>
+                  <View style={[styles.statBox, styles.statBoxPv8]}>
+                    <Text style={[styles.statVal, styles.statValBlue]}>{npmMeta.license}</Text>
+                    <Text style={styles.statLbl}>LICENSE</Text>
+                  </View>
+                </View>
+
+                <View style={styles.gap2Mt4}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Package Name</Text>
+                    <Text style={styles.infoValue}>react-native-inapp-inspector</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Installed Library Version</Text>
+                    <Text style={[styles.infoValue, styles.infoValuePurple]}>v{LIB_VERSION}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>NPM Published Version</Text>
+                    <Text style={[styles.infoValue, styles.infoValueGreen]}>v{npmMeta.version}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Native Architecture</Text>
+                    <Text style={[styles.infoValue, styles.infoValueIndigo]}>
+                      Kotlin (Android) + Obj-C (iOS)
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Native Module Linked</Text>
+                    <Text
+                      style={[
+                        styles.infoValue,
+                        isNativeModuleAvailable() ? styles.infoValueGreen : styles.infoValueAmber,
+                      ]}
+                    >
+                      {isNativeModuleAvailable() ? 'YES (Active)' : 'NO (JS Fallback)'}
+                    </Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Module Formats</Text>
+                    <Text style={styles.infoValue}>CommonJS + ESM + TypeScript</Text>
+                  </View>
+                </View>
+
+                <TactileButton
+                  label="Fetch Native Device Telemetry"
+                  onPress={async () => {
+                    notifyAction('Native Metrics Fetched');
+                    const metrics = await getNativeDeviceMetrics();
+                    if (metrics) {
+                      console.log('[PERF] ⚡ Native Hardware Telemetry:', metrics);
+                    } else {
+                      console.log('[PERF] ⚡ Native module not linked or running in pure JS mode.');
+                    }
+                  }}
+                  color="#5C2D91"
+                  bgColor="#F3E8FF"
+                  icon={<SvgBolt color="#5C2D91" size={13} />}
+                  fullWidth
+                />
+
+                <TactileButton
+                  label="View Package on NPM Registry"
+                  onPress={() =>
+                    openUrl('https://www.npmjs.com/package/react-native-inapp-inspector')
+                  }
+                  color="#CC3534"
+                  bgColor="#CC3534"
+                  icon={<SvgPackage color="#FFFFFF" size={13} />}
+                  fullWidth
+                />
+              </View>
+            </ModuleErrorBoundary>
+
+            <ModuleErrorBoundary moduleName="Key Features Overview">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <Text style={styles.panelHeader}>Key Features</Text>
+                  <Text style={styles.panelHeaderBadge}>ALL-IN-ONE</Text>
+                </View>
+                <View style={styles.gap6}>
+                  <Text style={styles.featureBulletText}>
+                    • <Text style={styles.featureBulletBold}>Network Inspector:</Text> Auto-intercepts
+                    Axios, Fetch, and XMLHttpRequest with cURL copy and headers.
+                  </Text>
+                  <Text style={styles.featureBulletText}>
+                    • <Text style={styles.featureBulletBold}>Console & Stack Trace:</Text> Symbolicated
+                    source line and column coordinates directly from Metro.
+                  </Text>
+                  <Text style={styles.featureBulletText}>
+                    • <Text style={styles.featureBulletBold}>Redux Time-Travel:</Text> Dispatched action
+                    timeline, slice diff viewer, and state inspection.
+                  </Text>
+                  <Text style={styles.featureBulletText}>
+                    • <Text style={styles.featureBulletBold}>Firebase & GA4 Analytics:</Text> Automatic
+                    screen and ecommerce event category detection.
+                  </Text>
+                  <Text style={styles.featureBulletText}>
+                    • <Text style={styles.featureBulletBold}>Bundle & Performance Analyzer:</Text>{' '}
+                    Real-time FPS monitor and JS asset ratio treemaps.
+                  </Text>
                 </View>
               </View>
-
-              <TactileButton
-                label="Fetch Native Device Telemetry"
-                onPress={async () => {
-                  notifyAction('Native Metrics Fetched');
-                  const metrics = await getNativeDeviceMetrics();
-                  if (metrics) {
-                    console.log('[PERF] ⚡ Native Hardware Telemetry:', metrics);
-                  } else {
-                    console.log('[PERF] ⚡ Native module not linked or running in pure JS mode.');
-                  }
-                }}
-                color="#5C2D91"
-                bgColor="#F3E8FF"
-                icon={<SvgBolt color="#5C2D91" size={13} />}
-                fullWidth
-              />
-
-              <TactileButton
-                label="View Package on NPM Registry"
-                onPress={() =>
-                  openUrl('https://www.npmjs.com/package/react-native-inapp-inspector')
-                }
-                color="#CC3534"
-                bgColor="#CC3534"
-                icon={<SvgPackage color="#FFFFFF" size={13} />}
-                fullWidth
-              />
-            </View>
-
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <Text style={styles.panelHeader}>Key Features</Text>
-                <Text style={styles.panelHeaderBadge}>ALL-IN-ONE</Text>
-              </View>
-              <View style={{ gap: 6 }}>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Network Inspector:</Text> Auto-intercepts
-                  Axios, Fetch, and XMLHttpRequest with cURL copy and headers.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Console & Stack Trace:</Text> Symbolicated
-                  source line and column coordinates directly from Metro.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Redux Time-Travel:</Text> Dispatched action
-                  timeline, slice diff viewer, and state inspection.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Firebase & GA4 Analytics:</Text> Automatic
-                  screen and ecommerce event category detection.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Bundle & Performance Analyzer:</Text>{' '}
-                  Real-time FPS monitor and JS asset ratio treemaps.
-                </Text>
-              </View>
-            </View>
+            </ModuleErrorBoundary>
           </>
         )}
 
         {/* ─── TAB 3: GITHUB & DOCS ─────────────────────────────────────────── */}
         {activeTab === 'github' && (
           <>
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgGitHub color="#0F172A" size={15} />
-                  <Text style={styles.panelHeader}>Open Source Repository</Text>
-                </View>
-                <Text
-                  style={[
-                    styles.panelHeaderBadge,
-                    { backgroundColor: '#F3E8FF', color: '#5C2D91', fontWeight: '800' },
-                  ]}
-                >
-                  GITHUB • {githubMeta.defaultBranch}
-                </Text>
-              </View>
-
-              {/* Dynamic Live GitHub Metrics Strip */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <SvgStar color="#EAB308" size={13} />
-                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
-                      {githubMeta.stars}
-                    </Text>
+            <ModuleErrorBoundary moduleName="Open Source GitHub Repository">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgGitHub color="#0F172A" size={15} />
+                    <Text style={styles.panelHeader}>Open Source Repository</Text>
                   </View>
-                  <Text style={styles.statLbl}>STARS</Text>
-                </View>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <SvgFork color="#64748B" size={13} />
-                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
-                      {githubMeta.forks}
-                    </Text>
-                  </View>
-                  <Text style={styles.statLbl}>FORKS</Text>
-                </View>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <Text style={[styles.statVal, { color: '#DC2626', fontSize: 14 }]}>
-                    {githubMeta.openIssues}
+                  <Text
+                    style={[
+                      styles.panelHeaderBadge,
+                      styles.panelHeaderBadgeGithub,
+                    ]}
+                  >
+                    GITHUB • {githubMeta.defaultBranch}
                   </Text>
-                  <Text style={styles.statLbl}>ISSUES</Text>
                 </View>
-              </View>
 
-              <View style={{ gap: 2, marginTop: 4 }}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Repository</Text>
-                  <Text style={styles.infoValue}>vengatmacuser/react-native-inapp-inspector</Text>
+                {/* Dynamic Live GitHub Metrics Strip */}
+                <View style={styles.metricsStrip}>
+                  <View style={[styles.statBox, styles.statBoxPv8]}>
+                    <View style={styles.rowAlignCenterGap4}>
+                      <SvgStar color="#EAB308" size={13} />
+                      <Text style={[styles.statVal, styles.statValDark]}>
+                        {githubMeta.stars}
+                      </Text>
+                    </View>
+                    <Text style={styles.statLbl}>STARS</Text>
+                  </View>
+                  <View style={[styles.statBox, styles.statBoxPv8]}>
+                    <View style={styles.rowAlignCenterGap4}>
+                      <SvgFork color="#64748B" size={13} />
+                      <Text style={[styles.statVal, styles.statValDark]}>
+                        {githubMeta.forks}
+                      </Text>
+                    </View>
+                    <Text style={styles.statLbl}>FORKS</Text>
+                  </View>
+                  <View style={[styles.statBox, styles.statBoxPv8]}>
+                    <Text style={[styles.statVal, styles.statValRed]}>
+                      {githubMeta.openIssues}
+                    </Text>
+                    <Text style={styles.statLbl}>ISSUES</Text>
+                  </View>
                 </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Author / Creator</Text>
-                  <Text style={styles.infoValue}>Vengateswaran Balakrishnan</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Release Version</Text>
-                  <Text style={[styles.infoValue, { color: '#5C2D91' }]}>v{LIB_VERSION}</Text>
-                </View>
-                {githubMeta.pushedAt ? (
+
+                <View style={styles.gap2Mt4}>
                   <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Last Updated</Text>
-                    <Text style={styles.infoValue}>{githubMeta.pushedAt}</Text>
+                    <Text style={styles.infoLabel}>Repository</Text>
+                    <Text style={styles.infoValue}>vengatmacuser/react-native-inapp-inspector</Text>
                   </View>
-                ) : null}
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Platform Support</Text>
-                  <Text style={styles.infoValue}>iOS, Android, Expo, RN 0.60+</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>License</Text>
-                  <Text style={styles.infoValue}>{githubMeta.license}</Text>
-                </View>
-              </View>
-
-              <View style={{ gap: 8, marginTop: 4 }}>
-                <TactileButton
-                  label="Star & View on GitHub"
-                  onPress={() =>
-                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector')
-                  }
-                  color="#24292F"
-                  bgColor="#24292F"
-                  icon={<SvgStar color="#FACC15" size={13} />}
-                  fullWidth
-                />
-                <TactileButton
-                  label="Report Issue / Request Feature"
-                  onPress={() =>
-                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector/issues')
-                  }
-                  color="#0284C7"
-                  bgColor="#0284C7"
-                  icon={<SvgBug color="#FFFFFF" size={13} />}
-                  fullWidth
-                />
-                <TactileButton
-                  label="Sponsor on GitHub ❤️"
-                  onPress={() => openUrl('https://github.com/sponsors/vengatmacuser')}
-                  color="#DB2777"
-                  bgColor="#DB2777"
-                  icon={<SvgHeart color="#FFFFFF" size={13} />}
-                  fullWidth
-                />
-              </View>
-            </View>
-
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <Text style={styles.panelHeader}>Key Features</Text>
-                <Text style={styles.panelHeaderBadge}>ALL-IN-ONE</Text>
-              </View>
-              <View style={{ gap: 6 }}>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Network Inspector:</Text> Auto-intercepts
-                  Axios, Fetch, and XMLHttpRequest with cURL copy and headers.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Console & Stack Trace:</Text> Symbolicated
-                  source line and column coordinates directly from Metro.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Redux Time-Travel:</Text> Dispatched action
-                  timeline, slice diff viewer, and state inspection.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Firebase & GA4 Analytics:</Text> Automatic
-                  screen and ecommerce event category detection.
-                </Text>
-                <Text style={{ fontSize: 12, color: '#334155', lineHeight: 18 }}>
-                  • <Text style={{ fontWeight: '700' }}>Bundle & Performance Analyzer:</Text>{' '}
-                  Real-time FPS monitor and JS asset ratio treemaps.
-                </Text>
-              </View>
-            </View>
-          </>
-        )}
-
-        {/* ─── TAB 3: GITHUB & DOCS ─────────────────────────────────────────── */}
-        {activeTab === 'github' && (
-          <>
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <SvgGitHub color="#0F172A" size={15} />
-                  <Text style={styles.panelHeader}>Open Source Repository</Text>
-                </View>
-                <Text
-                  style={[
-                    styles.panelHeaderBadge,
-                    { backgroundColor: '#F3E8FF', color: '#5C2D91', fontWeight: '800' },
-                  ]}
-                >
-                  GITHUB • {githubMeta.defaultBranch}
-                </Text>
-              </View>
-
-              {/* Dynamic Live GitHub Metrics Strip */}
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <SvgStar color="#EAB308" size={13} />
-                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
-                      {githubMeta.stars}
-                    </Text>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Author / Creator</Text>
+                    <Text style={styles.infoValue}>Vengateswaran Balakrishnan</Text>
                   </View>
-                  <Text style={styles.statLbl}>STARS</Text>
-                </View>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <SvgFork color="#64748B" size={13} />
-                    <Text style={[styles.statVal, { color: '#0F172A', fontSize: 14 }]}>
-                      {githubMeta.forks}
-                    </Text>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Release Version</Text>
+                    <Text style={[styles.infoValue, styles.infoValuePurple]}>v{LIB_VERSION}</Text>
                   </View>
-                  <Text style={styles.statLbl}>FORKS</Text>
+                  {githubMeta.pushedAt ? (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>Last Updated</Text>
+                      <Text style={styles.infoValue}>{githubMeta.pushedAt}</Text>
+                    </View>
+                  ) : null}
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Platform Support</Text>
+                    <Text style={styles.infoValue}>iOS, Android, Expo, RN 0.60+</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>License</Text>
+                    <Text style={styles.infoValue}>{githubMeta.license}</Text>
+                  </View>
                 </View>
-                <View style={[styles.statBox, { paddingVertical: 8 }]}>
-                  <Text style={[styles.statVal, { color: '#DC2626', fontSize: 14 }]}>
-                    {githubMeta.openIssues}
+
+                <View style={styles.gap8Mt4}>
+                  <TactileButton
+                    label="Star & View on GitHub"
+                    onPress={() =>
+                      openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector')
+                    }
+                    color="#24292F"
+                    bgColor="#24292F"
+                    icon={<SvgStar color="#FACC15" size={13} />}
+                    fullWidth
+                  />
+                  <TactileButton
+                    label="Report Issue / Request Feature"
+                    onPress={() =>
+                      openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector/issues')
+                    }
+                    color="#0284C7"
+                    bgColor="#0284C7"
+                    icon={<SvgBug color="#FFFFFF" size={13} />}
+                    fullWidth
+                  />
+                  <TactileButton
+                    label="Sponsor on GitHub ❤️"
+                    onPress={() => openUrl('https://github.com/sponsors/vengatmacuser')}
+                    color="#DB2777"
+                    bgColor="#DB2777"
+                    icon={<SvgHeart color="#FFFFFF" size={13} />}
+                    fullWidth
+                  />
+                </View>
+              </View>
+            </ModuleErrorBoundary>
+
+            <ModuleErrorBoundary moduleName="Quick Setup Guide">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <Text style={styles.panelHeader}>Quick Setup Guide</Text>
+                  <Text style={styles.panelHeaderBadge}>ZERO CONFIG</Text>
+                </View>
+                <View style={styles.codeSnippet}>
+                  <Text style={styles.codeText}>
+                    {`import NetworkInspector, {\n  setupNetworkLogger\n} from 'react-native-inapp-inspector';\n\nsetupNetworkLogger();\n\nexport default function App() {\n  return <NetworkInspector />;\n}`}
                   </Text>
-                  <Text style={styles.statLbl}>ISSUES</Text>
                 </View>
               </View>
-
-              <View style={{ gap: 2, marginTop: 4 }}>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Repository</Text>
-                  <Text style={styles.infoValue}>vengatmacuser/react-native-inapp-inspector</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Author / Creator</Text>
-                  <Text style={styles.infoValue}>Vengateswaran Balakrishnan</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Release Version</Text>
-                  <Text style={[styles.infoValue, { color: '#5C2D91' }]}>v{LIB_VERSION}</Text>
-                </View>
-                {githubMeta.pushedAt ? (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Last Updated</Text>
-                    <Text style={styles.infoValue}>{githubMeta.pushedAt}</Text>
-                  </View>
-                ) : null}
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Platform Support</Text>
-                  <Text style={styles.infoValue}>iOS, Android, Expo, RN 0.60+</Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>License</Text>
-                  <Text style={styles.infoValue}>{githubMeta.license}</Text>
-                </View>
-              </View>
-
-              <View style={{ gap: 8, marginTop: 4 }}>
-                <TactileButton
-                  label="Star & View on GitHub"
-                  onPress={() =>
-                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector')
-                  }
-                  color="#24292F"
-                  bgColor="#24292F"
-                  icon={<SvgExternalLink color="#FFFFFF" size={13} />}
-                  fullWidth
-                />
-                <TactileButton
-                  label="Report Issue / Request Feature"
-                  onPress={() =>
-                    openUrl('https://github.com/vengatmacuser/react-native-inapp-inspector/issues')
-                  }
-                  color="#0284C7"
-                  bgColor="#0284C7"
-                  icon={<SvgExternalLink color="#FFFFFF" size={13} />}
-                  fullWidth
-                />
-                <TactileButton
-                  label="Sponsor on GitHub ❤️"
-                  onPress={() => openUrl('https://github.com/sponsors/vengatmacuser')}
-                  color="#DB2777"
-                  bgColor="#DB2777"
-                  icon={<SvgExternalLink color="#FFFFFF" size={13} />}
-                  fullWidth
-                />
-              </View>
-            </View>
-
-            <View style={styles.panelCard}>
-              <View style={styles.panelHeaderRow}>
-                <Text style={styles.panelHeader}>Quick Setup Guide</Text>
-                <Text style={styles.panelHeaderBadge}>ZERO CONFIG</Text>
-              </View>
-              <View style={styles.codeSnippet}>
-                <Text style={styles.codeText}>
-                  {`import NetworkInspector, {\n  setupNetworkLogger\n} from 'react-native-inapp-inspector';\n\nsetupNetworkLogger();\n\nexport default function App() {\n  return <NetworkInspector />;\n}`}
-                </Text>
-              </View>
-            </View>
+            </ModuleErrorBoundary>
           </>
         )}
       </ScrollView>

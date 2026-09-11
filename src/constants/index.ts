@@ -3,8 +3,7 @@ import {Method} from '../types';
 // Styles
 import {AppColors} from '../styles/AppColors';
 
-// Type Definition
-import {StatusFilter} from '../types';
+
 
 export const STATUS_FILTERS: string[] = [
   'ALL',

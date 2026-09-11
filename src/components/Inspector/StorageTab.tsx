@@ -12,9 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import TouchableScale from '../TouchableScale';
-import CopyButton from '../CopyButton';
 import EndOfListFooter from '../EndOfListFooter';
-import globalStyles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
@@ -27,7 +25,6 @@ import {
   TrashIcon,
   CopyIcon,
   CheckIcon,
-  CircleAlertIcon,
   LayersIcon,
   ResetIcon,
   ChevronIcon,
@@ -38,8 +35,6 @@ import {
   setStorageEntry,
   removeStorageEntry,
   clearStorageDriver,
-  isAsyncStorageConnected,
-  isMMKVConnected,
   getRegisteredMMKVInstanceIds,
   subscribeToStorageChanges,
   StorageDriver,
@@ -397,11 +392,6 @@ export const StorageTab = React.memo(() => {
     ),
     [expandedKeys, handleCopyEntry],
   );
-
-  const isConnected =
-    activeDriver === 'asyncStorage'
-      ? isAsyncStorageConnected()
-      : isMMKVConnected();
 
   return (
     <View style={styles.container}>

@@ -1,12 +1,11 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
   Image,
   ImageSourcePropType,
   StyleSheet,
   View,
 } from 'react-native';
-import BrandSquareIcon from './BrandSquareIcon';
-import {AppColors} from '../styles/AppColors';
+import BrandCircleIcon from './BrandCircleIcon';
 
 interface AppHeaderLogoProps {
   size?: number;
@@ -14,12 +13,12 @@ interface AppHeaderLogoProps {
 }
 
 export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
-  size = 46,
+  size = 52,
   customIcon,
 }) => {
   const cornerRadius = Math.round(size * 0.23);
 
-  // 1. If customIcon is explicitly provided, render it with smooth squircle edges
+  // 1. If customIcon is explicitly provided, render it
   if (customIcon) {
     if (React.isValidElement(customIcon)) {
       const clonedIcon = React.cloneElement(
@@ -56,27 +55,15 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
         ]}>
         <Image
           source={customIcon as ImageSourcePropType}
-          style={[logoStyles.image, {borderRadius: cornerRadius - 2}]}
+          style={[logoStyles.image, {borderRadius: cornerRadius}]}
           resizeMode="cover"
         />
       </View>
     );
   }
 
-  // 2. Default: Inspector's Signature Cyber Owl Square Brand App Icon
-  return (
-    <View
-      style={[
-        logoStyles.container,
-        {
-          width: size,
-          height: size,
-          borderRadius: cornerRadius,
-        },
-      ]}>
-      <BrandSquareIcon size={size} />
-    </View>
-  );
+  // 2. Default: Inspector's Signature FAB Icon Logo (Cyber Owl Circular Emblem)
+  return <BrandCircleIcon size={size} />;
 };
 
 const logoStyles = StyleSheet.create({
@@ -84,27 +71,13 @@ const logoStyles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.55)',
-    backgroundColor: AppColors.white,
-    shadowColor: AppColors.shadowColorString,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
-    elevation: 4,
+    backgroundColor: 'transparent',
   },
   imageContainer: {
     overflow: 'hidden',
-    backgroundColor: AppColors.white,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.55)',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: AppColors.shadowColorString,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
   },
   image: {
     width: '100%',
@@ -113,4 +86,5 @@ const logoStyles = StyleSheet.create({
 });
 
 export default AppHeaderLogo;
+
 

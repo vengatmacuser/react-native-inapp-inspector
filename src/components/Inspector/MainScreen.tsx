@@ -1,18 +1,16 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Modal,
   Platform,
   Pressable,
   StatusBar,
   StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import {useInspector} from './InspectorContext';
 import ErrorBoundary from '../ErrorBoundary';
+import ModuleErrorBoundary from '../ModuleErrorBoundary';
 import FabLauncher from './FabLauncher';
 import InspectorHeader from './InspectorHeader';
 import TabBar from './TabBar';
@@ -36,7 +34,6 @@ import AboutModal from './AboutModal';
 import NpmUpdateToast from './NpmUpdateToast';
 import NpmStarPrompt from './NpmStarPrompt';
 import Toast from '../Toast';
-import TouchableScale from '../TouchableScale';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import NavigationTracker from './NavigationTracker';
@@ -45,7 +42,6 @@ import {isLocalDebugEnvironment} from '../../helpers';
 const MainScreen = () => {
   const {
     visible,
-    isMinimized,
     modalAnimationType,
     closeModal,
     modalHeightPercent,
@@ -61,7 +57,6 @@ const MainScreen = () => {
     activeTab,
     isReady,
     enabled,
-    useNativeFab,
     hasNavigationContext,
     setNavState,
   } = useInspector();
@@ -149,17 +144,53 @@ const MainScreen = () => {
                   <TabBar />
                   {isReady ? (
                     <View style={{flex: 1}}>
-                      {activeTab === 'apis' && <NetworkTab />}
-                      {activeTab === 'logs' && <ConsoleTab />}
-                      {activeTab === 'analytics' && <AnalyticsTab />}
-                      {activeTab === 'redux' && <ReduxTab />}
-                      {activeTab === 'crash' && <CrashTab />}
-                      {activeTab === 'device' && <DeviceInfoTab />}
-                      {activeTab === 'storage' && <StorageTab />}
-                      {activeTab === 'media' && <MediaGalleryTab />}
+                      {activeTab === 'apis' && (
+                        <ModuleErrorBoundary moduleName="Network API Monitor">
+                          <NetworkTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'logs' && (
+                        <ModuleErrorBoundary moduleName="Console Logs Monitor">
+                          <ConsoleTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'analytics' && (
+                        <ModuleErrorBoundary moduleName="Analytics Event Tracker">
+                          <AnalyticsTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'redux' && (
+                        <ModuleErrorBoundary moduleName="Redux State Inspector">
+                          <ReduxTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'crash' && (
+                        <ModuleErrorBoundary moduleName="Crash Reporter">
+                          <CrashTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'device' && (
+                        <ModuleErrorBoundary moduleName="Device Diagnostics">
+                          <DeviceInfoTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'storage' && (
+                        <ModuleErrorBoundary moduleName="Storage Inspector">
+                          <StorageTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'media' && (
+                        <ModuleErrorBoundary moduleName="Media Gallery">
+                          <MediaGalleryTab />
+                        </ModuleErrorBoundary>
+                      )}
                       {Platform.OS === 'android' &&
                         isLocalDebugEnvironment() &&
-                        activeTab === 'debugging' && <DebuggingTab />}
+                        activeTab === 'debugging' && (
+                          <ModuleErrorBoundary moduleName="Debugging Utilities">
+                            <DebuggingTab />
+                          </ModuleErrorBoundary>
+                        )}
                     </View>
                   ) : (
                     <MainScreenSkeleton />
@@ -177,17 +208,29 @@ const MainScreen = () => {
                       },
                     ]}>
                     {activeTab === 'apis' && selected != null && (
-                      <NetworkDetail />
+                      <ModuleErrorBoundary moduleName="Network Request Details">
+                        <NetworkDetail />
+                      </ModuleErrorBoundary>
                     )}
                     {activeTab === 'analytics' && selectedEvent != null && (
-                      <AnalyticsDetail event={selectedEvent} />
+                      <ModuleErrorBoundary moduleName="Analytics Event Details">
+                        <AnalyticsDetail event={selectedEvent} />
+                      </ModuleErrorBoundary>
                     )}
                     {activeTab === 'logs' && selectedLog != null && (
-                      <LogDetail />
+                      <ModuleErrorBoundary moduleName="Console Log Details">
+                        <LogDetail />
+                      </ModuleErrorBoundary>
                     )}
-                    {activeTab === 'redux' && <ReduxDetail />}
+                    {activeTab === 'redux' && (
+                      <ModuleErrorBoundary moduleName="Redux Action & State Details">
+                        <ReduxDetail />
+                      </ModuleErrorBoundary>
+                    )}
                     {activeTab === 'crash' && selectedCrash != null && (
-                      <CrashDetail />
+                      <ModuleErrorBoundary moduleName="Crash Log Details">
+                        <CrashDetail />
+                      </ModuleErrorBoundary>
                     )}
                   </View>
                 )}
@@ -210,7 +253,9 @@ const MainScreen = () => {
                         ],
                       },
                     ]}>
-                    <SettingsPanel />
+                    <ModuleErrorBoundary moduleName="Settings Panel">
+                      <SettingsPanel />
+                    </ModuleErrorBoundary>
                   </Animated.View>
                 )}
 
@@ -232,7 +277,9 @@ const MainScreen = () => {
                         ],
                       },
                     ]}>
-                    <AboutModal onClose={() => setIsAboutOpen(false)} />
+                    <ModuleErrorBoundary moduleName="About & Diagnostics">
+                      <AboutModal onClose={() => setIsAboutOpen(false)} />
+                    </ModuleErrorBoundary>
                   </Animated.View>
                 )}
               </View>

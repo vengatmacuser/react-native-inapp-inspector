@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, Text, View, TextStyle, Linking} from 'react-native';
+import {StyleSheet, Text, TextStyle} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import {escapeRegex, handleOpenExternalLink} from '../helpers';

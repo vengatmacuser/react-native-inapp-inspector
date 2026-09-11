@@ -2,7 +2,6 @@ import React, {useState, useEffect, useRef} from 'react';
 import {
   Animated,
   Linking,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,

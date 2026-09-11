@@ -3,12 +3,8 @@ import {
   Alert,
   Animated,
   DevSettings,
-  Dimensions,
-  Linking,
-  PixelRatio,
   Platform,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -22,7 +18,6 @@ import {toggleGlobalTheme} from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {
-  isPersistentStorageAvailable,
   calculateRamBasedLimits,
 } from '../../helpers/settingsStore';
 import {clearNetworkLogs} from '../../customHooks/networkLogger';
@@ -48,19 +43,14 @@ import {
   TrashIcon,
   PackageIcon,
   ReduxIcon,
-  PerformanceIcon,
   CrashIcon,
   ShieldAlertIcon,
   ForwardChevronIcon,
   ChevronDownIcon,
-  NpmIcon,
-  BoltIcon,
   BrainIcon,
   SmartphoneIcon,
   DatabaseIcon,
   QrCodeIcon,
-  GitHubIcon,
-  CopyIcon,
   FilmIcon,
   ScreencastIcon,
   CameraIcon,
@@ -71,13 +61,8 @@ import {
 } from '../NetworkIcons';
 import {ScreenCapture} from '../../capture';
 
-import {LIB_VERSION} from '../../constants';
 import {
-  copyToClipboard,
   isLocalDebugEnvironment,
-  getAppName,
-  getBundleIdentifier,
-  getAppVersionAndBuild,
 } from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {pruneAllLogs} from '../../helpers/memoryManager';
@@ -105,15 +90,11 @@ const SettingsPanel = () => {
     setShowUpdateToast,
     showConsoleLevels,
     setShowConsoleLevels,
-    resetToDefaults,
     closeModal,
-    storage,
     logs,
     consoleLogs,
     analyticsEvents,
     reduxState,
-    maxNetworkLogs,
-    setMaxNetworkLogs,
     maxConsoleLogs,
     setMaxConsoleLogs,
     maxAnalyticsEventsLimit,
@@ -125,15 +106,12 @@ const SettingsPanel = () => {
     setReduxAutoRefreshState,
     reduxExpandDepth,
     setReduxExpandDepth,
-    switchActiveTab,
     setSelected,
     setSelectedEvent,
     setReduxState,
     crashRecords,
     maxCrashLogs,
     setMaxCrashLogs,
-    updateAvailable,
-    latestNpmVersion,
   } = useInspector();
 
   const [stagedHeight, setStagedHeight] = useState(modalHeightPercent);
@@ -143,13 +121,6 @@ const SettingsPanel = () => {
   }, [modalHeightPercent]);
 
   const autoRamProfile = calculateRamBasedLimits(deviceFreeRamMb);
-
-  const isPersistent = isPersistentStorageAvailable();
-
-  // Safe Area & Status Bar Padding for All Device Form Factors
-  const statusBarHeight =
-    Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 44;
-  const headerTopPadding = modalHeightPercent >= 95 ? statusBarHeight : 0;
 
   const allModules = useMemo(
     () =>
@@ -335,11 +306,6 @@ const SettingsPanel = () => {
 
   const [isDefaultTabDropdownOpen, setIsDefaultTabDropdownOpen] =
     useState(false);
-
-  const goBackToMain = () => {
-    animateNextLayout();
-    setSettingsPage('main');
-  };
 
   // Helper: settings row with icon + label + optional description
   const renderSettingRow = (opts: {
@@ -677,7 +643,7 @@ const SettingsPanel = () => {
 
                 const liveStats =
                   moduleItem.key === 'apis'
-                    ? `${logs.length} requests • Limit: ${maxNetworkLogs}`
+                    ? `${logs.length} requests`
                     : moduleItem.key === 'logs'
                     ? `${consoleLogs.length} logs • Limit: ${maxConsoleLogs}`
                     : moduleItem.key === 'crash'
@@ -2082,13 +2048,6 @@ const SettingsPanel = () => {
                   }}>
                   {[
                     {
-                      label: 'APIs',
-                      value: isAutoRamLimitEnabled
-                        ? autoRamProfile.maxNetworkLogs
-                        : maxNetworkLogs,
-                      color: AppColors.blue500,
-                    },
-                    {
                       label: 'Logs',
                       value: isAutoRamLimitEnabled
                         ? autoRamProfile.maxConsoleLogs
@@ -2719,40 +2678,12 @@ const SettingsPanel = () => {
   );
 
   let content: React.ReactNode = null;
-  let title = '';
-  let icon: React.ReactNode = null;
-  let rightInfo = '';
 
   if (settingsPage === 'apis') {
-    title = t('settings.apis.title');
-    icon = <SignalIcon color={AppColors.white} size={16} />;
-    rightInfo = t('settings.apis.total', {count: logs.length});
     content = (
       <ScrollView
         style={{flex: 1}}
         contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            padding: 16,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-          }}>
-          {renderSettingRow({
-            icon: <SignalIcon color={AppColors.purple} size={16} />,
-            label: t('settings.apis.maxRequestLogs'),
-            description: t('settings.apis.maxRequestLogsDescription'),
-            numericInput: {
-              value: maxNetworkLogs,
-              onChange: setMaxNetworkLogs,
-              min: 10,
-              max: 100,
-              placeholder: 'Enter max requests (10-100)',
-            },
-            isLast: true,
-          })}
-        </View>
 
         <View
           style={{
@@ -2804,9 +2735,6 @@ const SettingsPanel = () => {
       </ScrollView>
     );
   } else if (settingsPage === 'logs') {
-    title = t('settings.logs.title');
-    icon = <TerminalIcon color={AppColors.white} size={16} />;
-    rightInfo = t('settings.logs.total', {count: consoleLogs.length});
     content = (
       <ScrollView
         style={{flex: 1}}
@@ -3060,9 +2988,6 @@ const SettingsPanel = () => {
       </ScrollView>
     );
   } else if (settingsPage === 'analytics') {
-    title = t('settings.analytics.title');
-    icon = <AnalyticsIcon color={AppColors.white} size={16} />;
-    rightInfo = t('settings.analytics.total', {count: analyticsEvents.length});
     content = (
       <ScrollView
         style={{flex: 1}}
@@ -3141,11 +3066,6 @@ const SettingsPanel = () => {
       </ScrollView>
     );
   } else if (settingsPage === 'redux') {
-    title = t('settings.redux.title');
-    icon = <ReduxIcon color={AppColors.white} size={16} />;
-    rightInfo = t('settings.redux.reducers', {
-      count: Object.keys(reduxState || {}).length,
-    });
     content = (
       <ScrollView
         style={{flex: 1}}
@@ -3249,9 +3169,6 @@ const SettingsPanel = () => {
       </ScrollView>
     );
   } else if (settingsPage === 'crash') {
-    title = t('settings.crash.title');
-    icon = <CrashIcon color={AppColors.white} size={16} />;
-    rightInfo = `Total: ${crashRecords?.length || 0}`;
     content = (
       <ScrollView
         style={{flex: 1}}

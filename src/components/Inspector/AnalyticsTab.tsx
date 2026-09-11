@@ -19,24 +19,17 @@ import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
 import TouchableScale from '../TouchableScale';
-import {
-  getEventCategory,
-  getCategoryColors,
-} from '../../helpers';
+import {getEventCategory} from '../../helpers';
 import {
   LayersIcon,
-  CheckIcon,
   SearchIcon,
   ClearIcon,
   TrashIcon,
-  EmptyRadarIcon,
-  HeaderPauseIcon,
   FilterIcon,
   CartIcon,
   GlobeIcon,
   BoltIcon,
   SparkleIcon,
-  ChevronIcon,
 } from '../NetworkIcons';
 
 const AnalyticsTab = React.memo(() => {
@@ -55,8 +48,6 @@ const AnalyticsTab = React.memo(() => {
     logRouteMapRef,
     isAnalyticsLayoutReady,
     setIsAnalyticsLayoutReady,
-    isAnalyticsPaused,
-    setIsAnalyticsPaused,
     isAnalyticsFilterApplied,
   } = useInspector();
 
@@ -276,27 +267,6 @@ const AnalyticsTab = React.memo(() => {
               )}
             </View>
             <View style={styles.toolbarRight}>
-              <TouchableOpacity
-                style={[
-                  styles.toolbarBtn,
-                  isAnalyticsPaused && {
-                    borderColor: `${AppColors.darkOrange}50`,
-                    backgroundColor: `${AppColors.darkOrange}18`,
-                  },
-                ]}
-                onPress={() => setIsAnalyticsPaused(p => !p)}
-                hitSlop={6}>
-                <HeaderPauseIcon
-                  isPaused={isAnalyticsPaused}
-                  color={
-                    isAnalyticsPaused
-                      ? AppColors.darkOrange
-                      : AppColors.grayTextStrong
-                  }
-                  size={16}
-                />
-              </TouchableOpacity>
-
               {/* GA Dashboard-style Filter Button */}
               <TouchableOpacity
                 style={[

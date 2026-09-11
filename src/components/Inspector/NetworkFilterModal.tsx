@@ -12,7 +12,6 @@ import {useInspector} from './InspectorContext';
 import {Method} from '../../types';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
-import {useTranslation} from '../../i18n';
 import {METHOD_COLORS} from '../../constants';
 import {
   FilterIcon,
@@ -73,7 +72,6 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
   onApply,
   searchQuery = '',
 }) => {
-  const {t} = useTranslation();
   const {logs} = useInspector();
 
   const [draft, setDraft] = useState<NetworkFilterState>(() => ({
