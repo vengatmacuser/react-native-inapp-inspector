@@ -24,6 +24,7 @@ import {
 
 // Styles & Helpers
 import {AppColors} from '../styles/AppColors';
+import {AppFonts} from '../styles/AppFonts';
 import {getSize, copyToClipboard} from '../helpers';
 import {triggerNativeHaptic} from '../native/NativeInspector';
 
@@ -304,7 +305,7 @@ const JsonViewer = React.memo(
     const {t} = useTranslation();
     const [internalMode, setInternalMode] = useState<
       'pretty' | 'raw' | 'table'
-    >(externalMode ?? 'pretty');
+    >(externalMode ?? 'raw');
     const [copied, setCopied] = useState(false);
     const [isWrap, setIsWrap] = useState(wrap ?? true);
     const [rawIndentMode, setRawIndentMode] = useState<'formatted' | 'compact'>(
@@ -545,141 +546,116 @@ const JsonViewer = React.memo(
       );
     };
 
-    // Dynamic Data Format / Type Info
-    const typeInfo = useMemo(() => {
-      if (Array.isArray(data)) {
-        return {
-          label: `ARRAY [${data.length}]`,
-          color: AppColors.blue600,
-          bg: `${AppColors.blue600}12`,
-          border: `${AppColors.blue600}30`,
-        };
-      }
-      if (data && typeof data === 'object') {
-        const keyCount = Object.keys(data).length;
-        return {
-          label: `OBJECT {${keyCount}}`,
-          color: AppColors.violet600,
-          bg: `${AppColors.violet600}12`,
-          border: `${AppColors.violet600}30`,
-        };
-      }
-      return {
-        label: 'JSON',
-        color: AppColors.slate700,
-        bg: `${AppColors.slate700}10`,
-        border: `${AppColors.slate700}25`,
-      };
-    }, [data]);
-
     return (
       <View style={[localStyles.container, fullHeight && {flex: 1}]}>
-        {/* ── Code Snippet Window Header (IDE Pro Chrome) ── */}
+        {/* ── Code Snippet Window Header ── */}
         <View style={localStyles.snippetHeader}>
-          {/* Left: Language/Type Indicator + Size & Line Stats */}
-          <View style={localStyles.headerLeft}>
-            <View
-              style={[
-                localStyles.langBadge,
-                {backgroundColor: typeInfo.bg, borderColor: typeInfo.border},
-              ]}>
-              <View
+          {/* Left: Button Group for Raw / Pretty / Table */}
+          {!hideTabs && (
+            <View style={localStyles.snippetTabs}>
+              <TouchableScale
+                onPress={() => setMode('raw')}
                 style={[
-                  localStyles.langDot,
-                  {backgroundColor: typeInfo.color},
-                ]}
-              />
-              <Text
-                style={[
-                  localStyles.langBadgeText,
-                  {color: typeInfo.color},
+                  localStyles.snippetTabBtn,
+                  mode === 'raw' && localStyles.snippetTabBtnActive,
                 ]}>
-                {typeInfo.label}
-              </Text>
-            </View>
-            <View style={localStyles.metaBadge}>
-              <Text
-                style={localStyles.metaBadgeText}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {sizeFormatted} · {lineCount} {lineCount === 1 ? t('jsonViewer.line', 'line') : t('jsonViewer.lines', 'lines')}
-              </Text>
-            </View>
-          </View>
+                <RawIcon
+                  color={mode === 'raw' ? AppColors.white : AppColors.grayText}
+                  size={11.5}
+                />
+                <Text
+                  style={[
+                    localStyles.snippetTabText,
+                    mode === 'raw' && localStyles.snippetTabTextActive,
+                  ]}>
+                  {t('network.jsonViewer.raw', 'Raw')}
+                </Text>
+              </TouchableScale>
 
-          {/* Right: Mode Tabs + Action Tools */}
+              <TouchableScale
+                onPress={() => setMode('pretty')}
+                style={[
+                  localStyles.snippetTabBtn,
+                  mode === 'pretty' && localStyles.snippetTabBtnActive,
+                ]}>
+                <PrettyIcon
+                  color={mode === 'pretty' ? AppColors.white : AppColors.grayText}
+                  size={11.5}
+                />
+                <Text
+                  style={[
+                    localStyles.snippetTabText,
+                    mode === 'pretty' && localStyles.snippetTabTextActive,
+                  ]}>
+                  {t('network.jsonViewer.pretty', 'Pretty')}
+                </Text>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={() => setMode('table')}
+                style={[
+                  localStyles.snippetTabBtn,
+                  mode === 'table' && localStyles.snippetTabBtnActive,
+                ]}>
+                <TableIcon
+                  color={mode === 'table' ? AppColors.white : AppColors.grayText}
+                  size={11.5}
+                />
+                <Text
+                  style={[
+                    localStyles.snippetTabText,
+                    mode === 'table' && localStyles.snippetTabTextActive,
+                  ]}>
+                  {t('network.jsonViewer.table', 'Table')}
+                </Text>
+              </TouchableScale>
+            </View>
+          )}
+
+          {/* Right: Options for Active Mode + Copy Action */}
           <View style={localStyles.headerRight}>
-            {!hideTabs && (
-              <View style={localStyles.snippetTabs}>
+            {/* Raw Mode Options: Min & Wrap Toggles */}
+            {mode === 'raw' && (
+              <>
                 <TouchableScale
-                  onPress={() => setMode('pretty')}
+                  onPress={() =>
+                    setRawIndentMode(prev =>
+                      prev === 'compact' ? 'formatted' : 'compact',
+                    )
+                  }
                   style={[
-                    localStyles.snippetTabBtn,
-                    mode === 'pretty' && [
-                      localStyles.snippetTabBtnActive,
-                      {backgroundColor: AppColors.brandPurple, shadowColor: AppColors.brandPurple},
-                    ],
+                    localStyles.toolToggleBtn,
+                    rawIndentMode === 'compact' &&
+                      localStyles.toolToggleBtnActive,
                   ]}>
-                  <PrettyIcon
-                    color={mode === 'pretty' ? AppColors.white : AppColors.grayTextWeak}
-                    size={11}
-                  />
                   <Text
                     style={[
-                      localStyles.snippetTabText,
-                      mode === 'pretty' && localStyles.snippetTabTextActive,
+                      localStyles.toolToggleText,
+                      rawIndentMode === 'compact' &&
+                        localStyles.toolToggleTextActive,
                     ]}>
-                    {t('network.jsonViewer.pretty', 'Pretty')}
+                    {t('jsonViewer.min', 'Min')}
                   </Text>
                 </TouchableScale>
 
                 <TouchableScale
-                  onPress={() => setMode('raw')}
+                  onPress={() => setIsWrap(prev => !prev)}
                   style={[
-                    localStyles.snippetTabBtn,
-                    mode === 'raw' && [
-                      localStyles.snippetTabBtnActive,
-                      {backgroundColor: AppColors.sky600, shadowColor: AppColors.sky600},
-                    ],
+                    localStyles.toolToggleBtn,
+                    isWrap && localStyles.toolToggleBtnActive,
                   ]}>
-                  <RawIcon
-                    color={mode === 'raw' ? AppColors.white : AppColors.grayTextWeak}
-                    size={11}
-                  />
                   <Text
                     style={[
-                      localStyles.snippetTabText,
-                      mode === 'raw' && localStyles.snippetTabTextActive,
+                      localStyles.toolToggleText,
+                      isWrap && localStyles.toolToggleTextActive,
                     ]}>
-                    {t('network.jsonViewer.raw', 'Raw')}
+                    {t('jsonViewer.wrap', 'Wrap')}
                   </Text>
                 </TouchableScale>
-
-                <TouchableScale
-                  onPress={() => setMode('table')}
-                  style={[
-                    localStyles.snippetTabBtn,
-                    mode === 'table' && [
-                      localStyles.snippetTabBtnActive,
-                      {backgroundColor: AppColors.teal600, shadowColor: AppColors.teal600},
-                    ],
-                  ]}>
-                  <TableIcon
-                    color={mode === 'table' ? AppColors.white : AppColors.grayTextWeak}
-                    size={11}
-                  />
-                  <Text
-                    style={[
-                      localStyles.snippetTabText,
-                      mode === 'table' && localStyles.snippetTabTextActive,
-                    ]}>
-                    {t('network.jsonViewer.table', 'Table')}
-                  </Text>
-                </TouchableScale>
-              </View>
+              </>
             )}
 
-            {/* Pretty Mode: Fold / Expand Toggle */}
+            {/* Pretty Mode Option: Fold / Expand Toggle */}
             {mode === 'pretty' && isObject && (
               <TouchableScale
                 onPress={() => setAllExpanded(prev => !prev)}
@@ -697,49 +673,7 @@ const JsonViewer = React.memo(
               </TouchableScale>
             )}
 
-            {/* Raw Mode: Format / Compact Indent Toggle */}
-            {mode === 'raw' && (
-              <TouchableScale
-                onPress={() =>
-                  setRawIndentMode(prev =>
-                    prev === 'compact' ? 'formatted' : 'compact',
-                  )
-                }
-                style={[
-                  localStyles.toolToggleBtn,
-                  rawIndentMode === 'compact' &&
-                    localStyles.toolToggleBtnActive,
-                ]}>
-                <Text
-                  style={[
-                    localStyles.toolToggleText,
-                    rawIndentMode === 'compact' &&
-                      localStyles.toolToggleTextActive,
-                  ]}>
-                  {rawIndentMode === 'compact' ? t('jsonViewer.min', 'Min') : t('jsonViewer.indent', 'Indent')}
-                </Text>
-              </TouchableScale>
-            )}
-
-            {/* Raw Mode: Word Wrap Toggle */}
-            {mode === 'raw' && (
-              <TouchableScale
-                onPress={() => setIsWrap(prev => !prev)}
-                style={[
-                  localStyles.toolToggleBtn,
-                  isWrap && localStyles.toolToggleBtnActive,
-                ]}>
-                <Text
-                  style={[
-                    localStyles.toolToggleText,
-                    isWrap && localStyles.toolToggleTextActive,
-                  ]}>
-                  {t('jsonViewer.wrap', 'Wrap')}
-                </Text>
-              </TouchableScale>
-            )}
-
-            {/* Quick Copy Button */}
+            {/* Universal Copy Button */}
             <TouchableScale
               onPress={handleCopy}
               hitSlop={6}
@@ -748,9 +682,9 @@ const JsonViewer = React.memo(
                 copied && localStyles.copyBtnSuccess,
               ]}>
               {copied ? (
-                <CheckIcon color={AppColors.emerald500} size={12} />
+                <CheckIcon color={AppColors.emerald500} size={13} />
               ) : (
-                <CopyIcon color={AppColors.grayTextWeak} size={12} />
+                <CopyIcon color={AppColors.grayText} size={13} />
               )}
             </TouchableScale>
           </View>
@@ -946,9 +880,9 @@ const localStyles = StyleSheet.create({
   snippetTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${AppColors.grayBorderSecondary}66`,
-    borderRadius: 7,
-    padding: 2,
+    backgroundColor: `${AppColors.slate200}80`,
+    borderRadius: 8,
+    padding: 2.5,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
     gap: 2,
@@ -956,10 +890,10 @@ const localStyles = StyleSheet.create({
   snippetTabBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3.5,
-    paddingVertical: 2.5,
-    paddingHorizontal: 6,
-    borderRadius: 5,
+    gap: 4,
+    paddingVertical: 3.5,
+    paddingHorizontal: 8,
+    borderRadius: 6,
   },
   snippetTabBtnActive: {
     backgroundColor: AppColors.brandPurple,
@@ -970,18 +904,17 @@ const localStyles = StyleSheet.create({
     elevation: 1,
   },
   snippetTabText: {
-    fontFamily: monoFont,
-    fontSize: 9.5,
-    color: AppColors.grayTextWeak,
-    fontWeight: '600',
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 10.5,
+    color: AppColors.grayText,
   },
   snippetTabTextActive: {
     color: AppColors.white,
-    fontWeight: '700',
+    fontFamily: AppFonts.interBold,
   },
   toolToggleBtn: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
     borderRadius: 6,
     backgroundColor: AppColors.white,
     borderWidth: 1,
@@ -990,22 +923,21 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   toolToggleBtnActive: {
-    backgroundColor: AppColors.purple50,
-    borderColor: AppColors.purple200,
+    backgroundColor: AppColors.purpleShade50,
+    borderColor: `${AppColors.brandPurple}60`,
   },
   toolToggleText: {
-    fontFamily: monoFont,
-    fontSize: 9.5,
-    color: AppColors.grayTextWeak,
-    fontWeight: '600',
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 10.5,
+    color: AppColors.grayText,
   },
   toolToggleTextActive: {
     color: AppColors.brandPurple,
-    fontWeight: '700',
+    fontFamily: AppFonts.interBold,
   },
   copyBtn: {
-    width: 25,
-    height: 25,
+    width: 27,
+    height: 27,
     borderRadius: 6,
     backgroundColor: AppColors.white,
     borderWidth: 1,
@@ -1146,10 +1078,9 @@ const localStyles = StyleSheet.create({
     borderColor: AppColors.purple200,
   },
   truncationText: {
-    fontFamily: monoFont,
-    fontSize: 10.5,
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 11,
     color: AppColors.brandPurple,
-    fontWeight: '600',
   },
   tableView: {
     flex: 1,
@@ -1164,11 +1095,11 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   tableHeaderCell: {
-    fontFamily: monoFont,
-    fontSize: 10,
+    fontFamily: AppFonts.interBold,
+    fontSize: 10.5,
     color: AppColors.slate600,
-    fontWeight: '700',
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   tableRow: {
     flexDirection: 'row',
@@ -1204,9 +1135,8 @@ const localStyles = StyleSheet.create({
     marginTop: 3,
   },
   typePillText: {
-    fontFamily: monoFont,
+    fontFamily: AppFonts.interBold,
     fontSize: 9,
-    fontWeight: '700',
   },
   tableCellValue: {
     fontFamily: monoFont,
@@ -1231,10 +1161,9 @@ const localStyles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   showMoreText: {
-    fontFamily: monoFont,
-    fontSize: 10,
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 10.5,
     color: AppColors.brandPurple,
-    fontWeight: '600',
   },
   emptyContainer: {
     padding: 24,
@@ -1242,8 +1171,8 @@ const localStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: {
-    fontFamily: monoFont,
-    fontSize: 11.5,
+    fontFamily: AppFonts.interMedium,
+    fontSize: 12,
     color: AppColors.slate500,
   },
   highlight: {

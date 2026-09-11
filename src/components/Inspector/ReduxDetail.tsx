@@ -17,11 +17,13 @@ import SegmentedTabs from '../SegmentedTabs';
 import JsonViewer from '../JsonViewer';
 import DiffViewer from '../DiffViewer';
 import CopyButton from '../CopyButton';
+import ShareButton from '../ShareButton';
 import TouchableScale from '../TouchableScale';
 import HighlightText from '../HighlightText';
 import AnimatedEntrance from '../AnimatedEntrance';
 import {getActionHistory} from '../../customHooks/reduxLogger';
 import {getSize, openInVSCode, parseStackLine} from '../../helpers';
+import {shareReduxReport} from '../../helpers/shareFormatter';
 import {getCustomStorage} from '../../helpers/settingsStore';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -1068,8 +1070,13 @@ const ReduxDetail = React.memo(() => {
               )}
             </View>
 
-            {/* Copy Button */}
-            <CopyButton value={() => selectedReduxAction} label="Copy Action" />
+            {/* Share & Copy Action Buttons */}
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <ShareButton
+                onShare={() => shareReduxReport(selectedReduxAction)}
+              />
+              <CopyButton value={() => selectedReduxAction} label="Copy Action" />
+            </View>
           </View>
 
           {/* Sub Stats Row */}

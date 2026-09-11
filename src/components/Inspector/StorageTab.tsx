@@ -77,8 +77,8 @@ const StorageEntryCard = React.memo(function StorageEntryCard({
 }) {
   const formattedBytes = useMemo(() => {
     return entry.byteSize < 1024
-      ? `${entry.byteSize} B`
-      : `${(entry.byteSize / 1024).toFixed(1)} KB`;
+      ? `${entry.byteSize.toLocaleString()} B`
+      : `${(entry.byteSize / 1024).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})} KB`;
   }, [entry.byteSize]);
 
   // Lazy compute displayed value to avoid layout thrashing on large JSON strings
@@ -368,9 +368,16 @@ export const StorageTab = React.memo(() => {
   }, [entries]);
 
   const formattedTotalSize = useMemo(() => {
-    if (totalBytes < 1024) return `${totalBytes} B`;
-    if (totalBytes < 1024 * 1024) return `${(totalBytes / 1024).toFixed(1)} KB`;
-    return `${(totalBytes / (1024 * 1024)).toFixed(2)} MB`;
+    if (totalBytes < 1024) return `${totalBytes.toLocaleString()} B`;
+    if (totalBytes < 1024 * 1024)
+      return `${(totalBytes / 1024).toLocaleString(undefined, {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+      })} KB`;
+    return `${(totalBytes / (1024 * 1024)).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} MB`;
   }, [totalBytes]);
 
   const handleCopyEntry = useCallback((entry: StorageEntry) => {
@@ -395,7 +402,7 @@ export const StorageTab = React.memo(() => {
 
   return (
     <View style={styles.container}>
-      {/* ── Driver Sub-Tabs ── */}
+      {/* ── Driver Sub-Tabs (Styled like API list tabs) ── */}
       <View style={styles.driverTabsWrapper}>
         <ScrollView
           horizontal
@@ -405,26 +412,17 @@ export const StorageTab = React.memo(() => {
             onPress={() => setActiveDriver('asyncStorage')}
             style={[
               styles.driverTabPill,
-              {
-                backgroundColor:
-                  activeDriver === 'asyncStorage'
-                    ? AppColors.brandPurple
-                    : `${AppColors.brandPurple}0D`,
-                borderColor:
-                  activeDriver === 'asyncStorage'
-                    ? AppColors.brandPurple
-                    : `${AppColors.brandPurple}2B`,
-              },
               activeDriver === 'asyncStorage' && {
-                shadowColor: AppColors.brandPurple,
-                shadowOffset: {width: 0, height: 1.5},
-                shadowOpacity: 0.25,
-                shadowRadius: 3,
-                elevation: 3,
+                backgroundColor: AppColors.brandPurple,
+                borderColor: AppColors.brandPurple,
+              },
+              activeDriver !== 'asyncStorage' && {
+                backgroundColor: `${AppColors.brandPurple}12`,
+                borderColor: `${AppColors.brandPurple}30`,
               },
             ]}>
             <DatabaseIcon
-              size={13}
+              size={11}
               color={
                 activeDriver === 'asyncStorage'
                   ? AppColors.white
@@ -438,11 +436,7 @@ export const StorageTab = React.memo(() => {
                   color:
                     activeDriver === 'asyncStorage'
                       ? AppColors.white
-                      : AppColors.brandPurple,
-                  fontFamily:
-                    activeDriver === 'asyncStorage'
-                      ? AppFonts.interBold
-                      : AppFonts.interSemiBold,
+                      : AppColors.primaryBlack,
                 },
               ]}>
               {t('storage.subTabs.asyncStorage', 'AsyncStorage')}
@@ -453,7 +447,6 @@ export const StorageTab = React.memo(() => {
                   styles.driverCountBadge,
                   {
                     backgroundColor: 'rgba(255,255,255,0.25)',
-                    borderColor: 'rgba(255,255,255,0.45)',
                   },
                 ]}>
                 <Text style={[styles.driverCountText, {color: AppColors.white}]}>
@@ -467,26 +460,17 @@ export const StorageTab = React.memo(() => {
             onPress={() => setActiveDriver('mmkv')}
             style={[
               styles.driverTabPill,
-              {
-                backgroundColor:
-                  activeDriver === 'mmkv'
-                    ? AppColors.teal600
-                    : `${AppColors.teal600}0D`,
-                borderColor:
-                  activeDriver === 'mmkv'
-                    ? AppColors.teal600
-                    : `${AppColors.teal600}2B`,
-              },
               activeDriver === 'mmkv' && {
-                shadowColor: AppColors.teal600,
-                shadowOffset: {width: 0, height: 1.5},
-                shadowOpacity: 0.25,
-                shadowRadius: 3,
-                elevation: 3,
+                backgroundColor: AppColors.teal600,
+                borderColor: AppColors.teal600,
+              },
+              activeDriver !== 'mmkv' && {
+                backgroundColor: `${AppColors.teal600}12`,
+                borderColor: `${AppColors.teal600}30`,
               },
             ]}>
             <LayersIcon
-              size={13}
+              size={11}
               color={
                 activeDriver === 'mmkv'
                   ? AppColors.white
@@ -500,11 +484,7 @@ export const StorageTab = React.memo(() => {
                   color:
                     activeDriver === 'mmkv'
                       ? AppColors.white
-                      : AppColors.teal600,
-                  fontFamily:
-                    activeDriver === 'mmkv'
-                      ? AppFonts.interBold
-                      : AppFonts.interSemiBold,
+                      : AppColors.primaryBlack,
                 },
               ]}>
               {t('storage.subTabs.mmkv', 'MMKV')}
@@ -515,7 +495,6 @@ export const StorageTab = React.memo(() => {
                   styles.driverCountBadge,
                   {
                     backgroundColor: 'rgba(255,255,255,0.25)',
-                    borderColor: 'rgba(255,255,255,0.45)',
                   },
                 ]}>
                 <Text style={[styles.driverCountText, {color: AppColors.white}]}>
@@ -616,7 +595,7 @@ export const StorageTab = React.memo(() => {
       {/* ── Stats Strip ── */}
       <View style={styles.statsStrip}>
         <Text style={styles.statsText}>
-          {filteredEntries.length} of {entries.length} Keys • {formattedTotalSize}
+          {filteredEntries.length.toLocaleString()} of {entries.length.toLocaleString()} Keys • {formattedTotalSize}
         </Text>
         <Text style={styles.statsSubtext}>
           {activeDriver === 'asyncStorage' ? 'SQLite Key-Value' : `MMKV (${activeMMKVId})`}
@@ -641,7 +620,11 @@ export const StorageTab = React.memo(() => {
             windowSize={5}
             removeClippedSubviews={Platform.OS === 'android'}
             style={styles.scrollArea}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={
+              filteredEntries.length === 0
+                ? styles.emptyScrollContent
+                : styles.scrollContent
+            }
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
@@ -967,6 +950,13 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 10,
     paddingBottom: 100,
+  },
+  emptyScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    paddingBottom: 60,
   },
   entryCard: {
     backgroundColor: AppColors.primaryLight,

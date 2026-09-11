@@ -9,6 +9,7 @@ import {
   logAnalyticsEvent,
   subscribeAnalyticsEvents,
   simulateTestCrash,
+  simulateTestPush,
   getNativeDeviceMetrics,
   isNativeModuleAvailable,
   ModuleErrorBoundary,
@@ -56,6 +57,25 @@ const SvgFork = ({ color = '#64748B', size = 14 }: { color?: string; size?: numb
 );
 
 
+
+const SvgBell = ({ color = '#4F46E5', size = 14 }: { color?: string; size?: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M13.73 21a2 2 0 0 1-3.46 0"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 const SvgBolt = ({ color = '#FFFFFF', size = 14 }: { color?: string; size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -1380,6 +1400,72 @@ export function HomeScreen({ navigation }: any) {
                   icon={<SvgAlertTriangle color="#B91C1C" size={13} />}
                   fullWidth
                 />
+              </View>
+            </ModuleErrorBoundary>
+
+            {/* Push Notifications Simulation Panel */}
+            <ModuleErrorBoundary moduleName="Push Notification Simulation Module">
+              <View style={styles.panelCard}>
+                <View style={styles.panelHeaderRow}>
+                  <View style={styles.rowAlignCenterGap6}>
+                    <SvgBell color="#4F46E5" size={15} />
+                    <Text style={styles.panelHeader}>Push Notifications</Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.panelHeaderBadge,
+                      {backgroundColor: '#EEF2FF', color: '#4F46E5'},
+                    ]}
+                  >
+                    UNIVERSAL INGESTION
+                  </Text>
+                </View>
+
+                <View style={styles.btnRow}>
+                  <TactileButton
+                    label="Salesforce MC Push"
+                    onPress={() => {
+                      simulateTestPush('salesforce');
+                      notifyAction('Salesforce MC Push Received');
+                    }}
+                    color="#0284C7"
+                    bgColor="#F0F9FF"
+                    icon={<SvgBell color="#0284C7" size={13} />}
+                  />
+                  <TactileButton
+                    label="Firebase FCM Push"
+                    onPress={() => {
+                      simulateTestPush('fcm');
+                      notifyAction('Firebase FCM Push Received');
+                    }}
+                    color="#EA580C"
+                    bgColor="#FFF7ED"
+                    icon={<SvgBell color="#EA580C" size={13} />}
+                  />
+                </View>
+
+                <View style={styles.btnRow}>
+                  <TactileButton
+                    label="Apple APNs Push"
+                    onPress={() => {
+                      simulateTestPush('apns');
+                      notifyAction('Apple APNs Push Received');
+                    }}
+                    color="#334155"
+                    bgColor="#F8FAFC"
+                    icon={<SvgBell color="#334155" size={13} />}
+                  />
+                  <TactileButton
+                    label="Deep Link Push (Open)"
+                    onPress={() => {
+                      simulateTestPush('deeplink');
+                      notifyAction('Deep Link Push Opened');
+                    }}
+                    color="#7C3AED"
+                    bgColor="#F5F3FF"
+                    icon={<SvgBolt color="#7C3AED" size={13} />}
+                  />
+                </View>
               </View>
             </ModuleErrorBoundary>
           </>

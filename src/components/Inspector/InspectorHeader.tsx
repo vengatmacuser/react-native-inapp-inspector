@@ -25,6 +25,7 @@ import {
   getStatusColor,
   getAppName,
   formatTime,
+  formatTimeShort,
   getSize,
   getAppVersionAndBuild,
 } from '../../helpers';
@@ -89,6 +90,8 @@ const InspectorHeader = React.memo(() => {
     environment,
     selectedCrash,
     setSelectedCrash,
+    selectedPush,
+    setSelectedPush,
     refreshMediaCount,
   } = useInspector();
 
@@ -269,7 +272,8 @@ const InspectorHeader = React.memo(() => {
     (activeTab === 'logs' && selectedLog != null) ||
     (activeTab === 'redux' &&
       (selectedReduxSlice != null || selectedReduxAction != null)) ||
-    (activeTab === 'crash' && selectedCrash != null);
+    (activeTab === 'crash' && selectedCrash != null) ||
+    (activeTab === 'push' && selectedPush != null);
 
   const isSettingsView = settingsPage !== null;
   const isAnySelected =
@@ -287,6 +291,10 @@ const InspectorHeader = React.memo(() => {
         return 'Analytics Logger';
       case 'redux':
         return 'Redux Inspector';
+      case 'media':
+        return 'Screencast (Media)';
+      case 'push':
+        return 'Push Notifications';
       default:
         return 'Settings & Modules';
     }
@@ -377,6 +385,7 @@ const InspectorHeader = React.memo(() => {
                     setSelectedReduxSlice(null);
                     setSelectedReduxAction(null);
                     setSelectedCrash(null);
+                    setSelectedPush(null);
                   }}
                   hitSlop={15}
                   style={{
@@ -1263,6 +1272,123 @@ const InspectorHeader = React.memo(() => {
                       )}
                     </View>
                   </View>
+                ) : activeTab === 'push' && selectedPush != null ? (
+                  <View style={styles.headerDetailCenter}>
+                    <View style={styles.headerDetailRow}>
+                      <View
+                        style={[
+                          styles.headerMethodBadge,
+                          {
+                            backgroundColor: AppColors.brandPurple,
+                            paddingHorizontal: isNarrow ? 5 : 6,
+                            paddingVertical: isNarrow ? 2 : 3,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.headerMethodText,
+                            {fontSize: isNarrow ? 9 : 10},
+                          ]}>
+                          {(selectedPush.source || 'PUSH').toUpperCase()}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.headerDetailTitle,
+                          {fontSize: isNarrow ? 13 : 14.5, flex: 1, minWidth: 0},
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail">
+                        {selectedPush.title ||
+                          selectedPush.body ||
+                          'Push Notification'}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: isNarrow ? 4 : 6,
+                        marginTop: 3,
+                        paddingVertical: 1,
+                        maxWidth: '100%',
+                      }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          paddingHorizontal: isNarrow ? 6 : 8,
+                          paddingVertical: 2,
+                          borderRadius: 20,
+                          backgroundColor: `${
+                            selectedPush.appState === 'foreground'
+                              ? AppColors.greenColor
+                              : selectedPush.appState === 'background'
+                              ? AppColors.amber500
+                              : AppColors.brandPurple
+                          }26`,
+                          borderWidth: 1,
+                          borderColor: `${
+                            selectedPush.appState === 'foreground'
+                              ? AppColors.greenColor
+                              : selectedPush.appState === 'background'
+                              ? AppColors.amber500
+                              : AppColors.brandPurple
+                          }55`,
+                        }}>
+                        <View
+                          style={[
+                            styles.headerStatusDot,
+                            {
+                              backgroundColor:
+                                selectedPush.appState === 'foreground'
+                                  ? AppColors.greenColor
+                                  : selectedPush.appState === 'background'
+                                  ? AppColors.amber500
+                                  : AppColors.brandPurple,
+                              width: isNarrow ? 6 : 7,
+                              height: isNarrow ? 6 : 7,
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.headerSubTitle,
+                            {
+                              fontFamily: AppFonts.interBold,
+                              fontSize: isNarrow ? 9.5 : 10.5,
+                            },
+                          ]}>
+                          {selectedPush.appState
+                            ? selectedPush.appState.toUpperCase()
+                            : 'DELIVERED'}
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          paddingHorizontal: isNarrow ? 6 : 8,
+                          paddingVertical: 2,
+                          borderRadius: 20,
+                          backgroundColor: `${AppColors.white}29`,
+                        }}>
+                        <ClockIcon
+                          color={AppColors.white}
+                          size={isNarrow ? 9.5 : 10.5}
+                        />
+                        <Text
+                          style={[
+                            styles.headerSubTitle,
+                            {fontSize: isNarrow ? 9.5 : 10.5},
+                          ]}>
+                          {formatTimeShort(selectedPush.timestamp)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
                 ) : null}
               </View>
             )}
@@ -1275,11 +1401,32 @@ const InspectorHeader = React.memo(() => {
                   alignItems: 'center',
                   justifyContent: 'flex-end',
                   flexShrink: 0,
-                  gap: isNarrow ? 4 : 5,
+                  gap: isNarrow ? 4 : 6,
                 },
               ]}>
+              {/* 1. Minimize button (First) */}
+              <TouchableOpacity
+                onPress={minimizeInspector || closeModal}
+                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.minimize', 'Minimize')}
+                style={[
+                  styles.closeButtonSquare,
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: isNarrow ? 6 : 7,
+                    backgroundColor: 'rgba(56, 189, 248, 0.22)',
+                    borderColor: 'rgba(125, 211, 252, 0.40)',
+                    borderWidth: 1,
+                  },
+                ]}>
+                <ChevronDownIcon size={isNarrow ? 14 : 16} color={AppColors.white} />
+              </TouchableOpacity>
 
-              {isSettingsView && (
+              {/* 2. Settings / Reset button (Second) */}
+              {isSettingsView ? (
                 <TouchableScale
                   onPress={() => {
                     Alert.alert(
@@ -1302,6 +1449,9 @@ const InspectorHeader = React.memo(() => {
                       width: buttonSize,
                       height: buttonSize,
                       borderRadius: isNarrow ? 6 : 7,
+                      backgroundColor: 'rgba(245, 158, 11, 0.26)',
+                      borderColor: 'rgba(252, 211, 77, 0.45)',
+                      borderWidth: 1,
                     },
                   ]}>
                   <ResetIcon
@@ -1309,9 +1459,7 @@ const InspectorHeader = React.memo(() => {
                     size={isNarrow ? 12 : 14}
                   />
                 </TouchableScale>
-              )}
-
-              {!isAnySelected && (
+              ) : !isAnySelected ? (
                 <TouchableScale
                   accessible={true}
                   accessibilityRole="button"
@@ -1324,6 +1472,9 @@ const InspectorHeader = React.memo(() => {
                       width: buttonSize,
                       height: buttonSize,
                       borderRadius: isNarrow ? 6 : 7,
+                      backgroundColor: 'rgba(168, 85, 247, 0.28)',
+                      borderColor: 'rgba(216, 180, 254, 0.45)',
+                      borderWidth: 1,
                     },
                   ]}>
                   <SettingsIcon
@@ -1331,31 +1482,13 @@ const InspectorHeader = React.memo(() => {
                     size={isNarrow ? 12 : 14}
                   />
                 </TouchableScale>
-              )}
+              ) : null}
 
-              {/* Minimize button */}
-              <TouchableOpacity
-                onPress={minimizeInspector || closeModal}
-                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
-                activeOpacity={0.6}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.minimize', 'Minimize')}
-                style={[
-                  styles.closeButtonSquare,
-                  {
-                    width: buttonSize,
-                    height: buttonSize,
-                    borderRadius: isNarrow ? 6 : 7,
-                  },
-                ]}>
-                <ChevronDownIcon size={isNarrow ? 14 : 16} color={AppColors.white} />
-              </TouchableOpacity>
-
-              {/* Close button */}
+              {/* 3. Close button (Third) */}
               <TouchableOpacity
                 onPress={closeModal}
                 hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
-                activeOpacity={0.6}
+                activeOpacity={0.7}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close', 'Close')}
                 style={[
@@ -1364,6 +1497,9 @@ const InspectorHeader = React.memo(() => {
                     width: buttonSize,
                     height: buttonSize,
                     borderRadius: isNarrow ? 6 : 7,
+                    backgroundColor: 'rgba(244, 63, 94, 0.28)',
+                    borderColor: 'rgba(251, 113, 133, 0.48)',
+                    borderWidth: 1,
                   },
                 ]}>
                 <CloseWhite size={isNarrow ? 12 : 14} />

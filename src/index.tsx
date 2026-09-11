@@ -77,6 +77,14 @@ import {
 } from './customHooks/crashHandler';
 
 import {
+  subscribePushEvents,
+  getPushRecords,
+  clearPushRecords,
+  setMaxPushRecordsLimit,
+  simulateTestPush,
+} from './customHooks/pushNotificationLogger';
+
+import {
   trackActiveTelemetryHeartbeat,
   setTelemetryEnabled,
   trackInspectorTabView,
@@ -129,6 +137,7 @@ import {
   AnalyticsFilters,
   NetworkInspectorProps,
   CrashRecord,
+  PushNotificationRecord,
   SearchScope,
 } from './types';
 import {LIB_VERSION} from './constants';
@@ -306,6 +315,70 @@ const NetworkInspector = ({
     }
   }, [activeTab, crashRecords.length]);
 
+  // ─── Push Notifications state ──────────────────────────────────────────────
+  const [pushRecords, setPushRecords] = useState<PushNotificationRecord[]>(() =>
+    getPushRecords(),
+  );
+  const [selectedPush, setSelectedPush] = useState<PushNotificationRecord | null>(null);
+  const [pushSearch, setPushSearch] = useState<string>('');
+  const [pushQuickFilter, setPushQuickFilter] = useState<string>('all');
+  const [lastReadPushCount, setLastReadPushCount] = useState<number>(0);
+  const [maxPushLogs, setMaxPushLogs] = useState<number>(50);
+
+  useEffect(() => {
+    setMaxPushRecordsLimit(maxPushLogs);
+  }, [maxPushLogs]);
+
+  useEffect(() => {
+    const unsub = subscribePushEvents(records => {
+      setPushRecords(records);
+    });
+    return unsub;
+  }, []);
+
+  const unreadPushCount = useMemo(() => {
+    if (activeTab === 'push') return 0;
+    return Math.max(0, pushRecords.length - lastReadPushCount);
+  }, [activeTab, pushRecords.length, lastReadPushCount]);
+
+  useEffect(() => {
+    if (visible && activeTab === 'push') {
+      setLastReadPushCount(pushRecords.length);
+    }
+  }, [visible, activeTab, pushRecords.length]);
+
+  const filteredPushRecords = useMemo(() => {
+    let result = pushRecords;
+    if (pushQuickFilter !== 'all') {
+      if (pushQuickFilter === 'foreground') {
+        result = result.filter(r => (r.appState || '').toLowerCase() === 'foreground');
+      } else if (pushQuickFilter === 'background') {
+        result = result.filter(r => (r.appState || '').toLowerCase() === 'background');
+      } else if (pushQuickFilter === 'opened') {
+        result = result.filter(r => r.action === 'opened');
+      } else if (pushQuickFilter.startsWith('source:')) {
+        const src = pushQuickFilter.replace('source:', '').toLowerCase();
+        result = result.filter(r => (r.source || '').toLowerCase() === src);
+      }
+    }
+
+    if (pushSearch.trim()) {
+      const q = pushSearch.trim().toLowerCase();
+      result = result.filter(r => {
+        if (r.title && r.title.toLowerCase().includes(q)) return true;
+        if (r.body && r.body.toLowerCase().includes(q)) return true;
+        if (r.id && r.id.toLowerCase().includes(q)) return true;
+        if (r.source && r.source.toLowerCase().includes(q)) return true;
+        if (r.domain && r.domain.toLowerCase().includes(q)) return true;
+        if (r.channelId && r.channelId.toLowerCase().includes(q)) return true;
+        if (r.data && JSON.stringify(r.data).toLowerCase().includes(q)) return true;
+        return false;
+      });
+    }
+
+    return result;
+  }, [pushRecords, pushQuickFilter, pushSearch]);
+
   const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(300);
   const [showConsoleLevels, setShowConsoleLevels] = useState<{
     info: boolean;
@@ -365,6 +438,7 @@ const NetworkInspector = ({
     analytics: false,
     redux: false,
     crash: false,
+    push: true,
     device: false,
     storage: false,
     debugging: false,
@@ -407,6 +481,7 @@ const NetworkInspector = ({
             setMaxConsoleLogs(profile.maxConsoleLogs);
             setMaxAnalyticsEventsLimit(profile.maxAnalyticsEvents);
             setMaxCrashLogs(profile.maxCrashRecords);
+            setMaxPushLogs(profile.maxPushRecords);
           }
         }
       })
@@ -425,6 +500,7 @@ const NetworkInspector = ({
       analytics: false,
       redux: false,
       crash: false,
+      push: true,
       device: false,
       storage: false,
       debugging: false,
@@ -438,6 +514,7 @@ const NetworkInspector = ({
     setMaxNetworkLogs(profile.maxNetworkLogs);
     setMaxConsoleLogs(profile.maxConsoleLogs);
     setMaxAnalyticsEventsLimit(profile.maxAnalyticsEvents);
+    setMaxPushLogs(profile.maxPushRecords);
     setShowConsoleLevels({
       info: true,
       warn: true,
@@ -2242,6 +2319,28 @@ const NetworkInspector = ({
         setSelectedCrash(null);
       },
 
+      // ─── Push Notifications ──────────────────────────────────────────────
+      pushRecords,
+      filteredPushRecords,
+      selectedPush,
+      setSelectedPush,
+      pushSearch,
+      setPushSearch,
+      pushQuickFilter,
+      setPushQuickFilter,
+      lastReadPushCount,
+      unreadPushCount,
+      maxPushLogs,
+      setMaxPushLogs,
+      clearAllPushLogs: () => {
+        clearPushRecords();
+        setPushRecords([]);
+        setSelectedPush(null);
+      },
+      simulatePush: (preset, customData) => {
+        simulateTestPush(preset, customData);
+      },
+
       // ─── Settings ───────────────────────────────────────────────────────
       settingsActiveSubTab,
       setSettingsActiveSubTab,
@@ -2364,6 +2463,14 @@ const NetworkInspector = ({
       selectedCrash,
       lastReadCrashesCount,
       maxCrashLogs,
+      pushRecords,
+      filteredPushRecords,
+      selectedPush,
+      pushSearch,
+      pushQuickFilter,
+      lastReadPushCount,
+      unreadPushCount,
+      maxPushLogs,
       settingsActiveSubTab,
       defaultTab,
       isDark,
@@ -2557,7 +2664,37 @@ export {
 } from './customHooks/crashHandler';
 
 export {
+  recordPushNotification,
+  recordSalesforcePush,
+  getPushRecords,
+  clearPushRecords,
+  subscribePushEvents,
+  simulateTestPush,
+  autoSetupPushLogger,
+  setMaxPushRecordsLimit,
+  getDiscoveredPushSources,
+  prunePushRecords,
+} from './customHooks/pushNotificationLogger';
+
+export {
+  shareApiReport,
+  sharePushReport,
+  shareCrashReport,
+  shareAnalyticsReport,
+  shareReduxReport,
+  shareLogReport,
+  formatApiReport,
+  formatPushReport,
+  formatCrashReport,
+  formatAnalyticsReport,
+  formatReduxReport,
+  formatLogReport,
+} from './helpers/shareFormatter';
+
+export {
   BrandCircleIcon,
+  BellIcon,
+  CloudPushIcon,
 } from './components/NetworkIcons';
 
 export {
@@ -2600,6 +2737,14 @@ export {
   CrashDetailSubTab,
   CrashFilterType,
   BreadcrumbType,
+  PushAppState,
+  PushActionType,
+  PushDetailSubTab,
+  PushFilterType,
+  type PushNotificationRecord,
+  type PushSource,
+  type PushFilterState,
+  type PushStats,
 } from './types';
 
 export {

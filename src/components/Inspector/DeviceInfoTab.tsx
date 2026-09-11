@@ -69,6 +69,8 @@ const InfoRow = React.memo(
         ? value
           ? 'Yes'
           : 'No'
+        : typeof value === 'number'
+        ? value.toLocaleString()
         : String(value);
 
     return (
@@ -241,16 +243,26 @@ export const DeviceInfoTab = React.memo(() => {
       ? StatusBar.currentHeight || 24
       : (windowDims.height >= 812 ? 44 : 20);
 
-  // Pseudo-UDID deterministic identifier
+  // Pseudo-UDID deterministic standard UUID (stable per device/screen session)
   const pseudoUDID = useMemo(() => {
-    const raw = `${Platform.OS}-${Platform.Version}-${screenDims.width}x${screenDims.height}-${pixelRatio}-${(Platform.constants as any)?.Brand || 'generic'}`;
-    let hash = 0;
+    const raw = `${Platform.OS}-${Platform.Version}-${screenDims.width}x${screenDims.height}-${pixelRatio}-${(Platform.constants as any)?.Brand || 'generic'}-${(Platform.constants as any)?.Model || 'device'}`;
+    let h1 = 0xdeadbeef;
+    let h2 = 0x41c6ce57;
+    let h3 = 0x12345678;
+    let h4 = 0x87654321;
     for (let i = 0; i < raw.length; i++) {
-      hash = (hash << 5) - hash + raw.charCodeAt(i);
-      hash |= 0;
+      const code = raw.charCodeAt(i);
+      h1 = (Math.imul(h1 ^ code, 2654435761)) >>> 0;
+      h2 = (Math.imul(h2 ^ code, 1597334677)) >>> 0;
+      h3 = (Math.imul(h3 ^ code, 374761393)) >>> 0;
+      h4 = (Math.imul(h4 ^ code, 668265263)) >>> 0;
     }
-    const hex = Math.abs(hash).toString(16).padStart(8, '0');
-    return `UDID-${Platform.OS.toUpperCase()}-${hex.slice(0, 4)}-${hex.slice(4, 8)}-${Date.now().toString(16).slice(-4)}`.toUpperCase();
+    const p1 = h1.toString(16).padStart(8, '0').toUpperCase();
+    const p2 = (h2 & 0xffff).toString(16).padStart(4, '0').toUpperCase();
+    const p3 = (((h2 >>> 16) & 0x0fff) | 0x4000).toString(16).padStart(4, '0').toUpperCase();
+    const p4 = (((h3 >>> 16) & 0x3fff) | 0x8000).toString(16).padStart(4, '0').toUpperCase();
+    const p5 = (h3.toString(16).padStart(8, '0') + (h4 & 0xffff).toString(16).padStart(4, '0')).slice(0, 12).toUpperCase();
+    return `${p1}-${p2}-${p3}-${p4}-${p5}`;
   }, [screenDims.width, screenDims.height, pixelRatio]);
 
   // Hermes & TurboModule engine status
@@ -469,7 +481,7 @@ export const DeviceInfoTab = React.memo(() => {
       isMatch('Model', deviceMetrics?.deviceModel || (Platform.constants as any)?.Model) ||
       isMatch('OS', Platform.OS) ||
       isMatch('IP Address', ipAddress) ||
-      isMatch('RAM', `${usedRamMb}/${totalRamMb}`) ||
+      isMatch('RAM', `${usedRamMb.toLocaleString()}/${totalRamMb.toLocaleString()}`) ||
       isMatch('Uptime', deviceUptime)
     );
   }, [search, isMatch, deviceMetrics, ipAddress, usedRamMb, totalRamMb, deviceUptime]);
@@ -481,7 +493,7 @@ export const DeviceInfoTab = React.memo(() => {
       isMatch('Manufacturer', fullDeviceData.hardware.brand) ||
       isMatch('Operating System', fullDeviceData.hardware.osVersion) ||
       isMatch('IP Address', ipAddress) ||
-      isMatch('RAM Memory', `${usedRamMb} MB / ${totalRamMb} MB (${ramUsagePct}%)`, `Free Memory: ${freeRamMb} MB`) ||
+      isMatch('RAM Memory', `${usedRamMb.toLocaleString()} MB / ${totalRamMb.toLocaleString()} MB (${ramUsagePct}%)`, `Free Memory: ${freeRamMb.toLocaleString()} MB`) ||
       isMatch('Storage Capacity', `${freeStorageGb} GB Free / ${totalStorageGb} GB Total`) ||
       isMatch('App Version', `v${fullDeviceData.runtime.appVersion} (${fullDeviceData.runtime.appBuild})`) ||
       isMatch('JavaScript Engine', isHermes ? 'Hermes Bytecode Engine' : 'JavaScriptCore (JSC)') ||
@@ -493,8 +505,8 @@ export const DeviceInfoTab = React.memo(() => {
     if (!search.trim()) return true;
     return (
       isMatch('CPU Architecture', fullDeviceData.hardware.cpuAbi) ||
-      isMatch('Total RAM', `${totalRamMb} MB`) ||
-      isMatch('Free RAM', `${freeRamMb} MB`) ||
+      isMatch('Total RAM', `${totalRamMb.toLocaleString()} MB`) ||
+      isMatch('Free RAM', `${freeRamMb.toLocaleString()} MB`) ||
       isMatch('Storage Capacity', `${totalStorageGb} GB`) ||
       isMatch('Available Storage', `${freeStorageGb} GB`) ||
       isMatch('Battery', `${deviceMetrics?.batteryPercent ?? 100}%`) ||
@@ -518,9 +530,9 @@ export const DeviceInfoTab = React.memo(() => {
   const hasDisplayMatch = useMemo(() => {
     if (!search.trim()) return true;
     return (
-      isMatch('Window Resolution', `${windowDims.width.toFixed(0)} × ${windowDims.height.toFixed(0)} pt`) ||
-      isMatch('Screen Physical Size', `${(screenDims.width * pixelRatio).toFixed(0)} × ${(screenDims.height * pixelRatio).toFixed(0)} px`) ||
-      isMatch('Pixel Density', `@${pixelRatio}x (${Math.round(pixelRatio * 160)} dpi)`) ||
+      isMatch('Window Resolution', `${Math.round(windowDims.width).toLocaleString()} × ${Math.round(windowDims.height).toLocaleString()} pt`) ||
+      isMatch('Screen Physical Size', `${Math.round(screenDims.width * pixelRatio).toLocaleString()} × ${Math.round(screenDims.height * pixelRatio).toLocaleString()} px`) ||
+      isMatch('Pixel Density', `@${pixelRatio}x (${Math.round(pixelRatio * 160).toLocaleString()} dpi)`) ||
       isMatch('Font Scale', `${fontScale}x`) ||
       isMatch('Form Factor', isTablet ? 'Tablet' : 'Smartphone') ||
       isMatch('Orientation', isLandscape ? 'Landscape' : 'Portrait') ||
@@ -617,24 +629,11 @@ export const DeviceInfoTab = React.memo(() => {
       </View>
 
       {/* ─── Top Sub-Tabs Navigation Bar (Styled exactly like API Tab) ─── */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginBottom: 8,
-          paddingHorizontal: 12,
-          gap: 6,
-        }}>
+      <View style={styles.subTabsWrapper}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{flex: 1}}
-          contentContainerStyle={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            paddingRight: 6,
-          }}>
+          contentContainerStyle={styles.subTabsContainer}>
           {subTabs.map(tab => {
             const isActive = activeSubTab === tab.key;
             const chipColor = tab.themeColor || AppColors.purple;
@@ -644,30 +643,24 @@ export const DeviceInfoTab = React.memo(() => {
                 key={tab.key}
                 onPress={() => setActiveSubTab(tab.key as DeviceSubTab)}>
                 <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: 9,
-                    paddingVertical: 4.5,
-                    borderRadius: 8,
-                    backgroundColor: isActive
-                      ? chipColor
-                      : `${chipColor}12`,
-                    borderWidth: 1,
-                    borderColor: isActive
-                      ? chipColor
-                      : `${chipColor}30`,
-                    gap: 5,
-                  }}>
+                  style={[
+                    styles.subTabPill,
+                    isActive && {
+                      backgroundColor: chipColor,
+                      borderColor: chipColor,
+                    },
+                    !isActive && {
+                      backgroundColor: `${chipColor}12`,
+                      borderColor: `${chipColor}30`,
+                    },
+                  ]}>
                   {tab.icon(iconColor)}
                   <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 10.5,
-                      color: isActive
-                        ? AppColors.white
-                        : AppColors.primaryBlack,
-                    }}>
+                    style={[
+                      styles.subTabPillText,
+                      isActive && {color: AppColors.white},
+                      !isActive && {color: AppColors.primaryBlack},
+                    ]}>
                     {tab.label}
                   </Text>
                 </View>
@@ -682,6 +675,62 @@ export const DeviceInfoTab = React.memo(() => {
         style={styles.scrollArea}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
+        {/* ── Featured Device UUID Card (Always at top with Copy option) ── */}
+        {(!search.trim() || isMatch('UDID Identifier', pseudoUDID) || isMatch('UUID', pseudoUDID) || isMatch('Device UUID', pseudoUDID)) && (
+          <View style={styles.featuredUuidCard}>
+            <View style={styles.featuredUuidHeader}>
+              <View style={styles.featuredUuidTitleRow}>
+                <View style={styles.featuredUuidIconWrap}>
+                  <KeyIcon size={14} color={AppColors.white} />
+                </View>
+                <View style={{flex: 1, minWidth: 0}}>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    <Text style={styles.featuredUuidLabel}>DEVICE UUID</Text>
+                    <View style={styles.featuredBadge}>
+                      <Text style={styles.featuredBadgeText}>FEATURED</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.featuredUuidSubtext}>
+                    Deterministic hardware pseudo-identifier
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableScale
+                onPress={() => {
+                  copyToClipboard(pseudoUDID, 'Device UUID');
+                  showToast(t('device.copiedUuid', 'Copied Device UUID to clipboard!'));
+                }}
+                style={styles.featuredCopyBtn}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel="Copy Device UUID">
+                <CopyIcon size={11} color={AppColors.white} />
+                <Text style={styles.featuredCopyBtnText}>Copy</Text>
+              </TouchableScale>
+            </View>
+
+            <TouchableScale
+              onPress={() => {
+                copyToClipboard(pseudoUDID, 'Device UUID');
+                showToast(t('device.copiedUuid', 'Copied Device UUID to clipboard!'));
+              }}
+              style={styles.featuredUuidValueBox}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel="Tap to copy UUID">
+              <Text
+                style={styles.featuredUuidValueText}
+                numberOfLines={1}
+                ellipsizeMode="middle"
+                selectable>
+                {pseudoUDID}
+              </Text>
+              <CopyIcon size={12} color={AppColors.brandPurple} />
+            </TouchableScale>
+          </View>
+        )}
+
         {/* Hero Card */}
         {(!search.trim() || hasHeroMatch) && (
           <View style={styles.heroCard}>
@@ -719,7 +768,7 @@ export const DeviceInfoTab = React.memo(() => {
               <View style={styles.heroMetricItem}>
                 <Text style={styles.heroMetricLabel} numberOfLines={1} ellipsizeMode="tail">{t('device.ramUsedTotal', 'RAM (USED/TOTAL)')}</Text>
                 <Text style={styles.heroMetricValue} numberOfLines={1} ellipsizeMode="tail">
-                  {usedRamMb}/{totalRamMb} MB
+                  {usedRamMb.toLocaleString()}/{totalRamMb.toLocaleString()} MB
                 </Text>
               </View>
               <View style={styles.heroMetricDivider} />
@@ -761,11 +810,11 @@ export const DeviceInfoTab = React.memo(() => {
                 badge={{text: 'ONLINE', color: AppColors.emerald500, bg: `${AppColors.emerald500}18`}}
               />
             )}
-            {isMatch('RAM Memory', `${usedRamMb} MB / ${totalRamMb} MB (${ramUsagePct}%)`, `Free Memory: ${freeRamMb} MB`) && (
+            {isMatch('RAM Memory', `${usedRamMb.toLocaleString()} MB / ${totalRamMb.toLocaleString()} MB (${ramUsagePct}%)`, `Free Memory: ${freeRamMb.toLocaleString()} MB`) && (
               <InfoRow
                 label="RAM Memory"
-                value={`${usedRamMb} MB / ${totalRamMb} MB (${ramUsagePct}%)`}
-                subtext={`Free Memory: ${freeRamMb} MB`}
+                value={`${usedRamMb.toLocaleString()} MB / ${totalRamMb.toLocaleString()} MB (${ramUsagePct}%)`}
+                subtext={`Free Memory: ${freeRamMb.toLocaleString()} MB`}
               />
             )}
             {isMatch('Storage Capacity', `${freeStorageGb} GB Free / ${totalStorageGb} GB Total`) && (
@@ -812,16 +861,16 @@ export const DeviceInfoTab = React.memo(() => {
                 badge={{text: '64-BIT', color: AppColors.purple, bg: `${AppColors.purple}18`}}
               />
             )}
-            {isMatch('Total RAM', `${totalRamMb} MB`) && (
+            {isMatch('Total RAM', `${totalRamMb.toLocaleString()} MB`) && (
               <InfoRow
                 label="Total Physical RAM"
-                value={`${totalRamMb} MB`}
+                value={`${totalRamMb.toLocaleString()} MB`}
               />
             )}
-            {isMatch('Free RAM', `${freeRamMb} MB`) && (
+            {isMatch('Free RAM', `${freeRamMb.toLocaleString()} MB`) && (
               <InfoRow
                 label="Available Free RAM"
-                value={`${freeRamMb} MB`}
+                value={`${freeRamMb.toLocaleString()} MB`}
                 badge={{
                   text: freeRamMb < 500 ? 'LOW' : 'HEALTHY',
                   color: freeRamMb < 500 ? AppColors.errorColor : AppColors.emerald500,
@@ -924,22 +973,22 @@ export const DeviceInfoTab = React.memo(() => {
         {(activeSubTab === 'display' || search.length > 0) && hasDisplayMatch && (
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>DISPLAY & SCREEN GEOMETRY</Text>
-            {isMatch('Window Resolution', `${windowDims.width.toFixed(0)} × ${windowDims.height.toFixed(0)} pt`) && (
+            {isMatch('Window Resolution', `${Math.round(windowDims.width).toLocaleString()} × ${Math.round(windowDims.height).toLocaleString()} pt`) && (
               <InfoRow
                 label="Window Logical Size"
-                value={`${windowDims.width.toFixed(0)} × ${windowDims.height.toFixed(0)} pt`}
+                value={`${Math.round(windowDims.width).toLocaleString()} × ${Math.round(windowDims.height).toLocaleString()} pt`}
               />
             )}
-            {isMatch('Screen Physical Size', `${(screenDims.width * pixelRatio).toFixed(0)} × ${(screenDims.height * pixelRatio).toFixed(0)} px`) && (
+            {isMatch('Screen Physical Size', `${Math.round(screenDims.width * pixelRatio).toLocaleString()} × ${Math.round(screenDims.height * pixelRatio).toLocaleString()} px`) && (
               <InfoRow
                 label="Physical Screen Size"
-                value={`${(screenDims.width * pixelRatio).toFixed(0)} × ${(screenDims.height * pixelRatio).toFixed(0)} px`}
+                value={`${Math.round(screenDims.width * pixelRatio).toLocaleString()} × ${Math.round(screenDims.height * pixelRatio).toLocaleString()} px`}
               />
             )}
-            {isMatch('Pixel Density', `@${pixelRatio}x (${Math.round(pixelRatio * 160)} dpi)`) && (
+            {isMatch('Pixel Density', `@${pixelRatio}x (${Math.round(pixelRatio * 160).toLocaleString()} dpi)`) && (
               <InfoRow
                 label="Pixel Ratio (DPI Scale)"
-                value={`@${pixelRatio}x (${Math.round(pixelRatio * 160)} dpi)`}
+                value={`@${pixelRatio}x (${Math.round(pixelRatio * 160).toLocaleString()} dpi)`}
                 badge={{text: `@${pixelRatio}x`, color: AppColors.purple, bg: `${AppColors.purple}18`}}
               />
             )}
@@ -1145,7 +1194,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.primaryLight,
     borderBottomWidth: 1,
     borderBottomColor: AppColors.dividerColor,
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   subTabsContainer: {
     paddingHorizontal: 12,
@@ -1157,24 +1206,116 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5.5,
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
     borderRadius: 8,
-    backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
-  },
-  subTabPillActive: {
-    backgroundColor: AppColors.purple,
-    borderColor: AppColors.purple,
   },
   subTabPillText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 11,
-    color: AppColors.grayText,
+    fontSize: 10.5,
   },
-  subTabPillTextActive: {
+  featuredUuidCard: {
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: `${AppColors.brandPurple}40`,
+    padding: 12,
+    gap: 10,
+    shadowColor: AppColors.brandPurple,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: {width: 0, height: 2},
+    elevation: 2,
+  },
+  featuredUuidHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  featuredUuidTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    minWidth: 0,
+  },
+  featuredUuidIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    backgroundColor: AppColors.brandPurple,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  featuredUuidLabel: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 11,
+    color: AppColors.primaryBlack,
+    letterSpacing: 0.3,
+  },
+  featuredUuidSubtext: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 9.5,
+    color: AppColors.grayTextWeak,
+    marginTop: 0.5,
+  },
+  featuredBadge: {
+    backgroundColor: `${AppColors.brandPurple}18`,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: `${AppColors.brandPurple}30`,
+  },
+  featuredBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 8,
+    color: AppColors.brandPurple,
+    letterSpacing: 0.4,
+  },
+  featuredCopyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: AppColors.brandPurple,
+    paddingHorizontal: 10,
+    paddingVertical: 5.5,
+    borderRadius: 7,
+    shadowColor: AppColors.brandPurple,
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    shadowOffset: {width: 0, height: 1},
+    elevation: 1,
+  },
+  featuredCopyBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10.5,
     color: AppColors.white,
+  },
+  featuredUuidValueBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: `${AppColors.brandPurple}0C`,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: `${AppColors.brandPurple}28`,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    gap: 8,
+  },
+  featuredUuidValueText: {
+    flex: 1,
+    fontFamily: Platform.select({
+      ios: 'Menlo',
+      android: 'monospace',
+      default: 'monospace',
+    }),
+    fontSize: 11.5,
+    color: AppColors.brandPurple,
+    letterSpacing: 0.5,
   },
   actionBar: {
     flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, Text, View, ViewStyle} from 'react-native';
+import {Pressable, ScrollView, Text, View, ViewStyle} from 'react-native';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 
@@ -16,6 +16,7 @@ interface SegmentedTabsProps {
   activeKey: string;
   onChange: (key: string) => void;
   style?: ViewStyle | ViewStyle[];
+  scrollable?: boolean;
 }
 
 export const DEFAULT_INNER_TAB_THEMES: Record<string, string> = {
@@ -42,7 +43,7 @@ export const DEFAULT_INNER_TAB_THEMES: Record<string, string> = {
   persisted: AppColors.teal600,
   payload: AppColors.violet600,
   diff: AppColors.green600,
-  raw: AppColors.slate600,
+  raw: AppColors.brandPurple,
 
   // Crash detail
   diagnostics: AppColors.amber600,
@@ -53,8 +54,13 @@ export const DEFAULT_INNER_TAB_THEMES: Record<string, string> = {
   json: AppColors.brandPurple,
   tree: AppColors.violet600,
 
+  // Push detail
+  preview: AppColors.brandPurple,
+  delivery: AppColors.amber600,
+  domainAttrs: AppColors.sky600,
+
   // JSON viewer
-  pretty: AppColors.brandPurple,
+  pretty: AppColors.violet600,
   table: AppColors.teal600,
 
   // Device / Storage / Generic
@@ -78,76 +84,105 @@ export const DEFAULT_INNER_TAB_THEMES: Record<string, string> = {
 };
 
 const SegmentedTabs = React.memo(
-  ({tabs, activeKey, onChange, style}: SegmentedTabsProps) => (
-    <View
-      style={[
-        {
-          flexDirection: 'row',
-          borderRadius: 10,
-          backgroundColor: `${AppColors.slate200}80`,
-          padding: 3,
-          borderWidth: 1,
-          borderColor: AppColors.dividerColor,
-          gap: 3,
-          minWidth: 0,
-        },
-        style,
-      ]}>
-      {tabs.map(tab => {
-        const isActive = activeKey === tab.key;
-        const tabThemeColor =
-          tab.themeColor ||
-          tab.color ||
-          DEFAULT_INNER_TAB_THEMES[tab.key] ||
-          AppColors.brandPurple;
+  ({tabs, activeKey, onChange, style, scrollable}: SegmentedTabsProps & {scrollable?: boolean}) => {
+    const content = tabs.map(tab => {
+      const isActive = activeKey === tab.key;
+      const tabThemeColor =
+        tab.themeColor ||
+        tab.color ||
+        DEFAULT_INNER_TAB_THEMES[tab.key] ||
+        AppColors.brandPurple;
 
-        return (
-          <Pressable
-            key={tab.key}
-            onPress={() => onChange(tab.key)}
-            style={({pressed}) => [
-              {
-                flex: 1,
-                paddingVertical: 7,
-                paddingHorizontal: 6,
-                borderRadius: 7,
-                backgroundColor: isActive ? tabThemeColor : 'transparent',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 4.5,
-                flexDirection: 'row',
-                opacity: pressed ? 0.8 : 1,
-              },
-              isActive && {
-                shadowColor: tabThemeColor,
-                shadowOffset: {width: 0, height: 1},
-                shadowOpacity: 0.28,
-                shadowRadius: 3,
-                elevation: 2,
-              },
-            ]}>
-            {tab.icon
-              ? typeof tab.icon === 'function'
-                ? tab.icon(isActive, tabThemeColor)
-                : tab.icon
-              : null}
-            <Text
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              style={{
-                flexShrink: 1,
-                fontFamily: AppFonts.interBold,
-                fontSize: 10.5,
-                color: isActive ? AppColors.white : AppColors.grayText,
-                letterSpacing: 0.2,
-              }}>
-              {tab.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  ),
+      return (
+        <Pressable
+          key={tab.key}
+          onPress={() => onChange(tab.key)}
+          style={({pressed}) => [
+            {
+              flex: scrollable ? undefined : 1,
+              paddingVertical: 7,
+              paddingHorizontal: scrollable ? 12 : 6,
+              borderRadius: 7,
+              backgroundColor: isActive ? tabThemeColor : 'transparent',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4.5,
+              flexDirection: 'row',
+              opacity: pressed ? 0.8 : 1,
+            },
+            isActive && {
+              shadowColor: tabThemeColor,
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.28,
+              shadowRadius: 3,
+              elevation: 2,
+            },
+          ]}>
+          {tab.icon
+            ? typeof tab.icon === 'function'
+              ? tab.icon(isActive, tabThemeColor)
+              : tab.icon
+            : null}
+          <Text
+            numberOfLines={1}
+            style={{
+              fontFamily: AppFonts.interBold,
+              fontSize: 10.5,
+              color: isActive ? AppColors.white : AppColors.grayText,
+              letterSpacing: 0.2,
+            }}>
+            {tab.label}
+          </Text>
+        </Pressable>
+      );
+    });
+
+    if (scrollable) {
+      return (
+        <View
+          style={[
+            {
+              borderRadius: 10,
+              backgroundColor: `${AppColors.slate200}80`,
+              padding: 3,
+              borderWidth: 1,
+              borderColor: AppColors.dividerColor,
+            },
+            style,
+          ]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+            {content}
+          </ScrollView>
+        </View>
+      );
+    }
+
+    return (
+      <View
+        style={[
+          {
+            flexDirection: 'row',
+            borderRadius: 10,
+            backgroundColor: `${AppColors.slate200}80`,
+            padding: 3,
+            borderWidth: 1,
+            borderColor: AppColors.dividerColor,
+            gap: 3,
+            minWidth: 0,
+          },
+          style,
+        ]}>
+        {content}
+      </View>
+    );
+  },
 );
 
 export default SegmentedTabs;

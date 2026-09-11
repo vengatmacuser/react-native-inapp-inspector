@@ -10,6 +10,7 @@ import {
 
 // Components
 import CopyButton from './CopyButton';
+import ShareButton from './ShareButton';
 import JsonViewer from './JsonViewer';
 import SegmentedTabs from './SegmentedTabs';
 import HighlightText from './HighlightText';
@@ -19,6 +20,7 @@ import AnimatedEntrance from './AnimatedEntrance';
 import {AppFonts} from '../styles/AppFonts';
 import {AppColors} from '../styles/AppColors';
 import {getSize, formatDateTime} from '../helpers';
+import {shareAnalyticsReport} from '../helpers/shareFormatter';
 import {getEventCategory} from '../helpers/gaAnalyticsRegistry';
 import {useTranslation} from '../i18n';
 import {
@@ -245,11 +247,16 @@ const AnalyticsDetail = ({
             </View>
           </View>
 
-          {/* Copy Full Event JSON Button */}
-          <CopyButton
-            value={JSON.stringify(fullJsonData, null, 2)}
-            label={t('analytics.eventDetails')}
-          />
+          {/* Share & Copy Full Event JSON Buttons */}
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            <ShareButton
+              onShare={() => shareAnalyticsReport(event)}
+            />
+            <CopyButton
+              value={JSON.stringify(fullJsonData, null, 2)}
+              label={t('analytics.eventDetails')}
+            />
+          </View>
         </View>
 
         {/* Event Name Heading */}

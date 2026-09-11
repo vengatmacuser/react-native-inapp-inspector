@@ -58,8 +58,10 @@ import {
   MicrophoneIcon,
   GifIcon,
   ImageIcon,
+  BellIcon,
 } from '../NetworkIcons';
 import {ScreenCapture} from '../../capture';
+import {triggerNativeHaptic} from '../../native/NativeInspector';
 
 import {
   isLocalDebugEnvironment,
@@ -112,9 +114,24 @@ const SettingsPanel = () => {
     crashRecords,
     maxCrashLogs,
     setMaxCrashLogs,
+    pushRecords,
+    maxPushLogs,
+    setMaxPushLogs,
+    clearAllPushLogs,
+    simulatePush,
   } = useInspector();
 
   const [stagedHeight, setStagedHeight] = useState(modalHeightPercent);
+
+  // Capture & Screencast Settings State
+  const [captureImageFormat, setCaptureImageFormat] =
+    useState<'PNG' | 'JPEG' | 'WEBP'>('PNG');
+  const [captureAutoHide, setCaptureAutoHide] = useState<boolean>(true);
+  const [captureAudioMode, setCaptureAudioMode] =
+    useState<'Muted' | 'App' | 'Mic'>('Muted');
+  const [captureFps, setCaptureFps] =
+    useState<'15' | '24' | '30' | '60'>('30');
+  const [captureAutoGif, setCaptureAutoGif] = useState<boolean>(true);
 
   useEffect(() => {
     setStagedHeight(modalHeightPercent);
@@ -198,6 +215,14 @@ const SettingsPanel = () => {
             icon: 'media',
             desc: 'Screenshots, video recordings, audio narration & animated GIFs',
           },
+          {
+            id: 10,
+            key: 'push',
+            label: 'Push Notifications',
+            category: 'telemetry',
+            icon: 'push',
+            desc: 'Universal push & local notification logger (Salesforce, FCM, APNs, Braze, Expo)',
+          },
         ] as const
       ).filter(m =>
         m.key === 'debugging'
@@ -220,6 +245,7 @@ const SettingsPanel = () => {
     crash: Boolean(tabVisibility?.crash),
     debugging: Boolean(tabVisibility?.debugging),
     media: Boolean(tabVisibility?.media ?? true),
+    push: Boolean(tabVisibility?.push ?? true),
   }));
 
   // Synchronize staged state with tabVisibility when tabVisibility updates
@@ -234,6 +260,7 @@ const SettingsPanel = () => {
       crash: Boolean(tabVisibility?.crash),
       debugging: Boolean(tabVisibility?.debugging),
       media: Boolean(tabVisibility?.media ?? true),
+      push: Boolean(tabVisibility?.push ?? true),
     });
   }, [tabVisibility]);
 
@@ -271,6 +298,7 @@ const SettingsPanel = () => {
               crash: Boolean(tabVisibility?.crash),
               debugging: Boolean(tabVisibility?.debugging),
               media: Boolean(tabVisibility?.media ?? true),
+              push: Boolean(tabVisibility?.push ?? true),
             });
           },
         },
@@ -868,6 +896,16 @@ const SettingsPanel = () => {
                           )}
                           {moduleItem.icon === 'media' && (
                             <ScreencastIcon
+                              color={
+                                isChecked
+                                  ? AppColors.purple
+                                  : AppColors.grayTextWeak
+                              }
+                              size={16}
+                            />
+                          )}
+                          {moduleItem.icon === 'push' && (
+                            <BellIcon
                               color={
                                 isChecked
                                   ? AppColors.purple
@@ -2304,32 +2342,42 @@ const SettingsPanel = () => {
                   'Export formats (PNG lossless, JPEG lossy, WebP)',
                 ),
                 right: (
-                  <View style={{flexDirection: 'row', gap: 4}}>
-                    {['PNG', 'JPEG', 'WEBP'].map(fmt => (
-                      <View
-                        key={fmt}
-                        style={{
-                          paddingHorizontal: 8,
-                          paddingVertical: 4,
-                          borderRadius: 6,
-                          backgroundColor:
-                            fmt === 'PNG'
-                              ? AppColors.purple
-                              : `${AppColors.purple}1A`,
-                        }}>
-                        <Text
+                  <View style={{flexDirection: 'row', gap: 5}}>
+                    {(['PNG', 'JPEG', 'WEBP'] as const).map(fmt => {
+                      const isSelected = captureImageFormat === fmt;
+                      return (
+                        <TouchableScale
+                          key={fmt}
+                          onPress={() => {
+                            triggerNativeHaptic('light');
+                            setCaptureImageFormat(fmt);
+                            showToast(`Screenshot format: ${fmt}`);
+                          }}
                           style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 10,
-                            color:
-                              fmt === 'PNG'
+                            paddingHorizontal: 9,
+                            paddingVertical: 5,
+                            borderRadius: 7,
+                            backgroundColor: isSelected
+                              ? AppColors.purple
+                              : `${AppColors.purple}14`,
+                            borderWidth: 1,
+                            borderColor: isSelected
+                              ? AppColors.purple
+                              : `${AppColors.purple}2E`,
+                          }}>
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
+                              color: isSelected
                                 ? AppColors.white
                                 : AppColors.purple,
-                          }}>
-                          {fmt}
-                        </Text>
-                      </View>
-                    ))}
+                            }}>
+                            {fmt}
+                          </Text>
+                        </TouchableScale>
+                      );
+                    })}
                   </View>
                 ),
               })}
@@ -2345,23 +2393,43 @@ const SettingsPanel = () => {
                   'Temporarily hides the inspector overlay during screen capture',
                 ),
                 isLast: true,
+                onPress: () => {
+                  triggerNativeHaptic('light');
+                  setCaptureAutoHide(prev => !prev);
+                  showToast(`Auto-hide overlay: ${!captureAutoHide ? 'ON' : 'OFF'}`);
+                },
                 right: (
-                  <View
+                  <TouchableScale
+                    onPress={() => {
+                      triggerNativeHaptic('light');
+                      setCaptureAutoHide(prev => !prev);
+                      showToast(`Auto-hide overlay: ${!captureAutoHide ? 'ON' : 'OFF'}`);
+                    }}
                     style={{
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 6,
-                      backgroundColor: `${AppColors.emerald500}26`,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 7,
+                      backgroundColor: captureAutoHide
+                        ? `${AppColors.emerald500}26`
+                        : `${AppColors.grayText}20`,
+                      borderWidth: 1,
+                      borderColor: captureAutoHide
+                        ? `${AppColors.emerald500}4D`
+                        : `${AppColors.grayText}33`,
                     }}>
                     <Text
                       style={{
                         fontFamily: AppFonts.interBold,
-                        fontSize: 10,
-                        color: AppColors.emerald500,
+                        fontSize: 10.5,
+                        color: captureAutoHide
+                          ? AppColors.emerald500
+                          : AppColors.grayText,
                       }}>
-                      {t('settings.media.enabled', 'ON')}
+                      {captureAutoHide
+                        ? t('settings.media.enabled', 'ON')
+                        : 'OFF'}
                     </Text>
-                  </View>
+                  </TouchableScale>
                 ),
               })}
             </View>
@@ -2426,29 +2494,42 @@ const SettingsPanel = () => {
                   'Record video with muted, app audio, or microphone commentary',
                 ),
                 right: (
-                  <View style={{flexDirection: 'row', gap: 4}}>
-                    {['Muted', 'App', 'Mic'].map((aud, i) => (
-                      <View
-                        key={aud}
-                        style={{
-                          paddingHorizontal: 7,
-                          paddingVertical: 4,
-                          borderRadius: 6,
-                          backgroundColor:
-                            i === 0
-                              ? AppColors.purple
-                              : `${AppColors.purple}1A`,
-                        }}>
-                        <Text
+                  <View style={{flexDirection: 'row', gap: 5}}>
+                    {(['Muted', 'App', 'Mic'] as const).map(aud => {
+                      const isSelected = captureAudioMode === aud;
+                      return (
+                        <TouchableScale
+                          key={aud}
+                          onPress={() => {
+                            triggerNativeHaptic('light');
+                            setCaptureAudioMode(aud);
+                            showToast(`Audio source: ${aud}`);
+                          }}
                           style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 10,
-                            color: i === 0 ? AppColors.white : AppColors.purple,
+                            paddingHorizontal: 8,
+                            paddingVertical: 5,
+                            borderRadius: 7,
+                            backgroundColor: isSelected
+                              ? AppColors.purple
+                              : `${AppColors.purple}14`,
+                            borderWidth: 1,
+                            borderColor: isSelected
+                              ? AppColors.purple
+                              : `${AppColors.purple}2E`,
                           }}>
-                          {aud}
-                        </Text>
-                      </View>
-                    ))}
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
+                              color: isSelected
+                                ? AppColors.white
+                                : AppColors.purple,
+                            }}>
+                            {aud}
+                          </Text>
+                        </TouchableScale>
+                      );
+                    })}
                   </View>
                 ),
               })}
@@ -2464,30 +2545,42 @@ const SettingsPanel = () => {
                   'Target video smoothness: 15, 24, 30, or 60 FPS',
                 ),
                 right: (
-                  <View style={{flexDirection: 'row', gap: 4}}>
-                    {['15', '24', '30', '60'].map(fps => (
-                      <View
-                        key={fps}
-                        style={{
-                          paddingHorizontal: 6,
-                          paddingVertical: 4,
-                          borderRadius: 6,
-                          backgroundColor:
-                            fps === '24'
-                              ? AppColors.purple
-                              : `${AppColors.purple}1A`,
-                        }}>
-                        <Text
+                  <View style={{flexDirection: 'row', gap: 5}}>
+                    {(['15', '24', '30', '60'] as const).map(fps => {
+                      const isSelected = captureFps === fps;
+                      return (
+                        <TouchableScale
+                          key={fps}
+                          onPress={() => {
+                            triggerNativeHaptic('light');
+                            setCaptureFps(fps);
+                            showToast(`Recording FPS: ${fps}`);
+                          }}
                           style={{
-                            fontFamily: AppFonts.interBold,
-                            fontSize: 10,
-                            color:
-                              fps === '24' ? AppColors.white : AppColors.purple,
+                            paddingHorizontal: 7,
+                            paddingVertical: 5,
+                            borderRadius: 7,
+                            backgroundColor: isSelected
+                              ? AppColors.purple
+                              : `${AppColors.purple}14`,
+                            borderWidth: 1,
+                            borderColor: isSelected
+                              ? AppColors.purple
+                              : `${AppColors.purple}2E`,
                           }}>
-                          {fps}fps
-                        </Text>
-                      </View>
-                    ))}
+                          <Text
+                            style={{
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 10.5,
+                              color: isSelected
+                                ? AppColors.white
+                                : AppColors.purple,
+                            }}>
+                            {fps}fps
+                          </Text>
+                        </TouchableScale>
+                      );
+                    })}
                   </View>
                 ),
               })}
@@ -2500,23 +2593,41 @@ const SettingsPanel = () => {
                   'Automatic palette reduction and frame skip for lightweight animated GIFs',
                 ),
                 isLast: true,
+                onPress: () => {
+                  triggerNativeHaptic('light');
+                  setCaptureAutoGif(prev => !prev);
+                  showToast(`GIF optimization: ${!captureAutoGif ? 'ON' : 'OFF'}`);
+                },
                 right: (
-                  <View
+                  <TouchableScale
+                    onPress={() => {
+                      triggerNativeHaptic('light');
+                      setCaptureAutoGif(prev => !prev);
+                      showToast(`GIF optimization: ${!captureAutoGif ? 'ON' : 'OFF'}`);
+                    }}
                     style={{
-                      paddingHorizontal: 8,
-                      paddingVertical: 4,
-                      borderRadius: 6,
-                      backgroundColor: `${AppColors.emerald500}26`,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 7,
+                      backgroundColor: captureAutoGif
+                        ? `${AppColors.emerald500}26`
+                        : `${AppColors.grayText}20`,
+                      borderWidth: 1,
+                      borderColor: captureAutoGif
+                        ? `${AppColors.emerald500}4D`
+                        : `${AppColors.grayText}33`,
                     }}>
                     <Text
                       style={{
                         fontFamily: AppFonts.interBold,
-                        fontSize: 10,
-                        color: AppColors.emerald500,
+                        fontSize: 10.5,
+                        color: captureAutoGif
+                          ? AppColors.emerald500
+                          : AppColors.grayText,
                       }}>
-                      ON
+                      {captureAutoGif ? 'ON' : 'OFF'}
                     </Text>
-                  </View>
+                  </TouchableScale>
                 ),
               })}
             </View>
@@ -3262,6 +3373,685 @@ const SettingsPanel = () => {
                     color: AppColors.errorColor,
                   }}>
                   {t('common.clear')}
+                </Text>
+              </View>
+            ),
+          })}
+        </View>
+        <View style={{height: 48}} />
+      </ScrollView>
+    );
+  } else if (settingsPage === 'push') {
+    content = (
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
+        {/* Settings Card: Limits & Engine Status */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 4,
+          }}>
+          {renderSettingRow({
+            icon: <LayersIcon color={AppColors.purple} size={16} />,
+            label: 'Max Push Notification Logs',
+            description: 'Buffer size limit for recorded push payloads (10-200)',
+            numericInput: {
+              value: maxPushLogs,
+              onChange: setMaxPushLogs,
+              min: 10,
+              max: 200,
+              placeholder: 'Enter max logs (10-200)',
+            },
+          })}
+          <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
+          {renderSettingRow({
+            icon: <BellIcon color={AppColors.greenColor} size={16} />,
+            label: 'Universal Ingestion Engine',
+            description: 'Captures any push domain (Salesforce, FCM, APNs, Expo, Braze, Custom)',
+            isLast: true,
+            right: (
+              <View
+                style={{
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                  backgroundColor: `${AppColors.greenColor}1F`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    lineHeight: 13,
+                    color: AppColors.greenColor,
+                  }}>
+                  ACTIVE
+                </Text>
+              </View>
+            ),
+          })}
+        </View>
+
+        {/* Test Push Triggers Card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 8,
+          }}>
+          <Text
+            style={{
+              fontFamily: AppFonts.interBold,
+              fontSize: 12,
+              color: AppColors.primaryBlack,
+              marginBottom: 4,
+            }}>
+            ⚡ SIMULATE TEST PUSH NOTIFICATIONS
+          </Text>
+
+          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
+            <TouchableScale
+              onPress={() => {
+                simulatePush('salesforce');
+                showToast('Simulated Salesforce Marketing Cloud push');
+              }}
+              style={{
+                backgroundColor: `${AppColors.sky600}14`,
+                borderColor: `${AppColors.sky600}33`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.sky600}}>
+                + Salesforce MC
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => {
+                simulatePush('fcm');
+                showToast('Simulated Firebase FCM push');
+              }}
+              style={{
+                backgroundColor: `${AppColors.darkOrange}14`,
+                borderColor: `${AppColors.darkOrange}33`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.darkOrange}}>
+                + Firebase FCM
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => {
+                simulatePush('apns');
+                showToast('Simulated Apple APNs push');
+              }}
+              style={{
+                backgroundColor: `${AppColors.primaryBlack}10`,
+                borderColor: `${AppColors.primaryBlack}25`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.primaryBlack}}>
+                + Apple APNs
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => {
+                simulatePush('deeplink');
+                showToast('Simulated Deep Link push');
+              }}
+              style={{
+                backgroundColor: `${AppColors.brandPurple}14`,
+                borderColor: `${AppColors.brandPurple}33`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.brandPurple}}>
+                + Deep Link
+              </Text>
+            </TouchableScale>
+          </View>
+        </View>
+
+        {/* Clear History Card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            padding: 16,
+          }}>
+          {renderSettingRow({
+            icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+            label: 'Clear Push History',
+            description: `Permanently remove all ${pushRecords?.length || 0} recorded notifications`,
+            isLast: true,
+            onPress: () => {
+              clearAllPushLogs();
+              Alert.alert('Success', 'Push notification history cleared');
+            },
+            right: (
+              <View
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  backgroundColor: `${AppColors.errorColor}14`,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.errorColor}33`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: AppColors.errorColor,
+                  }}>
+                  {t('common.clear')}
+                </Text>
+              </View>
+            ),
+          })}
+        </View>
+        <View style={{height: 48}} />
+      </ScrollView>
+    );
+  } else if (settingsPage === 'media') {
+    content = (
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
+        {/* Quick Capture Actions */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 8,
+          }}>
+          <Text
+            style={{
+              fontFamily: AppFonts.interBold,
+              fontSize: 12,
+              color: AppColors.primaryBlack,
+              marginBottom: 4,
+            }}>
+            ⚡ DIRECT CAPTURE SHORTCUTS
+          </Text>
+
+          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
+            <TouchableScale
+              onPress={async () => {
+                triggerNativeHaptic('light');
+                const result = await ScreenCapture.takeScreenshot({
+                  format: captureImageFormat.toLowerCase() as any,
+                  quality: 0.9,
+                  hideInspector: captureAutoHide,
+                });
+                if (result) {
+                  triggerNativeHaptic('success');
+                  showToast('Screenshot captured and saved!');
+                }
+              }}
+              style={{
+                backgroundColor: `${AppColors.purple}14`,
+                borderColor: `${AppColors.purple}33`,
+                borderWidth: 1,
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+                borderRadius: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+              <CameraIcon color={AppColors.purple} size={14} />
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontFamily: AppFonts.interBold,
+                  color: AppColors.purple,
+                }}>
+                Take Screenshot
+              </Text>
+            </TouchableScale>
+          </View>
+        </View>
+
+        {/* Screenshot Preferences Card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 12,
+          }}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: AppColors.purpleShade50,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <CameraIcon color={AppColors.purple} size={16} />
+            </View>
+            <View style={{flex: 1}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 14,
+                  lineHeight: 18,
+                  color: AppColors.primaryBlack,
+                }}>
+                {t(
+                  'settings.media.screenshotCardTitle',
+                  'Screenshot Capture Settings',
+                )}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 11,
+                  lineHeight: 15,
+                  color: AppColors.grayText,
+                  marginTop: 1,
+                }}>
+                {t(
+                  'settings.media.screenshotCardDesc',
+                  'Image encoding format, compression quality and overlay auto-hide',
+                )}
+              </Text>
+            </View>
+          </View>
+
+          {renderSettingRow({
+            icon: <ImageIcon color={AppColors.purple} size={16} />,
+            label: t('settings.media.imageFormat', 'Image Format'),
+            description: t(
+              'settings.media.imageFormatDesc',
+              'Export formats (PNG lossless, JPEG lossy, WebP)',
+            ),
+            right: (
+              <View style={{flexDirection: 'row', gap: 5}}>
+                {(['PNG', 'JPEG', 'WEBP'] as const).map(fmt => {
+                  const isSelected = captureImageFormat === fmt;
+                  return (
+                    <TouchableScale
+                      key={fmt}
+                      onPress={() => {
+                        triggerNativeHaptic('light');
+                        setCaptureImageFormat(fmt);
+                        showToast(`Screenshot format: ${fmt}`);
+                      }}
+                      style={{
+                        paddingHorizontal: 9,
+                        paddingVertical: 5,
+                        borderRadius: 7,
+                        backgroundColor: isSelected
+                          ? AppColors.purple
+                          : `${AppColors.purple}14`,
+                        borderWidth: 1,
+                        borderColor: isSelected
+                          ? AppColors.purple
+                          : `${AppColors.purple}2E`,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10.5,
+                          color: isSelected
+                            ? AppColors.white
+                            : AppColors.purple,
+                        }}>
+                        {fmt}
+                      </Text>
+                    </TouchableScale>
+                  );
+                })}
+              </View>
+            ),
+          })}
+
+          {renderSettingRow({
+            icon: <EyeIcon color={AppColors.purple} size={16} />,
+            label: t(
+              'settings.media.autoHide',
+              'Auto-Hide Inspector During Capture',
+            ),
+            description: t(
+              'settings.media.autoHideDesc',
+              'Temporarily hides the inspector overlay during screen capture',
+            ),
+            isLast: true,
+            onPress: () => {
+              triggerNativeHaptic('light');
+              setCaptureAutoHide(prev => !prev);
+              showToast(`Auto-hide overlay: ${!captureAutoHide ? 'ON' : 'OFF'}`);
+            },
+            right: (
+              <TouchableScale
+                onPress={() => {
+                  triggerNativeHaptic('light');
+                  setCaptureAutoHide(prev => !prev);
+                  showToast(`Auto-hide overlay: ${!captureAutoHide ? 'ON' : 'OFF'}`);
+                }}
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 7,
+                  backgroundColor: captureAutoHide
+                    ? `${AppColors.emerald500}26`
+                    : `${AppColors.grayText}20`,
+                  borderWidth: 1,
+                  borderColor: captureAutoHide
+                    ? `${AppColors.emerald500}4D`
+                    : `${AppColors.grayText}33`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10.5,
+                    color: captureAutoHide
+                      ? AppColors.emerald500
+                      : AppColors.grayText,
+                  }}>
+                  {captureAutoHide
+                    ? t('settings.media.enabled', 'ON')
+                    : 'OFF'}
+                </Text>
+              </TouchableScale>
+            ),
+          })}
+        </View>
+
+        {/* Video & GIF Recording Card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 12,
+          }}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+            <View
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                backgroundColor: AppColors.purpleShade50,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <VideoCameraIcon color={AppColors.purple} size={16} />
+            </View>
+            <View style={{flex: 1}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 14,
+                  lineHeight: 18,
+                  color: AppColors.primaryBlack,
+                }}>
+                {t(
+                  'settings.media.videoCardTitle',
+                  'Video Recording & GIF Conversion',
+                )}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 11,
+                  lineHeight: 15,
+                  color: AppColors.grayText,
+                  marginTop: 1,
+                }}>
+                {t(
+                  'settings.media.videoCardDesc',
+                  'ReplayKit hardware encoding, frame capture fallback and GIF generation',
+                )}
+              </Text>
+            </View>
+          </View>
+
+          {renderSettingRow({
+            icon: <MicrophoneIcon color={AppColors.purple} size={16} />,
+            label: t('settings.media.audioMode', 'Audio Source'),
+            description: t(
+              'settings.media.audioModeDesc',
+              'Record video with muted, app audio, or microphone commentary',
+            ),
+            right: (
+              <View style={{flexDirection: 'row', gap: 5}}>
+                {(['Muted', 'App', 'Mic'] as const).map(aud => {
+                  const isSelected = captureAudioMode === aud;
+                  return (
+                    <TouchableScale
+                      key={aud}
+                      onPress={() => {
+                        triggerNativeHaptic('light');
+                        setCaptureAudioMode(aud);
+                        showToast(`Audio source: ${aud}`);
+                      }}
+                      style={{
+                        paddingHorizontal: 8,
+                        paddingVertical: 5,
+                        borderRadius: 7,
+                        backgroundColor: isSelected
+                          ? AppColors.purple
+                          : `${AppColors.purple}14`,
+                        borderWidth: 1,
+                        borderColor: isSelected
+                          ? AppColors.purple
+                          : `${AppColors.purple}2E`,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10.5,
+                          color: isSelected
+                            ? AppColors.white
+                            : AppColors.purple,
+                        }}>
+                        {aud}
+                      </Text>
+                    </TouchableScale>
+                  );
+                })}
+              </View>
+            ),
+          })}
+
+          {renderSettingRow({
+            icon: <FilmIcon color={AppColors.purple} size={16} />,
+            label: t(
+              'settings.media.frameRate',
+              'Recording Frame Rate (FPS)',
+            ),
+            description: t(
+              'settings.media.frameRateDesc',
+              'Target video smoothness: 15, 24, 30, or 60 FPS',
+            ),
+            right: (
+              <View style={{flexDirection: 'row', gap: 5}}>
+                {(['15', '24', '30', '60'] as const).map(fps => {
+                  const isSelected = captureFps === fps;
+                  return (
+                    <TouchableScale
+                      key={fps}
+                      onPress={() => {
+                        triggerNativeHaptic('light');
+                        setCaptureFps(fps);
+                        showToast(`Recording FPS: ${fps}`);
+                      }}
+                      style={{
+                        paddingHorizontal: 7,
+                        paddingVertical: 5,
+                        borderRadius: 7,
+                        backgroundColor: isSelected
+                          ? AppColors.purple
+                          : `${AppColors.purple}14`,
+                        borderWidth: 1,
+                        borderColor: isSelected
+                          ? AppColors.purple
+                          : `${AppColors.purple}2E`,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 10.5,
+                          color: isSelected
+                            ? AppColors.white
+                            : AppColors.purple,
+                        }}>
+                        {fps}fps
+                      </Text>
+                    </TouchableScale>
+                  );
+                })}
+              </View>
+            ),
+          })}
+
+          {renderSettingRow({
+            icon: <GifIcon color={AppColors.purple} size={16} />,
+            label: t('settings.media.gifAutoOpt', 'Auto GIF Optimization'),
+            description: t(
+              'settings.media.gifAutoOptDesc',
+              'Automatic palette reduction and frame skip for lightweight animated GIFs',
+            ),
+            isLast: true,
+            onPress: () => {
+              triggerNativeHaptic('light');
+              setCaptureAutoGif(prev => !prev);
+              showToast(`GIF optimization: ${!captureAutoGif ? 'ON' : 'OFF'}`);
+            },
+            right: (
+              <TouchableScale
+                onPress={() => {
+                  triggerNativeHaptic('light');
+                  setCaptureAutoGif(prev => !prev);
+                  showToast(`GIF optimization: ${!captureAutoGif ? 'ON' : 'OFF'}`);
+                }}
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 7,
+                  backgroundColor: captureAutoGif
+                    ? `${AppColors.emerald500}26`
+                    : `${AppColors.grayText}20`,
+                  borderWidth: 1,
+                  borderColor: captureAutoGif
+                    ? `${AppColors.emerald500}4D`
+                    : `${AppColors.grayText}33`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10.5,
+                    color: captureAutoGif
+                      ? AppColors.emerald500
+                      : AppColors.grayText,
+                  }}>
+                  {captureAutoGif ? 'ON' : 'OFF'}
+                </Text>
+              </TouchableScale>
+            ),
+          })}
+        </View>
+
+        {/* Media Storage Cache Management */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            padding: 16,
+          }}>
+          {renderSettingRow({
+            icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+            label: t(
+              'settings.media.purgeAll',
+              'Purge Captured Media Cache',
+            ),
+            description: t(
+              'settings.media.purgeAllDesc',
+              'Delete all local screenshots, screen recordings and converted GIFs',
+            ),
+            isLast: true,
+            onPress: () => {
+              Alert.alert(
+                t(
+                  'settings.media.purgeConfirmTitle',
+                  'Purge Media Storage?',
+                ),
+                t(
+                  'settings.media.purgeConfirmMessage',
+                  'This will permanently delete all captured screenshots and videos from disk.',
+                ),
+                [
+                  {text: t('common.cancel', 'Cancel'), style: 'cancel'},
+                  {
+                    text: t('settings.media.purgeCacheBtn', 'Purge All'),
+                    style: 'destructive',
+                    onPress: async () => {
+                      await ScreenCapture.clearAllMedia();
+                      showToast(
+                        t(
+                          'settings.media.purgedSuccess',
+                          'Media cache cleared successfully',
+                        ),
+                      );
+                    },
+                  },
+                ],
+              );
+            },
+            right: (
+              <View
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  backgroundColor: `${AppColors.errorColor}14`,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.errorColor}33`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: AppColors.errorColor,
+                  }}>
+                  {t('settings.media.purgeCacheBtn', 'Purge All')}
                 </Text>
               </View>
             ),

@@ -19,6 +19,7 @@ import {
   AnalyticsIcon,
   ReduxIcon,
   CrashIcon,
+  BellIcon,
   SmartphoneIcon,
   DatabaseIcon,
   QrCodeIcon,
@@ -59,6 +60,7 @@ const TAB_THEMES: Record<
   storage: HEADER_TAB_THEME,
   device: HEADER_TAB_THEME,
   crash: HEADER_TAB_THEME,
+  push: HEADER_TAB_THEME,
   debugging: HEADER_TAB_THEME,
   media: HEADER_TAB_THEME,
 };
@@ -72,6 +74,8 @@ const TabBar = React.memo(() => {
     consoleLogs,
     analyticsEvents,
     crashRecords,
+    pushRecords,
+    unreadPushCount,
     lastReadApisCount,
     lastReadLogsCount,
     lastReadCrashesCount,
@@ -207,6 +211,13 @@ const TabBar = React.memo(() => {
             },
             {
               id: 8,
+              key: 'push',
+              label: 'Push',
+              count: pushRecords?.length || 0,
+              icon: 'push',
+            },
+            {
+              id: 9,
               key: 'debugging',
               label: 'Debugging',
               count: 0,
@@ -287,6 +298,9 @@ const TabBar = React.memo(() => {
                   {tab.icon === 'crash' && (
                     <CrashIcon color={iconColor} size={14} />
                   )}
+                  {tab.icon === 'push' && (
+                    <BellIcon color={iconColor} size={14} />
+                  )}
                   {tab.icon === 'debugging' && (
                     <QrCodeIcon color={iconColor} size={14} />
                   )}
@@ -328,7 +342,7 @@ const TabBar = React.memo(() => {
                     ]}>
                     {tab.label}
                   </Text>
-                  {tab.count > 0 && (
+                  {tab.count > 0 && tab.key !== 'push' && (
                     <View
                       style={{
                         paddingHorizontal: 5,
@@ -358,7 +372,9 @@ const TabBar = React.memo(() => {
                   )}
                   {((tab.key === 'apis' && hasUnreadApis) ||
                     (tab.key === 'logs' && hasUnreadLogs) ||
-                    (tab.key === 'crash' && hasUnreadCrashes)) && (
+                    (tab.key === 'crash' && hasUnreadCrashes) ||
+                    (tab.key === 'push' &&
+                      ((pushRecords?.length || 0) > 0 || unreadPushCount > 0))) && (
                     <View
                       style={{
                         width: 6,

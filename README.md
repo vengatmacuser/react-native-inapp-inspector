@@ -9,13 +9,27 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/v/react-native-inapp-inspector?color=6366f1&label=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/v/react-native-inapp-inspector?color=6366f1&label=npm&logo=npm" alt="npm version" /></a>
   <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/dm/react-native-inapp-inspector?color=3b82f6&label=downloads" alt="npm downloads" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/github/stars/vengatmacuser/react-native-inapp-inspector?color=f59e0b&label=stars&logo=github" alt="GitHub stars" /></a>
-  <a href="https://bundlephobia.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/bundlephobia/minzip/react-native-inapp-inspector?color=10b981&label=minzipped" alt="bundle size" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license" /></a>
-  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Expo-blue" alt="platform" /></a>
-  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/badge/TypeScript-Ready-3178c6" alt="TypeScript" /></a>
+  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/unpacked-size/react-native-inapp-inspector?color=10b981&label=size" alt="unpacked size" /></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Expo-0284c7?logo=apple&logoColor=white" alt="platform" />
+  <img src="https://img.shields.io/badge/React%20Native-%E2%89%A50.60-61DAFB?logo=react&logoColor=white" alt="React Native" />
+  <img src="https://img.shields.io/badge/Expo-SDK%2048%2B%20%7C%2050%2B%20%7C%2051%2B-000020?logo=expo&logoColor=white" alt="Expo" />
+  <img src="https://img.shields.io/badge/TypeScript-Strict%20Ready-3178c6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Engine-Hermes%20%7C%20JSC-9333ea" alt="Engine" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Micro--UI-Fault--Isolated-10b981?logo=shield&logoColor=white" alt="Fault Isolated" />
+  <img src="https://img.shields.io/badge/Overhead-0%25%20Inactive-06b6d4" alt="Overhead" />
+  <img src="https://img.shields.io/badge/Redux-RTK%20%7C%20Persist-764abc?logo=redux&logoColor=white" alt="Redux" />
+  <img src="https://img.shields.io/badge/Analytics-Firebase%20%7C%20GA4-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
+  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
 </p>
 
 The **zero-config, all-in-one in-app debugging overlay for React Native & Expo**. Inspect network traffic (fetch/Axios), console logs with Metro symbolicated stack traces, Redux state diffs, Firebase Analytics events, and JavaScript bundle size directly on your device or simulator with zero native setup.
@@ -384,7 +398,14 @@ This library is a free, open-source utility maintained in spare time. If it save
 
 👉 **[Sponsor @vengatmacuser on GitHub Sponsors](https://github.com/sponsors/vengatmacuser)**
 
-[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-@vengatmacuser-ea4aaa?logo=githubsponsors&logoColor=white&style=for-the-badge)](https://github.com/sponsors/vengatmacuser)
+## 🔍 Keywords & Search Topics
+
+`react-native-inapp-inspector` is designed for engineers seeking:
+* **Network Logging**: React Native network logger, in-app HTTP/HTTPS network inspector, Axios interceptor, Fetch API logger, GraphQL network monitor, WebSocket stream logger, cURL snippet export on device.
+* **Modern Tool Alternatives**: Standalone Flipper alternative for React Native, Chucker for React Native Android & iOS, React Native Debugger replacement, mobile Proxyman / Charles Proxy alternative.
+* **State & Storage Inspection**: React Native Redux DevTools on mobile, Redux Toolkit action diffs, `redux-persist` metadata inspector, AsyncStorage viewer & editor, MMKV storage debugger.
+* **Crash & Diagnostics**: React Native crash reporter, Metro symbolicated stack traces, React Error Boundary with fault-isolated Micro-UI architecture, low-level RAM & battery telemetry, device hardware inspector.
+* **Analytics & Screen Capture**: Firebase Analytics event inspector, GA4 debugger, on-device screen recorder, video capture, and screenshot utility for bare React Native & Expo applications.
 
 ---
 

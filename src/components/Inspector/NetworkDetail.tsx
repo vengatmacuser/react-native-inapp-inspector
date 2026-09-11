@@ -20,6 +20,7 @@ import SectionHeader from '../SectionHeader';
 import JsonViewer from '../JsonViewer';
 import DiffViewer from '../DiffViewer';
 import CopyButton from '../CopyButton';
+import ShareButton from '../ShareButton';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -32,6 +33,7 @@ import {
   getFetchCommand,
   getCurlCommand,
 } from '../../helpers';
+import {shareApiReport} from '../../helpers/shareFormatter';
 import {
   FailIcon,
   StatusIcon,
@@ -385,6 +387,9 @@ const NetworkDetail = React.memo(() => {
                         value={getCurlCommand(selected)}
                         label="cURL"
                         iconType="terminal"
+                      />
+                      <ShareButton
+                        onShare={() => shareApiReport(selected)}
                       />
                       <CopyButton
                         value={getFetchCommand(selected)}

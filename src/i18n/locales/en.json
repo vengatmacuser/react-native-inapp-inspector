@@ -19,6 +19,7 @@
     "minimize": "Minimize",
     "tapToExpand": "Tap to expand",
     "open": "Open",
+    "share": "Share",
     "openInBrowser": "Open in Browser",
     "openInBrowserPrompt": "Are you sure you want to open this URL in your external browser?"
   },
@@ -52,6 +53,7 @@
     "analytics": "Analytics",
     "redux": "Redux",
     "crash": "Crash",
+    "push": "Push",
     "device": "Device",
     "storage": "Storage",
     "media": "Screencast"

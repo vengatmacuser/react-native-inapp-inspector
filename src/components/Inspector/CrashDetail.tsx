@@ -14,6 +14,7 @@ import SegmentedTabs from '../SegmentedTabs';
 import HighlightText from '../HighlightText';
 import JsonViewer from '../JsonViewer';
 import CopyButton from '../CopyButton';
+import ShareButton from '../ShareButton';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {
@@ -27,6 +28,7 @@ import {
   parseCrashStackTrace,
 } from '../../customHooks/crashHandler';
 import {copyToClipboard} from '../../helpers';
+import {shareCrashReport} from '../../helpers/shareFormatter';
 import {
   SearchIcon,
   ClearIcon,
@@ -211,7 +213,10 @@ const CrashDetail: React.FC = React.memo(() => {
 
             <View style={{flex: 1}} />
 
-            {/* Copy Report Action */}
+            {/* Share & Copy Report Actions */}
+            <ShareButton
+              onShare={() => shareCrashReport(selectedCrash)}
+            />
             <TouchableScale
               onPress={handleCopyReport}
               hitSlop={10}

@@ -24,6 +24,8 @@ import ReduxTab from './ReduxTab';
 import ReduxDetail from './ReduxDetail';
 import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
+import PushTab from './PushTab';
+import PushDetail from './PushDetail';
 import DeviceInfoTab from './DeviceInfoTab';
 import StorageTab from './StorageTab';
 import DebuggingTab from './DebuggingTab';
@@ -51,6 +53,8 @@ const MainScreen = () => {
     selectedReduxSlice,
     selectedReduxAction,
     selectedCrash,
+    selectedPush,
+    setSelectedPush,
     settingsPage,
     isAboutOpen,
     setIsAboutOpen,
@@ -66,7 +70,8 @@ const MainScreen = () => {
     (activeTab === 'analytics' && selectedEvent != null) ||
     (activeTab === 'logs' && selectedLog != null) ||
     (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null)) ||
-    (activeTab === 'crash' && selectedCrash != null);
+    (activeTab === 'crash' && selectedCrash != null) ||
+    (activeTab === 'push' && selectedPush != null);
 
   // ─── 60 FPS Transition Animations ──────────────────────────────────────────
 
@@ -169,6 +174,11 @@ const MainScreen = () => {
                           <CrashTab />
                         </ModuleErrorBoundary>
                       )}
+                      {activeTab === 'push' && (
+                        <ModuleErrorBoundary moduleName="Push Notifications">
+                          <PushTab />
+                        </ModuleErrorBoundary>
+                      )}
                       {activeTab === 'device' && (
                         <ModuleErrorBoundary moduleName="Device Diagnostics">
                           <DeviceInfoTab />
@@ -230,6 +240,14 @@ const MainScreen = () => {
                     {activeTab === 'crash' && selectedCrash != null && (
                       <ModuleErrorBoundary moduleName="Crash Log Details">
                         <CrashDetail />
+                      </ModuleErrorBoundary>
+                    )}
+                    {activeTab === 'push' && selectedPush != null && (
+                      <ModuleErrorBoundary moduleName="Push Notification Details">
+                        <PushDetail
+                          item={selectedPush}
+                          onClose={() => setSelectedPush(null)}
+                        />
                       </ModuleErrorBoundary>
                     )}
                   </View>

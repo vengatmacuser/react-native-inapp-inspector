@@ -9,6 +9,8 @@ import type {
   LocalFilter,
   LogFilter,
   Method,
+  PushActionType,
+  PushAppState,
   SettingsPage,
   SettingsSubTab,
   SortOrder,
@@ -174,6 +176,7 @@ export interface PersistedSettings {
   maxConsoleLogs?: number;
   maxAnalyticsEventsLimit?: number;
   maxCrashLogs?: number;
+  maxPushLogsLimit?: number;
   isAutoRamLimitEnabled?: boolean;
   showConsoleLevels?: {info: boolean; warn: boolean; error: boolean};
   reduxAutoRefresh?: boolean;
@@ -373,6 +376,22 @@ export interface InspectorContextValue {
   setMaxCrashLogs: React.Dispatch<React.SetStateAction<number>>;
   clearAllCrashes: () => void;
 
+  // ─── Push Notifications ──────────────────────────────────────────────────
+  pushRecords: PushNotificationRecord[];
+  filteredPushRecords: PushNotificationRecord[];
+  selectedPush: PushNotificationRecord | null;
+  setSelectedPush: React.Dispatch<React.SetStateAction<PushNotificationRecord | null>>;
+  pushSearch: string;
+  setPushSearch: React.Dispatch<React.SetStateAction<string>>;
+  pushQuickFilter: string;
+  setPushQuickFilter: React.Dispatch<React.SetStateAction<string>>;
+  lastReadPushCount: number;
+  unreadPushCount: number;
+  maxPushLogs: number;
+  setMaxPushLogs: React.Dispatch<React.SetStateAction<number>>;
+  clearAllPushLogs: () => void;
+  simulatePush: (preset?: 'salesforce' | 'fcm' | 'apns' | 'deeplink' | 'rich_media' | 'custom', customData?: any) => void;
+
   // ─── Settings ──────────────────────────────────────────────────────────────
   settingsActiveSubTab: SettingsSubTab;
   setSettingsActiveSubTab: React.Dispatch<React.SetStateAction<SettingsSubTab>>;
@@ -527,4 +546,56 @@ export interface ErrorBoundaryProps {
 export interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+}
+
+export type PushSource = string;
+
+export interface PushNotificationRecord {
+  id: string;
+  title?: string;
+  body?: string;
+  subtitle?: string;
+  source: PushSource;
+  domain?: string;
+  appState: PushAppState;
+  action: PushActionType;
+  actionId?: string;
+  userText?: string;
+  timestamp: number;
+  data: Record<string, any>;
+  rawPayload: any;
+  channelId?: string;
+  imageUrl?: string;
+  sound?: string;
+  badge?: number;
+  collapseKey?: string;
+  priority?: string;
+  customDomainAttributes?: Record<string, any>;
+}
+
+export interface PushFilterState {
+  search: string;
+  source: string;
+  appState: string;
+  action: string;
+}
+
+export interface PushStats {
+  total: number;
+  foreground: number;
+  background: number;
+  opened: number;
+  sources: Record<string, number>;
+}
+
+export interface PushCardProps {
+  item: PushNotificationRecord;
+  onPress: () => void;
+  searchStr?: string;
+  isNew?: boolean;
+}
+
+export interface PushDetailProps {
+  item: PushNotificationRecord | null;
+  onClose: () => void;
 }

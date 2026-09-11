@@ -8,6 +8,7 @@ export const ActiveTab = {
   Logs: 'logs',
   Redux: 'redux',
   Crash: 'crash',
+  Push: 'push',
   Device: 'device',
   Storage: 'storage',
   Debugging: 'debugging',
@@ -71,6 +72,7 @@ export const SettingsPage = {
   Storage: 'storage',
   Debugging: 'debugging',
   Media: 'media',
+  Push: 'push',
 } as const;
 export type SettingsPage =
   | (typeof SettingsPage)[keyof typeof SettingsPage]
@@ -184,3 +186,39 @@ export const BreadcrumbType = {
 } as const;
 export type BreadcrumbType =
   (typeof BreadcrumbType)[keyof typeof BreadcrumbType];
+
+export const PushAppState = {
+  Foreground: 'foreground',
+  Background: 'background',
+  Quit: 'quit',
+  ColdStart: 'cold_start',
+} as const;
+export type PushAppState =
+  (typeof PushAppState)[keyof typeof PushAppState] | string;
+
+export const PushActionType = {
+  Received: 'received',
+  Opened: 'opened',
+  Dismissed: 'dismissed',
+  ActionPress: 'action_press',
+} as const;
+export type PushActionType =
+  (typeof PushActionType)[keyof typeof PushActionType] | string;
+
+export const PushDetailSubTab = {
+  Preview: 'preview',
+  Payload: 'payload',
+  Headers: 'headers',
+  Raw: 'raw',
+} as const;
+export type PushDetailSubTab =
+  (typeof PushDetailSubTab)[keyof typeof PushDetailSubTab];
+
+export const PushFilterType = {
+  All: 'all',
+  Foreground: 'foreground',
+  Background: 'background',
+  Opened: 'opened',
+} as const;
+export type PushFilterType =
+  (typeof PushFilterType)[keyof typeof PushFilterType] | string;

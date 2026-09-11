@@ -12,6 +12,7 @@ import {useInspector} from './InspectorContext';
 import HighlightText from '../HighlightText';
 import JsonViewer from '../JsonViewer';
 import CopyButton from '../CopyButton';
+import ShareButton from '../ShareButton';
 import SegmentedTabs from '../SegmentedTabs';
 import {
   ClearIcon,
@@ -38,6 +39,7 @@ import {
   ParsedStackFrame,
   openInVSCode,
 } from '../../helpers';
+import {shareLogReport} from '../../helpers/shareFormatter';
 
 type DetailSubTab = 'output' | 'arguments' | 'stack' | 'metadata';
 
@@ -370,11 +372,16 @@ const LogDetail = React.memo(() => {
                 )}
             </View>
 
-            {/* Quick Copy button */}
-            <CopyButton
-              value={selectedLog.message}
-              label={t('console.logMessage')}
-            />
+            {/* Share & Quick Copy buttons */}
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <ShareButton
+                onShare={() => shareLogReport(selectedLog)}
+              />
+              <CopyButton
+                value={selectedLog.message}
+                label={t('console.logMessage')}
+              />
+            </View>
           </View>
 
           {/* Caller & Trace origin info */}
