@@ -109,6 +109,9 @@ const getOriginBadge = (originType?: string) => {
   }
 };
 
+const DEFAULT_PAGE_SIZE = 50;
+const LOAD_MORE_STEP = 10;
+
 const ReduxTab = React.memo(() => {
   const {t} = useTranslation();
   const {
@@ -120,10 +123,15 @@ const ReduxTab = React.memo(() => {
   } = useInspector();
 
   const listRef = useRef<FlatList>(null);
-  const [displayLimit, setDisplayLimit] = useState<number>(100);
+  const [displayLimit, setDisplayLimit] = useState<number>(DEFAULT_PAGE_SIZE);
 
   // Sort mode: 'latest' (newest updated first) vs 'alpha' (A-Z)
   const [sortMode, setSortMode] = useState<'latest' | 'alpha'>('latest');
+
+  React.useEffect(() => {
+    setDisplayLimit(DEFAULT_PAGE_SIZE);
+    listRef.current?.scrollToOffset({offset: 0, animated: false});
+  }, [reduxSearch, sortMode]);
 
   // Total state size calculation
   const totalStateSize = useMemo(() => {
@@ -742,8 +750,9 @@ const ReduxTab = React.memo(() => {
               count={displayedSlices.length}
               totalCount={filteredSlices.length}
               label="slices"
+              loadMoreStep={LOAD_MORE_STEP}
               hasMore={displayedSlices.length < filteredSlices.length}
-              onLoadMore={() => setDisplayLimit(p => p + 10)}
+              onLoadMore={() => setDisplayLimit(p => p + LOAD_MORE_STEP)}
             />
           ) : null
         }

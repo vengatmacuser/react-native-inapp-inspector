@@ -260,7 +260,7 @@ const NetworkTab = React.memo(() => {
             <View style={styles.treeCardWrapper}>
               {hasMore ? (
                 <TouchableScale
-                  onPress={() => loadMoreSection(pageName, 50)}
+                  onPress={() => loadMoreSection(pageName, loadMoreStep || 10)}
                   hitSlop={6}
                   style={{
                     flexDirection: 'row',

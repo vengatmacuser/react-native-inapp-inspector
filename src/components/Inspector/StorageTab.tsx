@@ -175,6 +175,9 @@ const StorageEntryCard = React.memo(function StorageEntryCard({
   );
 });
 
+const DEFAULT_PAGE_SIZE = 50;
+const LOAD_MORE_STEP = 10;
+
 export const StorageTab = React.memo(() => {
   const {t} = useTranslation();
   const listRef = useRef<FlatList>(null);
@@ -183,8 +186,13 @@ export const StorageTab = React.memo(() => {
   const [entries, setEntries] = useState<StorageEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
-  const [displayLimit, setDisplayLimit] = useState<number>(100);
+  const [displayLimit, setDisplayLimit] = useState<number>(DEFAULT_PAGE_SIZE);
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setDisplayLimit(DEFAULT_PAGE_SIZE);
+    listRef.current?.scrollToOffset({offset: 0, animated: false});
+  }, [search, activeDriver, activeMMKVId]);
 
   // Modal State for Create / Edit
   const [modalVisible, setModalVisible] = useState<boolean>(false);
@@ -666,8 +674,9 @@ export const StorageTab = React.memo(() => {
                   count={Math.min(displayLimit, filteredEntries.length)}
                   totalCount={filteredEntries.length}
                   label="keys"
+                  loadMoreStep={LOAD_MORE_STEP}
                   hasMore={filteredEntries.length > displayLimit}
-                  onLoadMore={() => setDisplayLimit(p => p + 10)}
+                  onLoadMore={() => setDisplayLimit(p => p + LOAD_MORE_STEP)}
                 />
               ) : (
                 <View style={{height: 60}} />

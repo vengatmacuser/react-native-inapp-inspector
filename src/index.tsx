@@ -1504,12 +1504,29 @@ const NetworkInspector = ({
     [activePageName],
   );
 
-  const loadMoreSection = useCallback((pageName: string, step = 50) => {
-    setSectionLimits(prev => ({
-      ...prev,
-      [pageName]: (prev[pageName] || 50) + step,
-    }));
-  }, []);
+  // Reset section pagination limits whenever search or filters change
+  useEffect(() => {
+    setSectionLimits({});
+  }, [
+    search,
+    searchScope,
+    isRegexSearch,
+    isCaseSensitive,
+    quickFilter,
+    statusFilters,
+    methodFilters,
+    maxNetworkLogs,
+  ]);
+
+  const loadMoreSection = useCallback(
+    (pageName: string, step = 10) => {
+      setSectionLimits(prev => ({
+        ...prev,
+        [pageName]: (prev[pageName] || (maxNetworkLogs || 50)) + step,
+      }));
+    },
+    [maxNetworkLogs],
+  );
 
   const groupedData = useMemo(() => {
     const result: GroupedListItem[] = [];
@@ -1573,7 +1590,8 @@ const NetworkInspector = ({
           return activeFilters.has('success');
         });
 
-        const limit = sectionLimits[g.pageName] || 50;
+        const defaultLimit = maxNetworkLogs || 50;
+        const limit = sectionLimits[g.pageName] || defaultLimit;
         const visibleLogs = displayLogs.slice(0, limit);
         const hasMore = displayLogs.length > limit;
 
@@ -1588,7 +1606,7 @@ const NetworkInspector = ({
         });
 
         const remaining = Math.max(0, displayLogs.length - limit);
-        const step = Math.min(remaining || 50, 50);
+        const step = Math.min(remaining || 10, 10);
         result.push({
           type: 'loadMore',
           id: `loadmore-${g.pageName}`,
@@ -1611,6 +1629,7 @@ const NetworkInspector = ({
     sectionExpandOverrides,
     activePageName,
     sectionLimits,
+    maxNetworkLogs,
   ]);
 
   const {minStart, totalRange} = useMemo(() => {

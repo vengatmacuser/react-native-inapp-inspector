@@ -31,6 +31,8 @@ import {
 } from '../NetworkIcons';
 import type {PushNotificationRecord} from '../../types';
 
+const LOAD_MORE_STEP = 10;
+
 const PushTab = React.memo(() => {
   const {
     pushRecords,
@@ -42,10 +44,24 @@ const PushTab = React.memo(() => {
     setSelectedPush,
     clearAllPushLogs,
     simulatePush,
+    maxPushLogs,
   } = useInspector();
 
+  const initialLimit = maxPushLogs || 50;
   const listRef = useRef<FlatList>(null);
   const [simIndex, setSimIndex] = useState(0);
+  const [displayLimit, setDisplayLimit] = useState<number>(initialLimit);
+
+  // Reset displayLimit to dynamic settings page size when search query, filter chip, or maxPushLogs setting changes
+  React.useEffect(() => {
+    setDisplayLimit(maxPushLogs || 50);
+    listRef.current?.scrollToOffset({offset: 0, animated: false});
+  }, [pushSearch, pushQuickFilter, maxPushLogs]);
+
+  const displayedPushRecords = useMemo(
+    () => filteredPushRecords.slice(0, displayLimit),
+    [filteredPushRecords, displayLimit],
+  );
 
   const presets: Array<'salesforce' | 'fcm' | 'apns' | 'deeplink' | 'rich_media'> = [
     'salesforce',
@@ -272,7 +288,7 @@ const PushTab = React.memo(() => {
       {/* ── Notification Records List ── */}
       <FlatList
         ref={listRef}
-        data={filteredPushRecords}
+        data={displayedPushRecords}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={pushTabStyles.listContent}
@@ -304,8 +320,12 @@ const PushTab = React.memo(() => {
         ListFooterComponent={
           filteredPushRecords.length > 0 ? (
             <EndOfListFooter
+              count={displayedPushRecords.length}
               totalCount={filteredPushRecords.length}
-              label="End of push notification history"
+              label="push notifications"
+              loadMoreStep={LOAD_MORE_STEP}
+              hasMore={displayedPushRecords.length < filteredPushRecords.length}
+              onLoadMore={() => setDisplayLimit(prev => prev + LOAD_MORE_STEP)}
             />
           ) : null
         }

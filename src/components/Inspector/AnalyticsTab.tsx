@@ -32,6 +32,8 @@ import {
   SparkleIcon,
 } from '../NetworkIcons';
 
+const LOAD_MORE_STEP = 10;
+
 const AnalyticsTab = React.memo(() => {
   const {t} = useTranslation();
   const {
@@ -49,11 +51,18 @@ const AnalyticsTab = React.memo(() => {
     isAnalyticsLayoutReady,
     setIsAnalyticsLayoutReady,
     isAnalyticsFilterApplied,
+    maxAnalyticsEventsLimit,
   } = useInspector();
 
+  const initialLimit = maxAnalyticsEventsLimit || 100;
   const listRef = useRef<FlatList>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [displayLimit, setDisplayLimit] = useState<number>(100);
+  const [displayLimit, setDisplayLimit] = useState<number>(initialLimit);
+
+  React.useEffect(() => {
+    setDisplayLimit(maxAnalyticsEventsLimit || 100);
+    listRef.current?.scrollToOffset({offset: 0, animated: false});
+  }, [analyticsSearch, analyticsFilters, maxAnalyticsEventsLimit]);
 
   const displayedAnalyticsEvents = useMemo(
     () => filteredAnalyticsEvents.slice(0, displayLimit),
@@ -493,8 +502,9 @@ const AnalyticsTab = React.memo(() => {
                     count={displayedAnalyticsEvents.length}
                     totalCount={filteredAnalyticsEvents.length}
                     label="events"
+                    loadMoreStep={LOAD_MORE_STEP}
                     hasMore={displayedAnalyticsEvents.length < filteredAnalyticsEvents.length}
-                    onLoadMore={() => setDisplayLimit(p => p + 10)}
+                    onLoadMore={() => setDisplayLimit(p => p + LOAD_MORE_STEP)}
                   />
                 ) : null
               }

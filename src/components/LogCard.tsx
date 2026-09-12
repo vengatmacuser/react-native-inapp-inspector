@@ -29,6 +29,7 @@ import {
   CircleXIcon,
   RepeatIcon,
   ForwardChevronIcon,
+  GlobeIcon,
 } from './NetworkIcons';
 import {AppFonts} from '../styles/AppFonts';
 import {LogCardProps} from '../types';
@@ -292,15 +293,20 @@ const LogCard = React.memo(function LogCard({
                   {getStatusText()}
                 </Text>
               </View>
+              <Pressable
+                onPress={handleOpenUrl}
+                hitSlop={8}
+                style={styles.globeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Open in Browser">
+                <GlobeIcon color={AppColors.grayTextWeak} size={12} />
+              </Pressable>
               <ForwardChevronIcon color={AppColors.grayTextWeak} size={13} />
             </View>
           </View>
 
           {/* Row 2: Clean Smart URL Container (Path prominent, Host subtitle) */}
-          <Pressable
-            onPress={handleOpenUrl}
-            hitSlop={6}
-            style={styles.urlBox}>
+          <View style={styles.urlBox}>
             <View style={styles.urlMainRow}>
               <HighlightText
                 text={urlParsed.path}
@@ -356,7 +362,7 @@ const LogCard = React.memo(function LogCard({
                 {urlParsed.host || item.url}
               </Text>
             </View>
-          </Pressable>
+          </View>
 
           {/* Row 3: Footer (Timestamp on Left, Response Size & Duration on Right) */}
           <View style={styles.cardFooterRow}>
@@ -529,6 +535,13 @@ const styles = StyleSheet.create({
     fontFamily: AppFonts.interBold,
     fontSize: 10,
     lineHeight: 13,
+  },
+  globeBtn: {
+    padding: 3,
+    borderRadius: 4,
+    backgroundColor: `${AppColors.grayTextWeak}12`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   urlBox: {
     backgroundColor: AppColors.grayBackground,

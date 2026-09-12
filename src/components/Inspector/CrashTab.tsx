@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   Alert,
   FlatList,
@@ -69,18 +69,26 @@ const getRelativeTime = (timestamp: number): string => {
   return `${days}d ago`;
 };
 
+const LOAD_MORE_STEP = 10;
+
 const CrashTab = React.memo(() => {
   const {t} = useTranslation();
-  const {crashRecords, setSelectedCrash} = useInspector();
+  const {crashRecords, setSelectedCrash, maxCrashLogs} = useInspector();
 
+  const initialLimit = maxCrashLogs || 50;
   const listRef = useRef<FlatList>(null);
-  const [displayLimit, setDisplayLimit] = useState<number>(100);
+  const [displayLimit, setDisplayLimit] = useState<number>(initialLimit);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<CrashFilterType>('all');
   const [crashFilters, setCrashFilters] = useState<CrashFilters>(
     DEFAULT_CRASH_FILTERS,
   );
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  useEffect(() => {
+    setDisplayLimit(maxCrashLogs || 50);
+    listRef.current?.scrollToOffset({offset: 0, animated: false});
+  }, [searchQuery, filterType, crashFilters, maxCrashLogs]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -688,8 +696,9 @@ const CrashTab = React.memo(() => {
                   count={Math.min(displayLimit, filteredList.length)}
                   totalCount={filteredList.length}
                   label="crashes"
+                  loadMoreStep={LOAD_MORE_STEP}
                   hasMore={filteredList.length > displayLimit}
-                  onLoadMore={() => setDisplayLimit(p => p + 10)}
+                  onLoadMore={() => setDisplayLimit(p => p + LOAD_MORE_STEP)}
                 />
               ) : null
             }

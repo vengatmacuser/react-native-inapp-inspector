@@ -32,6 +32,8 @@ import {
   AnalyticsIcon,
 } from '../NetworkIcons';
 
+const LOAD_MORE_STEP = 10;
+
 const ConsoleTab = React.memo(() => {
   const {t} = useTranslation();
   const {
@@ -45,10 +47,17 @@ const ConsoleTab = React.memo(() => {
     logCounts,
     filteredConsoleLogs,
     visibleConsoleLogs,
+    maxConsoleLogs,
   } = useInspector();
 
+  const initialLimit = maxConsoleLogs || 100;
   const listRef = useRef<FlatList>(null);
-  const [displayLimit, setDisplayLimit] = React.useState<number>(100);
+  const [displayLimit, setDisplayLimit] = React.useState<number>(initialLimit);
+
+  React.useEffect(() => {
+    setDisplayLimit(maxConsoleLogs || 100);
+    listRef.current?.scrollToOffset({offset: 0, animated: false});
+  }, [logSearch, logFilters, maxConsoleLogs]);
 
   const displayedConsoleLogs = useMemo(
     () => filteredConsoleLogs.slice(0, displayLimit),
@@ -508,8 +517,9 @@ const ConsoleTab = React.memo(() => {
               count={displayedConsoleLogs.length}
               totalCount={filteredConsoleLogs.length}
               label="logs"
+              loadMoreStep={LOAD_MORE_STEP}
               hasMore={displayedConsoleLogs.length < filteredConsoleLogs.length}
-              onLoadMore={() => setDisplayLimit(prev => prev + 10)}
+              onLoadMore={() => setDisplayLimit(prev => prev + LOAD_MORE_STEP)}
             />
           ) : null
         }
