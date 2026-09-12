@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>React Native In-App Inspector — The Zero-Config Debugger for React Native & Expo</title>
-  <meta name="description" content="A self-contained in-app debugging overlay for React Native & Expo. Inspect network traffic, console logs, stack traces, Redux state, Firebase analytics, and JS bundle size with zero external dependencies.">
-  <meta name="keywords" content="react-native, network-logger, network-inspector, react-native-network-logger, in-app-inspector, flipper-alternative, chucker, react-native-debugger, expo, expo-network-logger, redux-logger, console-logger, bundle-visualizer, hermes, devtools">
+  <meta name="description" content="A self-contained in-app debugging suite for React Native & Expo. Inspect HTTP/HTTPS traffic, WebSocket frames, AsyncStorage & MMKV storage, Redux state diffs, console logs with Metro symbolication, push notifications, native hardware metrics, and capture screen video with zero cables.">
+  <meta name="keywords" content="react-native, network-logger, network-inspector, react-native-network-logger, in-app-inspector, flipper-alternative, chucker, websocket-logger, socket-io, mmkv-inspector, async-storage, push-notification-logger, redux-logger, console-logger, hermes, devtools, expo, expo-network-logger, react-native-usa, react-native-uk, react-native-canada, react-native-australia, react-native-singapore, react-native-抓包, 移动端抓包, 网络监控, 调试工具, 移动端调试器, 移动端控制台, flipper替代方案, chucker替代方案, charles替代方案, proxyman替代, WebSocket抓包, MMKV查看器, AsyncStorage查看器, 行動端偵錯, 網路封包側錄, 免电脑抓包, APP抓包工具, リアクトネイティブ, デバッガー, ネットワークロガー, パケットキャプチャ, 開発ツール, フリッパー代替, 通信ログ監視, チャールズ代替, アプリ内デバッガー, react-native-india, नेटवर्क-लॉगर, डिबगिंग-टूल, मोबाइल-ऐप-डिबगिंग, வலைப்பின்னல்-பதிவர், நெட்வொர்க்-இன்ஸ்பெக்டர், నెట్‌వర్క్-లాగర్, ನೆಟ್‌ವರ್ಕ್-ಲಾಗರ್, നെറ്റ്‌വർക്ക്-ലോഗർ, নেটওয়ার্ক-লগার, depurador-react-native, captura-de-red, registro-de-red, herramientas-desarrollo, alternativa-flipper, alternativa-charles, inspector-en-app, netzwerk-logger, entwicklertools, in-app-debugger-deutschland, paketmitschnitt, debogueur-react-native, inspecteur-reseau, outils-developpement, capture-paquets-mobile, depurador-mobile, inspetor-de-rede, ferramentas-dev, depurador-react-native-brasil, 리액트네이티브, 디버거, 네트워크로거, 모바일디버깅, 패킷캡처, 플리퍼대체, отладчик-react-native, сниффер-сети, логирование-сети, альтернатива-flipper, فاحص-الشبكة-رياكت-نيتف, مصحح-أخطاء-الموبايل, مراقب-الشبكة, بديل-فليبر, debugger-react-native-italia, netwerk-inspecteur-nederlands, debuger-react-native-polska, ag-gunlukcusu-turkce, alat-debug-react-native-indonesia, kiem-tra-mang-react-native-vietnam, ดีบักเกอร์-react-native-thai">
   <meta name="author" content="Vengateswaran Balakrishnan">
   <meta name="google-site-verification" content="google38c810675d88210c">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -17,15 +17,15 @@
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vengatmacuser.github.io/react-native-inapp-inspector/">
-  <meta property="og:title" content="React Native In-App Inspector — Zero-Config Debugging Toolkit">
-  <meta property="og:description" content="All-in-one in-app debugging toolkit for React Native & Expo. Network, Console, Redux, Firebase Analytics & Bundle visualizer on-device.">
+  <meta property="og:title" content="React Native In-App Inspector — Zero-Config In-App Debugging Suite">
+  <meta property="og:description" content="All-in-one in-app debugging suite for React Native & Expo. Network waterfall, WebSockets, MMKV & AsyncStorage, Redux, Metro symbolicated logs, push notifications, hardware telemetry, and screen capture on-device.">
   <meta property="og:image" content="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://vengatmacuser.github.io/react-native-inapp-inspector/">
-  <meta name="twitter:title" content="React Native In-App Inspector — Zero-Config Debugging Toolkit">
-  <meta name="twitter:description" content="All-in-one in-app debugging toolkit for React Native & Expo. Network, Console, Redux, Firebase Analytics & Bundle visualizer on-device.">
+  <meta name="twitter:title" content="React Native In-App Inspector — Zero-Config In-App Debugging Suite">
+  <meta name="twitter:description" content="All-in-one in-app debugging suite for React Native & Expo. Network waterfall, WebSockets, MMKV & AsyncStorage, Redux, Metro symbolicated logs, push notifications, hardware telemetry, and screen capture on-device.">
   <meta name="twitter:image" content="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
 
   <!-- Schema.org JSON-LD Structured Data -->
@@ -36,9 +36,10 @@
       {
         "@type": "SoftwareApplication",
         "name": "react-native-inapp-inspector",
+        "softwareVersion": "2.4.1",
         "operatingSystem": "iOS, Android",
         "applicationCategory": "DeveloperApplication",
-        "description": "A self-contained in-app debugging overlay for React Native & Expo applications.",
+        "description": "A self-contained in-app debugging suite for React Native & Expo applications. Inspect HTTP/HTTPS traffic, WebSockets, MMKV & AsyncStorage, Redux state, console logs with Metro symbolication, push notifications, and native hardware metrics on-device.",
         "url": "https://vengatmacuser.github.io/react-native-inapp-inspector/",
         "sameAs": [
           "https://www.npmjs.com/package/react-native-inapp-inspector",
@@ -69,7 +70,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -83,8 +84,10 @@
       </div>
       <nav class="nav-links">
         <a href="#features">Features</a>
-        <a href="#demo">Interactive Demo</a>
-        <a href="#install">Getting Started</a>
+        <a href="#demo">Live Demo</a>
+        <a href="#walkthrough">Video Tour</a>
+        <a href="#search">Search Syntax</a>
+        <a href="#install">Quick Start</a>
         <a href="https://github.com/vengatmacuser/react-native-inapp-inspector" class="nav-btn github" target="_blank">
           <svg class="icon-svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.9-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/></svg>
           GitHub
@@ -93,6 +96,26 @@
     </div>
   </header>
 
+  <!-- Global Multilingual Documentation Bar -->
+  <div class="lang-bar">
+    <div class="container lang-bar-container">
+      <span class="lang-label">🌍 Docs in Your Language:</span>
+      <div class="lang-links">
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.md" class="lang-chip active">English</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.zh-CN.md" class="lang-chip">简体中文</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.hi.md" class="lang-chip">हिन्दी</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ja.md" class="lang-chip">日本語</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.es.md" class="lang-chip">Español</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.de.md" class="lang-chip">Deutsch</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.fr.md" class="lang-chip">Français</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.pt-BR.md" class="lang-chip">Português</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ko.md" class="lang-chip">한국어</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ru.md" class="lang-chip">Русский</a>
+        <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ar.md" class="lang-chip">العربية</a>
+      </div>
+    </div>
+  </div>
+
   <!-- Hero Section -->
   <section class="hero">
     <div class="hero-bg-gradients">
@@ -100,9 +123,22 @@
       <div class="g-purple"></div>
     </div>
     <div class="container hero-container">
-      <div class="hero-badge">🎉 PREMIUM DEV COMPANION</div>
-      <h1 class="hero-title">Self-Contained In-App Inspector for React Native</h1>
-      <p class="hero-subtitle">Intercept network requests, analyze console streams, track navigation routes, and monitor custom analytics events directly from your device screens. No debugger ports or cables required.</p>
+      <div class="hero-badge">✨ VERSION 2.4.1 — ZERO-CONFIG IN-APP DEVTOOLS</div>
+      <h1 class="hero-title">The Complete In-App Debugging Suite for React Native & Expo</h1>
+      <p class="hero-subtitle">Intercept HTTP/HTTPS network traffic, WebSocket streams, AsyncStorage & MMKV storage, Redux state diffs, console logs with Metro symbolication, push notifications, native hardware metrics, and capture screenshots & video directly on your device with zero cables.</p>
+
+      <div class="hero-pills">
+        <span class="hero-pill">🌐 HTTP & Axios Waterfall</span>
+        <span class="hero-pill">⚡ WebSocket & Socket.IO</span>
+        <span class="hero-pill">💾 MMKV & AsyncStorage CRUD</span>
+        <span class="hero-pill">🔔 Push Notification Logger</span>
+        <span class="hero-pill">🪵 Console & Metro Symbolication</span>
+        <span class="hero-pill">🔄 Redux State Diffs</span>
+        <span class="hero-pill">🛡️ Crash Protection & Breadcrumbs</span>
+        <span class="hero-pill">📱 RAM & Hardware Telemetry</span>
+        <span class="hero-pill">📸 Screen Video & GIF Recording</span>
+        <span class="hero-pill">🌍 25 Global Languages</span>
+      </div>
       
       <div class="hero-actions">
         <a href="#install" class="btn primary">Get Started Now</a>
@@ -126,41 +162,98 @@
     <div class="container">
       <div class="section-header">
         <h2 class="section-title">Built for Modern Mobile Developers</h2>
-        <p class="section-subtitle">Everything you need to troubleshoot, audit, and verify your mobile application states in real-time.</p>
+        <p class="section-subtitle">A comprehensive runtime toolbox to audit, verify, and diagnose your React Native application states in real-time.</p>
       </div>
       
       <div class="features-grid">
-        <!-- Feature 1 -->
+        <!-- Feature 1: Network Waterfall -->
         <div class="feature-card">
           <div class="feature-icon icon-cyan">
-            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-15c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
           </div>
-          <h3 class="feature-name">🌐 Network Logger</h3>
-          <p class="feature-desc">Monitor raw HTTP packets, track headers, body payloads, latency, and status codes. Copy requests directly as Axios fetch or cURL commands.</p>
+          <h3 class="feature-name">🌐 Network Waterfall & P95</h3>
+          <p class="feature-desc">Hooks into `fetch`, Axios, and XHR. Inspect status codes, request/response headers, JSON trees, latency waterfall bars, P95 telemetry, and export as cURL or Fetch.</p>
         </div>
-        <!-- Feature 2 -->
+
+        <!-- Feature 2: WebSocket & Socket.IO -->
+        <div class="feature-card">
+          <div class="feature-icon icon-amber">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16.5v-2.09c3.05-.44 5.46-2.85 5.9-5.91H21c-.48 4.14-3.86 7.52-8 8zm-2-13v2.09c-3.05.44-5.46 2.85-5.9 5.91H3c.48-4.14 3.86-7.52 8-8zm0 4.08V7.5c0-.28.22-.5.5-.5s.5.22.5.5v2.08c1.86.38 3.29 1.81 3.67 3.67H18.5c.28 0 .5.22.5.5s-.22.5-.5.5h-1.83c-.38 1.86-1.81 3.29-3.67 3.67V16.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-2.08c-1.86-.38-3.29-1.81-3.67-3.67H6.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h1.83c.38-1.86 1.81-3.29 3.67-3.67z"/></svg>
+          </div>
+          <h3 class="feature-name">⚡ WebSocket & Socket.IO</h3>
+          <p class="feature-desc">Intercept native WebSocket (`ws://`, `wss://`) and Socket.IO v2/v3/v4 frames. Inspect live bidirectional packet timeline, text/binary payloads, and ping/pong heartbeats.</p>
+        </div>
+
+        <!-- Feature 3: Storage Tab -->
+        <div class="feature-card">
+          <div class="feature-icon icon-emerald">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M19 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 18H5v-4h7v4zm7 0h-5v-4h5v4zm0-6H5v-4h14v4zm0-6H5V4h14v4z"/></svg>
+          </div>
+          <h3 class="feature-name">💾 Storage Manager (CRUD)</h3>
+          <p class="feature-desc">Unified live explorer for `@react-native-async-storage/async-storage` and `react-native-mmkv`. Browse, search, edit, create, or delete keys and JSON values in real-time.</p>
+        </div>
+
+        <!-- Feature 4: Push Notification Logger -->
+        <div class="feature-card">
+          <div class="feature-icon icon-pink">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+          </div>
+          <h3 class="feature-name">🔔 Push Notification Logger</h3>
+          <p class="feature-desc">Intercept FCM, APNs, Salesforce, OneSignal, and Notifee. Track foreground/background app state, payload parameters, deep links, and user notification action clicks.</p>
+        </div>
+
+        <!-- Feature 5: Console & Metro Symbolication -->
         <div class="feature-card">
           <div class="feature-icon icon-purple">
             <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 12H4v-2h8v2zm8-4H4V8h16v4z"/></svg>
           </div>
-          <h3 class="feature-name">💻 Log Terminal</h3>
-          <p class="feature-desc">Interactive in-app logs window displaying React Native warnings, errors, and system logging messages in color-coded cards.</p>
+          <h3 class="feature-name">🪵 Console & Metro Symbolication</h3>
+          <p class="feature-desc">Intercepts `console.log/warn/error`. Automatically maps minified stack traces back to exact project TypeScript files and line numbers (`HomeScreen.tsx:42:15`).</p>
         </div>
-        <!-- Feature 3 -->
+
+        <!-- Feature 6: Redux State & Action Diffs -->
+        <div class="feature-card">
+          <div class="feature-icon icon-indigo">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          </div>
+          <h3 class="feature-name">🔄 Redux State & Action Diffs</h3>
+          <p class="feature-desc">Connects to Redux Store and RTK. Inspect dispatched action history, payload inspection, color-coded state diffs (added/updated/deleted), and `redux-persist` metadata.</p>
+        </div>
+
+        <!-- Feature 7: Crash Protection & Breadcrumbs -->
+        <div class="feature-card">
+          <div class="feature-icon icon-red">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v6h-2V7zm1 10.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/></svg>
+          </div>
+          <h3 class="feature-name">🛡️ Crash Guard & Breadcrumbs</h3>
+          <p class="feature-desc">Fault-isolated Micro-UI architecture. Global React Error Boundary with user navigation, network, and Redux breadcrumbs leading up to any unhandled crash.</p>
+        </div>
+
+        <!-- Feature 8: Native Telemetry & Hardware -->
+        <div class="feature-card">
+          <div class="feature-icon icon-teal">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M15 9H9v6h6V9zm-2 4h-2v-2h2v2zm8-2V9h-2V7c0-1.1-.9-2-2-2h-2V3h-2v2h-2V3H9v2H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h2v2h2v-2h2v2h2v-2h2c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2zm-4 6H7V7h10v10z"/></svg>
+          </div>
+          <h3 class="feature-name">📱 Native Hardware & RAM</h3>
+          <p class="feature-desc">Direct Kotlin & Obj-C bridge querying Total RAM, Free RAM, native heap, storage space, battery %, charging state, CPU ABI, and real-time display FPS monitoring.</p>
+        </div>
+
+        <!-- Feature 9: Screen Video & GIF Recording -->
+        <div class="feature-card">
+          <div class="feature-icon icon-violet">
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM15 16H5V8h10v8z"/></svg>
+          </div>
+          <h3 class="feature-name">📸 Screen Capture & Video Suite</h3>
+          <p class="feature-desc">Take high-resolution full-window screenshots, record smooth MP4 screen video walkthroughs with mic narration, and generate animated GIFs for GitHub PRs and Jira tickets.</p>
+        </div>
+
+        <!-- Feature 10: 25 Languages & Bottom Sheet -->
         <div class="feature-card">
           <div class="feature-icon icon-blue">
-            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
           </div>
-          <h3 class="feature-name">🕸️ WebView Inspector</h3>
-          <p class="feature-desc">Audit scripts, styles, resources, navigation history, and console messages running inside nested web views dynamically.</p>
-        </div>
-        <!-- Feature 4 -->
-        <div class="feature-card">
-          <div class="feature-icon icon-pink">
-            <svg viewBox="0 0 24 24" class="icon-svg"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-          </div>
-          <h3 class="feature-name">📊 Analytics Event Tracker</h3>
-          <p class="feature-desc">Observe real-time events triggered inside Google Analytics, Firebase, or custom marketing platforms as they happen.</p>
+          <h3 class="feature-name">🌍 25 Global Languages</h3>
+          <p class="feature-desc">Full localization across 25 global languages and regions (English, Chinese, Hindi, Japanese, Spanish, German, etc.) with an interactive bottom sheet and country picker.</p>
         </div>
       </div>
     </div>
@@ -171,7 +264,7 @@
     <div class="container">
       <div class="section-header">
         <h2 class="section-title">Experience the Interface</h2>
-        <p class="section-subtitle">Interact with our simulation of the React Native inspector client. Toggle tabs to see mock network requests and logs.</p>
+        <p class="section-subtitle">Interact with our simulation of the React Native inspector client. Toggle tabs to see live network, WebSocket, storage, and push notification streams.</p>
       </div>
 
       <div class="device-mockup-wrapper">
@@ -184,10 +277,13 @@
           <!-- Inspector App Inside Mockup -->
           <div class="inspector-client">
             <div class="inspector-header">
-              <span class="client-title">RN-InApp-Inspector</span>
+              <span class="client-title">RN-InApp-Inspector v2.4.1</span>
               <div class="client-tabs">
                 <button class="client-tab active" onclick="switchDemoTab('apis')">APIs</button>
+                <button class="client-tab" onclick="switchDemoTab('sockets')">WebSockets</button>
+                <button class="client-tab" onclick="switchDemoTab('storage')">Storage</button>
                 <button class="client-tab" onclick="switchDemoTab('logs')">Logs</button>
+                <button class="client-tab" onclick="switchDemoTab('push')">Push</button>
                 <button class="client-tab" onclick="switchDemoTab('analytics')">Analytics</button>
               </div>
             </div>
@@ -201,16 +297,16 @@
                     <span class="status">200 OK</span>
                     <span class="time">45ms</span>
                   </div>
-                  <span class="item-url">https://api.example.com/users/profile</span>
+                  <span class="item-url">https://api.example.com/v1/users/profile</span>
                 </div>
                 
                 <div class="demo-list-item success">
                   <div class="item-meta">
                     <span class="badge post">POST</span>
                     <span class="status">201 Created</span>
-                    <span class="time">120ms</span>
+                    <span class="time">118ms</span>
                   </div>
-                  <span class="item-url">https://api.example.com/auth/login</span>
+                  <span class="item-url">https://api.example.com/v1/auth/login</span>
                 </div>
 
                 <div class="demo-list-item error">
@@ -219,23 +315,95 @@
                     <span class="status failed">500 Server Error</span>
                     <span class="time">88ms</span>
                   </div>
-                  <span class="item-url">https://api.example.com/analytics/v2/events</span>
+                  <span class="item-url">https://api.example.com/v2/analytics/stream</span>
+                </div>
+              </div>
+
+              <!-- WebSockets tab content -->
+              <div id="demo-tab-sockets" class="demo-tab-content">
+                <div class="demo-list-item ws">
+                  <div class="item-meta">
+                    <span class="badge ws">CONNECTED</span>
+                    <span class="status">101 Switching</span>
+                    <span class="time">Live</span>
+                  </div>
+                  <span class="item-url">wss://socket.example.com/realtime</span>
+                </div>
+                <div class="log-card log">
+                  <span class="log-tag">⬇️ [Frame In]</span>
+                  <span class="log-msg">{"event":"ORDER_STATUS","id":"9420","status":"SHIPPED"}</span>
+                </div>
+                <div class="log-card warn">
+                  <span class="log-tag">⬆️ [Frame Out]</span>
+                  <span class="log-msg">{"action":"HEARTBEAT_PING","clientTime":17892188}</span>
+                </div>
+                <div class="log-card log">
+                  <span class="log-tag">⬇️ [Frame In]</span>
+                  <span class="log-msg">{"pong":true,"serverTime":17892189}</span>
+                </div>
+              </div>
+
+              <!-- Storage tab content -->
+              <div id="demo-tab-storage" class="demo-tab-content">
+                <div class="demo-list-item storage">
+                  <div class="item-meta">
+                    <span class="badge storage">MMKV</span>
+                    <span class="status">auth_session_token</span>
+                    <span class="time">String</span>
+                  </div>
+                  <span class="item-url">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC..."</span>
+                </div>
+                <div class="demo-list-item storage">
+                  <div class="item-meta">
+                    <span class="badge storage">ASYNC</span>
+                    <span class="status">user_preferences</span>
+                    <span class="time">JSON Object</span>
+                  </div>
+                  <span class="item-url">{"theme":"dark","locale":"en","sound":true}</span>
+                </div>
+                <div class="demo-list-item storage">
+                  <div class="item-meta">
+                    <span class="badge storage">MMKV</span>
+                    <span class="status">cart_items</span>
+                    <span class="time">Array[3]</span>
+                  </div>
+                  <span class="item-url">[{"sku":"PROD-1","qty":2},{"sku":"PROD-4"}]</span>
                 </div>
               </div>
 
               <!-- Logs tab content -->
               <div id="demo-tab-logs" class="demo-tab-content">
                 <div class="log-card log">
-                  <span class="log-tag">[App]</span>
-                  <span class="log-msg">HomeScreen mounted and tracking initialized.</span>
+                  <span class="log-tag">[HomeScreen.tsx:42]</span>
+                  <span class="log-msg">Mounted component with active session.</span>
                 </div>
                 <div class="log-card warn">
-                  <span class="log-tag">[System]</span>
-                  <span class="log-msg">API request latency is above average (120ms).</span>
+                  <span class="log-tag">[System:RAM]</span>
+                  <span class="log-msg">High memory usage detected (78% of heap).</span>
                 </div>
                 <div class="log-card error">
-                  <span class="log-tag">[Critical]</span>
-                  <span class="log-msg">Simulated crash: DB connection timeout.</span>
+                  <span class="log-tag">[NetworkError]</span>
+                  <span class="log-msg">Axios timeout: /v2/analytics/stream failed.</span>
+                </div>
+              </div>
+
+              <!-- Push tab content -->
+              <div id="demo-tab-push" class="demo-tab-content">
+                <div class="demo-list-item push">
+                  <div class="item-meta">
+                    <span class="badge push">FCM</span>
+                    <span class="status">Foreground</span>
+                    <span class="time">12:04:12</span>
+                  </div>
+                  <span class="item-url">"Your package #9420 has been delivered!"</span>
+                </div>
+                <div class="demo-list-item push">
+                  <div class="item-meta">
+                    <span class="badge push">APNS</span>
+                    <span class="status">Background</span>
+                    <span class="time">11:32:05</span>
+                  </div>
+                  <span class="item-url">"Weekend Flash Sale: 50% off all shoes"</span>
                 </div>
               </div>
 
@@ -243,22 +411,119 @@
               <div id="demo-tab-analytics" class="demo-tab-content">
                 <div class="event-card">
                   <div class="event-header">
-                    <span class="event-name">user_login_success</span>
+                    <span class="event-name">checkout_completed</span>
                     <span class="event-time">12:04:12</span>
                   </div>
-                  <pre class="event-params">{ "method": "Google", "role": "Lead Architect" }</pre>
+                  <pre class="event-params">{ "cartId": "cart_9921", "amount": 89.50, "currency": "USD" }</pre>
                 </div>
-                
                 <div class="event-card">
                   <div class="event-header">
                     <span class="event-name">screen_view</span>
                     <span class="event-time">12:04:08</span>
                   </div>
-                  <pre class="event-params">{ "screen_name": "HomeScreen" }</pre>
+                  <pre class="event-params">{ "screen_name": "CheckoutSuccessScreen" }</pre>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Video Walkthrough Section -->
+  <section id="walkthrough" class="walkthrough-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">🎬 Real Device Video Walkthrough</h2>
+        <p class="section-subtitle">Experience react-native-inapp-inspector v2.4.1 in action on iOS: inspecting live APIs, WebSocket frames, push notifications, storage, and 25-language localization.</p>
+      </div>
+
+      <div class="video-container-wrapper">
+        <video controls playsinline preload="metadata" poster="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg" class="walkthrough-video">
+          <source src="video_walkthrough.mp4" type="video/mp4">
+          <source src="video_walkthrough.mov" type="video/quicktime">
+          Your browser does not support HTML5 video.
+        </video>
+        <div class="video-footer-links">
+          <span>Format Options:</span>
+          <a href="video_walkthrough.mp4" download>Download MP4 (8.7 MB)</a>
+          <span>•</span>
+          <a href="video_walkthrough.mov" download>Original MOV (65.9 MB)</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DevTools Search Syntax Section -->
+  <section id="search" class="search-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">DevTools-Grade Search Engine</h2>
+        <p class="section-subtitle">Search effortlessly across network calls, console logs, socket frames, and storage using standard developer keywords.</p>
+      </div>
+
+      <div class="search-grid">
+        <div class="search-card">
+          <code class="search-syntax">method:POST status:200</code>
+          <p class="search-desc">Filter network requests by HTTP method and status code simultaneously.</p>
+        </div>
+        <div class="search-card">
+          <code class="search-syntax">url:myapp.com -analytics</code>
+          <p class="search-desc">Search by target domain while negating background tracking or noise.</p>
+        </div>
+        <div class="search-card">
+          <code class="search-syntax">header:authorization</code>
+          <p class="search-desc">Inspect requests containing specific headers like Bearer tokens.</p>
+        </div>
+        <div class="search-card">
+          <code class="search-syntax">body:"orderId"</code>
+          <p class="search-desc">Deep-search inside request or response JSON payloads.</p>
+        </div>
+        <div class="search-card">
+          <code class="search-syntax">page:CheckoutScreen</code>
+          <p class="search-desc">Tag and filter network calls and logs by React Navigation active screen.</p>
+        </div>
+        <div class="search-card">
+          <code class="search-syntax">file:ProfileView.tsx</code>
+          <p class="search-desc">Search console logs by exact source file resolved via Metro symbolication.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Submodules Section -->
+  <section class="submodules-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Modular Sub-Path Imports</h2>
+        <p class="section-subtitle">Import only what you need for optimal bundle size and zero runtime overhead.</p>
+      </div>
+
+      <div class="submodules-grid">
+        <div class="submodule-chip">
+          <div class="submodule-path">.../network</div>
+          <p class="submodule-desc">setupNetworkLogger, addAxiosInterceptors, getNetworkLogs</p>
+        </div>
+        <div class="submodule-chip">
+          <div class="submodule-path">.../socket</div>
+          <p class="submodule-desc">setupSocketLogger, recordSocketFrame, SocketTab</p>
+        </div>
+        <div class="submodule-chip">
+          <div class="submodule-path">.../storage</div>
+          <p class="submodule-desc">connectAsyncStorage, connectMMKV, setStorageEntry</p>
+        </div>
+        <div class="submodule-chip">
+          <div class="submodule-path">.../push</div>
+          <p class="submodule-desc">autoSetupPushLogger, recordPushNotification</p>
+        </div>
+        <div class="submodule-chip">
+          <div class="submodule-path">.../redux</div>
+          <p class="submodule-desc">connectReduxStore, inspectorReduxMiddleware</p>
+        </div>
+        <div class="submodule-chip">
+          <div class="submodule-path">.../capture</div>
+          <p class="submodule-desc">ScreenCapture: screenshot, video recording, GIF</p>
         </div>
       </div>
     </div>
@@ -269,7 +534,7 @@
     <div class="container">
       <div class="section-header">
         <h2 class="section-title">Simple Integration</h2>
-        <p class="section-subtitle">Add the inspector to your app in under three minutes.</p>
+        <p class="section-subtitle">Add the complete inspector suite to your app in under three minutes.</p>
       </div>
 
       <div class="code-flow-grid">
@@ -278,21 +543,21 @@
             <div class="step-num">1</div>
             <div class="step-body">
               <h4>Install Dependencies</h4>
-              <p>Add the library as a dev dependency via npm or yarn package manager.</p>
+              <p>Add <code>react-native-inapp-inspector</code> and <code>react-native-svg</code> to your project.</p>
             </div>
           </div>
           <div class="step-item">
             <div class="step-num">2</div>
             <div class="step-body">
-              <h4>Mount the Inspector Component</h4>
-              <p>Place the inspector at the root level overlay of your application.</p>
+              <h4>Initialize at Entry File</h4>
+              <p>Call <code>setupNetworkLogger()</code>, <code>setupConsoleLogger()</code>, and <code>setupSocketLogger()</code> before root mounts.</p>
             </div>
           </div>
           <div class="step-item">
             <div class="step-num">3</div>
             <div class="step-body">
-              <h4>Start Inspecting</h4>
-              <p>Open your app, tap the floating overlay trigger, and explore the runtime details.</p>
+              <h4>Mount the Overlay</h4>
+              <p>Place <code>&lt;NetworkInspector /&gt;</code> in your root JSX layout. Shake device or tap the floating bubble to inspect!</p>
             </div>
           </div>
         </div>
@@ -303,20 +568,297 @@
           </div>
           <pre class="code-block"><code><span class="token keyword">import</span> React <span class="token keyword">from</span> <span class="token string">'react'</span>;
 <span class="token keyword">import</span> { SafeAreaView } <span class="token keyword">from</span> <span class="token string">'react-native'</span>;
-<span class="token keyword">import</span> NetworkInspector <span class="token keyword">from</span> <span class="token string">'react-native-inapp-inspector'</span>;
+<span class="token keyword">import</span> NetworkInspector, {
+  setupNetworkLogger,
+  setupConsoleLogger,
+  setupSocketLogger,
+  connectReduxStore,
+  connectAsyncStorage,
+} <span class="token keyword">from</span> <span class="token string">'react-native-inapp-inspector'</span>;
+<span class="token keyword">import</span> AsyncStorage <span class="token keyword">from</span> <span class="token string">'@react-native-async-storage/async-storage'</span>;
+<span class="token keyword">import</span> { store } <span class="token keyword">from</span> <span class="token string">'./src/store'</span>;
 
-<span class="token keyword">const</span> <span class="token function">App</span> = () => {
+<span class="token comment">// ⚡ Initialize loggers before application renders</span>
+<span class="token function">setupNetworkLogger</span>();
+<span class="token function">setupConsoleLogger</span>();
+<span class="token function">setupSocketLogger</span>();
+<span class="token keyword">if</span> (store) <span class="token function">connectReduxStore</span>(store);
+<span class="token function">connectAsyncStorage</span>(AsyncStorage);
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token keyword">function</span> <span class="token function">App</span>() {
   <span class="token keyword">return</span> (
     &lt;<span class="token class">SafeAreaView</span> style={{ flex: 1 }}&gt;
       <span class="token comment">{/* Your application components */}</span>
+      &lt;<span class="token class">AppNavigation</span> /&gt;
       
-      <span class="token comment">{/* Floating overlay UI */}</span>
-      &lt;<span class="token class">NetworkInspector</span> /&gt;
+      <span class="token comment">{/* In-App Debugger Overlay */}</span>
+      {__DEV__ &amp;&amp; &lt;<span class="token class">NetworkInspector</span> enabled={true} environment=<span class="token string">"DEV"</span> /&gt;}
     &lt;/<span class="token class">SafeAreaView</span>&gt;
   );
-};
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
 
-<span class="token keyword">export</span> <span class="token keyword">default</span> App;</code></pre>
+  <!-- Global Markets & Keywords Section -->
+  <section id="global-markets" class="global-markets-section">
+    <div class="container">
+      <div class="section-header" style="text-align: center; margin-bottom: 20px;">
+        <span class="badge badge-accent">Worldwide Ecosystem</span>
+        <h2 class="section-title">Optimized for Developers Across All Countries 🌍</h2>
+        <p class="section-subtitle">
+          Whether you search in English, 中文, 日本語, 한국어, Español, Deutsch, Français, Português, Русский, हिन्दी, or العربية — <code>react-native-inapp-inspector</code> is indexed with localized terms and native developer terminology.
+        </p>
+      </div>
+
+      <div class="markets-grid">
+        <!-- North America & English Global -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇺🇸 🇬🇧</span>
+              <h3 class="market-title">English Global</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.md" class="market-readme-link" target="_blank">EN Docs ↗</a>
+          </div>
+          <p class="market-countries">USA, UK, Canada, Australia, NZ, Ireland</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">flipper-alternative</span>
+            <span class="market-tag highlight">chucker-react-native</span>
+            <span class="market-tag">network-logger</span>
+            <span class="market-tag">in-app-inspector</span>
+            <span class="market-tag">charles-proxy-alternative</span>
+            <span class="market-tag">proxyman-alternative</span>
+            <span class="market-tag">metro-symbolication</span>
+            <span class="market-tag">mmkv-debugger</span>
+          </div>
+        </div>
+
+        <!-- China & East Asia -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇨🇳 🇹🇼</span>
+              <h3 class="market-title">中文 (Chinese)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.zh-CN.md" class="market-readme-link" target="_blank">中文文档 ↗</a>
+          </div>
+          <p class="market-countries">中国大陆, 台湾, 香港, 新加坡</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">React Native 抓包</span>
+            <span class="market-tag highlight">移动端抓包</span>
+            <span class="market-tag">Flipper 替代方案</span>
+            <span class="market-tag">Charles 替代</span>
+            <span class="market-tag">真机调试工具</span>
+            <span class="market-tag">免电脑抓包</span>
+            <span class="market-tag">WebSocket 抓包</span>
+            <span class="market-tag">MMKV 查看器</span>
+          </div>
+        </div>
+
+        <!-- India & South Asia -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇮🇳</span>
+              <h3 class="market-title">India (हिन्दी / Regional)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.hi.md" class="market-readme-link" target="_blank">हिन्दी ↗</a>
+          </div>
+          <p class="market-countries">Bengaluru, Hyderabad, Pune, Delhi, Chennai</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">react-native-india</span>
+            <span class="market-tag highlight">नेटवर्क-लॉगर</span>
+            <span class="market-tag">डिबगिंग-टूल</span>
+            <span class="market-tag">வலைப்பின்னல் பதிவர் (TN)</span>
+            <span class="market-tag">నెట్‌వర్క్ లాగర్ (AP/TS)</span>
+            <span class="market-tag">ನೆಟ್‌ವರ್ಕ್ ಲಾಗರ್ (KA)</span>
+            <span class="market-tag">ചക്കർ ബദൽ (KL)</span>
+            <span class="market-tag">নেটওয়ার্ক লগার (WB)</span>
+          </div>
+        </div>
+
+        <!-- Japan -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇯🇵</span>
+              <h3 class="market-title">日本語 (Japanese)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ja.md" class="market-readme-link" target="_blank">日本語 ↗</a>
+          </div>
+          <p class="market-countries">Japan (Tokyo, Osaka, Kyoto, Fukuoka)</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">リアクトネイティブ デバッガー</span>
+            <span class="market-tag highlight">ネットワークロガー</span>
+            <span class="market-tag">パケットキャプチャ</span>
+            <span class="market-tag">フリッパー代替</span>
+            <span class="market-tag">通信ログ監視</span>
+            <span class="market-tag">チャールズ代替</span>
+            <span class="market-tag">実機デバッグ</span>
+          </div>
+        </div>
+
+        <!-- South Korea -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇰🇷</span>
+              <h3 class="market-title">한국어 (Korean)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ko.md" class="market-readme-link" target="_blank">한국어 ↗</a>
+          </div>
+          <p class="market-countries">South Korea (Seoul, Pangyo, Busan)</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">리액트 네이티브 디버거</span>
+            <span class="market-tag highlight">네트워크 로거</span>
+            <span class="market-tag">플리퍼 대체</span>
+            <span class="market-tag">패킷 캡처</span>
+            <span class="market-tag">찰스 프록시 대체</span>
+            <span class="market-tag">차커 대체</span>
+            <span class="market-tag">인앱 디버거</span>
+          </div>
+        </div>
+
+        <!-- Latin America & Spain -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇪🇸 🇲🇽</span>
+              <h3 class="market-title">Español (Spanish)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.es.md" class="market-readme-link" target="_blank">Español ↗</a>
+          </div>
+          <p class="market-countries">España, México, Argentina, Colombia, Chile</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">depurador-react-native</span>
+            <span class="market-tag highlight">captura-de-red</span>
+            <span class="market-tag">alternativa-flipper</span>
+            <span class="market-tag">alternativa-charles</span>
+            <span class="market-tag">herramientas-desarrollo</span>
+            <span class="market-tag">monitor-trafico-movil</span>
+          </div>
+        </div>
+
+        <!-- Germany & DACH -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇩🇪 🇦🇹 🇨🇭</span>
+              <h3 class="market-title">Deutsch (German)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.de.md" class="market-readme-link" target="_blank">Deutsch ↗</a>
+          </div>
+          <p class="market-countries">Deutschland, Österreich, Schweiz</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">netzwerk-logger</span>
+            <span class="market-tag highlight">in-app-debugger-deutschland</span>
+            <span class="market-tag">flipper-alternative</span>
+            <span class="market-tag">paketmitschnitt</span>
+            <span class="market-tag">entwicklertools</span>
+            <span class="market-tag">fehlersuche-mobil</span>
+          </div>
+        </div>
+
+        <!-- France & Francophonie -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇫🇷 🇨🇦</span>
+              <h3 class="market-title">Français (French)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.fr.md" class="market-readme-link" target="_blank">Français ↗</a>
+          </div>
+          <p class="market-countries">France, Canada (Québec), Belgique, Suisse</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">debogueur-react-native</span>
+            <span class="market-tag highlight">inspecteur-reseau</span>
+            <span class="market-tag">alternative-flipper</span>
+            <span class="market-tag">outils-developpement</span>
+            <span class="market-tag">capture-paquets-mobile</span>
+            <span class="market-tag">journal-reseau</span>
+          </div>
+        </div>
+
+        <!-- Brazil & Portugal -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇧🇷 🇵🇹</span>
+              <h3 class="market-title">Português</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.pt-BR.md" class="market-readme-link" target="_blank">Português ↗</a>
+          </div>
+          <p class="market-countries">Brasil, Portugal, Angola</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">depurador-react-native-brasil</span>
+            <span class="market-tag highlight">inspetor-de-rede</span>
+            <span class="market-tag">alternativa-flipper</span>
+            <span class="market-tag">ferramentas-dev</span>
+            <span class="market-tag">captura-de-pacotes</span>
+            <span class="market-tag">monitor-de-rede</span>
+          </div>
+        </div>
+
+        <!-- Russia & CIS -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇷🇺 🇰🇿</span>
+              <h3 class="market-title">Русский (Russian)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ru.md" class="market-readme-link" target="_blank">Русский ↗</a>
+          </div>
+          <p class="market-countries">Россия, Казахстан, Беларусь, СНГ</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">отладчик-react-native</span>
+            <span class="market-tag highlight">сниффер-сети</span>
+            <span class="market-tag">логирование-сети</span>
+            <span class="market-tag">альтернатива-flipper</span>
+            <span class="market-tag">перехватчик-трафика</span>
+            <span class="market-tag">мобильная-отладка</span>
+          </div>
+        </div>
+
+        <!-- Middle East & North Africa -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇦🇪 🇸🇦</span>
+              <h3 class="market-title">العربية (Arabic)</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/README.ar.md" class="market-readme-link" target="_blank">العربية ↗</a>
+          </div>
+          <p class="market-countries">UAE, Saudi Arabia, Egypt, Qatar, MENA</p>
+          <div class="market-tags">
+            <span class="market-tag highlight">فاحص-الشبكة-رياكت-نيتف</span>
+            <span class="market-tag highlight">مصحح-أخطاء-الموبايل</span>
+            <span class="market-tag">مراقب-الشبكة</span>
+            <span class="market-tag">بديل-فليبر</span>
+            <span class="market-tag">فاحص-الشبكة-المحمول</span>
+          </div>
+        </div>
+
+        <!-- Southeast Asia & Europe -->
+        <div class="market-card">
+          <div class="market-card-header">
+            <div class="market-flag-title">
+              <span class="market-flag">🇮🇩 🇻🇳 🇹🇭 🇮🇹 🇳🇱 🇵🇱 🇹🇷</span>
+              <h3 class="market-title">Global Hubs</h3>
+            </div>
+            <a href="https://github.com/vengatmacuser/react-native-inapp-inspector" class="market-readme-link" target="_blank">GitHub ↗</a>
+          </div>
+          <p class="market-countries">Indonesia, Vietnam, Thailand, Italy, Netherlands, Poland, Turkey</p>
+          <div class="market-tags">
+            <span class="market-tag">alat-debug-react-native-indonesia</span>
+            <span class="market-tag">kiem-tra-mang-react-native</span>
+            <span class="market-tag">ดีบักเกอร์-react-native-thai</span>
+            <span class="market-tag">debugger-react-native-italia</span>
+            <span class="market-tag">netwerk-logger-nederland</span>
+            <span class="market-tag">debuger-react-native-polska</span>
+            <span class="market-tag">ag-gunlukcusu-turkce</span>
+          </div>
         </div>
       </div>
     </div>
@@ -349,7 +891,10 @@
       });
 
       // Activate selected tab button
-      const activeBtn = Array.from(document.querySelectorAll('.client-tab')).find(btn => btn.innerText.toLowerCase() === tabId);
+      const activeBtn = Array.from(document.querySelectorAll('.client-tab')).find(btn => {
+        const text = btn.innerText.toLowerCase();
+        return text.includes(tabId.toLowerCase()) || tabId.toLowerCase().includes(text);
+      });
       if (activeBtn) activeBtn.classList.add('active');
 
       // Activate content block
