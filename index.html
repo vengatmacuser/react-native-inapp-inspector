@@ -7,7 +7,10 @@
   <meta name="description" content="A self-contained in-app debugging overlay for React Native & Expo. Inspect network traffic, console logs, stack traces, Redux state, Firebase analytics, and JS bundle size with zero external dependencies.">
   <meta name="keywords" content="react-native, network-logger, network-inspector, react-native-network-logger, in-app-inspector, flipper-alternative, chucker, react-native-debugger, expo, expo-network-logger, redux-logger, console-logger, bundle-visualizer, hermes, devtools">
   <meta name="author" content="Vengateswaran Balakrishnan">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="googlebot" content="index, follow">
   <link rel="canonical" href="https://vengatmacuser.github.io/react-native-inapp-inspector/">
+  <link rel="sitemap" type="application/xml" href="https://vengatmacuser.github.io/react-native-inapp-inspector/sitemap.xml">
   <link rel="icon" type="image/svg+xml" href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/icon_circle.svg">
 
   <!-- Open Graph / Facebook -->
@@ -24,26 +27,41 @@
   <meta name="twitter:description" content="All-in-one in-app debugging toolkit for React Native & Expo. Network, Console, Redux, Firebase Analytics & Bundle visualizer on-device.">
   <meta name="twitter:image" content="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
 
-  <!-- Schema.org JSON-LD -->
+  <!-- Schema.org JSON-LD Structured Data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "react-native-inapp-inspector",
-    "operatingSystem": "iOS, Android",
-    "applicationCategory": "DeveloperApplication",
-    "description": "A self-contained in-app debugging overlay for React Native & Expo applications.",
-    "url": "https://vengatmacuser.github.io/react-native-inapp-inspector/",
-    "author": {
-      "@type": "Person",
-      "name": "Vengateswaran Balakrishnan",
-      "url": "https://github.com/vengatmacuser"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    }
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "react-native-inapp-inspector",
+        "operatingSystem": "iOS, Android",
+        "applicationCategory": "DeveloperApplication",
+        "description": "A self-contained in-app debugging overlay for React Native & Expo applications.",
+        "url": "https://vengatmacuser.github.io/react-native-inapp-inspector/",
+        "sameAs": [
+          "https://www.npmjs.com/package/react-native-inapp-inspector",
+          "https://github.com/vengatmacuser/react-native-inapp-inspector"
+        ],
+        "author": {
+          "@type": "Person",
+          "name": "Vengateswaran Balakrishnan",
+          "url": "https://github.com/vengatmacuser"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      },
+      {
+        "@type": "SoftwareSourceCode",
+        "name": "react-native-inapp-inspector",
+        "codeRepository": "https://github.com/vengatmacuser/react-native-inapp-inspector",
+        "programmingLanguage": "TypeScript",
+        "license": "https://opensource.org/licenses/MIT"
+      }
+    ]
   }
   </script>
 

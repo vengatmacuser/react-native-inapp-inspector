@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vengatmacuser.github.io/react-native-inapp-inspector/sitemap.xml
