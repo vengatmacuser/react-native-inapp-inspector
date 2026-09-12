@@ -545,9 +545,9 @@ const CombinedHeroHeader = ({
 }: CombinedHeroHeaderProps) => {
   const [measuredWidth, setMeasuredWidth] = useState<number>(0);
   const chartWidth = Math.max(100, measuredWidth || SCREEN_WIDTH - 84);
-  const chartHeight = 98;
-  const topPad = 18;
-  const bottomPad = 12;
+  const chartHeight = 114;
+  const topPad = 24;
+  const bottomPad = 14;
   const usableHeight = chartHeight - topPad - bottomPad;
 
   const {dailyPoints, loading} = insights;
@@ -670,7 +670,7 @@ const CombinedHeroHeader = ({
   // Smooth Spline Waveform Calculation for NPM Ingestion Log
   const splinePoints = useMemo(() => {
     if (trendSeries.length === 0) return [];
-    const xPad = 22;
+    const xPad = 24;
     const w = chartWidth - xPad * 2;
     const stepX = trendSeries.length > 1 ? w / (trendSeries.length - 1) : 0;
     return trendSeries.map((d, i) => {
@@ -678,7 +678,7 @@ const CombinedHeroHeader = ({
       const y =
         chartHeight -
         bottomPad -
-        Math.max(6, (d.downloads / maxDownload) * usableHeight);
+        Math.max(4, (d.downloads / maxDownload) * usableHeight);
       return {x, y, downloads: d.downloads, day: d.day};
     });
   }, [trendSeries, chartWidth, chartHeight, bottomPad, usableHeight, maxDownload]);
@@ -957,9 +957,22 @@ const CombinedHeroHeader = ({
                             : 'url(#barGradNormal)'
                         }
                       />
+                      {/* Knockout halo text for crisp visibility over bars */}
                       <SvgText
                         x={x + barWidth / 2}
-                        y={Math.max(12, y - 5)}
+                        y={Math.max(15, y - 7)}
+                        fontSize="9"
+                        fontWeight="800"
+                        fill="#FFFFFF"
+                        stroke="#FFFFFF"
+                        strokeWidth="3.5"
+                        strokeLinejoin="round"
+                        textAnchor="middle">
+                        {formatCompactNumber(d.downloads)}
+                      </SvgText>
+                      <SvgText
+                        x={x + barWidth / 2}
+                        y={Math.max(15, y - 7)}
                         fontSize="9"
                         fontWeight="800"
                         fill={isToday || isPeak ? '#4F46E5' : '#64748B'}
@@ -1258,10 +1271,11 @@ const CombinedHeroHeader = ({
                   />
                 ) : null}
 
-                {/* Data Pulse Nodes */}
+                {/* Data Pulse Nodes & Numbers */}
                 {splinePoints.map((p, idx) => {
                   const isPeak = p.downloads === peakIn7Days && p.downloads > 0;
                   const isLatest = idx === splinePoints.length - 1;
+                  const textY = Math.max(15, p.y - (isPeak ? 13 : 11));
                   return (
                     <G key={idx}>
                       {/* Outer halo */}
@@ -1280,11 +1294,24 @@ const CombinedHeroHeader = ({
                         r={isPeak ? 3 : 2}
                         fill={isPeak ? '#7C3AED' : '#6366F1'}
                       />
-                      {/* Value Callout */}
+                      {/* Value Callout - Knockout white halo to prevent line collision */}
                       <SvgText
                         x={p.x}
-                        y={Math.max(12, p.y - 8)}
-                        fontSize="8.5"
+                        y={textY}
+                        fontSize="9"
+                        fontWeight="800"
+                        fill="#FFFFFF"
+                        stroke="#FFFFFF"
+                        strokeWidth="3.5"
+                        strokeLinejoin="round"
+                        textAnchor="middle">
+                        {formatCompactNumber(p.downloads)}
+                      </SvgText>
+                      {/* Value Callout - Foreground text */}
+                      <SvgText
+                        x={p.x}
+                        y={textY}
+                        fontSize="9"
                         fontWeight="800"
                         fill={isPeak ? '#7C3AED' : isLatest ? '#4F46E5' : '#64748B'}
                         textAnchor="middle">
