@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "The zero-config, all-in-one in-app debugger & network logger for React Native & Expo (Flipper / Chucker alternative). Inspect Network (fetch/Axios/GraphQL), Console logs with Metro Symbolication, Redux State, Firebase Analytics, Storage (AsyncStorage/MMKV), Hardware Telemetry, and JS Bundle size directly on device.",
   "repository": {
     "type": "git",
