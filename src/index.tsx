@@ -2561,12 +2561,19 @@ export {
   clearNetworkLogs,
   subscribeNetworkLogs,
   addAxiosInterceptors,
+  setMaxNetworkLogsLimit,
+  getMaxNetworkLogsLimit,
+  pruneNetworkLogs,
+  getNetworkLogs,
 } from './customHooks/networkLogger';
 
 export {
   setupConsoleLogger,
   clearConsoleLogs,
   subscribeConsoleLogs,
+  setMaxConsoleLogsLimit,
+  getMaxConsoleLogsLimit,
+  pruneConsoleLogs,
 } from './customHooks/consoleLogger';
 
 export {
@@ -2578,6 +2585,9 @@ export {
   getCurrentUserId,
   getDefaultEventParameters,
   getCollectionEnabled,
+  setMaxAnalyticsLogsLimit,
+  getMaxAnalyticsLogsLimit,
+  pruneAnalyticsLogs,
 } from './customHooks/analyticsLogger';
 
 export {
@@ -2596,6 +2606,8 @@ export {
   recordReduxBreadcrumb,
   recordUserActionBreadcrumb,
   computeCrashFingerprint,
+  getMaxCrashLogsLimit,
+  pruneCrashRecords,
   type CrashEventPayload,
 } from './customHooks/crashHandler';
 
@@ -2610,6 +2622,10 @@ export {
   getActionHistory,
   clearActionHistory,
   getLastActionForReducer,
+  setMaxReduxHistoryLimit,
+  getMaxReduxHistoryLimit,
+  pruneReduxHistory,
+  isReduxConnected,
 } from './customHooks/reduxLogger';
 
 export {
@@ -2652,35 +2668,6 @@ export {
   subscribeMemoryWarning,
   type MemoryPruneSummary,
 } from './helpers';
-
-export {
-  setMaxNetworkLogsLimit,
-  getMaxNetworkLogsLimit,
-  pruneNetworkLogs,
-} from './customHooks/networkLogger';
-
-export {
-  setMaxConsoleLogsLimit,
-  getMaxConsoleLogsLimit,
-  pruneConsoleLogs,
-} from './customHooks/consoleLogger';
-
-export {
-  setMaxReduxHistoryLimit,
-  getMaxReduxHistoryLimit,
-  pruneReduxHistory,
-} from './customHooks/reduxLogger';
-
-export {
-  setMaxAnalyticsLogsLimit,
-  getMaxAnalyticsLogsLimit,
-  pruneAnalyticsLogs,
-} from './customHooks/analyticsLogger';
-
-export {
-  getMaxCrashLogsLimit,
-  pruneCrashRecords,
-} from './customHooks/crashHandler';
 
 export {
   recordPushNotification,
