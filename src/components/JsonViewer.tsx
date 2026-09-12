@@ -950,13 +950,13 @@ const localStyles = StyleSheet.create({
     backgroundColor: AppColors.greenMintBg,
   },
   editorBody: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
     minHeight: 80,
   },
   prettyContainer: {
     padding: 10,
     minWidth: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
   },
   fullHeightScrollView: {
     flex: 1,
@@ -975,7 +975,7 @@ const localStyles = StyleSheet.create({
   },
   rawLinesWrapper: {
     paddingVertical: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
     width: '100%',
   },
   rawCodeLineRow: {
@@ -991,15 +991,15 @@ const localStyles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'flex-start',
     borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderRightColor: AppColors.grayBorderSecondary,
+    backgroundColor: AppColors.grayBackground,
     userSelect: 'none',
   },
   gutterNumber: {
     fontFamily: monoFont,
     fontSize: 11,
     lineHeight: 18,
-    color: '#94A3B8', // Slate 400
+    color: AppColors.slate400,
     textAlign: 'right',
   },
   rawTextCell: {
@@ -1019,7 +1019,7 @@ const localStyles = StyleSheet.create({
     fontFamily: monoFont,
     fontSize: 11.5,
     lineHeight: 18,
-    color: '#CBD5E1', // Slate 300 indent dots
+    color: AppColors.gray300,
     letterSpacing: 0.5,
   },
   rawMonospaceText: {

@@ -726,11 +726,13 @@ const ReduxTab = React.memo(() => {
           offset: 126 * index,
           index,
         })}
-        initialNumToRender={12}
+        initialNumToRender={10}
         maxToRenderPerBatch={8}
         windowSize={5}
-        removeClippedSubviews={Platform.OS === 'android'}
+        updateCellsBatchingPeriod={40}
+        removeClippedSubviews={true}
         renderToHardwareTextureAndroid={true}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <EmptyState
             isSearch={reduxSearch.trim().length > 0}

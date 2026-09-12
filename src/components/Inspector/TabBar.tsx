@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import {useInspector} from './InspectorContext';
+import {useTranslation} from '../../i18n';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -25,6 +26,7 @@ import {
   QrCodeIcon,
   ScreencastIcon,
   ChevronIcon,
+  WebsocketIcon,
 } from '../NetworkIcons';
 
 import {isReduxConnected} from '../../customHooks/reduxLogger';
@@ -61,11 +63,13 @@ const TAB_THEMES: Record<
   device: HEADER_TAB_THEME,
   crash: HEADER_TAB_THEME,
   push: HEADER_TAB_THEME,
+  socket: HEADER_TAB_THEME,
   debugging: HEADER_TAB_THEME,
   media: HEADER_TAB_THEME,
 };
 
 const TabBar = React.memo(() => {
+  const {t} = useTranslation();
   const {
     activeTab,
     switchActiveTab,
@@ -75,10 +79,13 @@ const TabBar = React.memo(() => {
     analyticsEvents,
     crashRecords,
     pushRecords,
+    socketRecords,
     unreadPushCount,
+    unreadSocketCount,
     lastReadApisCount,
     lastReadLogsCount,
     lastReadCrashesCount,
+    lastReadSocketCount,
     mediaCount,
   } = useInspector();
 
@@ -218,6 +225,13 @@ const TabBar = React.memo(() => {
             },
             {
               id: 9,
+              key: 'socket',
+              label: 'WebSocket',
+              count: socketRecords?.length || 0,
+              icon: 'socket',
+            },
+            {
+              id: 10,
               key: 'debugging',
               label: 'Debugging',
               count: 0,
@@ -250,6 +264,9 @@ const TabBar = React.memo(() => {
             const hasUnreadCrashes =
               activeTab !== 'crash' &&
               (crashRecords?.length || 0) > (lastReadCrashesCount || 0);
+            const hasUnreadSockets =
+              activeTab !== 'socket' &&
+              ((socketRecords?.length || 0) > (lastReadSocketCount || 0) || unreadSocketCount > 0);
 
             return (
               <TouchableScale
@@ -301,6 +318,9 @@ const TabBar = React.memo(() => {
                   {tab.icon === 'push' && (
                     <BellIcon color={iconColor} size={14} />
                   )}
+                  {tab.icon === 'socket' && (
+                    <WebsocketIcon color={iconColor} size={14} />
+                  )}
                   {tab.icon === 'debugging' && (
                     <QrCodeIcon color={iconColor} size={14} />
                   )}
@@ -340,7 +360,7 @@ const TabBar = React.memo(() => {
                         fontFamily: isActive ? AppFonts.interBold : AppFonts.interSemiBold,
                       },
                     ]}>
-                    {tab.label}
+                    {t(`tabs.${tab.key}`, tab.label)}
                   </Text>
                   {tab.count > 0 && tab.key !== 'push' && (
                     <View
@@ -374,7 +394,8 @@ const TabBar = React.memo(() => {
                     (tab.key === 'logs' && hasUnreadLogs) ||
                     (tab.key === 'crash' && hasUnreadCrashes) ||
                     (tab.key === 'push' &&
-                      ((pushRecords?.length || 0) > 0 || unreadPushCount > 0))) && (
+                      ((pushRecords?.length || 0) > 0 || unreadPushCount > 0)) ||
+                    (tab.key === 'socket' && hasUnreadSockets)) && (
                     <View
                       style={{
                         width: 6,

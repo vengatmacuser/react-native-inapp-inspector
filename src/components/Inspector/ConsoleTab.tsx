@@ -48,6 +48,7 @@ const ConsoleTab = React.memo(() => {
     filteredConsoleLogs,
     visibleConsoleLogs,
     maxConsoleLogs,
+    setSelectedLog,
   } = useInspector();
 
   const initialLimit = maxConsoleLogs || 100;
@@ -64,13 +65,24 @@ const ConsoleTab = React.memo(() => {
     [filteredConsoleLogs, displayLimit],
   );
 
+  const handleSelectLog = useCallback(
+    (item: any) => {
+      setSelectedLog(item);
+    },
+    [setSelectedLog],
+  );
+
   const renderItem = useCallback(
     ({item, index}: {item: any; index: number}) => (
       <AnimatedEntrance index={index} distance={8}>
-        <ConsoleLogCard item={item} searchStr={logSearch} />
+        <ConsoleLogCard
+          item={item}
+          searchStr={logSearch}
+          onPress={handleSelectLog}
+        />
       </AnimatedEntrance>
     ),
-    [logSearch],
+    [logSearch, handleSelectLog],
   );
 
   const getItemLayout = useCallback(
@@ -489,11 +501,13 @@ const ConsoleTab = React.memo(() => {
         ListHeaderComponent={listHeader}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
-        initialNumToRender={15}
-        maxToRenderPerBatch={10}
-        windowSize={9}
-        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        updateCellsBatchingPeriod={40}
+        removeClippedSubviews={true}
         renderToHardwareTextureAndroid={true}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <EmptyState
             isSearch={

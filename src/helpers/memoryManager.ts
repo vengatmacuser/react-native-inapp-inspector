@@ -5,6 +5,7 @@ import {pruneReduxHistory} from '../customHooks/reduxLogger';
 import {pruneAnalyticsLogs} from '../customHooks/analyticsLogger';
 import {pruneCrashRecords, addCrashBreadcrumb} from '../customHooks/crashHandler';
 import {prunePushRecords} from '../customHooks/pushNotificationLogger';
+import {pruneSocketRecords} from '../customHooks/socketLogger';
 import {showToast} from './toast';
 
 export interface MemoryPruneSummary {
@@ -15,6 +16,7 @@ export interface MemoryPruneSummary {
   prunedAnalytics: number;
   prunedCrashes: number;
   prunedPush: number;
+  prunedSocket: number;
   totalPruned: number;
   triggeredBy: 'memory-warning' | 'manual' | 'ram-threshold';
 }
@@ -41,6 +43,8 @@ export const pruneAllLogs = (
   const prunedCrashes = pruneCrashRecords(undefined);
   const prunedPush = 0; // prunePushRecords manages buffer internally
   prunePushRecords(20);
+  const prunedSocket = 0;
+  pruneSocketRecords(20);
 
   const totalPruned =
     prunedNetwork +
@@ -48,7 +52,8 @@ export const pruneAllLogs = (
     prunedRedux +
     prunedAnalytics +
     prunedCrashes +
-    prunedPush;
+    prunedPush +
+    prunedSocket;
 
   lastPruneTimestamp = Date.now();
 
@@ -67,6 +72,7 @@ export const pruneAllLogs = (
     prunedAnalytics,
     prunedCrashes,
     prunedPush,
+    prunedSocket,
     totalPruned,
     triggeredBy,
   };

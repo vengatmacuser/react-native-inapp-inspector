@@ -47,6 +47,13 @@
       <stop offset="0.7" stop-color="#7DE8FF" stop-opacity="0.05"/>
       <stop offset="1" stop-color="#7DE8FF" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="lensshadow" cx="0.5" cy="0.5" r="0.62">
+      <stop offset="0.45" stop-color="#02040A" stop-opacity="0"/>
+      <stop offset="1" stop-color="#02040A" stop-opacity="0.55"/>
+    </radialGradient>
+    <clipPath id="lensClip">
+      <circle class="clip-circle" cx="95" cy="103" r="26"/>
+    </clipPath>
     <linearGradient id="belly" x1="94" y1="126" x2="162" y2="212" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#33477A"/>
       <stop offset="1" stop-color="#1D2B53"/>
@@ -59,24 +66,202 @@
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <rect x="8" y="8" width="240" height="240" rx="58" fill="url(#tile)"/>
-  <rect x="8.6" y="8.6" width="238.8" height="238.8" rx="57.4" fill="none" stroke="url(#edge)" stroke-opacity="0.6"/>
-  <circle cx="128" cy="128" r="104" fill="url(#halo)"/>
-  <g transform="translate(128 128) scale(1.16) translate(-128 -134)">
+
+  <style>
+    .floaty { animation: bob 3.2s ease-in-out infinite; transform-origin: 128px 128px; }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-5px); }
+    }
+
+    .lean {
+      transform-box: fill-box;
+      transform-origin: 50% 70%;
+      animation: leanForward 4.8s ease-in-out infinite;
+    }
+    @keyframes leanForward {
+      0%, 100% { transform: rotate(0deg) translateX(0); }
+      50%      { transform: rotate(-2.5deg) translateX(-1.5px); }
+    }
+
+    .wing-left  { transform-box: fill-box; transform-origin: 100% 15%; animation: flapL 2.4s ease-in-out infinite; }
+    .wing-right { transform-box: fill-box; transform-origin: 0% 15%;  animation: flapR 2.4s ease-in-out infinite; }
+    @keyframes flapL { 0%,100% { transform: rotate(11deg); } 50% { transform: rotate(5deg); } }
+    @keyframes flapR { 0%,100% { transform: rotate(-11deg); } 50% { transform: rotate(-5deg); } }
+
+    .blink-main, .blink-mag {
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      animation: blink 5.2s ease-in-out infinite;
+    }
+    .blink-mag { animation-delay: 0.05s; }
+    @keyframes blink {
+      0%, 88%, 100% { transform: scaleY(1); }
+      92%, 95%      { transform: scaleY(0.12); }
+    }
+
+    .magnifier-sway {
+      transform-box: fill-box;
+      transform-origin: 65% 75%;
+      animation: scan 6s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%   { transform: translate(0px, 0px) rotate(0deg); }
+      15%  { transform: translate(-4px, 3px) rotate(-6deg); }
+      30%  { transform: translate(3px, 6px) rotate(4deg); }
+      45%  { transform: translate(-3px, -2px) rotate(-4deg); }
+      60%  { transform: translate(4px, -3px) rotate(5deg); }
+      75%  { transform: translate(-2px, 2px) rotate(-3deg); }
+      90%  { transform: translate(2px, -1px) rotate(2deg); }
+      100% { transform: translate(0px, 0px) rotate(0deg); }
+    }
+
+    /* the code content itself is fixed in place; only the visible "window" onto it
+       moves, matching the same path/timing as the lens above so the two stay aligned */
+    .lens-window {
+      clip-path: url(#lensClip);
+    }
+    .clip-circle {
+      animation: clipScan 6s ease-in-out infinite;
+    }
+    @keyframes clipScan {
+      0%   { cx: 95px; cy: 103px; }
+      15%  { cx: 91px; cy: 106px; }
+      30%  { cx: 98px; cy: 109px; }
+      45%  { cx: 92px; cy: 101px; }
+      60%  { cx: 99px; cy: 100px; }
+      75%  { cx: 93px; cy: 105px; }
+      90%  { cx: 97px; cy: 102px; }
+      100% { cx: 95px; cy: 103px; }
+    }
+
+    .lens-glass {
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      animation: focus 2.4s ease-in-out infinite;
+    }
+    @keyframes focus {
+      0%, 100% { transform: scale(1);    opacity: 1; }
+      50%      { transform: scale(0.88); opacity: 0.7; }
+    }
+
+    .lens-ring {
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      animation: focusring 2.4s ease-in-out infinite;
+    }
+    @keyframes focusring {
+      0%, 100% { transform: scale(1);    stroke-opacity: 1; }
+      50%      { transform: scale(1.08); stroke-opacity: 0.55; }
+    }
+
+    .sparkle-a { animation: twinkleA 2.1s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+    .sparkle-b { animation: twinkleB 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+    @keyframes twinkleA { 0%,100% { opacity: 0.95; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+    @keyframes twinkleB { 0%,100% { opacity: 0.75; transform: scale(1); } 50% { opacity: 0.2; transform: scale(0.6); } }
+
+    .cheek { animation: blush 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+    .cheek-right { animation-delay: 0.4s; }
+    @keyframes blush { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+    .beak-wiggle { transform-box: fill-box; transform-origin: 50% 0%; animation: chirp 3.2s ease-in-out infinite; }
+    @keyframes chirp { 0%,100% { transform: rotate(0deg); } 45% { transform: rotate(0deg); } 50% { transform: rotate(-4deg); } 55% { transform: rotate(0deg); } }
+
+    .halo-pulse { animation: halo 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+    @keyframes halo { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.05); } }
+
+    .glint { animation: glintsweep 2.4s ease-in-out infinite; stroke-dasharray: 20 60; }
+    @keyframes glintsweep {
+      0%   { stroke-dashoffset: 60; opacity: 0; }
+      15%  { opacity: 1; }
+      55%  { opacity: 1; }
+      70%  { stroke-dashoffset: -40; opacity: 0; }
+      100% { stroke-dashoffset: -40; opacity: 0; }
+    }
+
+    .scan-spark {
+      opacity: 0;
+      animation: scanspark 6s ease-in-out infinite;
+    }
+    @keyframes scanspark {
+      0%, 92%, 100% { opacity: 0; transform: scale(0.4); }
+      3%, 6%        { opacity: 0.9; transform: scale(1); }
+    }
+    .spark-2 { animation-delay: 1.6s; }
+    .spark-3 { animation-delay: 3.4s; }
+    .spark-4 { animation-delay: 5s; }
+
+    .leg-left, .leg-right {
+      transform-box: fill-box;
+      transform-origin: 50% 0%;
+    }
+    .leg-left  { animation: stepL 1.7s ease-in-out infinite; }
+    .leg-right { animation: stepR 1.7s ease-in-out infinite; animation-delay: 0.85s; }
+    @keyframes stepL {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(-2.5px) rotate(-9deg); }
+    }
+    @keyframes stepR {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(-2.5px) rotate(9deg); }
+    }
+
+    .ear-twitch {
+      transform-box: fill-box;
+      transform-origin: 50% 100%;
+    }
+    .ear-left  { animation: twitchL 5s ease-in-out infinite; }
+    .ear-right { animation: twitchR 5s ease-in-out infinite; animation-delay: 0.15s; }
+    @keyframes twitchL {
+      0%, 84%, 100% { transform: rotate(0deg); }
+      87%           { transform: rotate(-10deg); }
+      90%           { transform: rotate(6deg); }
+      93%           { transform: rotate(-3deg); }
+      96%           { transform: rotate(0deg); }
+    }
+    @keyframes twitchR {
+      0%, 84%, 100% { transform: rotate(0deg); }
+      87%           { transform: rotate(10deg); }
+      90%           { transform: rotate(-6deg); }
+      93%           { transform: rotate(3deg); }
+      96%           { transform: rotate(0deg); }
+    }
+
+  </style>
+
+  <circle cx="128" cy="128" r="122" fill="url(#tile)"/>
+  <circle cx="128" cy="128" r="121.4" fill="none" stroke="url(#edge)" stroke-opacity="0.7" stroke-width="1.4"/>
+  <circle class="halo-pulse" cx="128" cy="128" r="100" fill="url(#halo)"/>
+
+  <g class="floaty">
+  <g class="lean">
+  <g transform="translate(128 132) scale(1.05) translate(-128 -134)">
 
   <!-- ===== full-body debugger owl ===== -->
 
   <!-- grounded body + wings (cast a soft shadow) -->
   <g filter="url(#drop)">
-    <path d="M74 124 C58 154 60 190 86 204 C79 176 77 148 88 126 Z" fill="url(#wing)" stroke="url(#beam)" stroke-width="2.5" stroke-opacity="0.45"/>
-    <path d="M182 124 C198 154 196 190 170 204 C177 176 179 148 168 126 Z" fill="url(#wing)" stroke="url(#beam)" stroke-width="2.5" stroke-opacity="0.45"/>
+    <g class="wing-left">
+      <path d="M74 124 C58 154 60 190 86 204 C79 176 77 148 88 126 Z" fill="url(#wing)" stroke="url(#beam)" stroke-width="2.5" stroke-opacity="0.45"/>
+    </g>
+    <g class="wing-right">
+      <path d="M182 124 C198 154 196 190 170 204 C177 176 179 148 168 126 Z" fill="url(#wing)" stroke="url(#beam)" stroke-width="2.5" stroke-opacity="0.45"/>
+    </g>
     <path d="M62 150 C58 104 70 70 90 58 L98 42 L116 62 Q128 57 140 62 L158 42 L166 58 C186 70 198 104 194 150 C198 180 184 204 152 212 C140 216 116 216 104 212 C72 204 58 180 62 150 Z"
           fill="url(#owlbody)" stroke="url(#beam)" stroke-width="4" stroke-linejoin="round"/>
   </g>
 
-  <!-- inner-ear shadows -->
-  <path d="M99 48 L114 62 L104 63 L98 55 Z" fill="#080F22" opacity="0.5"/>
-  <path d="M157 48 L142 62 L152 63 L158 55 Z" fill="#080F22" opacity="0.5"/>
+  <!-- animated ear tufts (twitch independently of the head) -->
+  <g class="ear-twitch ear-left">
+    <path d="M90 58 L98 42 L116 62 Z" fill="url(#owlbody)"/>
+    <path d="M90 58 L98 42 L116 62" fill="none" stroke="url(#beam)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M99 48 L114 62 L104 63 L98 55 Z" fill="#080F22" opacity="0.5"/>
+  </g>
+  <g class="ear-twitch ear-right">
+    <path d="M166 58 L158 42 L140 62 Z" fill="url(#owlbody)"/>
+    <path d="M166 58 L158 42 L140 62" fill="none" stroke="url(#beam)" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M157 48 L142 62 L152 63 L158 55 Z" fill="#080F22" opacity="0.5"/>
+  </g>
 
   <!-- wing feather lines -->
   <g stroke="#22325A" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.75">
@@ -117,32 +302,68 @@
 
   <!-- feet -->
   <g stroke="url(#beak)" stroke-width="5" stroke-linecap="round" fill="none">
-    <path d="M111 209 L105 224 M111 209 L111 226 M111 209 L117 224"/>
-    <path d="M145 209 L139 224 M145 209 L145 226 M145 209 L151 224"/>
+    <g class="leg-left">
+      <path d="M111 209 L105 224 M111 209 L111 226 M111 209 L117 224"/>
+    </g>
+    <g class="leg-right">
+      <path d="M145 209 L139 224 M145 209 L145 226 M145 209 L151 224"/>
+    </g>
   </g>
 
   <!-- normal eye: big cute yellow iris, dark pupil, sparkles -->
-  <circle cx="153" cy="107" r="17" fill="url(#iris)" stroke="#1A1205" stroke-width="2.2"/>
-  <circle cx="153" cy="108" r="8.2" fill="#0A0E18"/>
-  <circle cx="156.2" cy="104" r="3.1" fill="#ffffff" opacity="0.95"/>
-  <circle cx="149.6" cy="111" r="1.6" fill="#ffffff" opacity="0.7"/>
+  <g class="blink-main">
+    <circle cx="153" cy="107" r="17" fill="url(#iris)" stroke="#1A1205" stroke-width="2.2"/>
+    <circle cx="153" cy="108" r="8.2" fill="#0A0E18"/>
+    <circle class="sparkle-a" cx="156.2" cy="104" r="3.1" fill="#ffffff"/>
+    <circle class="sparkle-b" cx="149.6" cy="111" r="1.6" fill="#ffffff"/>
+  </g>
 
   <!-- beak (small + rounded) -->
-  <path d="M123.5 123 Q128 121 132.5 123 Q131 132 128 134.5 Q125 132 123.5 123 Z" fill="url(#beak)"/>
+  <g class="beak-wiggle">
+    <path d="M123.5 123 Q128 121 132.5 123 Q131 132 128 134.5 Q125 132 123.5 123 Z" fill="url(#beak)"/>
+  </g>
 
   <!-- ===== magnifier held to the big (debug) eye ===== -->
-  <circle cx="95" cy="103" r="20" fill="url(#iris)" stroke="#1A1205" stroke-width="2.6"/>
-  <circle cx="95" cy="104" r="10" fill="#0A0E18" filter="url(#soft)"/>
-  <circle cx="98.6" cy="100" r="3.4" fill="#ffffff" opacity="0.95"/>
-  <circle cx="91" cy="107" r="1.8" fill="#ffffff" opacity="0.7"/>
-  <circle cx="95" cy="103" r="28" fill="url(#lensglass)"/>
-  <path d="M77 87 A28 28 0 0 1 106 79" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-opacity="0.5"/>
-  <line x1="75" y1="123" x2="54" y2="147" stroke="#0A0F1C" stroke-width="14" stroke-linecap="round"/>
-  <line x1="75" y1="123" x2="54" y2="147" stroke="url(#beam)" stroke-width="8.5" stroke-linecap="round"/>
-  <circle cx="95" cy="103" r="28" fill="none" stroke="url(#beam)" stroke-width="7" filter="url(#soft)"/>
+  <!-- the eye itself stays put; only the lens frame/handle sweep around it -->
+  <g class="blink-mag">
+    <circle cx="95" cy="103" r="20" fill="url(#iris)" stroke="#1A1205" stroke-width="2.6"/>
+    <circle cx="95" cy="104" r="10" fill="#0A0E18" filter="url(#soft)"/>
+    <circle class="sparkle-a" cx="98.6" cy="100" r="3.4" fill="#ffffff"/>
+    <circle class="sparkle-b" cx="91" cy="107" r="1.8" fill="#ffffff"/>
+  </g>
+  <!-- mirrored code-editor reflection: fixed in place, revealed only through the lens window as it scans -->
+  <g class="lens-window" clip-path="url(#lensClip)" opacity="0.4">
+    <g transform="translate(190,0) scale(-1,1)">
+      <rect x="79" y="88" width="32" height="30" rx="3" fill="#0B1220"/>
+      <rect x="79" y="88" width="32" height="6" rx="3" fill="#141B2E"/>
+      <circle cx="83" cy="91" r="1.1" fill="#FF6B6B"/>
+      <circle cx="87" cy="91" r="1.1" fill="#FFD166"/>
+      <circle cx="91" cy="91" r="1.1" fill="#6BCB77"/>
+      <rect x="82" y="98" width="11" height="2" rx="1" fill="#C792EA"/>
+      <rect x="82" y="102" width="16" height="2" rx="1" fill="#82AAFF"/>
+      <rect x="86" y="106" width="9" height="2" rx="1" fill="#F78C6C"/>
+      <rect x="82" y="110" width="19" height="2" rx="1" fill="#89DDFF"/>
+      <rect x="86" y="114" width="7" height="2" rx="1" fill="#5C6773" opacity="0.7"/>
+    </g>
+  </g>
+  <g class="magnifier-sway">
+    <circle class="lens-glass" cx="95" cy="103" r="28" fill="url(#lensglass)"/>
+    <circle class="lens-glass" cx="95" cy="103" r="28" fill="url(#lensshadow)"/>
+    <path d="M77 87 A28 28 0 0 1 106 79" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-opacity="0.5"/>
+    <circle class="glint" cx="95" cy="103" r="27" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="75" y1="123" x2="54" y2="147" stroke="#0A0F1C" stroke-width="14" stroke-linecap="round"/>
+    <line x1="75" y1="123" x2="54" y2="147" stroke="url(#beam)" stroke-width="8.5" stroke-linecap="round"/>
+    <circle class="lens-ring" cx="95" cy="103" r="28" fill="none" stroke="url(#beam)" stroke-width="7" filter="url(#soft)"/>
+    <circle class="scan-spark spark-1" cx="60" cy="90" r="2.4" fill="#ffffff"/>
+    <circle class="scan-spark spark-2" cx="130" cy="70" r="2" fill="#ffffff"/>
+    <circle class="scan-spark spark-3" cx="115" cy="130" r="2.2" fill="#ffffff"/>
+    <circle class="scan-spark spark-4" cx="70" cy="140" r="1.8" fill="#ffffff"/>
+  </g>
 
   <!-- rosy cheeks -->
-  <ellipse cx="83" cy="127" rx="9" ry="6" fill="url(#blush)"/>
-  <ellipse cx="167" cy="122" rx="9" ry="6" fill="url(#blush)"/>
+  <ellipse class="cheek cheek-left" cx="83" cy="127" rx="9" ry="6" fill="url(#blush)"/>
+  <ellipse class="cheek cheek-right" cx="167" cy="122" rx="9" ry="6" fill="url(#blush)"/>
+  </g>
+  </g>
   </g>
 </svg>

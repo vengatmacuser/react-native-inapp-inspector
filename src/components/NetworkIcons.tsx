@@ -763,6 +763,7 @@ export const MoonIcon = ({color = AppColors.white, size = 16}: IconProps) => {
 };
 
 export {BrandCircleIcon} from './BrandCircleIcon';
+export {BrandSquareIcon} from './BrandSquareIcon';
 
 export const HtmlIcon = ({color = AppColors.grayTextWeak, size = 14}: IconProps) => {
   return (
@@ -2915,8 +2916,234 @@ export const CloudPushIcon = ({
   </Svg>
 );
 
+export const SocketIcon = ({
+  color = AppColors.blue600,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M12 6v6l4 2"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24"
+      stroke={color}
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
+export const WebsocketIcon = ({
+  color = AppColors.blue600,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M7 8h10M17 8l-3-3M17 8l-3 3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M17 16H7M7 16l3-3M7 16l3 3"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="4" cy="8" r="1.5" fill={color} />
+    <Circle cx="20" cy="16" r="1.5" fill={color} />
+  </Svg>
+);
 
+export const SendFrameIcon = ({
+  color = AppColors.blue600,
+  size = 12,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="m12 19V5m-7 7 7-7 7 7"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
+export const ReceiveFrameIcon = ({
+  color = AppColors.emerald600,
+  size = 12,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="m12 5v14m-7-7 7 7 7-7"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
+export const PingIcon = ({
+  color = AppColors.amber600,
+  size = 12,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M22 12h-4l-3 9L9 3l-3 9H2"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
+export const BroadcastIcon = ({
+  color = AppColors.brandPurple,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M4.93 4.93a10 10 0 0 1 14.14 0M7.76 7.76a6 6 0 0 1 8.48 0"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <Circle cx="12" cy="12" r="2" fill={color} />
+  </Svg>
+);
+
+export const VolumeIcon = ({
+  color = AppColors.violet600,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const BuildingIcon = ({
+  color = AppColors.blue600,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ArrowUpIcon = ({
+  color = AppColors.green600,
+  size = 12,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 19V5M5 12l7-7 7 7"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ArrowDownIcon = ({
+  color = AppColors.blue600,
+  size = 12,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 5v14M19 12l-7 7-7-7"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const SupportIcon = ({
+  color = AppColors.white,
+  size = 14,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9.5" stroke={color} strokeWidth="1.8" />
+    <Circle cx="12" cy="12" r="4" stroke={color} strokeWidth="1.8" />
+    <Line
+      x1="4.93"
+      y1="4.93"
+      x2="9.17"
+      y2="9.17"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <Line
+      x1="14.83"
+      y1="9.17"
+      x2="19.07"
+      y2="4.93"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <Line
+      x1="14.83"
+      y1="14.83"
+      x2="19.07"
+      y2="19.07"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    <Line
+      x1="4.93"
+      y1="19.07"
+      x2="9.17"
+      y2="14.83"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const HeartIcon = ({
+  color = AppColors.red500,
+  size = 20,
+  fill = color,
+}: IconProps & {fill?: string}) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+      fill={fill}
+    />
+  </Svg>
+);

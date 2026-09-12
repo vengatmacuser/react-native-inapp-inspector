@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import {AppFonts} from '../styles/AppFonts';
+import {AppColors} from '../styles/AppColors';
 import {copyToClipboard} from '../helpers';
 import {WarningTriangleIcon, RefreshCcwIcon, CopyIcon} from './NetworkIcons';
 import {handleInterceptedCrash} from '../customHooks/crashHandler';
@@ -152,8 +153,8 @@ export default ModuleErrorBoundary;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECDD3',
+    backgroundColor: AppColors.red50,
+    borderColor: `${AppColors.red500}33`,
     borderWidth: 1.2,
     borderRadius: 16,
     padding: 14,
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
     gap: 10,
     ...Platform.select({
       ios: {
-        shadowColor: '#DC2626',
+        shadowColor: AppColors.red600,
         shadowOffset: {width: 0, height: 2},
         shadowOpacity: 0.06,
         shadowRadius: 6,
@@ -186,27 +187,27 @@ const styles = StyleSheet.create({
   moduleName: {
     fontSize: 12.5,
     fontWeight: '800',
-    color: '#991B1B',
+    color: AppColors.redErrorText,
     fontFamily: AppFonts.interBold,
     flexShrink: 1,
   },
   badge: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: AppColors.red100,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: `${AppColors.red500}4D`,
   },
   badgeText: {
     fontSize: 8.5,
     fontWeight: '800',
-    color: '#B91C1C',
+    color: AppColors.rose700,
     letterSpacing: 0.4,
   },
   message: {
     fontSize: 11.5,
-    color: '#7F1D1D',
+    color: AppColors.redErrorText,
     lineHeight: 16,
     fontFamily: AppFonts.interRegular,
   },
@@ -222,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#DC2626',
+    backgroundColor: AppColors.red600,
     paddingVertical: 7,
     paddingHorizontal: 12,
     borderRadius: 9,
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
   retryText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: AppColors.white,
     fontFamily: AppFonts.interBold,
   },
   copyButton: {
@@ -238,17 +239,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: AppColors.graySurface,
     paddingVertical: 7,
     paddingHorizontal: 12,
     borderRadius: 9,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: AppColors.grayBorderSecondary,
   },
   copyText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#475569',
+    color: AppColors.grayText,
     fontFamily: AppFonts.interMedium,
   },
 });

@@ -125,6 +125,7 @@ export interface RamLimitsProfile {
   maxAnalyticsEvents: number;
   maxCrashRecords: number;
   maxPushRecords: number;
+  maxSocketRecords: number;
   profileName: 'High-End' | 'Standard' | 'Compact' | 'Ultra-Light';
   freeRamMb: number;
 }
@@ -137,6 +138,7 @@ export function calculateRamBasedLimits(freeRamMb: number): RamLimitsProfile {
       maxAnalyticsEvents: 300,
       maxCrashRecords: 150,
       maxPushRecords: 100,
+      maxSocketRecords: 100,
       profileName: 'High-End',
       freeRamMb,
     };
@@ -147,6 +149,7 @@ export function calculateRamBasedLimits(freeRamMb: number): RamLimitsProfile {
       maxAnalyticsEvents: 200,
       maxCrashRecords: 100,
       maxPushRecords: 75,
+      maxSocketRecords: 75,
       profileName: 'Standard',
       freeRamMb,
     };
@@ -157,6 +160,7 @@ export function calculateRamBasedLimits(freeRamMb: number): RamLimitsProfile {
       maxAnalyticsEvents: 100,
       maxCrashRecords: 50,
       maxPushRecords: 50,
+      maxSocketRecords: 50,
       profileName: 'Compact',
       freeRamMb,
     };
@@ -167,6 +171,7 @@ export function calculateRamBasedLimits(freeRamMb: number): RamLimitsProfile {
       maxAnalyticsEvents: 50,
       maxCrashRecords: 25,
       maxPushRecords: 25,
+      maxSocketRecords: 25,
       profileName: 'Ultra-Light',
       freeRamMb,
     };

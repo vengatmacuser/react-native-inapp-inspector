@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Debug
 import android.os.Environment
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import android.os.StatFs
 import android.util.Base64
@@ -37,6 +38,7 @@ import java.io.StringWriter
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 class NetworkInspectorModule(private val reactContext: ReactApplicationContext) :
@@ -60,6 +62,9 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     private var recordingTimer: Timer? = null
     private val recordedFrames = mutableListOf<Bitmap>()
     private var recordingFps = 15
+    private val isFrameCapturing = AtomicBoolean(false)
+    private var captureHandlerThread: HandlerThread? = null
+    private var captureBackgroundHandler: Handler? = null
 
     private var defaultHandler: Thread.UncaughtExceptionHandler? = null
     private var isProtectionEnabled = false
@@ -67,6 +72,34 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     override fun getName(): String {
         return MODULE_NAME
+    }
+
+    override fun getConstants(): MutableMap<String, Any> {
+        val constants = HashMap<String, Any>()
+        try {
+            val packageManager = reactContext.packageManager
+            val packageName = reactContext.packageName
+            val packageInfo = packageManager.getPackageInfo(packageName, 0)
+            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            val appName = packageManager.getApplicationLabel(appInfo).toString()
+            val appVersion = packageInfo.versionName ?: "1.0"
+            val appBuild = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageInfo.longVersionCode.toString()
+            } else {
+                @Suppress("DEPRECATION")
+                packageInfo.versionCode.toString()
+            }
+            constants["appName"] = appName
+            constants["appVersion"] = appVersion
+            constants["appBuild"] = appBuild
+            constants["appPackageName"] = packageName
+            constants["appBundleId"] = packageName
+        } catch (e: Exception) {
+            constants["appName"] = "App"
+            constants["appVersion"] = "1.0"
+            constants["appBuild"] = "1"
+        }
+        return constants
     }
 
     private fun setupNativeCrashProtection() {
@@ -715,7 +748,8 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
             return
         }
 
-        Handler(Looper.getMainLooper()).post {
+        val mainHandler = Handler(Looper.getMainLooper())
+        mainHandler.post {
             try {
                 val decorView = targetWindow.decorView
                 val metrics = reactContext.resources.displayMetrics
@@ -725,22 +759,19 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                 val targetHeight = (origHeight * scale).toInt().coerceAtLeast(1)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val rawBitmap = Bitmap.createBitmap(origWidth, origHeight, Bitmap.Config.ARGB_8888)
+                    val destBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+                    val copyHandler = captureBackgroundHandler ?: mainHandler
                     try {
-                        PixelCopy.request(targetWindow, null, rawBitmap, { copyResult ->
+                        PixelCopy.request(targetWindow, null, destBitmap, { copyResult ->
                             if (copyResult == PixelCopy.SUCCESS) {
-                                if (scale != 1.0f) {
-                                    val scaled = Bitmap.createScaledBitmap(rawBitmap, targetWidth, targetHeight, true)
-                                    if (scaled != rawBitmap) rawBitmap.recycle()
-                                    callback(scaled)
-                                } else {
-                                    callback(rawBitmap)
-                                }
+                                callback(destBitmap)
                             } else {
+                                destBitmap.recycle()
                                 fallbackCanvasCapture(decorView, targetWidth, targetHeight, scale, callback)
                             }
-                        }, Handler(Looper.getMainLooper()))
+                        }, copyHandler)
                     } catch (e: Exception) {
+                        destBitmap.recycle()
                         fallbackCanvasCapture(decorView, targetWidth, targetHeight, scale, callback)
                     }
                 } else {
@@ -864,11 +895,22 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
             recordedFrames.clear()
         }
 
-        val fps = if (options.hasKey("fps")) options.getInt("fps").coerceIn(5, 30) else 15
+        val fps = if (options.hasKey("fps")) options.getInt("fps").coerceIn(5, 60) else 30
+        val scale = if (options.hasKey("scale")) options.getDouble("scale").toFloat().coerceIn(0.2f, 1.0f) else 0.5f
+        val maxDuration = if (options.hasKey("maxDurationSeconds")) options.getInt("maxDurationSeconds").coerceIn(5, 300) else 120
         recordingFps = fps
-        val intervalMs = (1000L / fps).coerceAtLeast(33L)
+        val intervalMs = (1000L / fps).coerceAtLeast(16L)
+        val maxFrames = (fps * maxDuration).coerceAtMost(3600)
         isRecordingVideo = true
+        isFrameCapturing.set(false)
         recordingStartTime = System.currentTimeMillis()
+
+        if (captureHandlerThread == null) {
+            val ht = HandlerThread("InAppInspector-PixelCopy")
+            ht.start()
+            captureHandlerThread = ht
+            captureBackgroundHandler = Handler(ht.looper)
+        }
 
         recordingTimer = Timer("InAppInspector-Recorder", true).apply {
             scheduleAtFixedRate(object : TimerTask() {
@@ -877,16 +919,34 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                         cancel()
                         return
                     }
-                    val curWindow = getActiveWindow() ?: return
-                    captureWindowBitmap(curWindow, 0.5f) { frame ->
-                        if (frame != null && isRecordingVideo) {
-                            synchronized(recordedFrames) {
-                                if (recordedFrames.size < 300) { // Keep memory safe (max 20s buffer)
-                                    recordedFrames.add(frame)
-                                } else {
-                                    frame.recycle()
+                    if (!isFrameCapturing.compareAndSet(false, true)) {
+                        // Previous frame still copying or processing; drop tick to guarantee smooth scrolling
+                        return
+                    }
+                    // Auto-stop if max duration exceeded
+                    val elapsed = System.currentTimeMillis() - recordingStartTime
+                    if (elapsed > maxDuration * 1000L) {
+                        isFrameCapturing.set(false)
+                        return
+                    }
+                    val curWindow = getActiveWindow()
+                    if (curWindow == null) {
+                        isFrameCapturing.set(false)
+                        return
+                    }
+                    captureWindowBitmap(curWindow, scale) { frame ->
+                        try {
+                            if (frame != null && isRecordingVideo) {
+                                synchronized(recordedFrames) {
+                                    if (recordedFrames.size < maxFrames) {
+                                        recordedFrames.add(frame)
+                                    } else {
+                                        frame.recycle()
+                                    }
                                 }
                             }
+                        } finally {
+                            isFrameCapturing.set(false)
                         }
                     }
                 }
@@ -906,6 +966,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
         isRecordingVideo = false
         recordingTimer?.cancel()
         recordingTimer = null
+        isFrameCapturing.set(false)
 
         val durationMs = (System.currentTimeMillis() - recordingStartTime).coerceAtLeast(500L)
         val timestamp = System.currentTimeMillis()

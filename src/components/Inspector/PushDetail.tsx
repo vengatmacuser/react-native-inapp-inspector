@@ -9,6 +9,7 @@ import {
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {useTranslation} from '../../i18n';
 import {formatDateTime} from '../../helpers';
 import {sharePushReport} from '../../helpers/shareFormatter';
 import ShareButton from '../ShareButton';
@@ -23,12 +24,18 @@ import {
   LayersIcon,
   MetadataIcon,
   RawJsonIcon,
+  LinkChainIcon,
+  VolumeIcon,
+  BoltIcon,
+  BuildingIcon,
+  SettingsIcon,
 } from '../NetworkIcons';
 import type {PushDetailProps} from '../../types';
 
 const PushDetail = React.memo(function PushDetail({
   item,
 }: PushDetailProps) {
+  const {t} = useTranslation();
   const [activeSubTab, setActiveSubTab] = useState<'preview' | 'payload' | 'headers' | 'raw'>('preview');
 
   const formattedTime = useMemo(() => (item ? formatDateTime(item.timestamp) : ''), [item]);
@@ -42,7 +49,7 @@ const PushDetail = React.memo(function PushDetail({
   const tabs = [
     {
       key: 'preview',
-      label: 'Preview',
+      label: t('push.preview', 'Preview'),
       themeColor: AppColors.brandPurple,
       icon: (isActive: boolean) => (
         <EyeIcon
@@ -53,7 +60,7 @@ const PushDetail = React.memo(function PushDetail({
     },
     {
       key: 'payload',
-      label: 'Custom Payload',
+      label: t('push.payload', 'Custom Payload'),
       themeColor: AppColors.violet600,
       icon: (isActive: boolean) => (
         <LayersIcon
@@ -64,7 +71,7 @@ const PushDetail = React.memo(function PushDetail({
     },
     {
       key: 'headers',
-      label: 'Delivery Metadata',
+      label: t('push.deliveryMetadata', 'Delivery Metadata'),
       themeColor: AppColors.teal600,
       icon: (isActive: boolean) => (
         <MetadataIcon
@@ -75,7 +82,7 @@ const PushDetail = React.memo(function PushDetail({
     },
     {
       key: 'raw',
-      label: 'Raw Payload',
+      label: t('push.rawPayload', 'Raw Payload'),
       themeColor: AppColors.sky600,
       icon: (isActive: boolean) => (
         <RawJsonIcon
@@ -326,8 +333,9 @@ const PushDetail = React.memo(function PushDetail({
               ) : null}
               {hasDeepLink ? (
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2}}>
+                  <LinkChainIcon size={11} color={AppColors.brandPurple} />
                   <Text style={{fontSize: 10, fontFamily: AppFonts.interBold, color: AppColors.brandPurple}}>
-                    🔗 LINK:
+                    {t('push.link', 'LINK')}:
                   </Text>
                   <Text style={{fontSize: 10.5, fontFamily: AppFonts.interRegular, color: AppColors.sky600}} numberOfLines={1}>
                     {deepLinkUrl}
@@ -360,9 +368,9 @@ const PushDetail = React.memo(function PushDetail({
                   <BellIcon size={12} color={AppColors.white} />
                 </View>
                 <Text style={detailStyles.mockupAppName}>
-                  {item.domain || 'App Notification'}
+                  {item.domain || t('push.appNotification', 'App Notification')}
                 </Text>
-                <Text style={detailStyles.mockupTime}>• now</Text>
+                <Text style={detailStyles.mockupTime}>• {t('push.now', 'now')}</Text>
               </View>
 
               {/* Notification Banner Image */}
@@ -397,8 +405,9 @@ const PushDetail = React.memo(function PushDetail({
                   </View>
                 ) : null}
                 {item.sound ? (
-                  <View style={detailStyles.tagPill}>
-                    <Text style={detailStyles.tagPillText}>🔊 {item.sound}</Text>
+                  <View style={[detailStyles.tagPill, {flexDirection: 'row', alignItems: 'center', gap: 4}]}>
+                    <VolumeIcon size={11} color={AppColors.violet600} />
+                    <Text style={detailStyles.tagPillText}>{item.sound}</Text>
                   </View>
                 ) : null}
                 {item.badge != null ? (
@@ -407,8 +416,9 @@ const PushDetail = React.memo(function PushDetail({
                   </View>
                 ) : null}
                 {item.priority ? (
-                  <View style={detailStyles.tagPill}>
-                    <Text style={detailStyles.tagPillText}>⚡ {item.priority}</Text>
+                  <View style={[detailStyles.tagPill, {flexDirection: 'row', alignItems: 'center', gap: 4}]}>
+                    <BoltIcon size={11} color={AppColors.amber600} />
+                    <Text style={detailStyles.tagPillText}>{item.priority}</Text>
                   </View>
                 ) : null}
               </View>
@@ -417,7 +427,10 @@ const PushDetail = React.memo(function PushDetail({
             {/* Custom Domain Attributes (Dynamic Extracted Fields) */}
             {item.customDomainAttributes && Object.keys(item.customDomainAttributes).length > 0 && (
               <View style={detailStyles.sectionCard}>
-                <Text style={detailStyles.sectionTitle}>🏢 Domain Specific Fields</Text>
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8}}>
+                  <BuildingIcon size={13} color={AppColors.blue600} />
+                  <Text style={detailStyles.sectionTitle}>{t('push.domainFields', 'Domain Specific Fields')}</Text>
+                </View>
                 {Object.entries(item.customDomainAttributes).map(([k, v]) => (
                   <View key={k} style={detailStyles.keyValRow}>
                     <Text style={detailStyles.keyText}>{k}:</Text>
@@ -441,7 +454,10 @@ const PushDetail = React.memo(function PushDetail({
         {activeSubTab === 'headers' && (
           <ScrollView contentContainerStyle={detailStyles.scrollContent}>
             <View style={detailStyles.sectionCard}>
-              <Text style={detailStyles.sectionTitle}>⚙️ Delivery & Message Metadata</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8}}>
+                <SettingsIcon size={13} color={AppColors.slate600} />
+                <Text style={detailStyles.sectionTitle}>{t('push.deliveryMetadata', 'Delivery & Message Metadata')}</Text>
+              </View>
               <View style={detailStyles.keyValRow}>
                 <Text style={detailStyles.keyText}>Message ID:</Text>
                 <Text style={detailStyles.valText} selectable>{item.id || 'N/A'}</Text>
@@ -593,7 +609,7 @@ const detailStyles = StyleSheet.create({
     borderColor: AppColors.dividerColor,
     padding: 14,
     gap: 8,
-    shadowColor: '#000',
+    shadowColor: AppColors.black,
     shadowOpacity: 0.05,
     shadowOffset: {width: 0, height: 2},
     shadowRadius: 6,

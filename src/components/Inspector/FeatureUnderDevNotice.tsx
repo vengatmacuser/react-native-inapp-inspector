@@ -3,6 +3,7 @@ import {StyleSheet, Text, View, Pressable} from 'react-native';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {WarningTriangleIcon, ClearIcon} from '../NetworkIcons';
+import {t} from '../../i18n';
 
 interface FeatureUnderDevNoticeProps {
   featureName?: string;
@@ -22,7 +23,7 @@ export const FeatureUnderDevNotice: React.FC<FeatureUnderDevNoticeProps> = ({
       <View style={styles.contentRow}>
         <View style={styles.badgeWrap}>
           <WarningTriangleIcon color={AppColors.warningIconGold} size={12} />
-          <Text style={styles.badgeText}>IN ACTIVE DEVELOPMENT</Text>
+          <Text style={styles.badgeText}>{t('common.inActiveDevelopment', 'IN ACTIVE DEVELOPMENT')}</Text>
         </View>
 
         <Pressable

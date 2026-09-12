@@ -168,8 +168,8 @@ const styles = StyleSheet.create({
     color: AppColors.primaryBlack,
   },
   searchHighlight: {
-    backgroundColor: '#fef08a',
-    color: '#854d0e',
+    backgroundColor: AppColors.yellow200,
+    color: AppColors.yellow800,
     fontFamily: AppFonts.interBold,
     borderRadius: 2,
   },

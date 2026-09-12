@@ -26,12 +26,15 @@ import CrashTab from './CrashTab';
 import CrashDetail from './CrashDetail';
 import PushTab from './PushTab';
 import PushDetail from './PushDetail';
+import SocketTab from './SocketTab';
+import SocketDetail from './SocketDetail';
 import DeviceInfoTab from './DeviceInfoTab';
 import StorageTab from './StorageTab';
 import DebuggingTab from './DebuggingTab';
 import {MediaGalleryTab} from './MediaGalleryTab';
 import SettingsPanel from './SettingsPanel';
 import AboutModal from './AboutModal';
+import {SupportPage} from './SupportPage';
 
 import NpmUpdateToast from './NpmUpdateToast';
 import NpmStarPrompt from './NpmStarPrompt';
@@ -55,12 +58,17 @@ const MainScreen = () => {
     selectedCrash,
     selectedPush,
     setSelectedPush,
+    selectedSocket,
+    setSelectedSocket,
     settingsPage,
     isAboutOpen,
     setIsAboutOpen,
+    isSupportOpen,
+    setIsSupportOpen,
     activeTab,
     isReady,
     enabled,
+    isDismissed,
     hasNavigationContext,
     setNavState,
   } = useInspector();
@@ -71,7 +79,8 @@ const MainScreen = () => {
     (activeTab === 'logs' && selectedLog != null) ||
     (activeTab === 'redux' && (selectedReduxSlice != null || selectedReduxAction != null)) ||
     (activeTab === 'crash' && selectedCrash != null) ||
-    (activeTab === 'push' && selectedPush != null);
+    (activeTab === 'push' && selectedPush != null) ||
+    (activeTab === 'socket' && selectedSocket != null);
 
   // ─── 60 FPS Transition Animations ──────────────────────────────────────────
 
@@ -101,10 +110,24 @@ const MainScreen = () => {
     }
   }, [isAboutOpen]);
 
+  const supportAnim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (isSupportOpen) {
+      supportAnim.setValue(0);
+      Animated.spring(supportAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [isSupportOpen]);
+
   return (
     <>
       {(Platform.OS === 'ios' || Platform.OS === 'android') &&
         enabled &&
+        !isDismissed &&
         !visible && <FabLauncher />}
       <Modal
         visible={visible}
@@ -125,6 +148,7 @@ const MainScreen = () => {
                   height: `${modalHeightPercent}%`,
                   borderTopLeftRadius: modalHeightPercent >= 100 ? 0 : 20,
                   borderTopRightRadius: modalHeightPercent >= 100 ? 0 : 20,
+                  backgroundColor: 'transparent',
                 },
               ]}>
               <StatusBar
@@ -135,14 +159,20 @@ const MainScreen = () => {
 
               <InspectorHeader />
 
-              <View style={{flex: 1}}>
+              <View
+                style={{
+                  flex: 1,
+                  overflow: 'hidden',
+                  backgroundColor: AppColors.grayBackground,
+                }}>
                 {/* ─── Persistent Content Layer (TabBar + List, never unmounted or hidden with display:none) ─── */}
                 <View
                   style={{flex: 1}}
                   pointerEvents={
                     isDetailActive ||
                     settingsPage !== null ||
-                    isAboutOpen
+                    isAboutOpen ||
+                    isSupportOpen
                       ? 'none'
                       : 'auto'
                   }>
@@ -177,6 +207,11 @@ const MainScreen = () => {
                       {activeTab === 'push' && (
                         <ModuleErrorBoundary moduleName="Push Notifications">
                           <PushTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'socket' && (
+                        <ModuleErrorBoundary moduleName="WebSocket & Socket.IO">
+                          <SocketTab />
                         </ModuleErrorBoundary>
                       )}
                       {activeTab === 'device' && (
@@ -250,6 +285,14 @@ const MainScreen = () => {
                         />
                       </ModuleErrorBoundary>
                     )}
+                    {activeTab === 'socket' && selectedSocket != null && (
+                      <ModuleErrorBoundary moduleName="WebSocket & Socket.IO Details">
+                        <SocketDetail
+                          item={selectedSocket}
+                          onClose={() => setSelectedSocket(null)}
+                        />
+                      </ModuleErrorBoundary>
+                    )}
                   </View>
                 )}
 
@@ -297,6 +340,30 @@ const MainScreen = () => {
                     ]}>
                     <ModuleErrorBoundary moduleName="About & Diagnostics">
                       <AboutModal onClose={() => setIsAboutOpen(false)} />
+                    </ModuleErrorBoundary>
+                  </Animated.View>
+                )}
+
+                {/* Support & Community Layer - Rendered inside in-app inspector covering full content card */}
+                {isSupportOpen && (
+                  <Animated.View
+                    style={[
+                      StyleSheet.absoluteFill,
+                      {
+                        backgroundColor: AppColors.primaryLight,
+                        opacity: supportAnim,
+                        transform: [
+                          {
+                            translateY: supportAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [24, 0],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}>
+                    <ModuleErrorBoundary moduleName="Support & Community">
+                      <SupportPage onClose={() => setIsSupportOpen(false)} />
                     </ModuleErrorBoundary>
                   </Animated.View>
                 )}

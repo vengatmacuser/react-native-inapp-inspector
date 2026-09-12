@@ -13,6 +13,11 @@ import type {
   PushAppState,
   SettingsPage,
   SettingsSubTab,
+  SocketDetailSubTab,
+  SocketFilterType,
+  SocketFrameDirection,
+  SocketFrameType,
+  SocketStatus,
   SortOrder,
   StatusFilter,
 } from './index';
@@ -168,6 +173,7 @@ export interface InspectorStorage {
 
 export interface PersistedSettings {
   isDark?: boolean;
+  language?: string;
   modalHeightPercent?: number;
   modalAnimationType?: string;
   tabVisibility?: Record<string, boolean>;
@@ -177,6 +183,9 @@ export interface PersistedSettings {
   maxAnalyticsEventsLimit?: number;
   maxCrashLogs?: number;
   maxPushLogsLimit?: number;
+  maxSocketLogsLimit?: number;
+  isSocketAutoCaptureEnabled?: boolean;
+  isGroupByPageEnabled?: boolean;
   isAutoRamLimitEnabled?: boolean;
   showConsoleLevels?: {info: boolean; warn: boolean; error: boolean};
   reduxAutoRefresh?: boolean;
@@ -194,6 +203,15 @@ export interface PersistedSettings {
   starPromptActioned?: boolean;
   starPromptLastShown?: number;
   starPromptFirstSeen?: number;
+  // ─── Capture & Recording Settings ──────────────────────────────────────────
+  captureImageFormat?: 'png' | 'jpeg' | 'webp';
+  captureAutoHide?: boolean;
+  captureAudioMode?: 'none' | 'app' | 'mic';
+  captureFps?: number;
+  captureScale?: number;
+  captureBitrate?: number;
+  captureMaxDurationSeconds?: number;
+  captureAutoGif?: boolean;
 }
 
 // ─── Inspector component props / context ──────────────────────────────────────
@@ -222,6 +240,9 @@ export interface InspectorContextValue {
   isMinimized: boolean;
   setIsMinimized: React.Dispatch<React.SetStateAction<boolean>>;
   minimizeInspector: () => void;
+  isDismissed: boolean;
+  setIsDismissed: React.Dispatch<React.SetStateAction<boolean>>;
+  dismissInspector: () => void;
   isReady: boolean;
   enabled: boolean;
   isEnabled: boolean;
@@ -259,6 +280,8 @@ export interface InspectorContextValue {
   setSettingsPage: React.Dispatch<React.SetStateAction<SettingsPage>>;
   isAboutOpen: boolean;
   setIsAboutOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isSupportOpen: boolean;
+  setIsSupportOpen: React.Dispatch<React.SetStateAction<boolean>>;
   updateAvailable: boolean;
   latestNpmVersion: string | null;
   clearAnim: Animated.Value;
@@ -292,6 +315,12 @@ export interface InspectorContextValue {
   setStatusFilters: React.Dispatch<React.SetStateAction<Set<StatusFilter>>>;
   methodFilters: Set<Method>;
   setMethodFilters: React.Dispatch<React.SetStateAction<Set<Method>>>;
+  latencyFilter: 'all' | 'fast' | 'normal' | 'slow';
+  setLatencyFilter: React.Dispatch<React.SetStateAction<'all' | 'fast' | 'normal' | 'slow'>>;
+  protocolFilter: 'all' | 'https' | 'http';
+  setProtocolFilter: React.Dispatch<React.SetStateAction<'all' | 'https' | 'http'>>;
+  networkSortBy: 'time_desc' | 'time_asc' | 'duration_desc' | 'duration_asc' | 'size_desc';
+  setNetworkSortBy: React.Dispatch<React.SetStateAction<'time_desc' | 'time_asc' | 'duration_desc' | 'duration_asc' | 'size_desc'>>;
   availableMethods: Method[];
   sortOrder: SortOrder;
   setSortOrder: React.Dispatch<React.SetStateAction<SortOrder>>;
@@ -304,6 +333,8 @@ export interface InspectorContextValue {
   toggleSectionCollapse: (pageName: string) => void;
   loadMoreSection: (pageName: string, step?: number) => void;
   handleDelete: () => void;
+  isGroupByPageEnabled: boolean;
+  setIsGroupByPageEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 
   // ─── Network detail ────────────────────────────────────────────────────────
   detailTitle: string;
@@ -392,6 +423,24 @@ export interface InspectorContextValue {
   clearAllPushLogs: () => void;
   simulatePush: (preset?: 'salesforce' | 'fcm' | 'apns' | 'deeplink' | 'rich_media' | 'custom', customData?: any) => void;
 
+  // ─── WebSocket / Socket.IO ────────────────────────────────────────────────
+  socketRecords: SocketConnectionRecord[];
+  filteredSocketRecords: SocketConnectionRecord[];
+  selectedSocket: SocketConnectionRecord | null;
+  setSelectedSocket: React.Dispatch<React.SetStateAction<SocketConnectionRecord | null>>;
+  socketSearch: string;
+  setSocketSearch: React.Dispatch<React.SetStateAction<string>>;
+  socketQuickFilter: string;
+  setSocketQuickFilter: React.Dispatch<React.SetStateAction<string>>;
+  lastReadSocketCount: number;
+  unreadSocketCount: number;
+  maxSocketLogs: number;
+  setMaxSocketLogs: React.Dispatch<React.SetStateAction<number>>;
+  clearAllSocketLogs: () => void;
+  deleteSocketRecord?: (id: string) => void;
+  deleteMultipleSocketRecords?: (ids: string[]) => void;
+  simulateSocket: (preset?: 'chat' | 'crypto' | 'socketio' | 'echo' | 'custom', customData?: any) => void;
+
   // ─── Settings ──────────────────────────────────────────────────────────────
   settingsActiveSubTab: SettingsSubTab;
   setSettingsActiveSubTab: React.Dispatch<React.SetStateAction<SettingsSubTab>>;
@@ -422,6 +471,24 @@ export interface InspectorContextValue {
   setReduxAutoRefreshState: React.Dispatch<React.SetStateAction<boolean>>;
   reduxExpandDepth: number;
   setReduxExpandDepth: React.Dispatch<React.SetStateAction<number>>;
+
+  // ─── Capture & Recording Settings ──────────────────────────────────────────
+  captureFps: number;
+  setCaptureFps: React.Dispatch<React.SetStateAction<number>>;
+  captureScale: number;
+  setCaptureScale: React.Dispatch<React.SetStateAction<number>>;
+  captureBitrate: number;
+  setCaptureBitrate: React.Dispatch<React.SetStateAction<number>>;
+  captureMaxDurationSeconds: number;
+  setCaptureMaxDurationSeconds: React.Dispatch<React.SetStateAction<number>>;
+  captureImageFormat: 'png' | 'jpeg' | 'webp';
+  setCaptureImageFormat: React.Dispatch<React.SetStateAction<'png' | 'jpeg' | 'webp'>>;
+  captureAudioMode: 'none' | 'app' | 'mic';
+  setCaptureAudioMode: React.Dispatch<React.SetStateAction<'none' | 'app' | 'mic'>>;
+  captureAutoHide: boolean;
+  setCaptureAutoHide: React.Dispatch<React.SetStateAction<boolean>>;
+  captureAutoGif: boolean;
+  setCaptureAutoGif: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // ─── Shared component props ───────────────────────────────────────────────────
@@ -524,6 +591,7 @@ export interface AnimatedEntranceProps {
 export interface ConsoleLogCardProps {
   item: ConsoleLog;
   searchStr?: string;
+  onPress?: (item: ConsoleLog) => void;
 }
 
 export interface JsonContent {
@@ -597,5 +665,76 @@ export interface PushCardProps {
 
 export interface PushDetailProps {
   item: PushNotificationRecord | null;
+  onClose: () => void;
+}
+
+// ─── WebSocket / Socket.IO ──────────────────────────────────────────────────
+
+export interface SocketFrame {
+  id: string;
+  timestamp: number;
+  direction: SocketFrameDirection;
+  type: SocketFrameType;
+  data: any;
+  raw?: any;
+  size?: number;
+  eventName?: string;
+  ackId?: number;
+}
+
+export interface SocketConnectionRecord {
+  id: string;
+  url: string;
+  protocols?: string | string[];
+  readyState: number;
+  status: SocketStatus;
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+  closeCode?: number;
+  closeReason?: string;
+  error?: string | any;
+  client: 'websocket' | 'socket.io' | string;
+  frames: SocketFrame[];
+  sentCount: number;
+  receivedCount: number;
+  totalBytesSent: number;
+  totalBytesReceived: number;
+  caller?: string;
+  query?: Record<string, string>;
+  headers?: Record<string, string>;
+  routeInfo?: RouteInfo;
+}
+
+export interface SocketFilterState {
+  search: string;
+  status: Set<string>;
+  types: Set<string>;
+  sortBy: 'time_desc' | 'time_asc' | 'frames_desc' | 'duration_desc';
+}
+
+export interface SocketStats {
+  total: number;
+  open: number;
+  closed: number;
+  error: number;
+  totalFrames: number;
+  sentFrames: number;
+  receivedFrames: number;
+  totalBytes: number;
+}
+
+export interface SocketCardProps {
+  item: SocketConnectionRecord;
+  onPress: () => void;
+  searchStr?: string;
+  isNew?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
+  serialNumber?: number;
+}
+
+export interface SocketDetailProps {
+  item: SocketConnectionRecord | null;
   onClose: () => void;
 }

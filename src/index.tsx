@@ -11,11 +11,12 @@ import {
 import {NavigationContext} from '@react-navigation/native';
 
 // i18n
-import {I18nextProvider, i18n} from './i18n';
+import {I18nextProvider, i18n, setLanguage, getLanguage, useTranslation} from './i18n';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
 import MainScreen from './components/Inspector/MainScreen';
+import {ConfirmationModal} from './components/Inspector/ConfirmationModal';
 import {
   InspectorContext,
   animateNextLayout,
@@ -85,6 +86,19 @@ import {
 } from './customHooks/pushNotificationLogger';
 
 import {
+  setupSocketLogger,
+  clearSocketRecords,
+  subscribeSocketRecords,
+  getSocketRecords,
+  setSocketModuleEnabled,
+  setMaxSocketRecordsLimit,
+  simulateTestSocket,
+  setSocketRouteInfoProvider,
+  deleteSocketRecord,
+  deleteMultipleSocketRecords,
+} from './customHooks/socketLogger';
+
+import {
   trackActiveTelemetryHeartbeat,
   setTelemetryEnabled,
   trackInspectorTabView,
@@ -138,6 +152,7 @@ import {
   NetworkInspectorProps,
   CrashRecord,
   PushNotificationRecord,
+  SocketConnectionRecord,
   SearchScope,
 } from './types';
 import {LIB_VERSION} from './constants';
@@ -157,6 +172,7 @@ const NetworkInspector = ({
 }: NetworkInspectorProps): React.JSX.Element | null => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
+  const {t} = useTranslation();
 
   const [isDark, setIsDark] = useState(false);
   const [reduxState, setReduxState] = useState<any>(null);
@@ -174,10 +190,17 @@ const NetworkInspector = ({
     controlledVisible ?? initialVisible ?? false,
   );
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
+  const [isDismissed, setIsDismissed] = useState<boolean>(false);
 
   const minimizeInspector = useCallback(() => {
     setIsMinimized(true);
     setVisible(false);
+  }, []);
+
+  const dismissInspector = useCallback(() => {
+    setIsDismissed(true);
+    setVisible(false);
+    hideNativeFloatingButton().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -189,10 +212,24 @@ const NetworkInspector = ({
   const [isReady, setIsReady] = useState(false);
   const [selected, setSelected] = useState<NetworkLog | null>(null);
   const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
+  const [confirmModal, setConfirmModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
   const [search, setSearch] = useState('');
   const [searchScope, setSearchScope] = useState<SearchScope>('all');
   const [isRegexSearch, setIsRegexSearch] = useState<boolean>(false);
   const [isCaseSensitive, setIsCaseSensitive] = useState<boolean>(false);
+  const [isGroupByPageEnabled, setIsGroupByPageEnabled] = useState<boolean>(true);
   const [quickFilter, setQuickFilter] = useState<string>('all');
   const [detailSearch, setDetailSearch] = useState('');
   const [reduxSearch, setReduxSearch] = useState('');
@@ -221,6 +258,9 @@ const NetworkInspector = ({
     new Set(),
   );
   const [methodFilters, setMethodFilters] = useState<Set<Method>>(new Set());
+  const [latencyFilter, setLatencyFilter] = useState<'all' | 'fast' | 'normal' | 'slow'>('all');
+  const [protocolFilter, setProtocolFilter] = useState<'all' | 'https' | 'http'>('all');
+  const [networkSortBy, setNetworkSortBy] = useState<'time_desc' | 'time_asc' | 'duration_desc' | 'duration_asc' | 'size_desc'>('time_desc');
   const [sectionFilters, setSectionFilters] = useState<
     Record<string, Set<LocalFilter>>
   >({});
@@ -379,6 +419,77 @@ const NetworkInspector = ({
     return result;
   }, [pushRecords, pushQuickFilter, pushSearch]);
 
+  // ─── WebSocket / Socket.IO state ──────────────────────────────────────────
+  const [socketRecords, setSocketRecords] = useState<SocketConnectionRecord[]>(() =>
+    getSocketRecords(),
+  );
+  const [selectedSocket, setSelectedSocket] = useState<SocketConnectionRecord | null>(null);
+  const [socketSearch, setSocketSearch] = useState<string>('');
+  const [socketQuickFilter, setSocketQuickFilter] = useState<string>('all');
+  const [lastReadSocketCount, setLastReadSocketCount] = useState<number>(0);
+  const [maxSocketLogs, setMaxSocketLogs] = useState<number>(50);
+
+  useEffect(() => {
+    setMaxSocketRecordsLimit(maxSocketLogs);
+  }, [maxSocketLogs]);
+
+  useEffect(() => {
+    const unsub = subscribeSocketRecords(records => {
+      setSocketRecords(records);
+    });
+    return unsub;
+  }, []);
+
+  const unreadSocketCount = useMemo(() => {
+    if (activeTab === 'socket') return 0;
+    return Math.max(0, socketRecords.length - lastReadSocketCount);
+  }, [activeTab, socketRecords.length, lastReadSocketCount]);
+
+  useEffect(() => {
+    if (visible && activeTab === 'socket') {
+      setLastReadSocketCount(socketRecords.length);
+    }
+  }, [visible, activeTab, socketRecords.length]);
+
+  const filteredSocketRecords = useMemo(() => {
+    let result = socketRecords;
+    if (socketQuickFilter !== 'all') {
+      if (socketQuickFilter === 'open') {
+        result = result.filter(r => (r.status || 'open').toLowerCase() === 'open');
+      } else if (socketQuickFilter === 'closed') {
+        result = result.filter(r => (r.status || '').toLowerCase() === 'closed');
+      } else if (socketQuickFilter === 'error') {
+        result = result.filter(r => (r.status || '').toLowerCase() === 'error');
+      } else if (socketQuickFilter === 'sio') {
+        result = result.filter(r => r.client === 'socket.io' || r.url.includes('/socket.io'));
+      } else if (socketQuickFilter === 'wss') {
+        result = result.filter(r => r.url.startsWith('wss://'));
+      } else if (socketQuickFilter === 'ws') {
+        result = result.filter(r => r.url.startsWith('ws://'));
+      }
+    }
+
+    if (socketSearch.trim()) {
+      const q = socketSearch.trim().toLowerCase();
+      result = result.filter(r => {
+        if (r.url && r.url.toLowerCase().includes(q)) return true;
+        if (r.id && r.id.toLowerCase().includes(q)) return true;
+        if (r.client && r.client.toLowerCase().includes(q)) return true;
+        if (r.caller && r.caller.toLowerCase().includes(q)) return true;
+        if (r.query && JSON.stringify(r.query).toLowerCase().includes(q)) return true;
+        if (r.frames && r.frames.some(f => {
+          if (f.eventName && f.eventName.toLowerCase().includes(q)) return true;
+          if (typeof f.data === 'string' && f.data.toLowerCase().includes(q)) return true;
+          if (f.data && typeof f.data === 'object' && JSON.stringify(f.data).toLowerCase().includes(q)) return true;
+          return false;
+        })) return true;
+        return false;
+      });
+    }
+
+    return result;
+  }, [socketRecords, socketQuickFilter, socketSearch]);
+
   const [maxConsoleLogs, setMaxConsoleLogs] = useState<number>(300);
   const [showConsoleLevels, setShowConsoleLevels] = useState<{
     info: boolean;
@@ -429,6 +540,7 @@ const NetworkInspector = ({
     | null
   >(null);
   const [isAboutOpen, setIsAboutOpen] = useState<boolean>(false);
+  const [isSupportOpen, setIsSupportOpen] = useState<boolean>(false);
   const [settingsActiveSubTab, setSettingsActiveSubTab] = useState<SettingsSubTab>('module');
   const [tabVisibility, setTabVisibility] = useState<
     Record<ActiveTab, boolean>
@@ -439,6 +551,7 @@ const NetworkInspector = ({
     redux: false,
     crash: false,
     push: true,
+    socket: false,
     device: false,
     storage: false,
     debugging: false,
@@ -453,6 +566,16 @@ const NetworkInspector = ({
   const [reduxAutoRefresh, setReduxAutoRefreshState] = useState<boolean>(true);
   const [reduxExpandDepth, setReduxExpandDepth] = useState<number>(1);
 
+  // ─── Capture & Recording Settings ──────────────────────────────────────────
+  const [captureFps, setCaptureFps] = useState<number>(60);
+  const [captureScale, setCaptureScale] = useState<number>(0.5);
+  const [captureBitrate, setCaptureBitrate] = useState<number>(0); // 0 = auto
+  const [captureMaxDurationSeconds, setCaptureMaxDurationSeconds] = useState<number>(120);
+  const [captureImageFormat, setCaptureImageFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
+  const [captureAudioMode, setCaptureAudioMode] = useState<'none' | 'app' | 'mic'>('none');
+  const [captureAutoHide, setCaptureAutoHide] = useState<boolean>(true);
+  const [captureAutoGif, setCaptureAutoGif] = useState<boolean>(true);
+
   // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
   const [showDuplicateLogs, setShowDuplicateLogs] = useState<boolean>(false);
@@ -465,6 +588,7 @@ const NetworkInspector = ({
     setAnalyticsModuleEnabled(!!tabVisibility.analytics);
     setReduxModuleEnabled(!!tabVisibility.redux);
     setCrashModuleEnabled(!!tabVisibility.crash);
+    setSocketModuleEnabled(!!tabVisibility.socket);
   }, [tabVisibility]);
 
   // Query native hardware RAM and auto-tune limits if auto-RAM is active
@@ -501,6 +625,7 @@ const NetworkInspector = ({
       redux: false,
       crash: false,
       push: true,
+      socket: false,
       device: false,
       storage: false,
       debugging: false,
@@ -533,6 +658,9 @@ const NetworkInspector = ({
     let cancelled = false;
     loadSettings().then(saved => {
       if (cancelled) return;
+      if (saved.language) {
+        setLanguage(saved.language);
+      }
       if (saved.isDark != null) {
         setIsDark(saved.isDark);
         toggleGlobalTheme(saved.isDark);
@@ -561,10 +689,21 @@ const NetworkInspector = ({
         setReduxAutoRefreshState(saved.reduxAutoRefresh);
       if (saved.reduxExpandDepth != null)
         setReduxExpandDepth(saved.reduxExpandDepth);
+      // Capture settings
+      if (saved.captureFps != null) setCaptureFps(saved.captureFps);
+      if (saved.captureScale != null) setCaptureScale(saved.captureScale);
+      if (saved.captureBitrate != null) setCaptureBitrate(saved.captureBitrate);
+      if (saved.captureMaxDurationSeconds != null) setCaptureMaxDurationSeconds(saved.captureMaxDurationSeconds);
+      if (saved.captureImageFormat) setCaptureImageFormat(saved.captureImageFormat);
+      if (saved.captureAudioMode) setCaptureAudioMode(saved.captureAudioMode);
+      if (saved.captureAutoHide != null) setCaptureAutoHide(saved.captureAutoHide);
+      if (saved.captureAutoGif != null) setCaptureAutoGif(saved.captureAutoGif);
       if (saved.showDuplicateLogs != null)
         setShowDuplicateLogs(saved.showDuplicateLogs);
       if (saved.showUpdateToast != null)
         setShowUpdateToast(saved.showUpdateToast);
+      if (saved.isGroupByPageEnabled != null)
+        setIsGroupByPageEnabled(saved.isGroupByPageEnabled);
       if (saved.defaultTab) {
         const dt = saved.defaultTab as ActiveTab;
         const vis = {
@@ -615,6 +754,7 @@ const NetworkInspector = ({
     if (!settingsHydratedRef.current) return;
     saveSettings({
       isDark,
+      language: getLanguage(),
       modalHeightPercent,
       modalAnimationType,
       tabVisibility,
@@ -624,11 +764,20 @@ const NetworkInspector = ({
       maxAnalyticsEventsLimit,
       maxCrashLogs,
       isAutoRamLimitEnabled,
+      isGroupByPageEnabled,
       showConsoleLevels,
       reduxAutoRefresh,
       reduxExpandDepth,
       showDuplicateLogs,
       showUpdateToast,
+      captureFps,
+      captureScale,
+      captureBitrate,
+      captureMaxDurationSeconds,
+      captureImageFormat,
+      captureAudioMode,
+      captureAutoHide,
+      captureAutoGif,
     });
   }, [
     isDark,
@@ -641,10 +790,19 @@ const NetworkInspector = ({
     maxAnalyticsEventsLimit,
     maxCrashLogs,
     isAutoRamLimitEnabled,
+    isGroupByPageEnabled,
     showConsoleLevels,
     reduxAutoRefresh,
     reduxExpandDepth,
     showDuplicateLogs,
+    captureFps,
+    captureScale,
+    captureBitrate,
+    captureMaxDurationSeconds,
+    captureImageFormat,
+    captureAudioMode,
+    captureAutoHide,
+    captureAutoGif,
   ]);
 
   // #1 — check NPM for a newer published version; surfaces an animated dot
@@ -743,6 +901,7 @@ const NetworkInspector = ({
     setSelectedReduxSlice(null);
     setSelectedReduxAction(null);
     setSelectedCrash(null);
+    setSelectedSocket(null);
 
     if (typeof React.startTransition === 'function') {
       React.startTransition(() => {
@@ -828,8 +987,10 @@ const NetworkInspector = ({
 
   useEffect(() => {
     setRouteInfoProvider(() => currentRouteRef.current);
+    setSocketRouteInfoProvider(() => currentRouteRef.current);
     return () => {
       setRouteInfoProvider(null);
+      setSocketRouteInfoProvider(null);
     };
   }, []);
 
@@ -1056,12 +1217,12 @@ const NetworkInspector = ({
 
 
 
-  // Always hide legacy native circular button in favor of the React Native music-player dock
+  // Always hide legacy native circular button in favor of the React Native FAB launcher
   useEffect(() => {
     if (useNativeFab) {
       hideNativeFloatingButton().catch(() => {});
     }
-  }, [useNativeFab, visible]);
+  }, [useNativeFab, visible, isDismissed]);
 
   // Subscribe to native UI-thread floating button tap events
   useEffect(() => {
@@ -1149,6 +1310,7 @@ const NetworkInspector = ({
     setupConsoleLogger();
     autoSetupAnalyticsLogger();
     setupGlobalCrashHandler();
+    setupSocketLogger();
     const cleanupMemoryWarning = setupMemoryWarningHandler();
 
     const isVisibleRef = isVisibleRefObj;
@@ -1368,30 +1530,53 @@ const NetworkInspector = ({
         }
       }
 
-      // 2. Status Filter Check (from filters accordion dropdown)
-      if (statusFilters.size > 0) {
+      // 2. Status Filter Check (from filters modal / accordion)
+      if (statusFilters.size > 0 && !statusFilters.has('all' as any)) {
+        const s = typeof log.status === 'number' ? log.status : parseInt(String(log.status), 10);
         const matched = [...statusFilters].some(f => {
-          if (f === 'ALL') return true;
-          if (f === 'Failed') return log.status === 0 || log.status == null;
-          const codeNum = parseInt(f, 10);
-          if (!isNaN(codeNum)) {
-            return Number(log.status) === codeNum;
+          const lower = String(f).toLowerCase();
+          if (lower === 'all') return true;
+          if (lower === 'failed') return log.status === 0 || log.status == null || (!isNaN(s) && s >= 400);
+          if (lower === '2xx') return !isNaN(s) && s >= 200 && s < 300;
+          if (lower === '3xx') return !isNaN(s) && s >= 300 && s < 400;
+          if (lower === '4xx') return !isNaN(s) && s >= 400 && s < 500;
+          if (lower === '5xx') return !isNaN(s) && s >= 500 && s < 600;
+          if (!isNaN(s)) {
+            const parsedF = parseInt(String(f), 10);
+            if (!isNaN(parsedF) && parsedF >= 100) {
+              return s === parsedF;
+            }
           }
-          return String(log.status)[0] === f[0];
+          return String(log.status).startsWith(String(f)[0]);
         });
         if (!matched) return false;
       }
 
-      // 3. Method Filter Check (from filters accordion dropdown)
-      if (methodFilters.size > 0) {
+      // 3. Method Filter Check (from filters modal / accordion)
+      if (methodFilters.size > 0 && !methodFilters.has('all' as any)) {
         const matchedMethod = [...methodFilters].some(m => {
-          if (m === 'ALL') return true;
-          return log.method?.toUpperCase() === m;
+          if (String(m).toUpperCase() === 'ALL') return true;
+          return log.method?.toUpperCase() === String(m).toUpperCase();
         });
         if (!matchedMethod) return false;
       }
 
-      // 4. Advanced Search Query Engine Check with Scope, Regex and Case-Sensitivity
+      // 4. Latency Filter Check
+      if (latencyFilter !== 'all') {
+        const dur = log.duration || 0;
+        if (latencyFilter === 'fast' && dur >= 200) return false;
+        if (latencyFilter === 'normal' && (dur < 200 || dur > 500)) return false;
+        if (latencyFilter === 'slow' && dur <= 500) return false;
+      }
+
+      // 5. Protocol Filter Check
+      if (protocolFilter !== 'all') {
+        const isHttps = (log.url || '').toLowerCase().startsWith('https');
+        if (protocolFilter === 'https' && !isHttps) return false;
+        if (protocolFilter === 'http' && isHttps) return false;
+      }
+
+      // 6. Advanced Search Query Engine Check with Scope, Regex and Case-Sensitivity
       if (search && search.trim().length > 0) {
         const routePath = logRouteMapRef.current.get(log.id)?.path || '';
         const isMatch = matchNetworkLogQuery(log, search, routePath, {
@@ -1405,8 +1590,18 @@ const NetworkInspector = ({
       return true;
     });
 
-    if (sortOrder === 'oldest') {
+    if (networkSortBy === 'time_asc' || sortOrder === 'oldest') {
       result = [...result].reverse();
+    } else if (networkSortBy === 'duration_desc') {
+      result = [...result].sort((a, b) => (b.duration || 0) - (a.duration || 0));
+    } else if (networkSortBy === 'duration_asc') {
+      result = [...result].sort((a, b) => (a.duration || 0) - (b.duration || 0));
+    } else if (networkSortBy === 'size_desc') {
+      result = [...result].sort((a, b) => {
+        const sizeA = (a.response ? JSON.stringify(a.response).length : 0) + (a.request ? JSON.stringify(a.request).length : 0);
+        const sizeB = (b.response ? JSON.stringify(b.response).length : 0) + (b.request ? JSON.stringify(b.request).length : 0);
+        return sizeB - sizeA;
+      });
     }
 
     // #9 — collapse consecutive identical requests
@@ -1441,6 +1636,9 @@ const NetworkInspector = ({
     quickFilter,
     statusFilters,
     methodFilters,
+    latencyFilter,
+    protocolFilter,
+    networkSortBy,
     sortOrder,
     showDuplicateLogs,
   ]);
@@ -1494,19 +1692,22 @@ const NetworkInspector = ({
     (pageName: string) => {
       setSectionExpandOverrides(prev => {
         const next = new Map(prev);
+        const isSearching = Boolean(search && search.trim().length > 0);
+        const defaultExpanded = isSearching ? true : pageName === activePageName;
         const isCurrentlyExpanded = next.has(pageName)
           ? next.get(pageName)!
-          : pageName === activePageName;
+          : defaultExpanded;
         next.set(pageName, !isCurrentlyExpanded);
         return next;
       });
     },
-    [activePageName],
+    [activePageName, search],
   );
 
-  // Reset section pagination limits whenever search or filters change
+  // Reset section pagination limits and expand overrides whenever search or filters change
   useEffect(() => {
     setSectionLimits({});
+    setSectionExpandOverrides(new Map());
   }, [
     search,
     searchScope,
@@ -1529,6 +1730,21 @@ const NetworkInspector = ({
   );
 
   const groupedData = useMemo(() => {
+    if (!isGroupByPageEnabled) {
+      return filteredLogs.map((log, index) => {
+        const routeInfo =
+          logRouteMapRef.current.get(log.id) || (log as any)?.routeInfo;
+        const pageName = getLogPageName(log, routeInfo);
+        return {
+          type: 'log' as const,
+          id: `flat-log-${log.id}`,
+          log,
+          isLast: index === filteredLogs.length - 1,
+          color: getDomainColor(pageName),
+        };
+      });
+    }
+
     const result: GroupedListItem[] = [];
     const groupMap = new Map<
       string,
@@ -1549,6 +1765,8 @@ const NetworkInspector = ({
       group.logs.push(log);
     }
 
+    const isSearching = Boolean(search && search.trim().length > 0);
+
     let idx = 0;
     groupMap.forEach(g => {
       let success = 0;
@@ -1564,9 +1782,10 @@ const NetworkInspector = ({
       const activeFilters =
         sectionFilters[g.pageName] || new Set(['success', 'failed', 'loading']);
 
+      const defaultExpanded = isSearching ? true : g.pageName === activePageName;
       const isCollapsed = sectionExpandOverrides.has(g.pageName)
         ? !sectionExpandOverrides.get(g.pageName)
-        : g.pageName !== activePageName;
+        : !defaultExpanded;
       const timestamp = g.logs[0]?.startTime || 0;
 
       result.push({
@@ -1623,6 +1842,7 @@ const NetworkInspector = ({
 
     return result;
   }, [
+    isGroupByPageEnabled,
     filteredLogs,
     logs,
     sectionFilters,
@@ -1630,6 +1850,7 @@ const NetworkInspector = ({
     activePageName,
     sectionLimits,
     maxNetworkLogs,
+    search,
   ]);
 
   const {minStart, totalRange} = useMemo(() => {
@@ -2013,6 +2234,7 @@ const NetworkInspector = ({
       setSelectedReduxSlice(null);
       setSelectedReduxAction(null);
       setSelectedCrash(null);
+      setSelectedSocket(null);
     }, 300);
   }, []);
 
@@ -2042,78 +2264,66 @@ const NetworkInspector = ({
 
   function handleDelete() {
     if (activeTab === 'logs') {
-      Alert.alert(
-        'Clear Logs',
-        'Are you sure you want to clear all console logs?',
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Clear All',
-            onPress: () => {
-              clearConsoleLogs();
-              setConsoleLogs([]);
-            },
-            style: 'destructive',
-          },
-        ],
-      );
+      setConfirmModal({
+        visible: true,
+        title: t('console.clearLogsTitle', 'Clear Console Logs'),
+        message: t('console.clearLogsMsg', 'Are you sure you want to clear all console logs?'),
+        confirmText: t('common.clearAll', 'Clear All'),
+        cancelText: t('common.cancel', 'Cancel'),
+        onConfirm: () => {
+          setConfirmModal(prev => ({...prev, visible: false}));
+          clearConsoleLogs();
+          setConsoleLogs([]);
+        },
+      });
       return;
     }
     if (activeTab === 'analytics') {
-      Alert.alert(
-        'Clear Analytics',
-        'Are you sure you want to clear all analytics events?',
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Clear All',
-            onPress: () => {
-              clearAnalyticsEvents();
-              setAnalyticsEvents([]);
-              setSelectedEvent(null);
-              prevEventIdsRef.current = new Set();
-            },
-            style: 'destructive',
-          },
-        ],
-      );
+      setConfirmModal({
+        visible: true,
+        title: t('analytics.clearEventsTitle', 'Clear Analytics'),
+        message: t('analytics.clearEventsMsg', 'Are you sure you want to clear all analytics events?'),
+        confirmText: t('common.clearAll', 'Clear All'),
+        cancelText: t('common.cancel', 'Cancel'),
+        onConfirm: () => {
+          setConfirmModal(prev => ({...prev, visible: false}));
+          clearAnalyticsEvents();
+          setAnalyticsEvents([]);
+          setSelectedEvent(null);
+          prevEventIdsRef.current = new Set();
+        },
+      });
       return;
     }
     if (activeTab === 'redux') {
-      Alert.alert(
-        'Clear Redux Timeline',
-        'Are you sure you want to clear the dispatched action history?',
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Clear All',
-            onPress: () => {
-              clearActionHistory();
-              setReduxLastActionMap({});
-            },
-            style: 'destructive',
-          },
-        ],
-      );
+      setConfirmModal({
+        visible: true,
+        title: t('redux.clearTimelineTitle', 'Clear Redux Timeline'),
+        message: t('redux.clearTimelineMsg', 'Are you sure you want to clear the dispatched action history?'),
+        confirmText: t('common.clearAll', 'Clear All'),
+        cancelText: t('common.cancel', 'Cancel'),
+        onConfirm: () => {
+          setConfirmModal(prev => ({...prev, visible: false}));
+          clearActionHistory();
+          setReduxLastActionMap({});
+        },
+      });
       return;
     }
     if (activeTab === 'crash') {
-      Alert.alert(
-        'Clear Crash History',
-        'Are you sure you want to clear all intercepted crash records?',
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Clear All',
-            onPress: () => {
-              clearCrashRecords();
-              setCrashRecords([]);
-              setSelectedCrash(null);
-            },
-            style: 'destructive',
-          },
-        ],
-      );
+      setConfirmModal({
+        visible: true,
+        title: t('crash.clearTitle', 'Clear Crash Records'),
+        message: t('crash.clearMessage', 'Are you sure you want to clear all intercepted crash records?'),
+        confirmText: t('crash.clearConfirm', 'Clear All'),
+        cancelText: t('crash.clearCancel', 'Cancel'),
+        onConfirm: () => {
+          setConfirmModal(prev => ({...prev, visible: false}));
+          clearCrashRecords();
+          setCrashRecords([]);
+          setSelectedCrash(null);
+        },
+      });
       return;
     }
     // Default: APIs tab. Only clears NETWORK logs — never touches the other tabs.
@@ -2121,18 +2331,17 @@ const NetworkInspector = ({
       setLogs(prev => prev.filter(l => !selectedLogs.has(l.id)));
       setSelectedLogs(new Set());
     } else {
-      Alert.alert(
-        'Clear Logs',
-        'Are you sure you want to clear all network logs?',
-        [
-          {text: 'Cancel', style: 'cancel'},
-          {
-            text: 'Clear All',
-            onPress: clearNetworkOnly,
-            style: 'destructive',
-          },
-        ],
-      );
+      setConfirmModal({
+        visible: true,
+        title: t('network.clearLogsTitle', 'Clear Network Logs'),
+        message: t('network.clearLogsMsg', 'Are you sure you want to clear all network logs?'),
+        confirmText: t('common.clearAll', 'Clear All'),
+        cancelText: t('common.cancel', 'Cancel'),
+        onConfirm: () => {
+          setConfirmModal(prev => ({...prev, visible: false}));
+          clearNetworkOnly();
+        },
+      });
     }
   }
 
@@ -2184,6 +2393,9 @@ const NetworkInspector = ({
       isMinimized,
       setIsMinimized,
       minimizeInspector,
+      isDismissed,
+      setIsDismissed,
+      dismissInspector,
       isReady,
       enabled,
       isEnabled: enabled,
@@ -2219,6 +2431,8 @@ const NetworkInspector = ({
       setSettingsPage,
       isAboutOpen,
       setIsAboutOpen,
+      isSupportOpen,
+      setIsSupportOpen,
       updateAvailable,
       latestNpmVersion,
       clearAnim,
@@ -2252,6 +2466,12 @@ const NetworkInspector = ({
       setStatusFilters,
       methodFilters,
       setMethodFilters,
+      latencyFilter,
+      setLatencyFilter,
+      protocolFilter,
+      setProtocolFilter,
+      networkSortBy,
+      setNetworkSortBy,
       availableMethods,
       sortOrder,
       setSortOrder,
@@ -2264,6 +2484,8 @@ const NetworkInspector = ({
       toggleSectionCollapse,
       loadMoreSection,
       handleDelete,
+      isGroupByPageEnabled,
+      setIsGroupByPageEnabled,
 
       // ─── Network detail ─────────────────────────────────────────────────
       detailTitle,
@@ -2360,6 +2582,43 @@ const NetworkInspector = ({
         simulateTestPush(preset, customData);
       },
 
+      // ─── WebSocket / Socket.IO ──────────────────────────────────────────
+      socketRecords,
+      filteredSocketRecords,
+      selectedSocket,
+      setSelectedSocket,
+      socketSearch,
+      setSocketSearch,
+      socketQuickFilter,
+      setSocketQuickFilter,
+      lastReadSocketCount,
+      unreadSocketCount,
+      maxSocketLogs,
+      setMaxSocketLogs,
+      clearAllSocketLogs: () => {
+        clearSocketRecords();
+        setSocketRecords([]);
+        setSelectedSocket(null);
+      },
+      deleteSocketRecord: (id: string) => {
+        deleteSocketRecord(id);
+        setSocketRecords(prev => prev.filter(r => r.id !== id));
+        if (selectedSocket?.id === id) {
+          setSelectedSocket(null);
+        }
+      },
+      deleteMultipleSocketRecords: (ids: string[]) => {
+        deleteMultipleSocketRecords(ids);
+        const idSet = new Set(ids);
+        setSocketRecords(prev => prev.filter(r => !idSet.has(r.id)));
+        if (selectedSocket && idSet.has(selectedSocket.id)) {
+          setSelectedSocket(null);
+        }
+      },
+      simulateSocket: (preset, customData) => {
+        simulateTestSocket(preset, customData);
+      },
+
       // ─── Settings ───────────────────────────────────────────────────────
       settingsActiveSubTab,
       setSettingsActiveSubTab,
@@ -2388,6 +2647,24 @@ const NetworkInspector = ({
       setReduxAutoRefreshState,
       reduxExpandDepth,
       setReduxExpandDepth,
+
+      // ─── Capture & Recording Settings ───────────────────────────────
+      captureFps,
+      setCaptureFps,
+      captureScale,
+      setCaptureScale,
+      captureBitrate,
+      setCaptureBitrate,
+      captureMaxDurationSeconds,
+      setCaptureMaxDurationSeconds,
+      captureImageFormat,
+      setCaptureImageFormat,
+      captureAudioMode,
+      setCaptureAudioMode,
+      captureAutoHide,
+      setCaptureAutoHide,
+      captureAutoGif,
+      setCaptureAutoGif,
     }),
     [
       visible,
@@ -2414,6 +2691,7 @@ const NetworkInspector = ({
       showHeaderInfo,
       settingsPage,
       isAboutOpen,
+      isSupportOpen,
       updateAvailable,
       latestNpmVersion,
       clearAnim,
@@ -2446,6 +2724,8 @@ const NetworkInspector = ({
       toggleSectionCollapse,
       loadMoreSection,
       handleDelete,
+      isGroupByPageEnabled,
+      setIsGroupByPageEnabled,
       detailTitle,
       detailDisplayUrl,
       apiDetailActiveTab,
@@ -2490,6 +2770,14 @@ const NetworkInspector = ({
       lastReadPushCount,
       unreadPushCount,
       maxPushLogs,
+      socketRecords,
+      filteredSocketRecords,
+      selectedSocket,
+      socketSearch,
+      socketQuickFilter,
+      lastReadSocketCount,
+      unreadSocketCount,
+      maxSocketLogs,
       settingsActiveSubTab,
       defaultTab,
       isDark,
@@ -2504,13 +2792,33 @@ const NetworkInspector = ({
       deviceFreeRamMb,
       reduxAutoRefresh,
       reduxExpandDepth,
+      captureFps,
+      captureScale,
+      captureBitrate,
+      captureMaxDurationSeconds,
+      captureImageFormat,
+      captureAudioMode,
+      captureAutoHide,
+      captureAutoGif,
       isMinimized,
+      isDismissed,
     ],
   );
 
   return (
     <InspectorContext.Provider value={contextValue}>
       <MainScreen />
+      <ConfirmationModal
+        visible={confirmModal.visible}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        isDestructive={true}
+        icon="trash"
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({...prev, visible: false}))}
+      />
     </InspectorContext.Provider>
   );
 };
@@ -2683,14 +2991,38 @@ export {
 } from './customHooks/pushNotificationLogger';
 
 export {
+  setupSocketLogger,
+  clearSocketRecords,
+  subscribeSocketRecords,
+  getSocketRecords,
+  setSocketModuleEnabled,
+  getSocketModuleEnabled,
+  setMaxSocketRecordsLimit,
+  getMaxSocketRecordsLimit,
+  pruneSocketRecords,
+  recordSocketConnection,
+  recordSocketFrame,
+  recordSocketClose,
+  recordSocketError,
+  simulateTestSocket,
+  analyzeSocketPayload,
+} from './customHooks/socketLogger';
+
+export {default as SocketTab} from './components/Inspector/SocketTab';
+export {default as SocketDetail} from './components/Inspector/SocketDetail';
+export {default as SocketCard} from './components/Inspector/SocketCard';
+
+export {
   shareApiReport,
   sharePushReport,
+  shareSocketReport,
   shareCrashReport,
   shareAnalyticsReport,
   shareReduxReport,
   shareLogReport,
   formatApiReport,
   formatPushReport,
+  formatSocketReport,
   formatCrashReport,
   formatAnalyticsReport,
   formatReduxReport,
@@ -2699,14 +3031,22 @@ export {
 
 export {
   BrandCircleIcon,
+  BrandSquareIcon,
   BellIcon,
   CloudPushIcon,
+  WebsocketIcon,
+  SocketIcon,
 } from './components/NetworkIcons';
 
 export {
   ModuleErrorBoundary,
   type ModuleErrorBoundaryProps,
 } from './components/ModuleErrorBoundary';
+
+export {
+  SkeletonPlaceholder,
+  type SkeletonPlaceholderProps,
+} from './components/SkeletonPlaceholder';
 
 export {
   connectAsyncStorage,
@@ -2747,10 +3087,19 @@ export {
   PushActionType,
   PushDetailSubTab,
   PushFilterType,
+  SocketStatus,
+  SocketFrameDirection,
+  SocketFrameType,
+  SocketDetailSubTab,
+  SocketFilterType,
   type PushNotificationRecord,
   type PushSource,
   type PushFilterState,
   type PushStats,
+  type SocketConnectionRecord,
+  type SocketFrame,
+  type SocketFilterState,
+  type SocketStats,
 } from './types';
 
 export {

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {useTranslation} from '../../i18n';
 import QRCodeView from '../QRCodeView';
 import TouchableScale from '../TouchableScale';
 import {showToast} from '../../helpers/toast';
@@ -46,6 +47,7 @@ interface BuildStatusData {
 }
 
 export const DebuggingTab: React.FC = () => {
+  const {t} = useTranslation();
   // Auto-detect host IP and initial port from NativeModules.SourceCode.scriptURL
   const detectedConfig = useMemo(() => {
     const scriptURL = NativeModules.SourceCode?.scriptURL || '';
@@ -195,7 +197,7 @@ export const DebuggingTab: React.FC = () => {
           if (data.status === 'completed') {
             if (pollingRef.current) clearInterval(pollingRef.current);
             triggerNativeHaptic('success');
-            showToast('✓ APK Build Generated Successfully!');
+            showToast(t('debugging.buildSuccess', 'APK Build Generated Successfully!'));
             if (data.apkSize) {
               setApkSizeMb((data.apkSize / (1024 * 1024)).toFixed(1));
             }
@@ -206,7 +208,7 @@ export const DebuggingTab: React.FC = () => {
           } else if (data.status === 'failed') {
             if (pollingRef.current) clearInterval(pollingRef.current);
             triggerNativeHaptic('error');
-            showToast('✕ Build Failed: ' + (data.error || 'Gradle error'));
+            showToast(t('debugging.buildFailed', {error: data.error || 'Gradle error'}));
           }
         }
       } catch {}
@@ -288,10 +290,10 @@ export const DebuggingTab: React.FC = () => {
     setBuildStatus(prev => ({
       ...prev,
       status: 'idle',
-      currentTask: 'Build cancelled by user',
-      logs: [...(prev.logs || []), '🛑 Build cancelled by user.'],
+      currentTask: t('debugging.buildCancelled', 'Build cancelled by user'),
+      logs: [...(prev.logs || []), `[Build] ${t('debugging.buildCancelled', 'Build cancelled by user')}.`],
     }));
-    showToast('Build cancelled');
+    showToast(t('debugging.buildCancelled', 'Build cancelled'));
   };
 
   // Construct target download URL

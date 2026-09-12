@@ -18,6 +18,7 @@ import EndOfListFooter from '../EndOfListFooter';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {useTranslation} from '../../i18n';
 import {
   ClearIcon,
   SearchIcon,
@@ -34,6 +35,7 @@ import type {PushNotificationRecord} from '../../types';
 const LOAD_MORE_STEP = 10;
 
 const PushTab = React.memo(() => {
+  const {t} = useTranslation();
   const {
     pushRecords,
     filteredPushRecords,
@@ -152,17 +154,24 @@ const PushTab = React.memo(() => {
     return chips;
   }, [quickCounts]);
 
+  const handleSelectPush = useCallback(
+    (item: PushNotificationRecord) => {
+      setSelectedPush(item);
+    },
+    [setSelectedPush],
+  );
+
   const renderItem = useCallback(
     ({item, index}: {item: PushNotificationRecord; index: number}) => (
       <AnimatedEntrance index={index} distance={8}>
         <PushCard
           item={item}
           searchStr={pushSearch}
-          onPress={() => setSelectedPush(item)}
+          onPress={() => handleSelectPush(item)}
         />
       </AnimatedEntrance>
     ),
-    [pushSearch, setSelectedPush],
+    [pushSearch, handleSelectPush],
   );
 
   const keyExtractor = useCallback(
@@ -292,23 +301,26 @@ const PushTab = React.memo(() => {
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={pushTabStyles.listContent}
-        initialNumToRender={15}
-        maxToRenderPerBatch={20}
-        windowSize={11}
-        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={10}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        updateCellsBatchingPeriod={40}
+        removeClippedSubviews={true}
+        renderToHardwareTextureAndroid={true}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <EmptyState
             isSearch={Boolean(pushSearch || pushQuickFilter !== 'all')}
             searchQuery={pushSearch}
             customTitle={
               pushSearch || pushQuickFilter !== 'all'
-                ? 'No matching push notifications'
-                : 'No push notifications captured yet'
+                ? t('push.noMatching', 'No matching push notifications')
+                : t('push.noNotifications', 'No push notifications captured yet')
             }
             customSub={
               pushSearch || pushQuickFilter !== 'all'
-                ? 'Try adjusting your search query or filter chips.'
-                : 'Incoming or opened push payloads from any domain (Salesforce, FCM, APNs, etc.) will appear here automatically.'
+                ? t('push.adjustSearchFilter', 'Try adjusting your search query or filter chips.')
+                : t('push.noNotificationsDesc', 'Incoming or opened push payloads from any domain (Salesforce, FCM, APNs, etc.) will appear here automatically.')
             }
             onClearSearch={() => {
               setPushSearch('');

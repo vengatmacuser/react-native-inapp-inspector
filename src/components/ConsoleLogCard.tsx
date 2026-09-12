@@ -384,6 +384,7 @@ const getLogMessageWithBadges = (
 export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   item,
   searchStr = '',
+  onPress,
 }: ConsoleLogCardProps) {
   const {setSelectedLog} = useInspector();
   const {t} = useTranslation();
@@ -485,7 +486,11 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   const jsonPreview = jsonContent ? getJsonPreviewText(jsonContent.data) : null;
 
   const openDetail = () => {
-    setSelectedLog(item);
+    if (onPress) {
+      onPress(item);
+    } else {
+      setSelectedLog(item);
+    }
   };
 
   const sourceMethodName =
@@ -506,14 +511,14 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           },
         ]}>
         <View style={styles.cardBody}>
-          {/* Row 1: Header Row (Serial, Method Badge, Source Chip, JSON Type, Duplicate Badge, Status Pill) */}
+          {/* Row 1: Header Row (Serial, Method Badge, JSON Type / Source Chip, Duplicate Badge, Chevron) */}
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
               <Text style={styles.serialNumber}>
                 #{item.id != null ? item.id + 1 : 1}
               </Text>
 
-              {/* Vibrant Method Badge (like GET/POST in API list card) */}
+              {/* Vibrant Method Badge */}
               <View
                 style={[
                   styles.methodBadge,
@@ -522,28 +527,14 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                 <Text style={styles.methodBadgeText}>{colors.label}</Text>
               </View>
 
-              {/* Source Method Chip */}
-              <View
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: `${colors.badgeColor}12`,
-                    borderColor: `${colors.badgeColor}2E`,
-                  },
-                ]}>
-                <Text style={[styles.chipText, {color: colors.badgeColor}]} numberOfLines={1}>
-                  console.{sourceMethodName}
-                </Text>
-              </View>
-
               {/* Structured JSON Payload Type Badge */}
               {jsonContent && (
                 <View
                   style={[
                     styles.chip,
                     {
-                      backgroundColor: `${AppColors.teal600}14`,
-                      borderColor: `${AppColors.teal600}33`,
+                      backgroundColor: `${AppColors.teal600}12`,
+                      borderColor: `${AppColors.teal600}2E`,
                     },
                   ]}>
                   <Text style={[styles.chipText, {color: AppColors.teal600}]}>
@@ -566,23 +557,9 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                 )}
             </View>
 
-            {/* Right Status Pill & Chevron */}
+            {/* Right Side Affordance: Subtle Action Icon / Chevron */}
             <View style={styles.cardHeaderRight}>
-              <View
-                style={[
-                  styles.statusPill,
-                  {
-                    backgroundColor: colors.statusPillBg,
-                    borderColor: colors.statusPillBorder,
-                  },
-                ]}>
-                <StatusIconComp color={colors.statusPillText} size={9.5} />
-                <Text
-                  style={[styles.statusPillText, {color: colors.statusPillText}]}>
-                  {colors.label}
-                </Text>
-              </View>
-              <ForwardChevronIcon color={AppColors.grayTextWeak} size={13} />
+              <ForwardChevronIcon color={AppColors.slate400} size={13} />
             </View>
           </View>
 
@@ -708,14 +685,6 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
               )}
             </View>
           </View>
-
-          {/* Bottom Accent Bar (matching LogCard waterfall bar height) */}
-          <View
-            style={[
-              styles.bottomAccentBar,
-              {backgroundColor: `${colors.border}35`},
-            ]}
-          />
         </View>
       </TouchableScale>
     </View>
@@ -962,5 +931,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
+function areConsoleLogPropsEqual(
+  prev: ConsoleLogCardProps,
+  next: ConsoleLogCardProps,
+): boolean {
+  return (
+    prev.item === next.item &&
+    prev.searchStr === next.searchStr &&
+    prev.onPress === next.onPress
+  );
+}
 
-export default ConsoleLogCard;
+export const MemoizedConsoleLogCard = React.memo(
+  ConsoleLogCard,
+  areConsoleLogPropsEqual,
+);
+
+export default MemoizedConsoleLogCard;

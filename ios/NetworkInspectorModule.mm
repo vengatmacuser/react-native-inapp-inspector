@@ -539,6 +539,21 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
     return YES;
 }
 
+- (NSDictionary *)constantsToExport {
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    NSString *appName = [mainBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"] ?: [mainBundle objectForInfoDictionaryKey:@"CFBundleName"] ?: @"App";
+    NSString *appVersion = [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"] ?: @"1.0";
+    NSString *appBuild = [mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"] ?: @"1";
+    NSString *appBundleId = [mainBundle bundleIdentifier] ?: @"";
+    return @{
+        @"appName": appName,
+        @"appVersion": appVersion,
+        @"appBuild": appBuild,
+        @"appBundleId": appBundleId,
+        @"appPackageName": appBundleId
+    };
+}
+
 - (void)safeSendEvent:(NSString *)eventName body:(id)body {
     if (!hasListeners) return;
     if (self.bridge == nil) return;
@@ -1235,6 +1250,9 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
                                                  rgbColorSpace,
                                                  (CGBitmapInfo)kCGBitmapByteOrder32Little | (CGBitmapInfo)kCGImageAlphaPremultipliedFirst);
     if (context) {
+        // Invert Y axis for CGBitmapContext so row 0 aligns with the top of the video frame
+        CGContextTranslateCTM(context, 0, size.height);
+        CGContextScaleCTM(context, 1.0, -1.0);
         UIGraphicsPushContext(context);
         [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
         UIGraphicsPopContext();
@@ -1275,10 +1293,25 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
             return;
         }
 
+        // Read bitrate from options (default: adaptive based on resolution)
+        double bitrateParam = [options[@"bitrate"] doubleValue];
+        if (bitrateParam <= 0.0) {
+            // Auto-calculate: ~6 Mbps for 1080p, scales proportionally
+            bitrateParam = (double)(width * height) * 4.0;
+            if (bitrateParam < 1000000.0) bitrateParam = 1000000.0; // Floor: 1 Mbps
+            if (bitrateParam > 20000000.0) bitrateParam = 20000000.0; // Ceiling: 20 Mbps
+        }
+
         NSDictionary *videoSettings = @{
             AVVideoCodecKey: AVVideoCodecTypeH264,
             AVVideoWidthKey: @(videoSize.width),
             AVVideoHeightKey: @(videoSize.height),
+            AVVideoCompressionPropertiesKey: @{
+                AVVideoAverageBitRateKey: @((NSInteger)bitrateParam),
+                AVVideoMaxKeyFrameIntervalKey: @(30),
+                AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
+                AVVideoExpectedSourceFrameRateKey: @([options[@"fps"] doubleValue] > 0 ? [options[@"fps"] doubleValue] : 30),
+            },
         };
 
         self->_softwareWriterInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:videoSettings];
@@ -1307,8 +1340,11 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
         self->_softwareVideoHeight = height;
 
         double fps = [options[@"fps"] doubleValue];
-        if (fps <= 0.0 || fps > 30.0) fps = 15.0;
+        if (fps <= 0.0 || fps > 60.0) fps = 30.0;
         double frameInterval = 1.0 / fps;
+
+        double maxDuration = [options[@"maxDurationSeconds"] doubleValue];
+        if (maxDuration <= 0.0 || maxDuration > 300.0) maxDuration = 120.0;
 
         // Immediately capture frame 0 & save thumbnail
         UIImage *firstImg = [self captureScreenHierarchyWithScale:(CGFloat)scaleParam];
@@ -1336,24 +1372,54 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
         dispatch_source_set_timer(self->_softwareRecordingTimerSource, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(frameInterval * NSEC_PER_SEC)), (uint64_t)(frameInterval * NSEC_PER_SEC), (uint64_t)(frameInterval * 0.1 * NSEC_PER_SEC));
 
         __weak NetworkInspectorModule *weakSelf = self;
+        __block BOOL isFrameBusy = NO;
+        NSTimeInterval recordingStartTime = self->_softwareRecordingStartTime;
         dispatch_source_set_event_handler(self->_softwareRecordingTimerSource, ^{
             NetworkInspectorModule *strongSelf = weakSelf;
             if (!strongSelf || !strongSelf->_isSoftwareRecordingActive) return;
 
-            dispatch_sync(dispatch_get_main_queue(), ^{
-                if (!strongSelf || !strongSelf->_isSoftwareRecordingActive) return;
-                if (!strongSelf->_softwareAssetWriter || strongSelf->_softwareAssetWriter.status != AVAssetWriterStatusWriting) return;
+            // Auto-stop guard: enforce max recording duration
+            NSTimeInterval elapsed = [[NSDate date] timeIntervalSince1970] - recordingStartTime;
+            if (elapsed >= maxDuration) {
+                strongSelf->_isSoftwareRecordingActive = NO;
+                return;
+            }
+
+            if (isFrameBusy) {
+                // Drop frame tick if previous frame capture or encoding is still executing to prevent UI freezing
+                return;
+            }
+            isFrameBusy = YES;
+
+            // Fast snapshot on main queue without blocking user interactions
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (!strongSelf || !strongSelf->_isSoftwareRecordingActive) {
+                    isFrameBusy = NO;
+                    return;
+                }
+                if (!strongSelf->_softwareAssetWriter || strongSelf->_softwareAssetWriter.status != AVAssetWriterStatusWriting) {
+                    isFrameBusy = NO;
+                    return;
+                }
 
                 UIImage *frameImg = [strongSelf captureScreenHierarchyWithScale:(CGFloat)scaleParam];
-                if (frameImg && strongSelf->_softwareWriterInput.isReadyForMoreMediaData) {
-                    CVPixelBufferRef buffer = [strongSelf createPixelBufferFromUIImage:frameImg size:videoSize];
-                    if (buffer) {
-                        CMTime presentTime = CMTimeMake((int64_t)(strongSelf->_softwareFrameIndex * 1000 / fps), 1000);
-                        [strongSelf->_softwarePixelBufferAdaptor appendPixelBuffer:buffer withPresentationTime:presentTime];
-                        CVPixelBufferRelease(buffer);
-                        strongSelf->_softwareFrameIndex++;
+
+                // Offload all heavy CVPixelBuffer creation, context drawing, and AVAssetWriter append to background queue
+                dispatch_async(queue, ^{
+                    @try {
+                        if (strongSelf && strongSelf->_isSoftwareRecordingActive && frameImg && strongSelf->_softwareWriterInput.isReadyForMoreMediaData) {
+                            CVPixelBufferRef buffer = [strongSelf createPixelBufferFromUIImage:frameImg size:videoSize];
+                            if (buffer) {
+                                CMTime presentTime = CMTimeMake((int64_t)(strongSelf->_softwareFrameIndex * 1000 / fps), 1000);
+                                [strongSelf->_softwarePixelBufferAdaptor appendPixelBuffer:buffer withPresentationTime:presentTime];
+                                CVPixelBufferRelease(buffer);
+                                strongSelf->_softwareFrameIndex++;
+                            }
+                        }
+                    } @finally {
+                        isFrameBusy = NO;
                     }
-                }
+                });
             });
         });
 
@@ -1487,6 +1553,30 @@ RCT_EXPORT_METHOD(stopVideoRecording:(RCTPromiseResolveBlock)resolve
 
         if (thumbPath && [[NSFileManager defaultManager] fileExistsAtPath:thumbPath]) {
             result[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbPath].absoluteString;
+        } else {
+            @try {
+                NSURL *vidUrl = [NSURL fileURLWithPath:filePath];
+                AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:vidUrl options:nil];
+                AVAssetImageGenerator *gen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+                gen.appliesPreferredTrackTransform = YES;
+                gen.requestedTimeToleranceBefore = kCMTimePositiveInfinity;
+                gen.requestedTimeToleranceAfter = kCMTimePositiveInfinity;
+                gen.maximumSize = CGSizeMake(720, 720);
+                CMTime time = kCMTimeZero;
+                NSError *err = nil;
+                CGImageRef imgRef = [gen copyCGImageAtTime:time actualTime:NULL error:&err];
+                if (imgRef) {
+                    UIImage *thumbImg = [UIImage imageWithCGImage:imgRef];
+                    CGImageRelease(imgRef);
+                    NSData *tData = UIImageJPEGRepresentation(thumbImg, 0.85);
+                    if (tData) {
+                        NSString *generatedThumbFile = [NSString stringWithFormat:@"thumb_%lld.jpg", timestamp];
+                        NSString *generatedThumbPath = [[self getCapturesDirectory] stringByAppendingPathComponent:generatedThumbFile];
+                        [tData writeToFile:generatedThumbPath atomically:YES];
+                        result[@"thumbnailUri"] = [NSURL fileURLWithPath:generatedThumbPath].absoluteString;
+                    }
+                }
+            } @catch (NSException *e) {}
         }
 
         resolve(result);

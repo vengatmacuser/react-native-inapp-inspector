@@ -457,11 +457,19 @@ export interface ScreenshotResult {
 }
 
 export interface RecordingOptions {
+  /** Output format: 'mp4' (H.264) or 'gif' (animated GIF). Default: 'mp4' */
   format?: 'mp4' | 'gif';
+  /** Audio source: 'none' (muted), 'app' (in-app audio), 'mic' (microphone), 'mixed'. Default: 'none' */
   audioSource?: 'none' | 'app' | 'mic' | 'mixed';
+  /** Target frames per second: 5–60. Default: 30 */
   fps?: number;
+  /** Resolution scale factor: 0.2–1.0. Lower = smaller file, less CPU. Default: 0.5 */
+  scale?: number;
+  /** H.264 encoding bitrate in bits/sec. 0 = auto (adaptive to resolution). Default: auto */
   bitrate?: number;
+  /** Maximum recording duration in seconds: 5–300. Default: 120 */
   maxDurationSeconds?: number;
+  /** Temporarily hide inspector overlay during recording. Default: false */
   hideInspector?: boolean;
 }
 

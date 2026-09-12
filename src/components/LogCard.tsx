@@ -37,7 +37,7 @@ import HighlightText from './HighlightText';
 import TouchableScale from './TouchableScale';
 import {useTranslation} from '../i18n';
 
-const LogCard = React.memo(function LogCard({
+function LogCard({
   item,
   onPress,
   timelineMinStart,
@@ -108,10 +108,10 @@ const LogCard = React.memo(function LogCard({
       Animated.timing(shimmerOpacity, {
         toValue: 0,
         duration: 1200,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
     }
-  }, [isNew]);
+  }, [isNew, shimmerOpacity]);
 
   const getStatusText = () => {
     if (isLoading) return '...';
@@ -429,7 +429,7 @@ const LogCard = React.memo(function LogCard({
       </TouchableScale>
     </View>
   );
-});
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -697,4 +697,17 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LogCard;
+function areLogCardPropsEqual(prev: LogCardProps, next: LogCardProps): boolean {
+  return (
+    prev.item === next.item &&
+    prev.isSelected === next.isSelected &&
+    prev.isNew === next.isNew &&
+    prev.searchStr === next.searchStr &&
+    prev.timelineMinStart === next.timelineMinStart &&
+    prev.timelineTotalRange === next.timelineTotalRange &&
+    prev.onPress === next.onPress &&
+    prev.onToggleSelect === next.onToggleSelect
+  );
+}
+
+export default React.memo(LogCard, areLogCardPropsEqual);

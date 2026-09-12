@@ -1,6 +1,20 @@
 # React Native In-App Inspector
 
 <p align="center">
+  <b><a href="./README.md">English</a></b> |
+  <b><a href="./README.zh-CN.md">简体中文</a></b> |
+  <b><a href="./README.hi.md">हिन्दी</a></b> |
+  <b><a href="./README.ja.md">日本語</a></b> |
+  <b><a href="./README.es.md">Español</a></b> |
+  <b><a href="./README.de.md">Deutsch</a></b> |
+  <b><a href="./README.fr.md">Français</a></b> |
+  <b><a href="./README.pt-BR.md">Português</a></b> |
+  <b><a href="./README.ko.md">한국어</a></b> |
+  <b><a href="./README.ru.md">Русский</a></b> |
+  <b><a href="./README.ar.md">العربية</a></b>
+</p>
+
+<p align="center">
   <picture>
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
@@ -19,68 +33,156 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Expo-0284c7?logo=apple&logoColor=white" alt="platform" />
   <img src="https://img.shields.io/badge/React%20Native-%E2%89%A50.60-61DAFB?logo=react&logoColor=white" alt="React Native" />
-  <img src="https://img.shields.io/badge/Expo-SDK%2048%2B%20%7C%2050%2B%20%7C%2051%2B-000020?logo=expo&logoColor=white" alt="Expo" />
+  <img src="https://img.shields.io/badge/Expo-SDK%2048%2B%20%7C%2050%2B%20%7C%2051%2B%20%7C%2052%2B-000020?logo=expo&logoColor=white" alt="Expo" />
   <img src="https://img.shields.io/badge/TypeScript-Strict%20Ready-3178c6?logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Engine-Hermes%20%7C%20JSC-9333ea" alt="Engine" />
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Micro--UI-Fault--Isolated-10b981?logo=shield&logoColor=white" alt="Fault Isolated" />
-  <img src="https://img.shields.io/badge/Overhead-0%25%20Inactive-06b6d4" alt="Overhead" />
-  <img src="https://img.shields.io/badge/Redux-RTK%20%7C%20Persist-764abc?logo=redux&logoColor=white" alt="Redux" />
-  <img src="https://img.shields.io/badge/Analytics-Firebase%20%7C%20GA4-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
+  <img src="https://img.shields.io/badge/WebSockets-ws%20%7C%20wss%20%7C%20Socket.IO-06b6d4?logo=socketdotio&logoColor=white" alt="WebSockets" />
+  <img src="https://img.shields.io/badge/Storage-AsyncStorage%20%7C%20MMKV-f59e0b?logo=databricks&logoColor=white" alt="Storage" />
+  <img src="https://img.shields.io/badge/Push%20Logger-APNs%20%7C%20FCM-10b981?logo=firebase&logoColor=white" alt="Push" />
+  <img src="https://img.shields.io/badge/Localization-25%20Languages-ec4899" alt="Localization" />
+  <img src="https://img.shields.io/badge/Screen%20Capture-Video%20%7C%20GIF%20%7C%20Screenshot-8b5cf6" alt="Screen Capture" />
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
 </p>
 
-The **zero-config, all-in-one in-app debugging overlay for React Native & Expo**. Inspect network traffic (fetch/Axios), console logs with Metro symbolicated stack traces, Redux state diffs, Firebase Analytics events, and JavaScript bundle size directly on your device or simulator with zero native setup.
+The **zero-config, all-in-one in-app debugging toolkit for React Native & Expo**. Inspect HTTP/HTTPS network traffic, WebSocket and Socket.IO real-time streams, console logs with Metro symbolicated stack traces, Redux state diffs, AsyncStorage & MMKV live storage, push notifications, native hardware metrics, and capture screenshots or screen recordings directly on your device with **zero native setup**.
 
-> 🚀 **The modern, lightweight alternative to Flipper and Chucker** — works standalone on device, in test builds, and across standalone APKs/IPAs without desktop companion apps, cables, or open debugger ports.
+> 🚀 **The modern, lightweight alternative to Flipper, Charles, Proxyman, and Chucker** — works standalone on device, in test builds, and across standalone APKs/IPAs without desktop companion apps, cables, or open debugger ports.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector Walkthrough" width="360" style="border-radius: 20px;" />
+  <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector Walkthrough" width="360" style="border-radius: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.5);" />
+</p>
+
+<p align="center">
+  🎬 <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mp4">Watch Full Video Walkthrough (MP4)</a></b> | <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mov">Original MOV</a></b>
 </p>
 
 ---
 
 ## ⚡ Why Choose `react-native-inapp-inspector`?
 
-| Capability | **react-native-inapp-inspector** | Flipper / RN Debugger |
-| :--- | :---: | :---: |
-| **Native Module (Kotlin & iOS Bridge)** | ✅ | ⚠️ |
-| **Low-Level Hardware & RAM Telemetry** | ✅ | ⚠️ |
-| **Zero-Render Inactive Mode (0% Background Overhead)** | ✅ | ❌ |
-| **Network Timing Waterfall & P95 Telemetry** | ✅ | ✅ |
-| **Network Inspector (Fetch & Axios)** | ✅ | ✅ |
-| **cURL & Fetch Snippet Export** | ✅ | ⚠️ |
-| **Console Logger + Stack Traces** | ✅ (Metro Symbolicated) | ✅ |
-| **Redux State & Action Diffs** | ✅ | ⚠️ |
-| **Firebase Analytics Tracker** | ✅ | ❌ |
-| **JS Bundle Size & Hermes Analyzer** | ✅ | ❌ |
-| **Live Traffic Stream Freeze** | ✅ | ❌ |
-| **Expo & Bare React Native** | ✅ | ⚠️ |
+| Capability | **react-native-inapp-inspector** | Flipper | Charles / Proxyman | RN Debugger |
+| :--- | :---: | :---: | :---: | :---: |
+| **Standalone on Device (No PC/Cable Required)** | ✅ | ❌ | ❌ | ❌ |
+| **Zero-Render Inactive Mode (0% Background CPU)** | ✅ | ❌ | ❌ | ❌ |
+| **HTTP/HTTPS Network Logger (Fetch / Axios / XHR)** | ✅ | ✅ | ✅ | ✅ |
+| **Timing Waterfall & P95 Telemetry** | ✅ | ⚠️ | ⚠️ | ❌ |
+| **cURL & Fetch Snippet Instant Export** | ✅ | ⚠️ | ⚠️ | ❌ |
+| **WebSocket & Socket.IO Packet Inspector** | ✅ | ❌ | ⚠️ | ⚠️ |
+| **Storage Inspector & Editor (AsyncStorage & MMKV)** | ✅ (Live CRUD) | ⚠️ (Read-only) | ❌ | ⚠️ |
+| **Push Notification Logger (APNs, FCM, Salesforce)** | ✅ | ❌ | ❌ | ❌ |
+| **Console Logger + Metro Source-Map Symbolication** | ✅ (Accurate Line #) | ✅ | ❌ | ✅ |
+| **Redux State Diffs & Action Timeline** | ✅ | ⚠️ | ❌ | ✅ |
+| **Crash Protection & Multi-type Breadcrumbs** | ✅ | ❌ | ❌ | ❌ |
+| **Native Hardware, RAM, Storage & Battery Telemetry** | ✅ | ⚠️ | ❌ | ❌ |
+| **Screen Capture (Screenshots, MP4 Video, GIF)** | ✅ | ❌ | ❌ | ❌ |
+| **25 Global Languages with Bottom Sheet Picker** | ✅ | ❌ (English only) | ❌ | ❌ |
+| **Expo (Bare & Managed) & React Native** | ✅ | ⚠️ | ⚠️ | ⚠️ |
 
 ---
 
 ## ✨ Features
 
-| Feature | Description |
-| --- | --- |
-| ⚡ **Native Hardware Telemetry** | Native Kotlin (`Android`) & Objective-C (`iOS`) bridge to query total RAM, available RAM, native heap size, internal storage free space, battery level, charging status, and CPU ABI. |
-| 🌊 **Network Timing Waterfall** | Latency breakdown with visual proportional waterfall bars, performance ratings (Fast `<200ms`, Moderate `200-800ms`, Slow `>800ms`), and aggregate **Success Rate %**, **Avg Latency**, and **P95 Latency** health indicators. |
-| 🚀 **Zero-Render Inactive Mode** | High-performance architecture that eliminates background React re-renders while the inspector modal is closed, synchronizing state instantaneously upon opening. |
-| 🌐 **Network Inspector** | Intercepts `fetch` and Axios (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`). Inspect status codes, request/response headers, body JSON, duration, caller origin, and instant cURL / fetch export snippets. |
-| 🪵 **Console Logger & Stack Trace** | Captures `console.log`, `info`, `warn`, and `error`. Displays trigger file (`TSX`, `JSX`, `TS`, `JS`) & line numbers via **Metro Symbolication**, call stack frames, individual arguments inspection, and duplicate collapsing (`×N`). |
-| ⏸️ **Live Stream Pause / Resume** | Freeze incoming network requests, console logs, and analytics streams on the fly to inspect active traffic without list jumping. |
-| 📊 **Analytics Tracker** | Tracks manual events and auto-patches `@react-native-firebase/analytics` calls (`logEvent`, `logScreenView`, `setUserProperties`, and `setUserId`). |
-| 🔄 **Redux State & Actions** | Connects to Redux / Redux Toolkit. Inspect dispatched actions with deep state diffs, payload breakdown, slice state trees, and `redux-persist` metadata. |
-| 📦 **Bundle Visualizer** | In-app JavaScript bundle size breakdown, Hermes engine bytecode metrics, visual package treemap, and integrated `react-native-bundle-visualizer` CLI. |
-| 🛡️ **Error Boundary & Native Crash Catcher** | Built-in React `ErrorBoundary` and native exception/signal crash catcher emitting rich stack traces and device diagnostics. |
+### 🌐 1. Network Inspector & Timing Waterfall
+- **Universal HTTP/HTTPS Interception**: Automatically hooks into `fetch`, default Axios, `axios.create()` instances, and `XMLHttpRequest`.
+- **Latency Breakdown**: Proportional timing waterfall bars, latency grading (Fast `<200ms`, Moderate `200-800ms`, Slow `>800ms`).
+- **Telemetry Strip**: Real-time **Success Rate %**, **Avg Latency (ms)**, and **P95 Latency (ms)**.
+- **Payload Viewer**: Formatted JSON syntax tree, raw payload view, request & response headers, query parameters, and caller origin.
+- **Export Formats**: One-tap copy as **cURL command**, **Fetch code snippet**, or formatted summary report.
+
+### ⚡ 2. WebSocket & Socket.IO Real-Time Stream Inspector
+- **Full Protocol Coverage**: Intercepts native WebSocket (`ws://`, `wss://`) and Socket.IO (`v2`, `v3`, `v4`).
+- **Live Frame Timeline**: Bidirectional frame tracking (⬆️ Sent, ⬇️ Received) with high-resolution timestamps.
+- **Frame Types**: Text, JSON payloads, Binary/ArrayBuffer lengths, and Ping/Pong heartbeats.
+- **Handshake & Metadata**: Inspect connection state, handshake query params, transport type (websocket/polling), reconnection events, and errors.
+- **Search & Filter**: Filter frames by direction, opcode, or inspect specific payload payloads.
+
+### 💾 3. Storage Manager (AsyncStorage & MMKV)
+- **Unified Storage Interface**: Live viewer for both `@react-native-async-storage/async-storage` and `react-native-mmkv`.
+- **Live In-App CRUD**: Read, search, create, update, and delete storage keys directly from your phone screen.
+- **Type-Aware Parsing**: Automatically distinguishes JSON objects, arrays, booleans, numbers, and strings.
+- **Instant Search**: Search through thousands of stored keys and values with zero lag.
+
+### 🔔 4. Push Notification Logger
+- **Multi-Provider Detection**: Automatically logs notifications from FCM (`@react-native-firebase/messaging`), APNs, Salesforce Marketing Cloud, OneSignal, and Notifee.
+- **App State Tracking**: Identifies if notifications were received in **Foreground**, **Background**, or caused app launch from **Killed** state.
+- **Payload Inspector**: Full data payload inspection, deep-link URLs, notification titles, bodies, and channel IDs.
+- **Interactive Action Tracking**: Captures user taps, dismissals, and custom notification button action clicks.
+
+### 🪵 5. Console Logger & Metro Source-Map Symbolication
+- **Line-Accurate Symbolication**: Intercepts `console.log`, `info`, `warn`, and `error`. Symbolicates stack traces via Metro Bundler so you see exact project source files and line numbers (`HomeScreen.tsx:42:15`, `AuthService.ts:88`).
+- **Detailed Sub-Tabs**:
+  - **Output**: JSON viewer (Pretty, Raw, Table) with clickable URL detection.
+  - **Args (N)**: Inspect each passed argument individually with type breakdown.
+  - **Call Stack**: Structured frame cards (File name, Function, Line, Column pills).
+  - **Error Stack**: Thrown Error stack traces preserved and highlighted.
+  - **Metadata**: Duplicate collapsing counter (`×N`), character size, and timestamp.
+
+### 🔄 6. Redux State & Action Diffs
+- **Redux & Redux Toolkit**: Seamless integration with Redux Store, RTK Query, and `redux-persist`.
+- **Action Timeline**: Chronological record of dispatched actions with exact timestamps and durations.
+- **Deep State Diffs**: Visual color-coded diffing of state changes (**Green** for additions, **Amber** for updates, **Red** for deletions).
+- **Slice Tree Navigation**: Explore your global state tree slice by slice.
+
+### 📊 7. Analytics Event Tracker
+- **Firebase Analytics Auto-Patch**: Hooks into `@react-native-firebase/analytics` (`logEvent`, `logScreenView`, `setUserProperties`, `setUserId`).
+- **Plugin Architecture**: Easily plug in custom analytics providers (Google Analytics 4, Mixpanel, Segment, Amplitude).
+- **Parameter Inspection**: Inspect event parameters, user properties, and timestamps.
+
+### 🛡️ 8. Crash Protection & Global Error Boundary
+- **Zero-Crash Micro-UI**: The inspector UI is fully isolated; errors inside the inspector cannot crash your host application.
+- **Global Error Boundary**: Catch unhandled JavaScript rendering crashes with a helpful recovery UI.
+- **Breadcrumb Timeline**: Tracks preceding user navigation, network calls, and Redux actions leading up to the crash.
+- **Native Crash Protection**: Captures native uncaught signals and exceptions on iOS and Android.
+
+### 📱 9. Native Hardware, RAM & Performance Telemetry
+- **Low-Level Metrics**: Total RAM, Available Free RAM, Native Allocated Heap, Internal Storage Free Space, Battery Percentage & Charging state, CPU Architecture (ABI).
+- **Live FPS Counter**: Real-time FPS monitoring on native display refresh cycles.
+- **Memory Warning Auto-Pruning**: Automatically prunes in-memory logs when the OS triggers low memory alerts.
+- **Shake to Toggle**: Shake physical device or press `Ctrl+Cmd+Z` / `Cmd+M` to toggle the inspector.
+
+### 📸 10. Native Media Capture Suite (Screenshot, Video, GIF)
+- **On-Device Screenshot**: Take crisp high-resolution full-window screenshots without status bar clipping.
+- **Screen Video Recording**: Capture smooth MP4 video walkthroughs of bugs directly on device.
+- **Animated GIF Generator**: Convert recordings to lightweight GIFs for easy sharing on GitHub PRs and Jira tickets.
+- **In-App Media Gallery**: Preview, share, or delete captured recordings inside the inspector.
+
+### 🌍 11. 25 Global Languages & Interactive Bottom Sheet
+- **25 Supported Locales**: English, Spanish, French, German, Italian, Portuguese, Russian, Japanese, Korean, Simplified Chinese (`zh`), Traditional Chinese (`zh-TW`), Arabic, Turkish, Dutch, Polish, Indonesian, Vietnamese, Thai, and 7 major Indian languages (Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Marathi).
+- **Interactive Bottom Sheet**: Tap `[ 🌐 EN ▾ ]` to open the bottom sheet with horizontal country flags/chips and instant search for one-tap switching.
 
 ---
 
-## 🎬 Video Walkthrough
+## 🔎 Smart DevTools Search Engine Syntax
 
-[Download or watch the Video Walkthrough](https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/example/guidance/Video-WalkThrough.mp4)
+The search bar supports advanced Chrome DevTools-style filtering across all tabs:
+
+```text
+# Filter by HTTP method and status code
+method:POST status:200
+
+# Exclude analytics or third-party domains
+url:api.myapp.com -analytics -facebook
+
+# Filter by request or response header
+header:authorization
+
+# Search inside request or response JSON body
+body:"orderId"
+
+# Filter logs by screen / route name
+page:CheckoutScreen
+
+# Filter console logs by specific TSX file
+file:ProfileView.tsx
+
+# Negate any term using minus prefix
+-healthcheck -socket.io
+```
+
+*Note: Proxy headers like `via: 2.0 heroku-router`, `cf-ray:`, or `nel:` are automatically separated to avoid polluting search results.*
 
 ---
 
@@ -88,292 +190,270 @@ The **zero-config, all-in-one in-app debugging overlay for React Native & Expo**
 
 ### Bare React Native
 ```bash
-npm install --save-dev react-native-inapp-inspector axios
+npm install --save-dev react-native-inapp-inspector react-native-svg
 # or
-yarn add -D react-native-inapp-inspector axios
+yarn add -D react-native-inapp-inspector react-native-svg
+# or
+pnpm add -D react-native-inapp-inspector react-native-svg
 ```
 
+#### iOS CocoaPods Setup
 ```bash
-# iOS Pods
-cd ios && pod install
+cd ios && pod install && cd ..
 ```
 
 ### Expo Projects
 ```bash
-npx expo install react-native-inapp-inspector react-native-svg react-native-linear-gradient
+npx expo install react-native-inapp-inspector react-native-svg
 ```
-
-### Dependencies
-The package requires React (`>=18.0.0`) and React Native (`>=0.60.0`) as peer dependencies and utilizes `@react-navigation/native`, `react-native-linear-gradient`, and `react-native-svg`.
-
-*(Optional)* If you use `@react-native-clipboard/clipboard` in your project, the inspector automatically detects and utilizes native clipboard bridges for seamless emulator-to-host copying.
+*(Compatible with Expo SDK 48, 49, 50, 51, 52+ in both Expo Go and Prebuild)*
 
 ---
 
-## 🚀 Basic Setup (JavaScript & TypeScript)
+## 🚀 Getting Started
 
-Mount `<NetworkInspector />` near the root of your application (e.g. in `App.js` or `App.tsx`):
+### 1. Basic Setup in `App.tsx`
 
-```jsx
+Mount `<NetworkInspector />` at the root of your app. Wrap with `__DEV__` to ensure it only runs in development or test builds:
+
+```tsx
 import React from 'react';
-import {SafeAreaView} from 'react-native';
-import NetworkInspector from 'react-native-inapp-inspector';
-
-const App = () => {
-  return (
-    <SafeAreaView style={{flex: 1}}>
-      {/* Your application components */}
-      <NetworkInspector />
-    </SafeAreaView>
-  );
-};
-
-export default App;
-```
-
-When mounted, the inspector automatically sets up network logging, intercepts console methods, and attaches Firebase Analytics if available.
-
-### Early Startup Network Logging
-
-If your application makes API calls before the root component finishes mounting, initialize the logger at the module level in your entry file (`index.js` or `App.tsx`):
-
-```javascript
+import { SafeAreaView } from 'react-native';
 import NetworkInspector, {
   setupNetworkLogger,
   setupConsoleLogger,
+  setupSocketLogger,
+  connectReduxStore,
+  connectAsyncStorage,
 } from 'react-native-inapp-inspector';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { store } from './src/store';
 
+// ⚡ Initialize loggers before application renders
 setupNetworkLogger();
 setupConsoleLogger();
+setupSocketLogger();
+
+if (store) {
+  connectReduxStore(store);
+}
+connectAsyncStorage(AsyncStorage);
+
+export default function App() {
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* Your host app components */}
+      <YourAppRoot />
+
+      {/* Floating overlay UI */}
+      {__DEV__ && (
+        <NetworkInspector
+          enabled={true}
+          environment="DEV"
+        />
+      )}
+    </SafeAreaView>
+  );
+}
 ```
 
 ---
 
-## ⚡ Native Hardware & Memory Telemetry
+## 💡 Advanced Usage & Feature Guides
 
-Access native low-level device, battery, and memory metrics:
+### 🌐 Early Startup Network Logging
+If your app triggers API calls before root components mount, invoke `setupNetworkLogger()` at the top of your index entry file (`index.js` or `index.ts`):
 
-```javascript
-import { 
-  getNativeDeviceMetrics, 
-  enableNativeCrashProtection, 
-  subscribeNativeCrashes 
-} from 'react-native-inapp-inspector';
+```typescript
+import { setupNetworkLogger } from 'react-native-inapp-inspector';
 
-// Fetch hardware & memory metrics
-async function logStats() {
-  const metrics = await getNativeDeviceMetrics();
-  if (metrics) {
-    console.log('Model:', metrics.deviceModel, metrics.osVersion);
-    console.log('Total RAM:', (metrics.totalRAM / (1024 * 1024)).toFixed(0), 'MB');
-    console.log('Free RAM:', (metrics.freeRAM / (1024 * 1024)).toFixed(0), 'MB');
-    console.log('Native Heap:', (metrics.nativeHeapAllocated / (1024 * 1024)).toFixed(1), 'MB');
-    console.log('Free Storage:', (metrics.freeStorage / (1024 * 1024 * 1024)).toFixed(2), 'GB');
-    console.log('Battery:', `${metrics.batteryPercent}% (Charging: ${metrics.isCharging})`);
-  }
-}
-
-// Enable native crash protection
-enableNativeCrashProtection();
-
-// Subscribe to native crash events
-const unsubscribe = subscribeNativeCrashes((crash) => {
-  console.log('Native Exception:', crash.error, crash.stack);
+// Automatically captures fetch, Axios, and XMLHttpRequest
+setupNetworkLogger({
+  maxRequests: 200,
+  ignoredUrls: ['https://clients3.google.com/generate_204'],
 });
 ```
 
----
+### ⚡ WebSocket & Socket.IO Interception
+Intercept real-time packets effortlessly:
 
-## 🪵 Console Logger & Stack Trace
+```typescript
+import { setupSocketLogger, recordSocketConnection, recordSocketFrame } from 'react-native-inapp-inspector/socket';
 
-The console logger provides deep insight into every `console.log`, `info`, `warn`, and `error` call:
+// Initialize global WebSocket interceptor
+setupSocketLogger();
 
-- **Metro Source Map Symbolication**: Stack traces are automatically symbolicated against Metro to point directly to your exact project source files (`HomeScreen.tsx:42:15`, `App.js:20`).
-- **Vector SVG Category Tags**: Clean vector icons for `[TEST]`, `[API]`, `[REDUX]`, `[ANALYTICS]`, `[AUTH]`, `[WARN]`, `[ERROR]` tags.
-- **Detailed Sub-Tabs**:
-  - **Output / Message**: Full message with JSON Viewer (Pretty, Raw, Table modes) and link detection.
-  - **Args (N)**: Inspect each passed argument individually with type detection (`Array[5]`, `Object{4}`).
-  - **Call Stack Trace**: Structured frame cards (with Frame `#`, Function, File, and `L:C` pills) and Raw Trace view.
-  - **Error Stack**: Automatically captures the thrown Error stack trace when logging Error objects.
-  - **Metadata**: Structured table of log properties, timestamp, character count, and duplicate counter.
-
----
-
-## 🌐 Network Logging & Latency Waterfall
-
-`setupNetworkLogger()` intercepts global `fetch`, the default Axios instance, and instances created with `axios.create()`.
-
-```javascript
-import axios from 'axios';
-import {setupNetworkLogger} from 'react-native-inapp-inspector';
-
-setupNetworkLogger();
-
-const api = axios.create({baseURL: 'https://api.example.com'});
-
-await fetch('https://api.example.com/users');
-await api.post('/login', {email, password});
+// Or manually record custom socket frames:
+recordSocketFrame(connectionId, {
+  direction: 'in', // 'in' | 'out'
+  type: 'json',
+  data: { event: 'ORDER_UPDATED', orderId: '12345' },
+});
 ```
 
-The APIs tab features:
-- **Telemetry Strip**: Real-time **Success Rate %**, **Avg Latency (ms)**, and **P95 Latency (ms)**.
-- **Timing Waterfall**: Color-coded latency progress bars on each request card and duration benchmarks in request details.
-- **cURL & Fetch Export**: Instant copyable commands for debugging in Postman, Charles, or Terminal.
+### 💾 Storage Tab Integration (AsyncStorage & MMKV)
+Inspect and mutate storage keys in real-time on your phone:
 
----
+```typescript
+// For AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { connectAsyncStorage } from 'react-native-inapp-inspector/storage';
 
-## 🔄 Redux State & Action Inspection
+connectAsyncStorage(AsyncStorage);
 
-Connect your Redux store once during application startup:
+// For react-native-mmkv
+import { MMKV } from 'react-native-mmkv';
+import { connectMMKV } from 'react-native-inapp-inspector/storage';
 
-```javascript
-import {configureStore} from '@reduxjs/toolkit';
-import {inspectorReduxMiddleware, connectReduxStore} from 'react-native-inapp-inspector';
+export const storage = new MMKV();
+connectMMKV(storage, 'default');
+```
+
+### 🔔 Push Notifications Logger
+Track APNs, FCM, and custom push events:
+
+```typescript
+import { autoSetupPushLogger, recordPushNotification } from 'react-native-inapp-inspector/push';
+
+// Auto-detect and hook available push providers (FCM, OneSignal, etc.)
+autoSetupPushLogger();
+
+// Or manually record received notifications:
+recordPushNotification({
+  title: 'Order Delivered',
+  body: 'Your package #58219 has arrived!',
+  source: 'fcm',
+  appState: 'foreground',
+  data: { orderId: '58219', url: 'myapp://orders/58219' },
+});
+```
+
+### 🔄 Redux State & Action Inspection
+Inspect action payloads and deep state diffs:
+
+```typescript
+import { configureStore } from '@reduxjs/toolkit';
+import { inspectorReduxMiddleware, connectReduxStore } from 'react-native-inapp-inspector/redux';
 import rootReducer from './slices';
 
 const store = configureStore({
   reducer: rootReducer,
-  middleware: getDefaultMiddleware =>
+  middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(inspectorReduxMiddleware),
 });
 
 connectReduxStore(store);
 ```
 
----
+### 🧭 React Navigation Screen Tracking
+Pass your navigation container ref so all logs, network calls, and socket frames are tagged with the active screen:
 
-## 🧭 Navigation & Screen Tracking
-
-To group network requests, logs, and analytics by the active screen, pass your navigation container ref:
-
-```jsx
-import {NavigationContainer, createNavigationContainerRef} from '@react-navigation/native';
+```tsx
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import NetworkInspector from 'react-native-inapp-inspector';
 
 const navigationRef = createNavigationContainerRef();
 
-const App = () => {
+export default function App() {
   return (
     <>
       <NavigationContainer ref={navigationRef}>
-        {/* Your screens */}
+        <RootNavigator />
       </NavigationContainer>
       <NetworkInspector navigationRef={navigationRef} />
     </>
   );
-};
+}
 ```
 
----
+### 📸 Screen Capture & Video Recording Suite
+Take screenshots or record screen videos on device:
 
-## ⚙️ Settings Persistence
+```typescript
+import { ScreenCapture } from 'react-native-inapp-inspector/capture';
 
-Inspector preferences (dark mode, active modules, default landing tab) persist across app launches:
-- **iOS**: Uses React Native's built-in `Settings` module (`NSUserDefaults`) with zero extra configuration.
-- **Android / Custom Storage**: Pass `@react-native-async-storage/async-storage` or `react-native-mmkv` to the `storage` prop:
+// Take high-resolution screenshot
+const shot = await ScreenCapture.takeScreenshot({ format: 'png' });
+console.log('Saved screenshot to:', shot.uri);
 
-```jsx
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Start video recording with mic audio
+await ScreenCapture.startRecording({
+  audioSource: 'mic',
+  format: 'mp4',
+});
 
-<NetworkInspector storage={AsyncStorage} />
+// Stop recording and retrieve file
+const video = await ScreenCapture.stopRecording();
+console.log('Recorded video:', video.uri, video.duration);
 ```
 
----
+### 🌍 Multi-Language Programmatic API
+Switch languages on the fly or customize translations:
 
-## 🏛️ Full Native Migration Guide (Native Core + JS Bridge API)
+```typescript
+import { setLanguage, getLanguage, SUPPORTED_LANGUAGES } from 'react-native-inapp-inspector';
 
-If you wish to migrate the inspector's entire UI and data engine to **100% Native (Kotlin / Swift)** while keeping a seamless, zero-friction JavaScript API for React Native developers, follow this architectural roadmap:
+// Change language to Simplified Chinese, Hindi, Spanish, etc.
+setLanguage('zh'); // 'en' | 'zh' | 'hi' | 'ja' | 'es' | 'fr' | 'de' | etc.
 
-```mermaid
-flowchart TB
-    subgraph React Native / JavaScript Layer
-        JS_App[Host React Native App]
-        JS_Bridge[Thin TS API: setupNetworkLogger / connectRedux / NativeInspector]
-        JS_App -->|Logs, Redux, Analytics| JS_Bridge
-    end
-
-    subgraph Native iOS / Android Engine
-        Native_Store[(Native Circular Ring Buffer & SQLite Storage)]
-        Native_Overlay[100% Native Floating Overlay & Window]
-        Native_Modal[Native Inspector Modal: SwiftUI / Compose / UIKit]
-        Native_Network[Native OkHttp Interceptor & NSURLProtocol]
-
-        JS_Bridge <-->|JSI / TurboModules / Event Emitters| Native_Store
-        Native_Network -->|Direct Native Traffic| Native_Store
-        Native_Overlay -->|Taps & Gestures| Native_Modal
-        Native_Store -->|Instant 120 FPS Rendering| Native_Modal
-    end
+console.log('Current language:', getLanguage());
 ```
-
-### Step-by-Step Migration Plan
-
-#### Step 1: Native Floating Overlay & Gesture Engine *(Completed)*
-- **iOS:** Floating `UIWindow` or root `UIView` subview at `UIWindowLevelAlert` with `UIPanGestureRecognizer` and edge-snapping physics on `[NSOperationQueue mainQueue]`.
-- **Android:** Custom `FrameLayout` attached to `activity.window.decorView` with hardware-accelerated `OnTouchListener` running on the Main Looper.
-- **Benefit:** 100% immune to JS thread stalls, instant 120 FPS drag response.
-
-#### Step 2: Native Full-Screen Inspector Modal
-- **iOS (UIKit / SwiftUI):**
-  - Create an `InspectorViewController` or SwiftUI `InspectorView`.
-  - When the floating icon is tapped, present it via `rootViewController.presentViewController:animated:completion:` directly on the native main thread.
-- **Android (Jetpack Compose / XML View):**
-  - Create an `InspectorBottomSheetDialogFragment` or full-screen `DialogFragment`.
-  - Present with `fragmentManager.beginTransaction()` from `currentActivity`.
-- **Benefit:** Searching 10,000+ network calls and expanding multi-megabyte JSON payloads occurs natively with virtualized lists and zero React re-render overhead.
-
-#### Step 3: Native Network Interception (OkHttp & NSURLProtocol)
-- **Android:** Add an `OkHttpInterceptor` into React Native's `OkHttpClientProvider.setOkHttpClientFactory` or custom client. Captures headers, byte streams, and timing without touching JavaScript `fetch` proxies.
-- **iOS:** Register a custom `NSURLProtocol` on `[NSURLSessionConfiguration defaultSessionConfiguration]` to intercept low-level iOS network traffic globally.
-- **Benefit:** Intercepts 3rd-party native SDK calls (Firebase, Stripe, AWS, Native Image loaders) in addition to JavaScript `fetch`/Axios requests.
-
-#### Step 4: High-Performance JSI / C++ Shared Store
-- Use React Native's **JSI (JavaScript Interface)** to share memory directly between C++/Kotlin/Swift and Hermes/JSC without JSON serialization over the legacy bridge.
-- Expose synchronous methods:
-  ```ts
-  // JSI Direct Memory Calls (0ms latency):
-  global.__InAppInspector_log(item);
-  global.__InAppInspector_getLogs();
-  ```
-
-#### Step 5: Preserve JavaScript Backwards Compatibility
-- Keep existing JS exports (`setupNetworkLogger`, `connectReduxStore`, `logAnalyticsEvent`, `<NetworkInspector />`).
-- The TS wrapper transparently forwards data into the native store:
-  ```ts
-  export const logAnalyticsEvent = (name: string, params?: Record<string, any>) => {
-    if (NativeModules.NetworkInspectorModule?.logEvent) {
-      NativeModules.NetworkInspectorModule.logEvent(name, params);
-    }
-  };
-  ```
 
 ---
 
 ## 📚 Public API Reference
 
+### Component Props: `<NetworkInspector />`
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `enabled` | `boolean` | `true` | When `false`, completely unmounts with 0% overhead. |
+| `environment` | `string` | `'DEV'` | Environment badge displayed on top bar (`'DEV'`, `'QA'`, `'STAGING'`). |
+| `navigationRef` | `NavigationContainerRef` | `undefined` | React Navigation ref for tagging logs with active screen names. |
+| `storage` | `AsyncStorage / MMKV` | `undefined` | Custom storage instance for persisting inspector settings. |
+| `theme` | `'dark' \| 'light' \| 'system'` | `'dark'` | Visual theme preference. |
+| `defaultTab` | `ActiveTab` | `ActiveTab.APIs` | Initial tab opened when expanding the inspector modal. |
+
+### Module Exports: `react-native-inapp-inspector`
+
 | Export | Type | Description |
-| --- | --- | --- |
-| `NetworkInspector` | Component | Floating inspector overlay. Mount near app root. |
-| `getNativeDeviceMetrics()` | Function | Returns native RAM, heap, disk, battery, and hardware metrics. |
-| `enableNativeCrashProtection()` | Function | Enables native signal & uncaught exception protection. |
-| `subscribeNativeCrashes(cb)` | Function | Subscribes to native crash events. |
-| `setupNetworkLogger()` | Function | Patches `fetch`, default Axios, and future `axios.create()` instances. |
-| `addAxiosInterceptors(instance)` | Function | Manually attaches Axios interceptors to an existing instance. |
-| `clearNetworkLogs()` | Function | Clears captured network requests. |
-| `subscribeNetworkLogs(cb)` | Function | Subscribes to network log updates. |
-| `setupConsoleLogger()` | Function | Intercepts `console.log`, `info`, `warn`, and `error`. |
-| `clearConsoleLogs()` | Function | Clears captured console logs. |
-| `subscribeConsoleLogs(cb)` | Function | Subscribes to console log updates. |
-| `connectReduxStore(store)` | Function | Connects a Redux store for state and action inspection. |
-| `inspectorReduxMiddleware` | Middleware | Redux middleware for capturing thunks, sagas, and RTK Query actions. |
-| `setupAnalyticsLogger(instance)` | Function | Patches a Firebase Analytics instance. |
-| `logAnalyticsEvent(name, params?, userProps?)` | Function | Logs a manual analytics event. |
-| `ErrorBoundary` | Component | React error boundary component. |
+| :--- | :--- | :--- |
+| `setupNetworkLogger(options?)` | `Function` | Intercepts `fetch`, Axios, and XMLHttpRequest. |
+| `setupConsoleLogger()` | `Function` | Intercepts `console.log/info/warn/error` with Metro symbolication. |
+| `setupSocketLogger()` | `Function` | Intercepts WebSocket and Socket.IO real-time traffic. |
+| `connectReduxStore(store)` | `Function` | Connects a Redux store for action timeline and state diffs. |
+| `connectAsyncStorage(storage)` | `Function` | Connects AsyncStorage to the Storage tab. |
+| `connectMMKV(instance, id?)` | `Function` | Connects an MMKV instance to the Storage tab. |
+| `autoSetupPushLogger()` | `Function` | Automatically attaches push notification logger. |
+| `recordPushNotification(record)` | `Function` | Manually records an incoming push notification. |
+| `ScreenCapture` | `Object` | Screenshot, video recording, and GIF capture API. |
+| `getNativeDeviceMetrics()` | `Function` | Returns hardware RAM, heap, disk, battery, and CPU info. |
+| `setupGlobalCrashHandler()` | `Function` | Captures uncaught JS errors and records breadcrumbs. |
+| `enableNativeCrashProtection()`| `Function` | Enables native crash signal and uncaught exception protection. |
+| `setLanguage(code)` | `Function` | Switches inspector language across 25 supported locales. |
+| `SUPPORTED_LANGUAGES` | `Array` | Array of all 25 supported languages with country metadata. |
+
+---
+
+## 📱 Sub-Path Modular Imports
+
+For optimal bundle tree-shaking, you can import specific sub-modules directly:
+
+```typescript
+import { setupNetworkLogger } from 'react-native-inapp-inspector/network';
+import { setupSocketLogger } from 'react-native-inapp-inspector/socket';
+import { connectAsyncStorage, connectMMKV } from 'react-native-inapp-inspector/storage';
+import { autoSetupPushLogger } from 'react-native-inapp-inspector/push';
+import { connectReduxStore, inspectorReduxMiddleware } from 'react-native-inapp-inspector/redux';
+import { setupConsoleLogger } from 'react-native-inapp-inspector/console';
+import { ScreenCapture } from 'react-native-inapp-inspector/capture';
+```
 
 ---
 
 ## 📱 Example App
 
-Check out the `example` directory for a complete demo application:
+Explore a complete working showcase in the `example/` directory:
 
 ```bash
 cd example
@@ -388,24 +468,41 @@ npm run android
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please check out our [Contributing Guidelines](CONTRIBUTING.md) to get started.
+Contributions are warmly welcomed! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) to get started with local development and testing.
 
 ---
 
 ## 💖 Support & Sponsoring
 
-This library is a free, open-source utility maintained in spare time. If it saved you or your team time debugging, please consider supporting its continuous development.
+`react-native-inapp-inspector` is an independent, free, open-source project. If it has simplified your daily development, saved your team debugging hours, or made QA testing smoother, please consider starring the repository and supporting its maintenance:
 
 👉 **[Sponsor @vengatmacuser on GitHub Sponsors](https://github.com/sponsors/vengatmacuser)**
 
-## 🔍 Keywords & Search Topics
+## 🔍 Global Search Keywords & Regional Topics
 
-`react-native-inapp-inspector` is designed for engineers seeking:
-* **Network Logging**: React Native network logger, in-app HTTP/HTTPS network inspector, Axios interceptor, Fetch API logger, GraphQL network monitor, WebSocket stream logger, cURL snippet export on device.
-* **Modern Tool Alternatives**: Standalone Flipper alternative for React Native, Chucker for React Native Android & iOS, React Native Debugger replacement, mobile Proxyman / Charles Proxy alternative.
-* **State & Storage Inspection**: React Native Redux DevTools on mobile, Redux Toolkit action diffs, `redux-persist` metadata inspector, AsyncStorage viewer & editor, MMKV storage debugger.
-* **Crash & Diagnostics**: React Native crash reporter, Metro symbolicated stack traces, React Error Boundary with fault-isolated Micro-UI architecture, low-level RAM & battery telemetry, device hardware inspector.
-* **Analytics & Screen Capture**: Firebase Analytics event inspector, GA4 debugger, on-device screen recorder, video capture, and screenshot utility for bare React Native & Expo applications.
+`react-native-inapp-inspector` is index-optimized for developers and teams searching across all world markets, languages, and regional dev ecosystems:
+
+| Region / Market | Primary Countries | Search Keywords & Native Regional Developer Terms |
+| :--- | :--- | :--- |
+| 🇺🇸 🇬🇧 🇨🇦 🇦🇺 🇳🇿 🇮🇪 | **USA, UK, Canada, Australia, New Zealand, Ireland** | React Native network logger, Flipper alternative, Charles proxy alternative, Chucker for React Native, Proxyman alternative, in-app inspector, WebSocket inspector, AsyncStorage editor, MMKV debugger, push notification logger, Metro source-map symbolication, Hermes bytecode visualizer, mobile devtools, zero-config network debugger. |
+| 🇨🇳 🇹🇼 🇭🇰 🇸🇬 | **China, Taiwan, Hong Kong, Singapore** | React Native 抓包工具, 移动端抓包, 网络监控, 移动端控制台, 调试工具, Flipper 替代方案, Charles 替代, Chucker 替代, Proxyman 替代, WebSocket 实时抓包, MMKV 查看器, AsyncStorage 查看器, 免电脑抓包, 行動端偵錯, 網路封包側錄, 移动端网络调试, 真机调试工具. |
+| 🇮🇳 | **India & South Asia** | react-native-india, नेटवर्क लॉगर, मोबाइल ऐप डिबगिंग, इन-ऐप इंस्पेक्टर, வலைப்பின்னல் பதிவர் (Tamil), நெட்வொர்க் இன்ஸ்பெக்டர், வலைப்பின்னல் ஆய்வாளர், నెట్‌వర్క్ లాగర్ (Telugu), నెట్‌వర్క్ ఇన్‌స్పెక్టర్, ನೆಟ್‌ವರ್ಕ್ ಲಾಗರ್ (Kannada), നെറ്റ്‌വർക്ക് ലോഗർ (Malayalam), নেটওয়ার্ক লগার (Bengali), नेटवर्क लॉगर मराठी (Marathi), react-native-bangalore, react-native-hyderabad. |
+| 🇯🇵 | **Japan** | リアクトネイティブ デバッガー, ネットワークロガー, パケットキャプチャ, 開発ツール, フリッパー代替, 通信ログ監視, チャールズ代替, アプリ内デバッガー, モバイル開発ツール, 通信監視ツール, WebSocket デバッグ, 端末内インスペクター, 通信ログ. |
+| 🇰🇷 | **South Korea** | 리액트 네이티브 디버거, 네트워크 로거, 모바일 패킷 캡처, 플리퍼 대체, 인앱 디버거, 웹소켓 로거, 찰스 프록시 대체, 차커 대체, 단말기 디버거, 모바일 개발 도구, 리액트네이티브 디버깅. |
+| 🇪🇸 🇲🇽 🇦🇷 🇨🇴 🇨🇱 | **Spain, Mexico, Argentina, Colombia, Chile, Peru** | Depurador React Native, captura de red móvil, registro de red, alternativa a Flipper, alternativa a Charles, herramientas de desarrollo React Native, editor de AsyncStorage en vivo, depuración móvil, monitor de tráfico móvil, react-native-mexico, react-native-argentina. |
+| 🇩🇪 🇦🇹 🇨🇭 | **Germany, Austria, Switzerland (DACH)** | Netzwerk-Logger, Entwicklertools React Native, In-App-Debugger Deutschland, Flipper-Alternative, Charles-Alternative, Paketmitschnitt Mobil, Netzwerk-Mitschnitt, Chucker-Alternative Deutsch, Fehlersuche Mobil, Speicher-Inspektor. |
+| 🇫🇷 🇧🇪 🇨🇦 | **France, Belgium, Canada (Quebec), Francophonie** | Débogueur React Native, inspecteur réseau mobile, outils de développement, alternative à Flipper, journal réseau, analyseur réseau mobile, capture paquets mobile, dépannage mobile React Native, inspecteur réseau France. |
+| 🇧🇷 🇵🇹 🇦🇴 | **Brazil, Portugal, Angola** | Depurador React Native, inspetor de rede móvel, ferramentas dev, alternativa ao Flipper, captura de pacotes, editor de storage mobile, react-native-brasil, depurador mobile, monitor de rede mobile. |
+| 🇷🇺 🇰🇿 🇧🇾 🇺🇦 | **Russia, Kazakhstan, Belarus, Ukraine (CIS)** | Отладчик React Native, сниффер сети, логирование сети, альтернатива Flipper, перехватчик трафика, мобильная отладка, инспектор сети, налагоджувач React Native Україна, логер мережі. |
+| 🇦🇪 🇸🇦 🇪🇬 🇶🇦 | **Middle East & North Africa (MENA)** | فاحص الشبكة رياكت نيتف, مصحح أخطاء الموبايل, مراقب الشبكة, بديل فليبر, أدوات مطور رياكت نيتف, فاحص الشبكة المحمول, تسجيل حزم البيانات. |
+| 🇮🇹 | **Italy** | Debugger React Native Italia, ispettore di rete, strumenti sviluppo mobile, cattura traffico mobile, alternativa Flipper Italia, registro chiamate HTTP. |
+| 🇳🇱 🇧🇪 | **Netherlands & Belgium (Flanders)** | Netwerk inspecteur Nederlands, netwerk logger Nederland, mobiele debugger, React Native ontwikkelaar, pakket sniffer mobiel, Flipper alternatief Nederland. |
+| 🇵🇱 | **Poland & Central Europe** | Debuger React Native Polska, inspektor sieci mobilnej, narzędzia programistyczne, rejestrator pakietów, rejestrator sieci, alternatywa dla Flipper. |
+| 🇹🇷 | **Turkey & Central Asia** | Ağ günlükçüsü Türkçe, hata ayıklayıcı, ağ denetleyicisi, Flipper alternatifi, React Native geliştirici araçları, mobil paket yakalama. |
+| 🇮🇩 🇻🇳 🇹🇭 🇵🇭 🇲🇾 | **Southeast Asia (ASEAN)** | Alat debug React Native Indonesia, pelacak jaringan mobile, kiểm tra mạng React Native Vietnam, ghi log mạng mobile, ดีบักเกอร์ React Native Thai, เครื่องมือตรวจสอบเครือข่าย, tagasuri ng network React Native Philippines. |
+| 🇸🇪 🇳🇴 🇩🇰 🇫🇮 | **Nordic Countries (Sweden, Norway, Denmark, Finland)** | Nätverkslogg Sverige, felsökare React Native, utvecklarverktyg React Native, mobildebuggning. |
+| 🇮🇱 | **Israel** | מנפה שגיאות ריאקט נייטיב, ניטור רשת מובייל, כלי פיתוח מובייל, לוכד תעבורת רשת. |
+| 🇿🇦 🇳🇬 🇰🇪 | **Sub-Saharan Africa (South Africa, Nigeria, Kenya)** | React Native Nigeria, React Native South Africa, mobile debugging Kenya, in-app inspector Africa. |
 
 ---
 

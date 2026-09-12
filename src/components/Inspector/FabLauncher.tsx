@@ -13,7 +13,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
 import AppHeaderLogo from '../AppHeaderLogo';
-import BrandCircleIcon from '../BrandCircleIcon';
 import {
   AndroidIcon,
   AppleIcon,
@@ -39,6 +38,7 @@ const FabLauncher = () => {
     setVisible,
     isMinimized,
     setIsMinimized,
+    dismissInspector,
     appIcon,
     fabPan,
     fabPanResponder,
@@ -46,6 +46,11 @@ const FabLauncher = () => {
     pulseAnim,
     fabShineAnim,
     refreshMediaCount,
+    captureFps,
+    captureScale,
+    captureBitrate,
+    captureMaxDurationSeconds,
+    captureAudioMode,
   } = useInspector();
   const {width: screenWidth} = useWindowDimensions();
   const {t} = useTranslation();
@@ -189,6 +194,7 @@ const FabLauncher = () => {
             width: result.width,
             height: result.height,
             hasAudio: result.hasAudio,
+            thumbnailUri: result.thumbnailUri,
           };
           setPreviewMediaItem(newItem);
           refreshMediaCount?.().catch(() => {});
@@ -202,8 +208,11 @@ const FabLauncher = () => {
       } else {
         triggerNativeHaptic('medium');
         const started = await ScreenCapture.startRecording({
-          fps: 24,
-          audioSource: 'none',
+          fps: captureFps,
+          scale: captureScale,
+          audioSource: captureAudioMode,
+          bitrate: captureBitrate > 0 ? captureBitrate : undefined,
+          maxDurationSeconds: captureMaxDurationSeconds,
         });
         if (started) {
           setIsRecording(true);
@@ -216,7 +225,7 @@ const FabLauncher = () => {
       showToast(t('header.recordingError', 'Error during screen recording'));
       setIsRecording(false);
     }
-  }, [isRecording, refreshMediaCount, t]);
+  }, [isRecording, captureFps, captureScale, captureBitrate, captureMaxDurationSeconds, captureAudioMode, refreshMediaCount, t]);
 
   const handleExpandInspector = useCallback(() => {
     if (playerDraggedRef.current) return;
@@ -257,41 +266,6 @@ const FabLauncher = () => {
             pointerEvents="none"
           />
 
-          {/* Enhanced Shining sweep streak across the player bar */}
-          <View pointerEvents="none" style={fabStyles.playerShineClip}>
-            <Animated.View
-              style={[
-                fabStyles.playerShineStreak,
-                {
-                  transform: [
-                    {
-                      translateX: fabShineAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [-80, screenWidth + 80],
-                      }),
-                    },
-                    {rotate: '28deg'},
-                  ],
-                },
-              ]}>
-              <LinearGradient
-                colors={[
-                  'rgba(255, 255, 255, 0)',
-                  'rgba(255, 255, 255, 0.18)',
-                  'rgba(255, 255, 255, 0.70)',
-                  'rgba(255, 255, 255, 1)',
-                  'rgba(255, 255, 255, 0.70)',
-                  'rgba(255, 255, 255, 0.18)',
-                  'rgba(255, 255, 255, 0)',
-                ]}
-                locations={[0, 0.22, 0.44, 0.5, 0.56, 0.78, 1]}
-                start={{x: 0, y: 0.5}}
-                end={{x: 1, y: 0.5}}
-                style={{flex: 1}}
-              />
-            </Animated.View>
-          </View>
-
           {/* App Logo & Expand Info (Music Player Left Section) */}
           <TouchableOpacity
             activeOpacity={0.75}
@@ -299,7 +273,7 @@ const FabLauncher = () => {
             style={fabStyles.brandSection}
             accessibilityRole="button"
             accessibilityLabel={t('mediaGallery.expand', 'Expand Inspector')}>
-            <AppHeaderLogo size={36} customIcon={appIcon} />
+            <AppHeaderLogo size={36} customIcon={appIcon} shape="circle" />
             <View style={fabStyles.titleWrapper}>
               <Text style={fabStyles.appTitle} numberOfLines={1}>
                 {getAppName()}
@@ -397,50 +371,38 @@ const FabLauncher = () => {
         <Animated.View
           style={[styles.fabWrapper, {transform: fabPan.getTranslateTransform()}]}
           {...fabPanResponder.panHandlers}>
-          <TouchableScale
-            style={{alignItems: 'center', justifyContent: 'center'}}
-            onPress={() => {
-              if (fabDraggedRef.current) return;
-              triggerNativeHaptic('light');
-              setVisible(true);
-            }}
-            hitSlop={10}>
-            <Animated.View
-              style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
-            />
-            <BrandCircleIcon size={62} />
-            {/* Shining sweep, clipped inside the circular launcher */}
-            <View pointerEvents="none" style={styles.fabShineClip}>
+            <TouchableScale
+              style={{alignItems: 'center', justifyContent: 'center'}}
+              onPress={() => {
+                if (fabDraggedRef.current) return;
+                triggerNativeHaptic('light');
+                setVisible(true);
+              }}
+              hitSlop={10}>
               <Animated.View
-                style={[
-                  styles.fabShineStreak,
-                  {
-                    transform: [
-                      {
-                        translateX: fabShineAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [-48, 96],
-                        }),
-                      },
-                      {rotate: '25deg'},
-                    ],
-                  },
-                ]}>
-                <LinearGradient
-                  colors={[
-                    'rgba(255, 255, 255, 0)',
-                    'rgba(255, 255, 255, 0.25)',
-                    'rgba(255, 255, 255, 0.95)',
-                    'rgba(255, 255, 255, 0.25)',
-                    'rgba(255, 255, 255, 0)',
-                  ]}
-                  locations={[0, 0.25, 0.5, 0.75, 1]}
-                  start={{x: 0, y: 0.5}}
-                  end={{x: 1, y: 0.5}}
-                  style={{flex: 1}}
-                />
-              </Animated.View>
-            </View>
+                style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
+              />
+              <AppHeaderLogo size={68} customIcon={appIcon} shape="circle" />
+            </TouchableScale>
+
+          {/* Dismiss / Close Session Button Badge */}
+          <TouchableScale
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.close', 'Close')}
+            onPress={() => {
+              triggerNativeHaptic('medium');
+              dismissInspector();
+              showToast(
+                t(
+                  'common.inspectorDismissed',
+                  'In-App Inspector closed for this session',
+                ),
+              );
+            }}
+            hitSlop={8}
+            style={styles.fabCloseBadge}>
+            <CloseWhite size={9.5} />
           </TouchableScale>
         </Animated.View>
       )}

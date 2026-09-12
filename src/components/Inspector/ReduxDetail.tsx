@@ -223,10 +223,10 @@ const ReduxDetail = React.memo(() => {
   const handleClearPersistence = () => {
     if (!selectedReduxSlice) return;
     Alert.alert(
-      'Clear Persisted State',
-      `Are you sure you want to delete persisted storage for slice "${selectedReduxSlice}"?`,
+      t('redux.clearPersistedTitle', 'Clear Persisted State'),
+      t('redux.clearPersistedMessage', 'Are you sure you want to delete persisted storage for slice "{{slice}}"?').replace('{{slice}}', selectedReduxSlice || ''),
       [
-        {text: 'Cancel', style: 'cancel'},
+        {text: t('common.cancel', 'Cancel'), style: 'cancel'},
         {
           text: 'Delete',
           style: 'destructive',
@@ -253,10 +253,10 @@ const ReduxDetail = React.memo(() => {
                   ToastAndroid.SHORT,
                 );
               } else {
-                Alert.alert('Cleared', 'Persisted state has been cleared.');
+                Alert.alert(t('redux.clearedPersisted', 'Persisted state has been cleared.'));
               }
             } catch (err) {
-              Alert.alert('Error', 'Failed to clear persisted state.');
+              Alert.alert(t('common.failed', 'Failed'), t('redux.clearPersistedError', 'Failed to clear persisted state.'));
             }
           },
         },

@@ -2,16 +2,18 @@ import React, {useMemo} from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {useTranslation} from '../../i18n';
 import {formatTime} from '../../helpers';
 import {
   BellIcon,
   ClockIcon,
   ForwardChevronIcon,
-  KeyIcon,
   SunIcon,
   MoonIcon,
-  ExternalLinkIcon,
   CloudPushIcon,
+  LinkChainIcon,
+  ExternalLinkIcon,
+  KeyIcon,
 } from '../NetworkIcons';
 import HighlightText from '../HighlightText';
 import TouchableScale from '../TouchableScale';
@@ -120,11 +122,12 @@ const getAppStatePill = (appState?: string, action?: string) => {
   };
 };
 
-const PushCard = React.memo(function PushCard({
+function PushCard({
   item,
   onPress,
   searchStr = '',
 }: PushCardProps) {
+  const {t} = useTranslation();
   const colors = useMemo(() => getSourceColors(item.source), [item.source]);
   const statePill = useMemo(
     () => getAppStatePill(item.appState, item.action),
@@ -217,10 +220,14 @@ const PushCard = React.memo(function PushCard({
                   {
                     backgroundColor: `${AppColors.brandPurple}14`,
                     borderColor: `${AppColors.brandPurple}33`,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 3,
                   },
                 ]}>
+                <LinkChainIcon size={10} color={AppColors.brandPurple} />
                 <Text style={[styles.chipText, {color: AppColors.brandPurple}]}>
-                  🔗 Link
+                  {t('push.link', 'Link')}
                 </Text>
               </View>
             )}
@@ -321,7 +328,7 @@ const PushCard = React.memo(function PushCard({
       </View>
     </TouchableScale>
   );
-});
+}
 
 const styles = StyleSheet.create({
   card: {
@@ -512,6 +519,15 @@ const styles = StyleSheet.create({
   },
 });
 
-PushCard.displayName = 'PushCard';
+function arePushPropsEqual(
+  prev: PushCardProps,
+  next: PushCardProps,
+): boolean {
+  return (
+    prev.item === next.item &&
+    prev.searchStr === next.searchStr &&
+    prev.onPress === next.onPress
+  );
+}
 
-export default PushCard;
+export default React.memo(PushCard, arePushPropsEqual);

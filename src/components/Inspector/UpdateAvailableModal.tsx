@@ -9,13 +9,14 @@ import {
   Linking,
 } from 'react-native';
 import Svg, {Path} from 'react-native-svg';
-import {BrandCircleIcon} from '../BrandCircleIcon';
+import AppHeaderLogo from '../AppHeaderLogo';
 import {NpmIcon} from '../NetworkIcons';
 import {LIB_VERSION} from '../../constants';
 import {copyToClipboard} from '../../helpers';
 import {showToast} from '../../helpers/toast';
 import {AppFonts} from '../../styles/AppFonts';
 import {AppColors} from '../../styles/AppColors';
+import {t} from '../../i18n';
 
 // ─── Crisp SVG Icons ─────────────────────────────────────────────────────────
 
@@ -167,7 +168,7 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
   const handleCopyCommand = () => {
     copyToClipboard(installCommand, 'Install Command');
     setCopied(true);
-    showToast('Copied npm install command to clipboard!');
+    showToast(t('about.copiedInstallCommand', 'Copied npm install command to clipboard!'));
     setTimeout(() => {
       setCopied(false);
     }, 2500);
@@ -208,14 +209,14 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
           {/* Icon Halo + Sparkle */}
           <View style={styles.headerSection}>
             <View style={styles.iconHaloRing}>
-              <BrandCircleIcon size={38} />
+              <AppHeaderLogo size={38} shape="circle" />
               <View style={styles.sparkleBadge}>
                 <SparkleSvg size={13} color={AppColors.amber500} />
               </View>
             </View>
-            <Text style={styles.title}>Update Available</Text>
+            <Text style={styles.title}>{t('header.updateAvailableTitle', 'Update Available')}</Text>
             <Text style={styles.subtitle}>
-              A new version of react-native-inapp-inspector is ready to install
+              {t('header.updateAvailableSubtitle', 'A new version of react-native-inapp-inspector is ready to install')}
             </Text>
           </View>
 
@@ -244,11 +245,11 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
           {/* Terminal / Code Snippet */}
           <View style={styles.codeSnippetBox}>
             <View style={styles.codeSnippetHeader}>
-              <Text style={styles.codeSnippetLabel}>UPGRADE COMMAND</Text>
+              <Text style={styles.codeSnippetLabel}>{t('header.upgradeCommand', 'UPGRADE COMMAND')}</Text>
               {copied && (
                 <View style={styles.copiedIndicator}>
                   <CheckSvg size={11} color={AppColors.emerald500} />
-                  <Text style={styles.copiedText}>Copied</Text>
+                  <Text style={styles.copiedText}>{t('common.copied', 'Copied')}</Text>
                 </View>
               )}
             </View>
@@ -272,14 +273,14 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
               activeOpacity={0.7}
               onPress={handleClose}
               style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>Later</Text>
+              <Text style={styles.secondaryButtonText}>{t('common.later', 'Later')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleOpenNpm}
               style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>View on NPM</Text>
+              <Text style={styles.primaryButtonText}>{t('common.viewOnNpm', 'View on NPM')}</Text>
               <ExternalLinkSvg size={12} color={AppColors.white} />
             </TouchableOpacity>
           </View>

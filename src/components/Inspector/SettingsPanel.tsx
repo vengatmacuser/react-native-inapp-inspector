@@ -3,6 +3,7 @@ import {
   Alert,
   Animated,
   DevSettings,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -22,13 +23,15 @@ import {
 } from '../../helpers/settingsStore';
 import {clearNetworkLogs} from '../../customHooks/networkLogger';
 import {clearConsoleLogs} from '../../customHooks/consoleLogger';
-import {clearAnalyticsEvents} from '../../customHooks/analyticsLogger';
+import {clearAnalyticsEvents, isAnalyticsConnected} from '../../customHooks/analyticsLogger';
 import {clearCrashRecords} from '../../customHooks/crashHandler';
 import {isReduxConnected} from '../../customHooks/reduxLogger';
-import {isAnalyticsConnected} from '../../customHooks/analyticsLogger';
-import {useTranslation} from '../../i18n';
+import {useTranslation, SUPPORTED_LANGUAGES, setLanguage, getLanguage} from '../../i18n';
+import {LanguageSelectorModal} from './LanguageSelectorModal';
+import {loadSettings, saveSettings} from '../../helpers/settingsStore';
 import {ActiveTab} from '../../types';
 import {
+  GlobeIcon,
   SignalIcon,
   TerminalIcon,
   AnalyticsIcon,
@@ -59,6 +62,8 @@ import {
   GifIcon,
   ImageIcon,
   BellIcon,
+  WebsocketIcon,
+  BoltIcon,
 } from '../NetworkIcons';
 import {ScreenCapture} from '../../capture';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
@@ -119,19 +124,36 @@ const SettingsPanel = () => {
     setMaxPushLogs,
     clearAllPushLogs,
     simulatePush,
+    socketRecords,
+    maxSocketLogs,
+    setMaxSocketLogs,
+    clearAllSocketLogs,
+    simulateSocket,
+    captureImageFormat,
+    setCaptureImageFormat,
+    captureAutoHide,
+    setCaptureAutoHide,
+    captureAudioMode,
+    setCaptureAudioMode,
+    captureFps,
+    setCaptureFps,
+    captureScale,
+    setCaptureScale,
+    captureBitrate,
+    setCaptureBitrate,
+    captureMaxDurationSeconds,
+    setCaptureMaxDurationSeconds,
+    captureAutoGif,
+    setCaptureAutoGif,
   } = useInspector();
 
   const [stagedHeight, setStagedHeight] = useState(modalHeightPercent);
 
-  // Capture & Screencast Settings State
-  const [captureImageFormat, setCaptureImageFormat] =
-    useState<'PNG' | 'JPEG' | 'WEBP'>('PNG');
-  const [captureAutoHide, setCaptureAutoHide] = useState<boolean>(true);
-  const [captureAudioMode, setCaptureAudioMode] =
-    useState<'Muted' | 'App' | 'Mic'>('Muted');
-  const [captureFps, setCaptureFps] =
-    useState<'15' | '24' | '30' | '60'>('30');
-  const [captureAutoGif, setCaptureAutoGif] = useState<boolean>(true);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const currentLangCode = getLanguage();
+  const currentLangObj =
+    SUPPORTED_LANGUAGES.find(l => l.code === currentLangCode) ||
+    SUPPORTED_LANGUAGES[0];
 
   useEffect(() => {
     setStagedHeight(modalHeightPercent);
@@ -223,6 +245,14 @@ const SettingsPanel = () => {
             icon: 'push',
             desc: 'Universal push & local notification logger (Salesforce, FCM, APNs, Braze, Expo)',
           },
+          {
+            id: 11,
+            key: 'socket',
+            label: 'WebSocket & Socket.IO',
+            category: 'telemetry',
+            icon: 'socket',
+            desc: 'Real-time WebSocket & Socket.IO message inspector, frames & event logger',
+          },
         ] as const
       ).filter(m =>
         m.key === 'debugging'
@@ -246,6 +276,7 @@ const SettingsPanel = () => {
     debugging: Boolean(tabVisibility?.debugging),
     media: Boolean(tabVisibility?.media ?? true),
     push: Boolean(tabVisibility?.push ?? true),
+    socket: Boolean(tabVisibility?.socket ?? false),
   }));
 
   // Synchronize staged state with tabVisibility when tabVisibility updates
@@ -261,6 +292,7 @@ const SettingsPanel = () => {
       debugging: Boolean(tabVisibility?.debugging),
       media: Boolean(tabVisibility?.media ?? true),
       push: Boolean(tabVisibility?.push ?? true),
+      socket: Boolean(tabVisibility?.socket ?? false),
     });
   }, [tabVisibility]);
 
@@ -275,6 +307,33 @@ const SettingsPanel = () => {
   const stagedActiveCount = allModules.filter(
     m => m.key === 'apis' || Boolean(stagedTabVisibility[m.key as ActiveTab]),
   ).length;
+
+  const selectableModules = useMemo(() => {
+    return allModules.filter(m => {
+      if (m.key === 'apis') return false;
+      if (m.key === 'redux' && !isReduxConnected()) return false;
+      if (m.key === 'analytics' && !isAnalyticsConnected()) return false;
+      return true;
+    });
+  }, [allModules]);
+
+  const isAllSelectableChecked = useMemo(() => {
+    if (selectableModules.length === 0) return false;
+    return selectableModules.every(
+      m => Boolean(stagedTabVisibility[m.key as ActiveTab]),
+    );
+  }, [selectableModules, stagedTabVisibility]);
+
+  const handleToggleSelectAll = () => {
+    const nextState = !isAllSelectableChecked;
+    setStagedTabVisibility(prev => {
+      const updated = {...prev};
+      selectableModules.forEach(m => {
+        updated[m.key as ActiveTab] = nextState;
+      });
+      return updated;
+    });
+  };
 
   const handleSaveChanges = () => {
     if (!hasUnsavedChanges) return;
@@ -299,6 +358,7 @@ const SettingsPanel = () => {
               debugging: Boolean(tabVisibility?.debugging),
               media: Boolean(tabVisibility?.media ?? true),
               push: Boolean(tabVisibility?.push ?? true),
+              socket: Boolean(tabVisibility?.socket ?? false),
             });
           },
         },
@@ -653,6 +713,104 @@ const SettingsPanel = () => {
 
         {settingsActiveSubTab === 'module' && (
           <View style={{gap: 12}}>
+            {/* Select All / Deselect All Action Bar */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: AppColors.primaryLight,
+                borderRadius: 12,
+                paddingVertical: 10,
+                paddingHorizontal: 14,
+                borderWidth: 1,
+                borderColor: isAllSelectableChecked
+                  ? `${AppColors.purple}40`
+                  : AppColors.grayBorderSecondary,
+                shadowColor: AppColors.black,
+                shadowOpacity: 0.02,
+                shadowRadius: 3,
+                shadowOffset: {width: 0, height: 1},
+              }}>
+              <TouchableScale
+                accessible={true}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Toggle Select All Modules"
+                accessibilityState={{checked: isAllSelectableChecked}}
+                onPress={handleToggleSelectAll}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  flex: 1,
+                }}>
+                <View
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 6,
+                    borderWidth: isAllSelectableChecked ? 0 : 1.8,
+                    borderColor: AppColors.grayBorderSecondary,
+                    backgroundColor: isAllSelectableChecked
+                      ? AppColors.purple
+                      : AppColors.grayBackground,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  {isAllSelectableChecked && (
+                    <CheckIcon size={12} color={AppColors.white} />
+                  )}
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 13,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {isAllSelectableChecked
+                      ? 'Deselect All Modules'
+                      : 'Select All Modules'}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 10.5,
+                      color: AppColors.grayText,
+                      marginTop: 1,
+                    }}>
+                    {stagedActiveCount} of {allModules.length} modules active
+                  </Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={handleToggleSelectAll}
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 8,
+                  backgroundColor: isAllSelectableChecked
+                    ? `${AppColors.purple}14`
+                    : AppColors.purple,
+                  borderWidth: 1,
+                  borderColor: isAllSelectableChecked
+                    ? `${AppColors.purple}30`
+                    : 'transparent',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    color: isAllSelectableChecked
+                      ? AppColors.purple
+                      : AppColors.white,
+                  }}>
+                  {isAllSelectableChecked ? 'Deselect All' : 'Select All'}
+                </Text>
+              </TouchableScale>
+            </View>
+
             {/* Individual Module Cards with Left Checkboxes */}
             <View style={{gap: 10}}>
               {allModules.map(moduleItem => {
@@ -671,19 +829,33 @@ const SettingsPanel = () => {
 
                 const liveStats =
                   moduleItem.key === 'apis'
-                    ? `${logs.length} requests`
+                    ? logs.length > 0
+                      ? `${logs.length} requests`
+                      : ''
                     : moduleItem.key === 'logs'
-                    ? `${consoleLogs.length} logs • Limit: ${maxConsoleLogs}`
+                    ? consoleLogs.length > 0
+                      ? `${consoleLogs.length} logs • Limit: ${maxConsoleLogs}`
+                      : ''
                     : moduleItem.key === 'crash'
-                    ? `${
-                        crashRecords?.length || 0
-                      } crashes recorded • Crash Guard`
+                    ? crashRecords && crashRecords.length > 0
+                      ? `${crashRecords.length} crashes recorded • Crash Guard`
+                      : ''
                     : moduleItem.key === 'analytics'
-                    ? `${analyticsEvents.length} events logged`
+                    ? analyticsEvents.length > 0
+                      ? `${analyticsEvents.length} events logged`
+                      : ''
                     : moduleItem.key === 'redux'
-                    ? `${
-                        Object.keys(reduxState || {}).length
-                      } slices • Depth: ${reduxExpandDepth}`
+                    ? reduxState && Object.keys(reduxState).length > 0
+                      ? `${Object.keys(reduxState).length} slices • Depth: ${reduxExpandDepth}`
+                      : ''
+                    : moduleItem.key === 'push'
+                    ? pushRecords && pushRecords.length > 0
+                      ? `${pushRecords.length} notifications logged`
+                      : ''
+                    : moduleItem.key === 'socket'
+                    ? socketRecords && socketRecords.length > 0
+                      ? `${socketRecords.length} connections active`
+                      : ''
                     : '';
 
                 return (
@@ -914,6 +1086,16 @@ const SettingsPanel = () => {
                               size={16}
                             />
                           )}
+                          {moduleItem.icon === 'socket' && (
+                            <WebsocketIcon
+                              color={
+                                isChecked
+                                  ? AppColors.purple
+                                  : AppColors.grayTextWeak
+                              }
+                              size={16}
+                            />
+                          )}
                         </View>
 
                         {/* Titles & Status Pill */}
@@ -1117,33 +1299,37 @@ const SettingsPanel = () => {
                           borderTopColor: AppColors.dividerColor,
                         }}>
                         {/* Live Info Pill */}
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 6,
-                            flex: 1,
-                          }}>
+                        {liveStats && liveStats.trim().length > 0 ? (
                           <View
                             style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: 3,
-                              backgroundColor: isChecked
-                                ? AppColors.liveGreen
-                                : AppColors.grayTextWeak,
-                            }}
-                          />
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interMedium,
-                              fontSize: 11,
-                              color: AppColors.grayText,
-                              lineHeight: 14,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 6,
+                              flex: 1,
                             }}>
-                            {liveStats}
-                          </Text>
-                        </View>
+                            <View
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: 3,
+                                backgroundColor: isChecked
+                                  ? AppColors.liveGreen
+                                  : AppColors.grayTextWeak,
+                              }}
+                            />
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interMedium,
+                                fontSize: 11,
+                                color: AppColors.grayText,
+                                lineHeight: 14,
+                              }}>
+                              {liveStats}
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={{flex: 1}} />
+                        )}
 
                         {/* Sleek Configure Button */}
                         <TouchableScale
@@ -1297,6 +1483,96 @@ const SettingsPanel = () => {
                       shadowOffset: {width: 0, height: 1},
                     }}
                   />
+                </TouchableScale>
+              </View>
+
+              <View
+                style={{
+                  height: 1,
+                  backgroundColor: AppColors.grayBorderSecondary,
+                  opacity: 0.6,
+                }}
+              />
+
+              {/* Language Selector Row */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 10,
+                    flex: 1,
+                  }}>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      backgroundColor: `${AppColors.blue600}14`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    <GlobeIcon color={AppColors.blue600} size={15} />
+                  </View>
+                  <View style={{flex: 1}}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 13.5,
+                        lineHeight: 18,
+                        color: AppColors.primaryBlack,
+                      }}>
+                      {t('settings.general.language', 'Language')}
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interRegular,
+                        fontSize: 11,
+                        lineHeight: 15,
+                        color: AppColors.grayText,
+                        marginTop: 1,
+                      }}>
+                      {t(
+                        'settings.general.languageDescription',
+                        'Choose preferred display language',
+                      )}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableScale
+                  onPress={() => {
+                    triggerNativeHaptic('light');
+                    setShowLanguageModal(true);
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: AppColors.purpleShade50,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    gap: 5,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.purple}20`,
+                  }}>
+                  <Text style={{fontSize: 13}}>
+                    {currentLangObj?.flag || '🌐'}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interSemiBold,
+                      fontSize: 12,
+                      color: AppColors.purple,
+                    }}>
+                    {currentLangObj?.nativeName || currentLangObj?.name || 'English'}
+                  </Text>
+                  <ForwardChevronIcon size={11} color={AppColors.purple} />
                 </TouchableScale>
               </View>
             </View>
@@ -2238,7 +2514,7 @@ const SettingsPanel = () => {
                       fontSize: 13,
                       color: AppColors.primaryBlack,
                     }}>
-                    Manual Memory Cleanup
+                    {t('settings.memory.manualTitle', 'Manual Memory Cleanup')}
                   </Text>
                   <Text
                     style={{
@@ -2247,14 +2523,21 @@ const SettingsPanel = () => {
                       color: AppColors.grayText,
                       marginTop: 1,
                     }}>
-                    Prune older entries across all log stores and free RAM
+                    {t(
+                      'settings.memory.manualDescription',
+                      'Prune older entries across all log stores and free RAM',
+                    )}
                   </Text>
                 </View>
                 <TouchableScale
                   onPress={() => {
                     const summary = pruneAllLogs('manual', 0.5);
                     showToast(
-                      `Pruned ${summary.totalPruned} items from memory`,
+                      t(
+                        'settings.memory.pruned',
+                        {count: summary.totalPruned},
+                        `Pruned ${summary.totalPruned} items from memory`,
+                      ),
                     );
                   }}
                   style={{
@@ -2343,7 +2626,7 @@ const SettingsPanel = () => {
                 ),
                 right: (
                   <View style={{flexDirection: 'row', gap: 5}}>
-                    {(['PNG', 'JPEG', 'WEBP'] as const).map(fmt => {
+                    {(['png', 'jpeg', 'webp'] as const).map(fmt => {
                       const isSelected = captureImageFormat === fmt;
                       return (
                         <TouchableScale
@@ -2351,7 +2634,7 @@ const SettingsPanel = () => {
                           onPress={() => {
                             triggerNativeHaptic('light');
                             setCaptureImageFormat(fmt);
-                            showToast(`Screenshot format: ${fmt}`);
+                            showToast(`Screenshot format: ${fmt.toUpperCase()}`);
                           }}
                           style={{
                             paddingHorizontal: 9,
@@ -2373,7 +2656,7 @@ const SettingsPanel = () => {
                                 ? AppColors.white
                                 : AppColors.purple,
                             }}>
-                            {fmt}
+                            {fmt.toUpperCase()}
                           </Text>
                         </TouchableScale>
                       );
@@ -2495,15 +2778,21 @@ const SettingsPanel = () => {
                 ),
                 right: (
                   <View style={{flexDirection: 'row', gap: 5}}>
-                    {(['Muted', 'App', 'Mic'] as const).map(aud => {
-                      const isSelected = captureAudioMode === aud;
+                    {(
+                      [
+                        {key: 'none', label: 'Muted'},
+                        {key: 'app', label: 'App'},
+                        {key: 'mic', label: 'Mic'},
+                      ] as const
+                    ).map(aud => {
+                      const isSelected = captureAudioMode === aud.key;
                       return (
                         <TouchableScale
-                          key={aud}
+                          key={aud.key}
                           onPress={() => {
                             triggerNativeHaptic('light');
-                            setCaptureAudioMode(aud);
-                            showToast(`Audio source: ${aud}`);
+                            setCaptureAudioMode(aud.key);
+                            showToast(`Audio source: ${aud.label}`);
                           }}
                           style={{
                             paddingHorizontal: 8,
@@ -2525,7 +2814,7 @@ const SettingsPanel = () => {
                                 ? AppColors.white
                                 : AppColors.purple,
                             }}>
-                            {aud}
+                            {aud.label}
                           </Text>
                         </TouchableScale>
                       );
@@ -2546,7 +2835,7 @@ const SettingsPanel = () => {
                 ),
                 right: (
                   <View style={{flexDirection: 'row', gap: 5}}>
-                    {(['15', '24', '30', '60'] as const).map(fps => {
+                    {([15, 24, 30, 60] as const).map(fps => {
                       const isSelected = captureFps === fps;
                       return (
                         <TouchableScale
@@ -3446,21 +3735,28 @@ const SettingsPanel = () => {
             borderColor: AppColors.grayBorderSecondary,
             gap: 8,
           }}>
-          <Text
-            style={{
-              fontFamily: AppFonts.interBold,
-              fontSize: 12,
-              color: AppColors.primaryBlack,
-              marginBottom: 4,
-            }}>
-            ⚡ SIMULATE TEST PUSH NOTIFICATIONS
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4}}>
+            <BoltIcon size={13} color={AppColors.amber500} />
+            <Text
+              style={{
+                fontFamily: AppFonts.interBold,
+                fontSize: 12,
+                color: AppColors.primaryBlack,
+              }}>
+              {t('settings.simulatePushTitle', 'SIMULATE TEST PUSH NOTIFICATIONS')}
+            </Text>
+          </View>
 
           <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
             <TouchableScale
               onPress={() => {
                 simulatePush('salesforce');
-                showToast('Simulated Salesforce Marketing Cloud push');
+                showToast(
+                  t(
+                    'settings.simulator.salesforce',
+                    'Simulated Salesforce Marketing Cloud push',
+                  ),
+                );
               }}
               style={{
                 backgroundColor: `${AppColors.sky600}14`,
@@ -3478,7 +3774,9 @@ const SettingsPanel = () => {
             <TouchableScale
               onPress={() => {
                 simulatePush('fcm');
-                showToast('Simulated Firebase FCM push');
+                showToast(
+                  t('settings.simulator.fcm', 'Simulated Firebase FCM push'),
+                );
               }}
               style={{
                 backgroundColor: `${AppColors.darkOrange}14`,
@@ -3496,7 +3794,9 @@ const SettingsPanel = () => {
             <TouchableScale
               onPress={() => {
                 simulatePush('apns');
-                showToast('Simulated Apple APNs push');
+                showToast(
+                  t('settings.simulator.apns', 'Simulated Apple APNs push'),
+                );
               }}
               style={{
                 backgroundColor: `${AppColors.primaryBlack}10`,
@@ -3514,7 +3814,12 @@ const SettingsPanel = () => {
             <TouchableScale
               onPress={() => {
                 simulatePush('deeplink');
-                showToast('Simulated Deep Link push');
+                showToast(
+                  t(
+                    'settings.simulator.deepLink',
+                    'Simulated Deep Link push',
+                  ),
+                );
               }}
               style={{
                 backgroundColor: `${AppColors.brandPurple}14`,
@@ -3542,12 +3847,228 @@ const SettingsPanel = () => {
           }}>
           {renderSettingRow({
             icon: <TrashIcon color={AppColors.errorColor} size={16} />,
-            label: 'Clear Push History',
+            label: t('push.clearTitle', 'Clear Push History'),
             description: `Permanently remove all ${pushRecords?.length || 0} recorded notifications`,
             isLast: true,
             onPress: () => {
               clearAllPushLogs();
-              Alert.alert('Success', 'Push notification history cleared');
+              Alert.alert(t('common.success', 'Success'), t('settings.pushHistoryCleared', 'Push notification history cleared'));
+            },
+            right: (
+              <View
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  backgroundColor: `${AppColors.errorColor}14`,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.errorColor}33`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: AppColors.errorColor,
+                  }}>
+                  {t('common.clear')}
+                </Text>
+              </View>
+            ),
+          })}
+        </View>
+        <View style={{height: 48}} />
+      </ScrollView>
+    );
+  } else if (settingsPage === 'socket') {
+    content = (
+      <ScrollView
+        style={{flex: 1}}
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
+        {/* Settings Card: Limits & Engine Status */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 4,
+          }}>
+          {renderSettingRow({
+            icon: <LayersIcon color={AppColors.purple} size={16} />,
+            label: 'Max WebSocket Connections',
+            description: 'Ring buffer limit for active & closed socket sessions (10-200)',
+            numericInput: {
+              value: maxSocketLogs,
+              onChange: setMaxSocketLogs,
+              min: 10,
+              max: 200,
+              placeholder: 'Enter max sockets (10-200)',
+            },
+          })}
+          <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
+          {renderSettingRow({
+            icon: <WebsocketIcon color={AppColors.greenColor} size={16} />,
+            label: 'Global WebSocket Interceptor',
+            description: 'Automatic capture for WebSocket, WSS & Socket.IO traffic',
+            isLast: true,
+            right: (
+              <View
+                style={{
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                  backgroundColor: `${AppColors.greenColor}1F`,
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 10,
+                    lineHeight: 13,
+                    color: AppColors.greenColor,
+                  }}>
+                  ACTIVE
+                </Text>
+              </View>
+            ),
+          })}
+        </View>
+
+        {/* Test Socket Triggers Card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 8,
+          }}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4}}>
+            <BoltIcon size={13} color={AppColors.amber500} />
+            <Text
+              style={{
+                fontFamily: AppFonts.interBold,
+                fontSize: 12,
+                color: AppColors.primaryBlack,
+              }}>
+              {t('settings.simulateSocketTitle', 'SIMULATE TEST SOCKET CONNECTIONS')}
+            </Text>
+          </View>
+
+          <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 6}}>
+            <TouchableScale
+              onPress={() => {
+                simulateSocket('chat');
+                showToast(
+                  t(
+                    'settings.simulator.chat',
+                    'Simulated Real-time Chat WebSocket session',
+                  ),
+                );
+              }}
+              style={{
+                backgroundColor: `${AppColors.blue600}14`,
+                borderColor: `${AppColors.blue600}33`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.blue600}}>
+                + Chat Room (WS)
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => {
+                simulateSocket('crypto');
+                showToast(
+                  t(
+                    'settings.simulator.crypto',
+                    'Simulated Binance Crypto Ticker stream',
+                  ),
+                );
+              }}
+              style={{
+                backgroundColor: `${AppColors.emerald600}14`,
+                borderColor: `${AppColors.emerald600}33`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.emerald600}}>
+                + Crypto Feed (WSS)
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => {
+                simulateSocket('socketio');
+                showToast(
+                  t(
+                    'settings.simulator.socketio',
+                    'Simulated Socket.IO v4 session',
+                  ),
+                );
+              }}
+              style={{
+                backgroundColor: `${AppColors.violet600}14`,
+                borderColor: `${AppColors.violet600}33`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.violet600}}>
+                + Socket.IO Room
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => {
+                simulateSocket('echo');
+                showToast(
+                  t(
+                    'settings.simulator.echo',
+                    'Simulated WebSocket Echo test',
+                  ),
+                );
+              }}
+              style={{
+                backgroundColor: `${AppColors.brandPurple}14`,
+                borderColor: `${AppColors.brandPurple}33`,
+                borderWidth: 1,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}>
+              <Text style={{fontSize: 11, fontFamily: AppFonts.interSemiBold, color: AppColors.brandPurple}}>
+                + Echo Test
+              </Text>
+            </TouchableScale>
+          </View>
+        </View>
+
+        {/* Clear History Card */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            padding: 16,
+          }}>
+          {renderSettingRow({
+            icon: <TrashIcon color={AppColors.errorColor} size={16} />,
+            label: t('socket.clearTitle', 'Clear All WebSocket Logs').replace('All WebSocket Logs', 'Socket History'),
+            description: `Permanently remove all ${socketRecords?.length || 0} recorded sessions`,
+            isLast: true,
+            onPress: () => {
+              clearAllSocketLogs();
+              Alert.alert(t('common.success', 'Success'), t('settings.socketHistoryCleared', 'WebSocket history cleared'));
             },
             right: (
               <View
@@ -3590,15 +4111,17 @@ const SettingsPanel = () => {
             borderColor: AppColors.grayBorderSecondary,
             gap: 8,
           }}>
-          <Text
-            style={{
-              fontFamily: AppFonts.interBold,
-              fontSize: 12,
-              color: AppColors.primaryBlack,
-              marginBottom: 4,
-            }}>
-            ⚡ DIRECT CAPTURE SHORTCUTS
-          </Text>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4}}>
+            <BoltIcon size={13} color={AppColors.amber500} />
+            <Text
+              style={{
+                fontFamily: AppFonts.interBold,
+                fontSize: 12,
+                color: AppColors.primaryBlack,
+              }}>
+              {t('settings.directCaptureShortcuts', 'DIRECT CAPTURE SHORTCUTS')}
+            </Text>
+          </View>
 
           <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
             <TouchableScale
@@ -3611,7 +4134,12 @@ const SettingsPanel = () => {
                 });
                 if (result) {
                   triggerNativeHaptic('success');
-                  showToast('Screenshot captured and saved!');
+                  showToast(
+                    t(
+                      'settings.simulator.screenshotSaved',
+                      'Screenshot captured and saved!',
+                    ),
+                  );
                 }
               }}
               style={{
@@ -3698,7 +4226,7 @@ const SettingsPanel = () => {
             ),
             right: (
               <View style={{flexDirection: 'row', gap: 5}}>
-                {(['PNG', 'JPEG', 'WEBP'] as const).map(fmt => {
+                {(['png', 'jpeg', 'webp'] as const).map(fmt => {
                   const isSelected = captureImageFormat === fmt;
                   return (
                     <TouchableScale
@@ -3706,7 +4234,7 @@ const SettingsPanel = () => {
                       onPress={() => {
                         triggerNativeHaptic('light');
                         setCaptureImageFormat(fmt);
-                        showToast(`Screenshot format: ${fmt}`);
+                        showToast(`Screenshot format: ${fmt.toUpperCase()}`);
                       }}
                       style={{
                         paddingHorizontal: 9,
@@ -3728,7 +4256,7 @@ const SettingsPanel = () => {
                             ? AppColors.white
                             : AppColors.purple,
                         }}>
-                        {fmt}
+                        {fmt.toUpperCase()}
                       </Text>
                     </TouchableScale>
                   );
@@ -3849,15 +4377,21 @@ const SettingsPanel = () => {
             ),
             right: (
               <View style={{flexDirection: 'row', gap: 5}}>
-                {(['Muted', 'App', 'Mic'] as const).map(aud => {
-                  const isSelected = captureAudioMode === aud;
+                {(
+                  [
+                    {key: 'none', label: 'Muted'},
+                    {key: 'app', label: 'App'},
+                    {key: 'mic', label: 'Mic'},
+                  ] as const
+                ).map(aud => {
+                  const isSelected = captureAudioMode === aud.key;
                   return (
                     <TouchableScale
-                      key={aud}
+                      key={aud.key}
                       onPress={() => {
                         triggerNativeHaptic('light');
-                        setCaptureAudioMode(aud);
-                        showToast(`Audio source: ${aud}`);
+                        setCaptureAudioMode(aud.key);
+                        showToast(`Audio source: ${aud.label}`);
                       }}
                       style={{
                         paddingHorizontal: 8,
@@ -3879,7 +4413,7 @@ const SettingsPanel = () => {
                             ? AppColors.white
                             : AppColors.purple,
                         }}>
-                        {aud}
+                        {aud.label}
                       </Text>
                     </TouchableScale>
                   );
@@ -3900,7 +4434,7 @@ const SettingsPanel = () => {
             ),
             right: (
               <View style={{flexDirection: 'row', gap: 5}}>
-                {(['15', '24', '30', '60'] as const).map(fps => {
+                {([15, 24, 30, 60] as const).map(fps => {
                   const isSelected = captureFps === fps;
                   return (
                     <TouchableScale
@@ -4111,6 +4645,12 @@ const SettingsPanel = () => {
           {content}
         </Animated.View>
       )}
+
+      {/* ─── Language Picker Modal ─── */}
+      <LanguageSelectorModal
+        visible={showLanguageModal}
+        onClose={() => setShowLanguageModal(false)}
+      />
     </View>
   );
 };

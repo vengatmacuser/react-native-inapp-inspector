@@ -161,7 +161,7 @@ export const NpmUpdateToast = () => {
   const handleCopyCommand = () => {
     copyToClipboard('npm install react-native-inapp-inspector@latest', 'Install Command');
     setCopied(true);
-    showToast('Copied npm install command!');
+    showToast(t('about.copiedInstallCommand', 'Copied npm install command!'));
     setTimeout(() => {
       setCopied(false);
     }, 2000);

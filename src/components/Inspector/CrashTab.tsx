@@ -33,6 +33,7 @@ import CrashFilterModal, {
   DEFAULT_CRASH_FILTERS,
   isCrashFiltersDefault,
 } from './CrashFilterModal';
+import {ConfirmationModal} from './ConfirmationModal';
 import {
   SearchIcon,
   ClearIcon,
@@ -84,6 +85,7 @@ const CrashTab = React.memo(() => {
     DEFAULT_CRASH_FILTERS,
   );
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   useEffect(() => {
     setDisplayLimit(maxCrashLogs || 50);
@@ -185,18 +187,7 @@ const CrashTab = React.memo(() => {
   }, [crashRecords, filterType, searchQuery, crashFilters]);
 
   const handleClearAll = () => {
-    Alert.alert(
-      t('crash.clearTitle'),
-      t('crash.clearMessage'),
-      [
-        {text: t('crash.clearCancel'), style: 'cancel'},
-        {
-          text: t('crash.clearConfirm'),
-          style: 'destructive',
-          onPress: () => clearCrashRecords(),
-        },
-      ],
-    );
+    setShowClearConfirm(true);
   };
 
   const renderCard = useCallback(
@@ -683,10 +674,11 @@ const CrashTab = React.memo(() => {
             data={filteredList.slice(0, displayLimit)}
             keyExtractor={item => item.id}
             renderItem={renderCard}
-            initialNumToRender={12}
+            initialNumToRender={10}
             maxToRenderPerBatch={8}
             windowSize={5}
-            removeClippedSubviews={Platform.OS === 'android'}
+            updateCellsBatchingPeriod={40}
+            removeClippedSubviews={true}
             renderToHardwareTextureAndroid={true}
             contentContainerStyle={localStyles.listContent}
             showsVerticalScrollIndicator={false}
@@ -713,6 +705,21 @@ const CrashTab = React.memo(() => {
         filters={crashFilters}
         onApply={setCrashFilters}
         searchQuery={searchQuery}
+      />
+
+      <ConfirmationModal
+        visible={showClearConfirm}
+        title={t('crash.clearTitle', 'Clear Crash Records')}
+        message={t('crash.clearMessage', 'Are you sure you want to clear all intercepted crash records?')}
+        confirmText={t('crash.clearConfirm', 'Clear All')}
+        cancelText={t('crash.clearCancel', 'Cancel')}
+        isDestructive={true}
+        icon="trash"
+        onConfirm={() => {
+          setShowClearConfirm(false);
+          clearCrashRecords();
+        }}
+        onCancel={() => setShowClearConfirm(false)}
       />
     </View>
   );

@@ -11,7 +11,9 @@ import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
 import {useInspector} from './InspectorContext';
+import {t} from '../../i18n';
 import {LIB_VERSION} from '../../constants/version';
+import AppHeaderLogo from '../AppHeaderLogo';
 import {
   getAppName,
   getBundleIdentifier,
@@ -55,25 +57,23 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
         <View style={styles.heroCard}>
           <View style={styles.heroHeaderRow}>
             <View style={styles.heroBrandRow}>
-              <View style={styles.heroIconBox}>
-                <PackageIcon color={AppColors.brandPurple} size={24} />
-              </View>
+              <AppHeaderLogo size={46} shape="circle" />
               <View style={{flex: 1}}>
                 <View style={styles.heroTitleRow}>
-                  <Text style={styles.heroTitle}>In-App Inspector</Text>
+                  <Text style={styles.heroTitle}>{t('about.heroTitle', 'In-App Inspector')}</Text>
                   <View style={styles.versionBadge}>
                     <Text style={styles.versionBadgeText}>v{LIB_VERSION}</Text>
                   </View>
                   {updateAvailable ? (
                     <View style={styles.updateBadge}>
                       <Text style={styles.updateBadgeText}>
-                        v{latestNpmVersion} Available
+                        {t('about.versionAvailable', 'v{{version}} Available').replace('{{version}}', latestNpmVersion || '')}
                       </Text>
                       <BoltIcon size={9} color={AppColors.amber600} />
                     </View>
                   ) : (
                     <View style={styles.upToDateBadge}>
-                      <Text style={styles.upToDateBadgeText}>Up to date</Text>
+                      <Text style={styles.upToDateBadgeText}>{t('about.upToDate', 'Up to date')}</Text>
                     </View>
                   )}
                 </View>
@@ -85,9 +85,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
           </View>
 
           <Text style={styles.heroDescription}>
-            The all-in-one on-device debugging, logging, and QA companion for
-            React Native & Expo applications. Designed for developers, QA
-            testers, and product teams.
+            {t('about.heroDescription', 'The all-in-one on-device debugging, logging, and QA companion for React Native & Expo applications. Designed for developers, QA testers, and product teams.')}
           </Text>
 
           {updateAvailable && (
@@ -97,12 +95,12 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                   'npm install react-native-inapp-inspector@latest',
                   'Install Command',
                 );
-                showToast('Copied npm upgrade command!');
+                showToast(t('about.copiedUpgradeCommand', 'Copied npm upgrade command!'));
               }}
               style={styles.upgradeBtn}>
               <BoltIcon size={12} color={AppColors.white} />
               <Text style={styles.upgradeBtnText}>
-                Copy Upgrade Command (v{latestNpmVersion})
+                {t('about.copyUpgradeCommand', 'Copy Upgrade Command (v{{version}})').replace('{{version}}', latestNpmVersion || '')}
               </Text>
             </TouchableScale>
           )}
@@ -110,28 +108,28 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
 
         {/* Section: Application Outline */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeader}>APP INFORMATION</Text>
+          <Text style={styles.sectionHeader}>{t('about.appInformation', 'APP INFORMATION')}</Text>
 
           <View style={{gap: 8}}>
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>App Name</Text>
+              <Text style={styles.rowLabel}>{t('about.appName', 'App Name')}</Text>
               <Text style={styles.rowValueBold}>{getAppName()}</Text>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>Package Identifier</Text>
+              <Text style={styles.rowLabel}>{t('about.packageIdentifier', 'Package Identifier')}</Text>
               <Text style={styles.rowValueRegular}>{getBundleIdentifier()}</Text>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>App Version</Text>
+              <Text style={styles.rowLabel}>{t('about.appVersion', 'App Version')}</Text>
               <Text style={styles.rowValueBold}>
                 {getAppVersionAndBuild().formatted}
               </Text>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>Environment</Text>
+              <Text style={styles.rowLabel}>{t('about.environment', 'Environment')}</Text>
               <View
                 style={[
                   styles.statusTag,
@@ -153,15 +151,15 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                         : AppColors.emerald600,
                     },
                   ]}>
-                  {__DEV__ ? 'Development (Debug)' : 'Production (Release)'}
+                  {__DEV__ ? t('about.developmentDebug', 'Development (Debug)') : t('about.productionRelease', 'Production (Release)')}
                 </Text>
               </View>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>Platform</Text>
+              <Text style={styles.rowLabel}>{t('about.platform', 'Platform')}</Text>
               <Text style={styles.rowValueRegular}>
-                {Platform.OS === 'ios' ? 'Apple iOS' : 'Google Android'}{' '}
+                {Platform.OS === 'ios' ? t('about.appleIos', 'Apple iOS') : t('about.googleAndroid', 'Google Android')}{' '}
                 (v{Platform.Version})
               </Text>
             </View>
@@ -170,7 +168,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
 
         {/* Section: Features & Capabilities Outline */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionHeader}>WHAT IN-APP INSPECTOR DOES</Text>
+          <Text style={styles.sectionHeader}>{t('about.features', 'WHAT IN-APP INSPECTOR DOES')}</Text>
 
           <View style={styles.featuresList}>
             <View style={styles.featureItem}>
@@ -182,10 +180,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                 <WifiIcon color={AppColors.brandPurple} size={18} />
               </View>
               <View style={styles.featureTextBox}>
-                <Text style={styles.featureTitle}>Network Traffic Monitor</Text>
+                <Text style={styles.featureTitle}>{t('about.featureNetwork', 'Network Traffic Monitor')}</Text>
                 <Text style={styles.featureDesc}>
-                  Inspect HTTP and HTTPS API requests, responses, headers, and
-                  server latency with waterfall timing charts.
+                  {t('about.featureNetworkDesc', 'Inspect HTTP and HTTPS API requests, responses, headers, and server latency with waterfall timing charts.')}
                 </Text>
               </View>
             </View>
@@ -199,10 +196,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                 <TerminalIcon color={AppColors.blue500} size={18} />
               </View>
               <View style={styles.featureTextBox}>
-                <Text style={styles.featureTitle}>Console Logger</Text>
+                <Text style={styles.featureTitle}>{t('about.featureConsole', 'Console Logger')}</Text>
                 <Text style={styles.featureDesc}>
-                  View real-time console logs, warnings, and errors with source
-                  file origins and formatted stack traces.
+                  {t('about.featureConsoleDesc', 'View real-time console logs, warnings, and errors with source file origins and formatted stack traces.')}
                 </Text>
               </View>
             </View>
@@ -216,10 +212,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                 <AnalyticsIcon color={AppColors.firebaseOrange} size={18} />
               </View>
               <View style={styles.featureTextBox}>
-                <Text style={styles.featureTitle}>Analytics Telemetry</Text>
+                <Text style={styles.featureTitle}>{t('about.featureAnalytics', 'Analytics Telemetry')}</Text>
                 <Text style={styles.featureDesc}>
-                  Track Firebase and custom analytics events, screen views, and
-                  user properties live on the device.
+                  {t('about.featureAnalyticsDesc', 'Track Firebase and custom analytics events, screen views, and user properties live on the device.')}
                 </Text>
               </View>
             </View>
@@ -233,10 +228,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                 <DatabaseIcon color={AppColors.violet600} size={18} />
               </View>
               <View style={styles.featureTextBox}>
-                <Text style={styles.featureTitle}>Redux State & Actions</Text>
+                <Text style={styles.featureTitle}>{t('about.featureRedux', 'Redux State & Actions')}</Text>
                 <Text style={styles.featureDesc}>
-                  Inspect dispatched actions, payloads, and state tree diffs
-                  without connecting desktop companion tools.
+                  {t('about.featureReduxDesc', 'Inspect dispatched actions, payloads, and state tree diffs without connecting desktop companion tools.')}
                 </Text>
               </View>
             </View>
@@ -250,10 +244,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                 <CameraIcon color={AppColors.teal600} size={18} />
               </View>
               <View style={styles.featureTextBox}>
-                <Text style={styles.featureTitle}>Screen & Video Capture</Text>
+                <Text style={styles.featureTitle}>{t('about.featureCapture', 'Screen & Video Capture')}</Text>
                 <Text style={styles.featureDesc}>
-                  Take screenshots and record test sessions to share with QA and
-                  engineering teams instantly.
+                  {t('about.featureCaptureDesc', 'Take screenshots and record test sessions to share with QA and engineering teams instantly.')}
                 </Text>
               </View>
             </View>
@@ -268,11 +261,10 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
               </View>
               <View style={styles.featureTextBox}>
                 <Text style={styles.featureTitle}>
-                  Crash Catcher & Diagnostics
+                  {t('about.featureCrash', 'Crash Catcher & Diagnostics')}
                 </Text>
                 <Text style={styles.featureDesc}>
-                  Protects against native crashes and provides device health
-                  metrics including RAM, battery, and storage.
+                  {t('about.featureCrashDesc', 'Protects against native crashes and provides device health metrics including RAM, battery, and storage.')}
                 </Text>
               </View>
             </View>
@@ -299,9 +291,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
               <View
                 style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
                 <StarIcon color={AppColors.amber500} size={13} />
-                <Text style={styles.gridCardTitle}>GitHub</Text>
+                <Text style={styles.gridCardTitle}>{t('about.github', 'GitHub')}</Text>
               </View>
-              <Text style={styles.gridCardSub}>Star & source code</Text>
+              <Text style={styles.gridCardSub}>{t('about.githubSub', 'Star & source code')}</Text>
             </View>
             <ExternalLinkIcon size={12} color={AppColors.grayTextWeak} />
           </TouchableScale>
@@ -315,8 +307,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
             style={styles.gridCard}>
             <NpmIcon color={AppColors.npmRed} size={18} />
             <View style={{flex: 1}}>
-              <Text style={styles.gridCardTitle}>NPM Registry</Text>
-              <Text style={styles.gridCardSub}>Package updates</Text>
+              <Text style={styles.gridCardTitle}>{t('about.npmRegistry', 'NPM Registry')}</Text>
+              <Text style={styles.gridCardSub}>{t('about.npmRegistrySub', 'Package updates')}</Text>
             </View>
             <ExternalLinkIcon size={12} color={AppColors.grayTextWeak} />
           </TouchableScale>
@@ -330,8 +322,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
             style={styles.gridCard}>
             <BookOpenIcon color={AppColors.brandPurple} size={18} />
             <View style={{flex: 1}}>
-              <Text style={styles.gridCardTitle}>Documentation</Text>
-              <Text style={styles.gridCardSub}>Integration guide</Text>
+              <Text style={styles.gridCardTitle}>{t('about.documentation', 'Documentation')}</Text>
+              <Text style={styles.gridCardSub}>{t('about.documentationSub', 'Integration guide')}</Text>
             </View>
             <ExternalLinkIcon size={12} color={AppColors.grayTextWeak} />
           </TouchableScale>
@@ -345,8 +337,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
             style={styles.gridCard}>
             <BugIcon color={AppColors.errorColor} size={18} />
             <View style={{flex: 1}}>
-              <Text style={styles.gridCardTitle}>Report Issue</Text>
-              <Text style={styles.gridCardSub}>Help & support</Text>
+              <Text style={styles.gridCardTitle}>{t('about.reportIssue', 'Report Issue')}</Text>
+              <Text style={styles.gridCardSub}>{t('about.reportIssueSub', 'Help & support')}</Text>
             </View>
             <ExternalLinkIcon size={12} color={AppColors.grayTextWeak} />
           </TouchableScale>
@@ -360,8 +352,8 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
             style={styles.gridCard}>
             <TagIcon color={AppColors.successGreen} size={18} />
             <View style={{flex: 1}}>
-              <Text style={styles.gridCardTitle}>Release Notes</Text>
-              <Text style={styles.gridCardSub}>What's new</Text>
+              <Text style={styles.gridCardTitle}>{t('about.releaseNotes', 'Release Notes')}</Text>
+              <Text style={styles.gridCardSub}>{t('about.releaseNotesSub', 'What\'s new')}</Text>
             </View>
             <ExternalLinkIcon size={12} color={AppColors.grayTextWeak} />
           </TouchableScale>
@@ -372,13 +364,13 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
                 'npm install react-native-inapp-inspector',
                 'NPM Command',
               );
-              showToast('Copied package install command!');
+              showToast(t('about.copiedInstallCommand', 'Copied package install command!'));
             }}
             style={styles.gridCard}>
             <CopyIcon color={AppColors.brandPurple} size={16} />
             <View style={{flex: 1}}>
-              <Text style={styles.gridCardTitle}>Copy Install</Text>
-              <Text style={styles.gridCardSub}>npm / yarn command</Text>
+              <Text style={styles.gridCardTitle}>{t('about.copyInstall', 'Copy Install')}</Text>
+              <Text style={styles.gridCardSub}>{t('about.copyInstallSub', 'npm / yarn command')}</Text>
             </View>
           </TouchableScale>
         </View>
@@ -386,10 +378,10 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
         {/* Footer info */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            React Native In-App Inspector · MIT License
+            {t('about.footerLicense', 'React Native In-App Inspector · MIT License')}
           </Text>
           <Text style={styles.footerSubText}>
-            Zero-config on-device debugging tool
+            {t('about.footerTagline', 'Zero-config on-device debugging tool')}
           </Text>
         </View>
       </ScrollView>

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import TouchableScale from '../TouchableScale';
 import EndOfListFooter from '../EndOfListFooter';
+import {ConfirmationModal} from './ConfirmationModal';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
@@ -251,66 +252,74 @@ export const StorageTab = React.memo(() => {
     setModalVisible(true);
   };
 
+  const [confirmConfig, setConfirmConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
+
   // Delete single key
   const handleDeleteKey = (key: string) => {
-    Alert.alert(
-      t('storage.deleteKeyTitle', 'Delete Key'),
-      t('storage.deleteKeyMessage', {key, defaultValue: `Are you sure you want to delete key "${key}"?`}),
-      [
-        {text: t('common.cancel', 'Cancel'), style: 'cancel'},
-        {
-          text: t('common.clear', 'Delete'),
-          style: 'destructive',
-          onPress: async () => {
-            const ok = await removeStorageEntry(
-              activeDriver,
-              key,
-              activeDriver === 'mmkv' ? activeMMKVId : undefined,
-            );
-            if (ok) {
-              showToast(`Deleted "${key}"`);
-              loadEntries();
-            } else {
-              showToast(`Failed to delete "${key}"`);
-            }
-          },
-        },
-      ],
-    );
+    setConfirmConfig({
+      visible: true,
+      title: t('storage.deleteKeyTitle', 'Delete Key'),
+      message: t('storage.deleteKeyMessage', {key, defaultValue: `Are you sure you want to delete key "${key}"?`}),
+      confirmText: t('common.clear', 'Delete'),
+      cancelText: t('common.cancel', 'Cancel'),
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({...prev, visible: false}));
+        const ok = await removeStorageEntry(
+          activeDriver,
+          key,
+          activeDriver === 'mmkv' ? activeMMKVId : undefined,
+        );
+        if (ok) {
+          showToast(`Deleted "${key}"`);
+          loadEntries();
+        } else {
+          showToast(`Failed to delete "${key}"`);
+        }
+      },
+    });
   };
 
   // Clear all keys
   const handleClearAll = () => {
-    Alert.alert(
-      t('storage.clearTitle', 'Clear Storage Driver'),
-      t('storage.clearMessage', {
+    setConfirmConfig({
+      visible: true,
+      title: t('storage.clearTitle', 'Clear Storage Driver'),
+      message: t('storage.clearMessage', {
         driver: activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV',
         defaultValue: `Are you sure you want to delete all keys in ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'}?`,
       }),
-      [
-        {text: t('common.cancel', 'Cancel'), style: 'cancel'},
-        {
-          text: t('storage.clearConfirm', 'Clear All'),
-          style: 'destructive',
-          onPress: async () => {
-            const ok = await clearStorageDriver(
-              activeDriver,
-              activeDriver === 'mmkv' ? activeMMKVId : undefined,
-            );
-            if (ok) {
-              showToast('All storage keys wiped');
-              loadEntries();
-            }
-          },
-        },
-      ],
-    );
+      confirmText: t('storage.clearConfirm', 'Clear All'),
+      cancelText: t('common.cancel', 'Cancel'),
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({...prev, visible: false}));
+        const ok = await clearStorageDriver(
+          activeDriver,
+          activeDriver === 'mmkv' ? activeMMKVId : undefined,
+        );
+        if (ok) {
+          showToast(t('storage.cleared', 'All storage keys wiped'));
+          loadEntries();
+        }
+      },
+    });
   };
 
   // Save Modal (Create / Update)
   const handleSaveModal = async () => {
     if (!editKeyName.trim()) {
-      showToast('Key name cannot be empty');
+      showToast(t('storage.keyNameEmpty', 'Key name cannot be empty'));
       return;
     }
 
@@ -344,7 +353,7 @@ export const StorageTab = React.memo(() => {
       setModalVisible(false);
       loadEntries();
     } else {
-      showToast('Error saving storage key');
+      showToast(t('storage.saveError', 'Error saving storage key'));
     }
   };
 
@@ -355,7 +364,7 @@ export const StorageTab = React.memo(() => {
       setEditValue(JSON.stringify(parsed, null, 2));
       setJsonError(null);
       setEditType('json');
-      showToast('Formatted JSON');
+      showToast(t('storage.beautifyJson', 'Formatted JSON'));
     } catch {
       setJsonError('Cannot format: invalid JSON syntax');
     }
@@ -624,9 +633,11 @@ export const StorageTab = React.memo(() => {
             keyExtractor={item => item.key}
             renderItem={renderItem}
             initialNumToRender={10}
-            maxToRenderPerBatch={10}
+            maxToRenderPerBatch={8}
             windowSize={5}
-            removeClippedSubviews={Platform.OS === 'android'}
+            updateCellsBatchingPeriod={40}
+            removeClippedSubviews={true}
+            renderToHardwareTextureAndroid={true}
             style={styles.scrollArea}
             contentContainerStyle={
               filteredEntries.length === 0
@@ -806,6 +817,18 @@ export const StorageTab = React.memo(() => {
           </View>
         </View>
       </Modal>
+
+      <ConfirmationModal
+        visible={confirmConfig.visible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        isDestructive={true}
+        icon="trash"
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({...prev, visible: false}))}
+      />
     </View>
   );
 });

@@ -474,11 +474,13 @@ const AnalyticsTab = React.memo(() => {
               keyExtractor={keyExtractor}
               renderItem={renderItem}
               getItemLayout={getItemLayout}
-              initialNumToRender={15}
-              maxToRenderPerBatch={10}
-              windowSize={9}
-              removeClippedSubviews={Platform.OS === 'android'}
+              initialNumToRender={10}
+              maxToRenderPerBatch={8}
+              windowSize={5}
+              updateCellsBatchingPeriod={40}
+              removeClippedSubviews={true}
               renderToHardwareTextureAndroid={true}
+              showsVerticalScrollIndicator={false}
               ListEmptyComponent={
                 <EmptyState
                   isSearch={analyticsSearch.length > 0}

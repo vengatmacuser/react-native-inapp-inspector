@@ -38,6 +38,7 @@ import {showToast} from '../../helpers/toast';
 import {useTranslation} from '../../i18n';
 
 import {useInspector} from './InspectorContext';
+import {ConfirmationModal} from './ConfirmationModal';
 
 export const MediaGalleryTab: React.FC = () => {
   const {t} = useTranslation();
@@ -48,6 +49,19 @@ export const MediaGalleryTab: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<CapturedMediaItem | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [confirmConfig, setConfirmConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const loadMedia = useCallback(async () => {
     try {
@@ -174,52 +188,53 @@ export const MediaGalleryTab: React.FC = () => {
     const count = selectedIds.size;
     if (count === 0) return;
 
-    Alert.alert(
-      t('mediaGallery.deleteSelectedTitle'),
-      t('mediaGallery.deleteSelectedMessage', {count}),
-      [
-        {text: t('common.cancel'), style: 'cancel'},
-        {
-          text: t('mediaGallery.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            const itemsToDelete = mediaList.filter(item => selectedIds.has(item.id));
-            for (const item of itemsToDelete) {
-              await ScreenCapture.deleteMedia(item.uri);
-            }
-            setSelectedIds(new Set());
-            await loadMedia();
-            const remainingCount = await refreshMediaCount?.();
-            if (remainingCount === 0) {
-              switchActiveTab('apis');
-            }
-            showToast(t('mediaGallery.deletedCount', {count: itemsToDelete.length}));
-          },
-        },
-      ],
-    );
+    setConfirmConfig({
+      visible: true,
+      title: t('mediaGallery.deleteSelectedTitle', 'Delete Selected Media'),
+      message: t('mediaGallery.deleteSelectedMessage', {
+        count,
+        defaultValue: `Are you sure you want to permanently delete ${count} media items?`,
+      }),
+      confirmText: t('mediaGallery.delete', 'Delete'),
+      cancelText: t('common.cancel', 'Cancel'),
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({...prev, visible: false}));
+        const itemsToDelete = mediaList.filter(item => selectedIds.has(item.id));
+        for (const item of itemsToDelete) {
+          await ScreenCapture.deleteMedia(item.uri);
+        }
+        setSelectedIds(new Set());
+        await loadMedia();
+        const remainingCount = await refreshMediaCount?.();
+        if (remainingCount === 0) {
+          switchActiveTab('apis');
+        }
+        showToast(t('mediaGallery.deletedCount', {count: itemsToDelete.length}));
+      },
+    });
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      t('mediaGallery.purgeTitle'),
-      t('mediaGallery.purgeMessage', {count: mediaList.length, size: formatBytes(totalStorageBytes)}),
-      [
-        {text: t('common.cancel'), style: 'cancel'},
-        {
-          text: t('common.clearAll'),
-          style: 'destructive',
-          onPress: async () => {
-            await ScreenCapture.clearAllMedia();
-            setSelectedIds(new Set());
-            await loadMedia();
-            await refreshMediaCount?.();
-            switchActiveTab('apis');
-            showToast(t('mediaGallery.allPurged'));
-          },
-        },
-      ],
-    );
+    setConfirmConfig({
+      visible: true,
+      title: t('mediaGallery.purgeTitle', 'Purge Gallery'),
+      message: t('mediaGallery.purgeMessage', {
+        count: mediaList.length,
+        size: formatBytes(totalStorageBytes),
+        defaultValue: `Are you sure you want to delete all ${mediaList.length} media files (${formatBytes(totalStorageBytes)})? This cannot be undone.`,
+      }),
+      confirmText: t('common.clearAll', 'Clear All'),
+      cancelText: t('common.cancel', 'Cancel'),
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({...prev, visible: false}));
+        await ScreenCapture.clearAllMedia();
+        setSelectedIds(new Set());
+        await loadMedia();
+        await refreshMediaCount?.();
+        switchActiveTab('apis');
+        showToast(t('mediaGallery.allPurged'));
+      },
+    });
   };
 
   const handleConvertToGif = async (item: CapturedMediaItem) => {
@@ -592,6 +607,18 @@ export const MediaGalleryTab: React.FC = () => {
         onClose={() => setSelectedItem(null)}
         onDelete={handleDeleteItem}
         onConvertToGif={handleConvertToGif}
+      />
+
+      <ConfirmationModal
+        visible={confirmConfig.visible}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        isDestructive={true}
+        icon="trash"
+        onConfirm={confirmConfig.onConfirm}
+        onCancel={() => setConfirmConfig(prev => ({...prev, visible: false}))}
       />
     </View>
   );

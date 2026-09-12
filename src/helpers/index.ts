@@ -543,6 +543,17 @@ export const getAppName = (): string => {
     return RNDeviceInfo.appName;
   }
 
+  // Try InAppInspector native module constants
+  const NetworkInspectorModule = NativeModules.NetworkInspectorModule;
+  if (
+    NetworkInspectorModule &&
+    typeof NetworkInspectorModule.appName === 'string' &&
+    NetworkInspectorModule.appName.length > 0 &&
+    NetworkInspectorModule.appName !== 'App'
+  ) {
+    return NetworkInspectorModule.appName;
+  }
+
   // Try Expo
   const ExpoApplication = NativeModules.ExpoApplication;
   if (ExpoApplication && typeof ExpoApplication.applicationName === 'string') {
@@ -581,90 +592,109 @@ export const getAppVersionAndBuild = (): {
   let version = '';
   let build = '';
 
-  // 1. Try ExpoApplication / ExponentConstants
-  const ExpoApplication = NativeModules.ExpoApplication;
-  if (ExpoApplication) {
-    if (typeof ExpoApplication.nativeAppVersion === 'string') {
-      version = ExpoApplication.nativeAppVersion;
+  // 1. Try InAppInspector native module constants (exact native app version & build)
+  const NetworkInspectorModule = NativeModules.NetworkInspectorModule;
+  if (NetworkInspectorModule) {
+    if (
+      typeof NetworkInspectorModule.appVersion === 'string' &&
+      NetworkInspectorModule.appVersion.length > 0
+    ) {
+      version = NetworkInspectorModule.appVersion;
     }
-    if (typeof ExpoApplication.nativeBuildVersion === 'string') {
-      build = ExpoApplication.nativeBuildVersion;
+    if (
+      typeof NetworkInspectorModule.appBuild === 'string' &&
+      NetworkInspectorModule.appBuild.length > 0
+    ) {
+      build = NetworkInspectorModule.appBuild;
     }
   }
 
-  const ExponentConstants = NativeModules.ExponentConstants;
-  if (ExponentConstants) {
-    const manifest = ExponentConstants.manifest || ExponentConstants.expoConfig;
-    if (manifest) {
-      if (!version && manifest.version) {
-        version = String(manifest.version);
+  // 2. Try ExpoApplication / ExponentConstants
+  if (!version || !build) {
+    const ExpoApplication = NativeModules.ExpoApplication;
+    if (ExpoApplication) {
+      if (!version && typeof ExpoApplication.nativeAppVersion === 'string') {
+        version = ExpoApplication.nativeAppVersion;
       }
-      if (!build) {
-        if (manifest.ios?.buildNumber) {
-          build = String(manifest.ios.buildNumber);
-        } else if (manifest.android?.versionCode) {
-          build = String(manifest.android.versionCode);
+      if (!build && typeof ExpoApplication.nativeBuildVersion === 'string') {
+        build = ExpoApplication.nativeBuildVersion;
+      }
+    }
+  }
+
+  if (!version || !build) {
+    const ExponentConstants = NativeModules.ExponentConstants;
+    if (ExponentConstants) {
+      const manifest = ExponentConstants.manifest || ExponentConstants.expoConfig;
+      if (manifest) {
+        if (!version && manifest.version) {
+          version = String(manifest.version);
+        }
+        if (!build) {
+          if (manifest.ios?.buildNumber) {
+            build = String(manifest.ios.buildNumber);
+          } else if (manifest.android?.versionCode) {
+            build = String(manifest.android.versionCode);
+          }
         }
       }
     }
   }
 
-  // 2. Try react-native-device-info
-  const RNDeviceInfo = NativeModules.RNDeviceInfo;
-  if (RNDeviceInfo) {
-    if (!version) {
-      if (typeof RNDeviceInfo.appVersion === 'string') {
-        version = RNDeviceInfo.appVersion;
-      } else if (typeof RNDeviceInfo.getVersion === 'function') {
-        try {
-          version = RNDeviceInfo.getVersion();
-        } catch (e) {}
+  // 3. Try react-native-device-info
+  if (!version || !build) {
+    const RNDeviceInfo = NativeModules.RNDeviceInfo;
+    if (RNDeviceInfo) {
+      if (!version) {
+        if (typeof RNDeviceInfo.appVersion === 'string') {
+          version = RNDeviceInfo.appVersion;
+        } else if (typeof RNDeviceInfo.getVersion === 'function') {
+          try {
+            version = RNDeviceInfo.getVersion();
+          } catch (e) {}
+        }
       }
-    }
-    if (!build) {
-      if (typeof RNDeviceInfo.buildNumber === 'string') {
-        build = RNDeviceInfo.buildNumber;
-      } else if (typeof RNDeviceInfo.getBuildNumber === 'function') {
-        try {
-          build = RNDeviceInfo.getBuildNumber();
-        } catch (e) {}
+      if (!build) {
+        if (typeof RNDeviceInfo.buildNumber === 'string') {
+          build = RNDeviceInfo.buildNumber;
+        } else if (typeof RNDeviceInfo.getBuildNumber === 'function') {
+          try {
+            build = RNDeviceInfo.getBuildNumber();
+          } catch (e) {}
+        }
       }
     }
   }
 
-  // 3. Try PlatformConstants / Platform.constants
-  const constants =
-    (Platform.constants as any) || NativeModules.PlatformConstants;
-  if (constants) {
+  // 4. Try Android AppInfo
+  if (!version || !build) {
+    const AppInfo = NativeModules.AppInfo;
+    if (AppInfo) {
+      if (!version && typeof AppInfo.versionName === 'string') {
+        version = AppInfo.versionName;
+      }
+      if (!build && typeof AppInfo.versionCode === 'string') {
+        build = AppInfo.versionCode;
+      }
+    }
+  }
+
+  // 5. Try PlatformConstants / Platform.constants (only if actual app version)
+  if (!version) {
+    const constants =
+      (Platform.constants as any) || NativeModules.PlatformConstants;
     if (
-      !version &&
+      constants &&
       constants.Version &&
       typeof constants.Version === 'string' &&
       constants.Version.includes('.')
     ) {
       version = constants.Version;
     }
-    if (!version && constants.reactNativeVersion) {
-      const rnv = constants.reactNativeVersion;
-      if (rnv.major !== undefined) {
-        version = `${rnv.major}.${rnv.minor}.${rnv.patch}`;
-      }
-    }
-  }
-
-  // 4. Try Android AppInfo
-  const AppInfo = NativeModules.AppInfo;
-  if (AppInfo) {
-    if (!version && typeof AppInfo.versionName === 'string') {
-      version = AppInfo.versionName;
-    }
-    if (!build && typeof AppInfo.versionCode === 'string') {
-      build = AppInfo.versionCode;
-    }
   }
 
   // Fallbacks
-  if (!version) version = '1.0.0';
+  if (!version) version = '1.0';
   if (!build) build = '1';
 
   return {

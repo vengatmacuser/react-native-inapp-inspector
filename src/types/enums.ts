@@ -9,6 +9,7 @@ export const ActiveTab = {
   Redux: 'redux',
   Crash: 'crash',
   Push: 'push',
+  Socket: 'socket',
   Device: 'device',
   Storage: 'storage',
   Debugging: 'debugging',
@@ -73,6 +74,7 @@ export const SettingsPage = {
   Debugging: 'debugging',
   Media: 'media',
   Push: 'push',
+  Socket: 'socket',
 } as const;
 export type SettingsPage =
   | (typeof SettingsPage)[keyof typeof SettingsPage]
@@ -222,3 +224,51 @@ export const PushFilterType = {
 } as const;
 export type PushFilterType =
   (typeof PushFilterType)[keyof typeof PushFilterType] | string;
+
+export const SocketStatus = {
+  Connecting: 'connecting',
+  Open: 'open',
+  Closed: 'closed',
+  Error: 'error',
+} as const;
+export type SocketStatus =
+  (typeof SocketStatus)[keyof typeof SocketStatus] | string;
+
+export const SocketFrameDirection = {
+  Send: 'send',
+  Receive: 'receive',
+} as const;
+export type SocketFrameDirection =
+  (typeof SocketFrameDirection)[keyof typeof SocketFrameDirection];
+
+export const SocketFrameType = {
+  Text: 'text',
+  Json: 'json',
+  Binary: 'binary',
+  Ping: 'ping',
+  Pong: 'pong',
+  SocketIo: 'socket.io',
+  Custom: 'custom',
+} as const;
+export type SocketFrameType =
+  (typeof SocketFrameType)[keyof typeof SocketFrameType] | string;
+
+export const SocketDetailSubTab = {
+  Messages: 'messages',
+  Overview: 'overview',
+  Params: 'params',
+  Raw: 'raw',
+} as const;
+export type SocketDetailSubTab =
+  (typeof SocketDetailSubTab)[keyof typeof SocketDetailSubTab];
+
+export const SocketFilterType = {
+  All: 'all',
+  Open: 'open',
+  Closed: 'closed',
+  Error: 'error',
+  SocketIo: 'socket.io',
+  WebSocket: 'ws',
+} as const;
+export type SocketFilterType =
+  (typeof SocketFilterType)[keyof typeof SocketFilterType] | string;

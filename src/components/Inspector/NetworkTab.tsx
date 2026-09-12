@@ -51,6 +51,8 @@ const NetworkTab = React.memo(() => {
     quickFilter,
     setQuickFilter,
     handleDelete,
+    isGroupByPageEnabled,
+    setIsGroupByPageEnabled,
     selectedLogs,
     sortOrder,
     setSortOrder,
@@ -58,6 +60,12 @@ const NetworkTab = React.memo(() => {
     setStatusFilters,
     methodFilters,
     setMethodFilters,
+    latencyFilter,
+    setLatencyFilter,
+    protocolFilter,
+    setProtocolFilter,
+    networkSortBy,
+    setNetworkSortBy,
     filteredLogs,
     logs,
     toggleSectionFilter,
@@ -67,6 +75,7 @@ const NetworkTab = React.memo(() => {
     newLogIds,
     toggleSelect,
     setSelected,
+    maxNetworkLogs,
   } = useInspector();
 
   const {t} = useTranslation();
@@ -74,6 +83,40 @@ const NetworkTab = React.memo(() => {
 
   const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
+  const [displayLimit, setDisplayLimit] = React.useState<number>(maxNetworkLogs || 50);
+
+  React.useEffect(() => {
+    setDisplayLimit(maxNetworkLogs || 50);
+  }, [search, quickFilter, maxNetworkLogs]);
+
+  const displayedData = useMemo(() => {
+    if (isGroupByPageEnabled) return groupedData;
+    return groupedData.slice(0, displayLimit);
+  }, [isGroupByPageEnabled, groupedData, displayLimit]);
+
+  const keyExtractor = useCallback((item: GroupedListItem) => {
+    return item?.id ? String(item.id) : '';
+  }, []);
+
+  const isFilterActive = useMemo(() => {
+    return (
+      (statusFilters.size > 0 && !statusFilters.has('all' as any)) ||
+      (methodFilters.size > 0 && !methodFilters.has('all' as any)) ||
+      latencyFilter !== 'all' ||
+      protocolFilter !== 'all' ||
+      networkSortBy !== 'time_desc'
+    );
+  }, [statusFilters, methodFilters, latencyFilter, protocolFilter, networkSortBy]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (statusFilters.size > 0 && !statusFilters.has('all' as any)) count += statusFilters.size;
+    if (methodFilters.size > 0 && !methodFilters.has('all' as any)) count += methodFilters.size;
+    if (latencyFilter !== 'all') count++;
+    if (protocolFilter !== 'all') count++;
+    if (networkSortBy !== 'time_desc') count++;
+    return count;
+  }, [statusFilters, methodFilters, latencyFilter, protocolFilter, networkSortBy]);
 
   const modalFilterState: NetworkFilterState = useMemo(
     () => ({
@@ -81,11 +124,11 @@ const NetworkTab = React.memo(() => {
         statusFilters.size > 0 ? new Set(statusFilters) : new Set(['all']),
       methods:
         methodFilters.size > 0 ? new Set(methodFilters) : new Set(['all']),
-      latency: 'all',
-      protocol: 'all',
-      sortBy: sortOrder === 'newest' ? 'time_desc' : 'time_asc',
+      latency: latencyFilter,
+      protocol: protocolFilter,
+      sortBy: networkSortBy,
     }),
-    [statusFilters, methodFilters, sortOrder],
+    [statusFilters, methodFilters, latencyFilter, protocolFilter, networkSortBy],
   );
 
   const handleApplyNetworkFilters = useCallback(
@@ -96,7 +139,7 @@ const NetworkTab = React.memo(() => {
       ) {
         setStatusFilters(new Set());
       } else {
-        setStatusFilters(new Set(newFilters.statusCodes));
+        setStatusFilters(new Set(newFilters.statusCodes as any));
       }
 
       if (newFilters.methods.has('all') || newFilters.methods.size === 0) {
@@ -107,13 +150,17 @@ const NetworkTab = React.memo(() => {
         );
       }
 
+      setLatencyFilter(newFilters.latency || 'all');
+      setProtocolFilter(newFilters.protocol || 'all');
+      setNetworkSortBy(newFilters.sortBy || 'time_desc');
+
       if (newFilters.sortBy === 'time_asc') {
         setSortOrder('oldest');
       } else {
         setSortOrder('newest');
       }
     },
-    [setStatusFilters, setMethodFilters, setSortOrder],
+    [setStatusFilters, setMethodFilters, setLatencyFilter, setProtocolFilter, setNetworkSortBy, setSortOrder],
   );
 
   const quickCounts = useMemo(() => {
@@ -192,13 +239,13 @@ const NetworkTab = React.memo(() => {
         id: 'POST',
         label: 'POST',
         count: quickCounts.post,
-        color: METHOD_COLORS.POST || '#3B82F6',
+        color: METHOD_COLORS.POST || AppColors.blue500,
       },
       {
         id: 'GET',
         label: 'GET',
         count: quickCounts.get,
-        color: METHOD_COLORS.GET || '#10B981',
+        color: METHOD_COLORS.GET || AppColors.emerald500,
       },
       {
         id: 'graphql',
@@ -433,23 +480,26 @@ const NetworkTab = React.memo(() => {
         <AnimatedEntrance
           index={index}
           distance={8}
-          style={[
-            styles.treeNodeRow,
-            isLast && styles.treeNodeRowLast,
-          ]}>
-          <View style={styles.treeLines}>
-            <View
-              style={[
-                styles.modernTreeLine,
-                {borderColor: color},
-                isLast && styles.modernTreeLineLast,
-              ]}
-            />
-            {!isLast && (
-              <View style={[styles.modernTreeBranch, {borderColor: color}]} />
-            )}
-          </View>
-          <View style={styles.treeCardWrapper}>
+          style={
+            !isGroupByPageEnabled
+              ? {marginBottom: 6, marginHorizontal: 2}
+              : [styles.treeNodeRow, isLast && styles.treeNodeRowLast]
+          }>
+          {isGroupByPageEnabled && (
+            <View style={styles.treeLines}>
+              <View
+                style={[
+                  styles.modernTreeLine,
+                  {borderColor: color},
+                  isLast && styles.modernTreeLineLast,
+                ]}
+              />
+              {!isLast && (
+                <View style={[styles.modernTreeBranch, {borderColor: color}]} />
+              )}
+            </View>
+          )}
+          <View style={isGroupByPageEnabled ? styles.treeCardWrapper : {flex: 1}}>
             <LogCard
               item={log}
               isSelected={selectedLogs.has(log.id)}
@@ -467,6 +517,7 @@ const NetworkTab = React.memo(() => {
       );
     },
     [
+      isGroupByPageEnabled,
       minStart,
       totalRange,
       newLogIds,
@@ -575,6 +626,35 @@ const NetworkTab = React.memo(() => {
                 </TouchableScale>
 
                 <TouchableScale
+                  style={[
+                    styles.toolbarBtn,
+                    isGroupByPageEnabled && {
+                      borderColor: AppColors.purple,
+                      backgroundColor: `${AppColors.purple}15`,
+                    },
+                  ]}
+                  onPress={() => setIsGroupByPageEnabled(prev => !prev)}
+                  hitSlop={6}
+                  accessibilityLabel={
+                    isGroupByPageEnabled
+                      ? 'Page Accordion Grouping Enabled (Tap for Plain List)'
+                      : 'Plain List Enabled (Tap for Page Accordion)'
+                  }
+                  accessibilityRole="button">
+                  <LayersIcon
+                    color={
+                      isGroupByPageEnabled
+                        ? AppColors.purple
+                        : AppColors.grayTextStrong
+                    }
+                    size={16}
+                  />
+                  {isGroupByPageEnabled && (
+                    <View style={styles.activeFilterDot} />
+                  )}
+                </TouchableScale>
+
+                <TouchableScale
                   style={styles.toolbarBtn}
                   onPress={() =>
                     setSortOrder(o =>
@@ -589,30 +669,6 @@ const NetworkTab = React.memo(() => {
                     color={AppColors.grayTextStrong}
                     size={18}
                   />
-                </TouchableScale>
-
-                <TouchableScale
-                  style={[
-                    styles.toolbarBtn,
-                    (statusFilters.size > 0 || methodFilters.size > 0) && {
-                      borderColor: AppColors.purple,
-                      backgroundColor: `${AppColors.purple}15`,
-                    },
-                  ]}
-                  onPress={() => setIsFilterModalOpen(true)}
-                  hitSlop={6}>
-                  <FilterIcon
-                    color={
-                      statusFilters.size > 0 || methodFilters.size > 0
-                        ? AppColors.purple
-                        : AppColors.grayTextStrong
-                    }
-                    size={16}
-                  />
-                  {(statusFilters.size > 0 ||
-                    methodFilters.size > 0) && (
-                    <View style={styles.activeFilterDot} />
-                  )}
                 </TouchableScale>
               </View>
             </View>
@@ -714,12 +770,12 @@ const NetworkTab = React.memo(() => {
                     paddingVertical: 4.5,
                     borderRadius: 8,
                     backgroundColor:
-                      statusFilters.size > 0 || methodFilters.size > 0
+                      isFilterActive
                         ? `${AppColors.purple}20`
                         : AppColors.grayBackground,
                     borderWidth: 1,
                     borderColor:
-                      statusFilters.size > 0 || methodFilters.size > 0
+                      isFilterActive
                         ? AppColors.purple
                         : AppColors.grayBorderSecondary,
                     gap: 5,
@@ -732,7 +788,7 @@ const NetworkTab = React.memo(() => {
                   <FilterIcon
                     size={11}
                     color={
-                      statusFilters.size > 0 || methodFilters.size > 0
+                      isFilterActive
                         ? AppColors.purple
                         : AppColors.grayText
                     }
@@ -742,13 +798,13 @@ const NetworkTab = React.memo(() => {
                       fontFamily: AppFonts.interBold,
                       fontSize: 10.5,
                       color:
-                        statusFilters.size > 0 || methodFilters.size > 0
+                        isFilterActive
                           ? AppColors.purple
                           : AppColors.grayText,
                     }}>
-                    More Filters
+                    {t('network.moreFilters', 'More Filters')}
                   </Text>
-                  {(statusFilters.size > 0 || methodFilters.size > 0) && (
+                  {isFilterActive && (
                     <View
                       style={{
                         backgroundColor: AppColors.purple,
@@ -762,7 +818,7 @@ const NetworkTab = React.memo(() => {
                           fontSize: 8.5,
                           color: AppColors.white,
                         }}>
-                        {statusFilters.size + methodFilters.size}
+                        {activeFiltersCount}
                       </Text>
                     </View>
                   )}
@@ -773,8 +829,7 @@ const NetworkTab = React.memo(() => {
             {/* Active Filter Helper Status Bar */}
             {(quickFilter !== 'all' ||
               search.trim().length > 0 ||
-              statusFilters.size > 0 ||
-              methodFilters.size > 0 ||
+              isFilterActive ||
               filteredLogs.length !== logs.length) && (
               <View
                 style={{
@@ -804,6 +859,10 @@ const NetworkTab = React.memo(() => {
                     setQuickFilter('all');
                     setStatusFilters(new Set());
                     setMethodFilters(new Set());
+                    setLatencyFilter('all');
+                    setProtocolFilter('all');
+                    setNetworkSortBy('time_desc');
+                    setSearchScope('all');
                   }}>
                   <Text
                     style={{
@@ -820,20 +879,21 @@ const NetworkTab = React.memo(() => {
 
         <FlatList
           ref={apisListRef}
-          data={groupedData}
-          keyExtractor={item => item?.id?.toString()}
+          data={displayedData}
+          keyExtractor={keyExtractor}
           renderItem={renderItem}
-          initialNumToRender={15}
-          maxToRenderPerBatch={10}
-          windowSize={9}
-          removeClippedSubviews={Platform.OS === 'android'}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          updateCellsBatchingPeriod={40}
+          removeClippedSubviews={true}
           renderToHardwareTextureAndroid={true}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
           <EmptyState
             isSearch={
               search.length > 0 ||
-              statusFilters.size > 0 ||
-              methodFilters.size > 0 ||
+              isFilterActive ||
               quickFilter !== 'all'
             }
             searchQuery={search}
@@ -846,6 +906,9 @@ const NetworkTab = React.memo(() => {
               setSearch('');
               setStatusFilters(new Set());
               setMethodFilters(new Set());
+              setLatencyFilter('all');
+              setProtocolFilter('all');
+              setNetworkSortBy('time_desc');
               setQuickFilter('all');
               setSearchScope('all');
             }}
@@ -854,9 +917,18 @@ const NetworkTab = React.memo(() => {
         ListFooterComponent={
           groupedData.length > 0 ? (
             <EndOfListFooter
-              count={filteredLogs.length}
+              count={
+                isGroupByPageEnabled
+                  ? filteredLogs.length
+                  : Math.min(displayLimit, filteredLogs.length)
+              }
               totalCount={filteredLogs.length}
               label="requests"
+              hasMore={
+                !isGroupByPageEnabled && filteredLogs.length > displayLimit
+              }
+              loadMoreStep={30}
+              onLoadMore={() => setDisplayLimit(p => p + 30)}
             />
           ) : null
         }

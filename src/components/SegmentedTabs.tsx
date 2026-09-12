@@ -59,6 +59,11 @@ export const DEFAULT_INNER_TAB_THEMES: Record<string, string> = {
   delivery: AppColors.amber600,
   domainAttrs: AppColors.sky600,
 
+  // WebSocket detail
+  messages: AppColors.violet600,
+  params: AppColors.teal600,
+  code: AppColors.amber600,
+
   // JSON viewer
   pretty: AppColors.violet600,
   table: AppColors.teal600,

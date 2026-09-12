@@ -5,18 +5,23 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import BrandCircleIcon from './BrandCircleIcon';
+
+// Bundled animated GIF logo for the Inspector brand
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const BRAND_GIF_LOGO = require('../../../assets/inapp_inspector_icon.gif');
 
 interface AppHeaderLogoProps {
   size?: number;
   customIcon?: ImageSourcePropType | null;
+  shape?: 'square' | 'circle';
 }
 
 export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
-  size = 52,
+  size = 64,
   customIcon,
+  shape = 'square',
 }) => {
-  const cornerRadius = Math.round(size * 0.23);
+  const cornerRadius = shape === 'circle' ? size / 2 : Math.round(size * 0.2265);
 
   // 1. If customIcon is explicitly provided, render it
   if (customIcon) {
@@ -62,8 +67,24 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
     );
   }
 
-  // 2. Default: Inspector's Signature FAB Icon Logo (Cyber Owl Circular Emblem)
-  return <BrandCircleIcon size={size} />;
+  // 2. Default: Inspector's Animated GIF Brand Logo
+  return (
+    <View
+      style={[
+        logoStyles.imageContainer,
+        {
+          width: size,
+          height: size,
+          borderRadius: cornerRadius,
+        },
+      ]}>
+      <Image
+        source={BRAND_GIF_LOGO}
+        style={[logoStyles.image, {borderRadius: cornerRadius}]}
+        resizeMode="cover"
+      />
+    </View>
+  );
 };
 
 const logoStyles = StyleSheet.create({

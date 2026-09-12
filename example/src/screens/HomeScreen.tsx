@@ -39,6 +39,8 @@ import {
   getCrashRecords,
   isReduxConnected,
   isNativeModuleAvailable,
+  simulateTestSocket,
+  SkeletonPlaceholder,
 } from 'react-native-inapp-inspector';
 import {mockStore} from '../store/mockStore';
 import {styles} from '../styles/appStyles';
@@ -716,7 +718,9 @@ const CombinedHeroHeader = ({
             <BrandCircleIcon size={38} />
           </View>
           <View style={styles.headerBrandTextCol}>
-            <Text style={styles.headerTitle}>In-App Inspector</Text>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              react-native-inapp-inspector
+            </Text>
             <Text style={styles.headerSubtitle} numberOfLines={1}>
               v{npmMeta.version} • Zero-Config DevTools
             </Text>
@@ -724,13 +728,14 @@ const CombinedHeroHeader = ({
         </View>
 
         <Pressable
+          accessibilityLabel="Refresh and sync data"
+          accessibilityRole="button"
           style={({pressed}) => [
             styles.headerRefreshBtn,
             pressed && {opacity: 0.7, transform: [{scale: 0.95}]},
           ]}
           onPress={onRefresh}>
-          <SvgRefresh color="#4F46E5" size={13} />
-          <Text style={styles.headerRefreshBtnText}>Sync</Text>
+          <SvgRefresh color="#4F46E5" size={14} />
         </Pressable>
       </View>
 
@@ -2202,6 +2207,11 @@ export function HomeScreen() {
       payload: {id: 101, status: 'synced', role: 'Architect'},
       __origin: 'thunk',
     });
+
+    // 5. WebSocket & Socket.IO sample traffic
+    try {
+      simulateTestSocket('chat');
+    } catch {}
   };
 
   const openUrl = (url: string) => {
@@ -2222,18 +2232,21 @@ export function HomeScreen() {
       <ScrollView
         contentContainerStyle={[styles.content, {paddingBottom: bottomPadding}]}
         showsVerticalScrollIndicator={false}>
-        {/* ─── COMBINED HERO HEADER + DOWNLOADS & VELOCITY CARD ───────────── */}
-        <ModuleErrorBoundary moduleName="Combined Hero Header">
-          <CombinedHeroHeader
-            npmMeta={npmMeta}
-            githubMeta={githubMeta}
-            insights={liveInsights}
-            copiedInstall={copiedInstall}
-            onCopyInstall={copyInstallCommand}
-            onRefresh={fetchLiveInsightsData}
-            onOpenUrl={openUrl}
-          />
-        </ModuleErrorBoundary>
+        {liveInsights.loading ? (
+          <SkeletonPlaceholder cardCount={4} />
+        ) : (
+          <ModuleErrorBoundary moduleName="Combined Hero Header">
+            <CombinedHeroHeader
+              npmMeta={npmMeta}
+              githubMeta={githubMeta}
+              insights={liveInsights}
+              copiedInstall={copiedInstall}
+              onCopyInstall={copyInstallCommand}
+              onRefresh={fetchLiveInsightsData}
+              onOpenUrl={openUrl}
+            />
+          </ModuleErrorBoundary>
+        )}
       </ScrollView>
 
       {/* ─── STATIC FOOTER ACTION BAR: FAST BATCH SIMULATION ──────────────── */}

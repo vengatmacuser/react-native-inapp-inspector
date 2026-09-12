@@ -72,7 +72,7 @@ export const styles = StyleSheet.create({
     gap: 1,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '900',
     color: '#0F172A',
     letterSpacing: -0.3,
@@ -93,15 +93,14 @@ export const styles = StyleSheet.create({
     fontFamily: INTER_FONT,
   },
   headerRefreshBtn: {
-    flexDirection: 'row',
+    width: 32,
+    height: 32,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#EEF2FF',
     borderColor: '#C7D2FE',
     borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
-    gap: 4.5,
+    borderRadius: 16,
     ...Platform.select({
       ios: {
         shadowColor: '#4F46E5',
