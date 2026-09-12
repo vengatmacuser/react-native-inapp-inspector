@@ -1162,7 +1162,7 @@ const CombinedHeroHeader = ({
                           <Text style={styles.countryListName}>{c.name}</Text>
                           {isDetected && (
                             <View style={styles.detectedBadge}>
-                              <SvgMapPin size={9} color="#4F46E5" />
+                              <SvgMapPin size={9} color="#059669" />
                               <Text style={styles.detectedBadgeText}>
                                 Your Region
                               </Text>
