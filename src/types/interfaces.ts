@@ -515,6 +515,12 @@ export interface InspectorContextValue {
   setPeekMode: React.Dispatch<React.SetStateAction<boolean>>;
   peekOpacity: number;
   setPeekOpacity: React.Dispatch<React.SetStateAction<number>>;
+
+  // ─── Shared Media Preview State ─────────────────────────────────────────────
+  previewMediaItem: import('../capture').CapturedMediaItem | null;
+  setPreviewMediaItem: React.Dispatch<
+    React.SetStateAction<import('../capture').CapturedMediaItem | null>
+  >;
 }
 
 // ─── Shared component props ───────────────────────────────────────────────────

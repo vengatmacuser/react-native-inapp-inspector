@@ -162,9 +162,9 @@ const MainScreen = () => {
                   height: `${modalHeightPercent}%`,
                   borderTopLeftRadius: modalHeightPercent >= 100 ? 0 : 20,
                   borderTopRightRadius: modalHeightPercent >= 100 ? 0 : 20,
-                  backgroundColor:
-                    AppColors.contentBg || AppColors.grayBackground,
-                  opacity: peekMode ? Math.max(peekOpacity || 0.75, 0.7) : 1,
+                  opacity: peekMode
+                    ? Math.max(0.05, Math.min(1.0, typeof peekOpacity === 'number' ? peekOpacity : 0.75))
+                    : 1,
                   zIndex: 9999999,
                   elevation: 999999,
                 },

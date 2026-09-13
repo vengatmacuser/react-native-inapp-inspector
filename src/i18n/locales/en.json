@@ -58,7 +58,15 @@
     "version": "Version",
     "update": "UPDATE",
     "unknown": "Unknown",
-    "moreFilters": "More Filters"
+    "moreFilters": "More Filters",
+    "all": "All",
+    "dragToHide": "Drag here to hide",
+    "releaseToHide": "Release to hide inspector",
+    "expand": "Expand",
+    "undo": "Undo",
+    "inActiveDevelopment": "In Active Development",
+    "inspectorDismissed": "Inspector dismissed",
+    "noMatches": "No matching results"
   },
   "support": {
     "title": "Support & Community",
@@ -97,7 +105,9 @@
     "clearEverythingTitle": "Clear Everything",
     "clearEverythingMessage": "This clears all tabs — APIs, Logs, Analytics, Redux timeline and Crash history. Continue?",
     "photo": "Photo",
+    "screenshot": "Screenshot",
     "record": "Record",
+    "videoCapture": "Record",
     "rec": "REC",
     "clear": "Clear",
     "about": "About",
@@ -118,7 +128,14 @@
     "live": "Live",
     "keys": "{{count}} keys",
     "frames": "{{count}} frames",
-    "sliceBadge": "SLICE"
+    "sliceBadge": "SLICE",
+    "recordScreen": "Record Screen",
+    "newVersionAvailable": "Update Available",
+    "updateAvailable": "react-native-inapp-inspector update v{{latestVersion}} is ready",
+    "updateAvailableSubtitle": "A new version of react-native-inapp-inspector is ready to install",
+    "upgradeCommand": "UPGRADE COMMAND",
+    "copyCommand": "Copy",
+    "viewNpm": "View"
   },
   "tabs": {
     "apis": "APIs",
@@ -302,7 +319,9 @@
       "storageStatusDisabledDesc": "Preferences reset on app kill. Pass custom storage to <NetworkInspector storage={...} /> to persist on Android.",
       "language": "Language",
       "languageDescription": "Select interface display language",
-      "selectLanguage": "Select Language"
+      "selectLanguage": "Select Language",
+      "peekOpacity": "Peek-Through Opacity",
+      "peekOpacityDescription": "Transparency level when the eye icon is enabled"
     },
     "configureSubtitle": "Configure module parameters",
     "resetAlertTitle": "Reset All Settings",
@@ -326,7 +345,10 @@
       "socketio": "Simulated Socket.IO v4 session",
       "echo": "Simulated WebSocket Echo test",
       "screenshotSaved": "Screenshot captured and saved!"
-    }
+    },
+    "simulatePushTitle": "SIMULATE TEST PUSH NOTIFICATIONS",
+    "simulateSocketTitle": "SIMULATE TEST SOCKET CONNECTIONS",
+    "directCaptureShortcuts": "DIRECT CAPTURE SHORTCUTS"
   },
   "network": {
     "title": "APIs",
@@ -409,7 +431,8 @@
       "key": "Key",
       "value": "VALUE",
       "keyProperty": "KEY / PROPERTY",
-      "noMatchingKeys": "No matching keys or values found"
+      "noMatchingKeys": "No matching keys or values found",
+      "emptyPayload": "No payload data available"
     },
     "showingRequests": "Showing {{count}} requests",
     "showingFilteredRequests": "Showing {{filtered}} of {{total}} requests",
@@ -423,7 +446,10 @@
     "status404": "404 Not Found",
     "status500": "500 Error",
     "shareError": "Share Error",
-    "shareErrorMessage": "Failed to open share sheet"
+    "shareErrorMessage": "Failed to open share sheet",
+    "clearLogsTitle": "Clear Network Logs",
+    "clearLogsMsg": "Are you sure you want to clear all network logs?",
+    "moreFilters": "More Filters"
   },
   "console": {
     "title": "Logs",
@@ -481,7 +507,10 @@
     "info": "Info",
     "warning": "Warn",
     "error": "Error",
-    "debug": "Debug"
+    "debug": "Debug",
+    "clearLogsTitle": "Clear Console Logs",
+    "clearLogsMsg": "Are you sure you want to clear all console logs?",
+    "analytics": "Analytics"
   },
   "analytics": {
     "title": "Analytics",
@@ -552,7 +581,9 @@
     "keyValueAttributes": "Key-Value Attributes",
     "filterParamsPlaceholder": "Filter parameters by key or value...",
     "noParamsRecorded": "No custom parameters recorded for this event.",
-    "noParamsMatching": "No parameters matching \"{{search}}\""
+    "noParamsMatching": "No parameters matching \"{{search}}\"",
+    "clearEventsTitle": "Clear Analytics",
+    "clearEventsMsg": "Are you sure you want to clear all analytics events?"
   },
   "redux": {
     "title": "Redux",
@@ -619,7 +650,10 @@
     "clearPersistedTitle": "Clear Persisted State",
     "clearPersistedMessage": "Are you sure you want to delete persisted storage for slice \"{{slice}}\"?",
     "clearedPersisted": "Persisted state has been cleared.",
-    "clearPersistedError": "Failed to clear persisted state."
+    "clearPersistedError": "Failed to clear persisted state.",
+    "clearTimelineTitle": "Clear Redux Timeline",
+    "clearTimelineMsg": "Are you sure you want to clear the dispatched action history?",
+    "diff": "State Diff"
   },
   "device": {
     "title": "Device",
@@ -646,7 +680,8 @@
     "live": "LIVE",
     "ipAddress": "IP ADDRESS",
     "ramUsedTotal": "RAM (USED/TOTAL)",
-    "uptime": "UPTIME"
+    "uptime": "UPTIME",
+    "copiedUuid": "Copied Unique Device ID (UUID)"
   },
   "storage": {
     "title": "Storage",
@@ -677,7 +712,9 @@
     "asyncStorage": "AsyncStorage",
     "mmkv": "MMKV",
     "deleteConfirm": "Delete",
-    "cleared": "Storage cleared"
+    "cleared": "Storage cleared",
+    "keyNameEmpty": "Key name cannot be empty",
+    "saveError": "Error saving storage key"
   },
   "footer": {
     "endOfList": "You've reached the end of the list",
@@ -1325,7 +1362,10 @@
     "filterApply": "Apply ({{count}} Crashes)",
     "frameCopy": "Copy",
     "frameCopied": "Copied",
-    "componentHierarchy": "Component Hierarchy"
+    "componentHierarchy": "Component Hierarchy",
+    "breadcrumbTrail": "BREADCRUMB TRAIL & EVENT LOG",
+    "deviceDiagnostics": "DEVICE DIAGNOSTICS AT CRASH TIME",
+    "openInInspector": "Open in Inspector"
   },
   "mediaGallery": {
     "all": "All ({{count}})",
@@ -1365,7 +1405,42 @@
     "speed": "Speed",
     "loop": "Loop",
     "pause": "Pause",
-    "play": "Play"
+    "play": "Play",
+    "hideGridlines": "Hide Instagram Grid (3×3)",
+    "showGridlines": "Show Instagram Grid (3×3)",
+    "hideWatermark": "Hide QA Watermark",
+    "showWatermark": "Show QA Watermark",
+    "exportGif": "Export as Animated GIF",
+    "snapshotFrame": "Snapshot Frame (PNG)",
+    "tapToPlaceStep": "Tap or drag on image to place step badge",
+    "resetAdjustments": "Adjustments Reset",
+    "tagPlaced": "Placed tag",
+    "tapToAddText": "Tap anywhere on the image to add text",
+    "textAdded": "Text overlay added",
+    "redone": "Redone",
+    "undone": "Undone",
+    "videoSaved": "Edited video saved to gallery",
+    "savedSuccess": "Saved successfully",
+    "saveFailed": "Failed to save media",
+    "snapshotSaved": "Snapshot frame saved to gallery",
+    "snapshotFailed": "Failed to capture frame snapshot",
+    "shareSuccess": "Media shared successfully",
+    "cropFailed": "Failed to crop media",
+    "croppedSuccess": "Media cropped successfully",
+    "resizeFailed": "Failed to resize media",
+    "resizedSuccess": "Media resized successfully",
+    "trimFailed": "Failed to trim video",
+    "trimmedSuccess": "Video trimmed successfully",
+    "muteFailed": "Failed to update video audio",
+    "mutedSuccess": "Audio modified successfully",
+    "resetSuccess": "Image reset to original",
+    "openCameraRoll": "Open Camera Roll",
+    "importPhotos": "Import Photos from Library",
+    "importVideos": "Import Videos from Library",
+    "importedPhoto": "Photo imported from Camera Roll",
+    "importedVideo": "Video imported from Camera Roll",
+    "importFailed": "Failed to import media",
+    "preview": "Preview"
   },
   "socket": {
     "title": "WebSocket",
@@ -1443,7 +1518,9 @@
     "sound": "Sound:",
     "badgeCount": "Badge Count:",
     "collapseKey": "Collapse Key:",
-    "noCustomData": "No custom key-value data found in payload"
+    "noCustomData": "No custom key-value data found in payload",
+    "noMatching": "No matching push notifications",
+    "adjustSearchFilter": "Try adjusting your search query or filter chips."
   },
   "debugging": {
     "title": "Debugging & Tools",
@@ -1518,6 +1595,17 @@
     "trim5s": "Trim 5s",
     "muteAudio": "Mute Audio",
     "toGif": "To GIF",
-    "play": "Play"
+    "play": "Play",
+    "trim": "Trim",
+    "audio": "Audio",
+    "speed": "Speed",
+    "snapshot": "Snapshot"
+  },
+  "language": {
+    "confirmTitle": "Change Language?",
+    "confirmMessage": "Do you want to switch the inspector language to {{newLang}}?",
+    "confirmApply": "Apply Language",
+    "current": "Current",
+    "new": "New"
   }
 }

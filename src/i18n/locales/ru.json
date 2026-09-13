@@ -57,7 +57,16 @@
     "version": "Версия",
     "update": "ОБНОВИТЬ",
     "unknown": "Неизвестно",
-    "share": "Поделиться"
+    "share": "Поделиться",
+    "all": "Все",
+    "dragToHide": "Перетащите сюда, чтобы скрыть",
+    "releaseToHide": "Отпустите, чтобы скрыть инспектор",
+    "expand": "Развернуть",
+    "undo": "Отменить",
+    "inActiveDevelopment": "В активной разработке",
+    "inspectorDismissed": "Инспектор закрыт",
+    "noMatches": "Нет совпадающих результатов",
+    "moreFilters": "Дополнительные фильтры"
   },
   "header": {
     "rec": "REC",
@@ -86,7 +95,16 @@
     "paramCount_plural": "{{count}} параметры",
     "firebase": "огневая база",
     "manual": "руководство",
-    "sliceBadge": "СЛАЙС"
+    "sliceBadge": "СЛАЙС",
+    "recordScreen": "Запись экрана",
+    "newVersionAvailable": "Доступно обновление",
+    "updateAvailable": "Обновление react-native-inapp-inspector v{{latestVersion}} готово",
+    "updateAvailableSubtitle": "Новая версия react-native-inapp-inspector готова к установке",
+    "upgradeCommand": "КОМАНДА ОБНОВЛЕНИЯ",
+    "copyCommand": "Копировать",
+    "viewNpm": "Просмотр",
+    "screenshot": "Скриншот",
+    "videoCapture": "Запись"
   },
   "tabs": {
     "apis": "API",
@@ -273,7 +291,9 @@
       "storageStatusDisabledDesc": "Настройки сбрасываются при удалении приложения. Передайте пользовательское хранилище в <NetworkInspector Storage={...} />, чтобы сохранить его на Android.",
       "language": "Язык",
       "languageDescription": "Выбор языка отображения интерфейса",
-      "selectLanguage": "Выберите язык"
+      "selectLanguage": "Выберите язык",
+      "peekOpacity": "Прозрачность режима просмотра",
+      "peekOpacityDescription": "Уровень прозрачности при включенном значке глаза"
     },
     "settingsReset": "Сброс настроек",
     "settingsResetMessage": "Все настройки сброшены на значения по умолчанию.",
@@ -294,7 +314,10 @@
       "socketio": "Имитация сеанса Socket.IO v4",
       "echo": "Имитация эхо-теста WebSocket",
       "screenshotSaved": "Скриншот сделан и сохранен!"
-    }
+    },
+    "simulatePushTitle": "СИМУЛЯЦИЯ ТЕСТОВЫХ PUSH-УВЕДОМЛЕНИЙ",
+    "simulateSocketTitle": "СИМУЛЯЦИЯ ТЕСТОВЫХ СОКЕТ-СОЕДИНЕНИЙ",
+    "directCaptureShortcuts": "БЫСТРЫЙ ЗАХВАТ ЭКРАНА"
   },
   "network": {
     "urlHeader": "URL",
@@ -307,7 +330,8 @@
       "emptyTable": "Пустой объект",
       "value": "ЗНАЧЕНИЕ",
       "keyProperty": "КЛЮЧ / СВОЙСТВО",
-      "noMatchingKeys": "Совпадающие ключи или значения не найдены"
+      "noMatchingKeys": "Совпадающие ключи или значения не найдены",
+      "emptyPayload": "Нет данных полезной нагрузки"
     },
     "title": "API",
     "searchPlaceholder": "Поиск по URL, статусу или методу...",
@@ -391,7 +415,10 @@
     "status404": "404 Не найден",
     "status500": "500 Ошибка",
     "shareError": "Поделиться ошибкой",
-    "shareErrorMessage": "Не удалось открыть общий лист."
+    "shareErrorMessage": "Не удалось открыть общий лист.",
+    "clearLogsTitle": "Очистить сетевые логи",
+    "clearLogsMsg": "Вы уверены, что хотите очистить все сетевые логи?",
+    "moreFilters": "Дополнительные фильтры"
   },
   "console": {
     "filterAll": "All",
@@ -449,7 +476,10 @@
     "lineColShort": "L{{line}}:C{{col}}",
     "searchInLogDetails": "Поиск в деталях журнала...",
     "showingFilteredLogs": "Показаны журналы {{filtered}} из {{total}}",
-    "filteredBy": "Отфильтровано по {{filters}} ({{filtered}} из {{total}} журналов)"
+    "filteredBy": "Отфильтровано по {{filters}} ({{filtered}} из {{total}} журналов)",
+    "clearLogsTitle": "Очистить логи консоли",
+    "clearLogsMsg": "Вы уверены, что хотите очистить все логи консоли?",
+    "analytics": "Аналитика"
   },
   "analytics": {
     "timeNow": "NOW",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "Атрибуты ключ-значение",
     "filterParamsPlaceholder": "Фильтр параметров по ключу или значению...",
     "noParamsRecorded": "Для этого события нет записанных параметров.",
-    "noParamsMatching": "Нет параметров, соответствующих \"{{search}}\""
+    "noParamsMatching": "Нет параметров, соответствующих \"{{search}}\"",
+    "clearEventsTitle": "Очистить события аналитики",
+    "clearEventsMsg": "Вы уверены, что хотите очистить все события аналитики?"
   },
   "redux": {
     "searchPlaceholder": "Поиск состояния или действий...",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "Очистить постоянное состояние",
     "clearPersistedMessage": "Вы уверены, что хотите удалить постоянное хранилище для фрагмента \"{{slice}}\"?",
     "clearedPersisted": "Сохраняющееся состояние очищено.",
-    "clearPersistedError": "Не удалось очистить сохраненное состояние."
+    "clearPersistedError": "Не удалось очистить сохраненное состояние.",
+    "clearTimelineTitle": "Очистить таймлайн Redux",
+    "clearTimelineMsg": "Вы уверены, что хотите очистить историю отправленных действий?",
+    "diff": "Разница состояний"
   },
   "device": {
     "title": "Устройство",
@@ -614,7 +649,8 @@
     "live": "ОНЛАЙН",
     "ipAddress": "IP-АДРЕС",
     "ramUsedTotal": "ОЗУ (ИСПОЛЬЗОВАНО/ВСЕГО)",
-    "uptime": "ВРЕМЯ РАБОТЫ"
+    "uptime": "ВРЕМЯ РАБОТЫ",
+    "copiedUuid": "Уникальный ID устройства скопирован (UUID)"
   },
   "storage": {
     "title": "Хранилище",
@@ -645,7 +681,9 @@
       "mmkv": "ММКВ"
     },
     "asyncStorage": "Асинхронное хранилище",
-    "mmkv": "ММКВ"
+    "mmkv": "ММКВ",
+    "keyNameEmpty": "Имя ключа не может быть пустым",
+    "saveError": "Ошибка сохранения ключа хранилища"
   },
   "footer": {
     "endOfList": "Вы достигли конца списка",
@@ -1256,7 +1294,10 @@
     "filterApply": "Применить ({{count}} сбой)",
     "frameCopy": "Копировать",
     "frameCopied": "Скопировано",
-    "componentHierarchy": "Иерархия компонентов"
+    "componentHierarchy": "Иерархия компонентов",
+    "breadcrumbTrail": "ЦЕПОЧКА СОБЫТИЙ И ЖУРНАЛ",
+    "deviceDiagnostics": "ДИАГНОСТИКА УСТРОЙСТВА В МОМЕНТ СБОЯ",
+    "openInInspector": "Открыть в инспекторе"
   },
   "push": {
     "foreground": "Передний план",
@@ -1287,7 +1328,9 @@
     "sound": "Звук:",
     "badgeCount": "Счетчик бейджа:",
     "collapseKey": "Ключ группировки:",
-    "noCustomData": "В полезной нагрузке не найдены пользовательские данные"
+    "noCustomData": "В полезной нагрузке не найдены пользовательские данные",
+    "noMatching": "Нет совпадающих push-уведомлений",
+    "adjustSearchFilter": "Попробуйте изменить поисковый запрос или фильтры."
   },
   "about": {
     "title": "О программе и спецификации",
@@ -1412,7 +1455,42 @@
     "speed": "Скорость",
     "loop": "Петля",
     "pause": "Пауза",
-    "play": "Играть"
+    "play": "Играть",
+    "hideGridlines": "Скрыть сетку Instagram (3×3)",
+    "showGridlines": "Показать сетку Instagram (3×3)",
+    "hideWatermark": "Скрыть водяной знак QA",
+    "showWatermark": "Показать водяной знак QA",
+    "exportGif": "Экспорт в анимированный GIF",
+    "snapshotFrame": "Снимок кадра (PNG)",
+    "tapToPlaceStep": "Коснитесь или перетащите для добавления шага",
+    "resetAdjustments": "Настройки сброшены",
+    "tagPlaced": "Тег добавлен",
+    "tapToAddText": "Коснитесь любого места на изображении для добавления текста",
+    "textAdded": "Текст добавлен",
+    "redone": "Повторено",
+    "undone": "Отменено",
+    "videoSaved": "Отредактированное видео сохранено в галерею",
+    "savedSuccess": "Успешно сохранено",
+    "saveFailed": "Не удалось сохранить медиа",
+    "snapshotSaved": "Кадр снимка сохранен в галерею",
+    "snapshotFailed": "Не удалось сделать снимок кадра",
+    "shareSuccess": "Медиафайл успешно отправлен",
+    "cropFailed": "Не удалось обрезать медиа",
+    "croppedSuccess": "Медиафайл успешно обрезан",
+    "resizeFailed": "Не удалось изменить размер",
+    "resizedSuccess": "Размер успешно изменен",
+    "trimFailed": "Не удалось обрезать видео",
+    "trimmedSuccess": "Видео успешно обрезано",
+    "muteFailed": "Не удалось обновить звук видео",
+    "mutedSuccess": "Звук успешно изменен",
+    "resetSuccess": "Изображение сброшено к оригиналу",
+    "openCameraRoll": "Открыть фотопленку",
+    "importPhotos": "Импортировать фото из медиатеки",
+    "importVideos": "Импортировать видео из медиатеки",
+    "importedPhoto": "Фото импортировано из фотопленки",
+    "importedVideo": "Видео импортировано из фотопленки",
+    "importFailed": "Не удалось импортировать медиа",
+    "preview": "Предпросмотр"
   },
   "socket": {
     "title": "Вебсокет",
@@ -1486,6 +1564,48 @@
     "trim5s": "Обрезать 5с",
     "muteAudio": "Выключить звук",
     "toGif": "В GIF",
-    "play": "Воспроизвести"
+    "play": "Воспроизвести",
+    "trim": "Обрезать",
+    "audio": "Аудио",
+    "speed": "Скорость",
+    "snapshot": "Снимок"
+  },
+  "language": {
+    "confirmTitle": "Сменить язык?",
+    "confirmMessage": "Вы хотите переключить язык инспектора на {{newLang}}?",
+    "confirmApply": "Применить язык",
+    "current": "Текущий",
+    "new": "Новый"
+  },
+  "support": {
+    "title": "Поддержка и сообщество",
+    "subtitle": "React Native In-App Inspector",
+    "heroDescription": "Создано с любовью, чтобы предоставить мобильным командам по всему миру мощный инструмент отладки на устройстве. Ваша поддержка, звёзды и отзывы вдохновляют на новые улучшения.",
+    "sponsor": "Спонсировать на GitHub",
+    "sponsorBadge": "СПОНСОР",
+    "sponsorDesc": "Поддержите развитие проекта, новые функции и частые релизы.",
+    "sponsorBtn": "Стать спонсором",
+    "copiedSponsor": "Ссылка на спонсорство GitHub скопирована!",
+    "star": "Поставить звезду на GitHub",
+    "starDesc": "Поставьте звезду репозиторию, чтобы больше разработчиков узнали о проекте.",
+    "issues": "Сообщить об ошибке / Предложение",
+    "issuesDesc": "Нашли ошибку или есть идея? Создайте issue на GitHub.",
+    "docs": "Официальная документация",
+    "docsDesc": "Интерактивный обзор функций, синтаксис поиска и руководства по настройке.",
+    "contact": "Связаться с автором",
+    "contactDesc": "vengatmacuser@gmail.com • Прямая поддержка и корпоративные запросы.",
+    "waysToSupport": "СПОСОБЫ ПОДДЕРЖКИ И УЧАСТИЯ",
+    "npmRegistry": "Реестр пакетов NPM",
+    "npmRegistryDesc": "Просматривайте примечания к выпуску, размеры архивов и статистику загрузок.",
+    "shareTitle": "РАССКАЖИТЕ ДРУГИМ",
+    "shareDesc": "Помогите коллегам-разработчикам и тестировщикам быстрее отлаживать сеть, логи и Redux.",
+    "shareWithTeam": "Поделиться с командой",
+    "copiedRepo": "Ссылка на репозиторий скопирована!",
+    "copyRepo": "Скопировать URL репозитория",
+    "maintainer": "АВТОР И МЕЙНТЕЙНЕР",
+    "sendEmail": "Отправить письмо",
+    "copiedEmail": "Email адрес скопирован!",
+    "copyEmail": "Скопировать email",
+    "close": "Закрыть"
   }
 }

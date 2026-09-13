@@ -57,7 +57,16 @@
     "unknown": "Inconnu",
     "source": "SOURCE",
     "share": "Partager",
-    "version": "Version"
+    "version": "Version",
+    "all": "Tout",
+    "dragToHide": "Glisser ici pour masquer",
+    "releaseToHide": "Relâcher pour masquer l’inspecteur",
+    "expand": "Agrandir",
+    "undo": "Annuler",
+    "inActiveDevelopment": "En développement actif",
+    "inspectorDismissed": "Inspecteur fermé",
+    "noMatches": "Aucun résultat correspondant",
+    "moreFilters": "Plus de filtres"
   },
   "header": {
     "rec": "REC",
@@ -86,7 +95,16 @@
     "paramCount_plural": "{{count}} paramètres",
     "firebase": "base de feu",
     "manual": "manuel",
-    "sliceBadge": "TRANCHE"
+    "sliceBadge": "TRANCHE",
+    "recordScreen": "Enregistrer l’écran",
+    "newVersionAvailable": "Mise à jour disponible",
+    "updateAvailable": "Mise à jour react-native-inapp-inspector v{{latestVersion}} prête",
+    "updateAvailableSubtitle": "Une nouvelle version de react-native-inapp-inspector est prête à installer",
+    "upgradeCommand": "COMMANDE DE MISE À NIVEAU",
+    "copyCommand": "Copier",
+    "viewNpm": "Voir",
+    "screenshot": "Capture",
+    "videoCapture": "Enregistrer"
   },
   "tabs": {
     "logs": "Journaux",
@@ -277,7 +295,9 @@
       "storageStatusDisabledDesc": "Les préférences sont réinitialisées lors de la suppression de l'application. Transmettez le stockage personnalisé à <NetworkInspector storage={...} /> pour persister sur Android.",
       "language": "Langue",
       "languageDescription": "Sélectionner la langue d'affichage de l'interface",
-      "selectLanguage": "Sélectionnez la langue"
+      "selectLanguage": "Sélectionnez la langue",
+      "peekOpacity": "Opacité de transparence",
+      "peekOpacityDescription": "Niveau de transparence lorsque l’icône d’œil est activée"
     },
     "memory": {
       "manualTitle": "Nettoyage manuel de la mémoire",
@@ -294,7 +314,10 @@
       "socketio": "Session Socket.IO v4 simulée",
       "echo": "Test d'écho WebSocket simulé",
       "screenshotSaved": "Capture d'écran capturée et enregistrée !"
-    }
+    },
+    "simulatePushTitle": "SIMULER DES NOTIFICATIONS PUSH TEST",
+    "simulateSocketTitle": "SIMULER DES CONNEXIONS SOCKET TEST",
+    "directCaptureShortcuts": "RACCOURCIS DE CAPTURE DIRECTE"
   },
   "network": {
     "urlHeader": "URL",
@@ -307,7 +330,8 @@
       "emptyTable": "Objet vide",
       "value": "VALEUR",
       "keyProperty": "CLÉ / PROPRIÉTÉ",
-      "noMatchingKeys": "Aucune clé ou valeur correspondante trouvée"
+      "noMatchingKeys": "Aucune clé ou valeur correspondante trouvée",
+      "emptyPayload": "Aucune donnée de charge utile disponible"
     },
     "showingRequests": "Affichage de {{count}} requêtes",
     "showingFilteredRequests": "Affichage de {{filtered}} sur {{total}} requêtes",
@@ -391,7 +415,10 @@
       "moderate": "Modéré (200-800 ms)",
       "slow": "Lent (> 800 ms)"
     },
-    "status200": "200 OK"
+    "status200": "200 OK",
+    "clearLogsTitle": "Effacer les journaux réseau",
+    "clearLogsMsg": "Voulez-vous vraiment effacer tous les journaux réseau ?",
+    "moreFilters": "Plus de filtres"
   },
   "console": {
     "filterAll": "All",
@@ -449,7 +476,10 @@
     "lineCol": "Ligne {{line}}, Col {{col}}",
     "lineColShort": "L{{line}}:C{{col}}",
     "searchInLogDetails": "Rechercher dans les détails du journal...",
-    "info": "Informations"
+    "info": "Informations",
+    "clearLogsTitle": "Effacer les journaux de console",
+    "clearLogsMsg": "Voulez-vous vraiment effacer tous les journaux de console ?",
+    "analytics": "Analytique"
   },
   "analytics": {
     "timeNow": "NOW",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "Attributs clé-valeur",
     "filterParamsPlaceholder": "Filtrer les paramètres par clé ou valeur...",
     "noParamsRecorded": "Aucun paramètre personnalisé enregistré pour cet événement.",
-    "noParamsMatching": "Aucun paramètre ne correspond à \"{{search}}\""
+    "noParamsMatching": "Aucun paramètre ne correspond à \"{{search}}\"",
+    "clearEventsTitle": "Effacer les événements analytiques",
+    "clearEventsMsg": "Voulez-vous vraiment effacer tous les événements analytiques ?"
   },
   "redux": {
     "searchPlaceholder": "Rechercher état ou actions...",
@@ -587,7 +619,10 @@
     "triggeredFrom": "Déclenché à partir de :",
     "openInEditor": "Ouvrir dans l'éditeur",
     "callStack": "Trace de la pile d'appels",
-    "sliceOrigin": "Tranche / Origine"
+    "sliceOrigin": "Tranche / Origine",
+    "clearTimelineTitle": "Effacer la chronologie Redux",
+    "clearTimelineMsg": "Voulez-vous vraiment effacer l’historique des actions distribuées ?",
+    "diff": "Différence d’état"
   },
   "device": {
     "title": "Appareil",
@@ -614,7 +649,8 @@
     "live": "EN DIRECT",
     "ipAddress": "ADRESSE IP",
     "ramUsedTotal": "RAM (UTILISÉE/TOTALE)",
-    "uptime": "TEMPS DE FONCTIONNEMENT"
+    "uptime": "TEMPS DE FONCTIONNEMENT",
+    "copiedUuid": "Identifiant unique de l’appareil copié (UUID)"
   },
   "storage": {
     "title": "Stockage",
@@ -645,7 +681,9 @@
     },
     "type": "Tapez",
     "asyncStorage": "Stockage asynchrone",
-    "mmkv": "MMKV"
+    "mmkv": "MMKV",
+    "keyNameEmpty": "Le nom de la clé ne peut pas être vide",
+    "saveError": "Erreur lors de l’enregistrement de la clé"
   },
   "footer": {
     "endOfList": "Vous avez atteint la fin de la liste",
@@ -1256,7 +1294,10 @@
     "filterApply": "Appliquer ({{count}} plantages)",
     "frameCopy": "Copier",
     "frameCopied": "Copié",
-    "componentHierarchy": "Hiérarchie des composants"
+    "componentHierarchy": "Hiérarchie des composants",
+    "breadcrumbTrail": "JOURNAL DES ACTIVITÉS ET ÉVÉNEMENTS",
+    "deviceDiagnostics": "DIAGNOSTICS DE L’APPAREIL AU MOMENT DU CRASH",
+    "openInInspector": "Ouvrir dans l’inspecteur"
   },
   "socket": {
     "showingConnections": "Affichage de {{count}} connexions",
@@ -1334,7 +1375,9 @@
     "sound": "Son :",
     "badgeCount": "Compteur de badge :",
     "collapseKey": "Clé de regroupement :",
-    "noCustomData": "Aucune donnée clé-valeur personnalisée trouvée"
+    "noCustomData": "Aucune donnée clé-valeur personnalisée trouvée",
+    "noMatching": "Aucune notification push correspondante",
+    "adjustSearchFilter": "Essayez d’ajuster votre recherche ou vos filtres."
   },
   "about": {
     "title": "À propos et spécifications",
@@ -1459,7 +1502,42 @@
     "speed": "Vitesse",
     "loop": "Boucle",
     "pause": "Pause",
-    "play": "Jouer"
+    "play": "Jouer",
+    "hideGridlines": "Masquer la grille Instagram (3×3)",
+    "showGridlines": "Afficher la grille Instagram (3×3)",
+    "hideWatermark": "Masquer le filigrane QA",
+    "showWatermark": "Afficher le filigrane QA",
+    "exportGif": "Exporter en GIF animé",
+    "snapshotFrame": "Capturer l’image (PNG)",
+    "tapToPlaceStep": "Touchez ou faites glisser pour placer le badge",
+    "resetAdjustments": "Ajustements réinitialisés",
+    "tagPlaced": "Étiquette placée",
+    "tapToAddText": "Touchez l’image pour ajouter du texte",
+    "textAdded": "Texte superposé ajouté",
+    "redone": "Rétabli",
+    "undone": "Annulé",
+    "videoSaved": "Vidéo éditée enregistrée dans la galerie",
+    "savedSuccess": "Enregistré avec succès",
+    "saveFailed": "Échec de l’enregistrement du média",
+    "snapshotSaved": "Image de capture enregistrée dans la galerie",
+    "snapshotFailed": "Échec de la capture de l’image",
+    "shareSuccess": "Média partagé avec succès",
+    "cropFailed": "Échec du recadrage",
+    "croppedSuccess": "Média recadré avec succès",
+    "resizeFailed": "Échec du redimensionnement",
+    "resizedSuccess": "Média redimensionné avec succès",
+    "trimFailed": "Échec de la coupe vidéo",
+    "trimmedSuccess": "Vidéo coupée avec succès",
+    "muteFailed": "Échec de la modification audio",
+    "mutedSuccess": "Audio modifié avec succès",
+    "resetSuccess": "Image réinitialisée à l’original",
+    "openCameraRoll": "Ouvrir la pellicule",
+    "importPhotos": "Importer des photos de la bibliothèque",
+    "importVideos": "Importer des vidéos de la bibliothèque",
+    "importedPhoto": "Photo importée de la pellicule",
+    "importedVideo": "Vidéo importée de la pellicule",
+    "importFailed": "Échec de l’importation du média",
+    "preview": "Aperçu"
   },
   "debugging": {
     "title": "Débogage et outils",
@@ -1486,6 +1564,48 @@
     "trim5s": "Rogner 5s",
     "muteAudio": "Couper son",
     "toGif": "En GIF",
-    "play": "Lire"
+    "play": "Lire",
+    "trim": "Couper",
+    "audio": "Audio",
+    "speed": "Vitesse",
+    "snapshot": "Capture"
+  },
+  "language": {
+    "confirmTitle": "Changer de langue ?",
+    "confirmMessage": "Voulez-vous basculer la langue de l’inspecteur vers {{newLang}} ?",
+    "confirmApply": "Appliquer la langue",
+    "current": "Actuel",
+    "new": "Nouveau"
+  },
+  "support": {
+    "title": "Support et Communauté",
+    "subtitle": "React Native In-App Inspector",
+    "heroDescription": "Conçu avec passion pour fournir une suite complète de débogage sur appareil pour les équipes mobiles du monde entier. Vos parrainages, étoiles et retours soutiennent nos améliorations continues.",
+    "sponsor": "Sponsoriser sur GitHub",
+    "sponsorBadge": "SPONSOR",
+    "sponsorDesc": "Soutenez la maintenance continue, les nouvelles fonctionnalités et améliorations.",
+    "sponsorBtn": "Devenir sponsor",
+    "copiedSponsor": "Lien GitHub Sponsors copié !",
+    "star": "Ajouter une étoile sur GitHub",
+    "starDesc": "Ajoutez une étoile pour aider d’autres développeurs React Native à découvrir cet outil.",
+    "issues": "Signaler un problème / Suggestion",
+    "issuesDesc": "Un bug ou une idée ? Ouvrez un ticket sur GitHub.",
+    "docs": "Documentation officielle",
+    "docsDesc": "Visite guidée, syntaxe de recherche et guides de configuration.",
+    "contact": "Contacter l’auteur",
+    "contactDesc": "vengatmacuser@gmail.com • Support direct et demandes d’entreprises.",
+    "waysToSupport": "FAÇONS DE CONTRIBUER ET DE SOUTENIR",
+    "npmRegistry": "Registre de paquets NPM",
+    "npmRegistryDesc": "Consultez les notes de version, la taille des paquets et les statistiques d’installation.",
+    "shareTitle": "FAITES PASSER LE MOT",
+    "shareDesc": "Aidez vos collègues développeurs et testeurs QA à déboguer le réseau, les logs et Redux plus rapidement.",
+    "shareWithTeam": "Partager avec l’équipe",
+    "copiedRepo": "Lien du dépôt copié !",
+    "copyRepo": "Copier l’URL du dépôt",
+    "maintainer": "MAINTENEUR DU PROJET",
+    "sendEmail": "Envoyer un e-mail",
+    "copiedEmail": "Adresse e-mail copiée !",
+    "copyEmail": "Copier l’e-mail",
+    "close": "Fermer"
   }
 }

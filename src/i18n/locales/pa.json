@@ -57,7 +57,16 @@
     "disconnected": "ਡਿਸਕਨੈਕਟ ਕੀਤਾ",
     "version": "ਸੰਸਕਰਣ",
     "update": "ਅੱਪਡੇਟ ਕਰੋ",
-    "unknown": "ਅਗਿਆਤ"
+    "unknown": "ਅਗਿਆਤ",
+    "all": "ਸਾਰੇ",
+    "dragToHide": "ਲੁਕਾਉਣ ਲਈ ਇੱਥੇ ਖਿੱਚੋ",
+    "releaseToHide": "ਇੰਸਪੈਕਟਰ ਲੁਕਾਉਣ ਲਈ ਛੱਡੋ",
+    "expand": "ਫੈਲਾਓ",
+    "undo": "ਅਣਕੀਤਾ ਕਰੋ",
+    "inActiveDevelopment": "ਸਰਗਰਮ ਵਿਕਾਸ ਅਧੀਨ",
+    "inspectorDismissed": "ਇੰਸਪੈਕਟਰ ਖਾਰਜ ਕੀਤਾ ਗਿਆ",
+    "noMatches": "ਕੋਈ ਮੇਲ ਖਾਂਦੇ ਨਤੀਜੇ ਨਹੀਂ",
+    "moreFilters": "ਹੋਰ ਫਿਲਟਰ"
   },
   "header": {
     "updateAvailableTitle": "ਅੱਪਡੇਟ ਉਪਲਬਧ ਹੈ",
@@ -86,7 +95,16 @@
     "live": "ਲਾਈਵ",
     "keys": "{{count}} ਕੁੰਜੀਆਂ",
     "frames": "{{count}} ਫਰੇਮ",
-    "sliceBadge": "ਟੁਕੜਾ"
+    "sliceBadge": "ਟੁਕੜਾ",
+    "recordScreen": "ਸਕ੍ਰੀਨ ਰਿਕਾਰਡ ਕਰੋ",
+    "newVersionAvailable": "ਅੱਪਡੇਟ ਉਪਲਬਧ ਹੈ",
+    "updateAvailable": "react-native-inapp-inspector ਅੱਪਡੇਟ v{{latestVersion}} ਤਿਆਰ ਹੈ",
+    "updateAvailableSubtitle": "react-native-inapp-inspector ਦਾ ਨਵਾਂ ਸੰਸਕਰਣ ਇੰਸਟਾਲ ਕਰਨ ਲਈ ਤਿਆਰ ਹੈ",
+    "upgradeCommand": "ਅੱਪਗ੍ਰੇਡ ਕਮਾਂਡ",
+    "copyCommand": "ਕਾਪੀ ਕਰੋ",
+    "viewNpm": "ਵੇਖੋ",
+    "screenshot": "ਸਕ੍ਰੀਨਸ਼ੌਟ",
+    "videoCapture": "ਰਿਕਾਰਡ"
   },
   "tabs": {
     "apis": "API",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "ਐਪ ਕਿੱਲ 'ਤੇ ਤਰਜੀਹਾਂ ਨੂੰ ਰੀਸੈਟ ਕੀਤਾ ਗਿਆ। Android 'ਤੇ ਬਣੇ ਰਹਿਣ ਲਈ ਕਸਟਮ ਸਟੋਰੇਜ ਨੂੰ <NetworkInspector storage={...} /> ਵਿੱਚ ਪਾਸ ਕਰੋ।",
       "language": "ਭਾਸ਼ਾ",
       "languageDescription": "ਇੰਟਰਫੇਸ ਡਿਸਪਲੇ ਭਾਸ਼ਾ ਚੁਣੋ",
-      "selectLanguage": "ਭਾਸ਼ਾ ਚੁਣੋ"
+      "selectLanguage": "ਭਾਸ਼ਾ ਚੁਣੋ",
+      "peekOpacity": "ਪਾਰਦਰਸ਼ਤਾ ਧੁੰਦਲਾਪਨ",
+      "peekOpacityDescription": "ਜਦੋਂ ਅੱਖ ਦਾ ਆਈਕਨ ਸਮਰੱਥ ਹੁੰਦਾ ਹੈ ਤਾਂ ਪਾਰਦਰਸ਼ਤਾ ਪੱਧਰ"
     },
     "configureSubtitle": "ਮੋਡੀਊਲ ਪੈਰਾਮੀਟਰਾਂ ਨੂੰ ਕੌਂਫਿਗਰ ਕਰੋ",
     "resetAlertTitle": "ਸਾਰੀਆਂ ਸੈਟਿੰਗਾਂ ਰੀਸੈਟ ਕਰੋ",
@@ -294,7 +314,10 @@
       "socketio": "ਸਿਮੂਲੇਟਡ Socket.IO v4 ਸੈਸ਼ਨ",
       "echo": "ਸਿਮੂਲੇਟਡ ਵੈੱਬਸੌਕੇਟ ਈਕੋ ਟੈਸਟ",
       "screenshotSaved": "ਸਕ੍ਰੀਨਸ਼ੌਟ ਕੈਪਚਰ ਅਤੇ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਗਿਆ!"
-    }
+    },
+    "simulatePushTitle": "ਟੈਸਟ ਪੁਸ਼ ਸੂਚਨਾਵਾਂ ਦੀ ਨਕਲ ਕਰੋ",
+    "simulateSocketTitle": "ਟੈਸਟ ਸਾਕਟ ਕਨੈਕਸ਼ਨਾਂ ਦੀ ਨਕਲ ਕਰੋ",
+    "directCaptureShortcuts": "ਸਿੱਧੇ ਕੈਪਚਰ ਸ਼ਾਰਟਕੱਟ"
   },
   "network": {
     "title": "API",
@@ -377,7 +400,8 @@
       "key": "ਕੁੰਜੀ",
       "value": "ਮੁੱਲ",
       "keyProperty": "ਕੁੰਜੀ / ਵਿਸ਼ੇਸ਼ਤਾ",
-      "noMatchingKeys": "ਕੋਈ ਮੇਲ ਖਾਂਦੀ ਕੁੰਜੀ ਜਾਂ ਮੁੱਲ ਨਹੀਂ ਮਿਲਿਆ"
+      "noMatchingKeys": "ਕੋਈ ਮੇਲ ਖਾਂਦੀ ਕੁੰਜੀ ਜਾਂ ਮੁੱਲ ਨਹੀਂ ਮਿਲਿਆ",
+      "emptyPayload": "ਕੋਈ ਪੇਲੋਡ ਡੇਟਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ"
     },
     "showingRequests": "{{count}} ਬੇਨਤੀਆਂ ਦਿਖਾਈਆਂ ਜਾ ਰਹੀਆਂ ਹਨ",
     "showingFilteredRequests": "{{total}} ਬੇਨਤੀਆਂ ਵਿੱਚੋਂ {{filtered}} ਨੂੰ ਦਿਖਾਇਆ ਜਾ ਰਿਹਾ ਹੈ",
@@ -391,7 +415,10 @@
     "status404": "404 ਨਹੀਂ ਮਿਲਿਆ",
     "status500": "500 ਗਲਤੀ",
     "shareError": "ਸ਼ੇਅਰ ਗਲਤੀ",
-    "shareErrorMessage": "ਸ਼ੇਅਰ ਸ਼ੀਟ ਖੋਲ੍ਹਣ ਵਿੱਚ ਅਸਫਲ"
+    "shareErrorMessage": "ਸ਼ੇਅਰ ਸ਼ੀਟ ਖੋਲ੍ਹਣ ਵਿੱਚ ਅਸਫਲ",
+    "clearLogsTitle": "ਨੈੱਟਵਰਕ ਲਾਗ ਸਾਫ਼ ਕਰੋ",
+    "clearLogsMsg": "ਕੀ ਤੁਸੀਂ ਸਾਰੇ ਨੈੱਟਵਰਕ ਲਾਗ ਸਾਫ਼ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "moreFilters": "ਹੋਰ ਫਿਲਟਰ"
   },
   "console": {
     "title": "ਲਾਗ",
@@ -449,7 +476,10 @@
     "info": "ਜਾਣਕਾਰੀ",
     "warning": "ਚੇਤਾਵਨੀ",
     "error": "ਗਲਤੀ",
-    "debug": "ਡੀਬੱਗ ਕਰੋ"
+    "debug": "ਡੀਬੱਗ ਕਰੋ",
+    "clearLogsTitle": "ਕੰਸੋਲ ਲਾਗ ਸਾਫ਼ ਕਰੋ",
+    "clearLogsMsg": "ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ ਸਾਰੇ ਕੰਸੋਲ ਲਾਗ ਸਾਫ਼ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "analytics": "ਵਿਸ਼ਲੇਸ਼ਣ"
   },
   "analytics": {
     "title": "ਵਿਸ਼ਲੇਸ਼ਣ",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "ਕੁੰਜੀ-ਮੁੱਲ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
     "filterParamsPlaceholder": "ਪੈਰਾਮੀਟਰ ਫਿਲਟਰ ਕਰੋ...",
     "noParamsRecorded": "ਇਸ ਇਵੈਂਟ ਲਈ ਕੋਈ ਕਸਟਮ ਪੈਰਾਮੀਟਰ ਨਹੀਂ ਹੈ।",
-    "noParamsMatching": "\"{{search}}\" ਨਾਲ ਮੇਲ ਖਾਂਦਾ ਕੋਈ ਪੈਰਾਮੀਟਰ ਨਹੀਂ ਮਿਲਿਆ"
+    "noParamsMatching": "\"{{search}}\" ਨਾਲ ਮੇਲ ਖਾਂਦਾ ਕੋਈ ਪੈਰਾਮੀਟਰ ਨਹੀਂ ਮਿਲਿਆ",
+    "clearEventsTitle": "ਵਿਸ਼ਲੇਸ਼ਣ ਸਾਫ਼ ਕਰੋ",
+    "clearEventsMsg": "ਕੀ ਤੁਸੀਂ ਸਾਰੇ ਵਿਸ਼ਲੇਸ਼ਣ ਇਵੈਂਟ ਸਾਫ਼ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?"
   },
   "redux": {
     "title": "Redux",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "ਸਥਿਰ ਸਥਿਤੀ ਨੂੰ ਸਾਫ਼ ਕਰੋ",
     "clearPersistedMessage": "ਕੀ ਤੁਸੀਂ ਪੱਕਾ ਟੁਕੜਾ \"{{slice}}\" ਲਈ ਸਥਿਰ ਸਟੋਰੇਜ ਨੂੰ ਮਿਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
     "clearedPersisted": "ਸਥਿਰ ਸਥਿਤੀ ਨੂੰ ਸਾਫ਼ ਕਰ ਦਿੱਤਾ ਗਿਆ ਹੈ।",
-    "clearPersistedError": "ਸਥਿਰ ਸਥਿਤੀ ਨੂੰ ਸਾਫ਼ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।"
+    "clearPersistedError": "ਸਥਿਰ ਸਥਿਤੀ ਨੂੰ ਸਾਫ਼ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।",
+    "clearTimelineTitle": "Redux ਟਾਈਮਲਾਈਨ ਸਾਫ਼ ਕਰੋ",
+    "clearTimelineMsg": "ਕੀ ਤੁਸੀਂ ਭੇਜੀ ਗਈ ਕਾਰਵਾਈ ਇਤਿਹਾਸ ਨੂੰ ਸਾਫ਼ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "diff": "ਸਥਿਤੀ ਅੰਤਰ"
   },
   "device": {
     "title": "ਡਿਵਾਈਸ",
@@ -614,7 +649,8 @@
     "live": "ਲਾਈਵ",
     "ipAddress": "IP ਪਤਾ",
     "ramUsedTotal": "RAM (USED/TOTAL)",
-    "uptime": "UPTIME"
+    "uptime": "UPTIME",
+    "copiedUuid": "ਵਿਲੱਖਣ ਡਿਵਾਈਸ ID (UUID) ਕਾਪੀ ਕੀਤਾ"
   },
   "storage": {
     "title": "ਸਟੋਰੇਜ",
@@ -645,7 +681,9 @@
     "asyncStorage": "ਅਸਿੰਕ ਸਟੋਰੇਜ",
     "mmkv": "MMKV",
     "deleteConfirm": "ਮਿਟਾਓ",
-    "cleared": "ਸਟੋਰੇਜ ਸਾਫ਼ ਕੀਤੀ ਗਈ"
+    "cleared": "ਸਟੋਰੇਜ ਸਾਫ਼ ਕੀਤੀ ਗਈ",
+    "keyNameEmpty": "ਕੁੰਜੀ ਦਾ ਨਾਮ ਖਾਲੀ ਨਹੀਂ ਹੋ ਸਕਦਾ",
+    "saveError": "ਸਟੋਰੇਜ ਕੁੰਜੀ ਸੁਰੱਖਿਅਤ ਕਰਨ ਵਿੱਚ ਗਲਤੀ"
   },
   "footer": {
     "endOfList": "ਤੁਸੀਂ ਸੂਚੀ ਦੇ ਅੰਤ 'ਤੇ ਪਹੁੰਚ ਗਏ ਹੋ",
@@ -1293,7 +1331,10 @@
     "filterApply": "ਲਾਗੂ ਕਰੋ ({{count}} ਕਰੈਸ਼)",
     "frameCopy": "ਕਾਪੀ ਕਰੋ",
     "frameCopied": "ਕਾਪੀ ਕੀਤਾ",
-    "componentHierarchy": "ਕੰਪੋਨੈਂਟ ਲੜੀ"
+    "componentHierarchy": "ਕੰਪੋਨੈਂਟ ਲੜੀ",
+    "breadcrumbTrail": "ਇਵੈਂਟ ਲਾਗ ਅਤੇ ਰਸਤਾ",
+    "deviceDiagnostics": "ਕਰੈਸ਼ ਦੇ ਸਮੇਂ ਡਿਵਾਈਸ ਨਿਦਾਨ",
+    "openInInspector": "ਇੰਸਪੈਕਟਰ ਵਿੱਚ ਖੋਲ੍ਹੋ"
   },
   "mediaGallery": {
     "all": "ਸਾਰੇ ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "ਗਤੀ",
     "loop": "ਲੂਪ",
     "pause": "ਵਿਰਾਮ",
-    "play": "ਖੇਡੋ"
+    "play": "ਖੇਡੋ",
+    "hideGridlines": "ਇੰਸਟਾਗ੍ਰਾਮ ਗਰਿੱਡ ਲੁਕਾਓ (3×3)",
+    "showGridlines": "ਇੰਸਟਾਗ੍ਰਾਮ ਗਰਿੱਡ ਦਿਖਾਓ (3×3)",
+    "hideWatermark": "QA ਵਾਟਰਮਾਰਕ ਲੁਕਾਓ",
+    "showWatermark": "QA ਵਾਟਰਮਾਰਕ ਦਿਖਾਓ",
+    "exportGif": "ਐਨੀਮੇਟਡ GIF ਵਜੋਂ ਨਿਰਯਾਤ ਕਰੋ",
+    "snapshotFrame": "ਫਰੇਮ ਸਨੈਪਸ਼ਾਟ (PNG)",
+    "tapToPlaceStep": "ਕਦਮ ਬੈਜ ਲਗਾਉਣ ਲਈ ਚਿੱਤਰ ਤੇ ਟੈਪ ਕਰੋ ਜਾਂ ਖਿੱਚੋ",
+    "resetAdjustments": "ਐਡਜਸਟਮੈਂਟਾਂ ਰੀਸੈਟ ਕੀਤੀਆਂ",
+    "tagPlaced": "ਟੈਗ ਲਗਾਇਆ ਗਿਆ",
+    "tapToAddText": "ਟੈਕਸਟ ਜੋੜਨ ਲਈ ਚਿੱਤਰ ਤੇ ਕਿਤੇ ਵੀ ਟੈਪ ਕਰੋ",
+    "textAdded": "ਟੈਕਸਟ ਓਵਰਲੇਅ ਸ਼ਾਮਲ ਕੀਤਾ ਗਿਆ",
+    "redone": "ਦੁਬਾਰਾ ਕੀਤਾ",
+    "undone": "ਅਣਕੀਤਾ ਕੀਤਾ",
+    "videoSaved": "ਸੰਪਾਦਿਤ ਵੀਡੀਓ ਗੈਲਰੀ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕੀਤੀ",
+    "savedSuccess": "ਸਫਲਤਾਪੂਰਵਕ ਸੁਰੱਖਿਅਤ ਕੀਤਾ ਗਿਆ",
+    "saveFailed": "ਮੀਡੀਆ ਨੂੰ ਸੁਰੱਖਿਅਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ",
+    "snapshotSaved": "ਸਨੈਪਸ਼ਾਟ ਫਰੇਮ ਗੈਲਰੀ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕੀਤਾ",
+    "snapshotFailed": "ਫਰੇਮ ਸਨੈਪਸ਼ਾਟ ਲੈਣ ਵਿੱਚ ਅਸਫਲ",
+    "shareSuccess": "ਮੀਡੀਆ ਸਫਲਤਾਪੂਰਵਕ ਸਾਂਝਾ ਕੀਤਾ ਗਿਆ",
+    "cropFailed": "ਮੀਡੀਆ ਨੂੰ ਕ੍ਰੌਪ ਕਰਨ ਵਿੱਚ ਅਸਫਲ",
+    "croppedSuccess": "ਮੀਡੀਆ ਸਫਲਤਾਪੂਰਵਕ ਕ੍ਰੌਪ ਕੀਤਾ ਗਿਆ",
+    "resizeFailed": "ਮੀਡੀਆ ਦਾ ਆਕਾਰ ਬਦਲਣ ਵਿੱਚ ਅਸਫਲ",
+    "resizedSuccess": "ਮੀਡੀਆ ਦਾ ਆਕਾਰ ਸਫਲਤਾਪੂਰਵਕ ਬਦਲਿਆ ਗਿਆ",
+    "trimFailed": "ਵੀਡੀਓ ਕੱਟਣ ਵਿੱਚ ਅਸਫਲ",
+    "trimmedSuccess": "ਵੀਡੀਓ ਸਫਲਤਾਪੂਰਵਕ ਕੱਟੀ ਗਈ",
+    "muteFailed": "ਵੀਡੀਓ ਆਡੀਓ ਅੱਪਡੇਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ",
+    "mutedSuccess": "ਆਡੀਓ ਸਫਲਤਾਪੂਰਵਕ ਸੋਧੀ ਗਈ",
+    "resetSuccess": "ਚਿੱਤਰ ਅਸਲ ਵਿੱਚ ਰੀਸੈਟ ਕੀਤਾ ਗਿਆ",
+    "openCameraRoll": "ਕੈਮਰਾ ਰੋਲ ਖੋਲ੍ਹੋ",
+    "importPhotos": "ਲਾਇਬ੍ਰੇਰੀ ਤੋਂ ਫੋਟੋਆਂ ਆਯਾਤ ਕਰੋ",
+    "importVideos": "ਲਾਇਬ੍ਰੇਰੀ ਤੋਂ ਵੀਡੀਓ ਆਯਾਤ ਕਰੋ",
+    "importedPhoto": "ਕੈਮਰਾ ਰੋਲ ਤੋਂ ਫੋਟੋ ਆਯਾਤ ਕੀਤੀ ਗਈ",
+    "importedVideo": "ਕੈਮਰਾ ਰੋਲ ਤੋਂ ਵੀਡੀਓ ਆਯਾਤ ਕੀਤੀ ਗਈ",
+    "importFailed": "ਮੀਡੀਆ ਆਯਾਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ",
+    "preview": "ਪੂਰਵਦਰਸ਼ਨ"
   },
   "socket": {
     "title": "WebSocket",
@@ -1411,7 +1487,9 @@
     "sound": "ਧੁਨੀ:",
     "badgeCount": "ਬੈਜ ਗਿਣਤੀ:",
     "collapseKey": "ਸੰਖੇਪ ਕੁੰਜੀ:",
-    "noCustomData": "ਪੇਲੋਡ ਵਿੱਚ ਕੋਈ ਕਸਟਮ ਡੇਟਾ ਨਹੀਂ ਮਿਲਿਆ"
+    "noCustomData": "ਪੇਲੋਡ ਵਿੱਚ ਕੋਈ ਕਸਟਮ ਡੇਟਾ ਨਹੀਂ ਮਿਲਿਆ",
+    "noMatching": "ਕੋਈ ਮੇਲ ਖਾਂਦੀਆਂ ਪੁਸ਼ ਸੂਚਨਾਵਾਂ ਨਹੀਂ",
+    "adjustSearchFilter": "ਆਪਣੀ ਖੋਜ ਜਾਂ ਫਿਲਟਰਾਂ ਨੂੰ ਵਿਵਸਥਿਤ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
   },
   "debugging": {
     "title": "ਡੀਬੱਗਿੰਗ ਅਤੇ ਟੂਲ",
@@ -1486,6 +1564,48 @@
     "trim5s": "5 ਸਕਿੰਟ ਕੱਟੋ",
     "muteAudio": "ਆਵਾਜ਼ ਬੰਦ ਕਰੋ",
     "toGif": "GIF ਬਣਾਓ",
-    "play": "ਚਲਾਓ"
+    "play": "ਚਲਾਓ",
+    "trim": "ਕੱਟੋ",
+    "audio": "ਆਡੀਓ",
+    "speed": "ਗਤੀ",
+    "snapshot": "ਸਨੈਪਸ਼ਾਟ"
+  },
+  "language": {
+    "confirmTitle": "ਭਾਸ਼ਾ ਬਦਲਣੀ ਹੈ?",
+    "confirmMessage": "ਕੀ ਤੁਸੀਂ ਇੰਸਪੈਕਟਰ ਦੀ ਭਾਸ਼ਾ {{newLang}} ਵਿੱਚ ਬਦਲਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "confirmApply": "ਭਾਸ਼ਾ ਲਾਗੂ ਕਰੋ",
+    "current": "ਮੌਜੂਦਾ",
+    "new": "ਨਵਾਂ"
+  },
+  "support": {
+    "title": "ਸਹਾਇਤਾ ਅਤੇ ਭਾਈਚਾਰਾ",
+    "subtitle": "React Native ਇਨ-ਐਪ ਇੰਸਪੈਕਟਰ",
+    "heroDescription": "ਦੁਨੀਆ ਭਰ ਦੀਆਂ ਮੋਬਾਈਲ ਟੀਮਾਂ ਲਈ ਆਨ-ਡਿਵਾਈਸ ਡੀਬੱਗਿੰਗ ਸੂਟ ਪ੍ਰਦਾਨ ਕਰਨ ਲਈ ਤਿਆਰ ਕੀਤਾ ਗਿਆ ਹੈ। ਤੁਹਾਡਾ ਸਮਰਥਨ ਨਿਰੰਤਰ ਸੁਧਾਰਾਂ ਨੂੰ ਪ੍ਰੇਰਿਤ ਕਰਦਾ ਹੈ।",
+    "sponsor": "GitHub ਤੇ ਸਪਾਂਸਰ ਕਰੋ",
+    "sponsorBadge": "ਸਪਾਂਸਰ",
+    "sponsorDesc": "ਨਿਰੰਤਰ ਰੱਖ-ਰਖਾਅ, ਨਵੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ ਅਤੇ ਸੁਧਾਰਾਂ ਦਾ ਸਮਰਥਨ ਕਰੋ।",
+    "sponsorBtn": "ਇੱਕ ਸਪਾਂਸਰ ਬਣੋ",
+    "copiedSponsor": "GitHub ਸਪਾਂਸਰ ਲਿੰਕ ਕਾਪੀ ਕੀਤਾ ਗਿਆ!",
+    "star": "GitHub ਤੇ ਸਟਾਰ ਦਿਓ",
+    "starDesc": "ਹੋਰ ਡਿਵੈਲਪਰਾਂ ਨੂੰ ਇਸ ਟੂਲ ਦੀ ਖੋਜ ਕਰਨ ਵਿੱਚ ਮਦਦ ਕਰਨ ਲਈ ਸਾਡੇ ਰੈਪੋ ਨੂੰ ਸਟਾਰ ਦਿਓ।",
+    "issues": "ਸਮੱਸਿਆ ਦੀ ਰਿਪੋਰਟ ਕਰੋ / ਸੁਝਾਅ",
+    "issuesDesc": "ਕੋਈ ਬੱਗ ਮਿਲਿਆ ਜਾਂ ਕੋਈ ਵਿਚਾਰ ਹੈ? GitHub ਤੇ ਇੱਕ ਮੁੱਦਾ ਖੋਲ੍ਹੋ।",
+    "docs": "ਅਧਿਕਾਰਤ ਦਸਤਾਵੇਜ਼",
+    "docsDesc": "ਇੰਟਰਐਕਟਿਵ ਫੀਚਰ ਟੂਰ, ਖੋਜ ਸੰਟੈਕਸ ਅਤੇ ਕੌਂਫਿਗਰੇਸ਼ਨ ਗਾਈਡਾਂ।",
+    "contact": "ਲੇਖਕ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+    "contactDesc": "vengatmacuser@gmail.com • ਸਿੱਧਾ ਸਮਰਥਨ ਅਤੇ ਉੱਦਮ ਪੁੱਛਗਿੱਛ।",
+    "waysToSupport": "ਯੋਗਦਾਨ ਅਤੇ ਸਮਰਥਨ ਕਰਨ ਦੇ ਤਰੀਕੇ",
+    "npmRegistry": "NPM ਪੈਕੇਜ ਰਜਿਸਟਰੀ",
+    "npmRegistryDesc": "ਰੀਲੀਜ਼ ਨੋਟਸ, ਪੈਕੇਜ ਆਕਾਰ ਅਤੇ ਇੰਸਟੌਲ ਅੰਕੜੇ ਦੇਖੋ।",
+    "shareTitle": "ਦੂਜਿਆਂ ਨਾਲ ਸਾਂਝਾ ਕਰੋ",
+    "shareDesc": "ਆਪਣੀ ਟੀਮ ਦੇ ਸਾਥੀਆਂ ਨੂੰ ਨੈੱਟਵਰਕ, ਕੰਸੋਲ ਲਾਗ ਅਤੇ Redux ਨੂੰ ਤੇਜ਼ੀ ਨਾਲ ਡੀਬੱਗ ਕਰਨ ਵਿੱਚ ਮਦਦ ਕਰੋ।",
+    "shareWithTeam": "ਟੀਮ ਨਾਲ ਸਾਂਝਾ ਕਰੋ",
+    "copiedRepo": "ਰਿਪੋਜ਼ਟਰੀ ਲਿੰਕ ਕਾਪੀ ਕੀਤਾ ਗਿਆ!",
+    "copyRepo": "ਰੈਪੋ URL ਕਾਪੀ ਕਰੋ",
+    "maintainer": "ਪ੍ਰੋਜੈਕਟ ਸੰਭਾਲਕ",
+    "sendEmail": "ਈਮੇਲ ਭੇਜੋ",
+    "copiedEmail": "ਈਮੇਲ ਪਤਾ ਕਾਪੀ ਕੀਤਾ ਗਿਆ!",
+    "copyEmail": "ਈਮੇਲ ਕਾਪੀ ਕਰੋ",
+    "close": "ਬੰਦ ਕਰੋ"
   }
 }

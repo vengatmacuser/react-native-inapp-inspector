@@ -1,5 +1,6 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
-plugins { id("com.facebook.react.settings") }
+plugins { id("com.facebook.react.settings")
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0' }
 
 def findNodeBinDir() {
     def nvmDir = System.getenv("NVM_DIR") ?: (System.getProperty("user.home") + "/.nvm")

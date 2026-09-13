@@ -57,7 +57,16 @@
     "disconnected": "Bağlantı kesildi",
     "version": "Sürüm",
     "update": "GÜNCELLEME",
-    "unknown": "Bilinmiyor"
+    "unknown": "Bilinmiyor",
+    "all": "Tümü",
+    "dragToHide": "Gizlemek için buraya sürükleyin",
+    "releaseToHide": "Denetleyiciyi gizlemek için bırakın",
+    "expand": "Genişlet",
+    "undo": "Geri Al",
+    "inActiveDevelopment": "Aktif Geliştirme Aşamasında",
+    "inspectorDismissed": "Denetleyici kapatıldı",
+    "noMatches": "Eşleşen sonuç yok",
+    "moreFilters": "Daha Fazla Filtre"
   },
   "header": {
     "updateAvailableTitle": "Güncelleme Mevcut",
@@ -86,7 +95,16 @@
     "live": "Canlı",
     "keys": "{{count}} tuşlar",
     "frames": "{{count}} kare",
-    "sliceBadge": "DİLİM"
+    "sliceBadge": "DİLİM",
+    "recordScreen": "Ekranı Kaydet",
+    "newVersionAvailable": "Güncelleme Mevcut",
+    "updateAvailable": "react-native-inapp-inspector güncellemesi v{{latestVersion}} hazır",
+    "updateAvailableSubtitle": "react-native-inapp-inspector’ın yeni bir sürümü yüklenmeye hazır",
+    "upgradeCommand": "YÜKSELTMЕ KOMUTU",
+    "copyCommand": "Kopyala",
+    "viewNpm": "Görüntüle",
+    "screenshot": "Ekran Görüntüsü",
+    "videoCapture": "Kaydet"
   },
   "tabs": {
     "apis": "API'ler",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "Uygulama sonlandırıldığında tercihler sıfırlanır. Android'de kalıcı olması için özel depolamayı <NetworkInspector Storage={...} /> öğesine aktarın.",
       "language": "Dil",
       "languageDescription": "Arayüz görüntüleme dilini seçin",
-      "selectLanguage": "Dil Seçiniz"
+      "selectLanguage": "Dil Seçiniz",
+      "peekOpacity": "Şeffaflık Opaklığı",
+      "peekOpacityDescription": "Göz simgesi etkinken şeffaflık düzeyi"
     },
     "configureSubtitle": "Modül parametrelerini yapılandırma",
     "resetAlertTitle": "Tüm Ayarları Sıfırla",
@@ -294,7 +314,10 @@
       "socketio": "Simüle edilmiş Socket.IO v4 oturumu",
       "echo": "Simüle edilmiş WebSocket Echo testi",
       "screenshotSaved": "Ekran görüntüsü alındı ve kaydedildi!"
-    }
+    },
+    "simulatePushTitle": "TEST PUSH BİLDİRİMLERİNİ SİMÜLE ET",
+    "simulateSocketTitle": "TEST SOKET BAĞLANTILARINI SİMÜLE ET",
+    "directCaptureShortcuts": "DOĞRUDAN YAKALAMA KISAYOLLARI"
   },
   "network": {
     "title": "API'ler",
@@ -377,7 +400,8 @@
       "key": "Anahtar",
       "value": "DEĞER",
       "keyProperty": "ANAHTAR / ÖZELLİK",
-      "noMatchingKeys": "Eşleşen anahtar veya değer bulunamadı"
+      "noMatchingKeys": "Eşleşen anahtar veya değer bulunamadı",
+      "emptyPayload": "Kullanılabilir yük verisi yok"
     },
     "showingRequests": "{{count}} istek gösteriliyor",
     "showingFilteredRequests": "{{total}} istekten {{filtered}} tanesi gösteriliyor",
@@ -391,7 +415,10 @@
     "status404": "404 Bulunamadı",
     "status500": "500 Hatası",
     "shareError": "Paylaşma Hatası",
-    "shareErrorMessage": "Paylaşım sayfası açılamadı"
+    "shareErrorMessage": "Paylaşım sayfası açılamadı",
+    "clearLogsTitle": "Ağ Günlüklerini Temizle",
+    "clearLogsMsg": "Tüm ağ günlüklerini temizlemek istediğinizden emin misiniz?",
+    "moreFilters": "Daha Fazla Filtre"
   },
   "console": {
     "title": "Günlükler",
@@ -449,7 +476,10 @@
     "info": "Bilgi",
     "warning": "Uyar",
     "error": "Hata",
-    "debug": "Hata ayıklama"
+    "debug": "Hata ayıklama",
+    "clearLogsTitle": "Konsol Günlüklerini Temizle",
+    "clearLogsMsg": "Tüm konsol günlüklerini temizlemek istediğinizden emin misiniz?",
+    "analytics": "Analitik"
   },
   "analytics": {
     "title": "Analitik",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "Anahtar-Değer Özellikleri",
     "filterParamsPlaceholder": "Parametreleri filtrele...",
     "noParamsRecorded": "Bu etkinlik için kaydedilmiş özel parametre yok.",
-    "noParamsMatching": "\"{{search}}\" ile eşleşen parametre bulunamadı"
+    "noParamsMatching": "\"{{search}}\" ile eşleşen parametre bulunamadı",
+    "clearEventsTitle": "Analitiği Temizle",
+    "clearEventsMsg": "Tüm analitik etkinliklerini temizlemek istediğinizden emin misiniz?"
   },
   "redux": {
     "title": "Redux",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "Kalıcı Durumu Temizle",
     "clearPersistedMessage": "\"{{slice}}\" dilimi için kalıcı depolama alanını silmek istediğinizden emin misiniz?",
     "clearedPersisted": "Kalıcı durum temizlendi.",
-    "clearPersistedError": "Kalıcı durum temizlenemedi."
+    "clearPersistedError": "Kalıcı durum temizlenemedi.",
+    "clearTimelineTitle": "Redux Zaman Çizelgesini Temizle",
+    "clearTimelineMsg": "Gönderilen eylem geçmişini temizlemek istediğinizden emin misiniz?",
+    "diff": "Durum Farkı"
   },
   "device": {
     "title": "Cihaz",
@@ -614,7 +649,8 @@
     "live": "CANLI",
     "ipAddress": "IP ADRESİ",
     "ramUsedTotal": "RAM (KULLANILAN/TOPLAM)",
-    "uptime": "ÇALIŞMA SÜRESİ"
+    "uptime": "ÇALIŞMA SÜRESİ",
+    "copiedUuid": "Benzersiz Cihaz Kimliği Kopyalandı (UUID)"
   },
   "storage": {
     "title": "Depolama",
@@ -645,7 +681,9 @@
     "asyncStorage": "EşzamansızDepolama",
     "mmkv": "MMKV",
     "deleteConfirm": "Sil",
-    "cleared": "Depolama alanı temizlendi"
+    "cleared": "Depolama alanı temizlendi",
+    "keyNameEmpty": "Anahtar adı boş olamaz",
+    "saveError": "Depolama anahtarı kaydedilirken hata oluştu"
   },
   "footer": {
     "endOfList": "Listenin sonuna ulaştınız",
@@ -1293,7 +1331,10 @@
     "filterApply": "Uygula ({{count}} Kilitlenme)",
     "frameCopy": "Kopyala",
     "frameCopied": "Kopyalandı",
-    "componentHierarchy": "Bileşen Hiyerarşisi"
+    "componentHierarchy": "Bileşen Hiyerarşisi",
+    "breadcrumbTrail": "ETKİNLİK GEÇMİŞİ VE GÜNLÜĞÜ",
+    "deviceDiagnostics": "ÇÖKME ANINDA CİHAZ TEŞHİSİ",
+    "openInInspector": "Denetleyicide Aç"
   },
   "mediaGallery": {
     "all": "Hepsi ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "Hız",
     "loop": "Döngü",
     "pause": "Duraklat",
-    "play": "Oyna"
+    "play": "Oyna",
+    "hideGridlines": "Instagram Izgarasını Gizle (3×3)",
+    "showGridlines": "Instagram Izgarasını Göster (3×3)",
+    "hideWatermark": "QA Filigranını Gizle",
+    "showWatermark": "QA Filigranını Göster",
+    "exportGif": "Animasyonlu GIF Olarak Dışa Aktar",
+    "snapshotFrame": "Kare Yakala (PNG)",
+    "tapToPlaceStep": "Adım rozetini yerleştirmek için resme dokunun veya sürükleyin",
+    "resetAdjustments": "Ayarlar Sıfırlandı",
+    "tagPlaced": "Etiket Yerleştirildi",
+    "tapToAddText": "Metin eklemek için resme dokunun",
+    "textAdded": "Metin Katmanı Eklendi",
+    "redone": "Yinelendi",
+    "undone": "Geri Alındı",
+    "videoSaved": "Düzenlenen video galeriye kaydedildi",
+    "savedSuccess": "Başarıyla Kaydedildi",
+    "saveFailed": "Medya kaydedilemedi",
+    "snapshotSaved": "Anlık görüntü karesi galeriye kaydedildi",
+    "snapshotFailed": "Kare anlık görüntüsü yakalanamadı",
+    "shareSuccess": "Medya başarıyla paylaşıldı",
+    "cropFailed": "Medya kırpılamadı",
+    "croppedSuccess": "Medya başarıyla kırpıldı",
+    "resizeFailed": "Yeniden boyutlandırma başarısız",
+    "resizedSuccess": "Boyutlandırma başarılı",
+    "trimFailed": "Video kırpılamadı",
+    "trimmedSuccess": "Video başarıyla kırpıldı",
+    "muteFailed": "Video sesi güncellenemedi",
+    "mutedSuccess": "Ses başarıyla değiştirildi",
+    "resetSuccess": "Resim orijinal haline sıfırlandı",
+    "openCameraRoll": "Film Rulosunu Aç",
+    "importPhotos": "Kitaplıktan Fotoğraf İçe Aktar",
+    "importVideos": "Kitaplıktan Video İçe Aktar",
+    "importedPhoto": "Fotoğraf film rulosundan içe aktarıldı",
+    "importedVideo": "Video film rulosundan içe aktarıldı",
+    "importFailed": "Medya içe aktarılamadı",
+    "preview": "Önizleme"
   },
   "socket": {
     "title": "WebSocket",
@@ -1411,7 +1487,9 @@
     "sound": "Ses:",
     "badgeCount": "Rozet Sayısı:",
     "collapseKey": "Daraltma Anahtarı:",
-    "noCustomData": "Yükte özel anahtar-değer verisi bulunamadı"
+    "noCustomData": "Yükte özel anahtar-değer verisi bulunamadı",
+    "noMatching": "Eşleşen push bildirimi yok",
+    "adjustSearchFilter": "Arama sorgunuzu veya filtreleri ayarlamayı deneyin."
   },
   "debugging": {
     "title": "Hata Ayıklama ve Araçlar",
@@ -1486,6 +1564,48 @@
     "trim5s": "5sn Kırp",
     "muteAudio": "Sesi Kapat",
     "toGif": "GIF'e Dönüştür",
-    "play": "Oynat"
+    "play": "Oynat",
+    "trim": "Kırp",
+    "audio": "Ses",
+    "speed": "Hız",
+    "snapshot": "Anlık Görüntü"
+  },
+  "language": {
+    "confirmTitle": "Dili Değiştir?",
+    "confirmMessage": "Denetleyici dilini {{newLang}} olarak değiştirmek istiyor musunuz?",
+    "confirmApply": "Dili Uygula",
+    "current": "Mevcut",
+    "new": "Yeni"
+  },
+  "support": {
+    "title": "Destek ve Topluluk",
+    "subtitle": "React Native Uygulama İçi Denetleyici",
+    "heroDescription": "Dünya çapındaki mobil ekiplere hepsi bir arada cihaz üstü hata ayıklama paketi sağlamak için tutkuyla hazırlandı. Desteğiniz ve geri bildirimleriniz sürekli iyileştirmeleri besler.",
+    "sponsor": "GitHub’da Sponsor Ol",
+    "sponsorBadge": "SPONSOR",
+    "sponsorDesc": "Sürekli bakımı, yeni özellikleri ve sürüm iyileştirmelerini destekleyin.",
+    "sponsorBtn": "Sponsor Olun",
+    "copiedSponsor": "GitHub Sponsorları bağlantısı kopyalandı!",
+    "star": "GitHub’da Yıldız Ver",
+    "starDesc": "Daha fazla geliştiricinin bu aracı keşfetmesine yardımcı olmak için depomuza yıldız verin.",
+    "issues": "Sorun Bildir / Öneri",
+    "issuesDesc": "Bir hata mı buldunuz veya bir fikriniz mi var? GitHub’da sorun açın.",
+    "docs": "Resmi Dokümantasyon",
+    "docsDesc": "Etkileşimli özellik turu, arama sözdizimi ve yapılandırma kılavuzları.",
+    "contact": "Yazarla İletişime Geçin",
+    "contactDesc": "vengatmacuser@gmail.com • Doğrudan destek ve kurumsal sorular.",
+    "waysToSupport": "KATKIDA BULUNMA VE DESTEK YOLLARI",
+    "npmRegistry": "NPM Paket Kayıt Defteri",
+    "npmRegistryDesc": "Sürüm notlarını, paket boyutlarını ve yükleme istatistiklerini keşfedin.",
+    "shareTitle": "BİLGİYİ YAYIN",
+    "shareDesc": "Mühendis ekip arkadaşlarınıza ve QA uzmanlarına ağ, konsol günlükleri ve Redux’ta daha hızlı hata ayıklama konusunda yardımcı olun.",
+    "shareWithTeam": "Ekiple Paylaş",
+    "copiedRepo": "Depo bağlantısı kopyalandı!",
+    "copyRepo": "Depo URL’sini Kopyala",
+    "maintainer": "PROJE YÖNETİCİSİ",
+    "sendEmail": "E-posta Gönder",
+    "copiedEmail": "E-posta adresi kopyalandı!",
+    "copyEmail": "E-postayı Kopyala",
+    "close": "Kapat"
   }
 }

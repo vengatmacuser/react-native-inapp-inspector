@@ -57,7 +57,16 @@
     "disconnected": "Disconnesso",
     "version": "Versione",
     "update": "AGGIORNAMENTO",
-    "unknown": "Sconosciuto"
+    "unknown": "Sconosciuto",
+    "all": "Tutto",
+    "dragToHide": "Trascina qui per nascondere",
+    "releaseToHide": "Rilascia per nascondere l’ispettore",
+    "expand": "Espandi",
+    "undo": "Annulla",
+    "inActiveDevelopment": "In sviluppo attivo",
+    "inspectorDismissed": "Ispettore chiuso",
+    "noMatches": "Nessun risultato corrispondente",
+    "moreFilters": "Altri filtri"
   },
   "header": {
     "updateAvailableTitle": "Aggiornamento disponibile",
@@ -86,7 +95,16 @@
     "live": "Vivi",
     "keys": "{{count}} tasti",
     "frames": "{{count}} fotogrammi",
-    "sliceBadge": "FETTA"
+    "sliceBadge": "FETTA",
+    "recordScreen": "Registra schermo",
+    "newVersionAvailable": "Aggiornamento disponibile",
+    "updateAvailable": "Aggiornamento react-native-inapp-inspector v{{latestVersion}} pronto",
+    "updateAvailableSubtitle": "Una nuova versione di react-native-inapp-inspector è pronta per l’installazione",
+    "upgradeCommand": "COMANDO DI AGGIORNAMENTO",
+    "copyCommand": "Copia",
+    "viewNpm": "Visualizza",
+    "screenshot": "Schermata",
+    "videoCapture": "Registra"
   },
   "tabs": {
     "apis": "API",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "Le preferenze vengono ripristinate all'uccisione dell'app. Passa l'archiviazione personalizzata a <NetworkInspector storage={...} /> per persistere su Android.",
       "language": "Lingua",
       "languageDescription": "Seleziona la lingua di visualizzazione dell'interfaccia",
-      "selectLanguage": "Seleziona lingua"
+      "selectLanguage": "Seleziona lingua",
+      "peekOpacity": "Opacità trasparenza",
+      "peekOpacityDescription": "Livello di trasparenza quando l’icona dell’occhio è attiva"
     },
     "configureSubtitle": "Configurare i parametri del modulo",
     "resetAlertTitle": "Ripristina tutte le impostazioni",
@@ -294,7 +314,10 @@
       "socketio": "Sessione Socket.IO v4 simulata",
       "echo": "Test di eco WebSocket simulato",
       "screenshotSaved": "Screenshot catturato e salvato!"
-    }
+    },
+    "simulatePushTitle": "SIMULA NOTIFICHE PUSH DI TEST",
+    "simulateSocketTitle": "SIMULA CONNESSIONI SOCKET DI TEST",
+    "directCaptureShortcuts": "SCORCIATOIE DI CATTURA DIRETTA"
   },
   "network": {
     "title": "API",
@@ -377,7 +400,8 @@
       "key": "Chiave",
       "value": "VALORE",
       "keyProperty": "CHIAVE / PROPRIETÀ",
-      "noMatchingKeys": "Nessuna chiave o valore corrispondente trovato"
+      "noMatchingKeys": "Nessuna chiave o valore corrispondente trovato",
+      "emptyPayload": "Nessun dato di payload disponibile"
     },
     "showingRequests": "Visualizzazione di {{count}} richieste",
     "showingFilteredRequests": "Visualizzazione di {{filtered}} di {{total}} richieste",
@@ -391,7 +415,10 @@
     "status404": "404 Non trovato",
     "status500": "Errore 500",
     "shareError": "Errore di condivisione",
-    "shareErrorMessage": "Impossibile aprire il foglio di condivisione"
+    "shareErrorMessage": "Impossibile aprire il foglio di condivisione",
+    "clearLogsTitle": "Cancella log di rete",
+    "clearLogsMsg": "Sei sicuro di voler cancellare tutti i log di rete?",
+    "moreFilters": "Altri filtri"
   },
   "console": {
     "title": "Registri",
@@ -449,7 +476,10 @@
     "info": "Informazioni",
     "warning": "Avvertire",
     "error": "Errore",
-    "debug": "Debug"
+    "debug": "Debug",
+    "clearLogsTitle": "Cancella log console",
+    "clearLogsMsg": "Sei sicuro di voler cancellare tutti i log della console?",
+    "analytics": "Analisi"
   },
   "analytics": {
     "title": "Analitica",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "Attributi chiave-valore",
     "filterParamsPlaceholder": "Filtra parametri per chiave o valore...",
     "noParamsRecorded": "Nessun parametro personalizzato registrato per questo evento.",
-    "noParamsMatching": "Nessun parametro corrispondente a \"{{search}}\""
+    "noParamsMatching": "Nessun parametro corrispondente a \"{{search}}\"",
+    "clearEventsTitle": "Cancella eventi di analisi",
+    "clearEventsMsg": "Sei sicuro di voler cancellare tutti gli eventi di analisi?"
   },
   "redux": {
     "title": "Redux",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "Cancella stato persistente",
     "clearPersistedMessage": "Vuoi eliminare lo spazio di archiviazione persistente per la sezione \"{{slice}}\"?",
     "clearedPersisted": "Lo stato persistente è stato cancellato.",
-    "clearPersistedError": "Impossibile cancellare lo stato persistente."
+    "clearPersistedError": "Impossibile cancellare lo stato persistente.",
+    "clearTimelineTitle": "Cancella sequenza temporale Redux",
+    "clearTimelineMsg": "Sei sicuro di voler cancellare la cronologia delle azioni inviate?",
+    "diff": "Differenza di stato"
   },
   "device": {
     "title": "Dispositivo",
@@ -614,7 +649,8 @@
     "live": "VIVI",
     "ipAddress": "INDIRIZZO IP",
     "ramUsedTotal": "RAM (UTILIZZATA/TOTALE)",
-    "uptime": "TEMPO DI UTILIZZO"
+    "uptime": "TEMPO DI UTILIZZO",
+    "copiedUuid": "ID univoco del dispositivo copiato (UUID)"
   },
   "storage": {
     "title": "Stoccaggio",
@@ -645,7 +681,9 @@
     "asyncStorage": "AsyncStorage",
     "mmkv": "MMKV",
     "deleteConfirm": "Elimina",
-    "cleared": "Spazio di archiviazione cancellato"
+    "cleared": "Spazio di archiviazione cancellato",
+    "keyNameEmpty": "Il nome della chiave non può essere vuoto",
+    "saveError": "Errore durante il salvataggio della chiave"
   },
   "footer": {
     "endOfList": "Hai raggiunto la fine dell'elenco",
@@ -1293,7 +1331,10 @@
     "filterApply": "Applica ({{count}} arresti anomali)",
     "frameCopy": "Copia",
     "frameCopied": "Copiato",
-    "componentHierarchy": "Gerarchia dei componenti"
+    "componentHierarchy": "Gerarchia dei componenti",
+    "breadcrumbTrail": "TRACCIA DI NAVIGAZIONE E LOG EVENTI",
+    "deviceDiagnostics": "DIAGNOSTICA DISPOSITIVO AL MOMENTO DEL CRASH",
+    "openInInspector": "Apri nell’ispettore"
   },
   "mediaGallery": {
     "all": "Tutti ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "Velocità",
     "loop": "Ciclo",
     "pause": "Pausa",
-    "play": "Gioca"
+    "play": "Gioca",
+    "hideGridlines": "Nascondi griglia Instagram (3×3)",
+    "showGridlines": "Mostra griglia Instagram (3×3)",
+    "hideWatermark": "Nascondi filigrana QA",
+    "showWatermark": "Mostra filigrana QA",
+    "exportGif": "Esporta come GIF animata",
+    "snapshotFrame": "Cattura fotogramma (PNG)",
+    "tapToPlaceStep": "Tocca o trascina sull’immagine per posizionare il badge",
+    "resetAdjustments": "Regolazioni ripristinate",
+    "tagPlaced": "Tag posizionato",
+    "tapToAddText": "Tocca l’immagine per inserire testo",
+    "textAdded": "Testo sovrapposto aggiunto",
+    "redone": "Ripristinato",
+    "undone": "Annullato",
+    "videoSaved": "Video modificato salvato nella galleria",
+    "savedSuccess": "Salvato con successo",
+    "saveFailed": "Impossibile salvare il file multimediale",
+    "snapshotSaved": "Fotogramma salvato nella galleria",
+    "snapshotFailed": "Impossibile catturare il fotogramma",
+    "shareSuccess": "File multimediale condiviso con successo",
+    "cropFailed": "Impossibile ritagliare",
+    "croppedSuccess": "File multimediale ritagliato con successo",
+    "resizeFailed": "Impossibile ridimensionare",
+    "resizedSuccess": "File multimediale ridimensionato",
+    "trimFailed": "Impossibile tagliare il video",
+    "trimmedSuccess": "Video tagliato con successo",
+    "muteFailed": "Impossibile aggiornare l’audio del video",
+    "mutedSuccess": "Audio modificato con successo",
+    "resetSuccess": "Immagine ripristinata all’originale",
+    "openCameraRoll": "Apri rullino foto",
+    "importPhotos": "Importa foto dalla libreria",
+    "importVideos": "Importa video dalla libreria",
+    "importedPhoto": "Foto importata dal rullino",
+    "importedVideo": "Video importato dal rullino",
+    "importFailed": "Impossibile importare il file multimediale",
+    "preview": "Anteprima"
   },
   "socket": {
     "title": "WebSocket",
@@ -1411,7 +1487,9 @@
     "sound": "Suono:",
     "badgeCount": "Conteggio badge:",
     "collapseKey": "Chiave di raggruppamento:",
-    "noCustomData": "Nessun dato chiave-valore personalizzato trovato nel payload"
+    "noCustomData": "Nessun dato chiave-valore personalizzato trovato nel payload",
+    "noMatching": "Nessuna notifica push corrispondente",
+    "adjustSearchFilter": "Prova a modificare la ricerca o i filtri."
   },
   "debugging": {
     "title": "Debug e strumenti",
@@ -1486,6 +1564,48 @@
     "trim5s": "Taglia 5s",
     "muteAudio": "Disattiva audio",
     "toGif": "In GIF",
-    "play": "Riproduci"
+    "play": "Riproduci",
+    "trim": "Taglia",
+    "audio": "Audio",
+    "speed": "Velocità",
+    "snapshot": "Istantanea"
+  },
+  "language": {
+    "confirmTitle": "Cambiare lingua?",
+    "confirmMessage": "Vuoi passare la lingua dell’ispettore a {{newLang}}?",
+    "confirmApply": "Applica lingua",
+    "current": "Attuale",
+    "new": "Nuovo"
+  },
+  "support": {
+    "title": "Supporto e Community",
+    "subtitle": "React Native In-App Inspector",
+    "heroDescription": "Creato con passione per fornire una suite completa di debug sul dispositivo per i team mobili di tutto il mondo. Le tue sponsorizzazioni, stelle e feedback guidano continui miglioramenti.",
+    "sponsor": "Sponsorizza su GitHub",
+    "sponsorBadge": "SPONSOR",
+    "sponsorDesc": "Supporta la manutenzione continua, nuove funzionalità e miglioramenti.",
+    "sponsorBtn": "Diventa uno sponsor",
+    "copiedSponsor": "Link GitHub Sponsors copiato!",
+    "star": "Lascia una stella su GitHub",
+    "starDesc": "Lascia una stella per aiutare altri sviluppatori React Native a scoprire questo strumento.",
+    "issues": "Segnala problema / Suggerimento",
+    "issuesDesc": "Hai trovato un bug o hai un’idea? Apri una segnalazione su GitHub.",
+    "docs": "Documentazione ufficiale",
+    "docsDesc": "Tour interattivo delle funzionalità, sintassi di ricerca e guide alla configurazione.",
+    "contact": "Contatta l’autore",
+    "contactDesc": "vengatmacuser@gmail.com • Supporto diretto e richieste aziendali.",
+    "waysToSupport": "MODI PER CONTRIBUIRE E SUPPORTARE",
+    "npmRegistry": "Registro dei pacchetti NPM",
+    "npmRegistryDesc": "Esplora note di rilascio, dimensioni dei pacchetti e statistiche.",
+    "shareTitle": "DIFFONDI LA NOTIZIA",
+    "shareDesc": "Aiuta i colleghi sviluppatori e i tester QA a eseguire il debug di rete, log e Redux più rapidamente.",
+    "shareWithTeam": "Condividi con il team",
+    "copiedRepo": "Link del repository copiato!",
+    "copyRepo": "Copia URL del repo",
+    "maintainer": "RESPONSABILE DEL PROGETTO",
+    "sendEmail": "Invia e-mail",
+    "copiedEmail": "Indirizzo e-mail copiato!",
+    "copyEmail": "Copia e-mail",
+    "close": "Chiudi"
   }
 }

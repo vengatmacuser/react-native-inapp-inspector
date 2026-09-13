@@ -57,7 +57,16 @@
     "disconnected": "डिस्कनेक्ट झाले",
     "version": "आवृत्ती",
     "update": "अपडेट करा",
-    "unknown": "अज्ञात"
+    "unknown": "अज्ञात",
+    "all": "सर्व",
+    "dragToHide": "लपवण्यासाठी येथे ड्रॅग करा",
+    "releaseToHide": "इन्स्पेक्टर लपवण्यासाठी सोडा",
+    "expand": "विस्तार करा",
+    "undo": "पूर्ववत करा",
+    "inActiveDevelopment": "सक्रिय विकासात",
+    "inspectorDismissed": "इन्स्पेक्टर बंद केला",
+    "noMatches": "जुळणारे निकाल नाहीत",
+    "moreFilters": "अधिक फिल्टर्स"
   },
   "header": {
     "updateAvailableTitle": "अपडेट उपलब्ध",
@@ -86,7 +95,16 @@
     "live": "लाइव्ह",
     "keys": "{{count}} की",
     "frames": "{{count}} फ्रेम",
-    "sliceBadge": "स्लाइस"
+    "sliceBadge": "स्लाइस",
+    "recordScreen": "स्क्रीन रेकॉर्ड करा",
+    "newVersionAvailable": "अपडेट उपलब्ध",
+    "updateAvailable": "react-native-inapp-inspector अपडेट v{{latestVersion}} तयार आहे",
+    "updateAvailableSubtitle": "react-native-inapp-inspector ची नवीन आवृत्ती स्थापित करण्यासाठी तयार आहे",
+    "upgradeCommand": "अपग्रेड कमांड",
+    "copyCommand": "कॉपी करा",
+    "viewNpm": "पहा",
+    "screenshot": "स्क्रीनशॉट",
+    "videoCapture": "रेकॉर्ड"
   },
   "tabs": {
     "apis": "API",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "ॲप किल वर प्राधान्ये रीसेट. Android वर टिकून राहण्यासाठी कस्टम स्टोरेज <NetworkInspector storage={...} /> वर पास करा.",
       "language": "भाषा",
       "languageDescription": "इंटरफेस प्रदर्शन भाषा निवडा",
-      "selectLanguage": "भाषा निवडा"
+      "selectLanguage": "भाषा निवडा",
+      "peekOpacity": "पारदर्शकता अपारदर्शकता",
+      "peekOpacityDescription": "डोळा चिन्ह सक्षम असताना पारदर्शकता पातळी"
     },
     "configureSubtitle": "मॉड्यूल पॅरामीटर्स कॉन्फिगर करा",
     "resetAlertTitle": "सर्व सेटिंग्ज रीसेट करा",
@@ -294,7 +314,10 @@
       "socketio": "सिम्युलेटेड Socket.IO v4 सत्र",
       "echo": "सिम्युलेटेड वेबसॉकेट इको चाचणी",
       "screenshotSaved": "स्क्रीनशॉट कॅप्चर केला आणि जतन केला!"
-    }
+    },
+    "simulatePushTitle": "चाचणी पुश सूचनांचे अनुकरण करा",
+    "simulateSocketTitle": "चाचणी सॉकेट कनेक्शनचे अनुकरण करा",
+    "directCaptureShortcuts": "थेट कॅप्चर शॉर्टकट"
   },
   "network": {
     "title": "API",
@@ -377,7 +400,8 @@
       "key": "की",
       "value": "मूल्य",
       "keyProperty": "की / गुणधर्म",
-      "noMatchingKeys": "कोणतीही जुळणारी की किंवा मूल्य आढळले नाही"
+      "noMatchingKeys": "कोणतीही जुळणारी की किंवा मूल्य आढळले नाही",
+      "emptyPayload": "पेलोड डेटा उपलब्ध नाही"
     },
     "showingRequests": "{{count}} विनंत्या दाखवत आहे",
     "showingFilteredRequests": "{{total}} पैकी {{filtered}} विनंत्या दाखवत आहे",
@@ -391,7 +415,10 @@
     "status404": "404 सापडले नाही",
     "status500": "500 एरर",
     "shareError": "शेअर त्रुटी",
-    "shareErrorMessage": "शेअर शीट उघडण्यात अयशस्वी"
+    "shareErrorMessage": "शेअर शीट उघडण्यात अयशस्वी",
+    "clearLogsTitle": "नेटवर्क नोंदी साफ करा",
+    "clearLogsMsg": "तुम्हाला सर्व नेटवर्क नोंदी साफ करायच्या आहेत का?",
+    "moreFilters": "अधिक फिल्टर्स"
   },
   "console": {
     "title": "नोंदी",
@@ -449,7 +476,10 @@
     "info": "माहिती",
     "warning": "चेतावणी द्या",
     "error": "त्रुटी",
-    "debug": "डीबग करा"
+    "debug": "डीबग करा",
+    "clearLogsTitle": "कन्सोल नोंदी साफ करा",
+    "clearLogsMsg": "तुम्हाला नक्की सर्व कन्सोल नोंदी साफ करायच्या आहेत का?",
+    "analytics": "अ‍ॅनालिटिक्स"
   },
   "analytics": {
     "title": "विश्लेषण",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "की-व्हॅल्यू गुणधर्म",
     "filterParamsPlaceholder": "पॅरामीटर्स फिल्टर करा...",
     "noParamsRecorded": "या इव्हेंटसाठी कोणतेही सानुकूल पॅरामीटर्स नोंदवले गेले नाहीत.",
-    "noParamsMatching": "\"{{search}}\" शी जुळणारे पॅरामीटर्स आढळले नाहीत"
+    "noParamsMatching": "\"{{search}}\" शी जुळणारे पॅरामीटर्स आढळले नाहीत",
+    "clearEventsTitle": "अ‍ॅनालिटिक्स साफ करा",
+    "clearEventsMsg": "तुम्हाला सर्व अ‍ॅनालिटिक्स इव्हेंट साफ करायचे आहेत का?"
   },
   "redux": {
     "title": "रेडक्स",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "कायम स्थिती साफ करा",
     "clearPersistedMessage": "तुमची खात्री आहे की तुम्ही स्लाइस \"{{slice}}\" साठी कायम ठेवलेले स्टोरेज हटवू इच्छिता?",
     "clearedPersisted": "स्थिर स्थिती साफ केली गेली आहे.",
-    "clearPersistedError": "कायम स्थिती साफ करण्यात अयशस्वी."
+    "clearPersistedError": "कायम स्थिती साफ करण्यात अयशस्वी.",
+    "clearTimelineTitle": "Redux टाइमलाइन साफ करा",
+    "clearTimelineMsg": "तुम्हाला पाठवलेला क्रिया इतिहास नक्की साफ करायचा आहे का?",
+    "diff": "स्थिती फरक"
   },
   "device": {
     "title": "साधन",
@@ -614,7 +649,8 @@
     "live": "लाइव्ह",
     "ipAddress": "IP पत्ता",
     "ramUsedTotal": "रॅम (वापरलेले/कुल)",
-    "uptime": "UPTIME"
+    "uptime": "UPTIME",
+    "copiedUuid": "अनन्य डिव्हाइस आयडी (UUID) कॉपी केला"
   },
   "storage": {
     "title": "स्टोरेज",
@@ -645,7 +681,9 @@
     "asyncStorage": "AsyncStorage",
     "mmkv": "MMKV",
     "deleteConfirm": "हटवा",
-    "cleared": "स्टोरेज साफ केले"
+    "cleared": "स्टोरेज साफ केले",
+    "keyNameEmpty": "की चे नाव रिकामे असू शकत नाही",
+    "saveError": "स्टोरेज की सेव्ह करताना त्रुटी"
   },
   "footer": {
     "endOfList": "तुम्ही सूचीच्या शेवटी पोहोचला आहात",
@@ -1293,7 +1331,10 @@
     "filterApply": "लागू करा ({{count}} क्रॅश)",
     "frameCopy": "कॉपी करा",
     "frameCopied": "कॉपी केले",
-    "componentHierarchy": "घटक पदानुक्रम"
+    "componentHierarchy": "घटक पदानुक्रम",
+    "breadcrumbTrail": "इव्हेंट लॉग आणि मार्ग",
+    "deviceDiagnostics": "क्रॅशच्या वेळी डिव्हाइस निदान",
+    "openInInspector": "इन्स्पेक्टरमध्ये उघडा"
   },
   "mediaGallery": {
     "all": "सर्व ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "गती",
     "loop": "पळवाट",
     "pause": "विराम द्या",
-    "play": "खेळा"
+    "play": "खेळा",
+    "hideGridlines": "इंस्टाग्राम ग्रिड लपवा (3×3)",
+    "showGridlines": "इंस्टाग्राम ग्रिड दाखवा (3×3)",
+    "hideWatermark": "QA वॉटरमार्क लपवा",
+    "showWatermark": "QA वॉटरमार्क दाखवा",
+    "exportGif": "अ‍ॅनिमेटेड GIF म्हणून निर्यात करा",
+    "snapshotFrame": "फ्रेम स्नॅपशॉट (PNG)",
+    "tapToPlaceStep": "पायरी बॅज ठेवण्यासाठी प्रतिमेवर टॅप करा किंवा ड्रॅग करा",
+    "resetAdjustments": "समायोजन रीसेट झाले",
+    "tagPlaced": "टॅગ ठेवला",
+    "tapToAddText": "मजकूर जोडण्यासाठी प्रतिमेवर कुठेही टॅप करा",
+    "textAdded": "मजकूर आच्छादन जोडले",
+    "redone": "पुन्हा केले",
+    "undone": "पूर्ववत केले",
+    "videoSaved": "संपादित व्हिडिओ गॅलरीत जतन केला",
+    "savedSuccess": "यशस्वीरीत्या जतन केले",
+    "saveFailed": "मीडिया जतन करण्यात अयशस्वी",
+    "snapshotSaved": "स्नॅपशॉट फ्रेम गॅलरीत जतन केली",
+    "snapshotFailed": "फ्रेम स्नॅपशॉट घेण्यात अयशस्वी",
+    "shareSuccess": "मीडिया यशस्वीरीत्या शेअर केला",
+    "cropFailed": "मीडिया क्रॉप करण्यात अयशस्वी",
+    "croppedSuccess": "मीडिया यशस्वीरीत्या क्रॉप केला",
+    "resizeFailed": "मीडिया आकार बदलण्यात अयशस्वी",
+    "resizedSuccess": "मीडिया आकार यशस्वीरीत्या बदलला",
+    "trimFailed": "व्हिडिओ ट्रिम करण्यात अयशस्वी",
+    "trimmedSuccess": "व्हिडिओ यशस्वीरीत्या ट्रिम केला",
+    "muteFailed": "व्हिडिओ ऑडिओ अपडेट करण्यात अयशस्वी",
+    "mutedSuccess": "ऑडिओ यशस्वीरीत्या सुधारित केला",
+    "resetSuccess": "प्रतिमा मूळ स्वरूपात रीसेट केली",
+    "openCameraRoll": "कॅमेरा रोल उघडा",
+    "importPhotos": "लायब्ररीमधून फोटो आयात करा",
+    "importVideos": "लायब्ररीमधून व्हिडिओ आयात करा",
+    "importedPhoto": "कॅमेरा रोलमधून फोटो आयात केला",
+    "importedVideo": "कॅमेरा रोलमधून व्हिडिओ आयात केला",
+    "importFailed": "मीडिया आयात करण्यात अयशस्वी",
+    "preview": "पूर्वावलोकन"
   },
   "socket": {
     "title": "वेबसॉकेट",
@@ -1411,7 +1487,9 @@
     "sound": "ध्वनी:",
     "badgeCount": "बॅज संख्या:",
     "collapseKey": "संक्षिप्त की:",
-    "noCustomData": "पेलोडमध्ये कोणताही सानुकूल डेटा आढळला नाही"
+    "noCustomData": "पेलोडमध्ये कोणताही सानुकूल डेटा आढळला नाही",
+    "noMatching": "जुळणाऱ्या पुश सूचना नाहीत",
+    "adjustSearchFilter": "तुमचा शोध किंवा फिल्टर समायोजित करण्याचा प्रयत्न करा."
   },
   "debugging": {
     "title": "डीबगिंग आणि साधने",
@@ -1486,6 +1564,48 @@
     "trim5s": "5 सेकंद ट्रिम करा",
     "muteAudio": "ऑडिओ म्यूट करा",
     "toGif": "GIF मध्ये बदला",
-    "play": "प्ले करा"
+    "play": "प्ले करा",
+    "trim": "ट्रिम करा",
+    "audio": "ऑडिओ",
+    "speed": "वेग",
+    "snapshot": "स्नॅपशॉट"
+  },
+  "language": {
+    "confirmTitle": "भाषा बदलायची?",
+    "confirmMessage": "तुम्हाला इन्स्पेक्टरची भाषा {{newLang}} वर बदलायची आहे का?",
+    "confirmApply": "भाषा लागू करा",
+    "current": "सध्याचे",
+    "new": "नवीन"
+  },
+  "support": {
+    "title": "समर्थन आणि समुदाय",
+    "subtitle": "React Native इन-अ‍ॅप इन्स्पेक्टर",
+    "heroDescription": "जगभरातील मोबाइल संघांसाठी ऑन-डिव्हाइस डीबगिंग संच प्रदान करण्यासाठी उत्साहाने तयार केले आहे. आपले समर्थन सतत सुधारणांना चालना देते.",
+    "sponsor": "GitHub वर प्रायोजित करा",
+    "sponsorBadge": "प्रायोजक",
+    "sponsorDesc": "चालू देखभाल, नवीन वैशिष्ट्ये आणि सुधारणांना समर्थन द्या.",
+    "sponsorBtn": "प्रायोजक व्हा",
+    "copiedSponsor": "GitHub प्रायोजक लिंक कॉपी केली!",
+    "star": "GitHub वर स्टार द्या",
+    "starDesc": "अधिक विकसकांना हे साधन शोधण्यात मदत करण्यासाठी आमच्या रेपोला स्टार द्या.",
+    "issues": "समस्या नोंदवा / सूचना",
+    "issuesDesc": "बग आढळला किंवा कल्पना आहे? GitHub वर समस्या नोंदवा.",
+    "docs": "अधिकृत दस्तऐवजीकरण",
+    "docsDesc": "परस्परसंवादी वैशिष्ट्य दौरा, शोध वाक्यरचना आणि कॉन्फिगरेशन मार्गदर्शक.",
+    "contact": "लेखकाशी संपर्क साधा",
+    "contactDesc": "vengatmacuser@gmail.com • थेट समर्थन आणि एंटरप्राइझ चौकशी.",
+    "waysToSupport": "योगदान आणि समर्थन देण्याचे मार्ग",
+    "npmRegistry": "NPM पॅकेज नोंदणी",
+    "npmRegistryDesc": "रिलीझ नोट्स, पॅकेज आकार आणि इन्स्टॉल आकडेवारी एक्सप्लोर करा.",
+    "shareTitle": "इतरांसोबत शेअर करा",
+    "shareDesc": "आपल्या टीममेट्सना नेटवर्क, कन्सोल नोंदी आणि Redux जलद डीबग करण्यात मदत करा.",
+    "shareWithTeam": "संघासोबत शेअर करा",
+    "copiedRepo": "रेपॉजिटरी लिंक कॉपी केली!",
+    "copyRepo": "रेपो URL कॉपी करा",
+    "maintainer": "प्रकल्प देखभालकर्ता",
+    "sendEmail": "ईमेल पाठवा",
+    "copiedEmail": "ईमेल पत्ता कॉपी केला!",
+    "copyEmail": "ईमेल कॉपी करा",
+    "close": "बंद करा"
   }
 }

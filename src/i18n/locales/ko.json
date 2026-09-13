@@ -57,7 +57,16 @@
     "version": "버전",
     "update": "업데이트",
     "unknown": "알 수 없음",
-    "share": "공유"
+    "share": "공유",
+    "all": "전체",
+    "dragToHide": "숨기려면 여기로 드래그",
+    "releaseToHide": "인스펙터를 숨기려면 놓으세요",
+    "expand": "펼치기",
+    "undo": "실행 취소",
+    "inActiveDevelopment": "활발히 개발 중",
+    "inspectorDismissed": "인스펙터가 닫혔습니다",
+    "noMatches": "일치하는 결과가 없습니다",
+    "moreFilters": "추가 필터"
   },
   "header": {
     "rec": "REC",
@@ -86,7 +95,16 @@
     "paramCount_plural": "{{count}} 매개변수",
     "firebase": "파이어베이스",
     "manual": "매뉴얼",
-    "sliceBadge": "슬라이스"
+    "sliceBadge": "슬라이스",
+    "recordScreen": "화면 녹화",
+    "newVersionAvailable": "업데이트 가능",
+    "updateAvailable": "react-native-inapp-inspector 업데이트 v{{latestVersion}} 준비 완료",
+    "updateAvailableSubtitle": "새로운 버전의 react-native-inapp-inspector를 설치할 수 있습니다",
+    "upgradeCommand": "업그레이드 명령",
+    "copyCommand": "복사",
+    "viewNpm": "보기",
+    "screenshot": "스크린샷",
+    "videoCapture": "녹화"
   },
   "tabs": {
     "apis": "API",
@@ -273,7 +291,9 @@
       "storageStatusDisabledDesc": "앱 종료 시 기본 설정이 재설정됩니다. Android에서 유지하려면 사용자 지정 저장소를 <NetworkInspector Storage={...} />에 전달하세요.",
       "language": "언어",
       "languageDescription": "인터페이스 표시 언어 선택",
-      "selectLanguage": "언어 선택"
+      "selectLanguage": "언어 선택",
+      "peekOpacity": "투시 투명도",
+      "peekOpacityDescription": "눈 아이콘이 활성화되었을 때의 투명도 수준"
     },
     "settingsReset": "설정 재설정",
     "settingsResetMessage": "모든 설정이 기본값으로 재설정되었습니다.",
@@ -294,7 +314,10 @@
       "socketio": "시뮬레이션된 Socket.IO v4 세션",
       "echo": "시뮬레이션된 WebSocket 에코 테스트",
       "screenshotSaved": "스크린샷을 캡처하여 저장했습니다!"
-    }
+    },
+    "simulatePushTitle": "테스트 푸시 알림 시뮬레이션",
+    "simulateSocketTitle": "테스트 소켓 연결 시뮬레이션",
+    "directCaptureShortcuts": "직접 캡처 단축키"
   },
   "network": {
     "urlHeader": "URL",
@@ -307,7 +330,8 @@
       "emptyTable": "빈 개체",
       "value": "값",
       "keyProperty": "키 / 속성",
-      "noMatchingKeys": "일치하는 키 또는 값을 찾을 수 없습니다"
+      "noMatchingKeys": "일치하는 키 또는 값을 찾을 수 없습니다",
+      "emptyPayload": "페이로드 데이터를 사용할 수 없습니다"
     },
     "title": "API",
     "searchPlaceholder": "URL, 상태, 방법으로 검색하세요...",
@@ -391,7 +415,10 @@
     "status404": "404 찾을 수 없음",
     "status500": "500 오류",
     "shareError": "공유 오류",
-    "shareErrorMessage": "공유 시트를 열지 못했습니다."
+    "shareErrorMessage": "공유 시트를 열지 못했습니다.",
+    "clearLogsTitle": "네트워크 로그 지우기",
+    "clearLogsMsg": "모든 네트워크 로그를 지우시겠습니까?",
+    "moreFilters": "추가 필터"
   },
   "console": {
     "filterAll": "All",
@@ -449,7 +476,10 @@
     "lineColShort": "L{{line}}:C{{col}}",
     "searchInLogDetails": "로그 세부정보에서 검색...",
     "showingFilteredLogs": "{{total}}개 로그 중 {{filtered}}개 표시 중",
-    "filteredBy": "{{filters}}({{total}} 로그 중 {{filtered}})으로 필터링됨"
+    "filteredBy": "{{filters}}({{total}} 로그 중 {{filtered}})으로 필터링됨",
+    "clearLogsTitle": "콘솔 로그 지우기",
+    "clearLogsMsg": "모든 콘솔 로그를 지우시겠습니까?",
+    "analytics": "분석"
   },
   "analytics": {
     "timeNow": "NOW",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "키-값 속성",
     "filterParamsPlaceholder": "키 또는 값으로 매개변수 필터링...",
     "noParamsRecorded": "이 이벤트에 기록된 사용자 정의 매개변수가 없습니다.",
-    "noParamsMatching": "\"{{search}}\"와 일치하는 매개변수가 없습니다"
+    "noParamsMatching": "\"{{search}}\"와 일치하는 매개변수가 없습니다",
+    "clearEventsTitle": "분석 이벤트 지우기",
+    "clearEventsMsg": "모든 분석 이벤트를 지우시겠습니까?"
   },
   "redux": {
     "searchPlaceholder": "State 또는 Action 검색...",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "지속 상태 지우기",
     "clearPersistedMessage": "\"{{slice}}\" 슬라이스에 대한 지속 스토리지를 삭제하시겠습니까?",
     "clearedPersisted": "지속 상태가 지워졌습니다.",
-    "clearPersistedError": "지속된 상태를 지우지 못했습니다."
+    "clearPersistedError": "지속된 상태를 지우지 못했습니다.",
+    "clearTimelineTitle": "Redux 타임라인 지우기",
+    "clearTimelineMsg": "디스패치된 액션 기록을 지우시겠습니까?",
+    "diff": "상태 차이"
   },
   "device": {
     "title": "디바이스",
@@ -614,7 +649,8 @@
     "live": "실시간",
     "ipAddress": "IP 주소",
     "ramUsedTotal": "RAM (사용 중/전체)",
-    "uptime": "가동 시간"
+    "uptime": "가동 시간",
+    "copiedUuid": "고유 기기 ID (UUID) 복사됨"
   },
   "storage": {
     "title": "스토리지",
@@ -645,7 +681,9 @@
       "mmkv": "MMKV"
     },
     "asyncStorage": "비동기스토리지",
-    "mmkv": "MMKV"
+    "mmkv": "MMKV",
+    "keyNameEmpty": "키 이름은 비어 있을 수 없습니다",
+    "saveError": "스토리지 키 저장 중 오류 발생"
   },
   "footer": {
     "endOfList": "목록의 끝에 도달했습니다",
@@ -1256,7 +1294,10 @@
     "filterApply": "적용({{count}} 충돌)",
     "frameCopy": "복사",
     "frameCopied": "복사됨",
-    "componentHierarchy": "구성 요소 계층"
+    "componentHierarchy": "구성 요소 계층",
+    "breadcrumbTrail": "이벤트 로그 및 이동 경로",
+    "deviceDiagnostics": "충돌 시 기기 진단 정보",
+    "openInInspector": "인스펙터에서 열기"
   },
   "push": {
     "foreground": "포그라운드",
@@ -1287,7 +1328,9 @@
     "sound": "사운드:",
     "badgeCount": "배지 수:",
     "collapseKey": "축소 키:",
-    "noCustomData": "페이로드에 사용자 지정 키-값 데이터가 없습니다"
+    "noCustomData": "페이로드에 사용자 지정 키-값 데이터가 없습니다",
+    "noMatching": "일치하는 푸시 알림이 없습니다",
+    "adjustSearchFilter": "검색어나 필터 칩을 조정해 보세요."
   },
   "about": {
     "title": "소개 및 사양",
@@ -1412,7 +1455,42 @@
     "speed": "속도",
     "loop": "루프",
     "pause": "일시중지",
-    "play": "플레이"
+    "play": "플레이",
+    "hideGridlines": "인스타그램 격자 숨기기 (3×3)",
+    "showGridlines": "인스타그램 격자 표시 (3×3)",
+    "hideWatermark": "QA 워터마크 숨기기",
+    "showWatermark": "QA 워터마크 표시",
+    "exportGif": "애니메이션 GIF로 내보내기",
+    "snapshotFrame": "프레임 스냅샷 (PNG)",
+    "tapToPlaceStep": "이미지를 탭하거나 드래그하여 단계 배지를 배치하세요",
+    "resetAdjustments": "조정 초기화됨",
+    "tagPlaced": "태그 배치됨",
+    "tapToAddText": "텍스트를 추가하려면 이미지를 탭하세요",
+    "textAdded": "텍스트 오버레이 추가됨",
+    "redone": "다시 실행됨",
+    "undone": "실행 취소됨",
+    "videoSaved": "편집된 비디오가 갤러리에 저장되었습니다",
+    "savedSuccess": "성공적으로 저장되었습니다",
+    "saveFailed": "미디어 저장에 실패했습니다",
+    "snapshotSaved": "스냅샷 프레임이 갤러리에 저장되었습니다",
+    "snapshotFailed": "프레임 스냅샷 캡처에 실패했습니다",
+    "shareSuccess": "미디어가 성공적으로 공유되었습니다",
+    "cropFailed": "미디어 자르기에 실패했습니다",
+    "croppedSuccess": "미디어가 성공적으로 잘렸습니다",
+    "resizeFailed": "미디어 크기 조정에 실패했습니다",
+    "resizedSuccess": "미디어 크기가 조정되었습니다",
+    "trimFailed": "비디오 다듬기에 실패했습니다",
+    "trimmedSuccess": "비디오가 성공적으로 다듬어졌습니다",
+    "muteFailed": "오디오 업데이트에 실패했습니다",
+    "mutedSuccess": "오디오가 수정되었습니다",
+    "resetSuccess": "이미지가 원본으로 초기화되었습니다",
+    "openCameraRoll": "카메라 롤 열기",
+    "importPhotos": "보관함에서 사진 가져오기",
+    "importVideos": "보관함에서 동영상 가져오기",
+    "importedPhoto": "카메라 롤에서 사진을 가져왔습니다",
+    "importedVideo": "카메라 롤에서 비디오를 가져왔습니다",
+    "importFailed": "미디어 가져오기에 실패했습니다",
+    "preview": "미리보기"
   },
   "socket": {
     "title": "웹소켓",
@@ -1486,6 +1564,48 @@
     "trim5s": "5초 트리밍",
     "muteAudio": "오디오 음소거",
     "toGif": "GIF로 변환",
-    "play": "재생"
+    "play": "재생",
+    "trim": "다듬기",
+    "audio": "오디오",
+    "speed": "속도",
+    "snapshot": "스냅샷"
+  },
+  "language": {
+    "confirmTitle": "언어를 변경하시겠습니까?",
+    "confirmMessage": "인스펙터 언어를 {{newLang}}(으)로 전환하시겠습니까?",
+    "confirmApply": "언어 적용",
+    "current": "현재",
+    "new": "신규"
+  },
+  "support": {
+    "title": "지원 및 커뮤니티",
+    "subtitle": "React Native 인앱 인스펙터",
+    "heroDescription": "전 세계 모바일 팀을 위한 올인원 기기 디버깅 제품군을 제공하기 위해 열정을 담아 제작되었습니다. 귀하의 후원, 스타 및 피드백은 지속적인 개선의 원동력이 됩니다.",
+    "sponsor": "GitHub에서 후원하기",
+    "sponsorBadge": "스폰서",
+    "sponsorDesc": "지속적인 유지보수, 새로운 기능 및 개선 사항을 지원합니다.",
+    "sponsorBtn": "후원자 되기",
+    "copiedSponsor": "GitHub 후원 링크가 복사되었습니다!",
+    "star": "GitHub에서 스타 주기",
+    "starDesc": "더 많은 개발자가 이 도구를 발견할 수 있도록 저장소에 스타를 눌러주세요.",
+    "issues": "문제 신고 / 제안",
+    "issuesDesc": "버그를 발견했거나 아이디어가 있으신가요? GitHub에 이슈를 등록하세요.",
+    "docs": "공식 문서",
+    "docsDesc": "기능 소개, 검색 구문 및 구성 가이드.",
+    "contact": "작성자에게 문의",
+    "contactDesc": "vengatmacuser@gmail.com • 직접 지원 및 기업 문의.",
+    "waysToSupport": "기여 및 지원 방법",
+    "npmRegistry": "NPM 패키지 레지스트리",
+    "npmRegistryDesc": "릴리스 노트, 패키지 크기 및 설치 통계를 확인하세요.",
+    "shareTitle": "널리 공유하기",
+    "shareDesc": "팀 동료와 QA 담당자가 네트워크, 콘솔 로그, Redux를 더 빠르게 디버깅할 수 있도록 도와주세요.",
+    "shareWithTeam": "팀원과 공유하기",
+    "copiedRepo": "저장소 링크가 복사되었습니다!",
+    "copyRepo": "저장소 URL 복사",
+    "maintainer": "프로젝트 관리자",
+    "sendEmail": "이메일 보내기",
+    "copiedEmail": "이메일 주소가 복사되었습니다!",
+    "copyEmail": "이메일 복사",
+    "close": "닫기"
   }
 }

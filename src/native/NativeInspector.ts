@@ -719,4 +719,26 @@ export const generateNativeFilmstrip = async (
   }
 };
 
+export interface PickMediaOptions {
+  mediaType?: 'image' | 'video' | 'any';
+}
+
+/**
+ * Opens native system photo/video picker (Camera Roll / Photo Library)
+ * with strict media type filtering (photos only or videos only).
+ */
+export const pickNativeMedia = async (
+  options?: PickMediaOptions,
+): Promise<CapturedMediaItem | null> => {
+  if (!NativeModule || !NativeModule.pickMedia) {
+    return null;
+  }
+  try {
+    const result = await NativeModule.pickMedia(options || {});
+    return (result as CapturedMediaItem) || null;
+  } catch {
+    return null;
+  }
+};
+
 

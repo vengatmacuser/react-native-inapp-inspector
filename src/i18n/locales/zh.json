@@ -57,7 +57,16 @@
     "version": "版本",
     "update": "更新",
     "unknown": "未知",
-    "share": "分享"
+    "share": "分享",
+    "all": "全部",
+    "dragToHide": "拖动到此处隐藏",
+    "releaseToHide": "释放以隐藏检查器",
+    "expand": "展开",
+    "undo": "撤销",
+    "inActiveDevelopment": "正在积极开发中",
+    "inspectorDismissed": "检查器已关闭",
+    "noMatches": "没有匹配的结果",
+    "moreFilters": "更多筛选"
   },
   "header": {
     "rec": "REC",
@@ -86,7 +95,16 @@
     "paramCount_plural": "{{count}} 参数",
     "firebase": "火力基地",
     "manual": "手册",
-    "sliceBadge": "切片"
+    "sliceBadge": "切片",
+    "recordScreen": "录制屏幕",
+    "newVersionAvailable": "有可用更新",
+    "updateAvailable": "react-native-inapp-inspector 更新 v{{latestVersion}} 已就绪",
+    "updateAvailableSubtitle": "新版本 react-native-inapp-inspector 已准备好安装",
+    "upgradeCommand": "升级命令",
+    "copyCommand": "复制",
+    "viewNpm": "查看",
+    "screenshot": "截图",
+    "videoCapture": "录屏"
   },
   "tabs": {
     "apis": "网络请求",
@@ -277,7 +295,9 @@
       "storageStatusDisabledDesc": "应用程序终止时重置首选项。将自定义存储传递给 <NetworkInspector storage={...} /> 以保留在 Android 上。",
       "language": "语言",
       "languageDescription": "选择界面显示语言",
-      "selectLanguage": "选择语言"
+      "selectLanguage": "选择语言",
+      "peekOpacity": "透视不透明度",
+      "peekOpacityDescription": "启用眼睛图标时的透明度级别"
     },
     "memory": {
       "manualTitle": "手动内存清理",
@@ -294,7 +314,10 @@
       "socketio": "模拟 Socket.IO v4 会话",
       "echo": "模拟WebSocket Echo测试",
       "screenshotSaved": "截图并保存！"
-    }
+    },
+    "simulatePushTitle": "模拟测试推送通知",
+    "simulateSocketTitle": "模拟测试套接字连接",
+    "directCaptureShortcuts": "直接截图/录制快捷方式"
   },
   "network": {
     "urlHeader": "URL",
@@ -307,7 +330,8 @@
       "emptyTable": "空对象",
       "value": "值",
       "keyProperty": "键 / 属性",
-      "noMatchingKeys": "未找到匹配的键或值"
+      "noMatchingKeys": "未找到匹配的键或值",
+      "emptyPayload": "无有效载荷数据"
     },
     "showingRequests": "显示 {{count}} 个请求",
     "showingFilteredRequests": "显示 {{filtered}} / {{total}} 个请求",
@@ -391,7 +415,10 @@
       "fast": "快速（< 200 毫秒）",
       "moderate": "中等（200-800 毫秒）",
       "slow": "慢（> 800 毫秒）"
-    }
+    },
+    "clearLogsTitle": "清空网络日志",
+    "clearLogsMsg": "确定要清空所有网络日志吗？",
+    "moreFilters": "更多筛选"
   },
   "console": {
     "filterAll": "All",
@@ -449,7 +476,10 @@
     "fullStackTrace": "完整的堆栈跟踪",
     "lineCol": "行 {{line}}，列 {{col}}",
     "lineColShort": "L{{line}}:C{{col}}",
-    "searchInLogDetails": "在日志详细信息中搜索..."
+    "searchInLogDetails": "在日志详细信息中搜索...",
+    "clearLogsTitle": "清空控制台日志",
+    "clearLogsMsg": "确定要清空所有控制台日志吗？",
+    "analytics": "分析"
   },
   "analytics": {
     "timeNow": "NOW",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "键值属性",
     "filterParamsPlaceholder": "按键或值过滤参数...",
     "noParamsRecorded": "此事件未记录任何自定义参数。",
-    "noParamsMatching": "未找到匹配 \"{{search}}\" 的参数"
+    "noParamsMatching": "未找到匹配 \"{{search}}\" 的参数",
+    "clearEventsTitle": "清空分析事件",
+    "clearEventsMsg": "确定要清空所有分析事件吗？"
   },
   "redux": {
     "searchPlaceholder": "搜索状态或动作...",
@@ -587,7 +619,10 @@
     "triggeredFrom": "触发自：",
     "openInEditor": "在编辑器中打开",
     "callStack": "调用堆栈跟踪",
-    "sliceOrigin": "切片/原点"
+    "sliceOrigin": "切片/原点",
+    "clearTimelineTitle": "清空 Redux 时间线",
+    "clearTimelineMsg": "确定要清空派发的操作历史记录吗？",
+    "diff": "状态差异"
   },
   "device": {
     "title": "设备信息",
@@ -614,7 +649,8 @@
     "live": "实时",
     "ipAddress": "IP 地址",
     "ramUsedTotal": "内存 (已用/总计)",
-    "uptime": "运行时长"
+    "uptime": "运行时长",
+    "copiedUuid": "已复制唯一设备 ID (UUID)"
   },
   "storage": {
     "title": "本地存储",
@@ -645,7 +681,9 @@
       "mmkv": "MMKV"
     },
     "asyncStorage": "异步存储",
-    "mmkv": "MMKV"
+    "mmkv": "MMKV",
+    "keyNameEmpty": "键名不能为空",
+    "saveError": "保存存储键出错"
   },
   "footer": {
     "endOfList": "已到达列表末尾",
@@ -1256,7 +1294,10 @@
     "filterApply": "应用（{{count}} 崩溃）",
     "frameCopy": "复制",
     "frameCopied": "已复制",
-    "componentHierarchy": "组件层次结构"
+    "componentHierarchy": "组件层次结构",
+    "breadcrumbTrail": "面包屑轨迹与事件日志",
+    "deviceDiagnostics": "崩溃时的设备诊断信息",
+    "openInInspector": "在检查器中打开"
   },
   "socket": {
     "showingConnections": "显示 {{count}} 个连接",
@@ -1334,7 +1375,9 @@
     "sound": "提示音：",
     "badgeCount": "角标数：",
     "collapseKey": "合并键：",
-    "noCustomData": "有效负载中未包含自定义键值数据"
+    "noCustomData": "有效负载中未包含自定义键值数据",
+    "noMatching": "没有匹配的推送通知",
+    "adjustSearchFilter": "尝试调整您的搜索词或筛选标签。"
   },
   "about": {
     "title": "关于与规格",
@@ -1459,7 +1502,42 @@
     "speed": "速度",
     "loop": "循环",
     "pause": "暂停",
-    "play": "玩"
+    "play": "玩",
+    "hideGridlines": "隐藏 Instagram 网格 (3×3)",
+    "showGridlines": "显示 Instagram 网格 (3×3)",
+    "hideWatermark": "隐藏 QA 水印",
+    "showWatermark": "显示 QA 水印",
+    "exportGif": "导出为动图 GIF",
+    "snapshotFrame": "截取当前帧 (PNG)",
+    "tapToPlaceStep": "点击或拖动图像以放置步骤标记",
+    "resetAdjustments": "调整已重置",
+    "tagPlaced": "已放置标签",
+    "tapToAddText": "点击图片任意位置添加文字",
+    "textAdded": "已添加文字覆盖层",
+    "redone": "已重做",
+    "undone": "已撤销",
+    "videoSaved": "已编辑的视频已保存到图库",
+    "savedSuccess": "保存成功",
+    "saveFailed": "保存媒体文件失败",
+    "snapshotSaved": "快照帧已保存到图库",
+    "snapshotFailed": "抓取当前帧失败",
+    "shareSuccess": "媒体分享成功",
+    "cropFailed": "裁剪媒体失败",
+    "croppedSuccess": "媒体裁剪成功",
+    "resizeFailed": "调整媒体尺寸失败",
+    "resizedSuccess": "媒体尺寸调整成功",
+    "trimFailed": "修剪视频失败",
+    "trimmedSuccess": "视频修剪成功",
+    "muteFailed": "更新视频音频失败",
+    "mutedSuccess": "音频修改成功",
+    "resetSuccess": "图像已重置为原始状态",
+    "openCameraRoll": "打开相册",
+    "importPhotos": "从相册导入照片",
+    "importVideos": "从相册导入视频",
+    "importedPhoto": "已从相册导入照片",
+    "importedVideo": "已从相册导入视频",
+    "importFailed": "导入媒体失败",
+    "preview": "预览"
   },
   "debugging": {
     "title": "调试与工具",
@@ -1486,6 +1564,48 @@
     "trim5s": "截取 5 秒",
     "muteAudio": "静音音频",
     "toGif": "转为 GIF",
-    "play": "播放"
+    "play": "播放",
+    "trim": "修剪",
+    "audio": "音频",
+    "speed": "速度",
+    "snapshot": "快照"
+  },
+  "language": {
+    "confirmTitle": "更改语言？",
+    "confirmMessage": "是否将检查器语言切换为 {{newLang}}？",
+    "confirmApply": "应用语言",
+    "current": "当前",
+    "new": "新"
+  },
+  "support": {
+    "title": "支持与社区",
+    "subtitle": "React Native 应用内检查器",
+    "heroDescription": "倾心打造，为全球移动开发团队提供集成的设备端调试套件。您的赞助、Star 和反馈将直接推动持续改进与快速发布。",
+    "sponsor": "在 GitHub 上赞助",
+    "sponsorBadge": "赞助",
+    "sponsorDesc": "支持持续维护、新功能开发和版本改进。",
+    "sponsorBtn": "成为赞助者",
+    "copiedSponsor": "已复制 GitHub 赞助链接！",
+    "star": "在 GitHub 上点亮 Star",
+    "starDesc": "给我们的仓库加星，帮助更多 React Native 开发者发现此工具。",
+    "issues": "报告问题 / 提出建议",
+    "issuesDesc": "发现了 Bug 或有新想法？请在 GitHub 上提交 Issue。",
+    "docs": "官方文档",
+    "docsDesc": "交互式功能导览、搜索语法与配置指南。",
+    "contact": "联系作者",
+    "contactDesc": "vengatmacuser@gmail.com • 直接支持与企业咨询。",
+    "waysToSupport": "贡献与支持方式",
+    "npmRegistry": "NPM 软件包注册表",
+    "npmRegistryDesc": "查看已发布版本的更新说明、包大小及安装统计。",
+    "shareTitle": "分享给他人",
+    "shareDesc": "帮助您的工程师队友和测试人员更快速地调试网络、控制台日志和 Redux。",
+    "shareWithTeam": "与团队分享",
+    "copiedRepo": "已复制仓库链接！",
+    "copyRepo": "复制仓库链接",
+    "maintainer": "项目维护者",
+    "sendEmail": "发送邮件",
+    "copiedEmail": "已复制邮箱地址！",
+    "copyEmail": "复制邮箱",
+    "close": "关闭"
   }
 }

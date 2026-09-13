@@ -1,4 +1,14 @@
-# React Native In-App Inspector
+<p align="center">
+  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector">
+    <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/inapp_inspector_icon.gif" alt="React Native In-App Inspector Icon" width="120" height="120" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.45);" />
+  </a>
+</p>
+
+<h1 align="center">React Native In-App Inspector</h1>
+
+<p align="center">
+  <b>The modern, zero-config on-device debugging suite for React Native & Expo</b>
+</p>
 
 <p align="center">
   <b><a href="./README.md">English</a></b> |
@@ -27,7 +37,7 @@
   <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/dm/react-native-inapp-inspector?color=3b82f6&label=downloads" alt="npm downloads" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/github/stars/vengatmacuser/react-native-inapp-inspector?color=f59e0b&label=stars&logo=github" alt="GitHub stars" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license" /></a>
-  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/unpacked-size/react-native-inapp-inspector?color=10b981&label=size" alt="unpacked size" /></a>
+  <a href="https://github.com/sponsors/vengatmacuser"><img src="https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ea4aaa?logo=githubsponsors&logoColor=white" alt="sponsor" /></a>
 </p>
 
 <p align="center">
@@ -58,6 +68,27 @@ The **zero-config, all-in-one in-app debugging toolkit for React Native & Expo**
 <p align="center">
   🎬 <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mp4">Watch Full Video Walkthrough (MP4)</a></b> | <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mov">Original MOV</a></b>
 </p>
+
+---
+
+<table align="center" width="100%">
+  <tr>
+    <td align="center" style="padding: 24px; background: linear-gradient(135deg, rgba(236,72,153,0.1), rgba(99,102,241,0.1)); border-radius: 16px; border: 1px solid rgba(236,72,153,0.35);">
+      <h3 align="center">💖 Made with Love for Every Developer Who Has Ever Chased a Phantom Bug at 2 AM</h3>
+      <p align="center">
+        <i>"We built <b>react-native-inapp-inspector</b> because we know the exact pain of tangled USB cables, broken proxy ports, and elusive production crashes. We poured hundreds of sleepless nights and pure passion into crafting this tool so that every mobile developer and QA engineer in the world could debug freely, effortlessly, and with joy."</i>
+      </p>
+      <p align="center">
+        If this tool saved you an hour of debugging, helped you ship a release on time, or made your daily development a little lighter — <b>please consider sponsoring the project</b>. Even a small coffee or a monthly sponsorship fuels continuous updates, new features, and keeps independent open-source development alive. ☕✨
+      </p>
+      <p align="center">
+        <a href="https://github.com/sponsors/vengatmacuser">
+          <img src="https://img.shields.io/badge/Sponsor%20%40vengatmacuser-💖%20Back%20This%20Project-ea4aaa?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor on GitHub Sponsors" />
+        </a>
+      </p>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -143,15 +174,31 @@ The **zero-config, all-in-one in-app debugging toolkit for React Native & Expo**
 - **Memory Warning Auto-Pruning**: Automatically prunes in-memory logs when the OS triggers low memory alerts.
 - **Shake to Toggle**: Shake physical device or press `Ctrl+Cmd+Z` / `Cmd+M` to toggle the inspector.
 
-### 📸 10. Native Media Capture Suite (Screenshot, Video, GIF)
-- **On-Device Screenshot**: Take crisp high-resolution full-window screenshots without status bar clipping.
-- **Screen Video Recording**: Capture smooth MP4 video walkthroughs of bugs directly on device.
-- **Animated GIF Generator**: Convert recordings to lightweight GIFs for easy sharing on GitHub PRs and Jira tickets.
-- **In-App Media Gallery**: Preview, share, or delete captured recordings inside the inspector.
+### 📸 10. Native Media Capture & Studio In-App Editor
+- **On-Device Capture**: Capture crisp high-res screenshots, smooth MP4 video recordings, or animated GIFs directly on device.
+- **Full-Featured Media Gallery**: Browse, filter (Photos, Videos, GIFs), batch select, delete, and copy capture URIs.
+- **Photo & Video Editing Studio**:
+  - **Crop & Resize**: Crop to custom aspects (Square, 4:3, 16:9) and scale resolution down for lightweight uploads.
+  - **Video Trimming & Audio Control**: Set start/end trim bounds, adjust playback speed (0.5× – 2.0×), or mute audio tracks.
+  - **Frame Snapshot**: Extract high-res PNG frame snapshots from any video with a single tap.
+- **QA Annotations & Markup**:
+  - **Instagram 3×3 Gridlines**: Toggle alignment grid overlays for pixel-perfect UI inspection.
+  - **Sequential Step Badges**: Tap or drag to place numbered step pills (`1`, `2`, `3`...) to document repro steps.
+  - **Bug & Note Tags**: Drop color-coded bug (`🐛`), note (`📝`), and warning badges onto screenshots.
+  - **Text Overlays & QA Watermark**: Add custom text annotations and toggle dynamic QA device watermarks.
+- **Camera Roll Importer**: Import photos or videos directly from the device photo library with smart media-type filtering.
 
-### 🌍 11. 25 Global Languages & Interactive Bottom Sheet
-- **25 Supported Locales**: English, Spanish, French, German, Italian, Portuguese, Russian, Japanese, Korean, Simplified Chinese (`zh`), Traditional Chinese (`zh-TW`), Arabic, Turkish, Dutch, Polish, Indonesian, Vietnamese, Thai, and 7 major Indian languages (Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Marathi).
-- **Interactive Bottom Sheet**: Tap `[ 🌐 EN ▾ ]` to open the bottom sheet with horizontal country flags/chips and instant search for one-tap switching.
+### 🎛️ 11. Draggable Floating FAB & Peek-Through Opacity
+- **Floating Action Launcher**: Draggable, minimizable floating bubble with live unread indicators and badge count.
+- **Drag-to-Dismiss Bottom Zone**: Drag the launcher to the glowing bottom dismiss target to hide it gracefully.
+- **Peek-Through Mode**: Toggle transparent view mode with customizable opacity (0.05 – 1.0) so you can inspect network calls and Redux state while interacting with the underlying app screen.
+
+### ☁️ 12. Firebase Remote Config Module Management
+- **Remote Feature Flags**: Toggle inspector modules (APIs, Redux, Crash, Storage, WebSockets) on or off in production/test builds via Firebase Remote Config without releasing new app builds.
+
+### 🌍 13. 25 Global Languages & Interactive Bottom Sheet
+- **25 Supported Locales**: English, Spanish, French, German, Italian, Portuguese, Russian, Japanese, Korean, Simplified Chinese, Arabic, Hindi, Turkish, Dutch, Polish, Indonesian, Vietnamese, Bengali, Tamil, Telugu, Marathi, Gujarati, Kannada, Malayalam, and Punjabi.
+- **Interactive Language Modal**: Tap `[ 🌐 EN ▾ ]` in the header to open the bottom sheet with country flag chips and instant search for real-time localization testing.
 
 ---
 
@@ -474,9 +521,21 @@ Contributions are warmly welcomed! Please check out [CONTRIBUTING.md](CONTRIBUTI
 
 ## 💖 Support & Sponsoring
 
-`react-native-inapp-inspector` is an independent, free, open-source project. If it has simplified your daily development, saved your team debugging hours, or made QA testing smoother, please consider starring the repository and supporting its maintenance:
-
-👉 **[Sponsor @vengatmacuser on GitHub Sponsors](https://github.com/sponsors/vengatmacuser)**
+<table align="center" width="100%">
+  <tr>
+    <td align="center" style="padding: 20px; background: linear-gradient(135deg, rgba(236,72,153,0.08), rgba(99,102,241,0.08)); border-radius: 12px; border: 1px solid rgba(236,72,153,0.3);">
+      <p align="center">
+        <b>react-native-inapp-inspector</b> is 100% free and independent open-source software.<br />
+        If it helped your workflow, please consider sponsoring to support ongoing maintenance & new features!
+      </p>
+      <p align="center">
+        <a href="https://github.com/sponsors/vengatmacuser">
+          <img src="https://img.shields.io/badge/Sponsor%20%40vengatmacuser-💖%20GitHub%20Sponsors-ea4aaa?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor on GitHub Sponsors" />
+        </a>
+      </p>
+    </td>
+  </tr>
+</table>
 
 ## 🔍 Global Search Keywords & Regional Topics
 

@@ -135,7 +135,7 @@ import {
 import {
   fetchRemoteConfigModuleStatus,
 } from './helpers/remoteConfig';
-import {ScreenCapture} from './capture';
+import {ScreenCapture, CapturedMediaItem} from './capture';
 
 // Constants
 import {
@@ -295,6 +295,7 @@ const NetworkInspector = ({
   const [lastReadApisCount, setLastReadApisCount] = useState(0);
   const [lastReadCrashesCount, setLastReadCrashesCount] = useState(0);
   const [mediaCount, setMediaCount] = useState(0);
+  const [previewMediaItem, setPreviewMediaItem] = useState<CapturedMediaItem | null>(null);
 
   const refreshMediaCount = useCallback(async () => {
     try {
@@ -706,7 +707,7 @@ const NetworkInspector = ({
       if (saved.captureAutoHide != null) setCaptureAutoHide(saved.captureAutoHide);
       if (saved.captureAutoGif != null) setCaptureAutoGif(saved.captureAutoGif);
       if (saved.peekOpacity != null)
-        setPeekOpacity(saved.peekOpacity < 0.5 ? 0.75 : saved.peekOpacity);
+        setPeekOpacity(Math.max(0.05, Math.min(1.0, saved.peekOpacity)));
       if (saved.showDuplicateLogs != null)
         setShowDuplicateLogs(saved.showDuplicateLogs);
       if (saved.showUpdateToast != null)
@@ -2685,6 +2686,8 @@ const NetworkInspector = ({
       setPeekMode,
       peekOpacity,
       setPeekOpacity,
+      previewMediaItem,
+      setPreviewMediaItem,
     }),
     [
       visible,
@@ -2705,6 +2708,7 @@ const NetworkInspector = ({
       lastReadLogsCount,
       mediaCount,
       refreshMediaCount,
+      previewMediaItem,
       selected,
       selectedEvent,
       selectedLog,

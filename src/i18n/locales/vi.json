@@ -57,7 +57,16 @@
     "disconnected": "Đã ngắt kết nối",
     "version": "Phiên bản",
     "update": "CẬP NHẬT",
-    "unknown": "Không xác định"
+    "unknown": "Không xác định",
+    "all": "Tất cả",
+    "dragToHide": "Kéo vào đây để ẩn",
+    "releaseToHide": "Thả để ẩn trình kiểm tra",
+    "expand": "Mở rộng",
+    "undo": "Hoàn tác",
+    "inActiveDevelopment": "Đang tích cực phát triển",
+    "inspectorDismissed": "Đã đóng trình kiểm tra",
+    "noMatches": "Không có kết quả khớp",
+    "moreFilters": "Bộ lọc khác"
   },
   "header": {
     "updateAvailableTitle": "Cập nhật có sẵn",
@@ -86,7 +95,16 @@
     "live": "Trực tiếp",
     "keys": "{{count}} phím",
     "frames": "{{count}} khung hình",
-    "sliceBadge": "lát"
+    "sliceBadge": "lát",
+    "recordScreen": "Ghi màn hình",
+    "newVersionAvailable": "Có bản cập nhật",
+    "updateAvailable": "Bản cập nhật react-native-inapp-inspector v{{latestVersion}} đã sẵn sàng",
+    "updateAvailableSubtitle": "Phiên bản mới của react-native-inapp-inspector đã sẵn sàng cài đặt",
+    "upgradeCommand": "LỆNH NÂNG CẤP",
+    "copyCommand": "Sao chép",
+    "viewNpm": "Xem",
+    "screenshot": "Ảnh chụp màn hình",
+    "videoCapture": "Ghi hình"
   },
   "tabs": {
     "apis": "API",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "Thiết lập lại tùy chọn khi tắt ứng dụng. Chuyển bộ nhớ tùy chỉnh tới <NetworkInspector storage={...} /> để tồn tại trên Android.",
       "language": "Ngôn ngữ",
       "languageDescription": "Chọn ngôn ngữ hiển thị giao diện",
-      "selectLanguage": "Chọn ngôn ngữ"
+      "selectLanguage": "Chọn ngôn ngữ",
+      "peekOpacity": "Độ mờ nhìn xuyên thấu",
+      "peekOpacityDescription": "Mức độ trong suốt khi biểu tượng mắt được bật"
     },
     "configureSubtitle": "Cấu hình các tham số mô-đun",
     "resetAlertTitle": "Đặt lại tất cả cài đặt",
@@ -294,7 +314,10 @@
       "socketio": "Phiên mô phỏng Socket.IO v4",
       "echo": "Kiểm tra tiếng vang WebSocket mô phỏng",
       "screenshotSaved": "Ảnh chụp màn hình đã được chụp và lưu!"
-    }
+    },
+    "simulatePushTitle": "MÔ PHỎNG THÔNG BÁO ĐẨY THỬ NGHIỆM",
+    "simulateSocketTitle": "MÔ PHỎNG KẾT NỐI SOCKET THỬ NGHIỆM",
+    "directCaptureShortcuts": "PHÍM TẮT CHỤP/GHI TRỰC TIẾP"
   },
   "network": {
     "title": "API",
@@ -377,7 +400,8 @@
       "key": "Chìa khóa",
       "value": "GIÁ TRỊ",
       "keyProperty": "KHÓA / THUỘC TÍNH",
-      "noMatchingKeys": "Không tìm thấy khóa hoặc giá trị phù hợp"
+      "noMatchingKeys": "Không tìm thấy khóa hoặc giá trị phù hợp",
+      "emptyPayload": "Không có dữ liệu tải trọng"
     },
     "showingRequests": "Đang hiển thị {{count}} yêu cầu",
     "showingFilteredRequests": "Đang hiển thị {{filtered}} trong số {{total}} yêu cầu",
@@ -391,7 +415,10 @@
     "status404": "404 Không tìm thấy",
     "status500": "Lỗi 500",
     "shareError": "Lỗi chia sẻ",
-    "shareErrorMessage": "Không mở được bảng chia sẻ"
+    "shareErrorMessage": "Không mở được bảng chia sẻ",
+    "clearLogsTitle": "Xóa nhật ký mạng",
+    "clearLogsMsg": "Bạn có chắc chắn muốn xóa tất cả nhật ký mạng không?",
+    "moreFilters": "Bộ lọc khác"
   },
   "console": {
     "title": "Nhật ký",
@@ -449,7 +476,10 @@
     "info": "Thông tin",
     "warning": "Cảnh báo",
     "error": "Lỗi",
-    "debug": "Gỡ lỗi"
+    "debug": "Gỡ lỗi",
+    "clearLogsTitle": "Xóa nhật ký bảng điều khiển",
+    "clearLogsMsg": "Bạn có chắc chắn muốn xóa tất cả nhật ký bảng điều khiển không?",
+    "analytics": "Phân tích"
   },
   "analytics": {
     "title": "Phân tích",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "Thuộc tính khóa-giá trị",
     "filterParamsPlaceholder": "Lọc tham số theo khóa hoặc giá trị...",
     "noParamsRecorded": "Không có tham số tùy chỉnh nào được ghi lại.",
-    "noParamsMatching": "Không có tham số nào khớp với \"{{search}}\""
+    "noParamsMatching": "Không có tham số nào khớp với \"{{search}}\"",
+    "clearEventsTitle": "Xóa sự kiện phân tích",
+    "clearEventsMsg": "Bạn có chắc chắn muốn xóa tất cả sự kiện phân tích không?"
   },
   "redux": {
     "title": "Chuyển đổi lại",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "Xóa trạng thái liên tục",
     "clearPersistedMessage": "Bạn có chắc chắn muốn xóa bộ nhớ liên tục cho lát \"{{slice}}\" không?",
     "clearedPersisted": "Trạng thái liên tục đã bị xóa.",
-    "clearPersistedError": "Không xóa được trạng thái tồn tại."
+    "clearPersistedError": "Không xóa được trạng thái tồn tại.",
+    "clearTimelineTitle": "Xóa dòng thời gian Redux",
+    "clearTimelineMsg": "Bạn có chắc chắn muốn xóa lịch sử hành động đã gửi không?",
+    "diff": "Khác biệt trạng thái"
   },
   "device": {
     "title": "Thiết bị",
@@ -614,7 +649,8 @@
     "live": "TRỰC TIẾP",
     "ipAddress": "ĐỊA CHỈ IP",
     "ramUsedTotal": "RAM (SỬ DỤNG/TỔNG)",
-    "uptime": "THỜI GIAN HOẠT ĐỘNG"
+    "uptime": "THỜI GIAN HOẠT ĐỘNG",
+    "copiedUuid": "Đã sao chép ID thiết bị duy nhất (UUID)"
   },
   "storage": {
     "title": "Lưu trữ",
@@ -645,7 +681,9 @@
     "asyncStorage": "Lưu trữ không đồng bộ",
     "mmkv": "MMKV",
     "deleteConfirm": "Xóa",
-    "cleared": "Đã xóa bộ nhớ"
+    "cleared": "Đã xóa bộ nhớ",
+    "keyNameEmpty": "Tên khóa không được để trống",
+    "saveError": "Lỗi khi lưu khóa bộ nhớ"
   },
   "footer": {
     "endOfList": "Bạn đã đến cuối danh sách",
@@ -1293,7 +1331,10 @@
     "filterApply": "Áp dụng ({{count}} Sự cố)",
     "frameCopy": "Sao chép",
     "frameCopied": "Đã sao chép",
-    "componentHierarchy": "Phân cấp thành phần"
+    "componentHierarchy": "Phân cấp thành phần",
+    "breadcrumbTrail": "DẤU VẾT VÀ NHẬT KÝ SỰ KIỆN",
+    "deviceDiagnostics": "CHẨN ĐOÁN THIẾT BỊ KHI GẶP SỰ CỐ",
+    "openInInspector": "Mở trong trình kiểm tra"
   },
   "mediaGallery": {
     "all": "Tất cả ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "Tốc độ",
     "loop": "Vòng lặp",
     "pause": "Tạm dừng",
-    "play": "Chơi"
+    "play": "Chơi",
+    "hideGridlines": "Ẩn lưới Instagram (3×3)",
+    "showGridlines": "Hiện lưới Instagram (3×3)",
+    "hideWatermark": "Ẩn hình mờ QA",
+    "showWatermark": "Hiện hình mờ QA",
+    "exportGif": "Xuất dưới dạng GIF động",
+    "snapshotFrame": "Chụp khung hình (PNG)",
+    "tapToPlaceStep": "Nhấn hoặc kéo trên ảnh để đặt huy hiệu bước",
+    "resetAdjustments": "Đã đặt lại điều chỉnh",
+    "tagPlaced": "Đã đặt thẻ",
+    "tapToAddText": "Nhấn vào bất kỳ đâu trên ảnh để thêm chữ",
+    "textAdded": "Đã thêm lớp phủ văn bản",
+    "redone": "Đã làm lại",
+    "undone": "Đã hoàn tác",
+    "videoSaved": "Đã lưu video đã chỉnh sửa vào thư viện",
+    "savedSuccess": "Đã lưu thành công",
+    "saveFailed": "Lưu phương tiện thất bại",
+    "snapshotSaved": "Đã lưu khung hình chụp nhanh vào thư viện",
+    "snapshotFailed": "Chụp ảnh khung hình thất bại",
+    "shareSuccess": "Đã chia sẻ phương tiện thành công",
+    "cropFailed": "Cắt phương tiện thất bại",
+    "croppedSuccess": "Đã cắt phương tiện thành công",
+    "resizeFailed": "Đổi kích thước thất bại",
+    "resizedSuccess": "Đã đổi kích thước thành công",
+    "trimFailed": "Cắt video thất bại",
+    "trimmedSuccess": "Đã cắt video thành công",
+    "muteFailed": "Cập nhật âm thanh video thất bại",
+    "mutedSuccess": "Đã sửa đổi âm thanh thành công",
+    "resetSuccess": "Đã đặt lại ảnh về ban đầu",
+    "openCameraRoll": "Mở cuộn camera",
+    "importPhotos": "Nhập ảnh từ thư viện",
+    "importVideos": "Nhập video từ thư viện",
+    "importedPhoto": "Đã nhập ảnh từ cuộn camera",
+    "importedVideo": "Đã nhập video từ cuộn camera",
+    "importFailed": "Nhập phương tiện thất bại",
+    "preview": "Xem trước"
   },
   "socket": {
     "title": "WebSocket",
@@ -1411,7 +1487,9 @@
     "sound": "Âm thanh:",
     "badgeCount": "Số lượng huy hiệu:",
     "collapseKey": "Khóa thu gọn:",
-    "noCustomData": "Không tìm thấy dữ liệu khóa-giá trị tùy chỉnh"
+    "noCustomData": "Không tìm thấy dữ liệu khóa-giá trị tùy chỉnh",
+    "noMatching": "Không có thông báo đẩy phù hợp",
+    "adjustSearchFilter": "Hãy thử điều chỉnh cụm từ tìm kiếm hoặc bộ lọc."
   },
   "debugging": {
     "title": "Gỡ lỗi & Công cụ",
@@ -1486,6 +1564,48 @@
     "trim5s": "Cắt 5 giây",
     "muteAudio": "Tắt tiếng",
     "toGif": "Thành GIF",
-    "play": "Phát"
+    "play": "Phát",
+    "trim": "Cắt video",
+    "audio": "Âm thanh",
+    "speed": "Tốc độ",
+    "snapshot": "Ảnh chụp nhanh"
+  },
+  "language": {
+    "confirmTitle": "Đổi ngôn ngữ?",
+    "confirmMessage": "Bạn có muốn chuyển ngôn ngữ trình kiểm tra sang {{newLang}} không?",
+    "confirmApply": "Áp dụng ngôn ngữ",
+    "current": "Hiện tại",
+    "new": "Mới"
+  },
+  "support": {
+    "title": "Hỗ trợ & Cộng đồng",
+    "subtitle": "Trình kiểm tra trong ứng dụng React Native",
+    "heroDescription": "Được chế tác với đam mê nhằm mang đến bộ công cụ gỡ lỗi trên thiết bị tất-cả-trong-một cho các nhóm di động toàn cầu. Sự tài trợ, gắn sao và phản hồi của bạn thúc đẩy phát triển liên tục.",
+    "sponsor": "Tài trợ trên GitHub",
+    "sponsorBadge": "TÀI TRỢ",
+    "sponsorDesc": "Hỗ trợ bảo trì liên tục, các tính năng mới và cải tiến phát hành.",
+    "sponsorBtn": "Trở thành nhà tài trợ",
+    "copiedSponsor": "Đã sao chép liên kết GitHub Sponsors!",
+    "star": "Gắn sao trên GitHub",
+    "starDesc": "Gắn sao để giúp nhiều nhà phát triển React Native khám phá công cụ này.",
+    "issues": "Báo cáo sự cố / Gợi ý",
+    "issuesDesc": "Tìm thấy lỗi hoặc có ý tưởng? Mở sự cố trên GitHub.",
+    "docs": "Tài liệu chính thức",
+    "docsDesc": "Tham quan tính năng tương tác, cú pháp tìm kiếm và hướng dẫn cấu hình.",
+    "contact": "Liên hệ tác giả",
+    "contactDesc": "vengatmacuser@gmail.com • Hỗ trợ trực tiếp & thắc mắc doanh nghiệp.",
+    "waysToSupport": "CÁCH ĐÓNG GÓP & HỖ TRỢ",
+    "npmRegistry": "Sổ đăng ký gói NPM",
+    "npmRegistryDesc": "Khám phá ghi chú phát hành, kích thước gói và thống kê cài đặt.",
+    "shareTitle": "CHIA SẺ VỚI MỌI NGƯỜI",
+    "shareDesc": "Giúp đồng nghiệp kỹ sư và chuyên viên QA gỡ lỗi mạng, nhật ký bảng điều khiển và Redux nhanh hơn.",
+    "shareWithTeam": "Chia sẻ với nhóm",
+    "copiedRepo": "Đã sao chép liên kết kho lưu trữ!",
+    "copyRepo": "Sao chép URL kho lưu trữ",
+    "maintainer": "NGƯỜI DUY TRÌ DỰ ÁN",
+    "sendEmail": "Gửi email",
+    "copiedEmail": "Đã sao chép địa chỉ email!",
+    "copyEmail": "Sao chép email",
+    "close": "Đóng"
   }
 }

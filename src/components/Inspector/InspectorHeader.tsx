@@ -35,7 +35,7 @@ import {
 import {
   triggerNativeHaptic,
 } from '../../native/NativeInspector';
-import {ScreenCapture, CapturedMediaItem} from '../../capture';
+import {ScreenCapture, CapturedMediaItem, generateCaptureId} from '../../capture';
 import {UpdateAvailableModal} from './UpdateAvailableModal';
 import {MediaPreviewModal} from './MediaPreviewModal';
 import {LanguageSelectorModal} from './LanguageSelectorModal';
@@ -101,6 +101,8 @@ const InspectorHeader = React.memo(() => {
     refreshMediaCount,
     peekMode,
     setPeekMode,
+    previewMediaItem,
+    setPreviewMediaItem,
   } = useInspector();
 
   const {width: windowWidth} = useWindowDimensions();
@@ -108,6 +110,7 @@ const InspectorHeader = React.memo(() => {
   const isCompact = windowWidth < 400;
 
   const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
+  const [showCopyBanner, setShowCopyBanner] = React.useState<boolean>(false);
   const [showLanguageModal, setShowLanguageModal] = React.useState<boolean>(false);
   const [appVersionString] = React.useState<string>(() => {
     return getAppVersionAndBuild().formatted;
@@ -122,7 +125,7 @@ const InspectorHeader = React.memo(() => {
 
   const [isRecording, setIsRecording] = React.useState<boolean>(false);
   const [recordingSeconds, setRecordingSeconds] = React.useState<number>(0);
-  const recordingTimerRef = React.useRef<any>(null);
+  const recordingTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     ScreenCapture.isRecording()
@@ -152,9 +155,6 @@ const InspectorHeader = React.memo(() => {
     };
   }, [isRecording]);
 
-  const [previewMediaItem, setPreviewMediaItem] =
-    React.useState<CapturedMediaItem | null>(null);
-
   const handleTakeScreenshot = React.useCallback(async () => {
     try {
       triggerNativeHaptic('light');
@@ -165,13 +165,14 @@ const InspectorHeader = React.memo(() => {
       });
       if (result) {
         triggerNativeHaptic('success');
+        const captureId = generateCaptureId('screenshot', result.format || 'png');
         const newItem: CapturedMediaItem = {
-          id: `screenshot_${result.timestamp}.png`,
+          id: captureId,
           type: 'image',
           format: result.format,
           uri: result.uri,
           filename:
-            result.uri.split('/').pop() || `screenshot_${result.timestamp}.png`,
+            result.uri.split('/').pop() || captureId,
           sizeBytes: result.sizeBytes,
           timestamp: result.timestamp,
           width: result.width,
@@ -196,14 +197,15 @@ const InspectorHeader = React.memo(() => {
         setIsRecording(false);
         if (result) {
           triggerNativeHaptic('success');
+          const captureId = generateCaptureId('video', result.format);
           const newItem: CapturedMediaItem = {
-            id: `video_${result.timestamp}.${result.format}`,
+            id: captureId,
             type: result.format === 'gif' ? 'gif' : 'video',
             format: result.format,
             uri: result.uri,
             filename:
               result.uri.split('/').pop() ||
-              `video_${result.timestamp}.${result.format}`,
+              captureId,
             sizeBytes: result.sizeBytes,
             timestamp: result.timestamp,
             durationMs: result.durationMs,
@@ -1760,12 +1762,13 @@ const InspectorHeader = React.memo(() => {
           });
           if (gif) {
             refreshMediaCount?.().catch(() => {});
+            const captureId = generateCaptureId('anim', 'gif');
             setPreviewMediaItem({
-              id: `anim_${gif.timestamp}.gif`,
+              id: captureId,
               type: 'gif',
               format: 'gif',
               uri: gif.uri,
-              filename: gif.uri.split('/').pop() || `anim_${gif.timestamp}.gif`,
+              filename: gif.uri.split('/').pop() || captureId,
               sizeBytes: gif.sizeBytes,
               timestamp: gif.timestamp,
               durationMs: gif.durationMs,

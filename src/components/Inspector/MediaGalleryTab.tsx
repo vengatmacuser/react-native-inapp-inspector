@@ -16,6 +16,7 @@ import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
 import EmptyState from '../EmptyState';
 import {
+  CameraRollIcon,
   CheckIcon,
   CopyIcon,
   FilmIcon,
@@ -42,11 +43,10 @@ import {ConfirmationModal} from './ConfirmationModal';
 
 export const MediaGalleryTab: React.FC = () => {
   const {t} = useTranslation();
-  const {refreshMediaCount, switchActiveTab} = useInspector();
+  const {refreshMediaCount, switchActiveTab, previewMediaItem, setPreviewMediaItem} = useInspector();
   const [mediaList, setMediaList] = useState<CapturedMediaItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'image' | 'video' | 'gif'>('all');
-  const [selectedItem, setSelectedItem] = useState<CapturedMediaItem | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -62,6 +62,35 @@ export const MediaGalleryTab: React.FC = () => {
     message: '',
     onConfirm: () => {},
   });
+
+  const handleOpenPicker = async () => {
+    try {
+      // If user selected photos filter ('image'), filter photos only (restricts video/gif)
+      // If user selected videos filter ('video'), filter videos only (restricts photos)
+      // If 'all' or 'gif', allow any media
+      const mediaType: 'image' | 'video' | 'any' =
+        selectedFilter === 'image'
+          ? 'image'
+          : selectedFilter === 'video'
+          ? 'video'
+          : 'any';
+
+      const pickedItem = await ScreenCapture.pickMedia({mediaType});
+      if (pickedItem) {
+        await loadMedia();
+        refreshMediaCount?.().catch(() => {});
+        showToast(
+          pickedItem.type === 'video'
+            ? t('mediaGallery.importedVideo', 'Video imported from Camera Roll')
+            : t('mediaGallery.importedPhoto', 'Photo imported from Camera Roll'),
+        );
+        // Automatically open the imported media in preview modal for editing / inspecting
+        setPreviewMediaItem(pickedItem);
+      }
+    } catch {
+      showToast(t('mediaGallery.importFailed', 'Failed to import media'));
+    }
+  };
 
   const loadMedia = useCallback(async () => {
     try {
@@ -275,7 +304,7 @@ export const MediaGalleryTab: React.FC = () => {
 
     return (
       <TouchableScale
-        onPress={() => setSelectedItem(item)}
+        onPress={() => setPreviewMediaItem(item)}
         style={[galleryStyles.card, isSelected && galleryStyles.cardSelected]}>
         <View style={galleryStyles.thumbnailContainer}>
           {thumbUri ? (
@@ -368,7 +397,7 @@ export const MediaGalleryTab: React.FC = () => {
 
     return (
       <TouchableScale
-        onPress={() => setSelectedItem(item)}
+        onPress={() => setPreviewMediaItem(item)}
         style={[galleryStyles.listRow, isSelected && galleryStyles.listRowSelected]}>
         {/* Checkbox */}
         <TouchableOpacity
@@ -501,24 +530,42 @@ export const MediaGalleryTab: React.FC = () => {
           })}
         </View>
 
-        {/* View Mode Toggle Button Group */}
-        <View style={galleryStyles.viewToggleContainer}>
+        {/* Right Controls: Camera Roll Import & View Mode Toggle */}
+        <View style={galleryStyles.rightControls}>
           <TouchableOpacity
-            onPress={() => setViewMode('grid')}
-            style={[
-              galleryStyles.viewToggleBtn,
-              viewMode === 'grid' && galleryStyles.viewToggleBtnActive,
-            ]}>
-            <GridIcon size={13} color={viewMode === 'grid' ? AppColors.white : AppColors.slate400} />
+            onPress={handleOpenPicker}
+            style={galleryStyles.importBtn}
+            accessibilityLabel="Open Camera Roll"
+            hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
+            <CameraRollIcon size={12} color={AppColors.sky400} />
+            <Text style={galleryStyles.importBtnText}>
+              {selectedFilter === 'image'
+                ? 'Photos'
+                : selectedFilter === 'video'
+                ? 'Videos'
+                : 'Import'}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setViewMode('list')}
-            style={[
-              galleryStyles.viewToggleBtn,
-              viewMode === 'list' && galleryStyles.viewToggleBtnActive,
-            ]}>
-            <ListIcon size={13} color={viewMode === 'list' ? AppColors.white : AppColors.slate400} />
-          </TouchableOpacity>
+
+          {/* View Mode Toggle Button Group */}
+          <View style={galleryStyles.viewToggleContainer}>
+            <TouchableOpacity
+              onPress={() => setViewMode('grid')}
+              style={[
+                galleryStyles.viewToggleBtn,
+                viewMode === 'grid' && galleryStyles.viewToggleBtnActive,
+              ]}>
+              <GridIcon size={13} color={viewMode === 'grid' ? AppColors.white : AppColors.slate400} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setViewMode('list')}
+              style={[
+                galleryStyles.viewToggleBtn,
+                viewMode === 'list' && galleryStyles.viewToggleBtnActive,
+              ]}>
+              <ListIcon size={13} color={viewMode === 'list' ? AppColors.white : AppColors.slate400} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -617,19 +664,46 @@ export const MediaGalleryTab: React.FC = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={AppColors.sky400} />
         }
         ListEmptyComponent={
-          <EmptyState
-            customTitle={t('mediaGallery.noMediaTitle')}
-            customSub={t('mediaGallery.noMediaDesc')}
-            showReload={false}
-          />
+          <View style={galleryStyles.emptyContainer}>
+            <EmptyState
+              customTitle={
+                selectedFilter === 'image'
+                  ? 'No Photos Found'
+                  : selectedFilter === 'video'
+                  ? 'No Videos Found'
+                  : t('mediaGallery.noMediaTitle')
+              }
+              customSub={
+                selectedFilter === 'image'
+                  ? 'Take a screenshot or import photos from Camera Roll.'
+                  : selectedFilter === 'video'
+                  ? 'Record a video or import videos from Camera Roll.'
+                  : t('mediaGallery.noMediaDesc')
+              }
+              showReload={false}
+            />
+            <TouchableOpacity
+              onPress={handleOpenPicker}
+              style={galleryStyles.emptyImportBtn}
+              activeOpacity={0.8}>
+              <CameraRollIcon size={14} color={AppColors.white} />
+              <Text style={galleryStyles.emptyImportBtnText}>
+                {selectedFilter === 'image'
+                  ? t('mediaGallery.importPhotos', 'Import Photos from Camera Roll')
+                  : selectedFilter === 'video'
+                  ? t('mediaGallery.importVideos', 'Import Videos from Camera Roll')
+                  : t('mediaGallery.openCameraRoll', 'Open Camera Roll')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         }
       />
 
       {/* Fullscreen Preview Modal */}
       <MediaPreviewModal
-        item={selectedItem}
-        visible={!!selectedItem}
-        onClose={() => setSelectedItem(null)}
+        item={previewMediaItem}
+        visible={!!previewMediaItem}
+        onClose={() => setPreviewMediaItem(null)}
         onDelete={handleDeleteItem}
         onConvertToGif={handleConvertToGif}
       />
@@ -726,6 +800,52 @@ const galleryStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  rightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: `${AppColors.sky500}1F`,
+    borderColor: `${AppColors.sky400}44`,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4.5,
+    borderRadius: 6,
+  },
+  importBtnText: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 11,
+    color: AppColors.sky400,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 36,
+  },
+  emptyImportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: AppColors.sky500,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 18,
+    shadowColor: AppColors.sky500,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  emptyImportBtnText: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 13,
+    color: AppColors.white,
   },
   viewToggleContainer: {
     flexDirection: 'row',

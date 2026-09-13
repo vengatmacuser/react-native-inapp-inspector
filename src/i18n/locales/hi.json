@@ -57,7 +57,16 @@
     "version": "संस्करण",
     "update": "अपडेट करें",
     "unknown": "अज्ञात",
-    "share": "साझा करें"
+    "share": "साझा करें",
+    "all": "सभी",
+    "dragToHide": "छिपाने के लिए यहाँ खींचें",
+    "releaseToHide": "निरीक्षक छिपाने के लिए छोड़ें",
+    "expand": "विस्तार करें",
+    "undo": "पूर्ववत करें",
+    "inActiveDevelopment": "सक्रिय विकास में",
+    "inspectorDismissed": "निरीक्षक बंद कर दिया गया",
+    "noMatches": "कोई मेल खाने वाले परिणाम नहीं",
+    "moreFilters": "अधिक फ़िल्टर"
   },
   "header": {
     "rec": "REC",
@@ -86,7 +95,16 @@
     "paramCount_plural": "{{count}} पैरामीटर",
     "firebase": "फायरबेस",
     "manual": "मैनुअल",
-    "sliceBadge": "टुकड़ा"
+    "sliceBadge": "टुकड़ा",
+    "recordScreen": "स्क्रीन रिकॉर्ड करें",
+    "newVersionAvailable": "अपडेट उपलब्ध है",
+    "updateAvailable": "react-native-inapp-inspector अपडेट v{{latestVersion}} तैयार है",
+    "updateAvailableSubtitle": "react-native-inapp-inspector का नया संस्करण इंस्टॉल के लिए तैयार है",
+    "upgradeCommand": "अपग्रेड कमांड",
+    "copyCommand": "कॉपी",
+    "viewNpm": "देखें",
+    "screenshot": "स्क्रीनशॉट",
+    "videoCapture": "रिकॉर्ड"
   },
   "tabs": {
     "logs": "लॉग्स",
@@ -273,7 +291,9 @@
       "storageStatusDisabledDesc": "ऐप किल पर प्राथमिकताएँ रीसेट हो गईं। Android पर बने रहने के लिए कस्टम स्टोरेज को <NetworkInspector स्टोरेज={...} /> पर पास करें।",
       "language": "भाषा",
       "languageDescription": "इंटरफ़ेस प्रदर्शन भाषा चुनें",
-      "selectLanguage": "भाषा चुनें"
+      "selectLanguage": "भाषा चुनें",
+      "peekOpacity": "पारदर्शिता अपारदर्शिता",
+      "peekOpacityDescription": "आँख आइकन सक्षम होने पर पारदर्शिता स्तर"
     },
     "settingsReset": "सेटिंग्स रीसेट करें",
     "settingsResetMessage": "सभी सेटिंग्स को डिफ़ॉल्ट मानों पर रीसेट कर दिया गया है।",
@@ -294,7 +314,10 @@
       "socketio": "सिम्युलेटेड सॉकेट.आईओ v4 सत्र",
       "echo": "सिम्युलेटेड वेबसॉकेट इको परीक्षण",
       "screenshotSaved": "स्क्रीनशॉट कैप्चर किया गया और सहेजा गया!"
-    }
+    },
+    "simulatePushTitle": "परीक्षण पुश सूचनाओं का अनुकरण करें",
+    "simulateSocketTitle": "परीक्षण सॉकेट कनेक्शन का अनुकरण करें",
+    "directCaptureShortcuts": "प्रत्यक्ष कैप्चर शॉर्टकट"
   },
   "network": {
     "urlHeader": "URL",
@@ -307,7 +330,8 @@
       "emptyTable": "खाली वस्तु",
       "value": "मान",
       "keyProperty": "कुंजी / विशेषता",
-      "noMatchingKeys": "कोई मेल खाने वाली कुंजी या मान नहीं मिला"
+      "noMatchingKeys": "कोई मेल खाने वाली कुंजी या मान नहीं मिला",
+      "emptyPayload": "कोई पेलोड डेटा उपलब्ध नहीं है"
     },
     "title": "एपीआई",
     "searchPlaceholder": "यूआरएल, स्थिति या विधि के आधार पर खोजें...",
@@ -391,7 +415,10 @@
     "status404": "404 नहीं मिला",
     "status500": "500 त्रुटि",
     "shareError": "त्रुटि साझा करें",
-    "shareErrorMessage": "शेयर शीट खोलने में विफल"
+    "shareErrorMessage": "शेयर शीट खोलने में विफल",
+    "clearLogsTitle": "नेटवर्क लॉग साफ़ करें",
+    "clearLogsMsg": "क्या आप वाकई सभी नेटवर्क लॉग साफ़ करना चाहते हैं?",
+    "moreFilters": "अधिक फ़िल्टर"
   },
   "console": {
     "filterAll": "All",
@@ -449,7 +476,10 @@
     "lineColShort": "एल{{line}}:सी{{col}}",
     "searchInLogDetails": "लॉग विवरण में खोजें...",
     "showingFilteredLogs": "{{total}} में से {{filtered}} लॉग दिखा रहा है",
-    "filteredBy": "{{filters}} ({{filtered}} में से {{total}} लॉग द्वारा फ़िल्टर किया गया)"
+    "filteredBy": "{{filters}} ({{filtered}} में से {{total}} लॉग द्वारा फ़िल्टर किया गया)",
+    "clearLogsTitle": "कंसोल लॉग साफ़ करें",
+    "clearLogsMsg": "क्या आप वाकई सभी कंसोल लॉग साफ़ करना चाहते हैं?",
+    "analytics": "एनालिटिक्स"
   },
   "analytics": {
     "timeNow": "NOW",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "कुंजी-मान विशेषताएँ",
     "filterParamsPlaceholder": "कुंजी या मान द्वारा पैरामीटर फ़िल्टर करें...",
     "noParamsRecorded": "इस इवेंट के लिए कोई कस्टम पैरामीटर रिकॉर्ड नहीं किया गया।",
-    "noParamsMatching": "\"{{search}}\" से मेल खाने वाला कोई पैरामीटर नहीं मिला"
+    "noParamsMatching": "\"{{search}}\" से मेल खाने वाला कोई पैरामीटर नहीं मिला",
+    "clearEventsTitle": "एनालिटिक्स साफ़ करें",
+    "clearEventsMsg": "क्या आप वाकई सभी एनालिटिक्स ईवेंट साफ़ करना चाहते हैं?"
   },
   "redux": {
     "searchPlaceholder": "स्टेट या एक्शन खोजें...",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "स्पष्ट स्थायी स्थिति",
     "clearPersistedMessage": "क्या आप वाकई स्लाइस \"{{slice}}\" के लिए मौजूदा स्टोरेज को हटाना चाहते हैं?",
     "clearedPersisted": "निरंतर स्थिति को साफ़ कर दिया गया है.",
-    "clearPersistedError": "निरंतर स्थिति साफ़ करने में विफल."
+    "clearPersistedError": "निरंतर स्थिति साफ़ करने में विफल.",
+    "clearTimelineTitle": "Redux समयरेखा साफ़ करें",
+    "clearTimelineMsg": "क्या आप वाकई प्रेषित क्रिया इतिहास साफ़ करना चाहते हैं?",
+    "diff": "स्थिति अंतर"
   },
   "device": {
     "title": "डिवाइस",
@@ -614,7 +649,8 @@
     "live": "लाइव",
     "ipAddress": "IP पता",
     "ramUsedTotal": "रैम (प्रयुक्त/कुल)",
-    "uptime": "सक्रिय समय"
+    "uptime": "सक्रिय समय",
+    "copiedUuid": "अद्वितीय डिवाइस आईडी (UUID) कॉपी की गई"
   },
   "storage": {
     "title": "स्टोरेज",
@@ -645,7 +681,9 @@
       "mmkv": "एमएमकेवी"
     },
     "asyncStorage": "AsyncStorage",
-    "mmkv": "एमएमकेवी"
+    "mmkv": "एमएमकेवी",
+    "keyNameEmpty": "कुंजी का नाम खाली नहीं हो सकता",
+    "saveError": "स्टोरेज कुंजी सहेजने में त्रुटि"
   },
   "footer": {
     "endOfList": "आप सूची के अंत तक पहुँच गए हैं",
@@ -1256,7 +1294,10 @@
     "filterApply": "लागू करें ({{count}} क्रैश)",
     "frameCopy": "प्रतिलिपि",
     "frameCopied": "नकल की गई",
-    "componentHierarchy": "घटक पदानुक्रम"
+    "componentHierarchy": "घटक पदानुक्रम",
+    "breadcrumbTrail": "इवेंट लॉग और ब्रेडक्रम्ब",
+    "deviceDiagnostics": "क्रैश के समय डिवाइस निदान",
+    "openInInspector": "निरीक्षक में खोलें"
   },
   "push": {
     "foreground": "अग्रभूमि",
@@ -1287,7 +1328,9 @@
     "sound": "ध्वनि:",
     "badgeCount": "बैज गणना:",
     "collapseKey": "संक्षिप्त कुंजी:",
-    "noCustomData": "पेलोड में कोई कस्टम कुंजी-मान डेटा नहीं मिला"
+    "noCustomData": "पेलोड में कोई कस्टम कुंजी-मान डेटा नहीं मिला",
+    "noMatching": "कोई मेल खाने वाली पुश सूचनाएँ नहीं",
+    "adjustSearchFilter": "अपनी खोज या फ़िल्टर चिप्स को समायोजित करने का प्रयास करें।"
   },
   "about": {
     "title": "परिचय और विनिर्देश",
@@ -1412,7 +1455,42 @@
     "speed": "गति",
     "loop": "पाश",
     "pause": "विराम",
-    "play": "खेलो"
+    "play": "खेलो",
+    "hideGridlines": "इंस्टाग्राम ग्रिड छिपाएं (3×3)",
+    "showGridlines": "इंस्टाग्राम ग्रिड दिखाएं (3×3)",
+    "hideWatermark": "QA वॉटरमार्क छिपाएं",
+    "showWatermark": "QA वॉटरमार्क दिखाएं",
+    "exportGif": "एनिमेटेड GIF के रूप में निर्यात करें",
+    "snapshotFrame": "फ्रेम स्नैपशॉट (PNG)",
+    "tapToPlaceStep": "चरण बैज लगाने के लिए छवि पर टैप या खींचें",
+    "resetAdjustments": "समायोजन रीसेट हो गया",
+    "tagPlaced": "टैग रखा गया",
+    "tapToAddText": "टेक्स्ट जोड़ने के लिए छवि पर कहीं भी टैप करें",
+    "textAdded": "टेक्स्ट ओवरले जोड़ा गया",
+    "redone": "फिर से किया गया",
+    "undone": "पूर्ववत किया गया",
+    "videoSaved": "संपादित वीडियो गैलरी में सहेजा गया",
+    "savedSuccess": "सफलतापूर्वक सहेजा गया",
+    "saveFailed": "मीडिया सहेजने में विफल",
+    "snapshotSaved": "स्नैपशॉट फ्रेम गैलरी में सहेजा गया",
+    "snapshotFailed": "फ्रेम स्नैपशॉट लेने में विफल",
+    "shareSuccess": "मीडिया सफलतापूर्वक साझा किया गया",
+    "cropFailed": "मीडिया क्रॉप करने में विफल",
+    "croppedSuccess": "मीडिया सफलतापूर्वक क्रॉप किया गया",
+    "resizeFailed": "मीडिया का आकार बदलने में विफल",
+    "resizedSuccess": "मीडिया का आकार सफलतापूर्वक बदला गया",
+    "trimFailed": "वीडियो काटने में विफल",
+    "trimmedSuccess": "वीडियो सफलतापूर्वक काटा गया",
+    "muteFailed": "वीडियो ऑडियो अपडेट करने में विफल",
+    "mutedSuccess": "ऑडियो सफलतापूर्वक संशोधित किया गया",
+    "resetSuccess": "छवि मूल स्थिति में रीसेट हो गई",
+    "openCameraRoll": "कैमरा रोल खोलें",
+    "importPhotos": "लाइब्रेरी से तस्वीरें आयात करें",
+    "importVideos": "लाइब्रेरी से वीडियो आयात करें",
+    "importedPhoto": "कैमरा रोल से तस्वीर आयात की गई",
+    "importedVideo": "कैमरा रोल से वीडियो आयात किया गया",
+    "importFailed": "मीडिया आयात करने में विफल",
+    "preview": "पूर्वावलोकन"
   },
   "socket": {
     "title": "वेबसॉकेट",
@@ -1486,6 +1564,48 @@
     "trim5s": "5 सेकंड काटें",
     "muteAudio": "ऑडियो म्यूट करें",
     "toGif": "GIF में बदलें",
-    "play": "चलाएं"
+    "play": "चलाएं",
+    "trim": "काटें",
+    "audio": "ऑडियो",
+    "speed": "गति",
+    "snapshot": "स्नैपशॉट"
+  },
+  "language": {
+    "confirmTitle": "भाषा बदलें?",
+    "confirmMessage": "क्या आप निरीक्षक की भाषा को {{newLang}} पर स्विच करना चाहते हैं?",
+    "confirmApply": "भाषा लागू करें",
+    "current": "वर्तमान",
+    "new": "नया"
+  },
+  "support": {
+    "title": "समर्थन और समुदाय",
+    "subtitle": "React Native इन-ऐप इंस्पेक्टर",
+    "heroDescription": "दुनिया भर की मोबाइल टीमों के लिए ऑन-डिवाइस डिबगिंग सुइट प्रदान करने के लिए उत्साह के साथ तैयार किया गया। आपका प्रायोजन, स्टार और प्रतिक्रिया निरंतर सुधार को प्रेरित करते हैं।",
+    "sponsor": "GitHub पर प्रायोजित करें",
+    "sponsorBadge": "प्रायोजक",
+    "sponsorDesc": "निरंतर रखरखाव, नई सुविधाओं और रिलीज सुधारों का समर्थन करें।",
+    "sponsorBtn": "प्रायोजक बनें",
+    "copiedSponsor": "GitHub प्रायोजक लिंक कॉपी किया गया!",
+    "star": "GitHub पर स्टार दें",
+    "starDesc": "अधिक डेवलपर्स तक इस टूल को पहुंचाने के लिए रेपो को स्टार दें।",
+    "issues": "समस्या की रिपोर्ट करें / सुझाव",
+    "issuesDesc": "कोई बग मिला या कोई विचार है? GitHub पर एक समस्या दर्ज करें।",
+    "docs": "आधिकारिक दस्तावेज",
+    "docsDesc": "इंटरएक्टिव फीचर टूर, सर्च सिंटैक्स और कॉन्फ़िगरेशन गाइड।",
+    "contact": "लेखक से संपर्क करें",
+    "contactDesc": "vengatmacuser@gmail.com • प्रत्यक्ष समर्थन और उद्यम पूछताछ।",
+    "waysToSupport": "योगदान और समर्थन के तरीके",
+    "npmRegistry": "NPM पैकेज रजिस्ट्री",
+    "npmRegistryDesc": "रिलीज़ नोट्स, टारबॉल आकार और इंस्टॉल आँकड़े देखें।",
+    "shareTitle": "दूसरों के साथ साझा करें",
+    "shareDesc": "अपनी टीम के साथियों और QA विशेषज्ञों को नेटवर्क, कंसोल लॉग और Redux को तेज़ी से डिबग करने में मदद करें।",
+    "shareWithTeam": "साथियों के साथ साझा करें",
+    "copiedRepo": "रिपॉजिटरी लिंक कॉपी किया गया!",
+    "copyRepo": "रेपो URL कॉपी करें",
+    "maintainer": "परियोजना अनुरक्षक",
+    "sendEmail": "ईमेल भेजें",
+    "copiedEmail": "ईमेल पता कॉपी किया गया!",
+    "copyEmail": "ईमेल कॉपी करें",
+    "close": "बंद करें"
   }
 }

@@ -57,7 +57,16 @@
     "version": "バージョン",
     "update": "更新",
     "unknown": "不明",
-    "share": "シェアする"
+    "share": "シェアする",
+    "all": "すべて",
+    "dragToHide": "ドラッグして非表示",
+    "releaseToHide": "離してインスペクターを非表示",
+    "expand": "展開",
+    "undo": "元に戻す",
+    "inActiveDevelopment": "アクティブ開発中",
+    "inspectorDismissed": "インスペクターを閉じました",
+    "noMatches": "一致する結果がありません",
+    "moreFilters": "詳細フィルター"
   },
   "header": {
     "rec": "REC",
@@ -86,7 +95,16 @@
     "paramCount_plural": "{{count}} パラメータ",
     "firebase": "ファイアベース",
     "manual": "マニュアル",
-    "sliceBadge": "スライス"
+    "sliceBadge": "スライス",
+    "recordScreen": "画面録画",
+    "newVersionAvailable": "アップデート利用可能",
+    "updateAvailable": "react-native-inapp-inspector アップデート v{{latestVersion}} の準備ができました",
+    "updateAvailableSubtitle": "新しいバージョンの react-native-inapp-inspector をインストールできます",
+    "upgradeCommand": "アップグレードコマンド",
+    "copyCommand": "コピー",
+    "viewNpm": "表示",
+    "screenshot": "スクリーンショット",
+    "videoCapture": "録画"
   },
   "tabs": {
     "apis": "API",
@@ -277,7 +295,9 @@
       "storageStatusDisabledDesc": "アプリを終了すると設定がリセットされます。 Android 上で永続化するには、カスタム ストレージを <NetworkInspector storage={...} /> に渡します。",
       "language": "言語",
       "languageDescription": "インターフェースの表示言語を選択する",
-      "selectLanguage": "言語の選択"
+      "selectLanguage": "言語の選択",
+      "peekOpacity": "透過モードの不透明度",
+      "peekOpacityDescription": "目のアイコンが有効なときの透明度"
     },
     "memory": {
       "manualTitle": "手動メモリクリーンアップ",
@@ -294,7 +314,10 @@
       "socketio": "シミュレートされた Socket.IO v4 セッション",
       "echo": "模擬 WebSocket Echo テスト",
       "screenshotSaved": "スクリーンショットをキャプチャして保存しました。"
-    }
+    },
+    "simulatePushTitle": "テストプッシュ通知のシミュレーション",
+    "simulateSocketTitle": "テストソケット接続のシミュレーション",
+    "directCaptureShortcuts": "ダイレクトキャプチャショートカット"
   },
   "network": {
     "urlHeader": "URL",
@@ -307,7 +330,8 @@
       "emptyTable": "空のオブジェクト",
       "value": "値",
       "keyProperty": "キー / プロパティ",
-      "noMatchingKeys": "一致するキーまたは値が見つかりません"
+      "noMatchingKeys": "一致するキーまたは値が見つかりません",
+      "emptyPayload": "ペイロードデータがありません"
     },
     "showingRequests": "{{count}} 件のリクエストを表示",
     "showingFilteredRequests": "{{total}} 件中 {{filtered}} 件のリクエストを表示",
@@ -391,7 +415,10 @@
       "moderate": "中程度 (200 ～ 800 ミリ秒)",
       "slow": "遅い (> 800ms)"
     },
-    "status200": "200 OK"
+    "status200": "200 OK",
+    "clearLogsTitle": "ネットワークログを消去",
+    "clearLogsMsg": "すべてのネットワークログを消去してもよろしいですか？",
+    "moreFilters": "詳細フィルター"
   },
   "console": {
     "filterAll": "All",
@@ -449,7 +476,10 @@
     "fullStackTrace": "フルスタックトレース",
     "lineCol": "行 {{line}}、列 {{col}}",
     "lineColShort": "L{{line}}:C{{col}}",
-    "searchInLogDetails": "ログの詳細を検索..."
+    "searchInLogDetails": "ログの詳細を検索...",
+    "clearLogsTitle": "コンソールログを消去",
+    "clearLogsMsg": "すべてのコンソールログを消去してもよろしいですか？",
+    "analytics": "アナリティクス"
   },
   "analytics": {
     "timeNow": "NOW",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "キーと値の属性",
     "filterParamsPlaceholder": "キーまたは値でパラメータをフィルタ...",
     "noParamsRecorded": "このイベントのカスタムパラメータはありません。",
-    "noParamsMatching": "「{{search}}」に一致するパラメータはありません"
+    "noParamsMatching": "「{{search}}」に一致するパラメータはありません",
+    "clearEventsTitle": "アナリティクスを消去",
+    "clearEventsMsg": "すべてのアナリティクスイベントを消去してもよろしいですか？"
   },
   "redux": {
     "searchPlaceholder": "StateまたはActionを検索...",
@@ -587,7 +619,10 @@
     "triggeredFrom": "トリガー元:",
     "openInEditor": "エディタで開く",
     "callStack": "コールスタックトレース",
-    "sliceOrigin": "スライス/原点"
+    "sliceOrigin": "スライス/原点",
+    "clearTimelineTitle": "Reduxタイムラインを消去",
+    "clearTimelineMsg": "ディスパッチされたアクション履歴を消去してもよろしいですか？",
+    "diff": "ステート差分"
   },
   "device": {
     "title": "端末情報",
@@ -614,7 +649,8 @@
     "live": "ライブ",
     "ipAddress": "IPアドレス",
     "ramUsedTotal": "メモリ (使用中/合計)",
-    "uptime": "稼働時間"
+    "uptime": "稼働時間",
+    "copiedUuid": "一意のデバイスID (UUID) をコピーしました"
   },
   "storage": {
     "title": "ストレージ",
@@ -645,7 +681,9 @@
       "mmkv": "MMKV"
     },
     "asyncStorage": "非同期ストレージ",
-    "mmkv": "MMKV"
+    "mmkv": "MMKV",
+    "keyNameEmpty": "キー名は空にできません",
+    "saveError": "ストレージキーの保存中にエラーが発生しました"
   },
   "footer": {
     "endOfList": "リストの末尾に到達しました",
@@ -1256,7 +1294,10 @@
     "filterApply": "適用 ({{count}} がクラッシュ)",
     "frameCopy": "コピー",
     "frameCopied": "コピーされました",
-    "componentHierarchy": "コンポーネント階層"
+    "componentHierarchy": "コンポーネント階層",
+    "breadcrumbTrail": "ブレッドクラムとイベントログ",
+    "deviceDiagnostics": "クラッシュ時のデバイス診断",
+    "openInInspector": "インスペクターで開く"
   },
   "socket": {
     "showingConnections": "{{count}} 件の接続を表示",
@@ -1334,7 +1375,9 @@
     "sound": "通知音:",
     "badgeCount": "バッジ数:",
     "collapseKey": "コラプスキー:",
-    "noCustomData": "ペイロードにカスタムキー値データはありません"
+    "noCustomData": "ペイロードにカスタムキー値データはありません",
+    "noMatching": "一致するプッシュ通知がありません",
+    "adjustSearchFilter": "検索クエリまたはフィルターチップを調整してみてください。"
   },
   "about": {
     "title": "概要と仕様",
@@ -1459,7 +1502,42 @@
     "speed": "速度",
     "loop": "ループ",
     "pause": "一時停止",
-    "play": "遊ぶ"
+    "play": "遊ぶ",
+    "hideGridlines": "Instagramグリッドを非表示 (3×3)",
+    "showGridlines": "Instagramグリッドを表示 (3×3)",
+    "hideWatermark": "QAウォーターマークを非表示",
+    "showWatermark": "QAウォーターマークを表示",
+    "exportGif": "アニメーションGIFとして書き出し",
+    "snapshotFrame": "フレームをスナップショット (PNG)",
+    "tapToPlaceStep": "画像をタップまたはドラッグしてステップバッジを配置",
+    "resetAdjustments": "調整をリセットしました",
+    "tagPlaced": "タグを配置しました",
+    "tapToAddText": "画像の任意の場所をタップしてテキストを追加",
+    "textAdded": "テキストを追加しました",
+    "redone": "やり直しました",
+    "undone": "元に戻しました",
+    "videoSaved": "編集した動画をギャラリーに保存しました",
+    "savedSuccess": "正常に保存されました",
+    "saveFailed": "メディアの保存に失敗しました",
+    "snapshotSaved": "スナップショットフレームをギャラリーに保存しました",
+    "snapshotFailed": "フレームのスナップショットキャプチャに失敗しました",
+    "shareSuccess": "メディアを正常に共有しました",
+    "cropFailed": "メディアのトリミングに失敗しました",
+    "croppedSuccess": "メディアを正常にトリミングしました",
+    "resizeFailed": "サイズ変更に失敗しました",
+    "resizedSuccess": "サイズ変更に成功しました",
+    "trimFailed": "動画のトリミングに失敗しました",
+    "trimmedSuccess": "動画をトリミングしました",
+    "muteFailed": "音声の更新に失敗しました",
+    "mutedSuccess": "音声を変更しました",
+    "resetSuccess": "画像を元に戻しました",
+    "openCameraRoll": "カメラロールを開く",
+    "importPhotos": "写真ライブラリから写真をインポート",
+    "importVideos": "写真ライブラリから動画をインポート",
+    "importedPhoto": "カメラロールから写真をインポートしました",
+    "importedVideo": "カメラロールから動画をインポートしました",
+    "importFailed": "メディアのインポートに失敗しました",
+    "preview": "プレビュー"
   },
   "debugging": {
     "title": "デバッグとツール",
@@ -1486,6 +1564,48 @@
     "trim5s": "5秒トリミング",
     "muteAudio": "音声をミュート",
     "toGif": "GIFに変換",
-    "play": "再生"
+    "play": "再生",
+    "trim": "トリミング",
+    "audio": "音声",
+    "speed": "再生速度",
+    "snapshot": "スナップショット"
+  },
+  "language": {
+    "confirmTitle": "言語を変更しますか？",
+    "confirmMessage": "インスペクターの言語を {{newLang}} に切り替えますか？",
+    "confirmApply": "言語を適用",
+    "current": "現在",
+    "new": "新規"
+  },
+  "support": {
+    "title": "サポート＆コミュニティ",
+    "subtitle": "React Native アプリ内インスペクター",
+    "heroDescription": "世界中のモバイルチーム向けに、包括的なオンデバイスデバッグスイートを提供するために情熱を込めて作成されました。スポンサーシップ、スター、フィードバックが継続的な改善の原動力となります。",
+    "sponsor": "GitHubでスポンサーになる",
+    "sponsorBadge": "スポンサー",
+    "sponsorDesc": "継続的なメンテナンス、新機能、リリースの改善をサポート。",
+    "sponsorBtn": "スポンサーになる",
+    "copiedSponsor": "GitHubスポンサーのリンクをコピーしました！",
+    "star": "GitHubでスターをつける",
+    "starDesc": "リポジトリにスターを付けて、より多くの開発者にこのツールを知らせましょう。",
+    "issues": "問題を報告 / 提案",
+    "issuesDesc": "バグを見つけた、またはアイデアがありますか？GitHubでIssueを作成してください。",
+    "docs": "公式ドキュメント",
+    "docsDesc": "機能ツアー、検索構文、設定ガイド。",
+    "contact": "作者に連絡",
+    "contactDesc": "vengatmacuser@gmail.com • 直接サポート＆企業向けのお問い合わせ。",
+    "waysToSupport": "貢献とサポートの方法",
+    "npmRegistry": "NPMパッケージレジストリ",
+    "npmRegistryDesc": "リリースノート、パッケージサイズ、インストール統計を確認。",
+    "shareTitle": "友達や同僚に教える",
+    "shareDesc": "チームメイトやQA担当者がネットワーク、コンソールログ、Reduxをより迅速にデバッグできるように支援します。",
+    "shareWithTeam": "チームと共有",
+    "copiedRepo": "リポジトリのリンクをコピーしました！",
+    "copyRepo": "リポジトリURLをコピー",
+    "maintainer": "プロジェクトメンテナー",
+    "sendEmail": "メールを送信",
+    "copiedEmail": "メールアドレスをコピーしました！",
+    "copyEmail": "メールをコピー",
+    "close": "閉じる"
   }
 }

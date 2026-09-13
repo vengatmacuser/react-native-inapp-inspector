@@ -2,6 +2,7 @@
 #import <execinfo.h>
 #import <signal.h>
 #import <objc/runtime.h>
+#import <objc/message.h>
 #import <unistd.h>
 #import <ReplayKit/ReplayKit.h>
 #import <AVFoundation/AVFoundation.h>
@@ -480,6 +481,144 @@ static void NativeExceptionHandler(NSException *exception) {
 }
 
 @end
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NATIVE CAMERA ROLL / PHOTO & VIDEO PICKER DELEGATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+@interface InAppInspectorPickerDelegate : NSObject <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@property (nonatomic, copy) RCTPromiseResolveBlock resolve;
+@property (nonatomic, copy) RCTPromiseRejectBlock reject;
+@property (nonatomic, copy) NSString *capturesDirectory;
+@end
+
+@implementation InAppInspectorPickerDelegate
+
+- (void)picker:(id)picker didFinishPicking:(NSArray *)results {
+    [picker dismissViewControllerAnimated:YES completion:nil];
+    if (results.count == 0) {
+        if (self.resolve) self.resolve([NSNull null]);
+        return;
+    }
+    
+    id result = results.firstObject;
+    NSItemProvider *provider = [result valueForKey:@"itemProvider"];
+    long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+    NSString *randomStr = [NSString stringWithFormat:@"%04d", arc4random_uniform(10000)];
+    
+    if ([provider hasItemConformingToTypeIdentifier:@"public.movie"]) {
+        [provider loadFileRepresentationForTypeIdentifier:@"public.movie" completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
+            if (error || !url) {
+                if (self.resolve) self.resolve([NSNull null]);
+                return;
+            }
+            NSString *ext = [url.pathExtension lowercaseString];
+            if (ext.length == 0) ext = @"mp4";
+            NSString *filename = [NSString stringWithFormat:@"rn_iai_%lld_imported_%@.%@", timestamp, randomStr, ext];
+            NSString *destPath = [self.capturesDirectory stringByAppendingPathComponent:filename];
+            
+            [[NSFileManager defaultManager] removeItemAtPath:destPath error:nil];
+            [[NSFileManager defaultManager] copyItemAtURL:url toURL:[NSURL fileURLWithPath:destPath] error:nil];
+            
+            NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:destPath error:nil];
+            long long sizeBytes = [attrs fileSize];
+            
+            NSMutableDictionary *map = [NSMutableDictionary dictionaryWithDictionary:@{
+                @"id": filename,
+                @"type": @"video",
+                @"format": ext,
+                @"uri": [NSURL fileURLWithPath:destPath].absoluteString,
+                @"filename": filename,
+                @"sizeBytes": @(sizeBytes),
+                @"timestamp": @(timestamp)
+            }];
+            
+            @try {
+                AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:[NSURL fileURLWithPath:destPath] options:nil];
+                AVAssetImageGenerator *gen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
+                gen.appliesPreferredTrackTransform = YES;
+                CGImageRef cgImage = [gen copyCGImageAtTime:kCMTimeZero actualTime:NULL error:nil];
+                if (cgImage) {
+                    UIImage *thumbImg = [UIImage imageWithCGImage:cgImage];
+                    CGImageRelease(cgImage);
+                    NSData *thumbData = UIImageJPEGRepresentation(thumbImg, 0.8);
+                    NSString *thumbFile = [NSString stringWithFormat:@"rn_iai_%lld_imported_%@_thumb.jpg", timestamp, randomStr];
+                    NSString *thumbPath = [self.capturesDirectory stringByAppendingPathComponent:thumbFile];
+                    [thumbData writeToFile:thumbPath atomically:YES];
+                    map[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbPath].absoluteString;
+                }
+            } @catch (id ex) {}
+            
+            if (self.resolve) self.resolve(map);
+        }];
+    } else {
+        [provider loadFileRepresentationForTypeIdentifier:@"public.image" completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
+            if (url) {
+                NSString *ext = [url.pathExtension lowercaseString];
+                if (ext.length == 0) ext = @"jpg";
+                NSString *type = [ext isEqualToString:@"gif"] ? @"gif" : @"image";
+                NSString *filename = [NSString stringWithFormat:@"rn_iai_%lld_imported_%@.%@", timestamp, randomStr, ext];
+                NSString *destPath = [self.capturesDirectory stringByAppendingPathComponent:filename];
+                
+                [[NSFileManager defaultManager] removeItemAtPath:destPath error:nil];
+                [[NSFileManager defaultManager] copyItemAtURL:url toURL:[NSURL fileURLWithPath:destPath] error:nil];
+                NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:destPath error:nil];
+                long long sizeBytes = [attrs fileSize];
+                
+                NSDictionary *map = @{
+                    @"id": filename,
+                    @"type": type,
+                    @"format": ext,
+                    @"uri": [NSURL fileURLWithPath:destPath].absoluteString,
+                    @"filename": filename,
+                    @"sizeBytes": @(sizeBytes),
+                    @"timestamp": @(timestamp)
+                };
+                if (self.resolve) self.resolve(map);
+            } else {
+                [provider loadObjectOfClass:[UIImage class] completionHandler:^(id<NSItemProviderReading>  _Nullable object, NSError * _Nullable err) {
+                    if ([object isKindOfClass:[UIImage class]]) {
+                        UIImage *img = (UIImage *)object;
+                        NSData *data = UIImageJPEGRepresentation(img, 0.95);
+                        NSString *filename = [NSString stringWithFormat:@"rn_iai_%lld_imported_%@.jpg", timestamp, randomStr];
+                        NSString *destPath = [self.capturesDirectory stringByAppendingPathComponent:filename];
+                        [data writeToFile:destPath atomically:YES];
+                        
+                        NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:destPath error:nil];
+                        long long sizeBytes = [attrs fileSize];
+                        
+                        NSDictionary *map = @{
+                            @"id": filename,
+                            @"type": @"image",
+                            @"format": @"jpg",
+                            @"uri": [NSURL fileURLWithPath:destPath].absoluteString,
+                            @"filename": filename,
+                            @"sizeBytes": @(sizeBytes),
+                            @"timestamp": @(timestamp)
+                        };
+                        if (self.resolve) self.resolve(map);
+                    } else {
+                        if (self.resolve) self.resolve([NSNull null]);
+                    }
+                }];
+            }
+        }];
+    }
+}
+
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info {
+    [picker dismissViewControllerAnimated:YES completion:nil];
+    if (self.resolve) self.resolve([NSNull null]);
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:nil];
+    if (self.resolve) self.resolve([NSNull null]);
+}
+
+@end
+
+static InAppInspectorPickerDelegate *g_pickerDelegate = nil;
 
 @implementation NetworkInspectorModule {
     bool hasListeners;
@@ -1116,6 +1255,21 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
     return capturesDir;
 }
 
+/**
+ * Generates a filename in the format: rn_iai_{YYYYMMDD_HHmmss_SSS}_{fileType}_{random6}.{ext}
+ */
+- (NSString *)generateCaptureFilename:(NSString *)fileType ext:(NSString *)ext {
+    NSDateFormatter *df = [[NSDateFormatter alloc] init];
+    [df setDateFormat:@"yyyyMMdd_HHmmss_SSS"];
+    NSString *dateStamp = [df stringFromDate:[NSDate date]];
+    NSString *chars = @"abcdefghijklmnopqrstuvwxyz0123456789";
+    NSMutableString *random = [NSMutableString stringWithCapacity:6];
+    for (int i = 0; i < 6; i++) {
+        [random appendFormat:@"%C", [chars characterAtIndex:arc4random_uniform((uint32_t)chars.length)]];
+    }
+    return [NSString stringWithFormat:@"rn_iai_%@_%@_%@.%@", dateStamp, fileType, random, ext];
+}
+
 - (UIWindow *)findActiveKeyWindow {
     UIWindow *foundWindow = nil;
     if (@available(iOS 13.0, *)) {
@@ -1283,7 +1437,7 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
         CGSize videoSize = CGSizeMake(width, height);
         long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
         self->_softwareRecordingTimestamp = timestamp;
-        NSString *filename = [NSString stringWithFormat:@"video_%lld.mp4", timestamp];
+        NSString *filename = [self generateCaptureFilename:@"video" ext:@"mp4"];
         NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
         NSURL *outputUrl = [NSURL fileURLWithPath:filePath];
 
@@ -1352,7 +1506,8 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
         if (firstImg) {
             NSData *thumbData = UIImageJPEGRepresentation(firstImg, 0.8);
             if (thumbData) {
-                NSString *thumbFilename = [NSString stringWithFormat:@"thumb_%lld.jpg", timestamp];
+                NSString *thumbBaseName = [[filename stringByDeletingPathExtension] stringByReplacingOccurrencesOfString:@"_video_" withString:@"_thumb_"];
+                NSString *thumbFilename = [NSString stringWithFormat:@"%@.jpg", thumbBaseName];
                 NSString *thumbFilePath = [[self getCapturesDirectory] stringByAppendingPathComponent:thumbFilename];
                 [thumbData writeToFile:thumbFilePath atomically:YES];
                 self->_softwareRecordingThumbnailPath = thumbFilePath;
@@ -1473,7 +1628,7 @@ RCT_EXPORT_METHOD(takeScreenshot:(NSDictionary *)options
             }
 
             long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
-            NSString *filename = [NSString stringWithFormat:@"screenshot_%lld.%@", timestamp, ext];
+            NSString *filename = [self generateCaptureFilename:@"screenshot" ext:ext];
             NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
 
             [data writeToFile:filePath atomically:YES];
@@ -1571,7 +1726,7 @@ RCT_EXPORT_METHOD(stopVideoRecording:(RCTPromiseResolveBlock)resolve
                     CGImageRelease(imgRef);
                     NSData *tData = UIImageJPEGRepresentation(thumbImg, 0.85);
                     if (tData) {
-                        NSString *generatedThumbFile = [NSString stringWithFormat:@"thumb_%lld.jpg", timestamp];
+                        NSString *generatedThumbFile = [self generateCaptureFilename:@"thumb" ext:@"jpg"];
                         NSString *generatedThumbPath = [[self getCapturesDirectory] stringByAppendingPathComponent:generatedThumbFile];
                         [tData writeToFile:generatedThumbPath atomically:YES];
                         result[@"thumbnailUri"] = [NSURL fileURLWithPath:generatedThumbPath].absoluteString;
@@ -1666,7 +1821,7 @@ RCT_EXPORT_METHOD(convertToGif:(NSString *)videoUri
             [reader startReading];
 
             long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
-            NSString *filename = [NSString stringWithFormat:@"anim_%lld.gif", timestamp];
+            NSString *filename = [self generateCaptureFilename:@"anim" ext:@"gif"];
             NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
             NSURL *gifUrl = [NSURL fileURLWithPath:filePath];
 
@@ -1755,7 +1910,7 @@ RCT_EXPORT_METHOD(getCapturedMedia:(RCTPromiseResolveBlock)resolve
 
         for (NSString *file in (files ?: @[])) {
             // Skip standalone thumbnail files
-            if ([file hasPrefix:@"thumb_"]) continue;
+            if ([file hasPrefix:@"thumb_"] || [file containsString:@"_thumb_"]) continue;
 
             NSString *fullPath = [dir stringByAppendingPathComponent:file];
             NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:fullPath error:nil];
@@ -1784,11 +1939,17 @@ RCT_EXPORT_METHOD(getCapturedMedia:(RCTPromiseResolveBlock)resolve
             }];
 
             if ([type isEqualToString:@"video"]) {
-                // Check if matching thumbnail exists
+                // Try new naming convention: replace _video_ with _thumb_ in base name
                 NSString *nameWithoutExt = [file stringByDeletingPathExtension];
-                NSString *timestampSuffix = [nameWithoutExt stringByReplacingOccurrencesOfString:@"video_" withString:@""];
-                NSString *thumbFile = [NSString stringWithFormat:@"thumb_%@.jpg", timestampSuffix];
+                NSString *thumbBaseName = [nameWithoutExt stringByReplacingOccurrencesOfString:@"_video_" withString:@"_thumb_"];
+                NSString *thumbFile = [NSString stringWithFormat:@"%@.jpg", thumbBaseName];
                 NSString *thumbFullPath = [dir stringByAppendingPathComponent:thumbFile];
+                // Fallback: legacy naming convention (thumb_{timestamp}.jpg)
+                if (![[NSFileManager defaultManager] fileExistsAtPath:thumbFullPath]) {
+                    NSString *timestampSuffix = [nameWithoutExt stringByReplacingOccurrencesOfString:@"video_" withString:@""];
+                    thumbFile = [NSString stringWithFormat:@"thumb_%@.jpg", timestampSuffix];
+                    thumbFullPath = [dir stringByAppendingPathComponent:thumbFile];
+                }
                 if ([[NSFileManager defaultManager] fileExistsAtPath:thumbFullPath]) {
                     item[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbFullPath].absoluteString;
                 } else {
@@ -1841,13 +2002,21 @@ RCT_EXPORT_METHOD(deleteCapturedMedia:(NSString *)uri
 
                 // Also remove any related thumbnail
                 NSString *filename = [path lastPathComponent];
-                if ([filename hasPrefix:@"video_"]) {
+                if ([filename containsString:@"_video_"] || [filename hasPrefix:@"video_"]) {
                     NSString *nameWithoutExt = [filename stringByDeletingPathExtension];
-                    NSString *timestampSuffix = [nameWithoutExt stringByReplacingOccurrencesOfString:@"video_" withString:@""];
-                    NSString *thumbFile = [NSString stringWithFormat:@"thumb_%@.jpg", timestampSuffix];
+                    // Try new convention: replace _video_ with _thumb_
+                    NSString *thumbBaseName = [nameWithoutExt stringByReplacingOccurrencesOfString:@"_video_" withString:@"_thumb_"];
+                    NSString *thumbFile = [NSString stringWithFormat:@"%@.jpg", thumbBaseName];
                     NSString *thumbPath = [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent:thumbFile];
                     if ([[NSFileManager defaultManager] fileExistsAtPath:thumbPath]) {
                         [[NSFileManager defaultManager] removeItemAtPath:thumbPath error:nil];
+                    }
+                    // Fallback: legacy convention
+                    NSString *timestampSuffix = [nameWithoutExt stringByReplacingOccurrencesOfString:@"video_" withString:@""];
+                    NSString *legacyThumbFile = [NSString stringWithFormat:@"thumb_%@.jpg", timestampSuffix];
+                    NSString *legacyThumbPath = [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent:legacyThumbFile];
+                    if ([[NSFileManager defaultManager] fileExistsAtPath:legacyThumbPath]) {
+                        [[NSFileManager defaultManager] removeItemAtPath:legacyThumbPath error:nil];
                     }
                 }
 
@@ -1920,241 +2089,241 @@ RCT_EXPORT_METHOD(editPhoto:(NSDictionary *)options
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        @try {
-            NSString *rawUri = options[@"uri"];
-            if (!rawUri || rawUri.length == 0) {
-                reject(@"INVALID_URI", @"Image URI is missing or empty", nil);
-                return;
-            }
-
-            NSString *cleanPath = rawUri;
-            if ([cleanPath hasPrefix:@"file://"]) {
-                cleanPath = [cleanPath substringFromIndex:7];
-            }
-            cleanPath = [cleanPath stringByRemovingPercentEncoding];
-
-            UIImage *sourceImage = [UIImage imageWithContentsOfFile:cleanPath];
-            if (!sourceImage) {
-                reject(@"IMAGE_LOAD_FAILED", @"Failed to load source image", nil);
-                return;
-            }
-
-            // 1. Convert to CIImage
-            CIImage *ciImage = [CIImage imageWithCGImage:sourceImage.CGImage];
-            if (!ciImage) {
-                ciImage = [CIImage imageWithContentsOfURL:[NSURL fileURLWithPath:cleanPath]];
-            }
-            if (!ciImage) {
-                reject(@"CIIMAGE_FAILED", @"Failed to initialize CoreImage pipeline", nil);
-                return;
-            }
-
-            // 2. Apply Rotation & Flip
-            NSInteger rotation = [options[@"rotation"] integerValue];
-            BOOL flipH = [options[@"flipHorizontal"] boolValue];
-            BOOL flipV = [options[@"flipVertical"] boolValue];
-
-            CGAffineTransform transform = CGAffineTransformIdentity;
-            if (rotation == 90) {
-                transform = CGAffineTransformRotate(transform, -M_PI_2);
-            } else if (rotation == 180) {
-                transform = CGAffineTransformRotate(transform, M_PI);
-            } else if (rotation == 270) {
-                transform = CGAffineTransformRotate(transform, M_PI_2);
-            }
-            if (flipH) {
-                transform = CGAffineTransformScale(transform, -1, 1);
-            }
-            if (flipV) {
-                transform = CGAffineTransformScale(transform, 1, -1);
-            }
-            if (!CGAffineTransformIsIdentity(transform)) {
-                ciImage = [ciImage imageByApplyingTransform:transform];
-                CGRect newExtent = ciImage.extent;
-                CGAffineTransform fixOrigin = CGAffineTransformMakeTranslation(-newExtent.origin.x, -newExtent.origin.y);
-                ciImage = [ciImage imageByApplyingTransform:fixOrigin];
-            }
-
-            // 3. Apply Crop
-            NSDictionary *cropDict = options[@"crop"];
-            if (cropDict && [cropDict isKindOfClass:[NSDictionary class]]) {
-                CGFloat x = [cropDict[@"x"] doubleValue];
-                CGFloat y = [cropDict[@"y"] doubleValue];
-                CGFloat width = [cropDict[@"width"] doubleValue];
-                CGFloat height = [cropDict[@"height"] doubleValue];
-                BOOL isNorm = [cropDict[@"isNormalized"] boolValue];
-
-                CGRect extent = ciImage.extent;
-                if (isNorm) {
-                    x *= extent.size.width;
-                    y *= extent.size.height;
-                    width *= extent.size.width;
-                    height *= extent.size.height;
-                }
-                // CoreImage coordinate system (bottom-left origin)
-                CGFloat ciY = extent.size.height - (y + height);
-                CGRect cropRect = CGRectMake(x, ciY, width, height);
-                CGRect intersection = CGRectIntersection(extent, cropRect);
-                if (!CGRectIsNull(intersection) && intersection.size.width > 0 && intersection.size.height > 0) {
-                    ciImage = [ciImage imageByCroppingToRect:intersection];
-                }
-            }
-
-            // 4. Color Grading Adjustments (CIColorControls, CITemperatureAndTint, CIVignette)
-            NSDictionary *adjustments = options[@"adjustments"];
-            if (adjustments && [adjustments isKindOfClass:[NSDictionary class]]) {
-                NSNumber *brightness = adjustments[@"brightness"];
-                NSNumber *contrast = adjustments[@"contrast"];
-                NSNumber *saturation = adjustments[@"saturation"];
-
-                if (brightness || contrast || saturation) {
-                    CIFilter *colorControls = [CIFilter filterWithName:@"CIColorControls"];
-                    [colorControls setValue:ciImage forKey:kCIInputImageKey];
-                    if (brightness) [colorControls setValue:brightness forKey:kCIInputBrightnessKey];
-                    if (contrast) [colorControls setValue:contrast forKey:kCIInputContrastKey];
-                    if (saturation) [colorControls setValue:saturation forKey:kCIInputSaturationKey];
-                    ciImage = colorControls.outputImage ?: ciImage;
+        @autoreleasepool {
+            @try {
+                NSString *rawUri = options[@"uri"];
+                if (!rawUri || rawUri.length == 0) {
+                    reject(@"INVALID_URI", @"Image URI is missing or empty", nil);
+                    return;
                 }
 
-                NSNumber *temperature = adjustments[@"temperature"];
-                if (temperature && [temperature doubleValue] != 0) {
-                    CIFilter *tempFilter = [CIFilter filterWithName:@"CITemperatureAndTint"];
-                    [tempFilter setValue:ciImage forKey:kCIInputImageKey];
-                    CIVector *neutral = [CIVector vectorWithX:6500 Y:0];
-                    CGFloat shift = [temperature doubleValue] * 2000;
-                    CIVector *target = [CIVector vectorWithX:6500 + shift Y:0];
-                    [tempFilter setValue:neutral forKey:@"inputNeutral"];
-                    [tempFilter setValue:target forKey:@"inputTargetNeutral"];
-                    ciImage = tempFilter.outputImage ?: ciImage;
+                NSString *cleanPath = rawUri;
+                if ([cleanPath hasPrefix:@"file://"]) {
+                    cleanPath = [cleanPath substringFromIndex:7];
+                }
+                cleanPath = [cleanPath stringByRemovingPercentEncoding];
+
+                UIImage *sourceImage = [UIImage imageWithContentsOfFile:cleanPath];
+                if (!sourceImage) {
+                    reject(@"IMAGE_LOAD_FAILED", @"Failed to load source image", nil);
+                    return;
                 }
 
-                NSNumber *vignette = adjustments[@"vignette"];
-                if (vignette && [vignette doubleValue] > 0) {
-                    CIFilter *vigFilter = [CIFilter filterWithName:@"CIVignette"];
-                    [vigFilter setValue:ciImage forKey:kCIInputImageKey];
-                    [vigFilter setValue:@([vignette doubleValue] * 2.0) forKey:kCIInputIntensityKey];
-                    [vigFilter setValue:@(1.0) forKey:kCIInputRadiusKey];
-                    ciImage = vigFilter.outputImage ?: ciImage;
+                // 1. Convert to CIImage
+                CIImage *ciImage = [CIImage imageWithCGImage:sourceImage.CGImage];
+                if (!ciImage) {
+                    ciImage = [CIImage imageWithContentsOfURL:[NSURL fileURLWithPath:cleanPath]];
+                }
+                if (!ciImage) {
+                    reject(@"CIIMAGE_FAILED", @"Failed to initialize CoreImage pipeline", nil);
+                    return;
                 }
 
-                NSNumber *sharpen = adjustments[@"sharpen"];
-                if (sharpen && [sharpen doubleValue] > 0) {
-                    CIFilter *sharpFilter = [CIFilter filterWithName:@"CISharpenLuminance"];
-                    [sharpFilter setValue:ciImage forKey:kCIInputImageKey];
-                    [sharpFilter setValue:@([sharpen doubleValue] * 2.0) forKey:kCIInputSharpnessKey];
-                    ciImage = sharpFilter.outputImage ?: ciImage;
+                // 2. Apply Rotation & Flip
+                NSInteger rotation = [options[@"rotation"] integerValue];
+                BOOL flipH = [options[@"flipHorizontal"] boolValue];
+                BOOL flipV = [options[@"flipVertical"] boolValue];
+
+                CGAffineTransform transform = CGAffineTransformIdentity;
+                if (rotation == 90) {
+                    transform = CGAffineTransformRotate(transform, -M_PI_2);
+                } else if (rotation == 180) {
+                    transform = CGAffineTransformRotate(transform, M_PI);
+                } else if (rotation == 270) {
+                    transform = CGAffineTransformRotate(transform, M_PI_2);
                 }
-            }
-
-            // 5. Preset Filters
-            NSString *preset = options[@"filterPreset"];
-            if (preset && preset.length > 0 && ![preset isEqualToString:@"none"]) {
-                NSString *filterName = nil;
-                if ([preset isEqualToString:@"mono"]) filterName = @"CIPhotoEffectMono";
-                else if ([preset isEqualToString:@"noir"]) filterName = @"CIPhotoEffectNoir";
-                else if ([preset isEqualToString:@"sepia"]) filterName = @"CISepiaTone";
-                else if ([preset isEqualToString:@"vibrant"]) filterName = @"CIPhotoEffectChrome";
-                else if ([preset isEqualToString:@"fade"]) filterName = @"CIPhotoEffectFade";
-                else if ([preset isEqualToString:@"vintage"]) filterName = @"CIPhotoEffectInstant";
-
-                if (filterName) {
-                    CIFilter *pFilter = [CIFilter filterWithName:filterName];
-                    [pFilter setValue:ciImage forKey:kCIInputImageKey];
-                    ciImage = pFilter.outputImage ?: ciImage;
+                if (flipH) {
+                    transform = CGAffineTransformScale(transform, -1, 1);
                 }
-            }
+                if (flipV) {
+                    transform = CGAffineTransformScale(transform, 1, -1);
+                }
+                if (!CGAffineTransformIsIdentity(transform)) {
+                    ciImage = [ciImage imageByApplyingTransform:transform];
+                    CGRect newExtent = ciImage.extent;
+                    CGAffineTransform fixOrigin = CGAffineTransformMakeTranslation(-newExtent.origin.x, -newExtent.origin.y);
+                    ciImage = [ciImage imageByApplyingTransform:fixOrigin];
+                }
 
-            // 6. GPU Render to File
-            CIContext *context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer: @(NO)}];
-            CGImageRef cgImage = [context createCGImage:ciImage fromRect:ciImage.extent];
-            if (!cgImage) {
-                reject(@"RENDER_FAILED", @"Failed to render CGImage", nil);
-                return;
-            }
+                // 3. Apply Crop
+                NSDictionary *cropDict = options[@"crop"];
+                if (cropDict && [cropDict isKindOfClass:[NSDictionary class]]) {
+                    CGFloat x = [cropDict[@"x"] doubleValue];
+                    CGFloat y = [cropDict[@"y"] doubleValue];
+                    CGFloat width = [cropDict[@"width"] doubleValue];
+                    CGFloat height = [cropDict[@"height"] doubleValue];
+                    BOOL isNorm = [cropDict[@"isNormalized"] boolValue];
 
-            UIImage *resultImage = [UIImage imageWithCGImage:cgImage];
-            CGImageRelease(cgImage);
-
-            // 7. Apply Redactions & Annotations Overlay if provided
-            NSArray *redactions = options[@"redactions"];
-            NSArray *annotations = options[@"annotations"];
-            if ((redactions && [redactions isKindOfClass:[NSArray class]] && redactions.count > 0) ||
-                (annotations && [annotations isKindOfClass:[NSArray class]] && annotations.count > 0)) {
-                UIGraphicsBeginImageContextWithOptions(resultImage.size, NO, 1.0);
-                [resultImage drawInRect:CGRectMake(0, 0, resultImage.size.width, resultImage.size.height)];
-                CGContextRef ctx = UIGraphicsGetCurrentContext();
-
-                if (redactions && [redactions isKindOfClass:[NSArray class]]) {
-                    for (NSDictionary *box in redactions) {
-                        CGFloat x = [box[@"x"] doubleValue];
-                        CGFloat y = [box[@"y"] doubleValue];
-                        CGFloat w = [box[@"width"] doubleValue];
-                        CGFloat h = [box[@"height"] doubleValue];
-                        BOOL isNorm = [box[@"isNormalized"] boolValue];
-                        if (isNorm) {
-                            x *= resultImage.size.width;
-                            y *= resultImage.size.height;
-                            w *= resultImage.size.width;
-                            h *= resultImage.size.height;
-                        }
-                        CGContextSetFillColorWithColor(ctx, [UIColor blackColor].CGColor);
-                        CGContextFillRect(ctx, CGRectMake(x, y, w, h));
+                    CGRect extent = ciImage.extent;
+                    if (isNorm) {
+                        x *= extent.size.width;
+                        y *= extent.size.height;
+                        width *= extent.size.width;
+                        height *= extent.size.height;
+                    }
+                    // CoreImage coordinate system (bottom-left origin)
+                    CGFloat ciY = extent.size.height - (y + height);
+                    CGRect cropRect = CGRectMake(x, ciY, width, height);
+                    CGRect intersection = CGRectIntersection(extent, cropRect);
+                    if (!CGRectIsNull(intersection) && intersection.size.width > 0 && intersection.size.height > 0) {
+                        ciImage = [ciImage imageByCroppingToRect:intersection];
                     }
                 }
 
-                if (annotations && [annotations isKindOfClass:[NSArray class]]) {
-                    for (NSDictionary *ann in annotations) {
-                        CGFloat x = [ann[@"x"] doubleValue];
-                        CGFloat y = [ann[@"y"] doubleValue];
-                        CGFloat w = [ann[@"width"] doubleValue];
-                        CGFloat h = [ann[@"height"] doubleValue];
-                        BOOL isNorm = [ann[@"isNormalized"] boolValue];
-                        if (isNorm) {
-                            x *= resultImage.size.width;
-                            y *= resultImage.size.height;
-                            w *= resultImage.size.width;
-                            h *= resultImage.size.height;
-                        }
-                        CGContextSetStrokeColorWithColor(ctx, [UIColor redColor].CGColor);
-                        CGContextSetLineWidth(ctx, 4.0);
-                        CGContextStrokeRect(ctx, CGRectMake(x, y, w, h));
+                // 4. Color Grading Adjustments (CIColorControls, CITemperatureAndTint, CIVignette)
+                NSDictionary *adjustments = options[@"adjustments"];
+                if (adjustments && [adjustments isKindOfClass:[NSDictionary class]]) {
+                    NSNumber *brightness = adjustments[@"brightness"];
+                    NSNumber *contrast = adjustments[@"contrast"];
+                    NSNumber *saturation = adjustments[@"saturation"];
+
+                    if (brightness || contrast || saturation) {
+                        CIFilter *colorControls = [CIFilter filterWithName:@"CIColorControls"];
+                        [colorControls setValue:ciImage forKey:kCIInputImageKey];
+                        if (brightness) [colorControls setValue:brightness forKey:kCIInputBrightnessKey];
+                        if (contrast) [colorControls setValue:contrast forKey:kCIInputContrastKey];
+                        if (saturation) [colorControls setValue:saturation forKey:kCIInputSaturationKey];
+                        ciImage = colorControls.outputImage ?: ciImage;
+                    }
+
+                    NSNumber *temperature = adjustments[@"temperature"];
+                    if (temperature && [temperature doubleValue] != 0) {
+                        CIFilter *tempFilter = [CIFilter filterWithName:@"CITemperatureAndTint"];
+                        [tempFilter setValue:ciImage forKey:kCIInputImageKey];
+                        CIVector *neutral = [CIVector vectorWithX:6500 Y:0];
+                        CGFloat shift = [temperature doubleValue] * 2000;
+                        CIVector *target = [CIVector vectorWithX:6500 + shift Y:0];
+                        [tempFilter setValue:neutral forKey:@"inputNeutral"];
+                        [tempFilter setValue:target forKey:@"inputTargetNeutral"];
+                        ciImage = tempFilter.outputImage ?: ciImage;
+                    }
+
+                    NSNumber *vignette = adjustments[@"vignette"];
+                    if (vignette && [vignette doubleValue] > 0) {
+                        CIFilter *vigFilter = [CIFilter filterWithName:@"CIVignette"];
+                        [vigFilter setValue:ciImage forKey:kCIInputImageKey];
+                        [vigFilter setValue:@([vignette doubleValue] * 2.0) forKey:kCIInputIntensityKey];
+                        [vigFilter setValue:@(1.0) forKey:kCIInputRadiusKey];
+                        ciImage = vigFilter.outputImage ?: ciImage;
+                    }
+
+                    NSNumber *sharpen = adjustments[@"sharpen"];
+                    if (sharpen && [sharpen doubleValue] > 0) {
+                        CIFilter *sharpFilter = [CIFilter filterWithName:@"CISharpenLuminance"];
+                        [sharpFilter setValue:ciImage forKey:kCIInputImageKey];
+                        [sharpFilter setValue:@([sharpen doubleValue] * 2.0) forKey:kCIInputSharpnessKey];
+                        ciImage = sharpFilter.outputImage ?: ciImage;
                     }
                 }
 
-                resultImage = UIGraphicsGetImageFromCurrentImageContext();
-                UIGraphicsEndImageContext();
+                // 5. Preset Filters
+                NSString *preset = options[@"filterPreset"];
+                if (preset && preset.length > 0 && ![preset isEqualToString:@"none"]) {
+                    NSString *filterName = nil;
+                    if ([preset isEqualToString:@"mono"]) filterName = @"CIPhotoEffectMono";
+                    else if ([preset isEqualToString:@"noir"]) filterName = @"CIPhotoEffectNoir";
+                    else if ([preset isEqualToString:@"sepia"]) filterName = @"CISepiaTone";
+                    else if ([preset isEqualToString:@"vibrant"]) filterName = @"CIPhotoEffectChrome";
+                    else if ([preset isEqualToString:@"fade"]) filterName = @"CIPhotoEffectFade";
+                    else if ([preset isEqualToString:@"vintage"]) filterName = @"CIPhotoEffectInstant";
+
+                    if (filterName) {
+                        CIFilter *pFilter = [CIFilter filterWithName:filterName];
+                        [pFilter setValue:ciImage forKey:kCIInputImageKey];
+                        ciImage = pFilter.outputImage ?: ciImage;
+                    }
+                }
+
+                // 6. GPU Render to File
+                CIContext *context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer: @(NO)}];
+                CGImageRef cgImage = [context createCGImage:ciImage fromRect:ciImage.extent];
+                if (!cgImage) {
+                    reject(@"RENDER_FAILED", @"Failed to render CGImage", nil);
+                    return;
+                }
+
+                UIImage *resultImage = [UIImage imageWithCGImage:cgImage];
+                CGImageRelease(cgImage);
+
+                // 7. Apply Redactions & Annotations Overlay if provided
+                NSArray *redactions = options[@"redactions"];
+                NSArray *annotations = options[@"annotations"];
+                if ((redactions && [redactions isKindOfClass:[NSArray class]] && redactions.count > 0) ||
+                    (annotations && [annotations isKindOfClass:[NSArray class]] && annotations.count > 0)) {
+                    UIGraphicsBeginImageContextWithOptions(resultImage.size, NO, 1.0);
+                    [resultImage drawInRect:CGRectMake(0, 0, resultImage.size.width, resultImage.size.height)];
+                    CGContextRef ctx = UIGraphicsGetCurrentContext();
+
+                    if (redactions && [redactions isKindOfClass:[NSArray class]]) {
+                        for (NSDictionary *box in redactions) {
+                            CGFloat x = [box[@"x"] doubleValue];
+                            CGFloat y = [box[@"y"] doubleValue];
+                            CGFloat w = [box[@"width"] doubleValue];
+                            CGFloat h = [box[@"height"] doubleValue];
+                            BOOL isNorm = [box[@"isNormalized"] boolValue];
+                            if (isNorm) {
+                                x *= resultImage.size.width;
+                                y *= resultImage.size.height;
+                                w *= resultImage.size.width;
+                                h *= resultImage.size.height;
+                            }
+                            CGContextSetFillColorWithColor(ctx, [UIColor blackColor].CGColor);
+                            CGContextFillRect(ctx, CGRectMake(x, y, w, h));
+                        }
+                    }
+
+                    if (annotations && [annotations isKindOfClass:[NSArray class]]) {
+                        for (NSDictionary *ann in annotations) {
+                            CGFloat x = [ann[@"x"] doubleValue];
+                            CGFloat y = [ann[@"y"] doubleValue];
+                            CGFloat w = [ann[@"width"] doubleValue];
+                            CGFloat h = [ann[@"height"] doubleValue];
+                            BOOL isNorm = [ann[@"isNormalized"] boolValue];
+                            if (isNorm) {
+                                x *= resultImage.size.width;
+                                y *= resultImage.size.height;
+                                w *= resultImage.size.width;
+                                h *= resultImage.size.height;
+                            }
+                            CGContextSetStrokeColorWithColor(ctx, [UIColor redColor].CGColor);
+                            CGContextSetLineWidth(ctx, 4.0);
+                            CGContextStrokeRect(ctx, CGRectMake(x, y, w, h));
+                        }
+                    }
+
+                    resultImage = UIGraphicsGetImageFromCurrentImageContext();
+                    UIGraphicsEndImageContext();
+                }
+
+                NSString *format = [options[@"format"] lowercaseString] ?: @"jpeg";
+                CGFloat quality = options[@"quality"] ? [options[@"quality"] doubleValue] : 0.9;
+                NSData *imageData = nil;
+                NSString *ext = @"jpg";
+                NSString *mime = @"image/jpeg";
+
+                if ([format isEqualToString:@"png"]) {
+                    imageData = UIImagePNGRepresentation(resultImage);
+                    ext = @"png";
+                    mime = @"image/png";
+                } else {
+                    imageData = UIImageJPEGRepresentation(resultImage, quality);
+                }
+
+                NSString *fileName = [self generateCaptureFilename:@"edit" ext:ext];
+                NSString *outPath = [[self getCapturesDirectory] stringByAppendingPathComponent:fileName];
+                [imageData writeToFile:outPath atomically:YES];
+
+                resolve(@{
+                    @"uri": [NSURL fileURLWithPath:outPath].absoluteString,
+                    @"width": @(resultImage.size.width),
+                    @"height": @(resultImage.size.height),
+                    @"size": @(imageData.length),
+                    @"mimeType": mime,
+                    @"format": format,
+                });
+            } @catch (NSException *ex) {
+                reject(@"EDIT_FAILED", ex.reason ?: @"Photo edit failed", nil);
             }
-
-            NSString *format = [options[@"format"] lowercaseString] ?: @"jpeg";
-            CGFloat quality = options[@"quality"] ? [options[@"quality"] doubleValue] : 0.9;
-            NSData *imageData = nil;
-            NSString *ext = @"jpg";
-            NSString *mime = @"image/jpeg";
-
-            if ([format isEqualToString:@"png"]) {
-                imageData = UIImagePNGRepresentation(resultImage);
-                ext = @"png";
-                mime = @"image/png";
-            } else {
-                imageData = UIImageJPEGRepresentation(resultImage, quality);
-            }
-
-            NSDateFormatter *df = [[NSDateFormatter alloc] init];
-            [df setDateFormat:@"yyyyMMdd_HHmmss_SSS"];
-            NSString *fileName = [NSString stringWithFormat:@"edit_%@.%@", [df stringFromDate:[NSDate date]], ext];
-            NSString *outPath = [[self getCapturesDirectory] stringByAppendingPathComponent:fileName];
-            [imageData writeToFile:outPath atomically:YES];
-
-            resolve(@{
-                @"uri": [NSURL fileURLWithPath:outPath].absoluteString,
-                @"width": @(resultImage.size.width),
-                @"height": @(resultImage.size.height),
-                @"size": @(imageData.length),
-                @"mimeType": mime,
-                @"format": format,
-            });
-        } @catch (NSException *ex) {
-            reject(@"EDIT_FAILED", ex.reason ?: @"Photo edit failed", nil);
         }
     });
 }
@@ -2235,9 +2404,7 @@ RCT_EXPORT_METHOD(trimVideo:(NSDictionary *)options
             else if ([quality isEqualToString:@"low"]) preset = AVAssetExportPreset640x480;
 
             AVAssetExportSession *exportSession = [AVAssetExportSession exportSessionWithAsset:composition presetName:preset];
-            NSDateFormatter *df = [[NSDateFormatter alloc] init];
-            [df setDateFormat:@"yyyyMMdd_HHmmss_SSS"];
-            NSString *fileName = [NSString stringWithFormat:@"trim_%@.mp4", [df stringFromDate:[NSDate date]]];
+            NSString *fileName = [self generateCaptureFilename:@"trim" ext:@"mp4"];
             NSString *outPath = [[self getCapturesDirectory] stringByAppendingPathComponent:fileName];
             NSURL *outUrl = [NSURL fileURLWithPath:outPath];
 
@@ -2336,6 +2503,102 @@ RCT_EXPORT_METHOD(generateFilmstrip:(NSDictionary *)options
             });
         } @catch (NSException *ex) {
             reject(@"FILMSTRIP_FAILED", ex.reason ?: @"Filmstrip generation failed", nil);
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NATIVE CAMERA ROLL / PHOTO & VIDEO PICKER
+// ─────────────────────────────────────────────────────────────────────────────
+
+RCT_EXPORT_METHOD(pickMedia:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSString *mediaType = options[@"mediaType"] ?: @"any";
+        
+        UIWindow *keyWin = nil;
+        if (@available(iOS 13.0, *)) {
+            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+                if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) {
+                    for (UIWindow *w in ((UIWindowScene *)scene).windows) {
+                        if (w.isKeyWindow) {
+                            keyWin = w;
+                            break;
+                        }
+                    }
+                }
+                if (keyWin) break;
+            }
+        }
+        if (!keyWin) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            keyWin = [UIApplication sharedApplication].keyWindow ?: [UIApplication sharedApplication].windows.firstObject;
+#pragma clang diagnostic pop
+        }
+        
+        UIViewController *rootVC = keyWin.rootViewController;
+        while (rootVC.presentedViewController) {
+            rootVC = rootVC.presentedViewController;
+        }
+        
+        g_pickerDelegate = [[InAppInspectorPickerDelegate alloc] init];
+        g_pickerDelegate.resolve = resolve;
+        g_pickerDelegate.reject = reject;
+        g_pickerDelegate.capturesDirectory = [self getCapturesDirectory];
+        
+        Class PHPickerVCClass = NSClassFromString(@"PHPickerViewController");
+        Class PHPickerConfigClass = NSClassFromString(@"PHPickerConfiguration");
+        Class PHPickerFilterClass = NSClassFromString(@"PHPickerFilter");
+        
+        if (PHPickerVCClass && PHPickerConfigClass && PHPickerFilterClass) {
+            id config = [[PHPickerConfigClass alloc] init];
+            [config setValue:@1 forKey:@"selectionLimit"];
+            
+            id filter = nil;
+            SEL imgFilterSel = NSSelectorFromString(@"imagesFilter");
+            SEL vidFilterSel = NSSelectorFromString(@"videosFilter");
+            SEL anyFilterSel = NSSelectorFromString(@"anyFilterMatchingSubfilters:");
+            
+            if ([mediaType isEqualToString:@"image"]) {
+                if ([PHPickerFilterClass respondsToSelector:imgFilterSel]) {
+                    filter = ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, imgFilterSel);
+                }
+            } else if ([mediaType isEqualToString:@"video"]) {
+                if ([PHPickerFilterClass respondsToSelector:vidFilterSel]) {
+                    filter = ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, vidFilterSel);
+                }
+            } else {
+                id imgFilter = [PHPickerFilterClass respondsToSelector:imgFilterSel] ? ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, imgFilterSel) : nil;
+                id vidFilter = [PHPickerFilterClass respondsToSelector:vidFilterSel] ? ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, vidFilterSel) : nil;
+                if (imgFilter && vidFilter && [PHPickerFilterClass respondsToSelector:anyFilterSel]) {
+                    filter = ((id (*)(id, SEL, id))objc_msgSend)(PHPickerFilterClass, anyFilterSel, @[imgFilter, vidFilter]);
+                }
+            }
+            if (filter) {
+                [config setValue:filter forKey:@"filter"];
+            }
+            
+            SEL initConfigSel = NSSelectorFromString(@"initWithConfiguration:");
+            id rawPicker = [PHPickerVCClass alloc];
+            UIViewController *picker = ((UIViewController * (*)(id, SEL, id))objc_msgSend)(rawPicker, initConfigSel, config);
+            [picker setValue:g_pickerDelegate forKey:@"delegate"];
+            [rootVC presentViewController:picker animated:YES completion:nil];
+        } else {
+            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+            picker.delegate = g_pickerDelegate;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            if ([mediaType isEqualToString:@"image"]) {
+                picker.mediaTypes = @[(NSString *)kUTTypeImage];
+            } else if ([mediaType isEqualToString:@"video"]) {
+                picker.mediaTypes = @[(NSString *)kUTTypeMovie];
+            } else {
+                picker.mediaTypes = @[(NSString *)kUTTypeImage, (NSString *)kUTTypeMovie];
+            }
+#pragma clang diagnostic pop
+            [rootVC presentViewController:picker animated:YES completion:nil];
         }
     });
 }

@@ -57,7 +57,16 @@
     "disconnected": "Terputus",
     "version": "Versi",
     "update": "PEMBARUAN",
-    "unknown": "Tidak diketahui"
+    "unknown": "Tidak diketahui",
+    "all": "Semua",
+    "dragToHide": "Tarik ke sini untuk menyembunyikan",
+    "releaseToHide": "Lepaskan untuk menyembunyikan inspektur",
+    "expand": "Perluas",
+    "undo": "Urungkan",
+    "inActiveDevelopment": "Dalam Pengembangan Aktif",
+    "inspectorDismissed": "Inspektur ditutup",
+    "noMatches": "Tidak ada hasil yang cocok",
+    "moreFilters": "Filter Lainnya"
   },
   "header": {
     "updateAvailableTitle": "Pembaruan Tersedia",
@@ -86,7 +95,16 @@
     "live": "Hidup",
     "keys": "{{count}} kunci",
     "frames": "{{count}} bingkai",
-    "sliceBadge": "irisan"
+    "sliceBadge": "irisan",
+    "recordScreen": "Rekam Layar",
+    "newVersionAvailable": "Pembaruan Tersedia",
+    "updateAvailable": "Pembaruan react-native-inapp-inspector v{{latestVersion}} siap",
+    "updateAvailableSubtitle": "Versi baru react-native-inapp-inspector siap dipasang",
+    "upgradeCommand": "PERINTAH UPGRADE",
+    "copyCommand": "Salin",
+    "viewNpm": "Lihat",
+    "screenshot": "Tangkapan Layar",
+    "videoCapture": "Rekam"
   },
   "tabs": {
     "apis": "API",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "Preferensi disetel ulang saat aplikasi dimatikan. Berikan penyimpanan khusus ke <NetworkInspector storage={...} /> agar tetap ada di Android.",
       "language": "Bahasa",
       "languageDescription": "Pilih bahasa tampilan antarmuka",
-      "selectLanguage": "Pilih Bahasa"
+      "selectLanguage": "Pilih Bahasa",
+      "peekOpacity": "Opasitas Tembus Pandang",
+      "peekOpacityDescription": "Tingkat transparansi saat ikon mata diaktifkan"
     },
     "configureSubtitle": "Konfigurasikan parameter modul",
     "resetAlertTitle": "Atur Ulang Semua Pengaturan",
@@ -294,7 +314,10 @@
       "socketio": "Sesi simulasi Socket.IO v4",
       "echo": "Tes simulasi WebSocket Echo",
       "screenshotSaved": "Tangkapan layar diambil dan disimpan!"
-    }
+    },
+    "simulatePushTitle": "SIMULASI NOTIFIKASI PUSH UJI COBA",
+    "simulateSocketTitle": "SIMULASI KONEKSI SOCKET UJI COBA",
+    "directCaptureShortcuts": "PINTASAN TANGKAPAN LANGSUNG"
   },
   "network": {
     "title": "API",
@@ -377,7 +400,8 @@
       "key": "Kunci",
       "value": "NILAI",
       "keyProperty": "KUNCI / PROPERTI",
-      "noMatchingKeys": "Tidak ditemukan kunci atau nilai yang cocok"
+      "noMatchingKeys": "Tidak ditemukan kunci atau nilai yang cocok",
+      "emptyPayload": "Tidak ada data muatan"
     },
     "showingRequests": "Menampilkan permintaan {{count}}",
     "showingFilteredRequests": "Menampilkan {{filtered}} dari {{total}} permintaan",
@@ -391,7 +415,10 @@
     "status404": "404 Tidak Ditemukan",
     "status500": "500 Kesalahan",
     "shareError": "Bagikan Kesalahan",
-    "shareErrorMessage": "Gagal membuka lembar berbagi"
+    "shareErrorMessage": "Gagal membuka lembar berbagi",
+    "clearLogsTitle": "Hapus Log Jaringan",
+    "clearLogsMsg": "Apakah Anda yakin ingin menghapus semua log jaringan?",
+    "moreFilters": "Filter Lainnya"
   },
   "console": {
     "title": "Log",
@@ -449,7 +476,10 @@
     "info": "Informasi",
     "warning": "Peringatkan",
     "error": "Kesalahan",
-    "debug": "Men-debug"
+    "debug": "Men-debug",
+    "clearLogsTitle": "Hapus Log Konsol",
+    "clearLogsMsg": "Apakah Anda yakin ingin menghapus semua log konsol?",
+    "analytics": "Analitik"
   },
   "analytics": {
     "title": "Analisis",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "Atribut Kunci-Nilai",
     "filterParamsPlaceholder": "Filter parameter berdasarkan kunci atau nilai...",
     "noParamsRecorded": "Tidak ada parameter kustom yang direkam untuk event ini.",
-    "noParamsMatching": "Tidak ada parameter yang cocok dengan \"{{search}}\""
+    "noParamsMatching": "Tidak ada parameter yang cocok dengan \"{{search}}\"",
+    "clearEventsTitle": "Hapus Analitik",
+    "clearEventsMsg": "Apakah Anda yakin ingin menghapus semua peristiwa analitik?"
   },
   "redux": {
     "title": "reduks",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "Hapus Status Bertahan",
     "clearPersistedMessage": "Apakah Anda yakin ingin menghapus penyimpanan tetap untuk potongan \"{{slice}}\"?",
     "clearedPersisted": "Status yang bertahan telah dihapus.",
-    "clearPersistedError": "Gagal menghapus status yang bertahan."
+    "clearPersistedError": "Gagal menghapus status yang bertahan.",
+    "clearTimelineTitle": "Hapus Linimasa Redux",
+    "clearTimelineMsg": "Apakah Anda yakin ingin menghapus riwayat tindakan yang dikirim?",
+    "diff": "Perbedaan Status"
   },
   "device": {
     "title": "Perangkat",
@@ -614,7 +649,8 @@
     "live": "LANGSUNG",
     "ipAddress": "ALAMAT IP",
     "ramUsedTotal": "RAM (TERGUNA/TOTAL)",
-    "uptime": "WAKTU TERAKHIR"
+    "uptime": "WAKTU TERAKHIR",
+    "copiedUuid": "ID Perangkat Unik Disalin (UUID)"
   },
   "storage": {
     "title": "Penyimpanan",
@@ -645,7 +681,9 @@
     "asyncStorage": "Penyimpanan Asinkron",
     "mmkv": "MMKV",
     "deleteConfirm": "Hapus",
-    "cleared": "Penyimpanan dibersihkan"
+    "cleared": "Penyimpanan dibersihkan",
+    "keyNameEmpty": "Nama kunci tidak boleh kosong",
+    "saveError": "Terjadi kesalahan saat menyimpan kunci penyimpanan"
   },
   "footer": {
     "endOfList": "Anda telah mencapai akhir daftar",
@@ -1293,7 +1331,10 @@
     "filterApply": "Terapkan ({{count}} Error)",
     "frameCopy": "Salin",
     "frameCopied": "Disalin",
-    "componentHierarchy": "Hirarki Komponen"
+    "componentHierarchy": "Hirarki Komponen",
+    "breadcrumbTrail": "JEJAK BREADCRUMB & LOG PERISTIWA",
+    "deviceDiagnostics": "DIAGNOSTIK PERANGKAT SAAT CRASH",
+    "openInInspector": "Buka di Inspektur"
   },
   "mediaGallery": {
     "all": "Semua ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "Kecepatan",
     "loop": "Lingkaran",
     "pause": "Jeda",
-    "play": "Mainkan"
+    "play": "Mainkan",
+    "hideGridlines": "Sembunyikan Kisi Instagram (3×3)",
+    "showGridlines": "Tampilkan Kisi Instagram (3×3)",
+    "hideWatermark": "Sembunyikan Tanda Air QA",
+    "showWatermark": "Tampilkan Tanda Air QA",
+    "exportGif": "Ekspor sebagai GIF Animasi",
+    "snapshotFrame": "Cuplikan Bingkai (PNG)",
+    "tapToPlaceStep": "Ketuk atau tarik pada gambar untuk menempatkan lencana langkah",
+    "resetAdjustments": "Penyesuaian Direset",
+    "tagPlaced": "Tag Ditempatkan",
+    "tapToAddText": "Ketuk di mana saja pada gambar untuk menambah teks",
+    "textAdded": "Hamparan Teks Ditambahkan",
+    "redone": "Dibuat Ulang",
+    "undone": "Dibatalkan",
+    "videoSaved": "Video yang diedit disimpan ke galeri",
+    "savedSuccess": "Berhasil Disimpan",
+    "saveFailed": "Gagal menyimpan media",
+    "snapshotSaved": "Bingkai cuplikan disimpan ke galeri",
+    "snapshotFailed": "Gagal mengambil cuplikan bingkai",
+    "shareSuccess": "Media berhasil dibagikan",
+    "cropFailed": "Gagal memotong media",
+    "croppedSuccess": "Media berhasil dipotong",
+    "resizeFailed": "Gagal mengubah ukuran",
+    "resizedSuccess": "Ukuran berhasil diubah",
+    "trimFailed": "Gagal memangkas video",
+    "trimmedSuccess": "Video berhasil dipangkas",
+    "muteFailed": "Gagal memperbarui audio video",
+    "mutedSuccess": "Audio berhasil diubah",
+    "resetSuccess": "Gambar direset ke versi asli",
+    "openCameraRoll": "Buka Rol Kamera",
+    "importPhotos": "Impor Foto dari Galeri",
+    "importVideos": "Impor Video dari Galeri",
+    "importedPhoto": "Foto diimpor dari rol kamera",
+    "importedVideo": "Video diimpor dari rol kamera",
+    "importFailed": "Gagal mengimpor media",
+    "preview": "Pratinjau"
   },
   "socket": {
     "title": "Soket Web",
@@ -1411,7 +1487,9 @@
     "sound": "Suara:",
     "badgeCount": "Jumlah Lencana:",
     "collapseKey": "Kunci Ciutkan:",
-    "noCustomData": "Tidak ada data kunci-nilai kustom dalam payload"
+    "noCustomData": "Tidak ada data kunci-nilai kustom dalam payload",
+    "noMatching": "Tidak ada notifikasi push yang cocok",
+    "adjustSearchFilter": "Coba sesuaikan kueri penelusuran atau filter."
   },
   "debugging": {
     "title": "Debugging & Alat",
@@ -1486,6 +1564,48 @@
     "trim5s": "Potong 5d",
     "muteAudio": "Bisukan Audio",
     "toGif": "Ke GIF",
-    "play": "Putar"
+    "play": "Putar",
+    "trim": "Pangkas",
+    "audio": "Audio",
+    "speed": "Kecepatan",
+    "snapshot": "Cuplikan"
+  },
+  "language": {
+    "confirmTitle": "Ubah Bahasa?",
+    "confirmMessage": "Apakah Anda ingin mengubah bahasa inspektur ke {{newLang}}?",
+    "confirmApply": "Terapkan Bahasa",
+    "current": "Saat Ini",
+    "new": "Baru"
+  },
+  "support": {
+    "title": "Dukungan & Komunitas",
+    "subtitle": "Inspektur Dalam Aplikasi React Native",
+    "heroDescription": "Dibuat dengan semangat untuk menyediakan rangkaian debugging di perangkat yang lengkap untuk tim seluler di seluruh dunia. Sponsor, bintang, dan masukan Anda mendorong pembaruan berkelanjutan.",
+    "sponsor": "Sponsori di GitHub",
+    "sponsorBadge": "SPONSOR",
+    "sponsorDesc": "Dukung pemeliharaan berkelanjutan, fitur baru, dan peningkatan rilis.",
+    "sponsorBtn": "Menjadi Sponsor",
+    "copiedSponsor": "Tautan GitHub Sponsors disalin!",
+    "star": "Beri Bintang di GitHub",
+    "starDesc": "Beri bintang pada repositori kami agar lebih banyak pengembang menemukan alat ini.",
+    "issues": "Laporkan Masalah / Saran",
+    "issuesDesc": "Menemukan bug atau punya ide? Buka issue di GitHub.",
+    "docs": "Dokumentasi Resmi",
+    "docsDesc": "Tur fitur interaktif, sintaksis pencarian & panduan konfigurasi.",
+    "contact": "Hubungi Penulis",
+    "contactDesc": "vengatmacuser@gmail.com • Dukungan langsung & pertanyaan perusahaan.",
+    "waysToSupport": "CARA BERKONTRIBUSI & MENDUKUNG",
+    "npmRegistry": "Registri Paket NPM",
+    "npmRegistryDesc": "Jelajahi catatan rilis, ukuran tarball, dan statistik instalasi.",
+    "shareTitle": "BAGIKAN KE TEMAN",
+    "shareDesc": "Bantu rekan tim dan penguji QA Anda men-debug jaringan, log konsol, dan Redux lebih cepat.",
+    "shareWithTeam": "Bagikan dengan Tim",
+    "copiedRepo": "Tautan repositori disalin!",
+    "copyRepo": "Salin URL Repositori",
+    "maintainer": "PENGELOLA PROYEK",
+    "sendEmail": "Kirim Email",
+    "copiedEmail": "Alamat email disalin!",
+    "copyEmail": "Salin Email",
+    "close": "Tutup"
   }
 }

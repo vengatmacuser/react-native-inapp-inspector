@@ -23,6 +23,7 @@ import android.view.PixelCopy
 import android.view.View
 import android.view.Window
 import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.BaseActivityEventListener
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -35,6 +36,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
 import java.util.concurrent.Executors
@@ -68,6 +72,91 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     private var defaultHandler: Thread.UncaughtExceptionHandler? = null
     private var isProtectionEnabled = false
+
+    private var pendingPickPromise: Promise? = null
+    private val PICK_MEDIA_REQUEST_CODE = 49281
+
+    private val activityEventListener = object : BaseActivityEventListener() {
+        override fun onActivityResult(activity: android.app.Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
+            if (requestCode == PICK_MEDIA_REQUEST_CODE) {
+                val promise = pendingPickPromise
+                pendingPickPromise = null
+                if (promise == null) return
+
+                if (resultCode != android.app.Activity.RESULT_OK || data?.data == null) {
+                    promise.resolve(null)
+                    return
+                }
+
+                captureExecutor.execute {
+                    try {
+                        val uri = data.data!!
+                        val dir = getCapturesDirectory()
+                        val contentResolver = reactContext.contentResolver
+                        val mimeType = contentResolver.getType(uri) ?: ""
+                        val isVideo = mimeType.startsWith("video/")
+                        val isGif = mimeType.contains("gif")
+                        val ext = when {
+                            isVideo -> "mp4"
+                            isGif -> "gif"
+                            mimeType.contains("png") -> "png"
+                            else -> "jpg"
+                        }
+                        val type = when {
+                            isVideo -> "video"
+                            isGif -> "gif"
+                            else -> "image"
+                        }
+                        val timeStamp = System.currentTimeMillis()
+                        val filename = "rn_iai_${timeStamp}_imported_${(1000..9999).random()}.${ext}"
+                        val destFile = File(dir, filename)
+
+                        contentResolver.openInputStream(uri)?.use { input ->
+                            FileOutputStream(destFile).use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+
+                        val map = Arguments.createMap().apply {
+                            putString("id", filename)
+                            putString("type", type)
+                            putString("format", ext)
+                            putString("uri", Uri.fromFile(destFile).toString())
+                            putString("filename", filename)
+                            putDouble("sizeBytes", destFile.length().toDouble())
+                            putDouble("timestamp", destFile.lastModified().toDouble())
+                        }
+
+                        if (type == "video") {
+                            try {
+                                val thumbBaseName = filename.substringBeforeLast(".")
+                                val thumbFile = File(dir, "${thumbBaseName}_thumb.jpg")
+                                val retriever = MediaMetadataRetriever()
+                                retriever.setDataSource(destFile.absolutePath)
+                                val bmp = retriever.getFrameAtTime(0, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                                if (bmp != null) {
+                                    FileOutputStream(thumbFile).use { fos ->
+                                        bmp.compress(Bitmap.CompressFormat.JPEG, 80, fos)
+                                    }
+                                    bmp.recycle()
+                                    map.putString("thumbnailUri", Uri.fromFile(thumbFile).toString())
+                                }
+                                retriever.release()
+                            } catch (e: Exception) {}
+                        }
+
+                        promise.resolve(map)
+                    } catch (e: Exception) {
+                        promise.reject("PICK_ERROR", e.message ?: "Failed to import media", e)
+                    }
+                }
+            }
+        }
+    }
+
+    init {
+        reactContext.addActivityEventListener(activityEventListener)
+    }
 
 
     override fun getName(): String {
@@ -737,6 +826,17 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
         return dir
     }
 
+    /**
+     * Generates a filename in the format: rn_iai_{YYYYMMDD_HHmmss_SSS}_{fileType}_{random6}.{ext}
+     */
+    private fun generateCaptureFilename(fileType: String, ext: String): String {
+        val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US)
+        val dateStamp = dateFormat.format(Date())
+        val chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+        val random = (1..6).map { chars.random() }.joinToString("")
+        return "rn_iai_${dateStamp}_${fileType}_${random}.$ext"
+    }
+
     private fun getActiveWindow(): Window? {
         return reactContext.currentActivity?.window
     }
@@ -847,7 +947,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     }
 
                     val timestamp = System.currentTimeMillis()
-                    val filename = "screenshot_${timestamp}.$ext"
+                    val filename = generateCaptureFilename("screenshot", ext)
                     val file = File(getCapturesDirectory(), filename)
 
                     val bos = ByteArrayOutputStream()
@@ -979,7 +1079,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     recordedFrames.clear()
                 }
 
-                val filename = "video_${timestamp}.mp4"
+                val filename = generateCaptureFilename("video", "mp4")
                 val file = File(getCapturesDirectory(), filename)
 
                 var width = 720
@@ -991,7 +1091,8 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     width = firstFrame.width
                     height = firstFrame.height
 
-                    val thumbFile = File(getCapturesDirectory(), "thumb_${timestamp}.jpg")
+                    val thumbBaseName = filename.substringBeforeLast(".").replace("_video_", "_thumb_")
+                    val thumbFile = File(getCapturesDirectory(), "${thumbBaseName}.jpg")
                     FileOutputStream(thumbFile).use { fos ->
                         firstFrame.compress(Bitmap.CompressFormat.JPEG, 85, fos)
                     }
@@ -1041,7 +1142,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
         captureExecutor.execute {
             try {
                 val timestamp = System.currentTimeMillis()
-                val gifFile = File(getCapturesDirectory(), "anim_${timestamp}.gif")
+                val gifFile = File(getCapturesDirectory(), generateCaptureFilename("anim", "gif"))
 
                 val cleanUri = if (videoUri.startsWith("file://")) videoUri.substring(7) else videoUri
                 val sourceFile = File(cleanUri)
@@ -1124,7 +1225,9 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                 val files = dir.listFiles() ?: emptyArray()
                 val jsonArr = org.json.JSONArray()
 
-                files.sortedByDescending { it.lastModified() }.forEach { file ->
+                files.sortedByDescending { it.lastModified() }
+                    .filter { !it.name.contains("_thumb_") && !it.name.startsWith("thumb_") }
+                    .forEach { file ->
                     val ext = file.extension.lowercase()
                     val type = when (ext) {
                         "mp4", "mov" -> "video"
@@ -1143,8 +1246,14 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     }
 
                     if (type == "video") {
-                        val suffix = file.nameWithoutExtension.removePrefix("video_")
-                        val thumbFile = File(dir, "thumb_${suffix}.jpg")
+                        // Try new naming convention: replace _video_ with _thumb_ in base name
+                        val thumbBaseName = file.nameWithoutExtension.replace("_video_", "_thumb_")
+                        var thumbFile = File(dir, "${thumbBaseName}.jpg")
+                        // Fallback: legacy naming convention (thumb_{timestamp}.jpg)
+                        if (!thumbFile.exists()) {
+                            val suffix = file.nameWithoutExtension.removePrefix("video_")
+                            thumbFile = File(dir, "thumb_${suffix}.jpg")
+                        }
                         if (thumbFile.exists()) {
                             obj.put("thumbnailUri", Uri.fromFile(thumbFile).toString())
                         } else {
@@ -1201,6 +1310,40 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
             } catch (e: Exception) {
                 promise.resolve(false)
             }
+        }
+    }
+
+    @ReactMethod
+    fun pickMedia(options: ReadableMap?, promise: Promise) {
+        val activity = currentActivity
+        if (activity == null) {
+            promise.reject("NO_ACTIVITY", "Current activity is null")
+            return
+        }
+        pendingPickPromise = promise
+        val mediaType = if (options?.hasKey("mediaType") == true) options.getString("mediaType") else "any"
+
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            when (mediaType) {
+                "image" -> {
+                    type = "image/*"
+                }
+                "video" -> {
+                    type = "video/*"
+                }
+                else -> {
+                    type = "*/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+                }
+            }
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+
+        try {
+            activity.startActivityForResult(Intent.createChooser(intent, "Select Media"), PICK_MEDIA_REQUEST_CODE)
+        } catch (e: Exception) {
+            pendingPickPromise = null
+            promise.reject("PICK_LAUNCH_ERROR", e.message ?: "Failed to open media picker", e)
         }
     }
 
@@ -1279,8 +1422,9 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                 }
 
                 val sourceBitmap = if (cleanPath.startsWith("content://")) {
-                    val input = reactContext.contentResolver.openInputStream(Uri.parse(cleanPath))
-                    android.graphics.BitmapFactory.decodeStream(input)
+                    reactContext.contentResolver.openInputStream(Uri.parse(cleanPath))?.use { input ->
+                        android.graphics.BitmapFactory.decodeStream(input)
+                    }
                 } else {
                     android.graphics.BitmapFactory.decodeFile(cleanPath)
                 }

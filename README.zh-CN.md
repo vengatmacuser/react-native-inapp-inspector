@@ -1,4 +1,10 @@
-# React Native In-App Inspector (应用内全功能调试器)
+<p align="center">
+  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector">
+    <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/inapp_inspector_icon.gif" alt="React Native In-App Inspector Icon" width="120" height="120" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.45);" />
+  </a>
+</p>
+
+# React Native In-App Inspector (移动端应用内全功能调试器)
 
 <p align="center">
   <b><a href="./README.md">English</a></b> |
@@ -27,7 +33,7 @@
   <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/dm/react-native-inapp-inspector?color=3b82f6&label=downloads" alt="npm downloads" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/github/stars/vengatmacuser/react-native-inapp-inspector?color=f59e0b&label=stars&logo=github" alt="GitHub stars" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license" /></a>
-  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/unpacked-size/react-native-inapp-inspector?color=10b981&label=size" alt="unpacked size" /></a>
+  <a href="https://github.com/sponsors/vengatmacuser"><img src="https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ea4aaa?logo=githubsponsors&logoColor=white" alt="sponsor" /></a>
 </p>
 
 <p align="center">
@@ -38,46 +44,61 @@
   <img src="https://img.shields.io/badge/Engine-Hermes%20%7C%20JSC-9333ea" alt="Engine" />
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/WebSockets-ws%20%7C%20wss%20%7C%20Socket.IO-06b6d4?logo=socketdotio&logoColor=white" alt="WebSockets" />
-  <img src="https://img.shields.io/badge/Storage-AsyncStorage%20%7C%20MMKV-f59e0b?logo=databricks&logoColor=white" alt="Storage" />
-  <img src="https://img.shields.io/badge/Push%20Logger-APNs%20%7C%20FCM-10b981?logo=firebase&logoColor=white" alt="Push" />
-  <img src="https://img.shields.io/badge/Localization-25%20Languages-ec4899" alt="Localization" />
-  <img src="https://img.shields.io/badge/Screen%20Capture-Video%20%7C%20GIF%20%7C%20Screenshot-8b5cf6" alt="Screen Capture" />
-  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
-</p>
+专为 React Native 与 Expo 打造的**零配置、开箱即用的全功能应用内调试套件**。在手机端直接抓取 HTTP/HTTPS 网络请求、WebSocket/Socket.IO 实时通信，查看精准到源码行号的 Console 日志、Redux 状态变动差量，实时编辑 AsyncStorage 与 MMKV 存储，捕获推送通知与系统硬件指标，更内置了专业级图像/视频编辑工作台与高清屏幕录制，无需连接电脑，脱离数据线束缚。
 
-专为 **React Native & Expo** 打造的**零配置、开箱即用的应用内全功能调试器与抓包工具**。无需连接数据线、无需配置 Charles/Proxyman 证书，直接在真机或模拟器上实时监控 HTTP/HTTPS 网络流量、WebSocket 与 Socket.IO 双向数据包、Metro 符号化控制台日志、Redux 状态树差量变动、AsyncStorage 与 MMKV 实时存储、推送通知、原生硬件运行指标，以及真机屏幕录制与截图！
-
-> 🚀 **替代 Flipper、Charles、Proxyman 与 Chucker 的现代化轻量级利器** —— 适用于日常开发、自动化测试以及独立打包测试（APK/IPA），完全摆脱电脑数据线和代理端口的束缚。
+> 🚀 **Flipper、Charles、Proxyman 和 Chucker 的现代轻量化替代方案** — 完全独立运行于真机设备与测试构建包（TestFlight / APK），告别电脑数据线与繁琐代理配置。
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector 演示" width="360" style="border-radius: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.5);" />
+  <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector Walkthrough" width="360" style="border-radius: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.5);" />
 </p>
 
 <p align="center">
-  🎬 <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mp4">查看完整演示视频 (MP4)</a></b> | <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mov">原始 MOV 格式</a></b>
+  🎬 <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mp4">观看完整演示视频 (MP4)</a></b> | <b><a href="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/docs/video_walkthrough.mov">MOV 原片</a></b>
 </p>
 
 ---
 
-## ⚡ 核心优势与对比
+<table align="center" width="100%">
+  <tr>
+    <td align="center" style="padding: 24px; background: linear-gradient(135deg, rgba(236,72,153,0.1), rgba(99,102,241,0.1)); border-radius: 16px; border: 1px solid rgba(236,72,153,0.35);">
+      <h3 align="center">💖 献给每一位曾在深夜两点与幽灵 Bug 苦战的开发者</h3>
+      <p align="center">
+        <i>“开发 react-native-inapp-inspector 的初衷，是因为我们深知缠绕的手机数据线、时常断开的调试端口以及线上偶现 Bug 带来的无助与煎熬。我们倾注了无数个不眠之夜与满腔热忱，只为让全球每一位移动端工程师和测试同学，都能彻底告别束缚，享受纯粹、丝滑、优雅的真机调试体验。”</i>
+      </p>
+      <p align="center">
+        如果这个开源工具曾为你节省过宝贵的排查时间、助你顺利按时交付版本，或者让团队的日常开发多了一份从容与舒心 —— <b>恳请您考虑赞助支持这个项目</b>。一杯暖心咖啡或一份月度赞助，都是我们持续迭代、打磨新功能并坚持完全开源的最大动力！☕✨
+      </p>
+      <p align="center">
+        <a href="https://github.com/sponsors/vengatmacuser">
+          <img src="https://img.shields.io/badge/Sponsor%20%40vengatmacuser-%E5%9C%A8%20GitHub%20Sponsors%20%E8%B5%9E%E5%8A%A9%E6%94%AF%E6%8C%81%E6%9C%AC%E9%A1%B9%E7%9B%AE-ea4aaa?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor on GitHub Sponsors" />
+        </a>
+      </p>
+    </td>
+  </tr>
+</table>
 
-| 功能特性 | **react-native-inapp-inspector** | Flipper | Charles / Proxyman | RN Debugger |
+---
+
+## ⚡ 核心优势与竞品对比
+
+| 能力项 | **react-native-inapp-inspector** | Flipper | Charles / Proxyman | RN Debugger |
 | :--- | :---: | :---: | :---: | :---: |
-| **真机独立运行（脱离电脑与数据线）** | ✅ | ❌ | ❌ | ❌ |
-| **零渲染性能开销（关闭时 0% 后台 CPU 占用）** | ✅ | ❌ | ❌ | ❌ |
+| **真机独立运行（无需电脑与数据线）** | ✅ | ❌ | ❌ | ❌ |
+| **空闲零渲染消耗（0% 后台 CPU 占用）** | ✅ | ❌ | ❌ | ❌ |
 | **HTTP/HTTPS 网络抓包 (Fetch / Axios / XHR)** | ✅ | ✅ | ✅ | ✅ |
-| **请求耗时瀑布流与 P95 性能指标** | ✅ | ⚠️ | ⚠️ | ❌ |
-| **一键复制 cURL 命令行与 Fetch 代码片段** | ✅ | ⚠️ | ⚠️ | ❌ |
-| **WebSocket & Socket.IO 双向消息帧监听** | ✅ | ❌ | ⚠️ | ⚠️ |
+| **耗时瀑布流与 P95 延迟统计** | ✅ | ⚠️ | ⚠️ | ❌ |
+| **cURL 与 Fetch 代码片段一键复制导出** | ✅ | ⚠️ | ⚠️ | ❌ |
+| **WebSocket & Socket.IO 双向实时抓包** | ✅ | ❌ | ⚠️ | ⚠️ |
 | **存储查看与实时编辑 (AsyncStorage & MMKV)** | ✅ (在线增删改查) | ⚠️ (仅只读) | ❌ | ⚠️ |
 | **推送通知日志记录 (APNs, FCM, 极光, 个推)** | ✅ | ❌ | ❌ | ❌ |
 | **Console 日志 + Metro 符号化源码定位** | ✅ (精准定位代码行号) | ✅ | ❌ | ✅ |
 | **Redux State 树与 Action 差量对比** | ✅ | ⚠️ | ❌ | ✅ |
+| **业务埋点与事件追踪 (Firebase, Mixpanel)** | ✅ | ❌ | ❌ | ❌ |
 | **崩溃防护与多类型操作面包屑 (Breadcrumbs)** | ✅ | ❌ | ❌ | ❌ |
-| **原生硬件指标 (RAM、堆内存、存储空间、电池、FPS)**| ✅ | ⚠️ | ❌ | ❌ |
-| **真机媒体录屏 (高清截图、MP4 录屏、动态 GIF)** | ✅ | ❌ | ❌ | ❌ |
+| **原生硬件指标 (RAM、堆内存、存储空间、电池、FPS)** | ✅ | ⚠️ | ❌ | ❌ |
+| **媒体录屏与 In-App 编辑工坊 (裁剪, 剪辑, 标注)** | ✅ (全功能工作室) | ❌ | ❌ | ❌ |
+| **可拖拽全局悬浮球与穿透半透明模式 (Peek)** | ✅ (0.05 - 1.0) | ❌ | ❌ | ❌ |
+| **Firebase Remote Config 动态模块管理** | ✅ | ❌ | ❌ | ❌ |
 | **全球 25 种语言本地化支持（底部抽屉快捷切换）** | ✅ | ❌ (仅英文) | ❌ | ❌ |
 | **Expo (Bare / Managed) & 纯原生 React Native** | ✅ | ⚠️ | ⚠️ | ⚠️ |
 
@@ -118,85 +139,90 @@
 - **Redux Toolkit 完美集成**：无缝连接 Redux Store、RTK Query 与 `redux-persist`。
 - **Action 时间线**：按触发顺序排布 Action，记录每次派发耗时与 Payload 载荷。
 - **深度状态 Diff 对比**：清晰标明变动项（**绿色**代表新增，**黄色**代表更新，**红色**代表移除）。
+- **Slice 状态树浏览**：按模块层级快速浏览全局状态树。
 
-### 🛡️ 7. 全局异常捕获与微架构防崩 (Crash Protection)
+### 📊 7. 业务埋点与事件追踪 (Analytics Event Tracker)
+- **Firebase Analytics 自动拦截**：深度集成 `@react-native-firebase/analytics`（`logEvent`、`logScreenView`、`setUserProperties`、`setUserId`）。
+- **开放插件式架构**：可轻松适配自定义埋点上报 SDK（Google Analytics 4、Mixpanel、Segment、神策分析、友盟等）。
+- **参数与时间线分析**：实时查看触发事件名、附带参数、用户属性与触发时间戳。
+
+### 🛡️ 8. 全局异常捕获与微架构防崩 (Crash Protection)
 - **微 UI 容错隔离**：调试器运行在完全隔离的环境中，即便调试器内部发生意外也绝对不会影响宿主应用。
 - **全局 ErrorBoundary**：优雅捕获未处理的 React 渲染崩溃并提供一键恢复交互。
 - **操作面包屑追溯**：记录崩溃发生前用户的页面跳转、最近网络请求与 Redux Action，助力秒级排查线上 Bug。
+- **原生异常捕获**：捕获 iOS 与 Android 原生未捕获信号与异常。
 
-### 📱 8. 原生硬件、内存与 FPS 监控 (Hardware Telemetry)
+### 📱 9. 原生硬件、内存与 FPS 监控 (Hardware Telemetry)
 - **低层原生指标**：手机总运行内存、可用空闲内存、原生堆分配、存储剩余空间、电池电量与充电状态、CPU 架构。
 - **实时刷新率监控**：真实测量屏幕渲染 FPS。
 - **内存警告自适应清理**：接收系统低内存广播时自动释放缓存记录，确保宿主应用平稳运行。
 - **摇一摇唤出**：支持摇晃手机物理设备或按下 `Ctrl+Cmd+Z` / `Cmd+M` 切换调试器显隐。
 
-### 📸 9. 原生媒体捕获套件 (截图 / 录屏 / GIF)
-- **无状态栏裁剪高清截图**：一键生成当前界面的高保真全屏截图。
-- **手机端屏幕录制**：直接录制操作视频（MP4），支持带麦克风语音讲解。
-- **动态 GIF 生成**：将操作复现步骤录制并导出为轻量动图，方便粘贴到 Issue 或需求评审单中。
+### 📸 10. 原生媒体捕获与 In-App 图像/视频编辑工作台 (Media Studio Editor)
+- **真机设备直接捕获**：一键生成无状态栏高保真全屏截图、流畅 MP4 录屏或轻量动态 GIF。
+- **全功能媒体管理画廊**：浏览、筛选（图片/视频/GIF）、批量多选、一键删除与快捷复制文件 URI。
+- **图片与视频专业编辑工作台**：
+  - **裁剪与分辨率缩放 (Crop & Resize)**：支持自由裁剪与常用比例（1:1 正方形、4:3、16:9），支持降采样缩放减小体积以便快速上传提交。
+  - **视频精确剪辑与音频控制 (Video Trimming & Audio)**：可视化滑动调整起止裁剪时间、调节播放倍速（0.5× – 2.0×）或一键消除音轨。
+  - **视频帧截图 (PNG Frame Snapshot)**：播放视频时一键提取任意时间点的高清 PNG 关键帧。
+- **QA 缺陷标记与批注系统**：
+  - **Instagram 3×3 九宫格辅助线**：开启辅助对齐网格，协助排查像素级 UI 布局偏差。
+  - **顺序步骤指示气泡 (Step Badges)**：点击或拖拽放置数字步骤徽章（`1`, `2`, `3`...），清晰标注复现步骤。
+  - **缺陷与便签标签 (Bug / Note Tags)**：随手标记彩色 Bug 缺陷（`🐛`）、便签（`📝`）与警示标记。
+  - **文字覆层与设备水印 (Text Overlay & QA Watermark)**：自由输入说明文字，支持附带动态设备型号与系统版本的测试水印。
+- **系统相册导入器 (Camera Roll Importer)**：支持从手机相册中导入现有图片与视频进行二次编辑与排查。
 
-### 🌍 10. 全球 25 种语言与底部抽屉交互
-- **25 种语言本地化**：简体中文 (`zh`)、繁体中文 (`zh-TW`)、英语、日语、韩语、西班牙语、法语、德语、俄语、印地语等。
-- **现代化底部抽屉**：点击顶部工具栏 `[ 🌐 中文 ▾ ]` 即可滑出抽屉，支持横向国家徽章筛选与模糊搜索，点击即时生效并持久化记忆。
+### 🎛️ 11. 可拖拽悬浮球 (FAB) 与穿透半透明模式 (Peek Mode)
+- **全局可拖拽悬浮气泡**：可拖动至屏幕任意位置，支持实时未读计数与动效微章提示。
+- **底部拖拽销毁区 (Drag-to-Dismiss)**：向屏幕底部拖动触发高亮销毁底栏，松手即可优雅隐藏。
+- **穿透半透明调试模式 (Peek-Through Opacity)**：支持通过滑块自定义调节 0.05 – 1.0 半透明度，在半透明状态下可一边操作底层 App 一边实时观察网络请求与 Redux 数据流。
+
+### ☁️ 12. Firebase Remote Config 动态模块管理
+- **云端功能开关 (Feature Flags)**：无需发版即可在生产或灰度构建中通过 Firebase Remote Config 远程开启或关闭特定调试模块（网络抓包、Redux、Crash 监控、存储等）。
+
+### 🌍 13. 全球 25 种语言与底部抽屉交互
+- **25 种语言本地化**：简体中文 (`zh`)、繁体中文 (`zh-TW`)、英语、日语、韩语、西班牙语、法语、德语、俄语、印地语、阿拉伯语、葡萄牙语等。
+- **现代化底部抽屉**：点击顶部工具栏 `[ 🌐 中文 ▾ ]` 即可滑出抽屉，支持横向国旗徽章筛选与模糊搜索，点击即时生效并持久化记忆。
 
 ---
 
 ## 🔎 DevTools 高级搜索语法
 
-顶部搜索框支持类似 Chrome DevTools 的复合多维过滤：
-
 ```text
-# 筛选 POST 请求且状态码为 200
-method:POST status:200
-
-# 仅查看 myapp.com 接口，过滤掉埋点与三方请求
-url:api.myapp.com -analytics -facebook
-
-# 按 Header 请求头筛选
-header:authorization
-
-# 在请求体或响应体 JSON 中搜索关键字段
-body:"orderId"
-
-# 按当前所在页面路由名称筛选
-page:CheckoutScreen
-
-# 搜索特定 TSX 文件中打印的日志
-file:ProfileView.tsx
-
-# 使用负向减号排除干扰项
--healthcheck -socket.io
+method:POST status:200         # Filter POST requests with 200 OK
+url:api.myapp.com -analytics   # Filter domain and exclude analytics
+header:authorization           # Filter requests containing auth header
+body:"orderId"                 # Search in request/response JSON body
+page:CheckoutScreen            # Filter logs by screen/route name
+file:ProfileView.tsx           # Filter console logs by source file
+-healthcheck -socket.io        # Exclude unwanted logs
 ```
 
 ---
 
 ## 📦 快速安装
 
-### 纯原生 React Native 工程
 ```bash
 npm install --save-dev react-native-inapp-inspector react-native-svg
-# 或使用 yarn
+# or
 yarn add -D react-native-inapp-inspector react-native-svg
-# 或使用 pnpm
+# or
 pnpm add -D react-native-inapp-inspector react-native-svg
 ```
 
-#### iOS CocoaPods 安装
+#### iOS CocoaPods
 ```bash
 cd ios && pod install && cd ..
 ```
 
-### Expo 工程
+### Expo
 ```bash
 npx expo install react-native-inapp-inspector react-native-svg
 ```
-*(完全适配 Expo SDK 48 至 52+ 的 Expo Go 与 Prebuild 原生模式)*
 
 ---
 
-## 🚀 极简集成（1分钟上手）
-
-在应用入口根组件（如 `App.tsx` 或 `index.js`）中引入：
+## 🚀 快速接入
 
 ```tsx
 import React from 'react';
@@ -209,25 +235,22 @@ import NetworkInspector, {
   connectAsyncStorage,
 } from 'react-native-inapp-inspector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { store } from './src/store'; // 你的 Redux Store
+import { store } from './src/store';
 
-// ⚡ 建议在根组件挂载前初始化，确保初始化阶段的请求与日志也能完整捕获
+// ⚡ Initialize interceptors before app mount
 setupNetworkLogger();
 setupConsoleLogger();
 setupSocketLogger();
 
-if (store) {
-  connectReduxStore(store);
-}
+if (store) connectReduxStore(store);
 connectAsyncStorage(AsyncStorage);
 
 export default function App() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      {/* 你的业务组件与页面 */}
       <YourAppRoot />
 
-      {/* 仅在开发环境显示悬浮调试器 */}
+      {/* Mount In-App Inspector in DEV builds */}
       {__DEV__ && (
         <NetworkInspector
           enabled={true}
@@ -238,150 +261,3 @@ export default function App() {
   );
 }
 ```
-
----
-
-## 💡 典型场景与进阶用法
-
-### 1. 拦截 WebSocket / Socket.IO 通信
-```typescript
-import { setupSocketLogger, recordSocketFrame } from 'react-native-inapp-inspector/socket';
-
-// 开启全局 WebSocket 自动拦截
-setupSocketLogger();
-
-// 手动录入自定义消息帧：
-recordSocketFrame(connectionId, {
-  direction: 'in', // 'in' | 'out'
-  type: 'json',
-  data: { event: 'PAYMENT_SUCCESS', orderId: '20260912' },
-});
-```
-
-### 2. 调试 AsyncStorage 与 MMKV 本地存储
-```typescript
-// 连接 AsyncStorage
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { connectAsyncStorage } from 'react-native-inapp-inspector/storage';
-
-connectAsyncStorage(AsyncStorage);
-
-// 连接 MMKV
-import { MMKV } from 'react-native-mmkv';
-import { connectMMKV } from 'react-native-inapp-inspector/storage';
-
-export const storage = new MMKV();
-connectMMKV(storage, 'default');
-```
-
-### 3. 拦截与测试推送通知
-```typescript
-import { autoSetupPushLogger, recordPushNotification } from 'react-native-inapp-inspector/push';
-
-// 自动连接支持的推送 SDK
-autoSetupPushLogger();
-
-// 手动记录推送通知
-recordPushNotification({
-  title: '双十一特惠提醒',
-  body: '您关注的商品降价啦，速来抢购！',
-  source: 'fcm',
-  appState: 'foreground',
-  data: { skuId: '10086', deepLink: 'myapp://product/10086' },
-});
-```
-
-### 4. 屏幕截图与录屏 API
-```typescript
-import { ScreenCapture } from 'react-native-inapp-inspector/capture';
-
-// 真机截图
-const screenshot = await ScreenCapture.takeScreenshot({ format: 'png' });
-console.log('截图文件路径:', screenshot.uri);
-
-// 开始录制视频
-await ScreenCapture.startRecording({
-  audioSource: 'mic', // 'mic' | 'app' | 'none'
-  format: 'mp4',
-});
-
-// 结束录制
-const video = await ScreenCapture.stopRecording();
-console.log('录屏文件生成:', video.uri, video.duration);
-```
-
-### 5. 多语言编程控制接口
-```typescript
-import { setLanguage, getLanguage } from 'react-native-inapp-inspector';
-
-// 切换为简体中文
-setLanguage('zh');
-
-console.log('当前语言:', getLanguage());
-```
-
----
-
-## 📱 模块化轻量导入 (Tree-shaking)
-
-若你的应用仅需要部分功能，可按需导入子模块以最小化包体积：
-
-```typescript
-import { setupNetworkLogger } from 'react-native-inapp-inspector/network';
-import { setupSocketLogger } from 'react-native-inapp-inspector/socket';
-import { connectAsyncStorage, connectMMKV } from 'react-native-inapp-inspector/storage';
-import { autoSetupPushLogger } from 'react-native-inapp-inspector/push';
-import { connectReduxStore, inspectorReduxMiddleware } from 'react-native-inapp-inspector/redux';
-import { setupConsoleLogger } from 'react-native-inapp-inspector/console';
-import { ScreenCapture } from 'react-native-inapp-inspector/capture';
-```
-
----
-
-## 📚 常用 API 清单
-
-| API 名称 | 类型 | 功能说明 |
-| :--- | :--- | :--- |
-| `<NetworkInspector />` | 组件 | 应用内悬浮调试球及主交互弹窗。 |
-| `setupNetworkLogger()` | 方法 | 拦截全局 `fetch`、Axios 及 XMLHttpRequest。 |
-| `setupConsoleLogger()` | 方法 | 拦截 `console.log/warn/error` 并通过 Metro 自动解析源码行列号。 |
-| `setupSocketLogger()` | 方法 | 自动拦截 WebSocket 及 Socket.IO 双向消息流。 |
-| `connectReduxStore(store)` | 方法 | 连接 Redux Store，开启 Action 时间线与 State 树差量对比。 |
-| `connectAsyncStorage(storage)` | 方法 | 连接 AsyncStorage 并在 Storage 选项卡中开启实时编辑。 |
-| `connectMMKV(instance, id?)` | 方法 | 连接 MMKV 并在 Storage 选项卡中开启实时编辑。 |
-| `autoSetupPushLogger()` | 方法 | 自动监听并记录接收到的推送通知。 |
-| `ScreenCapture` | 对象 | 提供真机截图、视频录屏及 GIF 导出的完整原生 API。 |
-| `getNativeDeviceMetrics()` | 方法 | 获取手机运行内存、堆分配、磁盘剩余、电池状态等低层指标。 |
-| `setupGlobalCrashHandler()` | 方法 | 捕获全局未处理的 JS 异常并串联前序用户操作面包屑。 |
-| `setLanguage(code)` | 方法 | 动态设置调试器语种（支持全球 25 种主流语言）。 |
-
----
-
-## 🤝 参与贡献
-
-欢迎社区贡献！如有 Bug 反馈或新功能想法，欢迎查阅 [CONTRIBUTING.md](CONTRIBUTING.md) 并提交 Issue 或 Pull Request。
-
----
-
-## 💖 支持与赞助
-
-`react-native-inapp-inspector` 是由作者在业余时间维护的开源免费项目。如果它为您和团队节省了宝贵的排查时间，欢迎在 GitHub 上点亮一个小星星 ⭐️，或通过 GitHub Sponsors 给予赞助支持！
-
-👉 **[在 GitHub Sponsors 上赞助作者 @vengatmacuser](https://github.com/sponsors/vengatmacuser)**
-
----
-
-## 🔍 中文与全球搜索关键词 (Keywords)
-
-为了方便中文开发者在百度、Google、GitHub 及 npm 快速检索到本工具，本项目针对常见开发痛点整理了高频搜索词：
-
-* **核心痛点检索**：React Native 抓包工具、移动端免电脑抓包、真机抓包、APP 请求监听、网络监控面板、移动端控制台、React Native 调试器、前端移动端 DevTools、接口报错定位。
-* **替代工具检索**：Flipper 替代方案 (Flipper alternative)、Charles 替代、Chucker React Native 版、Proxyman 替代、Whistle 替代、Reactotron 替代。
-* **协议与存储**：WebSocket 实时抓包、Socket.io 帧监听、MMKV 可视化编辑器、AsyncStorage 数据查看、Redux 状态时间旅行、Firebase 埋点事件追踪。
-* **地区生态**：中国大陆 (China)、台湾 (Taiwan)、香港 (Hong Kong)、新加坡 (Singapore) 开发者常用移动端联调利器。
-
----
-
-## 📄 开源协议
-
-本项目基于 [MIT License](./LICENSE) 协议开源。

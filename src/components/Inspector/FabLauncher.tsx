@@ -22,7 +22,7 @@ import {
   MaximizeIcon,
   NpmIcon,
 } from '../NetworkIcons';
-import {CapturedMediaItem, ScreenCapture} from '../../capture';
+import {CapturedMediaItem, ScreenCapture, generateCaptureId} from '../../capture';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {showToast} from '../../helpers/toast';
 import {getAppName, getAppVersionAndBuild} from '../../helpers';
@@ -51,6 +51,8 @@ const FabLauncher = () => {
     captureBitrate,
     captureMaxDurationSeconds,
     captureAudioMode,
+    previewMediaItem,
+    setPreviewMediaItem,
   } = useInspector();
   const {width: screenWidth, height: screenHeight} = useWindowDimensions();
   const {t} = useTranslation();
@@ -62,8 +64,6 @@ const FabLauncher = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [previewMediaItem, setPreviewMediaItem] =
-    useState<CapturedMediaItem | null>(null);
 
   // ─── Drag-to-Dismiss Bottom Center Zone State & Animations ───
   const [isDraggingFab, setIsDraggingFab] = useState(false);
@@ -332,13 +332,14 @@ const FabLauncher = () => {
       });
       if (result) {
         triggerNativeHaptic('success');
+        const captureId = generateCaptureId('screenshot', result.format || 'png');
         const newItem: CapturedMediaItem = {
-          id: `screenshot_${result.timestamp}.png`,
+          id: captureId,
           type: 'image',
           format: result.format,
           uri: result.uri,
           filename:
-            result.uri.split('/').pop() || `screenshot_${result.timestamp}.png`,
+            result.uri.split('/').pop() || captureId,
           sizeBytes: result.sizeBytes,
           timestamp: result.timestamp,
           width: result.width,
@@ -364,14 +365,15 @@ const FabLauncher = () => {
         setIsRecording(false);
         if (result) {
           triggerNativeHaptic('success');
+          const captureId = generateCaptureId('video', result.format);
           const newItem: CapturedMediaItem = {
-            id: `video_${result.timestamp}.${result.format}`,
+            id: captureId,
             type: result.format === 'gif' ? 'gif' : 'video',
             format: result.format,
             uri: result.uri,
             filename:
               result.uri.split('/').pop() ||
-              `video_${result.timestamp}.${result.format}`,
+              captureId,
             sizeBytes: result.sizeBytes,
             timestamp: result.timestamp,
             durationMs: result.durationMs,
@@ -626,12 +628,13 @@ const FabLauncher = () => {
           });
           if (gif) {
             refreshMediaCount?.().catch(() => {});
+            const captureId = generateCaptureId('anim', 'gif');
             setPreviewMediaItem({
-              id: `anim_${gif.timestamp}.gif`,
+              id: captureId,
               type: 'gif',
               format: 'gif',
               uri: gif.uri,
-              filename: gif.uri.split('/').pop() || `anim_${gif.timestamp}.gif`,
+              filename: gif.uri.split('/').pop() || captureId,
               sizeBytes: gif.sizeBytes,
               timestamp: gif.timestamp,
               durationMs: gif.durationMs,

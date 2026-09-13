@@ -57,7 +57,16 @@
     "disconnected": "Verbinding verbroken",
     "version": "Versie",
     "update": "UPDATE",
-    "unknown": "Onbekend"
+    "unknown": "Onbekend",
+    "all": "Alles",
+    "dragToHide": "Sleep hierheen om te verbergen",
+    "releaseToHide": "Laat los om inspector te verbergen",
+    "expand": "Uitvouwen",
+    "undo": "Ongedaan maken",
+    "inActiveDevelopment": "In actieve ontwikkeling",
+    "inspectorDismissed": "Inspector gesloten",
+    "noMatches": "Geen overeenkomende resultaten",
+    "moreFilters": "Meer filters"
   },
   "header": {
     "updateAvailableTitle": "Update beschikbaar",
@@ -86,7 +95,16 @@
     "live": "Leef",
     "keys": "{{count}} toetsen",
     "frames": "{{count}} kaders",
-    "sliceBadge": "PLAK"
+    "sliceBadge": "PLAK",
+    "recordScreen": "Scherm opnemen",
+    "newVersionAvailable": "Update beschikbaar",
+    "updateAvailable": "react-native-inapp-inspector update v{{latestVersion}} is klaar",
+    "updateAvailableSubtitle": "Een nieuwe versie van react-native-inapp-inspector is klaar om te installeren",
+    "upgradeCommand": "UPGRADE COMMANDO",
+    "copyCommand": "Kopiëren",
+    "viewNpm": "Bekijken",
+    "screenshot": "Schermafbeelding",
+    "videoCapture": "Opnemen"
   },
   "tabs": {
     "apis": "API's",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "Voorkeuren worden gereset bij het doden van de app. Geef aangepaste opslag door aan <NetworkInspector storage={...} /> om te blijven bestaan ​​op Android.",
       "language": "Taal",
       "languageDescription": "Selecteer de weergavetaal van de interface",
-      "selectLanguage": "Selecteer Taal"
+      "selectLanguage": "Selecteer Taal",
+      "peekOpacity": "Doorkijk-dekking",
+      "peekOpacityDescription": "Transparantieniveau wanneer het oogpictogram is ingeschakeld"
     },
     "configureSubtitle": "Configureer moduleparameters",
     "resetAlertTitle": "Reset alle instellingen",
@@ -294,7 +314,10 @@
       "socketio": "Gesimuleerde Socket.IO v4-sessie",
       "echo": "Gesimuleerde WebSocket-echotest",
       "screenshotSaved": "Screenshot gemaakt en opgeslagen!"
-    }
+    },
+    "simulatePushTitle": "SIMULEER TEST PUSH-MELDINGEN",
+    "simulateSocketTitle": "SIMULEER TEST SOCKET-VERBINDINGEN",
+    "directCaptureShortcuts": "DIRECTE CAPTURE SNELKOPPELINGEN"
   },
   "network": {
     "title": "API's",
@@ -377,7 +400,8 @@
       "key": "Sleutel",
       "value": "WAARDE",
       "keyProperty": "SLEUTEL / EIGENSCHAP",
-      "noMatchingKeys": "Geen overeenkomende sleutels of waarden gevonden"
+      "noMatchingKeys": "Geen overeenkomende sleutels of waarden gevonden",
+      "emptyPayload": "Geen payload-gegevens beschikbaar"
     },
     "showingRequests": "Er worden {{count}} verzoeken weergegeven",
     "showingFilteredRequests": "Er worden {{filtered}} van {{total}} verzoeken weergegeven",
@@ -391,7 +415,10 @@
     "status404": "404 Niet gevonden",
     "status500": "500 Fout",
     "shareError": "Deelfout",
-    "shareErrorMessage": "Kan het aandelenblad niet openen"
+    "shareErrorMessage": "Kan het aandelenblad niet openen",
+    "clearLogsTitle": "Netwerklogboeken wissen",
+    "clearLogsMsg": "Weet u zeker dat u alle netwerklogboeken wilt wissen?",
+    "moreFilters": "Meer filters"
   },
   "console": {
     "title": "Logboeken",
@@ -449,7 +476,10 @@
     "info": "Info",
     "warning": "Waarschuw",
     "error": "Fout",
-    "debug": "Foutopsporing"
+    "debug": "Foutopsporing",
+    "clearLogsTitle": "Consolelogboeken wissen",
+    "clearLogsMsg": "Weet u zeker dat u alle consolelogboeken wilt wissen?",
+    "analytics": "Statistieken"
   },
   "analytics": {
     "title": "Analyses",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "Sleutel-waarde-attributen",
     "filterParamsPlaceholder": "Filter parameters op sleutel of waarde...",
     "noParamsRecorded": "Geen aangepaste parameters geregistreerd voor deze gebeurtenis.",
-    "noParamsMatching": "Geen parameters gevonden die overeenkomen met \"{{search}}\""
+    "noParamsMatching": "Geen parameters gevonden die overeenkomen met \"{{search}}\"",
+    "clearEventsTitle": "Statistieken wissen",
+    "clearEventsMsg": "Weet u zeker dat u alle analyse-evenementen wilt wissen?"
   },
   "redux": {
     "title": "Redux",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "Duidelijke aanhoudende toestand",
     "clearPersistedMessage": "Weet u zeker dat u de permanente opslag voor segment '{{slice}}' wilt verwijderen?",
     "clearedPersisted": "De aanhoudende toestand is opgeheven.",
-    "clearPersistedError": "Kan de persistente status niet wissen."
+    "clearPersistedError": "Kan de persistente status niet wissen.",
+    "clearTimelineTitle": "Redux-tijdlijn wissen",
+    "clearTimelineMsg": "Weet u zeker dat u de verzonden actiegeschiedenis wilt wissen?",
+    "diff": "Statusverschil"
   },
   "device": {
     "title": "Apparaat",
@@ -614,7 +649,8 @@
     "live": "LEEF",
     "ipAddress": "IP-ADRES",
     "ramUsedTotal": "RAM (GEBRUIKT/TOTAAL)",
-    "uptime": "UPTIME"
+    "uptime": "UPTIME",
+    "copiedUuid": "Unieke apparaat-ID gekopieerd (UUID)"
   },
   "storage": {
     "title": "Opslag",
@@ -645,7 +681,9 @@
     "asyncStorage": "Asynchrone opslag",
     "mmkv": "MMKV",
     "deleteConfirm": "Verwijderen",
-    "cleared": "Opslag gewist"
+    "cleared": "Opslag gewist",
+    "keyNameEmpty": "Sleutelnaam mag niet leeg zijn",
+    "saveError": "Fout bij opslaan van opslagsleutel"
   },
   "footer": {
     "endOfList": "Je hebt het einde van de lijst bereikt",
@@ -1293,7 +1331,10 @@
     "filterApply": "Toepassen ({{count}} Crashes)",
     "frameCopy": "Kopieer",
     "frameCopied": "Gekopieerd",
-    "componentHierarchy": "Componenthiërarchie"
+    "componentHierarchy": "Componenthiërarchie",
+    "breadcrumbTrail": "ACTIVITEITENSPOOR & EVENEMENTENLOGBOEK",
+    "deviceDiagnostics": "APPARAATDIAGNOSTIEK BIJ CRASH",
+    "openInInspector": "Openen in inspector"
   },
   "mediaGallery": {
     "all": "Alles ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "Snelheid",
     "loop": "Lus",
     "pause": "Pauze",
-    "play": "Spelen"
+    "play": "Spelen",
+    "hideGridlines": "Instagram-raster verbergen (3×3)",
+    "showGridlines": "Instagram-raster tonen (3×3)",
+    "hideWatermark": "QA-watermerk verbergen",
+    "showWatermark": "QA-watermerk tonen",
+    "exportGif": "Exporteren als geanimeerde GIF",
+    "snapshotFrame": "Frame momentopname (PNG)",
+    "tapToPlaceStep": "Tik of sleep om stapbadge te plaatsen",
+    "resetAdjustments": "Aanpassingen gereset",
+    "tagPlaced": "Tag geplaatst",
+    "tapToAddText": "Tik op de afbeelding om tekst toe te voegen",
+    "textAdded": "Tekstoverlay toegevoegd",
+    "redone": "Opnieuw uitgevoerd",
+    "undone": "Ongedaan gemaakt",
+    "videoSaved": "Bewerkte video opgeslagen in galerij",
+    "savedSuccess": "Succesvol opgeslagen",
+    "saveFailed": "Kan media niet opslaan",
+    "snapshotSaved": "Momentopnameframe opgeslagen in galerij",
+    "snapshotFailed": "Kan frame momentopname niet vastleggen",
+    "shareSuccess": "Media succesvol gedeeld",
+    "cropFailed": "Kan media niet bijsnijden",
+    "croppedSuccess": "Media succesvol bijgesneden",
+    "resizeFailed": "Kan media niet schalen",
+    "resizedSuccess": "Media succesvol geschaald",
+    "trimFailed": "Kan video niet bijsnijden",
+    "trimmedSuccess": "Video succesvol bijgesneden",
+    "muteFailed": "Kan video-audio niet bijwerken",
+    "mutedSuccess": "Audio succesvol aangepast",
+    "resetSuccess": "Afbeelding hersteld naar origineel",
+    "openCameraRoll": "Filmrol openen",
+    "importPhotos": "Foto’s importeren uit bibliotheek",
+    "importVideos": "Video’s importeren uit bibliotheek",
+    "importedPhoto": "Foto geïmporteerd uit filmrol",
+    "importedVideo": "Video geïmporteerd uit filmrol",
+    "importFailed": "Kan media niet importeren",
+    "preview": "Voorbeeld"
   },
   "socket": {
     "title": "WebSocket",
@@ -1411,7 +1487,9 @@
     "sound": "Geluid:",
     "badgeCount": "Badge-aantal:",
     "collapseKey": "Samenvoegsleutel:",
-    "noCustomData": "Geen aangepaste sleutel-waardegegevens gevonden in de payload"
+    "noCustomData": "Geen aangepaste sleutel-waardegegevens gevonden in de payload",
+    "noMatching": "Geen overeenkomende push-meldingen",
+    "adjustSearchFilter": "Probeer uw zoekopdracht of filters aan te passen."
   },
   "debugging": {
     "title": "Foutopsporing en hulpmiddelen",
@@ -1486,6 +1564,48 @@
     "trim5s": "5s bijsnijden",
     "muteAudio": "Audio dempen",
     "toGif": "Naar GIF",
-    "play": "Afspelen"
+    "play": "Afspelen",
+    "trim": "Bijsnijden",
+    "audio": "Audio",
+    "speed": "Snelheid",
+    "snapshot": "Momentopname"
+  },
+  "language": {
+    "confirmTitle": "Taal wijzigen?",
+    "confirmMessage": "Wilt u de inspectortaal wijzigen naar {{newLang}}?",
+    "confirmApply": "Taal toepassen",
+    "current": "Huidig",
+    "new": "Nieuw"
+  },
+  "support": {
+    "title": "Ondersteuning & Community",
+    "subtitle": "React Native In-App Inspector",
+    "heroDescription": "Met passie gemaakt om mobiele teams wereldwijd een complete on-device debugging-suite te bieden. Uw sponsoring, sterren en feedback stimuleren continue verbeteringen.",
+    "sponsor": "Sponsor op GitHub",
+    "sponsorBadge": "SPONSOR",
+    "sponsorDesc": "Ondersteun continu onderhoud, nieuwe functies en verbeteringen.",
+    "sponsorBtn": "Word sponsor",
+    "copiedSponsor": "GitHub Sponsors-link gekopieerd!",
+    "star": "Geef een ster op GitHub",
+    "starDesc": "Geef onze repository een ster zodat meer ontwikkelaars deze tool ontdekken.",
+    "issues": "Probleem melden / Suggestie",
+    "issuesDesc": "Fout gevonden of een idee? Open een issue op GitHub.",
+    "docs": "Officiële documentatie",
+    "docsDesc": "Interactieve functietour, zoeksyntaxis en configuratiehandleidingen.",
+    "contact": "Contact opnemen met auteur",
+    "contactDesc": "vengatmacuser@gmail.com • Directe ondersteuning & zakelijke vragen.",
+    "waysToSupport": "MANIEREN OM BIJ TE DRAGEN & STEUNEN",
+    "npmRegistry": "NPM-pakketregister",
+    "npmRegistryDesc": "Bekijk releasenotities, pakketgroottes en installatiestatistieken.",
+    "shareTitle": "DEEL HET MET ANDEREN",
+    "shareDesc": "Help uw teamgenoten en QA-specialisten sneller te debuggen met netwerk, console en Redux.",
+    "shareWithTeam": "Delen met team",
+    "copiedRepo": "Repository-link gekopieerd!",
+    "copyRepo": "Kopieer repo-URL",
+    "maintainer": "PROJECTBEHEERDER",
+    "sendEmail": "E-mail verzenden",
+    "copiedEmail": "E-mailadres gekopieerd!",
+    "copyEmail": "E-mail kopiëren",
+    "close": "Sluiten"
   }
 }

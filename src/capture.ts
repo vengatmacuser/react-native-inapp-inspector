@@ -8,12 +8,14 @@ import {
   fetchCapturedMediaList,
   deleteCapturedMediaFile,
   clearAllCapturedMediaFiles,
+  pickNativeMedia,
   ScreenshotOptions,
   ScreenshotResult,
   RecordingOptions,
   RecordingResult,
   GifConversionOptions,
   CapturedMediaItem,
+  PickMediaOptions,
 } from './native/NativeInspector';
 
 export type {
@@ -23,11 +25,31 @@ export type {
   RecordingResult,
   GifConversionOptions,
   CapturedMediaItem,
+  PickMediaOptions,
 };
 
 export type ImageFormat = 'png' | 'jpeg' | 'webp';
 export type AudioSource = 'none' | 'app' | 'mic' | 'mixed';
 export type RecordingFormat = 'mp4' | 'gif';
+
+/**
+ * Generates a capture filename/ID in the format:
+ * rn_iai_{YYYYMMDD_HHmmss_SSS}_{fileType}_{random6chars}.{ext}
+ */
+export const generateCaptureId = (
+  fileType: string,
+  ext: string,
+): string => {
+  const now = new Date();
+  const pad = (n: number, len = 2) => String(n).padStart(len, '0');
+  const dateStamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}_${pad(now.getMilliseconds(), 3)}`;
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let random = '';
+  for (let i = 0; i < 6; i++) {
+    random += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `rn_iai_${dateStamp}_${fileType}_${random}.${ext}`;
+};
 
 /**
  * ScreenCapture & Video Recording API for React Native In-App Inspector.
@@ -110,6 +132,16 @@ export const ScreenCapture = {
    */
   clearAllMedia: async (): Promise<boolean> => {
     return clearAllCapturedMediaFiles();
+  },
+
+  /**
+   * Opens native system Camera Roll / photo & video library picker
+   * with strict media type filtering ('image' | 'video' | 'any').
+   */
+  pickMedia: async (
+    options?: PickMediaOptions,
+  ): Promise<CapturedMediaItem | null> => {
+    return pickNativeMedia(options);
   },
 };
 

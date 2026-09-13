@@ -3,9 +3,11 @@ import {
   ScreenCapture,
   ScreenRecorder,
   LIB_VERSION,
-  type PhotoEditOptions,
-  type VideoTrimOptions,
-  type FilmstripOptions,
+} from 'react-native-inapp-inspector';
+import type {
+  PhotoEditOptions,
+  VideoTrimOptions,
+  FilmstripOptions,
 } from 'react-native-inapp-inspector';
 import { NativeModules } from 'react-native';
 

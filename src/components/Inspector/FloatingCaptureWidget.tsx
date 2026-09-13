@@ -17,7 +17,7 @@ import {
   ScreenshotCaptureIcon,
   ScreenRecordIcon,
 } from '../NetworkIcons';
-import {CapturedMediaItem, ScreenCapture} from '../../capture';
+import {CapturedMediaItem, ScreenCapture, generateCaptureId} from '../../capture';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {showToast} from '../../helpers/toast';
 import {AppColors} from '../../styles/AppColors';
@@ -36,6 +36,8 @@ export const FloatingCaptureWidget: React.FC = () => {
     activeTab,
     settingsPage,
     peekMode,
+    previewMediaItem,
+    setPreviewMediaItem,
   } = useInspector();
 
   const {t} = useTranslation();
@@ -44,8 +46,6 @@ export const FloatingCaptureWidget: React.FC = () => {
   const [isExcludingForCapture, setIsExcludingForCapture] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [previewMediaItem, setPreviewMediaItem] =
-    useState<CapturedMediaItem | null>(null);
 
   // Pulse animation for recording state
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -67,12 +67,12 @@ export const FloatingCaptureWidget: React.FC = () => {
   const isDraggedRef = useRef(false);
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: () => true,
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_e, g) =>
         Math.abs(g.dx) > 2 || Math.abs(g.dy) > 2,
       onMoveShouldSetPanResponderCapture: (_e, g) =>
-        Math.abs(g.dx) > 2 || Math.abs(g.dy) > 2,
+        Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
       onPanResponderGrant: () => {
         isDraggedRef.current = true;
         pan.setOffset({
@@ -81,21 +81,21 @@ export const FloatingCaptureWidget: React.FC = () => {
         });
         pan.setValue({x: 0, y: 0});
       },
-      onPanResponderMove: (_e, gestureState) => {
-        pan.setValue({x: gestureState.dx, y: gestureState.dy});
-      },
+      onPanResponderMove: Animated.event([null, {dx: pan.x, dy: pan.y}], {
+        useNativeDriver: false,
+      }),
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
       onPanResponderRelease: () => {
         pan.flattenOffset();
         setTimeout(() => {
           isDraggedRef.current = false;
-        }, 150);
+        }, 100);
         const {width, height} = Dimensions.get('window');
-        const maxX = width / 2 - 30;
+        const maxX = width / 2 - 20;
         const minX = -maxX;
         const maxY = 20;
-        const minY = -(height - 120);
+        const minY = -(height - 140);
         const currentX = panRef.current.x;
         const currentY = panRef.current.y;
         if (currentX < minX || currentX > maxX || currentY < minY || currentY > maxY) {
@@ -201,13 +201,14 @@ export const FloatingCaptureWidget: React.FC = () => {
 
       if (result) {
         triggerNativeHaptic('success');
+        const captureId = generateCaptureId('screenshot', result.format || 'png');
         const newItem: CapturedMediaItem = {
-          id: `screenshot_${result.timestamp}.png`,
+          id: captureId,
           type: 'image',
           format: result.format,
           uri: result.uri,
           filename:
-            result.uri.split('/').pop() || `screenshot_${result.timestamp}.png`,
+            result.uri.split('/').pop() || captureId,
           sizeBytes: result.sizeBytes,
           timestamp: result.timestamp,
           width: result.width,
@@ -234,14 +235,15 @@ export const FloatingCaptureWidget: React.FC = () => {
         setIsRecording(false);
         if (result) {
           triggerNativeHaptic('success');
+          const captureId = generateCaptureId('video', result.format);
           const newItem: CapturedMediaItem = {
-            id: `video_${result.timestamp}.${result.format}`,
+            id: captureId,
             type: result.format === 'gif' ? 'gif' : 'video',
             format: result.format,
             uri: result.uri,
             filename:
               result.uri.split('/').pop() ||
-              `video_${result.timestamp}.${result.format}`,
+              captureId,
             sizeBytes: result.sizeBytes,
             timestamp: result.timestamp,
             durationMs: result.durationMs,
@@ -261,6 +263,8 @@ export const FloatingCaptureWidget: React.FC = () => {
         }
       } else {
         triggerNativeHaptic('medium');
+        // Instantly switch state so idle dock collapses before native recorder captures first frame
+        setIsRecording(true);
         const started = await ScreenCapture.startRecording({
           fps: captureFps,
           scale: captureScale,
@@ -269,9 +273,9 @@ export const FloatingCaptureWidget: React.FC = () => {
           maxDurationSeconds: captureMaxDurationSeconds,
         });
         if (started) {
-          setIsRecording(true);
           showToast(t('header.recordingStarted', 'Recording started'));
         } else {
+          setIsRecording(false);
           showToast(
             t('header.recordingStartFailed', 'Failed to start recording'),
           );
@@ -316,13 +320,13 @@ export const FloatingCaptureWidget: React.FC = () => {
         ]}
       />
 
-      {!isExcludingForCapture && (
+      {!isExcludingForCapture && !previewMediaItem && (
         <Animated.View
           {...panResponder.panHandlers}
           style={[
             styles.container,
             {
-              transform: [{translateX: pan.x}, {translateY: pan.y}],
+              transform: pan.getTranslateTransform(),
             },
           ]}>
           {/* Recording active state: Glowing studio capsule with live timer */}
@@ -363,11 +367,6 @@ export const FloatingCaptureWidget: React.FC = () => {
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 0}}
                 style={styles.dockBar}>
-                {/* Visual Drag Handle Grip */}
-                <View style={styles.dragGripArea} pointerEvents="none">
-                  <GripVerticalIcon size={13} color="rgba(255, 255, 255, 0.45)" />
-                </View>
-
                 {/* 1. Take Screenshot Action */}
                 <TouchableScale
                   onPress={handleTakeScreenshot}
@@ -406,6 +405,11 @@ export const FloatingCaptureWidget: React.FC = () => {
                     {t('header.record', 'Record')}
                   </Text>
                 </TouchableScale>
+
+                {/* Visual Drag Handle Grip (Moved to the right after record) */}
+                <View style={styles.dragGripArea}>
+                  <GripVerticalIcon size={14} color="rgba(255, 255, 255, 0.55)" />
+                </View>
               </LinearGradient>
             </View>
           )}
@@ -429,12 +433,13 @@ export const FloatingCaptureWidget: React.FC = () => {
           });
           if (gif) {
             refreshMediaCount?.().catch(() => {});
+            const captureId = generateCaptureId('anim', 'gif');
             setPreviewMediaItem({
-              id: `anim_${gif.timestamp}.gif`,
+              id: captureId,
               type: 'gif',
               format: 'gif',
               uri: gif.uri,
-              filename: gif.uri.split('/').pop() || `anim_${gif.timestamp}.gif`,
+              filename: gif.uri.split('/').pop() || captureId,
               sizeBytes: gif.sizeBytes,
               timestamp: gif.timestamp,
               durationMs: gif.durationMs,
@@ -480,31 +485,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 24,
-    width: 272,
-    paddingVertical: 0,
-    paddingHorizontal: 0,
     overflow: 'hidden',
   },
   dragGripArea: {
-    paddingLeft: 10,
-    paddingRight: 2,
+    paddingLeft: 6,
+    paddingRight: 12,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dockDivider: {
     width: 1,
-    height: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    height: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
   },
   menuItemBtn: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 7,
-    paddingVertical: 9,
-    paddingHorizontal: 10,
+    paddingVertical: 8.5,
+    paddingHorizontal: 12,
   },
   menuItemIconCircle: {
     width: 24,
@@ -520,58 +521,61 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   recordingShadowWrapper: {
-    borderRadius: 20,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...Platform.select({
       ios: {
-        shadowColor: AppColors.black,
+        shadowColor: '#E11D48',
         shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.40,
-        shadowRadius: 10,
+        shadowOpacity: 0.5,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 12,
+        elevation: 14,
       },
     }),
   },
   recordingPillWrapper: {
-    borderRadius: 20,
+    borderRadius: 22,
     overflow: 'hidden',
   },
   recordingPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    paddingVertical: 6.5,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    justifyContent: 'center',
+    gap: 8,
+    height: 38,
+    paddingHorizontal: 14,
+    borderRadius: 22,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.45)',
   },
   recordingDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: AppColors.white,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
   },
   recordingText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 11,
+    fontSize: 12,
     color: AppColors.white,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
   stopIconBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: 'rgba(255, 255, 255, 0.28)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 2,
+    marginLeft: 3,
   },
   stopIconSquare: {
-    width: 5.5,
-    height: 5.5,
-    borderRadius: 1,
+    width: 6,
+    height: 6,
+    borderRadius: 1.5,
     backgroundColor: AppColors.white,
   },
 });

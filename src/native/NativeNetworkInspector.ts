@@ -30,9 +30,9 @@ export interface Spec extends TurboModule {
   editPhoto(options: Object): Promise<Object>;
   trimVideo(options: Object): Promise<Object>;
   generateFilmstrip(options: Object): Promise<Object>;
+  pickMedia(options: Object): Promise<Object | null>;
   addListener(eventName: string): void;
   removeListeners(count: number): void;
 }
 
 export default TurboModuleRegistry.get<Spec>('NetworkInspectorModule');
-

@@ -57,7 +57,16 @@
     "disconnected": "সংযোগ বিচ্ছিন্ন",
     "version": "সংস্করণ",
     "update": "আপডেট করুন",
-    "unknown": "অজানা"
+    "unknown": "অজানা",
+    "all": "সব",
+    "dragToHide": "লুকানোর জন্য এখানে টানুন",
+    "releaseToHide": "ইন্সপেক্টর লুকাতে ছেড়ে দিন",
+    "expand": "প্রসারিত করুন",
+    "undo": "পূর্বাবস্থায় ফেরান",
+    "inActiveDevelopment": "সক্রিয় বিকাশে",
+    "inspectorDismissed": "ইন্সপেক্টর বরখাস্ত করা হয়েছে",
+    "noMatches": "কোনো মিল পাওয়া যায়নি",
+    "moreFilters": "আরও ফিল্টার"
   },
   "header": {
     "updateAvailableTitle": "আপডেট উপলব্ধ",
@@ -86,7 +95,16 @@
     "live": "লাইভ",
     "keys": "{{count}} কী",
     "frames": "{{count}} ফ্রেম",
-    "sliceBadge": "স্লাইস"
+    "sliceBadge": "স্লাইস",
+    "recordScreen": "স্ক্রিন রেকর্ড করুন",
+    "newVersionAvailable": "আপডেট উপলব্ধ",
+    "updateAvailable": "react-native-inapp-inspector আপডেট v{{latestVersion}} প্রস্তুত",
+    "updateAvailableSubtitle": "react-native-inapp-inspector-এর একটি নতুন সংস্করণ ইনস্টল করার জন্য প্রস্তুত",
+    "upgradeCommand": "আপগ্রেড কমান্ড",
+    "copyCommand": "কপি",
+    "viewNpm": "দেখুন",
+    "screenshot": "স্ক্রিনশট",
+    "videoCapture": "রেকর্ড"
   },
   "tabs": {
     "apis": "এপিআই",
@@ -270,7 +288,9 @@
       "storageStatusDisabledDesc": "অ্যাপ কিল-এ পছন্দ রিসেট। Android এ টিকে থাকতে <NetworkInspector storage={...} />-এ কাস্টম স্টোরেজ পাস করুন।",
       "language": "ভাষা",
       "languageDescription": "ইন্টারফেস প্রদর্শন ভাষা নির্বাচন করুন",
-      "selectLanguage": "ভাষা নির্বাচন করুন"
+      "selectLanguage": "ভাষা নির্বাচন করুন",
+      "peekOpacity": "স্বচ্ছতা অস্বচ্ছতা",
+      "peekOpacityDescription": "চোখের আইকন সক্ষম থাকলে স্বচ্ছতার মাত্রা"
     },
     "configureSubtitle": "মডিউল পরামিতি কনফিগার করুন",
     "resetAlertTitle": "সমস্ত সেটিংস রিসেট করুন",
@@ -294,7 +314,10 @@
       "socketio": "সিমুলেটেড Socket.IO v4 সেশন",
       "echo": "সিমুলেটেড ওয়েবসকেট ইকো পরীক্ষা",
       "screenshotSaved": "স্ক্রিনশট ক্যাপচার এবং সংরক্ষিত!"
-    }
+    },
+    "simulatePushTitle": "টেস্ট পুশ নোটিফিকেশন অনুকরণ করুন",
+    "simulateSocketTitle": "টেস্ট সকেট সংযোগ অনুকরণ করুন",
+    "directCaptureShortcuts": "সরাসরি ক্যাপচার শর্টকাট"
   },
   "network": {
     "title": "এপিআই",
@@ -377,7 +400,8 @@
       "key": "চাবি",
       "value": "মান",
       "keyProperty": "কী / বৈশিষ্ট্য",
-      "noMatchingKeys": "কোনো মিল থাকা কী বা মান পাওয়া যায়নি"
+      "noMatchingKeys": "কোনো মিল থাকা কী বা মান পাওয়া যায়নি",
+      "emptyPayload": "কোনো পেলোড ডেটা উপলব্ধ নেই"
     },
     "showingRequests": "{{count}} অনুরোধ দেখানো হচ্ছে",
     "showingFilteredRequests": "{{total}}টি অনুরোধের মধ্যে {{filtered}}টি দেখানো হচ্ছে৷",
@@ -391,7 +415,10 @@
     "status404": "404 পাওয়া যায়নি",
     "status500": "500 ত্রুটি",
     "shareError": "ভাগ ত্রুটি",
-    "shareErrorMessage": "শেয়ার শীট খুলতে ব্যর্থ হয়েছে৷"
+    "shareErrorMessage": "শেয়ার শীট খুলতে ব্যর্থ হয়েছে৷",
+    "clearLogsTitle": "নেটওয়ার্ক লগ সাফ করুন",
+    "clearLogsMsg": "আপনি কি সমস্ত নেটওয়ার্ক লগ সাফ করতে চান?",
+    "moreFilters": "আরও ফিল্টার"
   },
   "console": {
     "title": "লগ",
@@ -449,7 +476,10 @@
     "info": "তথ্য",
     "warning": "সতর্ক করুন",
     "error": "ত্রুটি",
-    "debug": "ডিবাগ"
+    "debug": "ডিবাগ",
+    "clearLogsTitle": "কনসোল লগ সাফ করুন",
+    "clearLogsMsg": "আপনি কি সমস্ত কনসোল লগ সাফ করতে নিশ্চিত?",
+    "analytics": "অ্যানালিটিক্স"
   },
   "analytics": {
     "title": "বিশ্লেষণ",
@@ -520,7 +550,9 @@
     "keyValueAttributes": "কী-মান বৈশিষ্ট্য",
     "filterParamsPlaceholder": "প্যারামিটার ফিল্টার করুন...",
     "noParamsRecorded": "এই ইভেন্টের জন্য কোনো কাস্টম প্যারামিটার রেকর্ড করা হয়নি।",
-    "noParamsMatching": "\"{{search}}\" এর সাথে মিল থাকা কোনো প্যারামিটার নেই"
+    "noParamsMatching": "\"{{search}}\" এর সাথে মিল থাকা কোনো প্যারামিটার নেই",
+    "clearEventsTitle": "অ্যানালিটিক্স সাফ করুন",
+    "clearEventsMsg": "আপনি কি সমস্ত অ্যানালিটিক্স ইভেন্ট সাফ করতে চান?"
   },
   "redux": {
     "title": "রেডাক্স",
@@ -587,7 +619,10 @@
     "clearPersistedTitle": "স্থির অবস্থা সাফ করুন",
     "clearPersistedMessage": "আপনি কি \"{{slice}}\" স্লাইসের জন্য স্থায়ী সঞ্চয়স্থান মুছতে চান?",
     "clearedPersisted": "স্থায়ী রাষ্ট্র সাফ করা হয়েছে.",
-    "clearPersistedError": "স্থায়ী অবস্থা সাফ করতে ব্যর্থ হয়েছে."
+    "clearPersistedError": "স্থায়ী অবস্থা সাফ করতে ব্যর্থ হয়েছে.",
+    "clearTimelineTitle": "Redux টাইমলাইন সাফ করুন",
+    "clearTimelineMsg": "আপনি কি প্রেরিত অ্যাকশন হিস্ট্রি সাফ করতে নিশ্চিত?",
+    "diff": "স্টেট ডিফারেন্স"
   },
   "device": {
     "title": "ডিভাইস",
@@ -614,7 +649,8 @@
     "live": "লাইভ",
     "ipAddress": "আইপি ঠিকানা",
     "ramUsedTotal": "RAM (ব্যবহৃত/টোটাল)",
-    "uptime": "UPTIME"
+    "uptime": "UPTIME",
+    "copiedUuid": "অনন্য ডিভাইস আইডি (UUID) কপি করা হয়েছে"
   },
   "storage": {
     "title": "স্টোরেজ",
@@ -645,7 +681,9 @@
     "asyncStorage": "অ্যাসিঙ্ক স্টোরেজ",
     "mmkv": "এমএমকেভি",
     "deleteConfirm": "মুছে দিন",
-    "cleared": "স্টোরেজ সাফ করা হয়েছে"
+    "cleared": "স্টোরেজ সাফ করা হয়েছে",
+    "keyNameEmpty": "কী-এর নাম খালি হতে পারে না",
+    "saveError": "স্টোরেজ কী সংরক্ষণে ত্রুটি"
   },
   "footer": {
     "endOfList": "আপনি তালিকার শেষে পৌঁছেছেন",
@@ -1293,7 +1331,10 @@
     "filterApply": "প্রয়োগ করুন ({{count}} ক্র্যাশ)",
     "frameCopy": "কপি",
     "frameCopied": "কপি করা হয়েছে",
-    "componentHierarchy": "উপাদান অনুক্রম"
+    "componentHierarchy": "উপাদান অনুক্রম",
+    "breadcrumbTrail": "ইভেন্ট লগ এবং ব্রেডক্রাম্ব ট্রেইল",
+    "deviceDiagnostics": "ক্র্যাশের সময় ডিভাইস ডায়াগনস্টিকস",
+    "openInInspector": "ইন্সপেক্টরে খুলুন"
   },
   "mediaGallery": {
     "all": "সব ({{count}})",
@@ -1333,7 +1374,42 @@
     "speed": "গতি",
     "loop": "লুপ",
     "pause": "বিরতি",
-    "play": "খেলা"
+    "play": "খেলা",
+    "hideGridlines": "ইনস্টাগ্রাম গ্রিড লুকান (3×3)",
+    "showGridlines": "ইনস্টাগ্রাম গ্রিড দেখান (3×3)",
+    "hideWatermark": "QA ওয়াটারমার্ক লুকান",
+    "showWatermark": "QA ওয়াটারমার্ক দেখান",
+    "exportGif": "অ্যানিমেটেড GIF হিসেবে এক্সপোর্ট করুন",
+    "snapshotFrame": "ফ্রেম স্ন্যাপশট (PNG)",
+    "tapToPlaceStep": "ধাপ ব্যাজ স্থাপন করতে ছবিতে আলতো চাপুন বা টানুন",
+    "resetAdjustments": "সমন্বয় রিসেট হয়েছে",
+    "tagPlaced": "ট্যাগ স্থাপন করা হয়েছে",
+    "tapToAddText": "টেক্সট যোগ করতে ছবিতে যেকোনো জায়গায় আলতো চাপুন",
+    "textAdded": "টেক্সট ওভারলে যোগ করা হয়েছে",
+    "redone": "পুনরায় করা হয়েছে",
+    "undone": "পূর্বাবস্থায় নেওয়া হয়েছে",
+    "videoSaved": "সম্পাদিত ভিডিও গ্যালারিতে সংরক্ষিত হয়েছে",
+    "savedSuccess": "সফলভাবে সংরক্ষিত হয়েছে",
+    "saveFailed": "মিডিয়া সংরক্ষণ করতে ব্যর্থ হয়েছে",
+    "snapshotSaved": "স্ন্যাপশট ফ্রেম গ্যালারিতে সংরক্ষিত হয়েছে",
+    "snapshotFailed": "ফ্রেম স্ন্যাপশট নিতে ব্যর্থ হয়েছে",
+    "shareSuccess": "মিডিয়া সফলভাবে শেয়ার করা হয়েছে",
+    "cropFailed": "মিডিয়া ক্রপ করতে ব্যর্থ হয়েছে",
+    "croppedSuccess": "মিডিয়া সফলভাবে ক্রপ করা হয়েছে",
+    "resizeFailed": "মিডিয়ার আকার পরিবর্তন করতে ব্যর্থ হয়েছে",
+    "resizedSuccess": "মিডিয়ার আকার সফলভাবে পরিবর্তিত হয়েছে",
+    "trimFailed": "ভিডিও ট্রিম করতে ব্যর্থ হয়েছে",
+    "trimmedSuccess": "ভিডিও সফলভাবে ট্রিম করা হয়েছে",
+    "muteFailed": "ভিডিও অডিও আপডেট করতে ব্যর্থ হয়েছে",
+    "mutedSuccess": "অডিও সফলভাবে পরিবর্তিত হয়েছে",
+    "resetSuccess": "ছবি মূলে রিসেট করা হয়েছে",
+    "openCameraRoll": "ক্যামেরা রোল খুলুন",
+    "importPhotos": "লাইব্রেরি থেকে ছবি আমদানি করুন",
+    "importVideos": "লাইব্রেরি থেকে ভিডিও আমদানি করুন",
+    "importedPhoto": "ক্যামেরা রোল থেকে ছবি আমদানি করা হয়েছে",
+    "importedVideo": "ক্যামেরা রোল থেকে ভিডিও আমদানি করা হয়েছে",
+    "importFailed": "মিডিয়া আমদানি করতে ব্যর্থ হয়েছে",
+    "preview": "প্রিভিউ"
   },
   "socket": {
     "title": "ওয়েবসকেট",
@@ -1411,7 +1487,9 @@
     "sound": "শব্দ:",
     "badgeCount": "ব্যাজ সংখ্যা:",
     "collapseKey": "সংক্ষেপ কী:",
-    "noCustomData": "পেলোডে কোনো কাস্টম ডেটা পাওয়া যায়নি"
+    "noCustomData": "পেলোডে কোনো কাস্টম ডেটা পাওয়া যায়নি",
+    "noMatching": "কোনো মিল থাকা পুশ নোটিফিকেশন নেই",
+    "adjustSearchFilter": "আপনার অনুসন্ধান বা ফিল্টার চিপস সামঞ্জস্য করার চেষ্টা করুন।"
   },
   "debugging": {
     "title": "ডিবাগিং ও টুলস",
@@ -1486,6 +1564,48 @@
     "trim5s": "5 সেকেন্ড কাটুন",
     "muteAudio": "অডিও নিঃশব্দ করুন",
     "toGif": "GIF-এ রূপান্তর",
-    "play": "চালান"
+    "play": "চালান",
+    "trim": "ট্রিম",
+    "audio": "অডিও",
+    "speed": "গতি",
+    "snapshot": "স্ন্যাপশট"
+  },
+  "language": {
+    "confirmTitle": "ভাষা পরিবর্তন করবেন?",
+    "confirmMessage": "আপনি কি ইন্সপেক্টরের ভাষা {{newLang}}-এ পরিবর্তন করতে চান?",
+    "confirmApply": "ভাষা প্রয়োগ করুন",
+    "current": "বর্তমান",
+    "new": "নতুন"
+  },
+  "support": {
+    "title": "সহায়তা এবং সম্প্রদায়",
+    "subtitle": "React Native ইন-অ্যাপ ইন্সপেক্টর",
+    "heroDescription": "বিশ্বজুড়ে মোবাইল টিমের জন্য ডিভাইসে ডিবাগিং স্যুট সরবরাহ করার জন্য তৈরি করা হয়েছে। আপনার স্পনসরশিপ, স্টার এবং প্রতিক্রিয়া ক্রমাগত উন্নতি সাধন করে।",
+    "sponsor": "GitHub-এ স্পনসর করুন",
+    "sponsorBadge": "স্পনসর",
+    "sponsorDesc": "চলমান রক্ষণাবেক্ষণ, নতুন বৈশিষ্ট্য এবং উন্নতি সমর্থন করুন।",
+    "sponsorBtn": "স্পনসর হোন",
+    "copiedSponsor": "GitHub স্পনসর লিঙ্ক কপি করা হয়েছে!",
+    "star": "GitHub-এ স্টার দিন",
+    "starDesc": "আরও বিকাশকারীদের এই টুলটি আবিষ্কার করতে সাহায্য করতে আমাদের রেপোতে স্টার দিন।",
+    "issues": "সমস্যা রিপোর্ট করুন / পরামর্শ",
+    "issuesDesc": "একটি বাগ খুঁজে পেয়েছেন বা একটি ধারণা আছে? GitHub-এ একটি ইস্যু খুলুন।",
+    "docs": "অফিসিয়াল ডকুমেন্টেশন",
+    "docsDesc": "ইন্টারেক্টিভ ফিচার ট্যুর, অনুসন্ধান সিনট্যাক্স এবং কনফিগারেশন গাইড।",
+    "contact": "লেখকের সাথে যোগাযোগ করুন",
+    "contactDesc": "vengatmacuser@gmail.com • সরাসরি সহায়তা এবং এন্টারপ্রাইজ অনুসন্ধান।",
+    "waysToSupport": "অবদান এবং সমর্থনের উপায়",
+    "npmRegistry": "NPM প্যাকেজ রেজিস্ট্রি",
+    "npmRegistryDesc": "প্রকাশিত সংস্করণের রিলিজ নোট, ফাইলের আকার এবং ইনস্টল পরিসংখ্যান দেখুন।",
+    "shareTitle": "সবার সাথে শেয়ার করুন",
+    "shareDesc": "আপনার সহকর্মী এবং QA বিশেষজ্ঞদের নেটওয়ার্ক, কনসোল লগ এবং Redux দ্রুত ডিবাগ করতে সহায়তা করুন।",
+    "shareWithTeam": "দলের সাথে শেয়ার করুন",
+    "copiedRepo": "রিপোজিটরি লিঙ্ক কপি করা হয়েছে!",
+    "copyRepo": "রেপো URL কপি করুন",
+    "maintainer": "প্রকল্প রক্ষণাবেক্ষণকারী",
+    "sendEmail": "ইমেল পাঠান",
+    "copiedEmail": "ইমেল ঠিকানা কপি করা হয়েছে!",
+    "copyEmail": "ইমেল কপি করুন",
+    "close": "বন্ধ করুন"
   }
 }

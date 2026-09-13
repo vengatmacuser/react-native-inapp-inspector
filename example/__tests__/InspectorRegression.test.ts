@@ -41,7 +41,7 @@ describe('Inspector Full Regression & Safety Test Suite', () => {
     it('initializes InAppInspector component and exports without crashing', () => {
       expect(InAppInspector).toBeDefined();
       expect(typeof InAppInspector).toBe('function');
-      expect(LIB_VERSION).toBe('2.4.2');
+      expect(LIB_VERSION).toBe('2.5.1');
     });
 
     it('exposes design system tokens and fonts', () => {
