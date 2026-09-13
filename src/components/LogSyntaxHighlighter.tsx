@@ -27,15 +27,23 @@ interface Token {
 }
 
 const TOKEN_REGEX =
-  /("(?:\\.|[^"\\])*"(?=\s*:))|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|(\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(\b(?:true|false)\b)|(\b(?:null|undefined|NaN)\b)|(https?:\/\/[^\s"',]+)|(\[[\w\s_-]+\])|([{}[\],:])|([^"'\d\s{}[\],:]+|[ \t\r\n]+)/g;
+  /("(?:\\.|[^"\\])*"(?=\s*:)|'(?:\\.|[^'\\])*'(?=\s*:))|("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`)|(\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|(\b(?:true|false)\b)|(\b(?:null|undefined|NaN)\b)|(https?:\/\/[^\s"',]+)|(\[[\w\s_-]+\])|([{}[\],:])|([^"'\s{}[\],:]+|[ \t\r\n]+)/g;
 
 export const tokenizeText = (input: string): Token[] => {
   if (!input) return [];
   const tokens: Token[] = [];
   let match: RegExpExecArray | null;
   TOKEN_REGEX.lastIndex = 0;
+  let lastIndex = 0;
 
   while ((match = TOKEN_REGEX.exec(input)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({
+        type: 'plain',
+        value: input.slice(lastIndex, match.index),
+      });
+    }
+
     if (match[1]) {
       tokens.push({type: 'key', value: match[1]});
     } else if (match[2]) {
@@ -55,6 +63,20 @@ export const tokenizeText = (input: string): Token[] => {
     } else if (match[9]) {
       tokens.push({type: 'plain', value: match[9]});
     }
+
+    lastIndex = TOKEN_REGEX.lastIndex;
+
+    if (match[0].length === 0) {
+      TOKEN_REGEX.lastIndex++;
+      lastIndex = TOKEN_REGEX.lastIndex;
+    }
+  }
+
+  if (lastIndex < input.length) {
+    tokens.push({
+      type: 'plain',
+      value: input.slice(lastIndex),
+    });
   }
 
   return tokens;
