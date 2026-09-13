@@ -14,6 +14,9 @@ import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
+import {animateNextLayout, useInspector} from './InspectorContext';
+import SourcePageCard from '../SourcePageCard';
+import HeadersSection from '../HeadersSection';
 import SegmentedTabs from '../SegmentedTabs';
 import JsonViewer from '../JsonViewer';
 import CopyButton from '../CopyButton';
@@ -21,7 +24,7 @@ import ShareButton from '../ShareButton';
 import CodeSnippet from '../CodeSnippet';
 import HighlightText from '../HighlightText';
 import TouchableScale from '../TouchableScale';
-import {formatDateTime} from '../../helpers';
+import {formatDateTime, formatByteSize} from '../../helpers';
 import {shareSocketReport} from '../../helpers/shareFormatter';
 import {
   ClockIcon,
@@ -37,18 +40,14 @@ import {
   TerminalIcon,
   SizeIcon,
   FailIcon,
+  HeadersIcon,
 } from '../NetworkIcons';
 import type {SocketDetailProps} from '../../types';
 
-function formatByteSize(bytes: number): string {
-  if (!bytes || bytes <= 0) return '0 B';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-const SocketDetail: React.FC<SocketDetailProps> = ({item}) => {
+const SocketDetail: React.FC<SocketDetailProps> = ({item: propItem}) => {
   const {t} = useTranslation();
+  const {selectedSocket, logRouteMapRef} = useInspector();
+  const item = propItem || selectedSocket;
   const [activeSubTab, setActiveSubTab] = useState<string>('messages');
   const [frameSearch, setFrameSearch] = useState<string>('');
   const [frameDirectionFilter, setFrameDirectionFilter] = useState<'all' | 'send' | 'receive'>('all');
@@ -513,6 +512,21 @@ ws.onclose = (event) => {
               />
             ),
           },
+          ...(item.headers && Object.keys(item.headers).length > 0
+            ? [
+                {
+                  key: 'headers',
+                  label: `${t('network.detailTabs.headers', 'Headers')} (${Object.keys(item.headers).length})`,
+                  themeColor: AppColors.purple,
+                  icon: (isActive: boolean) => (
+                    <HeadersIcon
+                      size={12}
+                      color={isActive ? AppColors.white : AppColors.grayText}
+                    />
+                  ),
+                },
+              ]
+            : []),
           {
             key: 'params',
             label: `${t('socket.params', 'Params')} (${Object.keys(item.query || {}).length})`,
@@ -537,7 +551,10 @@ ws.onclose = (event) => {
           },
         ]}
         activeKey={activeSubTab}
-        onChange={setActiveSubTab}
+        onChange={tab => {
+          animateNextLayout();
+          setActiveSubTab(tab);
+        }}
         style={{marginHorizontal: 6, marginBottom: 10, marginTop: 6}}
       />
 
@@ -796,6 +813,33 @@ ws.onclose = (event) => {
               </View>
             )}
           </View>
+
+          {/* Source Page Info Card */}
+          {(() => {
+            const routeInfo =
+              item.routeInfo ||
+              (logRouteMapRef?.current &&
+                logRouteMapRef.current.get(item.id as unknown as number));
+            if (!routeInfo || !routeInfo.path || routeInfo.path === 'Navigators')
+              return null;
+            return (
+              <View style={{marginTop: 12}}>
+                <SourcePageCard routeInfo={routeInfo} />
+              </View>
+            );
+          })()}
+        </ScrollView>
+      )}
+
+      {/* Tab: Headers (Handshake) */}
+      {activeSubTab === 'headers' && item.headers && (
+        <ScrollView style={socketDetailStyles.tabContentScroll} contentContainerStyle={{padding: 12}}>
+          <HeadersSection
+            title="Handshake Headers"
+            headers={item.headers}
+            search=""
+            resetKey={item.id}
+          />
         </ScrollView>
       )}
 

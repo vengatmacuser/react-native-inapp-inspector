@@ -27,6 +27,7 @@ import {
   formatTime,
   formatTimeShort,
   getSize,
+  formatByteSize,
   getAppVersionAndBuild,
 } from '../../helpers';
 import {
@@ -92,6 +93,8 @@ const InspectorHeader = React.memo(() => {
     setSelectedCrash,
     selectedPush,
     setSelectedPush,
+    selectedSocket,
+    setSelectedSocket,
     refreshMediaCount,
   } = useInspector();
 
@@ -273,7 +276,8 @@ const InspectorHeader = React.memo(() => {
     (activeTab === 'redux' &&
       (selectedReduxSlice != null || selectedReduxAction != null)) ||
     (activeTab === 'crash' && selectedCrash != null) ||
-    (activeTab === 'push' && selectedPush != null);
+    (activeTab === 'push' && selectedPush != null) ||
+    (activeTab === 'socket' && selectedSocket != null);
 
   const isSettingsView = settingsPage !== null;
   const isAnySelected =
@@ -386,6 +390,7 @@ const InspectorHeader = React.memo(() => {
                     setSelectedReduxAction(null);
                     setSelectedCrash(null);
                     setSelectedPush(null);
+                    setSelectedSocket(null);
                   }}
                   hitSlop={15}
                   style={{
@@ -1385,6 +1390,162 @@ const InspectorHeader = React.memo(() => {
                             {fontSize: isNarrow ? 9.5 : 10.5},
                           ]}>
                           {formatTimeShort(selectedPush.timestamp)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ) : activeTab === 'socket' && selectedSocket != null ? (
+                  <View style={styles.headerDetailCenter}>
+                    <View style={styles.headerDetailRow}>
+                      <View
+                        style={[
+                          styles.headerMethodBadge,
+                          {
+                            backgroundColor:
+                              selectedSocket.client === 'socket.io' ||
+                              selectedSocket.url.includes('/socket.io')
+                                ? AppColors.violet600
+                                : selectedSocket.url.startsWith('wss://')
+                                ? AppColors.emerald600
+                                : AppColors.blue600,
+                            paddingHorizontal: isNarrow ? 5 : 6,
+                            paddingVertical: isNarrow ? 2 : 3,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.headerMethodText,
+                            {fontSize: isNarrow ? 9 : 10},
+                          ]}>
+                          {selectedSocket.client === 'socket.io' ||
+                          selectedSocket.url.includes('/socket.io')
+                            ? 'SIO'
+                            : selectedSocket.url.startsWith('wss://')
+                            ? 'WSS'
+                            : 'WS'}
+                        </Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.headerDetailTitle,
+                          {fontSize: isNarrow ? 13.5 : 15},
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="middle">
+                        {selectedSocket.url}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: isNarrow ? 4 : 6,
+                        marginTop: 3,
+                        paddingVertical: 1,
+                      }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          paddingHorizontal: isNarrow ? 6 : 8,
+                          paddingVertical: 2.5,
+                          borderRadius: 20,
+                          backgroundColor: `${
+                            selectedSocket.status === 'open'
+                              ? AppColors.greenColor
+                              : selectedSocket.status === 'connecting'
+                              ? AppColors.amber600
+                              : selectedSocket.status === 'error'
+                              ? AppColors.errorColor
+                              : AppColors.slate500
+                          }26`,
+                          borderWidth: 1,
+                          borderColor: `${
+                            selectedSocket.status === 'open'
+                              ? AppColors.greenColor
+                              : selectedSocket.status === 'connecting'
+                              ? AppColors.amber600
+                              : selectedSocket.status === 'error'
+                              ? AppColors.errorColor
+                              : AppColors.slate500
+                          }55`,
+                        }}>
+                        <View
+                          style={[
+                            styles.headerStatusDot,
+                            {
+                              backgroundColor:
+                                selectedSocket.status === 'open'
+                                  ? AppColors.greenColor
+                                  : selectedSocket.status === 'connecting'
+                                  ? AppColors.amber600
+                                  : selectedSocket.status === 'error'
+                                  ? AppColors.errorColor
+                                  : AppColors.slate500,
+                              width: isNarrow ? 6 : 7,
+                              height: isNarrow ? 6 : 7,
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.headerSubTitle,
+                            {
+                              fontFamily: AppFonts.interBold,
+                              fontSize: isNarrow ? 10 : 11,
+                            },
+                          ]}>
+                          {(selectedSocket.status || 'open').toUpperCase()}
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          paddingHorizontal: isNarrow ? 6 : 8,
+                          paddingVertical: 2.5,
+                          borderRadius: 20,
+                          backgroundColor: `${AppColors.white}29`,
+                        }}>
+                        <ClockIcon
+                          color={AppColors.white}
+                          size={isNarrow ? 10 : 11}
+                        />
+                        <Text
+                          style={[
+                            styles.headerSubTitle,
+                            {fontSize: isNarrow ? 10 : 11},
+                          ]}>
+                          {selectedSocket.duration != null
+                            ? `${selectedSocket.duration}ms`
+                            : formatTimeShort(selectedSocket.startTime)}
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          paddingHorizontal: isNarrow ? 6 : 8,
+                          paddingVertical: 2.5,
+                          borderRadius: 20,
+                          backgroundColor: `${AppColors.white}29`,
+                        }}>
+                        <SizeIcon
+                          color={AppColors.white}
+                          size={isNarrow ? 10 : 11}
+                        />
+                        <Text
+                          style={[
+                            styles.headerSubTitle,
+                            {fontSize: isNarrow ? 10 : 11},
+                          ]}>
+                          {selectedSocket.frames?.length || 0} frames · {formatByteSize(
+                            (selectedSocket.totalBytesSent || 0) +
+                              (selectedSocket.totalBytesReceived || 0),
+                          )}
                         </Text>
                       </View>
                     </View>

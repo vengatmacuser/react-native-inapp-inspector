@@ -108,6 +108,13 @@ export const formatBytes = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i] || 'B'}`;
 };
 
+export const formatByteSize = (bytes: number): string => {
+  if (!bytes || bytes <= 0) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+};
+
 export const copyToClipboard = (value: unknown, label?: string): void => {
 
   const resolved = typeof value === 'function' ? (value as Function)() : value;
