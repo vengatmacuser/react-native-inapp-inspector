@@ -375,7 +375,9 @@
       "emptyObject": "ఖాళీ వస్తువు",
       "emptyTable": "ఖాళీ వస్తువు",
       "key": "కీ",
-      "value": "విలువ"
+      "value": "విలువ",
+      "keyProperty": "కీ / లక్షణం",
+      "noMatchingKeys": "సరిపోలే కీలు లేదా విలువలు కనుగొనబడలేదు"
     },
     "showingRequests": "{{count}} అభ్యర్థనలను చూపుతోంది",
     "showingFilteredRequests": "{{total}} అభ్యర్థనలలో {{filtered}} చూపుతోంది",
@@ -500,7 +502,25 @@
     "searchParameters": "శోధన పారామితులు...",
     "noParamsFound": "మీ శోధనకు ఏ పారామీటర్‌లు సరిపోలలేదు",
     "sourceFirebase": "ఫైర్‌బేస్ GA4",
-    "sourceCustom": "కస్టమ్ / మాన్యువల్"
+    "sourceCustom": "కస్టమ్ / మాన్యువల్",
+    "dataVisualization": "డేటా విజువలైజేషన్",
+    "dataTypesBreakdown": "డేటా రకాల విభజన",
+    "highestPayloadStrings": "అధిక పేలోడ్ స్ట్రింగ్‌లు",
+    "topLevelMetrics": "ఉన్నత స్థాయి కొలమానాలు",
+    "importantDates": "ముఖ్యమైన తేదీలు",
+    "itemPrices": "వస్తువుల ధరలు",
+    "sessionIdentity": "సెషన్ & గుర్తింపు",
+    "metricParams": "పారామితులు:",
+    "metricUserProps": "వినియోగదారు లక్షణాలు:",
+    "metricSize": "పరిమాణం:",
+    "metricItems": "{{count}} అంశాలు",
+    "sessionId": "సెషన్ ID",
+    "trackingId": "ట్రాకింగ్ ID",
+    "eventParameters": "ఈవెంట్ పారామితులు ({{count}})",
+    "keyValueAttributes": "కీ-విలువ లక్షణాలు",
+    "filterParamsPlaceholder": "కీ లేదా విలువ ద్వారా పారామితులను ఫిల్టర్ చేయండి...",
+    "noParamsRecorded": "ఈ ఈవెంట్ కోసం అనుకూల పారామితులు నమోదు కాలేదు.",
+    "noParamsMatching": "\"{{search}}\" తో సరిపోలే పారామితులు లేవు"
   },
   "redux": {
     "title": "Redux",
@@ -1344,7 +1364,23 @@
     "showingFilteredConnections": "{{total}} కనెక్షన్‌లలో {{filtered}} చూపుతోంది",
     "deletedCount": "{{count}} వెబ్‌సాకెట్ లాగ్‌లు తొలగించబడ్డాయి",
     "copiedUrls": "{{count}} URLలు క్లిప్‌బోర్డ్‌కి కాపీ చేయబడ్డాయి",
-    "webSocketTraffic": "WebSocket ట్రాఫిక్ ({{count}} కనెక్షన్‌లు)"
+    "webSocketTraffic": "WebSocket ట్రాఫిక్ ({{count}} కనెక్షన్‌లు)",
+    "connectionDetails": "కనెక్షన్ వివరాలు",
+    "url": "URL",
+    "clientEngine": "క్లయింట్ ఇంజిన్",
+    "readyState": "సిద్ధ స్థితి",
+    "connectedAt": "కనెక్ట్ అయిన సమయం",
+    "closedAt": "ముగిసిన సమయం",
+    "closeCodeReason": "ముగింపు కోడ్ & కారణం",
+    "subprotocols": "ఉప ప్రోటోకాల్‌లు",
+    "callerStack": "కాలర్ స్టాక్",
+    "error": "లోపం",
+    "handshakeHeaders": "హ్యాండ్‌షేక్ శీర్షికలు",
+    "handshakeParams": "హ్యాండ్‌షేక్ క్వెరీ పారామితులు",
+    "noQueryParams": "కనెక్షన్ URL లో క్వెరీ పారామితులు పంపబడలేదు",
+    "jsClientCode": "జావాస్క్రిప్ట్ క్లయింట్ కోడ్",
+    "terminalWscat": "టెర్మినల్ WSCAT కమాండ్",
+    "rawDump": "రా కనెక్షన్ JSON డంప్"
   },
   "push": {
     "title": "పుష్ నోటిఫికేషన్లు",
@@ -1365,7 +1401,17 @@
     "cleared": "పుష్ నోటిఫికేషన్ చరిత్ర క్లియర్ చేయబడింది",
     "foreground": "ముందుభాగం",
     "background": "నేపథ్యం",
-    "quit": "నిష్క్రమించు"
+    "quit": "నిష్క్రమించు",
+    "messageId": "సందేశ ID:",
+    "sourceDomain": "మూలం / డొమైన్:",
+    "appState": "యాప్ స్థితి:",
+    "actionType": "చర్య రకం:",
+    "timestamp": "సమయం:",
+    "channelId": "ఛానెల్ ID:",
+    "sound": "ధ్వని:",
+    "badgeCount": "బ్యాడ్జ్ సంఖ్య:",
+    "collapseKey": "కొలాప్స్ కీ:",
+    "noCustomData": "పేలోడ్‌లో అనుకూల డేటా కనుగొనబడలేదు"
   },
   "debugging": {
     "title": "డీబగ్గింగ్ & టూల్స్",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "ప్యాకేజీ ఇన్‌స్టాల్ ఆదేశం కాపీ చేయబడింది!",
     "footerLicense": "రియాక్ట్ స్థానిక యాప్ ఇన్‌స్పెక్టర్ · MIT లైసెన్స్",
     "footerTagline": "జీరో-కాన్ఫిగర్ ఆన్-డివైస్ డీబగ్గింగ్ టూల్"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "ప్రత్యక్ష నెట్‌వర్క్",
+    "ram": "RAM",
+    "active": "యాక్టివ్",
+    "networkSpeed": "నెట్‌వర్క్ వేగం",
+    "fpsLive": "ప్రత్యక్ష FPS",
+    "ramUsage": "RAM వినియోగం",
+    "battery": "బ్యాటరీ",
+    "livePerformanceStrip": "ప్రత్యక్ష పనితీరు స్ట్రిప్"
+  },
+  "media": {
+    "animatedGif": "యానిమేటెడ్ GIF",
+    "cropDefect": "లోపాన్ని కత్తిరించండి",
+    "rotate90": "90° తిప్పండి",
+    "redactPii": "వ్యక్తిగత సమాచారాన్ని దాచండి",
+    "trim5s": "5సె కత్తిరించండి",
+    "muteAudio": "ఆడియోను మ్యూట్ చేయండి",
+    "toGif": "GIF గా మార్చండి",
+    "play": "ప్లే చేయండి"
   }
 }

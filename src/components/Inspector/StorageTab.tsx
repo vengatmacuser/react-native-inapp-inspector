@@ -638,13 +638,16 @@ export const StorageTab = React.memo(() => {
             updateCellsBatchingPeriod={40}
             removeClippedSubviews={true}
             renderToHardwareTextureAndroid={true}
-            style={styles.scrollArea}
-            contentContainerStyle={
+            style={[styles.scrollArea, {flex: 1}]}
+            contentContainerStyle={[
               filteredEntries.length === 0
                 ? styles.emptyScrollContent
-                : styles.scrollContent
-            }
+                : styles.scrollContent,
+              {flexGrow: 1},
+            ]}
             showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <View style={styles.emptyIconWrap}>

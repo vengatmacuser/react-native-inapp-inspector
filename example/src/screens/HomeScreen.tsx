@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo} from 'react';
+import React, {useState, useEffect, useMemo, useRef} from 'react';
 import {
   Text,
   Pressable,
@@ -27,11 +27,6 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import axios from 'axios';
 import {
   logAnalyticsEvent,
-  subscribeAnalyticsEvents,
-  getCurrentUserProperties,
-  getCurrentUserId,
-  getDefaultEventParameters,
-  getCollectionEnabled,
   ModuleErrorBoundary,
   LIB_VERSION,
   BrandCircleIcon,
@@ -508,14 +503,6 @@ export const formatCompactNumber = (num: number | null | undefined): string => {
   return num.toString();
 };
 
-export interface AnalyticsSnapshot {
-  events: any[];
-  userProperties: Record<string, any>;
-  userId: string | undefined;
-  defaultParams: Record<string, any>;
-  isCollectionEnabled: boolean;
-}
-
 // ─── MAIN COMBINED HERO HEADER WITH LIVE DOWNLOADS & VELOCITY ─────────────────
 
 interface CombinedHeroHeaderProps {
@@ -982,7 +969,7 @@ const CombinedHeroHeader = ({
                     const isPeak = d.downloads === peakIn7Days;
 
                     return (
-                      <G key={i}>
+                      <G key={d.day || `trend-bar-${i}`}>
                         <Rect
                           x={x}
                           y={topPad}
@@ -1047,7 +1034,7 @@ const CombinedHeroHeader = ({
 
                   return (
                     <View
-                      key={i}
+                      key={d.day || `axis-pill-${i}`}
                       style={[
                         styles.insightsDayPill,
                         isToday && styles.insightsDayPillActive,
@@ -1172,7 +1159,7 @@ const CombinedHeroHeader = ({
                     {/* Top Countries Quick Legend Side Column */}
                     <View style={styles.countryDonutLegendCol}>
                       {countrySeries.slice(0, 4).map((c, i) => (
-                        <View key={i} style={styles.countryDonutLegendItem}>
+                        <View key={c.code || `legend-${i}`} style={styles.countryDonutLegendItem}>
                           <View style={styles.countryDonutLegendLeft}>
                             <View
                               style={[
@@ -1203,7 +1190,7 @@ const CombinedHeroHeader = ({
                   const isDetected = c.isClientRegion;
                   return (
                     <View
-                      key={idx}
+                      key={c.code || `rank-${idx}`}
                       style={[
                         styles.countryRankCard,
                         isDetected && styles.countryRankCardActive,
@@ -1347,7 +1334,7 @@ const CombinedHeroHeader = ({
                     const isLatest = idx === splinePoints.length - 1;
                     const textY = Math.max(15, p.y - (isPeak ? 13 : 11));
                     return (
-                      <G key={idx}>
+                      <G key={p.day || `spline-pt-${idx}`}>
                         {/* Outer halo */}
                         <Circle
                           cx={p.x}
@@ -1423,7 +1410,7 @@ const CombinedHeroHeader = ({
 
                     return (
                       <View
-                        key={i}
+                        key={d.day || `spline-axis-${i}`}
                         style={[
                           styles.insightsDayPill,
                           isToday && styles.insightsDayPillActive,
@@ -1579,7 +1566,7 @@ const CombinedHeroHeader = ({
 
                 <View style={styles.gap2Mt4}>
                   {insights.registry.recentReleases.map((rel, idx) => (
-                    <View key={idx} style={styles.infoRow}>
+                    <View key={rel.version || `release-${idx}`} style={styles.infoRow}>
                       <Text style={styles.infoLabel}>v{rel.version}</Text>
                       <Text style={styles.infoValue}>
                         {rel.date} • {rel.sizeMB}
@@ -1884,26 +1871,13 @@ export function HomeScreen() {
 
   const [copiedInstall, setCopiedInstall] = useState(false);
   const [batchSuccess, setBatchSuccess] = useState(false);
-
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsSnapshot>({
-    events: [],
-    userProperties: {},
-    userId: undefined,
-    defaultParams: {},
-    isCollectionEnabled: true,
-  });
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    const unsub = subscribeAnalyticsEvents(events => {
-      setAnalyticsData({
-        events,
-        userProperties: getCurrentUserProperties(),
-        userId: getCurrentUserId(),
-        defaultParams: getDefaultEventParameters(),
-        isCollectionEnabled: getCollectionEnabled(),
-      });
-    });
-    return () => unsub();
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const copyInstallCommand = () => {
@@ -1911,11 +1885,15 @@ export function HomeScreen() {
       `npm i react-native-inapp-inspector@${npmMeta.version}`,
     );
     setCopiedInstall(true);
-    setTimeout(() => setCopiedInstall(false), 2000);
+    setTimeout(() => {
+      if (isMountedRef.current) setCopiedInstall(false);
+    }, 2000);
   };
 
   const fetchLiveInsightsData = async () => {
-    setLiveInsights(prev => ({...prev, loading: true}));
+    if (isMountedRef.current) {
+      setLiveInsights(prev => ({...prev, loading: true}));
+    }
     try {
       // 1. Live NPM Downloads Range API
       let rawDownloads: NpmDailyPoint[] = [];
@@ -2154,25 +2132,29 @@ export function HomeScreen() {
         nativeFABAvailable: liveNativeAvailable,
       };
 
-      setLiveInsights({
-        dailyPoints: rawDownloads.slice(-7),
-        allDailyPoints: rawDownloads,
-        monthlyTotal,
-        weeklyTotal,
-        dailyAvg,
-        peakDay,
-        latestDay,
-        geo: geoData,
-        registry: regInfo,
-        contributors: contribsList,
-        runtime,
-        telemetry,
-        loading: false,
-        lastUpdated: new Date().toLocaleTimeString(),
-      });
+      if (isMountedRef.current) {
+        setLiveInsights({
+          dailyPoints: rawDownloads.slice(-7),
+          allDailyPoints: rawDownloads,
+          monthlyTotal,
+          weeklyTotal,
+          dailyAvg,
+          peakDay,
+          latestDay,
+          geo: geoData,
+          registry: regInfo,
+          contributors: contribsList,
+          runtime,
+          telemetry,
+          loading: false,
+          lastUpdated: new Date().toLocaleTimeString(),
+        });
+      }
     } catch (err) {
       console.warn('[Insights] General fetch error:', err);
-      setLiveInsights(prev => ({...prev, loading: false}));
+      if (isMountedRef.current) {
+        setLiveInsights(prev => ({...prev, loading: false}));
+      }
     }
   };
 
@@ -2185,7 +2167,7 @@ export function HomeScreen() {
     )
       .then(res => res.json())
       .then(data => {
-        if (data && typeof data.stargazers_count === 'number') {
+        if (isMountedRef.current && data && typeof data.stargazers_count === 'number') {
           setGithubMeta({
             stars: data.stargazers_count,
             forks: data.forks_count || 0,
@@ -2200,7 +2182,11 @@ export function HomeScreen() {
           });
         }
       })
-      .catch(() => setGithubMeta(prev => ({...prev, loading: false})));
+      .catch(() => {
+        if (isMountedRef.current) {
+          setGithubMeta(prev => ({...prev, loading: false}));
+        }
+      });
   }, []);
 
   // Axios client — interceptors are automatically applied by setupNetworkLogger()

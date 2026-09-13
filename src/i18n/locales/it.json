@@ -375,7 +375,9 @@
       "emptyObject": "Oggetto vuoto",
       "emptyTable": "Oggetto vuoto",
       "key": "Chiave",
-      "value": "Valore"
+      "value": "VALORE",
+      "keyProperty": "CHIAVE / PROPRIETÀ",
+      "noMatchingKeys": "Nessuna chiave o valore corrispondente trovato"
     },
     "showingRequests": "Visualizzazione di {{count}} richieste",
     "showingFilteredRequests": "Visualizzazione di {{filtered}} di {{total}} richieste",
@@ -500,7 +502,25 @@
     "searchParameters": "Cerca parametri...",
     "noParamsFound": "Nessun parametro corrisponde alla tua ricerca",
     "sourceFirebase": "FIREBASE GA4",
-    "sourceCustom": "PERSONALIZZATO/MANUALE"
+    "sourceCustom": "PERSONALIZZATO/MANUALE",
+    "dataVisualization": "Visualizzazione dati",
+    "dataTypesBreakdown": "Ripartizione dei tipi di dati",
+    "highestPayloadStrings": "Stringhe di payload più lunghe",
+    "topLevelMetrics": "Metriche principali",
+    "importantDates": "Date importanti",
+    "itemPrices": "Prezzi degli articoli",
+    "sessionIdentity": "SESSIONE E IDENTITÀ",
+    "metricParams": "Parametri:",
+    "metricUserProps": "Proprietà utente:",
+    "metricSize": "Dimensione:",
+    "metricItems": "{{count}} articoli",
+    "sessionId": "ID sessione",
+    "trackingId": "ID tracciamento",
+    "eventParameters": "PARAMETRI EVENTO ({{count}})",
+    "keyValueAttributes": "Attributi chiave-valore",
+    "filterParamsPlaceholder": "Filtra parametri per chiave o valore...",
+    "noParamsRecorded": "Nessun parametro personalizzato registrato per questo evento.",
+    "noParamsMatching": "Nessun parametro corrispondente a \"{{search}}\""
   },
   "redux": {
     "title": "Redux",
@@ -1344,7 +1364,23 @@
     "showingFilteredConnections": "Visualizzazione di {{filtered}} di {{total}} connessioni",
     "deletedCount": "Log WebSocket {{count}} eliminati",
     "copiedUrls": "{{count}} URL copiati negli appunti",
-    "webSocketTraffic": "Traffico WebSocket ({{count}} connessioni)"
+    "webSocketTraffic": "Traffico WebSocket ({{count}} connessioni)",
+    "connectionDetails": "DETTAGLI CONNESSIONE",
+    "url": "URL",
+    "clientEngine": "Motore client",
+    "readyState": "Stato pronto",
+    "connectedAt": "Connesso alle",
+    "closedAt": "Chiuso alle",
+    "closeCodeReason": "Codice e motivo di chiusura",
+    "subprotocols": "Sottoprotocolli",
+    "callerStack": "Stack chiamante",
+    "error": "Errore",
+    "handshakeHeaders": "Intestazioni Handshake",
+    "handshakeParams": "PARAMETRI QUERY HANDSHAKE",
+    "noQueryParams": "Nessun parametro query passato nell'URL di connessione",
+    "jsClientCode": "CODICE CLIENT JAVASCRIPT",
+    "terminalWscat": "COMANDO TERMINALE WSCAT",
+    "rawDump": "DUMP JSON GREZZO DELLA CONNESSIONE"
   },
   "push": {
     "title": "Notifiche push",
@@ -1365,7 +1401,17 @@
     "cleared": "La cronologia delle notifiche push è stata cancellata",
     "foreground": "Primo piano",
     "background": "Sfondo",
-    "quit": "Esci"
+    "quit": "Esci",
+    "messageId": "ID messaggio:",
+    "sourceDomain": "Origine / Dominio:",
+    "appState": "Stato app:",
+    "actionType": "Tipo di azione:",
+    "timestamp": "Timestamp:",
+    "channelId": "ID canale:",
+    "sound": "Suono:",
+    "badgeCount": "Conteggio badge:",
+    "collapseKey": "Chiave di raggruppamento:",
+    "noCustomData": "Nessun dato chiave-valore personalizzato trovato nel payload"
   },
   "debugging": {
     "title": "Debug e strumenti",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "Comando di installazione del pacchetto copiato!",
     "footerLicense": "React Native In-App Inspector · Licenza MIT",
     "footerTagline": "Strumento di debug sul dispositivo a configurazione zero"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "RETE IN DIRETTA",
+    "ram": "RAM",
+    "active": "ATTIVO",
+    "networkSpeed": "Velocità di rete",
+    "fpsLive": "FPS in tempo reale",
+    "ramUsage": "Utilizzo RAM",
+    "battery": "Batteria",
+    "livePerformanceStrip": "Barra delle prestazioni in tempo reale"
+  },
+  "media": {
+    "animatedGif": "GIF ANIMATA",
+    "cropDefect": "Ritaglia difetto",
+    "rotate90": "Ruota 90°",
+    "redactPii": "Nascondi PII",
+    "trim5s": "Taglia 5s",
+    "muteAudio": "Disattiva audio",
+    "toGif": "In GIF",
+    "play": "Riproduci"
   }
 }

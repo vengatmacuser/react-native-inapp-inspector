@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "2.4.2",
+  "version": "2.5.0",
   "description": "The zero-config, all-in-one in-app debugger & network logger for React Native & Expo (Flipper / Chucker alternative). Inspect Network (fetch/Axios/GraphQL), Console logs with Metro Symbolication, Redux State, Firebase Analytics, Storage (AsyncStorage/MMKV), Hardware Telemetry, and JS Bundle size directly on device.",
   "repository": {
     "type": "git",
@@ -87,6 +87,13 @@
       "require": "./dist/commonjs/socket.js",
       "default": "./dist/commonjs/socket.js"
     },
+    "./editor": {
+      "react-native": "./dist/commonjs/editor.js",
+      "types": "./dist/commonjs/editor.d.ts",
+      "import": "./dist/esm/editor.js",
+      "require": "./dist/commonjs/editor.js",
+      "default": "./dist/commonjs/editor.js"
+    },
     "./metro": {
       "types": "./dist/commonjs/metro.d.ts",
       "import": "./dist/esm/metro.js",
@@ -102,6 +109,8 @@
     "assets",
     "metro.js",
     "metro.d.ts",
+    "editor.js",
+    "editor.d.ts",
     "README.md",
     "android",
     "ios",

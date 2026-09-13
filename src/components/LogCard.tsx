@@ -305,17 +305,44 @@ function LogCard({
             </View>
           </View>
 
-          {/* Row 2: Clean Smart URL Container (Path prominent, Host subtitle) */}
+          {/* Row 2: Clean Smart URL Container (URL Host first, then Slug/Path further below) */}
           <View style={styles.urlBox}>
+            {/* Top Sub-Row: Protocol + Host URL + Badges */}
             <View style={styles.urlMainRow}>
-              <HighlightText
-                text={urlParsed.path}
-                search={searchStr}
-                style={styles.pathText}
-                highlightStyle={styles.highlight}
-                numberOfLines={1}
-                ellipsizeMode="middle"
-              />
+              <View style={styles.hostRow}>
+                <View
+                  style={[
+                    styles.protoBadge,
+                    {
+                      backgroundColor: urlParsed.isHttps
+                        ? `${AppColors.emerald600}12`
+                        : `${AppColors.amber600}12`,
+                      borderColor: urlParsed.isHttps
+                        ? `${AppColors.emerald600}2B`
+                        : `${AppColors.amber600}2B`,
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.protoBadgeText,
+                      {
+                        color: urlParsed.isHttps
+                          ? AppColors.emerald600
+                          : AppColors.amber700,
+                      },
+                    ]}>
+                    {urlParsed.isHttps ? 'HTTPS' : 'HTTP'}
+                  </Text>
+                </View>
+                <HighlightText
+                  text={urlParsed.host || item.url}
+                  search={searchStr}
+                  style={styles.hostText}
+                  highlightStyle={styles.highlight}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                />
+              </View>
               <View style={styles.urlBadgeRow}>
                 {isJson && (
                   <View style={styles.jsonBadge}>
@@ -330,37 +357,16 @@ function LogCard({
               </View>
             </View>
 
-            <View style={styles.hostRow}>
-              <View
-                style={[
-                  styles.protoBadge,
-                  {
-                    backgroundColor: urlParsed.isHttps
-                      ? `${AppColors.emerald600}12`
-                      : `${AppColors.amber600}12`,
-                    borderColor: urlParsed.isHttps
-                      ? `${AppColors.emerald600}2B`
-                      : `${AppColors.amber600}2B`,
-                  },
-                ]}>
-                <Text
-                  style={[
-                    styles.protoBadgeText,
-                    {
-                      color: urlParsed.isHttps
-                        ? AppColors.emerald600
-                        : AppColors.amber700,
-                    },
-                  ]}>
-                  {urlParsed.isHttps ? 'HTTPS' : 'HTTP'}
-                </Text>
-              </View>
-              <Text
-                style={styles.hostText}
+            {/* Bottom Sub-Row: Slug / Path */}
+            <View style={styles.slugRow}>
+              <HighlightText
+                text={urlParsed.path}
+                search={searchStr}
+                style={styles.pathText}
+                highlightStyle={styles.highlight}
                 numberOfLines={1}
-                ellipsizeMode="tail">
-                {urlParsed.host || item.url}
-              </Text>
+                ellipsizeMode="middle"
+              />
             </View>
           </View>
 
@@ -562,11 +568,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 4,
+    minHeight: 16,
   },
-  pathText: {
+  hostRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flex: 1,
+    minWidth: 0,
+  },
+  protoBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 3.5,
+    borderWidth: 1,
+  },
+  protoBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 8,
+    lineHeight: 10,
+  },
+  hostText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 11.5,
+    lineHeight: 15,
     color: AppColors.primaryBlack,
     flex: 1,
   },
@@ -602,28 +627,16 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     color: AppColors.purple,
   },
-  hostRow: {
+  slugRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
     minHeight: 15,
   },
-  protoBadge: {
-    paddingHorizontal: 4.5,
-    paddingVertical: 1,
-    borderRadius: 3.5,
-    borderWidth: 1,
-  },
-  protoBadgeText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 8,
-    lineHeight: 10,
-  },
-  hostText: {
+  pathText: {
     fontFamily: AppFonts.interMedium,
-    fontSize: 10,
-    lineHeight: 13,
-    color: AppColors.grayTextWeak,
+    fontSize: 10.5,
+    lineHeight: 14,
+    color: AppColors.slate600 || AppColors.grayText,
     flex: 1,
   },
   highlight: {

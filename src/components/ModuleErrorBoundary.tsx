@@ -107,7 +107,7 @@ export class ModuleErrorBoundary extends Component<
         <View style={[styles.card, containerStyle]}>
           <View style={styles.headerRow}>
             <View style={styles.titleRow}>
-              <WarningTriangleIcon color="#DC2626" size={16} />
+              <WarningTriangleIcon color={AppColors.red600} size={16} />
               <Text style={styles.moduleName} numberOfLines={1}>
                 {moduleName}
               </Text>
@@ -127,7 +127,7 @@ export class ModuleErrorBoundary extends Component<
               style={styles.retryButton}
               onPress={this.handleRetry}
               activeOpacity={0.7}>
-              <RefreshCcwIcon color="#FFFFFF" size={12} />
+              <RefreshCcwIcon color={AppColors.white} size={12} />
               <Text style={styles.retryText}>Retry Module</Text>
             </TouchableOpacity>
 
@@ -135,7 +135,7 @@ export class ModuleErrorBoundary extends Component<
               style={styles.copyButton}
               onPress={this.handleCopy}
               activeOpacity={0.7}>
-              <CopyIcon color="#475569" size={12} />
+              <CopyIcon color={AppColors.slate600} size={12} />
               <Text style={styles.copyText}>
                 {this.state.copied ? 'Copied' : 'Copy Error'}
               </Text>
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginVertical: 6,
     gap: 10,
-    ...Platform.select({
+    ...(Platform?.select ? Platform.select({
       ios: {
         shadowColor: AppColors.red600,
         shadowOffset: {width: 0, height: 2},
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
       android: {
         elevation: 2,
       },
-    }),
+    }) : { elevation: 2 }),
   },
   headerRow: {
     flexDirection: 'row',

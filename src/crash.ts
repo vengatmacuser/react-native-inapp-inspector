@@ -11,6 +11,7 @@ export {
   simulateTestCrash,
   exportCrashReport,
   parseCrashStackTrace,
+  triggerGlobalCrashScreen,
   setMaxCrashLogsLimit,
   getMaxCrashLogsLimit,
   pruneCrashRecords,

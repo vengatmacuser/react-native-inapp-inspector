@@ -266,7 +266,7 @@ const JsonTableRow = React.memo(
               <ChevronIcon
                 direction={expanded ? 'up' : 'down'}
                 size={9}
-                color="#4F46E5"
+                color={AppColors.purple}
               />
             </TouchableOpacity>
           )}
@@ -464,7 +464,7 @@ const JsonViewer = React.memo(
           <View style={localStyles.emptyContainer}>
             <Text style={localStyles.emptyText}>
               {search && search.trim().length > 0
-                ? 'No matching keys or values found'
+                ? t('network.jsonViewer.noMatchingKeys', 'No matching keys or values found')
                 : t('network.jsonViewer.emptyTable')}
             </Text>
           </View>
@@ -476,9 +476,11 @@ const JsonViewer = React.memo(
           {/* Table Header Row */}
           <View style={localStyles.tableHeaderRow}>
             <Text style={[localStyles.tableHeaderCell, {flex: 2}]}>
-              KEY / PROPERTY
+              {t('network.jsonViewer.keyProperty', 'KEY / PROPERTY')}
             </Text>
-            <Text style={[localStyles.tableHeaderCell, {flex: 3}]}>VALUE</Text>
+            <Text style={[localStyles.tableHeaderCell, {flex: 3}]}>
+              {t('network.jsonViewer.value', 'VALUE')}
+            </Text>
           </View>
           {keys.map((key, i) => (
             <JsonTableRow

@@ -41,7 +41,7 @@ export async function loadSettings(): Promise<PersistedSettings> {
       }
     }
 
-    if (Platform.OS === 'ios') {
+    if (Platform?.OS === 'ios' && Settings?.get) {
       const raw = Settings.get(SETTINGS_KEY);
       if (!raw) return {};
       if (typeof raw === 'string') {
@@ -74,7 +74,7 @@ export function saveSettings(settings: PersistedSettings): void {
       setNativeStorageItem(SETTINGS_KEY, raw);
     }
 
-    if (Platform.OS === 'ios') {
+    if (Platform?.OS === 'ios' && Settings?.set) {
       Settings.set({ [SETTINGS_KEY]: raw });
       return;
     }
@@ -100,7 +100,7 @@ export async function clearPersistedSettings(): Promise<void> {
       await setNativeStorageItem(SETTINGS_KEY, null);
     }
 
-    if (Platform.OS === 'ios') {
+    if (Platform?.OS === 'ios' && Settings?.set) {
       Settings.set({ [SETTINGS_KEY]: null });
       return;
     }

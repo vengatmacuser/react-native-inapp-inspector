@@ -375,7 +375,9 @@
       "emptyObject": "Pusty obiekt",
       "emptyTable": "Pusty obiekt",
       "key": "Klucz",
-      "value": "Wartość"
+      "value": "WARTOŚĆ",
+      "keyProperty": "KLUCZ / WŁAŚCIWOŚĆ",
+      "noMatchingKeys": "Nie znaleziono pasujących kluczy ani wartości"
     },
     "showingRequests": "Wyświetlam {{count}} żądań",
     "showingFilteredRequests": "Wyświetlam {{filtered}} z {{total}} żądań",
@@ -500,7 +502,25 @@
     "searchParameters": "Wyszukaj parametry...",
     "noParamsFound": "Żadne parametry nie pasują do Twojego wyszukiwania",
     "sourceFirebase": "BAZA FIREGA4",
-    "sourceCustom": "NIESTANDARDOWE / RĘCZNE"
+    "sourceCustom": "NIESTANDARDOWE / RĘCZNE",
+    "dataVisualization": "Wizualizacja danych",
+    "dataTypesBreakdown": "Podział typów danych",
+    "highestPayloadStrings": "Najdłuższe ciągi ładunku",
+    "topLevelMetrics": "Metryki najwyższego poziomu",
+    "importantDates": "Ważne daty",
+    "itemPrices": "Ceny elementów",
+    "sessionIdentity": "SESJA I TOŻSAMOŚĆ",
+    "metricParams": "Parametry:",
+    "metricUserProps": "Właściwości użytkownika:",
+    "metricSize": "Rozmiar:",
+    "metricItems": "{{count}} elementów",
+    "sessionId": "ID sesji",
+    "trackingId": "ID śledzenia",
+    "eventParameters": "PARAMETRY ZDARZENIA ({{count}})",
+    "keyValueAttributes": "Atrybuty klucz-wartość",
+    "filterParamsPlaceholder": "Filtruj parametry według klucza lub wartości...",
+    "noParamsRecorded": "Brak zarejestrowanych parametrów niestandardowych dla tego zdarzenia.",
+    "noParamsMatching": "Brak parametrów pasujących do \"{{search}}\""
   },
   "redux": {
     "title": "Redukcja",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "Wyświetlam {{filtered}} z {{total}} połączeń",
     "deletedCount": "Usunięto {{count}} dzienniki WebSocket",
     "copiedUrls": "{{count}} Adresy URL skopiowane do schowka",
-    "webSocketTraffic": "Ruch w WebSocket (połączenia {{count}})"
+    "webSocketTraffic": "Ruch w WebSocket (połączenia {{count}})",
+    "connectionDetails": "SZCZEGÓŁY POŁĄCZENIA",
+    "url": "URL",
+    "clientEngine": "Silnik klienta",
+    "readyState": "Stan gotowości",
+    "connectedAt": "Połączono o",
+    "closedAt": "Zamknięto o",
+    "closeCodeReason": "Kod i powód zamknięcia",
+    "subprotocols": "Podprotokoły",
+    "callerStack": "Stos wywołań",
+    "error": "Błąd",
+    "handshakeHeaders": "Nagłówki Handshake",
+    "handshakeParams": "PARAMETRY ZAPYTANIA HANDSHAKE",
+    "noQueryParams": "Brak parametrów zapytania w URL połączenia",
+    "jsClientCode": "KOD KLIENTA JAVASCRIPT",
+    "terminalWscat": "POLECENIE TERMINALA WSCAT",
+    "rawDump": "SUROWY ZRZUT JSON POŁĄCZENIA"
   },
   "push": {
     "title": "Powiadomienia push",
     "preview": "Podgląd",
     "payload": "Niestandardowy ładunek",
-    "deliveryMetadata": "Metadane dostawy i wiadomości",
+    "deliveryMetadata": "Metadane dostarczenia i wiadomości",
     "rawPayload": "Surowy ładunek",
     "link": "Link",
     "appNotification": "Powiadomienie aplikacji",
@@ -1365,7 +1401,17 @@
     "cleared": "Historia powiadomień push została wyczyszczona",
     "foreground": "Pierwszy plan",
     "background": "Tło",
-    "quit": "Przestań"
+    "quit": "Przestań",
+    "messageId": "ID wiadomości:",
+    "sourceDomain": "Źródło / Domena:",
+    "appState": "Stan aplikacji:",
+    "actionType": "Typ akcji:",
+    "timestamp": "Znacznik czasu:",
+    "channelId": "ID kanału:",
+    "sound": "Dźwięk:",
+    "badgeCount": "Liczba plakietek:",
+    "collapseKey": "Klucz zwijania:",
+    "noCustomData": "Nie znaleziono niestandardowych danych klucz-wartość w ładunku"
   },
   "debugging": {
     "title": "Debugowanie i narzędzia",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "Skopiowano polecenie instalacji pakietu!",
     "footerLicense": "Natywny inspektor w aplikacji React · Licencja MIT",
     "footerTagline": "Narzędzie do debugowania z zerową konfiguracją na urządzeniu"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "SIEĆ NA ŻYWO",
+    "ram": "RAM",
+    "active": "AKTYWNY",
+    "networkSpeed": "Prędkość sieci",
+    "fpsLive": "FPS na żywo",
+    "ramUsage": "Użycie pamięci RAM",
+    "battery": "Bateria",
+    "livePerformanceStrip": "Pasek wydajности na żywo"
+  },
+  "media": {
+    "animatedGif": "ANIMOWANY GIF",
+    "cropDefect": "Przytnij defekt",
+    "rotate90": "Obróć o 90°",
+    "redactPii": "Ukryj dane osobowe",
+    "trim5s": "Przytnij 5s",
+    "muteAudio": "Wycisz dźwięk",
+    "toGif": "Do GIF",
+    "play": "Odtwórz"
   }
 }

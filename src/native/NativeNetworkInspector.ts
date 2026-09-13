@@ -26,6 +26,10 @@ export interface Spec extends TurboModule {
   getCapturedMedia(): Promise<string>;
   deleteCapturedMedia(uri: string): Promise<boolean>;
   clearAllCapturedMedia(): Promise<boolean>;
+  copyMediaToClipboard(filePath: string): Promise<Object>;
+  editPhoto(options: Object): Promise<Object>;
+  trimVideo(options: Object): Promise<Object>;
+  generateFilmstrip(options: Object): Promise<Object>;
   addListener(eventName: string): void;
   removeListeners(count: number): void;
 }

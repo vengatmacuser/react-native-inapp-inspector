@@ -1,60 +1,61 @@
 import React from 'react';
 import Svg, {Circle, Path, G, Defs, LinearGradient, RadialGradient, Stop, Rect, Ellipse, Line} from 'react-native-svg';
+import {AppColors} from '../styles/AppColors';
 
 export const BrandCircleIcon = ({size = 56}: {size?: number}) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256" fill="none">
       <Defs>
         <LinearGradient id="tile" x1="30" y1="30" x2="210" y2="222" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#141B33"/>
-          <Stop offset="1" stopColor="#0A0E1C"/>
+          <Stop offset="0" stopColor={AppColors.navy900}/>
+          <Stop offset="1" stopColor={AppColors.navy950}/>
         </LinearGradient>
         <LinearGradient id="edge" x1="14" y1="22" x2="220" y2="228" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#3A4E7A"/>
-          <Stop offset="1" stopColor="#1A2238"/>
+          <Stop offset="0" stopColor={AppColors.steel600}/>
+          <Stop offset="1" stopColor={AppColors.navy800}/>
         </LinearGradient>
         <LinearGradient id="beam" x1="70" y1="74" x2="194" y2="187" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#5EEAD4"/>
-          <Stop offset="0.5" stopColor="#38BDF8"/>
-          <Stop offset="1" stopColor="#A78BFA"/>
+          <Stop offset="0" stopColor={AppColors.teal300}/>
+          <Stop offset="0.5" stopColor={AppColors.sky400}/>
+          <Stop offset="1" stopColor={AppColors.purple400}/>
         </LinearGradient>
         <RadialGradient id="halo" cx="0.5" cy="0.45" r="0.55">
-          <Stop offset="0" stopColor="#38BDF8" stopOpacity={0.12}/>
-          <Stop offset="1" stopColor="#38BDF8" stopOpacity={0}/>
+          <Stop offset="0" stopColor={AppColors.sky400} stopOpacity={0.12}/>
+          <Stop offset="1" stopColor={AppColors.sky400} stopOpacity={0}/>
         </RadialGradient>
         <LinearGradient id="owlbody" x1="78" y1="60" x2="178" y2="186" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#202E55"/>
-          <Stop offset="1" stopColor="#10182F"/>
+          <Stop offset="0" stopColor={AppColors.navy700}/>
+          <Stop offset="1" stopColor={AppColors.navy900}/>
         </LinearGradient>
         <LinearGradient id="beak" x1="120" y1="151" x2="136" y2="168" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#FCD34D"/>
-          <Stop offset="1" stopColor="#FB923C"/>
+          <Stop offset="0" stopColor={AppColors.amber300}/>
+          <Stop offset="1" stopColor={AppColors.orange400}/>
         </LinearGradient>
         <RadialGradient id="iris" cx="0.42" cy="0.38" r="0.72">
-          <Stop offset="0" stopColor="#FDE68A"/>
-          <Stop offset="0.5" stopColor="#FBBF24"/>
-          <Stop offset="1" stopColor="#F59E0B"/>
+          <Stop offset="0" stopColor={AppColors.amber200}/>
+          <Stop offset="0.5" stopColor={AppColors.amber400}/>
+          <Stop offset="1" stopColor={AppColors.amber500}/>
         </RadialGradient>
         <RadialGradient id="blush" cx="0.5" cy="0.5" r="0.5">
-          <Stop offset="0" stopColor="#FB7185" stopOpacity={0.5}/>
-          <Stop offset="1" stopColor="#FB7185" stopOpacity={0}/>
+          <Stop offset="0" stopColor={AppColors.rose400} stopOpacity={0.5}/>
+          <Stop offset="1" stopColor={AppColors.rose400} stopOpacity={0}/>
         </RadialGradient>
         <LinearGradient id="wing" x1="70" y1="120" x2="190" y2="206" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#1A2545"/>
-          <Stop offset="1" stopColor="#0E1530"/>
+          <Stop offset="0" stopColor={AppColors.navy800}/>
+          <Stop offset="1" stopColor={AppColors.navy950}/>
         </LinearGradient>
         <LinearGradient id="faceplate" x1="70" y1="72" x2="186" y2="152" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#35497E"/>
-          <Stop offset="1" stopColor="#1E2D4D"/>
+          <Stop offset="0" stopColor={AppColors.steel500}/>
+          <Stop offset="1" stopColor={AppColors.navy700}/>
         </LinearGradient>
         <RadialGradient id="lensglass" cx="0.4" cy="0.32" r="0.75">
-          <Stop offset="0" stopColor="#7DE8FF" stopOpacity={0.22}/>
-          <Stop offset="0.7" stopColor="#7DE8FF" stopOpacity={0.05}/>
-          <Stop offset="1" stopColor="#7DE8FF" stopOpacity={0}/>
+          <Stop offset="0" stopColor={AppColors.sky300} stopOpacity={0.22}/>
+          <Stop offset="0.7" stopColor={AppColors.sky300} stopOpacity={0.05}/>
+          <Stop offset="1" stopColor={AppColors.sky300} stopOpacity={0}/>
         </RadialGradient>
         <LinearGradient id="belly" x1="94" y1="126" x2="162" y2="212" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#33477A"/>
-          <Stop offset="1" stopColor="#1D2B53"/>
+          <Stop offset="0" stopColor={AppColors.steel600}/>
+          <Stop offset="1" stopColor={AppColors.navy700}/>
         </LinearGradient>
       </Defs>
       <Circle cx="128" cy="128" r="122" fill="url(#tile)"/>

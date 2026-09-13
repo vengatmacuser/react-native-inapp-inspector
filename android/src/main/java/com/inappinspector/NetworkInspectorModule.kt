@@ -1259,12 +1259,533 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
             promise.resolve(map)
         }
     }
-
+    // ─────────────────────────────────────────────────────────────────────────
+    // 100% Native Media Editor: Photo Editing (Bitmap + ColorMatrix + Canvas)
+    // ─────────────────────────────────────────────────────────────────────────
 
     @ReactMethod
-    fun addListener(eventName: String) {
-        // Required for React Native NativeEventEmitter
+    fun editPhoto(options: ReadableMap, promise: Promise) {
+        captureExecutor.execute {
+            try {
+                val rawUri = if (options.hasKey("uri")) options.getString("uri") else null
+                if (rawUri.isNullOrEmpty()) {
+                    promise.reject("INVALID_URI", "Image URI is missing or empty")
+                    return@execute
+                }
+
+                val cleanPath = when {
+                    rawUri.startsWith("file://") -> Uri.parse(rawUri).path ?: rawUri.substring(7)
+                    else -> rawUri
+                }
+
+                val sourceBitmap = if (cleanPath.startsWith("content://")) {
+                    val input = reactContext.contentResolver.openInputStream(Uri.parse(cleanPath))
+                    android.graphics.BitmapFactory.decodeStream(input)
+                } else {
+                    android.graphics.BitmapFactory.decodeFile(cleanPath)
+                }
+
+                if (sourceBitmap == null) {
+                    promise.reject("IMAGE_LOAD_FAILED", "Failed to decode source image")
+                    return@execute
+                }
+
+                // 1. Compute Matrix for Rotation and Flip
+                val matrix = Matrix()
+                val rotation = if (options.hasKey("rotation")) options.getInt("rotation") else 0
+                val flipH = if (options.hasKey("flipHorizontal")) options.getBoolean("flipHorizontal") else false
+                val flipV = if (options.hasKey("flipVertical")) options.getBoolean("flipVertical") else false
+
+                if (rotation != 0) {
+                    matrix.postRotate(rotation.toFloat())
+                }
+                val scaleX = if (flipH) -1f else 1f
+                val scaleY = if (flipV) -1f else 1f
+                if (flipH || flipV) {
+                    matrix.postScale(scaleX, scaleY)
+                }
+
+                // 2. Compute Crop Bounds
+                var cropX = 0
+                var cropY = 0
+                var cropW = sourceBitmap.width
+                var cropH = sourceBitmap.height
+
+                if (options.hasKey("crop")) {
+                    val cropMap = options.getMap("crop")
+                    if (cropMap != null) {
+                        val isNorm = if (cropMap.hasKey("isNormalized")) cropMap.getBoolean("isNormalized") else false
+                        var x = if (cropMap.hasKey("x")) cropMap.getDouble("x").toFloat() else 0f
+                        var y = if (cropMap.hasKey("y")) cropMap.getDouble("y").toFloat() else 0f
+                        var w = if (cropMap.hasKey("width")) cropMap.getDouble("width").toFloat() else cropW.toFloat()
+                        var h = if (cropMap.hasKey("height")) cropMap.getDouble("height").toFloat() else cropH.toFloat()
+
+                        if (isNorm) {
+                            x *= cropW
+                            y *= cropH
+                            w *= cropW
+                            h *= cropH
+                        }
+
+                        cropX = x.toInt().coerceIn(0, cropW - 1)
+                        cropY = y.toInt().coerceIn(0, cropH - 1)
+                        cropW = w.toInt().coerceIn(1, sourceBitmap.width - cropX)
+                        cropH = h.toInt().coerceIn(1, sourceBitmap.height - cropY)
+                    }
+                }
+
+                val croppedBitmap = Bitmap.createBitmap(sourceBitmap, cropX, cropY, cropW, cropH, matrix, true)
+
+                // 3. Color Grading & Adjustments via ColorMatrix
+                val finalColorMatrix = android.graphics.ColorMatrix()
+                var hasColorTransforms = false
+
+                if (options.hasKey("adjustments")) {
+                    val adj = options.getMap("adjustments")
+                    if (adj != null) {
+                        val brightness = if (adj.hasKey("brightness")) adj.getDouble("brightness").toFloat() else 0f
+                        val contrast = if (adj.hasKey("contrast")) adj.getDouble("contrast").toFloat() else 1f
+                        val saturation = if (adj.hasKey("saturation")) adj.getDouble("saturation").toFloat() else 1f
+                        val temperature = if (adj.hasKey("temperature")) adj.getDouble("temperature").toFloat() else 0f
+
+                        if (saturation != 1f) {
+                            finalColorMatrix.setSaturation(saturation)
+                            hasColorTransforms = true
+                        }
+                        if (contrast != 1f || brightness != 0f) {
+                            val scale = contrast
+                            val translate = (brightness * 255f) + (1f - scale) * 128f
+                            val cm = android.graphics.ColorMatrix(floatArrayOf(
+                                scale, 0f, 0f, 0f, translate,
+                                0f, scale, 0f, 0f, translate,
+                                0f, 0f, scale, 0f, translate,
+                                0f, 0f, 0f, 1f, 0f
+                            ))
+                            finalColorMatrix.postConcat(cm)
+                            hasColorTransforms = true
+                        }
+                        if (temperature != 0f) {
+                            val warmScaleR = 1f + (temperature * 0.15f)
+                            val coolScaleB = 1f - (temperature * 0.15f)
+                            val tempCm = android.graphics.ColorMatrix(floatArrayOf(
+                                warmScaleR, 0f, 0f, 0f, 0f,
+                                0f, 1f, 0f, 0f, 0f,
+                                0f, 0f, coolScaleB, 0f, 0f,
+                                0f, 0f, 0f, 1f, 0f
+                            ))
+                            finalColorMatrix.postConcat(tempCm)
+                            hasColorTransforms = true
+                        }
+                    }
+                }
+
+                // 4. Preset Filters
+                val filterPreset = if (options.hasKey("filterPreset")) options.getString("filterPreset") else "none"
+                if (!filterPreset.isNullOrEmpty() && filterPreset != "none") {
+                    val presetCm = android.graphics.ColorMatrix()
+                    when (filterPreset) {
+                        "mono", "noir" -> {
+                            presetCm.setSaturation(0f)
+                            if (filterPreset == "noir") {
+                                presetCm.postConcat(android.graphics.ColorMatrix(floatArrayOf(
+                                    1.2f, 0f, 0f, 0f, -20f,
+                                    0f, 1.2f, 0f, 0f, -20f,
+                                    0f, 0f, 1.2f, 0f, -20f,
+                                    0f, 0f, 0f, 1f, 0f
+                                )))
+                            }
+                            hasColorTransforms = true
+                        }
+                        "sepia" -> {
+                            val sepiaMatrix = floatArrayOf(
+                                0.393f, 0.769f, 0.189f, 0f, 0f,
+                                0.349f, 0.686f, 0.168f, 0f, 0f,
+                                0.272f, 0.534f, 0.131f, 0f, 0f,
+                                0f, 0f, 0f, 1f, 0f
+                            )
+                            presetCm.set(sepiaMatrix)
+                            hasColorTransforms = true
+                        }
+                        "vibrant" -> {
+                            presetCm.setSaturation(1.4f)
+                            hasColorTransforms = true
+                        }
+                        "warm" -> {
+                            presetCm.set(floatArrayOf(
+                                1.15f, 0f, 0f, 0f, 0f,
+                                0f, 1.05f, 0f, 0f, 0f,
+                                0f, 0f, 0.88f, 0f, 0f,
+                                0f, 0f, 0f, 1f, 0f
+                            ))
+                            hasColorTransforms = true
+                        }
+                        "cool" -> {
+                            presetCm.set(floatArrayOf(
+                                0.90f, 0f, 0f, 0f, 0f,
+                                0f, 1.0f, 0f, 0f, 0f,
+                                0f, 0f, 1.20f, 0f, 0f,
+                                0f, 0f, 0f, 1f, 0f
+                            ))
+                            hasColorTransforms = true
+                        }
+                        "fade" -> {
+                            presetCm.set(floatArrayOf(
+                                0.9f, 0f, 0f, 0f, 25f,
+                                0f, 0.9f, 0f, 0f, 25f,
+                                0f, 0f, 0.9f, 0f, 25f,
+                                0f, 0f, 0f, 1f, 0f
+                            ))
+                            hasColorTransforms = true
+                        }
+                    }
+                    finalColorMatrix.postConcat(presetCm)
+                }
+
+                // Render into final Bitmap
+                val finalBitmap: Bitmap
+                if (hasColorTransforms) {
+                    finalBitmap = Bitmap.createBitmap(croppedBitmap.width, croppedBitmap.height, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(finalBitmap)
+                    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                        colorFilter = android.graphics.ColorMatrixColorFilter(finalColorMatrix)
+                    }
+                    canvas.drawBitmap(croppedBitmap, 0f, 0f, paint)
+                } else {
+                    finalBitmap = croppedBitmap
+                }
+
+                // 5. Apply Redactions & Annotations Overlay if provided
+                val mutableBitmap = if (finalBitmap.isMutable) finalBitmap else finalBitmap.copy(Bitmap.Config.ARGB_8888, true)
+                val canvas = android.graphics.Canvas(mutableBitmap)
+                val overlayPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+
+                if (options.hasKey("redactions")) {
+                    val redactions = options.getArray("redactions")
+                    if (redactions != null) {
+                        overlayPaint.color = android.graphics.Color.BLACK
+                        overlayPaint.style = android.graphics.Paint.Style.FILL
+                        for (i in 0 until redactions.size()) {
+                            val box = redactions.getMap(i) ?: continue
+                            var x = if (box.hasKey("x")) box.getDouble("x").toFloat() else 0f
+                            var y = if (box.hasKey("y")) box.getDouble("y").toFloat() else 0f
+                            var w = if (box.hasKey("width")) box.getDouble("width").toFloat() else 0f
+                            var h = if (box.hasKey("height")) box.getDouble("height").toFloat() else 0f
+                            val isNorm = if (box.hasKey("isNormalized")) box.getBoolean("isNormalized") else false
+                            if (isNorm) {
+                                x *= mutableBitmap.width
+                                y *= mutableBitmap.height
+                                w *= mutableBitmap.width
+                                h *= mutableBitmap.height
+                            }
+                            canvas.drawRect(x, y, x + w, y + h, overlayPaint)
+                        }
+                    }
+                }
+
+                if (options.hasKey("annotations")) {
+                    val annotations = options.getArray("annotations")
+                    if (annotations != null) {
+                        overlayPaint.color = android.graphics.Color.RED
+                        overlayPaint.style = android.graphics.Paint.Style.STROKE
+                        overlayPaint.strokeWidth = 6f
+                        for (i in 0 until annotations.size()) {
+                            val ann = annotations.getMap(i) ?: continue
+                            var x = if (ann.hasKey("x")) ann.getDouble("x").toFloat() else 0f
+                            var y = if (ann.hasKey("y")) ann.getDouble("y").toFloat() else 0f
+                            var w = if (ann.hasKey("width")) ann.getDouble("width").toFloat() else 0f
+                            var h = if (ann.hasKey("height")) ann.getDouble("height").toFloat() else 0f
+                            val isNorm = if (ann.hasKey("isNormalized")) ann.getBoolean("isNormalized") else false
+                            if (isNorm) {
+                                x *= mutableBitmap.width
+                                y *= mutableBitmap.height
+                                w *= mutableBitmap.width
+                                h *= mutableBitmap.height
+                            }
+                            canvas.drawRect(x, y, x + w, y + h, overlayPaint)
+                        }
+                    }
+                }
+
+                val format = if (options.hasKey("format")) options.getString("format")?.lowercase() ?: "jpeg" else "jpeg"
+                val quality = if (options.hasKey("quality")) options.getDouble("quality").toFloat() else 0.9f
+                val qualityInt = (quality * 100).toInt().coerceIn(1, 100)
+
+                val compressFormat: Bitmap.CompressFormat
+                val ext: String
+                val mimeType: String
+
+                when (format) {
+                    "png" -> {
+                        compressFormat = Bitmap.CompressFormat.PNG
+                        ext = "png"
+                        mimeType = "image/png"
+                    }
+                    "webp" -> {
+                        compressFormat = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            Bitmap.CompressFormat.WEBP_LOSSY
+                        } else {
+                            @Suppress("DEPRECATION")
+                            Bitmap.CompressFormat.WEBP
+                        }
+                        ext = "webp"
+                        mimeType = "image/webp"
+                    }
+                    else -> {
+                        compressFormat = Bitmap.CompressFormat.JPEG
+                        ext = "jpg"
+                        mimeType = "image/jpeg"
+                    }
+                }
+
+                val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss_SSS", java.util.Locale.US).format(java.util.Date())
+                val outFile = File(getCapturesDirectory(), "edit_${timestamp}.$ext")
+                FileOutputStream(outFile).use { out ->
+                    mutableBitmap.compress(compressFormat, qualityInt, out)
+                    out.flush()
+                }
+
+                val resultMap = Arguments.createMap().apply {
+                    putString("uri", Uri.fromFile(outFile).toString())
+                    putInt("width", mutableBitmap.width)
+                    putInt("height", mutableBitmap.height)
+                    putDouble("size", outFile.length().toDouble())
+                    putString("mimeType", mimeType)
+                    putString("format", format)
+                }
+                promise.resolve(resultMap)
+            } catch (e: Exception) {
+                promise.reject("PHOTO_EDIT_ERROR", e.message ?: "Photo editing failed", e)
+            }
+        }
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 100% Native Media Editor: Video Trimming (MediaExtractor + MediaMuxer)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @ReactMethod
+    fun trimVideo(options: ReadableMap, promise: Promise) {
+        captureExecutor.execute {
+            var extractor: android.media.MediaExtractor? = null
+            var muxer: android.media.MediaMuxer? = null
+            try {
+                val rawUri = if (options.hasKey("uri")) options.getString("uri") else null
+                if (rawUri.isNullOrEmpty()) {
+                    promise.reject("INVALID_URI", "Video URI is missing or empty")
+                    return@execute
+                }
+
+                val cleanPath = when {
+                    rawUri.startsWith("file://") -> Uri.parse(rawUri).path ?: rawUri.substring(7)
+                    else -> rawUri
+                }
+
+                var startMs = if (options.hasKey("startTimeMs")) options.getDouble("startTimeMs").toLong() else 0L
+                var endMs = if (options.hasKey("endTimeMs")) options.getDouble("endTimeMs").toLong() else 0L
+                val muteAudio = (if (options.hasKey("mute")) options.getBoolean("mute") else false) ||
+                                (if (options.hasKey("muteAudio")) options.getBoolean("muteAudio") else false)
+
+                extractor = android.media.MediaExtractor()
+                if (cleanPath.startsWith("content://")) {
+                    extractor.setDataSource(reactContext, Uri.parse(cleanPath), null)
+                } else {
+                    extractor.setDataSource(cleanPath)
+                }
+
+                var totalDurationUs = 0L
+                val trackCount = extractor.trackCount
+                for (i in 0 until trackCount) {
+                    val format = extractor.getTrackFormat(i)
+                    if (format.containsKey(android.media.MediaFormat.KEY_DURATION)) {
+                        val dur = format.getLong(android.media.MediaFormat.KEY_DURATION)
+                        if (dur > totalDurationUs) {
+                            totalDurationUs = dur
+                        }
+                    }
+                }
+
+                val totalDurationMs = totalDurationUs / 1000L
+                if (endMs <= 0 || (totalDurationMs > 0 && endMs > totalDurationMs)) {
+                    endMs = if (totalDurationMs > 0) totalDurationMs else endMs
+                }
+                if (startMs >= endMs && endMs > 0) {
+                    startMs = 0L
+                }
+
+                val startUs = startMs * 1000L
+                val endUs = if (endMs > 0) endMs * 1000L else Long.MAX_VALUE
+
+                val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss_SSS", java.util.Locale.US).format(java.util.Date())
+                val outFile = File(getCapturesDirectory(), "trim_${timestamp}.mp4")
+
+                muxer = android.media.MediaMuxer(outFile.absolutePath, android.media.MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+
+                val trackIndexMap = HashMap<Int, Int>()
+                var videoWidth = 1080
+                var videoHeight = 1920
+
+                for (i in 0 until trackCount) {
+                    val format = extractor.getTrackFormat(i)
+                    val mime = format.getString(android.media.MediaFormat.KEY_MIME) ?: ""
+                    if (mime.startsWith("video/")) {
+                        extractor.selectTrack(i)
+                        val muxerTrackIndex = muxer.addTrack(format)
+                        trackIndexMap[i] = muxerTrackIndex
+                        if (format.containsKey(android.media.MediaFormat.KEY_WIDTH)) {
+                            videoWidth = format.getInteger(android.media.MediaFormat.KEY_WIDTH)
+                        }
+                        if (format.containsKey(android.media.MediaFormat.KEY_HEIGHT)) {
+                            videoHeight = format.getInteger(android.media.MediaFormat.KEY_HEIGHT)
+                        }
+                    } else if (mime.startsWith("audio/") && !muteAudio) {
+                        extractor.selectTrack(i)
+                        val muxerTrackIndex = muxer.addTrack(format)
+                        trackIndexMap[i] = muxerTrackIndex
+                    }
+                }
+
+                muxer.start()
+
+                extractor.seekTo(startUs, android.media.MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+
+                val bufferSize = 1024 * 1024
+                val buffer = java.nio.ByteBuffer.allocateDirect(bufferSize)
+                val bufferInfo = android.media.MediaCodec.BufferInfo()
+
+                while (true) {
+                    val trackIndex = extractor.sampleTrackIndex
+                    if (trackIndex < 0) break
+
+                    val sampleTime = extractor.sampleTime
+                    if (sampleTime > endUs) break
+
+                    if (sampleTime >= startUs) {
+                        bufferInfo.offset = 0
+                        bufferInfo.size = extractor.readSampleData(buffer, 0)
+                        if (bufferInfo.size > 0) {
+                            bufferInfo.presentationTimeUs = sampleTime - startUs
+                            bufferInfo.flags = extractor.sampleFlags
+                            val muxerTrackIndex = trackIndexMap[trackIndex]
+                            if (muxerTrackIndex != null) {
+                                muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
+                            }
+                        }
+                    }
+                    extractor.advance()
+                }
+
+                muxer.stop()
+                muxer.release()
+                muxer = null
+
+                extractor.release()
+                extractor = null
+
+                val durationMs = if (endMs > startMs) (endMs - startMs) else totalDurationMs
+                val resultMap = Arguments.createMap().apply {
+                    putString("uri", Uri.fromFile(outFile).toString())
+                    putDouble("durationMs", durationMs.toDouble())
+                    putDouble("size", outFile.length().toDouble())
+                    putInt("width", videoWidth)
+                    putInt("height", videoHeight)
+                    putString("format", "mp4")
+                }
+                promise.resolve(resultMap)
+            } catch (e: Exception) {
+                try { muxer?.release() } catch (_: Exception) {}
+                try { extractor?.release() } catch (_: Exception) {}
+                promise.reject("VIDEO_TRIM_ERROR", e.message ?: "Video trim failed", e)
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 100% Native Media Editor: Filmstrip Generator (MediaMetadataRetriever)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @ReactMethod
+    fun generateFilmstrip(options: ReadableMap, promise: Promise) {
+        captureExecutor.execute {
+            var retriever: MediaMetadataRetriever? = null
+            try {
+                val rawUri = if (options.hasKey("uri")) options.getString("uri") else null
+                if (rawUri.isNullOrEmpty()) {
+                    promise.reject("INVALID_URI", "Video URI is missing or empty")
+                    return@execute
+                }
+
+                val cleanPath = when {
+                    rawUri.startsWith("file://") -> Uri.parse(rawUri).path ?: rawUri.substring(7)
+                    else -> rawUri
+                }
+
+                val count = if (options.hasKey("count")) options.getInt("count").coerceIn(1, 50) else 10
+                val targetW = if (options.hasKey("maxWidth")) options.getInt("maxWidth")
+                              else if (options.hasKey("targetWidth")) options.getInt("targetWidth") else 120
+                val targetH = if (options.hasKey("maxHeight")) options.getInt("maxHeight")
+                              else if (options.hasKey("targetHeight")) options.getInt("targetHeight") else 120
+                val qualityDouble = if (options.hasKey("quality")) options.getDouble("quality") else 0.7
+                val qualityInt = (qualityDouble * 100).toInt().coerceIn(10, 100)
+
+                retriever = MediaMetadataRetriever()
+                if (cleanPath.startsWith("content://")) {
+                    retriever.setDataSource(reactContext, Uri.parse(cleanPath))
+                } else {
+                    retriever.setDataSource(cleanPath)
+                }
+
+                val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                val durationMs = durationStr?.toLongOrNull() ?: 0L
+                if (durationMs <= 0L) {
+                    promise.reject("INVALID_DURATION", "Unable to determine video duration")
+                    return@execute
+                }
+
+                val durationUs = durationMs * 1000L
+                val stepUs = durationUs / count.coerceAtLeast(1)
+                val thumbnailsArray = Arguments.createArray()
+
+                for (i in 0 until count) {
+                    val targetUs = i * stepUs
+                    val frameBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                        retriever.getScaledFrameAtTime(targetUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, targetW, targetH)
+                    } else {
+                        val original = retriever.getFrameAtTime(targetUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+                        if (original != null) {
+                            Bitmap.createScaledBitmap(original, targetW, targetH, true)
+                        } else null
+                    }
+
+                    if (frameBitmap != null) {
+                        val stream = ByteArrayOutputStream()
+                        frameBitmap.compress(Bitmap.CompressFormat.JPEG, qualityInt, stream)
+                        val b64 = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
+                        val dataUrl = "data:image/jpeg;base64,$b64"
+
+                        val thumbMap = Arguments.createMap().apply {
+                            putDouble("timeMs", (targetUs / 1000L).toDouble())
+                            putString("uri", dataUrl)
+                            putInt("index", i)
+                        }
+                        thumbnailsArray.pushMap(thumbMap)
+                    }
+                }
+
+                retriever.release()
+                retriever = null
+
+                val resultMap = Arguments.createMap().apply {
+                    putArray("thumbnails", thumbnailsArray)
+                    putDouble("durationMs", durationMs.toDouble())
+                }
+                promise.resolve(resultMap)
+            } catch (e: Exception) {
+                try { retriever?.release() } catch (_: Exception) {}
+                promise.reject("FILMSTRIP_ERROR", e.message ?: "Filmstrip generation failed", e)
+            }
+        }
+    }
+
 
 
     @ReactMethod

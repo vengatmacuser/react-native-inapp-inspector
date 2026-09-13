@@ -742,20 +742,20 @@ ws.onclose = (event) => {
       {activeSubTab === 'overview' && (
         <ScrollView style={socketDetailStyles.tabContentScroll} contentContainerStyle={{padding: 12}}>
           <View style={socketDetailStyles.sectionCard}>
-            <Text style={socketDetailStyles.sectionHeading}>CONNECTION DETAILS</Text>
+            <Text style={socketDetailStyles.sectionHeading}>{t('socket.connectionDetails', 'CONNECTION DETAILS')}</Text>
 
             <View style={socketDetailStyles.infoRow}>
-              <Text style={socketDetailStyles.infoKey}>URL</Text>
+              <Text style={socketDetailStyles.infoKey}>{t('socket.url', 'URL')}</Text>
               <Text style={socketDetailStyles.infoVal} selectable>{item.url}</Text>
             </View>
 
             <View style={socketDetailStyles.infoRow}>
-              <Text style={socketDetailStyles.infoKey}>Client Engine</Text>
+              <Text style={socketDetailStyles.infoKey}>{t('socket.clientEngine', 'Client Engine')}</Text>
               <Text style={socketDetailStyles.infoVal}>{item.client?.toUpperCase() || 'WEBSOCKET'}</Text>
             </View>
 
             <View style={socketDetailStyles.infoRow}>
-              <Text style={socketDetailStyles.infoKey}>Ready State</Text>
+              <Text style={socketDetailStyles.infoKey}>{t('socket.readyState', 'Ready State')}</Text>
               <Text style={socketDetailStyles.infoVal}>
                 {item.readyState === 1
                   ? '1 (OPEN)'
@@ -768,27 +768,27 @@ ws.onclose = (event) => {
             </View>
 
             <View style={socketDetailStyles.infoRow}>
-              <Text style={socketDetailStyles.infoKey}>Connected At</Text>
+              <Text style={socketDetailStyles.infoKey}>{t('socket.connectedAt', 'Connected At')}</Text>
               <Text style={socketDetailStyles.infoVal}>{formatDateTime(item.startTime)}</Text>
             </View>
 
             {item.endTime && (
               <View style={socketDetailStyles.infoRow}>
-                <Text style={socketDetailStyles.infoKey}>Closed At</Text>
+                <Text style={socketDetailStyles.infoKey}>{t('socket.closedAt', 'Closed At')}</Text>
                 <Text style={socketDetailStyles.infoVal}>{formatDateTime(item.endTime)}</Text>
               </View>
             )}
 
             {item.closeCode != null && (
               <View style={socketDetailStyles.infoRow}>
-                <Text style={socketDetailStyles.infoKey}>Close Code & Reason</Text>
+                <Text style={socketDetailStyles.infoKey}>{t('socket.closeCodeReason', 'Close Code & Reason')}</Text>
                 <Text style={socketDetailStyles.infoVal}>{item.closeCode} ({item.closeReason || 'N/A'})</Text>
               </View>
             )}
 
             {item.protocols && (
               <View style={socketDetailStyles.infoRow}>
-                <Text style={socketDetailStyles.infoKey}>Subprotocols</Text>
+                <Text style={socketDetailStyles.infoKey}>{t('socket.subprotocols', 'Subprotocols')}</Text>
                 <Text style={socketDetailStyles.infoVal}>
                   {Array.isArray(item.protocols) ? item.protocols.join(', ') : item.protocols}
                 </Text>
@@ -797,7 +797,7 @@ ws.onclose = (event) => {
 
             {item.caller && (
               <View style={socketDetailStyles.infoRow}>
-                <Text style={socketDetailStyles.infoKey}>Caller Stack</Text>
+                <Text style={socketDetailStyles.infoKey}>{t('socket.callerStack', 'Caller Stack')}</Text>
                 <Text style={[socketDetailStyles.infoVal, {fontFamily: AppFonts.interMedium, color: AppColors.brandPurple}]} selectable>
                   {item.caller}
                 </Text>
@@ -806,7 +806,7 @@ ws.onclose = (event) => {
 
             {item.error && (
               <View style={socketDetailStyles.infoRow}>
-                <Text style={socketDetailStyles.infoKey}>Error</Text>
+                <Text style={socketDetailStyles.infoKey}>{t('socket.error', 'Error')}</Text>
                 <Text style={[socketDetailStyles.infoVal, {color: AppColors.errorColor}]} selectable>
                   {item.error}
                 </Text>
@@ -835,7 +835,7 @@ ws.onclose = (event) => {
       {activeSubTab === 'headers' && item.headers && (
         <ScrollView style={socketDetailStyles.tabContentScroll} contentContainerStyle={{padding: 12}}>
           <HeadersSection
-            title="Handshake Headers"
+            title={t('socket.handshakeHeaders', 'Handshake Headers')}
             headers={item.headers}
             search=""
             resetKey={item.id}
@@ -847,9 +847,9 @@ ws.onclose = (event) => {
       {activeSubTab === 'params' && (
         <ScrollView style={socketDetailStyles.tabContentScroll} contentContainerStyle={{padding: 12}}>
           <View style={socketDetailStyles.sectionCard}>
-            <Text style={socketDetailStyles.sectionHeading}>HANDSHAKE QUERY PARAMETERS</Text>
+            <Text style={socketDetailStyles.sectionHeading}>{t('socket.handshakeParams', 'HANDSHAKE QUERY PARAMETERS')}</Text>
             {!item.query || Object.keys(item.query).length === 0 ? (
-              <Text style={socketDetailStyles.emptySectionText}>No query parameters passed in connection URL</Text>
+              <Text style={socketDetailStyles.emptySectionText}>{t('socket.noQueryParams', 'No query parameters passed in connection URL')}</Text>
             ) : (
               Object.entries(item.query).map(([key, value]) => (
                 <View key={key} style={socketDetailStyles.paramRow}>
@@ -867,17 +867,17 @@ ws.onclose = (event) => {
       {activeSubTab === 'raw' && (
         <ScrollView style={socketDetailStyles.tabContentScroll} contentContainerStyle={{padding: 12}}>
           <View style={socketDetailStyles.sectionCard}>
-            <Text style={socketDetailStyles.sectionHeading}>JAVASCRIPT CLIENT CODE</Text>
+            <Text style={socketDetailStyles.sectionHeading}>{t('socket.jsClientCode', 'JAVASCRIPT CLIENT CODE')}</Text>
             <CodeSnippet code={jsSnippet} language="javascript" />
           </View>
 
           <View style={[socketDetailStyles.sectionCard, {marginTop: 14}]}>
-            <Text style={socketDetailStyles.sectionHeading}>TERMINAL WSCAT COMMAND</Text>
+            <Text style={socketDetailStyles.sectionHeading}>{t('socket.terminalWscat', 'TERMINAL WSCAT COMMAND')}</Text>
             <CodeSnippet code={wscatCommand} language="javascript" />
           </View>
 
           <View style={[socketDetailStyles.sectionCard, {marginTop: 14}]}>
-            <Text style={socketDetailStyles.sectionHeading}>RAW CONNECTION JSON DUMP</Text>
+            <Text style={socketDetailStyles.sectionHeading}>{t('socket.rawDump', 'RAW CONNECTION JSON DUMP')}</Text>
             <JsonViewer data={item} />
           </View>
         </ScrollView>

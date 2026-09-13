@@ -305,7 +305,9 @@
       "table": "टेबल",
       "emptyObject": "खाली वस्तु",
       "emptyTable": "खाली वस्तु",
-      "value": "मूल्य"
+      "value": "मान",
+      "keyProperty": "कुंजी / विशेषता",
+      "noMatchingKeys": "कोई मेल खाने वाली कुंजी या मान नहीं मिला"
     },
     "title": "एपीआई",
     "searchPlaceholder": "यूआरएल, स्थिति या विधि के आधार पर खोजें...",
@@ -500,7 +502,25 @@
     "searchParameters": "पैरामीटर खोजें...",
     "noParamsFound": "कोई भी पैरामीटर आपकी खोज से मेल नहीं खाता",
     "sourceFirebase": "फायरबेस GA4",
-    "sourceCustom": "कस्टम/मैनुअल"
+    "sourceCustom": "कस्टम/मैनुअल",
+    "dataVisualization": "डेटा विज़ुअलाइज़ेशन",
+    "dataTypesBreakdown": "डेटा प्रकार विवरण",
+    "highestPayloadStrings": "उच्चतम पेलोड स्ट्रिंग्स",
+    "topLevelMetrics": "शीर्ष स्तरीय मेट्रिक्स",
+    "importantDates": "महत्वपूर्ण तिथियां",
+    "itemPrices": "आइटम की कीमतें",
+    "sessionIdentity": "सत्र और पहचान",
+    "metricParams": "पैरामीटर:",
+    "metricUserProps": "उपयोगकर्ता गुण:",
+    "metricSize": "आकार:",
+    "metricItems": "{{count}} आइटम",
+    "sessionId": "सत्र आईडी",
+    "trackingId": "ट्रैकिंग आईडी",
+    "eventParameters": "इवेंट पैरामीटर ({{count}})",
+    "keyValueAttributes": "कुंजी-मान विशेषताएँ",
+    "filterParamsPlaceholder": "कुंजी या मान द्वारा पैरामीटर फ़िल्टर करें...",
+    "noParamsRecorded": "इस इवेंट के लिए कोई कस्टम पैरामीटर रिकॉर्ड नहीं किया गया।",
+    "noParamsMatching": "\"{{search}}\" से मेल खाने वाला कोई पैरामीटर नहीं मिला"
   },
   "redux": {
     "searchPlaceholder": "स्टेट या एक्शन खोजें...",
@@ -1245,7 +1265,7 @@
     "title": "सूचनाएं पुश करें",
     "preview": "पूर्वावलोकन",
     "payload": "कस्टम पेलोड",
-    "deliveryMetadata": "वितरण एवं संदेश मेटाडेटा",
+    "deliveryMetadata": "वितरण और संदेश मेटाडेटा",
     "rawPayload": "कच्चा पेलोड",
     "link": "लिंक",
     "appNotification": "ऐप अधिसूचना",
@@ -1257,7 +1277,17 @@
     "filterTitle": "पुश सूचनाएँ फ़िल्टर करें",
     "clearTitle": "पुश इतिहास साफ़ करें",
     "clearMessage": "क्या आप वाकई सभी पुश अधिसूचना रिकॉर्ड साफ़ करना चाहते हैं?",
-    "cleared": "पुश अधिसूचना इतिहास साफ़ किया गया"
+    "cleared": "पुश अधिसूचना इतिहास साफ़ किया गया",
+    "messageId": "संदेश आईडी:",
+    "sourceDomain": "स्रोत / डोमेन:",
+    "appState": "ऐप स्थिति:",
+    "actionType": "क्रिया प्रकार:",
+    "timestamp": "समय टिकट:",
+    "channelId": "चैनल आईडी:",
+    "sound": "ध्वनि:",
+    "badgeCount": "बैज गणना:",
+    "collapseKey": "संक्षिप्त कुंजी:",
+    "noCustomData": "पेलोड में कोई कस्टम कुंजी-मान डेटा नहीं मिला"
   },
   "about": {
     "title": "परिचय और विनिर्देश",
@@ -1413,12 +1443,49 @@
     "showingFilteredConnections": "{{total}} में से {{filtered}} कनेक्शन दिखा रहा है",
     "deletedCount": "{{count}} वेबसॉकेट लॉग हटा दिए गए",
     "copiedUrls": "{{count}} यूआरएल को क्लिपबोर्ड पर कॉपी किया गया",
-    "webSocketTraffic": "वेबसॉकेट ट्रैफ़िक ({{count}} कनेक्शन)"
+    "webSocketTraffic": "वेबसॉकेट ट्रैफ़िक ({{count}} कनेक्शन)",
+    "connectionDetails": "कनेक्शन विवरण",
+    "url": "URL",
+    "clientEngine": "क्लाइंट इंजन",
+    "readyState": "तैयार स्थिति",
+    "connectedAt": "कनेक्ट होने का समय",
+    "closedAt": "बंद होने का समय",
+    "closeCodeReason": "समाप्ति कोड और कारण",
+    "subprotocols": "उप-प्रोटोकॉल",
+    "callerStack": "कॉलर स्टैक",
+    "error": "त्रुटि",
+    "handshakeHeaders": "हैंडशेक हेडर",
+    "handshakeParams": "हैंडशेक क्वेरी पैरामीटर",
+    "noQueryParams": "कनेक्शन URL में कोई क्वेरी पैरामीटर पास नहीं किया गया",
+    "jsClientCode": "जावास्क्रिप्ट क्लाइंट कोड",
+    "terminalWscat": "टर्मिनल WSCAT कमांड",
+    "rawDump": "रॉ कनेक्शन JSON डंप"
   },
   "debugging": {
     "title": "डिबगिंग एवं उपकरण",
     "buildSuccess": "एपीके बिल्ड सफलतापूर्वक उत्पन्न हुआ!",
     "buildFailed": "निर्माण विफल: {{error}}",
     "buildCancelled": "उपयोगकर्ता द्वारा निर्माण रद्द कर दिया गया"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "लाइव नेटवर्क",
+    "ram": "रैम",
+    "active": "सक्रिय",
+    "networkSpeed": "नेटवर्क गति",
+    "fpsLive": "लाइव FPS",
+    "ramUsage": "रैम उपयोग",
+    "battery": "बैटरी",
+    "livePerformanceStrip": "लाइव प्रदर्शन पट्टी"
+  },
+  "media": {
+    "animatedGif": "एनिमेटेड GIF",
+    "cropDefect": "दोष क्षेत्र काटें",
+    "rotate90": "90° घुमाएँ",
+    "redactPii": "संवेदनशील डेटा छिपाएं",
+    "trim5s": "5 सेकंड काटें",
+    "muteAudio": "ऑडियो म्यूट करें",
+    "toGif": "GIF में बदलें",
+    "play": "चलाएं"
   }
 }

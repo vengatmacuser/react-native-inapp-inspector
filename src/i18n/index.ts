@@ -141,6 +141,13 @@ export function t(
     }
     return fallbackStr;
   }
+  if (
+    typeof optionsOrFallback === 'object' &&
+    optionsOrFallback !== null &&
+    typeof optionsOrFallback.defaultValue === 'string'
+  ) {
+    return interpolate(optionsOrFallback.defaultValue, optionsOrFallback);
+  }
   return key;
 }
 

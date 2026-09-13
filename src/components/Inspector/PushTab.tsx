@@ -300,7 +300,11 @@ const PushTab = React.memo(() => {
         data={displayedPushRecords}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        contentContainerStyle={pushTabStyles.listContent}
+        style={{flex: 1}}
+        contentContainerStyle={[
+          pushTabStyles.listContent,
+          {flexGrow: 1},
+        ]}
         initialNumToRender={10}
         maxToRenderPerBatch={8}
         windowSize={5}
@@ -308,6 +312,8 @@ const PushTab = React.memo(() => {
         removeClippedSubviews={true}
         renderToHardwareTextureAndroid={true}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <EmptyState
             isSearch={Boolean(pushSearch || pushQuickFilter !== 'all')}

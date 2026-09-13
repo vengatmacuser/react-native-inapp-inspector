@@ -364,7 +364,9 @@ const ReduxTab = React.memo(() => {
                         reduxTabStyles.methodBadge,
                         {backgroundColor: AppColors.violet600},
                       ]}>
-                      <Text style={reduxTabStyles.methodBadgeText}>REDUX</Text>
+                      <Text style={reduxTabStyles.methodBadgeText}>
+                        {t('redux.title', 'REDUX').toUpperCase()}
+                      </Text>
                     </View>
                     <View
                       style={[
@@ -733,6 +735,7 @@ const ReduxTab = React.memo(() => {
         removeClippedSubviews={true}
         renderToHardwareTextureAndroid={true}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
         ListEmptyComponent={
           <EmptyState
             isSearch={reduxSearch.trim().length > 0}
@@ -758,9 +761,10 @@ const ReduxTab = React.memo(() => {
             />
           ) : null
         }
+        style={{flex: 1}}
         contentContainerStyle={[
           reduxTabStyles.listContent,
-          filteredSlices.length === 0 && {flexGrow: 1},
+          {flexGrow: 1},
         ]}
         keyboardShouldPersistTaps="handled"
       />

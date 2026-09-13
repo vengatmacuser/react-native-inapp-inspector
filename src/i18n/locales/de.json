@@ -305,7 +305,9 @@
       "table": "Tisch",
       "emptyObject": "Leeres Objekt",
       "emptyTable": "Leeres Objekt",
-      "value": "Wert"
+      "value": "WERT",
+      "keyProperty": "SCHLÜSSEL / EIGENSCHAFT",
+      "noMatchingKeys": "Keine passenden Schlüssel oder Werte gefunden"
     },
     "showingRequests": "{{count}} Anfragen anzeigen",
     "showingFilteredRequests": "{{filtered}} von {{total}} Anfragen anzeigen",
@@ -500,7 +502,25 @@
     "searchParameters": "Suchparameter...",
     "noParamsFound": "Zu Ihrer Suche passen keine Parameter",
     "sourceFirebase": "FEUERBASIS GA4",
-    "sourceCustom": "BENUTZERDEFINIERT / MANUELL"
+    "sourceCustom": "BENUTZERDEFINIERT / MANUELL",
+    "dataVisualization": "Datenvisualisierung",
+    "dataTypesBreakdown": "Aufschlüsselung der Datentypen",
+    "highestPayloadStrings": "Längste Payload-Zeichenfolgen",
+    "topLevelMetrics": "Metriken auf oberster Ebene",
+    "importantDates": "Wichtige Daten",
+    "itemPrices": "Artikelpreise",
+    "sessionIdentity": "SITZUNG & IDENTITÄT",
+    "metricParams": "Parameter:",
+    "metricUserProps": "Benutzereigenschaften:",
+    "metricSize": "Größe:",
+    "metricItems": "{{count}} Artikel",
+    "sessionId": "Sitzungs-ID",
+    "trackingId": "Tracking-ID",
+    "eventParameters": "EREIGNISPARAMETER ({{count}})",
+    "keyValueAttributes": "Schlüssel-Wert-Attribute",
+    "filterParamsPlaceholder": "Parameter nach Schlüssel oder Wert filtern...",
+    "noParamsRecorded": "Keine benutzerdefinierten Parameter für dieses Ereignis erfasst.",
+    "noParamsMatching": "Keine Parameter stimmen mit \"{{search}}\" überein"
   },
   "redux": {
     "searchPlaceholder": "Status oder Aktionen suchen...",
@@ -1267,7 +1287,23 @@
     "cleared": "Alle WebSocket-Protokolle gelöscht",
     "deleteSelectedTitle": "Ausgewählte WebSockets löschen",
     "deleteSelectedMsg": "Sind Sie sicher, dass Sie {{count}} ausgewählte WebSocket-Protokolle löschen möchten?",
-    "filterTitle": "WebSocket-Verbindungen filtern"
+    "filterTitle": "WebSocket-Verbindungen filtern",
+    "connectionDetails": "VERBINDUNGSDETAILS",
+    "url": "URL",
+    "clientEngine": "Client-Engine",
+    "readyState": "Bereitschaftsstatus",
+    "connectedAt": "Verbunden um",
+    "closedAt": "Geschlossen um",
+    "closeCodeReason": "Schließungscode & Grund",
+    "subprotocols": "Subprotokolle",
+    "callerStack": "Aufruf-Stack",
+    "error": "Fehler",
+    "handshakeHeaders": "Handshake-Header",
+    "handshakeParams": "HANDSHAKE-ABFRAGEPARAMETER",
+    "noQueryParams": "Keine Abfrageparameter in der Verbindungs-URL übergeben",
+    "jsClientCode": "JAVASCRIPT-CLIENT-CODE",
+    "terminalWscat": "TERMINAL-WSCAT-BEFEHL",
+    "rawDump": "ROHER VERBINDUNGS-JSON-DUMP"
   },
   "push": {
     "clearTitle": "Push-Verlauf löschen",
@@ -1279,7 +1315,7 @@
     "title": "Push-Benachrichtigungen",
     "preview": "Vorschau",
     "payload": "Benutzerdefinierte Nutzlast",
-    "deliveryMetadata": "Zustellungs- und Nachrichtenmetadaten",
+    "deliveryMetadata": "Zustellungs- & Nachrichten-Metadaten",
     "rawPayload": "Rohe Nutzlast",
     "link": "Link",
     "appNotification": "App-Benachrichtigung",
@@ -1288,7 +1324,17 @@
     "searchPlaceholder": "Push-Benachrichtigungen durchsuchen...",
     "noNotifications": "Keine Push-Benachrichtigungen",
     "noNotificationsDesc": "Erfasste Firebase FCM-, Apple APNs-, OneSignal- und benutzerdefinierte Push-Ereignisse werden hier in Echtzeit angezeigt.",
-    "filterTitle": "Push-Benachrichtigungen filtern"
+    "filterTitle": "Push-Benachrichtigungen filtern",
+    "messageId": "Nachrichten-ID:",
+    "sourceDomain": "Quelle / Domäne:",
+    "appState": "App-Status:",
+    "actionType": "Aktionstyp:",
+    "timestamp": "Zeitstempel:",
+    "channelId": "Kanal-ID:",
+    "sound": "Ton:",
+    "badgeCount": "Badge-Anzahl:",
+    "collapseKey": "Zusammenfassungsschlüssel:",
+    "noCustomData": "Keine benutzerdefinierten Schlüssel-Wert-Daten in der Nutzlast gefunden"
   },
   "about": {
     "title": "Über und Spezifikationen",
@@ -1420,5 +1466,26 @@
     "buildSuccess": "APK-Build erfolgreich generiert!",
     "buildFailed": "Build fehlgeschlagen: {{error}}",
     "buildCancelled": "Build vom Benutzer abgebrochen"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "LIVE-NETZ",
+    "ram": "RAM",
+    "active": "AKTIV",
+    "networkSpeed": "Netzwerkgeschwindigkeit",
+    "fpsLive": "Live-FPS",
+    "ramUsage": "RAM-Nutzung",
+    "battery": "Batterie",
+    "livePerformanceStrip": "Live-Performance-Leiste"
+  },
+  "media": {
+    "animatedGif": "ANIMIERTES GIF",
+    "cropDefect": "Fehler zuschneiden",
+    "rotate90": "90° drehen",
+    "redactPii": "PII schwärzen",
+    "trim5s": "5s trimmen",
+    "muteAudio": "Audio stummschalten",
+    "toGif": "Zu GIF",
+    "play": "Abspielen"
   }
 }

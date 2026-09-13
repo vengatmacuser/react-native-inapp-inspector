@@ -58,8 +58,7 @@
     "version": "Version",
     "update": "UPDATE",
     "unknown": "Unknown",
-    "moreFilters": "More Filters",
-    "close": "Close"
+    "moreFilters": "More Filters"
   },
   "support": {
     "title": "Support & Community",
@@ -408,7 +407,9 @@
       "emptyObject": "Empty Object",
       "emptyTable": "Empty Object",
       "key": "Key",
-      "value": "Value"
+      "value": "VALUE",
+      "keyProperty": "KEY / PROPERTY",
+      "noMatchingKeys": "No matching keys or values found"
     },
     "showingRequests": "Showing {{count}} requests",
     "showingFilteredRequests": "Showing {{filtered}} of {{total}} requests",
@@ -533,7 +534,25 @@
     "searchParameters": "Search parameters...",
     "noParamsFound": "No parameters match your search",
     "sourceFirebase": "FIREBASE GA4",
-    "sourceCustom": "CUSTOM / MANUAL"
+    "sourceCustom": "CUSTOM / MANUAL",
+    "dataVisualization": "Data Visualization",
+    "dataTypesBreakdown": "Data Types Breakdown",
+    "highestPayloadStrings": "Highest Payload Strings",
+    "topLevelMetrics": "Top-Level Metrics",
+    "importantDates": "Important Dates",
+    "itemPrices": "Item Prices",
+    "sessionIdentity": "SESSION & IDENTITY",
+    "metricParams": "Params:",
+    "metricUserProps": "User Props:",
+    "metricSize": "Size:",
+    "metricItems": "{{count}} items",
+    "sessionId": "Session ID",
+    "trackingId": "Tracking ID",
+    "eventParameters": "EVENT PARAMETERS ({{count}})",
+    "keyValueAttributes": "Key-Value Attributes",
+    "filterParamsPlaceholder": "Filter parameters by key or value...",
+    "noParamsRecorded": "No custom parameters recorded for this event.",
+    "noParamsMatching": "No parameters matching \"{{search}}\""
   },
   "redux": {
     "title": "Redux",
@@ -1377,7 +1396,23 @@
     "showingFilteredConnections": "Showing {{filtered}} of {{total}} connections",
     "deletedCount": "Deleted {{count}} WebSocket logs",
     "copiedUrls": "{{count}} URLs copied to clipboard",
-    "webSocketTraffic": "WebSocket Traffic ({{count}} connections)"
+    "webSocketTraffic": "WebSocket Traffic ({{count}} connections)",
+    "connectionDetails": "CONNECTION DETAILS",
+    "url": "URL",
+    "clientEngine": "Client Engine",
+    "readyState": "Ready State",
+    "connectedAt": "Connected At",
+    "closedAt": "Closed At",
+    "closeCodeReason": "Close Code & Reason",
+    "subprotocols": "Subprotocols",
+    "callerStack": "Caller Stack",
+    "error": "Error",
+    "handshakeHeaders": "Handshake Headers",
+    "handshakeParams": "HANDSHAKE QUERY PARAMETERS",
+    "noQueryParams": "No query parameters passed in connection URL",
+    "jsClientCode": "JAVASCRIPT CLIENT CODE",
+    "terminalWscat": "TERMINAL WSCAT COMMAND",
+    "rawDump": "RAW CONNECTION JSON DUMP"
   },
   "push": {
     "title": "Push Notifications",
@@ -1398,7 +1433,17 @@
     "cleared": "Push notification history cleared",
     "foreground": "Foreground",
     "background": "Background",
-    "quit": "Quit"
+    "quit": "Quit",
+    "messageId": "Message ID:",
+    "sourceDomain": "Source / Domain:",
+    "appState": "App State:",
+    "actionType": "Action Type:",
+    "timestamp": "Timestamp:",
+    "channelId": "Channel ID:",
+    "sound": "Sound:",
+    "badgeCount": "Badge Count:",
+    "collapseKey": "Collapse Key:",
+    "noCustomData": "No custom key-value data found in payload"
   },
   "debugging": {
     "title": "Debugging & Tools",
@@ -1453,5 +1498,26 @@
     "copiedInstallCommand": "Copied package install command!",
     "footerLicense": "React Native In-App Inspector · MIT License",
     "footerTagline": "Zero-config on-device debugging tool"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "LIVE NET",
+    "ram": "RAM",
+    "active": "ACTIVE",
+    "networkSpeed": "Network Speed",
+    "fpsLive": "Live FPS",
+    "ramUsage": "RAM Usage",
+    "battery": "Battery",
+    "livePerformanceStrip": "Live Performance Strip"
+  },
+  "media": {
+    "animatedGif": "ANIMATED GIF",
+    "cropDefect": "Crop Defect",
+    "rotate90": "Rotate 90°",
+    "redactPii": "Redact PII",
+    "trim5s": "Trim 5s",
+    "muteAudio": "Mute Audio",
+    "toGif": "To GIF",
+    "play": "Play"
   }
 }

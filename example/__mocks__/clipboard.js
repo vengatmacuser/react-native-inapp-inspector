@@ -1,0 +1,20 @@
+module.exports = {
+  setString: jest.fn(),
+  getString: jest.fn().mockResolvedValue(''),
+  hasString: jest.fn().mockResolvedValue(false),
+  hasURL: jest.fn().mockResolvedValue(false),
+  hasImage: jest.fn().mockResolvedValue(false),
+  hasNumber: jest.fn().mockResolvedValue(false),
+  addListener: jest.fn(() => ({ remove: jest.fn() })),
+  removeListeners: jest.fn(),
+  default: {
+    setString: jest.fn(),
+    getString: jest.fn().mockResolvedValue(''),
+    hasString: jest.fn().mockResolvedValue(false),
+    hasURL: jest.fn().mockResolvedValue(false),
+    hasImage: jest.fn().mockResolvedValue(false),
+    hasNumber: jest.fn().mockResolvedValue(false),
+    addListener: jest.fn(() => ({ remove: jest.fn() })),
+    removeListeners: jest.fn(),
+  },
+};

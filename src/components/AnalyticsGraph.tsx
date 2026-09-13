@@ -13,11 +13,13 @@ import Svg, {
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import {AnalyticsGraphProps} from '../types';
+import {useTranslation} from '../i18n';
 
 const BAR_HEIGHT = 24;
 const PADDING_Y = 12;
 
 const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
+  const {t} = useTranslation();
   const params = event.params || {};
 
   // 1. Check for E-commerce items array
@@ -39,12 +41,9 @@ const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
 
   // 3. Discover dates (YYYY-MM-DD format commonly used in booking/flights)
   const dateKeys: {key: string; date: Date}[] = [];
+  const dateRegex = /^\d{4}-\d{2}-\d{2}/;
   Object.entries(params).forEach(([k, v]) => {
-    if (
-      typeof v === 'string' &&
-      v.length >= 10 &&
-      /^\d{4}-\d{2}-\d{2}/.test(v)
-    ) {
+    if (typeof v === 'string' && v.length >= 10 && dateRegex.test(v)) {
       const d = new Date(v);
       if (!isNaN(d.getTime())) {
         dateKeys.push({key: k, date: d});
@@ -52,31 +51,34 @@ const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
     }
   });
 
-  // 4. Calculate parameter types
-  const paramTypes = {string: 0, number: 0, boolean: 0, object: 0};
-  const strings: {label: string; value: number}[] = [];
-
-  Object.entries(params).forEach(([k, v]) => {
-    const t = typeof v;
-    if (t === 'string') {
-      paramTypes.string++;
-      strings.push({label: k, value: (v as string).length});
-    } else if (t === 'number') {
-      paramTypes.number++;
-    } else if (t === 'boolean') {
-      paramTypes.boolean++;
-    } else if (t === 'object' && v !== null) {
-      paramTypes.object++;
-    }
+  // 4. Data types breakdown
+  const typeCounts: {[type: string]: number} = {};
+  Object.values(params).forEach(val => {
+    let type: string = typeof val;
+    if (val === null) type = 'null';
+    if (Array.isArray(val)) type = 'array';
+    typeCounts[type] = (typeCounts[type] || 0) + 1;
   });
 
-  const typeData = [
-    {label: 'Strings', value: paramTypes.string, color: AppColors.purple},
-    {label: 'Numbers', value: paramTypes.number, color: AppColors.skyBlue},
-    {label: 'Booleans', value: paramTypes.boolean, color: AppColors.amber500}, // Amber
-    {label: 'Objects', value: paramTypes.object, color: AppColors.greenColor},
-  ].filter(d => d.value > 0);
+  const colorPalette = [
+    AppColors.purple,
+    AppColors.skyBlue,
+    AppColors.amber500,
+    AppColors.greenColor,
+  ];
+  const typeData = Object.entries(typeCounts).map(([type, count], index) => ({
+    label: type,
+    value: count,
+    color: colorPalette[index % colorPalette.length],
+  }));
 
+  // 5. Longest / Highest Payload Strings
+  const strings: {label: string; value: number}[] = [];
+  Object.entries(params).forEach(([k, v]) => {
+    if (typeof v === 'string') {
+      strings.push({label: k, value: (v as string).length});
+    }
+  });
   strings.sort((a, b) => b.value - a.value);
   const topStrings = strings.slice(0, 5);
 
@@ -92,18 +94,18 @@ const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
 
   return (
     <View style={graphStyles.container}>
-      <Text style={graphStyles.headerTitle}>Data Visualization</Text>
+      <Text style={graphStyles.headerTitle}>{t('analytics.dataVisualization', 'Data Visualization')}</Text>
 
       {hasTypeData && (
         <View style={graphStyles.chartBlock}>
-          <Text style={graphStyles.chartTitle}>Data Types Breakdown</Text>
+          <Text style={graphStyles.chartTitle}>{t('analytics.dataTypesBreakdown', 'Data Types Breakdown')}</Text>
           <DonutChart data={typeData} />
         </View>
       )}
 
       {hasStringsChart && (
         <View style={graphStyles.chartBlock}>
-          <Text style={graphStyles.chartTitle}>Highest Payload Strings</Text>
+          <Text style={graphStyles.chartTitle}>{t('analytics.highestPayloadStrings', 'Highest Payload Strings')}</Text>
           <BarChart
             data={topStrings}
             accentColor={AppColors.purple}
@@ -115,7 +117,7 @@ const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
 
       {hasRootNumericChart && (
         <View style={graphStyles.chartBlock}>
-          <Text style={graphStyles.chartTitle}>Top-Level Metrics</Text>
+          <Text style={graphStyles.chartTitle}>{t('analytics.topLevelMetrics', 'Top-Level Metrics')}</Text>
           <GaugeChart
             data={rootNumericKeys.map(d => ({label: d.key, value: d.value}))}
             accentColor={accentColor}
@@ -125,7 +127,7 @@ const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
 
       {hasDatesChart && (
         <View style={graphStyles.chartBlock}>
-          <Text style={graphStyles.chartTitle}>Important Dates</Text>
+          <Text style={graphStyles.chartTitle}>{t('analytics.importantDates', 'Important Dates')}</Text>
           <CalendarChart
             data={dateKeys.map(d => ({label: d.key, date: d.date}))}
             accentColor={accentColor}
@@ -135,7 +137,7 @@ const AnalyticsGraph = ({event, accentColor}: AnalyticsGraphProps) => {
 
       {hasItemsChart && (
         <View style={graphStyles.chartBlock}>
-          <Text style={graphStyles.chartTitle}>Item Prices</Text>
+          <Text style={graphStyles.chartTitle}>{t('analytics.itemPrices', 'Item Prices')}</Text>
           <BarChart
             data={filteredItems.map((item: any, i) => ({
               label: item.item_name || item.item_id || `Item ${i + 1}`,

@@ -551,6 +551,18 @@ export const recordCustomCrash = (
   );
 };
 
+export const triggerGlobalCrashScreen = (crashRecord: CrashRecord): void => {
+  emitCrashEvent({
+    error: crashRecord.error || new Error(crashRecord.message),
+    isFatal: true,
+    message: crashRecord.message,
+    stack: crashRecord.stack,
+    timestamp: crashRecord.timestamp || Date.now(),
+    logId: crashRecord.logId,
+    crashRecord,
+  });
+};
+
 /**
  * Simulates a crash for developer testing without crashing the host app.
  * Uses real runtime Error objects — no mocked file paths or fake stacks.
@@ -559,13 +571,14 @@ export const simulateTestCrash = (
   type: CrashType = CrashType.Js,
   customMessage?: string,
   customStack?: string,
+  isFatal: boolean = true,
 ): CrashRecord => {
   const err = new Error(customMessage || _defaultSimMessage(type));
 
   return handleInterceptedCrash(
     type === CrashType.Native ? err.message : err,
     customStack || err.stack,
-    type === CrashType.Native,
+    isFatal,
     type,
     type === CrashType.Render ? _buildComponentStack() : undefined,
   );

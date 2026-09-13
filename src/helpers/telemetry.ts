@@ -366,6 +366,10 @@ export async function trackActiveTelemetryHeartbeat(
   }
   isTelemetryEnabled = true;
 
+  if (process.env.NODE_ENV === 'test' || typeof (globalThis as any).jest !== 'undefined') {
+    return;
+  }
+
   const url = getCollectUrl();
   if (!url) return;
 

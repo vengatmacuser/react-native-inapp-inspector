@@ -17,6 +17,7 @@ import {I18nextProvider, i18n, setLanguage, getLanguage, useTranslation} from '.
 import ErrorBoundary from './components/ErrorBoundary';
 import MainScreen from './components/Inspector/MainScreen';
 import {ConfirmationModal} from './components/Inspector/ConfirmationModal';
+import GlobalCrashScreenModal from './components/Inspector/GlobalCrashScreenModal';
 import {
   InspectorContext,
   animateNextLayout,
@@ -75,6 +76,7 @@ import {
   clearCrashRecords,
   setMaxCrashLogsLimit,
   setCrashModuleEnabled,
+  triggerGlobalCrashScreen,
 } from './customHooks/crashHandler';
 
 import {
@@ -317,6 +319,7 @@ const NetworkInspector = ({
     getCrashRecords(),
   );
   const [selectedCrash, setSelectedCrash] = useState<CrashRecord | null>(null);
+  const [activeGlobalCrash, setActiveGlobalCrash] = useState<CrashRecord | null>(null);
   const [maxCrashLogs, setMaxCrashLogs] = useState<number>(50);
 
   useEffect(() => {
@@ -547,14 +550,14 @@ const NetworkInspector = ({
   >({
     apis: true,
     logs: true,
-    analytics: false,
-    redux: false,
-    crash: false,
+    analytics: true,
+    redux: true,
+    crash: true,
     push: true,
-    socket: false,
-    device: false,
-    storage: false,
-    debugging: false,
+    socket: true,
+    device: true,
+    storage: true,
+    debugging: true,
     media: true,
   });
 
@@ -575,6 +578,10 @@ const NetworkInspector = ({
   const [captureAudioMode, setCaptureAudioMode] = useState<'none' | 'app' | 'mic'>('none');
   const [captureAutoHide, setCaptureAutoHide] = useState<boolean>(true);
   const [captureAutoGif, setCaptureAutoGif] = useState<boolean>(true);
+
+  // #7 — Peek-through mode: makes inspector semi-transparent so user can see app behind
+  const [peekMode, setPeekMode] = useState<boolean>(false);
+  const [peekOpacity, setPeekOpacity] = useState<number>(0.75);
 
   // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
@@ -621,14 +628,14 @@ const NetworkInspector = ({
     setTabVisibility({
       apis: true,
       logs: true,
-      analytics: false,
-      redux: false,
-      crash: false,
+      analytics: true,
+      redux: true,
+      crash: true,
       push: true,
-      socket: false,
-      device: false,
-      storage: false,
-      debugging: false,
+      socket: true,
+      device: true,
+      storage: true,
+      debugging: true,
       media: true,
     });
 
@@ -698,6 +705,8 @@ const NetworkInspector = ({
       if (saved.captureAudioMode) setCaptureAudioMode(saved.captureAudioMode);
       if (saved.captureAutoHide != null) setCaptureAutoHide(saved.captureAutoHide);
       if (saved.captureAutoGif != null) setCaptureAutoGif(saved.captureAutoGif);
+      if (saved.peekOpacity != null)
+        setPeekOpacity(saved.peekOpacity < 0.5 ? 0.75 : saved.peekOpacity);
       if (saved.showDuplicateLogs != null)
         setShowDuplicateLogs(saved.showDuplicateLogs);
       if (saved.showUpdateToast != null)
@@ -778,6 +787,7 @@ const NetworkInspector = ({
       captureAudioMode,
       captureAutoHide,
       captureAutoGif,
+      peekOpacity,
     });
   }, [
     isDark,
@@ -803,6 +813,7 @@ const NetworkInspector = ({
     captureAudioMode,
     captureAutoHide,
     captureAutoGif,
+    peekOpacity,
   ]);
 
   // #1 — check NPM for a newer published version; surfaces an animated dot
@@ -1319,14 +1330,16 @@ const NetworkInspector = ({
       if (crashInfo.message === '__CLEARED__') {
         setCrashRecords([]);
         setSelectedCrash(null);
+        setActiveGlobalCrash(null);
         return;
       }
       const updated = getCrashRecords();
       if (updated.length > 0) {
         pushNativeLogRecord('crash', JSON.stringify(updated[0]));
       }
-      if (isVisibleRef.current) {
-        setCrashRecords(updated);
+      setCrashRecords(updated);
+      if (crashInfo.crashRecord) {
+        setActiveGlobalCrash(crashInfo.crashRecord);
       }
     });
 
@@ -2668,6 +2681,10 @@ const NetworkInspector = ({
       setCaptureAutoHide,
       captureAutoGif,
       setCaptureAutoGif,
+      peekMode,
+      setPeekMode,
+      peekOpacity,
+      setPeekOpacity,
     }),
     [
       visible,
@@ -2803,6 +2820,8 @@ const NetworkInspector = ({
       captureAudioMode,
       captureAutoHide,
       captureAutoGif,
+      peekMode,
+      peekOpacity,
       isMinimized,
       isDismissed,
       confirmModal,
@@ -2812,6 +2831,23 @@ const NetworkInspector = ({
   return (
     <InspectorContext.Provider value={contextValue}>
       <MainScreen />
+      <GlobalCrashScreenModal
+        visible={!!activeGlobalCrash}
+        crash={activeGlobalCrash}
+        onDismiss={() => setActiveGlobalCrash(null)}
+        onOpenInspector={() => {
+          const target = activeGlobalCrash;
+          setActiveGlobalCrash(null);
+          if (target) {
+            setSelectedCrash(target);
+          }
+          setActiveTab('crash');
+          setVisible(true);
+        }}
+        onRetry={() => {
+          setActiveGlobalCrash(null);
+        }}
+      />
     </InspectorContext.Provider>
   );
 };
@@ -2855,6 +2891,10 @@ const NetworkInspectorWrapper = (props: NetworkInspectorProps) => {
 };
 
 export default NetworkInspectorWrapper;
+export {
+  NetworkInspectorWrapper as InAppInspector,
+  NetworkInspectorWrapper as NetworkInspector,
+};
 
 // Re-export public APIs
 export {
@@ -2898,6 +2938,7 @@ export {
   getCrashRecords,
   clearCrashRecords,
   simulateTestCrash,
+  triggerGlobalCrashScreen,
   exportCrashReport,
   parseCrashStackTrace,
   recordCustomCrash,
@@ -2914,6 +2955,7 @@ export {
 
 export {default as CrashTab} from './components/Inspector/CrashTab';
 export {default as ErrorBoundary} from './components/ErrorBoundary';
+export {default as GlobalCrashScreenModal} from './components/Inspector/GlobalCrashScreenModal';
 
 export {
   connectReduxStore,
@@ -3138,5 +3180,23 @@ export {
   type AudioSource,
   type RecordingFormat,
 } from './capture';
+
+export {
+  MediaEditor,
+  type PhotoEditOptions,
+  type PhotoEditResult,
+  type VideoTrimOptions,
+  type VideoTrimResult,
+  type FilmstripOptions,
+  type FilmstripThumbnail,
+  type FilmstripResult,
+  type CropRect,
+  type RedactionBox,
+  type AnnotationBox,
+  type PhotoAdjustments,
+  type PhotoFilterPreset,
+  type ImageOutputFormat,
+  type VideoExportQuality,
+} from './editor';
 
 export { LIB_VERSION } from './constants/version';

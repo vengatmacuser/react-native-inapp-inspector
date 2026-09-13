@@ -375,7 +375,9 @@
       "emptyObject": "रिक्त ऑब्जेक्ट",
       "emptyTable": "रिक्त ऑब्जेक्ट",
       "key": "की",
-      "value": "मूल्य"
+      "value": "मूल्य",
+      "keyProperty": "की / गुणधर्म",
+      "noMatchingKeys": "कोणतीही जुळणारी की किंवा मूल्य आढळले नाही"
     },
     "showingRequests": "{{count}} विनंत्या दाखवत आहे",
     "showingFilteredRequests": "{{total}} पैकी {{filtered}} विनंत्या दाखवत आहे",
@@ -500,7 +502,25 @@
     "searchParameters": "मापदंड शोधा...",
     "noParamsFound": "तुमच्या शोधाशी कोणतेही पॅरामीटर जुळत नाहीत",
     "sourceFirebase": "फायरबेस GA4",
-    "sourceCustom": "कस्टम / मॅन्युअल"
+    "sourceCustom": "कस्टम / मॅन्युअल",
+    "dataVisualization": "डेटा व्हिज्युअलायझेशन",
+    "dataTypesBreakdown": "डेटा प्रकार तपशील",
+    "highestPayloadStrings": "सर्वात मोठे पेलोड स्ट्रिंग्स",
+    "topLevelMetrics": "शीर्ष मेट्रिक्स",
+    "importantDates": "महत्त्वाच्या तारखा",
+    "itemPrices": "वस्तूंच्या किमती",
+    "sessionIdentity": "सत्र आणि ओळख",
+    "metricParams": "पॅरामीटर्स:",
+    "metricUserProps": "वापरकर्ता गुणधर्म:",
+    "metricSize": "आकार:",
+    "metricItems": "{{count}} वस्तू",
+    "sessionId": "सत्र आयडी",
+    "trackingId": "ट्रॅकिंग आयडी",
+    "eventParameters": "इव्हेंट पॅरामीटर्स ({{count}})",
+    "keyValueAttributes": "की-व्हॅल्यू गुणधर्म",
+    "filterParamsPlaceholder": "पॅरामीटर्स फिल्टर करा...",
+    "noParamsRecorded": "या इव्हेंटसाठी कोणतेही सानुकूल पॅरामीटर्स नोंदवले गेले नाहीत.",
+    "noParamsMatching": "\"{{search}}\" शी जुळणारे पॅरामीटर्स आढळले नाहीत"
   },
   "redux": {
     "title": "रेडक्स",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "{{total}} कनेक्शनपैकी {{filtered}} दर्शवित आहे",
     "deletedCount": "हटवले {{count}} WebSocket लॉग",
     "copiedUrls": "{{count}} URL क्लिपबोर्डवर कॉपी केल्या",
-    "webSocketTraffic": "वेबसॉकेट रहदारी ({{count}} कनेक्शन)"
+    "webSocketTraffic": "वेबसॉकेट रहदारी ({{count}} कनेक्शन)",
+    "connectionDetails": "कनेक्शन तपशील",
+    "url": "URL",
+    "clientEngine": "क्लायंट इंजिन",
+    "readyState": "सज्ज स्थिती",
+    "connectedAt": "कनेक्ट झाल्याची वेळ",
+    "closedAt": "बंद झाल्याची वेळ",
+    "closeCodeReason": "समाप्ती कोड आणि कारण",
+    "subprotocols": "उप-प्रोटोकॉल्स",
+    "callerStack": "कॉलर स्टॅक",
+    "error": "त्रुटी",
+    "handshakeHeaders": "हँडशेक हेडर्स",
+    "handshakeParams": "हँडशेक क्वेरी पॅरामीटर्स",
+    "noQueryParams": "कनेक्शन URL मध्ये कोणतेही क्वेरी पॅरामीटर्स नाहीत",
+    "jsClientCode": "जावास्क्रिप्ट क्लायंट कोड",
+    "terminalWscat": "टर्मिनल WSCAT कमांड",
+    "rawDump": "रॉ कनेक्शन JSON डंप"
   },
   "push": {
     "title": "पुश सूचना",
     "preview": "पूर्वावलोकन",
     "payload": "सानुकूल पेलोड",
-    "deliveryMetadata": "वितरण आणि संदेश मेटाडेटा",
+    "deliveryMetadata": "डिलिव्हरी आणि संदेश मेटाडेटा",
     "rawPayload": "कच्चा पेलोड",
     "link": "दुवा",
     "appNotification": "ॲप सूचना",
@@ -1365,7 +1401,17 @@
     "cleared": "पुश सूचना इतिहास साफ केला",
     "foreground": "अग्रभाग",
     "background": "पार्श्वभूमी",
-    "quit": "सोडा"
+    "quit": "सोडा",
+    "messageId": "संदेश आयडी:",
+    "sourceDomain": "स्रोत / डोमेन:",
+    "appState": "अ‍ॅप स्थिती:",
+    "actionType": "कृती प्रकार:",
+    "timestamp": "वेळ:",
+    "channelId": "चॅनेल आयडी:",
+    "sound": "ध्वनी:",
+    "badgeCount": "बॅज संख्या:",
+    "collapseKey": "संक्षिप्त की:",
+    "noCustomData": "पेलोडमध्ये कोणताही सानुकूल डेटा आढळला नाही"
   },
   "debugging": {
     "title": "डीबगिंग आणि साधने",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "पॅकेज इंस्टॉल कमांड कॉपी केले!",
     "footerLicense": "नेटिव्ह इन-ॲप इन्स्पेक्टर · MIT परवाना प्रतिक्रिया द्या",
     "footerTagline": "झिरो-कॉन्फिग ऑन-डिव्हाइस डीबगिंग साधन"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "थेट नेटवर्क",
+    "ram": "रॅम",
+    "active": "सक्रिय",
+    "networkSpeed": "नेटवर्क वेग",
+    "fpsLive": "थेट FPS",
+    "ramUsage": "रॅम वापर",
+    "battery": "बॅटरी",
+    "livePerformanceStrip": "थेट कार्यप्रदर्शन पट्टी"
+  },
+  "media": {
+    "animatedGif": "अ‍ॅनिमेटेड GIF",
+    "cropDefect": "दोष क्षेत्र क्रॉप करा",
+    "rotate90": "90° फिरवा",
+    "redactPii": "खाजगी माहिती लपवा",
+    "trim5s": "5 सेकंद ट्रिम करा",
+    "muteAudio": "ऑडिओ म्यूट करा",
+    "toGif": "GIF मध्ये बदला",
+    "play": "प्ले करा"
   }
 }

@@ -375,7 +375,9 @@
       "emptyObject": "வெற்று பொருள்",
       "emptyTable": "வெற்று பொருள்",
       "key": "முக்கிய",
-      "value": "மதிப்பு"
+      "value": "மதிப்பு",
+      "keyProperty": "விசை / பண்பு",
+      "noMatchingKeys": "பொருந்தும் விசைகள் அல்லது மதிப்புகள் இல்லை"
     },
     "showingRequests": "{{count}} கோரிக்கைகளைக் காட்டுகிறது",
     "showingFilteredRequests": "{{total}} கோரிக்கைகளில் {{filtered}}ஐக் காட்டுகிறது",
@@ -500,7 +502,25 @@
     "searchParameters": "தேடல் அளவுருக்கள்...",
     "noParamsFound": "உங்கள் தேடலுக்கு எந்த அளவுருவும் பொருந்தவில்லை",
     "sourceFirebase": "FIREBASE GA4",
-    "sourceCustom": "தனிப்பயன் / கையேடு"
+    "sourceCustom": "தனிப்பயன் / கையேடு",
+    "dataVisualization": "தரவு காட்சிப்படுத்தல்",
+    "dataTypesBreakdown": "தரவு வகை விவரம்",
+    "highestPayloadStrings": "நீண்ட எழுத்து சரங்கள்",
+    "topLevelMetrics": "முக்கிய அளவீடுகள்",
+    "importantDates": "முக்கிய தேதிகள்",
+    "itemPrices": "பொருட்களின் விலைகள்",
+    "sessionIdentity": "அமர்வு & அடையாளம்",
+    "metricParams": "அளபுருக்கள்:",
+    "metricUserProps": "பயனர் பண்புகள்:",
+    "metricSize": "அளவு:",
+    "metricItems": "{{count}} பொருட்கள்",
+    "sessionId": "அமர்வு ஐடி",
+    "trackingId": "கண்காணிப்பு ஐடி",
+    "eventParameters": "நிகழ்வு அளபுருக்கள் ({{count}})",
+    "keyValueAttributes": "முக்கிய பண்புக்கூறுகள்",
+    "filterParamsPlaceholder": "அளபுருக்களை வடிகட்டவும்...",
+    "noParamsRecorded": "இந்த நிகழ்விற்கு எந்த அளபுருக்களும் பதிவு செய்யப்படவில்லை.",
+    "noParamsMatching": "\"{{search}}\" உடன் பொருந்தும் அளபுருக்கள் இல்லை"
   },
   "redux": {
     "title": "Redux",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "{{total}} இல் {{filtered}} இணைப்புகளைக் காட்டுகிறது",
     "deletedCount": "{{count}} WebSocket பதிவுகள் நீக்கப்பட்டன",
     "copiedUrls": "{{count}} URLகள் கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டன",
-    "webSocketTraffic": "WebSocket ட்ராஃபிக் ({{count}} இணைப்புகள்)"
+    "webSocketTraffic": "WebSocket ட்ராஃபிக் ({{count}} இணைப்புகள்)",
+    "connectionDetails": "இணைப்பு விவரங்கள்",
+    "url": "URL",
+    "clientEngine": "கிளையன்ட் எஞ்சின்",
+    "readyState": "தயார் நிலை",
+    "connectedAt": "இணைக்கப்பட்ட நேரம்",
+    "closedAt": "மூடப்பட்ட நேரம்",
+    "closeCodeReason": "முடிவு குறியீடு & காரணம்",
+    "subprotocols": "துணை நெறிமுறைகள்",
+    "callerStack": "அழைப்பாளர் அடுக்கு",
+    "error": "பிழை",
+    "handshakeHeaders": "ஹேண்ட்ஷேக் தலைப்புகள்",
+    "handshakeParams": "ஹேண்ட்ஷேக் வினவல் அளபுருக்கள்",
+    "noQueryParams": "வினவல் அளபுருக்கள் எதுவும் அனுப்பப்படவில்லை",
+    "jsClientCode": "ஜாவாஸ்கிரிப்ட் கிளையன்ட் குறியீடு",
+    "terminalWscat": "டெர்மினல் WSCAT கட்டளை",
+    "rawDump": "மூல இணைப்பு JSON டம்ப்"
   },
   "push": {
     "title": "புஷ் அறிவிப்புகள்",
     "preview": "முன்னோட்டம்",
     "payload": "விருப்ப பேலோட்",
-    "deliveryMetadata": "டெலிவரி & செய்தி மெட்டாடேட்டா",
+    "deliveryMetadata": "விநியோக மற்றும் செய்தி மெட்டாடேட்டா",
     "rawPayload": "மூல பேலோடு",
     "link": "இணைப்பு",
     "appNotification": "பயன்பாட்டு அறிவிப்பு",
@@ -1365,7 +1401,17 @@
     "cleared": "புஷ் அறிவிப்பு வரலாறு அழிக்கப்பட்டது",
     "foreground": "முன்புறம்",
     "background": "பின்னணி",
-    "quit": "வெளியேறு"
+    "quit": "வெளியேறு",
+    "messageId": "செய்தி ஐடி:",
+    "sourceDomain": "மூலம் / டொமைன்:",
+    "appState": "பயன்பாட்டு நிலை:",
+    "actionType": "செயல் வகை:",
+    "timestamp": "நேர முத்திரை:",
+    "channelId": "சேனல் ஐடி:",
+    "sound": "ஒலி:",
+    "badgeCount": "பேட்ஜ் எண்ணிக்கை:",
+    "collapseKey": "சுருக்க விசை:",
+    "noCustomData": "தனிப்பயன் தரவு எதுவும் கிடைக்கவில்லை"
   },
   "debugging": {
     "title": "பிழைத்திருத்தம் & கருவிகள்",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "தொகுப்பு நிறுவல் கட்டளை நகலெடுக்கப்பட்டது!",
     "footerLicense": "ரியாக் நேட்டிவ் இன்-ஆப் இன்ஸ்பெக்டர் · எம்ஐடி உரிமம்",
     "footerTagline": "Zero-config சாதனத்தில் பிழைத்திருத்தக் கருவி"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "நேரலை இணையம்",
+    "ram": "RAM",
+    "active": "செயலில்",
+    "networkSpeed": "இணைய வேகம்",
+    "fpsLive": "நேரலை FPS",
+    "ramUsage": "RAM பயன்பாடு",
+    "battery": "பேட்டரி",
+    "livePerformanceStrip": "செயல்திறன் பட்டை"
+  },
+  "media": {
+    "animatedGif": "அனிமேஷன் GIF",
+    "cropDefect": "பிழைப்பகுதியை வெட்டு",
+    "rotate90": "90° சுழற்று",
+    "redactPii": "ரகசிய தகவலை மறை",
+    "trim5s": "5 வினாடி வெட்டு",
+    "muteAudio": "ஒலியை முடக்கு",
+    "toGif": "GIF ஆக மாற்று",
+    "play": "இயக்கு"
   }
 }

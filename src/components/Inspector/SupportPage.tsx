@@ -22,6 +22,7 @@ import {
   ExternalLinkIcon,
   GitHubIcon,
   HeartIcon,
+  MailIcon,
   NpmIcon,
   ShareIcon,
   StarIcon,
@@ -332,7 +333,7 @@ export const SupportPage: React.FC<SupportPageProps> = () => {
             <TouchableScale
               onPress={() => openUrl('mailto:vengatmacuser@gmail.com')}
               style={styles.authorActionBtn}>
-              <Text style={styles.authorActionEmoji}>✉️</Text>
+              <MailIcon size={14} color={AppColors.purple} />
               <Text style={styles.authorActionText}>
                 {t('support.sendEmail', 'Send Email')}
               </Text>

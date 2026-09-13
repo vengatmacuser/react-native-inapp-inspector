@@ -375,7 +375,9 @@
       "emptyObject": "খালি অবজেক্ট",
       "emptyTable": "খালি অবজেক্ট",
       "key": "চাবি",
-      "value": "মান"
+      "value": "মান",
+      "keyProperty": "কী / বৈশিষ্ট্য",
+      "noMatchingKeys": "কোনো মিল থাকা কী বা মান পাওয়া যায়নি"
     },
     "showingRequests": "{{count}} অনুরোধ দেখানো হচ্ছে",
     "showingFilteredRequests": "{{total}}টি অনুরোধের মধ্যে {{filtered}}টি দেখানো হচ্ছে৷",
@@ -500,7 +502,25 @@
     "searchParameters": "পরামিতি অনুসন্ধান করুন...",
     "noParamsFound": "কোনো পরামিতি আপনার অনুসন্ধানের সাথে মেলে না",
     "sourceFirebase": "ফায়ারবেস GA4",
-    "sourceCustom": "কাস্টম / ম্যানুয়াল"
+    "sourceCustom": "কাস্টম / ম্যানুয়াল",
+    "dataVisualization": "ডেটা ভিজ্যুয়ালাইজেশন",
+    "dataTypesBreakdown": "ডেটা প্রকার বিশ্লেষণ",
+    "highestPayloadStrings": "সর্বোচ্চ পেলোড স্ট্রিংস",
+    "topLevelMetrics": "শীর্ষ স্তরের মেট্রিক্স",
+    "importantDates": "গুরুত্বপূর্ণ তারিখ",
+    "itemPrices": "আইটেমের দাম",
+    "sessionIdentity": "সেশন এবং পরিচয়",
+    "metricParams": "প্যারামিটার:",
+    "metricUserProps": "ব্যবহারকারীর বৈশিষ্ট্য:",
+    "metricSize": "আকার:",
+    "metricItems": "{{count}} টি আইটেম",
+    "sessionId": "সেশন আইডি",
+    "trackingId": "ট্র্যাকিং আইডি",
+    "eventParameters": "ইভেন্ট প্যারামিটার ({{count}})",
+    "keyValueAttributes": "কী-মান বৈশিষ্ট্য",
+    "filterParamsPlaceholder": "প্যারামিটার ফিল্টার করুন...",
+    "noParamsRecorded": "এই ইভেন্টের জন্য কোনো কাস্টম প্যারামিটার রেকর্ড করা হয়নি।",
+    "noParamsMatching": "\"{{search}}\" এর সাথে মিল থাকা কোনো প্যারামিটার নেই"
   },
   "redux": {
     "title": "রেডাক্স",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "{{total}}টি সংযোগের মধ্যে {{filtered}}টি দেখানো হচ্ছে৷",
     "deletedCount": "মুছে ফেলা হয়েছে {{count}} WebSocket লগ",
     "copiedUrls": "ক্লিপবোর্ডে {{count}} URL কপি করা হয়েছে",
-    "webSocketTraffic": "ওয়েবসকেট ট্রাফিক ({{count}} সংযোগ)"
+    "webSocketTraffic": "ওয়েবসকেট ট্রাফিক ({{count}} সংযোগ)",
+    "connectionDetails": "সংযোগের বিবরণ",
+    "url": "URL",
+    "clientEngine": "ক্লায়েন্ট ইঞ্জিন",
+    "readyState": "প্রস্তুত অবস্থা",
+    "connectedAt": "সংযুক্ত সময়",
+    "closedAt": "বন্ধের সময়",
+    "closeCodeReason": "সমাপ্তির কোড এবং কারণ",
+    "subprotocols": "সাব-প্রোটোকল",
+    "callerStack": "কলার স্ট্যাক",
+    "error": "ত্রুটি",
+    "handshakeHeaders": "হ্যান্ডশেক হেডার",
+    "handshakeParams": "হ্যান্ডশেক কোয়েরি প্যারামিটার",
+    "noQueryParams": "সংযোগ URL-এ কোনো কোয়েরি প্যারামিটার নেই",
+    "jsClientCode": "জাভাস্ক্রিপ্ট ক্লায়েন্ট কোড",
+    "terminalWscat": "টার্মিনাল WSCAT কমান্ড",
+    "rawDump": "র সংযোগ JSON ডাম্প"
   },
   "push": {
     "title": "পুশ বিজ্ঞপ্তি",
     "preview": "পূর্বরূপ",
     "payload": "কাস্টম পেলোড",
-    "deliveryMetadata": "ডেলিভারি এবং মেসেজ মেটাডেটা",
+    "deliveryMetadata": "ডেলিভারি এবং বার্তা মেটাডেটা",
     "rawPayload": "কাঁচা পেলোড",
     "link": "লিঙ্ক",
     "appNotification": "অ্যাপ বিজ্ঞপ্তি",
@@ -1365,7 +1401,17 @@
     "cleared": "পুশ বিজ্ঞপ্তি ইতিহাস সাফ করা হয়েছে৷",
     "foreground": "ফোরগ্রাউন্ড",
     "background": "পটভূমি",
-    "quit": "প্রস্থান করুন"
+    "quit": "প্রস্থান করুন",
+    "messageId": "বার্তা আইডি:",
+    "sourceDomain": "উৎস / ডোমেন:",
+    "appState": "অ্যাপের অবস্থা:",
+    "actionType": "অ্যাকশনের ধরন:",
+    "timestamp": "টাইমস্ট্যাম্প:",
+    "channelId": "চ্যানেল আইডি:",
+    "sound": "শব্দ:",
+    "badgeCount": "ব্যাজ সংখ্যা:",
+    "collapseKey": "সংক্ষেপ কী:",
+    "noCustomData": "পেলোডে কোনো কাস্টম ডেটা পাওয়া যায়নি"
   },
   "debugging": {
     "title": "ডিবাগিং ও টুলস",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "অনুলিপি প্যাকেজ ইনস্টল কমান্ড!",
     "footerLicense": "প্রতিক্রিয়া নেটিভ ইন-অ্যাপ ইন্সপেক্টর · MIT লাইসেন্স",
     "footerTagline": "জিরো-কনফিগ অন-ডিভাইস ডিবাগিং টুল"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "লাইভ নেটওয়ার্ক",
+    "ram": "র‍্যাম",
+    "active": "সক্রিয়",
+    "networkSpeed": "নেটওয়ার্ক গতি",
+    "fpsLive": "লাইভ FPS",
+    "ramUsage": "র‍্যাম ব্যবহার",
+    "battery": "ব্যাটারি",
+    "livePerformanceStrip": "লাইভ পারফরম্যান্স স্ট্রিপ"
+  },
+  "media": {
+    "animatedGif": "অ্যানিমেটেড GIF",
+    "cropDefect": "ত্রুটির অংশ কাটুন",
+    "rotate90": "90° ঘোরান",
+    "redactPii": "সংবেদনশীল তথ্য লুকান",
+    "trim5s": "5 সেকেন্ড কাটুন",
+    "muteAudio": "অডিও নিঃশব্দ করুন",
+    "toGif": "GIF-এ রূপান্তর",
+    "play": "চালান"
   }
 }

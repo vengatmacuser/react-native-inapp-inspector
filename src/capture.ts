@@ -45,6 +45,15 @@ export const ScreenCapture = {
   },
 
   /**
+   * Alias for takeScreenshot.
+   */
+  captureScreenshot: async (
+    options?: ScreenshotOptions,
+  ): Promise<ScreenshotResult | null> => {
+    return takeNativeScreenshot(options);
+  },
+
+  /**
    * Starts native video or animated GIF recording with optional audio/mic narration.
    */
   startRecording: async (options?: RecordingOptions): Promise<boolean> => {

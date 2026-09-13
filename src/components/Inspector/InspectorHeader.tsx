@@ -30,14 +30,15 @@ import {
   getSize,
   formatByteSize,
   getAppVersionAndBuild,
+  showToast,
 } from '../../helpers';
 import {
   triggerNativeHaptic,
 } from '../../native/NativeInspector';
 import {ScreenCapture, CapturedMediaItem} from '../../capture';
-import {showToast} from '../../helpers/toast';
 import {UpdateAvailableModal} from './UpdateAvailableModal';
 import {MediaPreviewModal} from './MediaPreviewModal';
+import {LanguageSelectorModal} from './LanguageSelectorModal';
 import {
   WhiteBackNavigation,
   TrashIcon,
@@ -54,11 +55,12 @@ import {
   InfoCircleIcon,
   CameraIcon,
   VideoCameraIcon,
+  EyeIcon,
 } from '../NetworkIcons';
-import {useTranslation} from '../../i18n';
+import {useTranslation, SUPPORTED_LANGUAGES, getLanguage} from '../../i18n';
 
 const InspectorHeader = React.memo(() => {
-  const {t} = useTranslation();
+  const {t, language} = useTranslation();
   const {
     modalHeightPercent,
     appIcon,
@@ -97,6 +99,8 @@ const InspectorHeader = React.memo(() => {
     selectedSocket,
     setSelectedSocket,
     refreshMediaCount,
+    peekMode,
+    setPeekMode,
   } = useInspector();
 
   const {width: windowWidth} = useWindowDimensions();
@@ -104,9 +108,17 @@ const InspectorHeader = React.memo(() => {
   const isCompact = windowWidth < 400;
 
   const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
+  const [showLanguageModal, setShowLanguageModal] = React.useState<boolean>(false);
   const [appVersionString] = React.useState<string>(() => {
     return getAppVersionAndBuild().formatted;
   });
+
+  const currentLang = useMemo(() => {
+    const code = language || getLanguage();
+    return (
+      SUPPORTED_LANGUAGES.find(l => l.code === code) || SUPPORTED_LANGUAGES[0]
+    );
+  }, [language]);
 
   const [isRecording, setIsRecording] = React.useState<boolean>(false);
   const [recordingSeconds, setRecordingSeconds] = React.useState<number>(0);
@@ -318,7 +330,7 @@ const InspectorHeader = React.memo(() => {
     return 0;
   }, [modalHeightPercent, windowWidth]);
 
-  const buttonSize = isNarrow ? 26 : isCompact ? 28 : 28;
+  const buttonSize = isNarrow ? 25 : isCompact ? 26.5 : 27;
   const logoSize = isNarrow ? 36 : isCompact ? 38 : 40;
 
   return (
@@ -327,7 +339,7 @@ const InspectorHeader = React.memo(() => {
         style={[
           styles.headerGradient,
           {
-            minHeight: (isNarrow ? 48 : 52) + headerTopPadding,
+            minHeight: (isNarrow ? 44 : 48) + headerTopPadding,
           },
         ]}>
         {/* LinearGradient as absolute background layer to avoid Fabric view recycling crash.
@@ -356,8 +368,8 @@ const InspectorHeader = React.memo(() => {
                 width: '100%',
                 justifyContent: 'space-between',
                 paddingHorizontal: isNarrow ? 10 : 12,
-                paddingVertical: 7,
-                minHeight: isNarrow ? 48 : 52,
+                paddingVertical: 5.5,
+                minHeight: isNarrow ? 44 : 48,
               },
             ]}>
             <View
@@ -539,8 +551,8 @@ const InspectorHeader = React.memo(() => {
                     minWidth: 0,
                     marginRight: 4,
                   }}>
-                  <BrandCircleIcon size={isNarrow ? 40 : isCompact ? 44 : 46} />
-                  <View style={{gap: 2, flex: 1, minWidth: 0, justifyContent: 'center'}}>
+                  <BrandCircleIcon size={isNarrow ? 44 : isCompact ? 46 : 48} />
+                  <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
                     {/* Top Row: Full prominent package name */}
                     <Text
                       style={[
@@ -549,7 +561,7 @@ const InspectorHeader = React.memo(() => {
                           fontFamily: AppFonts.interBold,
                           fontWeight: '700',
                           fontSize: isNarrow ? 13 : isCompact ? 13.5 : 14.5,
-                          lineHeight: isNarrow ? 17 : isCompact ? 18 : 19,
+                          lineHeight: isNarrow ? 17 : isCompact ? 18 : 19.5,
                           color: AppColors.white,
                           letterSpacing: -0.2,
                           paddingBottom: 0,
@@ -560,7 +572,7 @@ const InspectorHeader = React.memo(() => {
                       react-native-inapp-inspector
                     </Text>
 
-                    {/* Sub Row: OS Chip, NPM Version Chip, DEV Env Badge, & Update Pill */}
+                    {/* Sub Row: Language Selector, OS Chip, NPM Version Chip, DEV Env Badge, & Update Pill */}
                     <View
                       style={{
                         flexDirection: 'row',
@@ -569,6 +581,45 @@ const InspectorHeader = React.memo(() => {
                         minWidth: 0,
                         marginTop: 1.5,
                       }}>
+                      {/* Country / Language Selector Pill */}
+                      <TouchableScale
+                        onPress={() => {
+                          triggerNativeHaptic('light');
+                          setShowLanguageModal(true);
+                        }}
+                        hitSlop={6}
+                        accessible={true}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('settings.general.selectLanguage', 'Select Language')}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: `${AppColors.white}24`,
+                          borderRadius: 5,
+                          paddingHorizontal: 5.5,
+                          paddingVertical: 2,
+                          gap: 3.5,
+                          borderWidth: 1,
+                          borderColor: `${AppColors.white}38`,
+                          flexShrink: 0,
+                        }}>
+                        <Text style={{fontSize: 9, lineHeight: 11}}>
+                          {currentLang?.flag || '🌐'}
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 8.5,
+                            lineHeight: 11,
+                            color: AppColors.white,
+                            letterSpacing: 0.2,
+                          }}
+                          numberOfLines={1}>
+                          {currentLang?.code?.toUpperCase() || 'EN'}
+                        </Text>
+                        <ChevronDownIcon size={6.5} color={`${AppColors.white}CC`} />
+                      </TouchableScale>
+
                       {/* Host OS & Version */}
                       <View
                         style={{
@@ -576,8 +627,8 @@ const InspectorHeader = React.memo(() => {
                           alignItems: 'center',
                           backgroundColor: `${AppColors.white}1F`,
                           borderRadius: 5,
-                          paddingHorizontal: 5,
-                          paddingVertical: 1.5,
+                          paddingHorizontal: 5.5,
+                          paddingVertical: 2,
                           gap: 3.5,
                           borderWidth: 1,
                           borderColor: `${AppColors.white}2E`,
@@ -625,8 +676,8 @@ const InspectorHeader = React.memo(() => {
                           alignItems: 'center',
                           backgroundColor: `${AppColors.white}1F`,
                           borderRadius: 5,
-                          paddingHorizontal: 5,
-                          paddingVertical: 1.5,
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
                           gap: 3.5,
                           borderWidth: 1,
                           borderColor: `${AppColors.white}2E`,
@@ -643,8 +694,7 @@ const InspectorHeader = React.memo(() => {
                             lineHeight: 11,
                             color: `${AppColors.white}EB`,
                             letterSpacing: 0.1,
-                          }}
-                          numberOfLines={1}>
+                          }}>
                           v{LIB_VERSION}
                         </Text>
                         {updateAvailable && (
@@ -658,33 +708,6 @@ const InspectorHeader = React.memo(() => {
                           </Text>
                         )}
                       </Pressable>
-
-                      {/* Environment Badge (DEV / STG / PROD) */}
-                      <View
-                        style={[
-                          styles.envBadge,
-                          {
-                            backgroundColor: envConfig.bg,
-                            borderColor: envConfig.border,
-                            flexShrink: 0,
-                            paddingHorizontal: 5,
-                            paddingVertical: 1.5,
-                            borderRadius: 5,
-                            marginBottom: 0,
-                          },
-                        ]}>
-                        <Text
-                          style={[
-                            styles.envBadgeText,
-                            {
-                              color: envConfig.text,
-                              fontSize: 8.5,
-                              lineHeight: 11,
-                            },
-                          ]}>
-                          {envConfig.label}
-                        </Text>
-                      </View>
 
                       {/* Update Available Notification Pill */}
                       {updateAvailable && (
@@ -1603,28 +1626,62 @@ const InspectorHeader = React.memo(() => {
                   />
                 </TouchableScale>
               ) : !isAnySelected ? (
-                <TouchableScale
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Settings"
-                  onPress={() => setSettingsPage('main')}
-                  hitSlop={15}
-                  style={[
-                    styles.closeButtonSquare,
-                    {
-                      width: buttonSize,
-                      height: buttonSize,
-                      borderRadius: isNarrow ? 6 : 7,
-                      backgroundColor: 'rgba(168, 85, 247, 0.28)',
-                      borderColor: 'rgba(216, 180, 254, 0.45)',
-                      borderWidth: 1,
-                    },
-                  ]}>
-                  <SettingsIcon
-                    color={AppColors.white}
-                    size={isNarrow ? 12 : 14}
-                  />
-                </TouchableScale>
+                <>
+                  {/* Peek-through (Eye) toggle button */}
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={peekMode ? 'Disable peek-through' : 'Enable peek-through'}
+                    onPress={() => {
+                      triggerNativeHaptic('light');
+                      setPeekMode(prev => !prev);
+                    }}
+                    hitSlop={15}
+                    style={[
+                      styles.closeButtonSquare,
+                      {
+                        width: buttonSize,
+                        height: buttonSize,
+                        borderRadius: isNarrow ? 6 : 7,
+                        backgroundColor: peekMode
+                          ? 'rgba(6, 182, 212, 0.38)'
+                          : 'rgba(6, 182, 212, 0.18)',
+                        borderColor: peekMode
+                          ? 'rgba(103, 232, 249, 0.65)'
+                          : 'rgba(103, 232, 249, 0.35)',
+                        borderWidth: 1,
+                      },
+                    ]}>
+                    <EyeIcon
+                      color={AppColors.white}
+                      size={isNarrow ? 12 : 14}
+                    />
+                  </TouchableScale>
+
+                  {/* Settings button */}
+                  <TouchableScale
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Settings"
+                    onPress={() => setSettingsPage('main')}
+                    hitSlop={15}
+                    style={[
+                      styles.closeButtonSquare,
+                      {
+                        width: buttonSize,
+                        height: buttonSize,
+                        borderRadius: isNarrow ? 6 : 7,
+                        backgroundColor: 'rgba(168, 85, 247, 0.28)',
+                        borderColor: 'rgba(216, 180, 254, 0.45)',
+                        borderWidth: 1,
+                      },
+                    ]}>
+                    <SettingsIcon
+                      color={AppColors.white}
+                      size={isNarrow ? 12 : 14}
+                    />
+                  </TouchableScale>
+                </>
               ) : null}
 
               {/* Minimize button */}
@@ -1678,6 +1735,12 @@ const InspectorHeader = React.memo(() => {
         visible={showUpdateModal}
         latestVersion={latestNpmVersion}
         onClose={() => setShowUpdateModal(false)}
+      />
+
+      {/* Country / Language Selector Bottom Sheet Modal */}
+      <LanguageSelectorModal
+        visible={showLanguageModal}
+        onClose={() => setShowLanguageModal(false)}
       />
 
       {/* Instant Media Preview Modal for Screenshots and Video Recordings */}

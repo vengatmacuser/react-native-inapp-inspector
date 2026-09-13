@@ -481,6 +481,7 @@ const AnalyticsTab = React.memo(() => {
               removeClippedSubviews={true}
               renderToHardwareTextureAndroid={true}
               showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
               ListEmptyComponent={
                 <EmptyState
                   isSearch={analyticsSearch.length > 0}
@@ -510,11 +511,10 @@ const AnalyticsTab = React.memo(() => {
                   />
                 ) : null
               }
+              style={{flex: 1}}
               contentContainerStyle={[
                 styles.listContent,
-                filteredAnalyticsEvents.length === 0 && {
-                  flexGrow: 1,
-                },
+                {flexGrow: 1},
               ]}
               keyboardShouldPersistTaps="handled"
             />

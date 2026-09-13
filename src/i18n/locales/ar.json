@@ -305,7 +305,9 @@
       "table": "الجدول",
       "emptyObject": "كائن فارغ",
       "emptyTable": "كائن فارغ",
-      "value": "القيمة"
+      "value": "القيمة",
+      "keyProperty": "المفتاح / الخاصية",
+      "noMatchingKeys": "لم يتم العثور على مفاتيح أو قيم مطابقة"
     },
     "title": "واجهات برمجة التطبيقات",
     "searchPlaceholder": "البحث حسب عنوان URL أو الحالة أو الطريقة...",
@@ -500,7 +502,25 @@
     "searchParameters": "معلمات البحث...",
     "noParamsFound": "لا توجد معلمات تطابق بحثك",
     "sourceFirebase": "فاير بيس GA4",
-    "sourceCustom": "مخصص / يدوي"
+    "sourceCustom": "مخصص / يدوي",
+    "dataVisualization": "تصور البيانات",
+    "dataTypesBreakdown": "توزيع أنواع البيانات",
+    "highestPayloadStrings": "أطول نصوص البيانات",
+    "topLevelMetrics": "المقاييس الرئيسية",
+    "importantDates": "تواريخ مهمة",
+    "itemPrices": "أسعار العناصر",
+    "sessionIdentity": "الجلسة والهوية",
+    "metricParams": "المعلمات:",
+    "metricUserProps": "خصائص المستخدم:",
+    "metricSize": "الحجم:",
+    "metricItems": "{{count}} عناصر",
+    "sessionId": "معرف الجلسة",
+    "trackingId": "معرف التتبع",
+    "eventParameters": "معلمات الحدث ({{count}})",
+    "keyValueAttributes": "سمات المفتاح والقيمة",
+    "filterParamsPlaceholder": "تصفية المعلمات حسب المفتاح أو القيمة...",
+    "noParamsRecorded": "لم يتم تسجيل معلمات مخصصة لهذا الحدث.",
+    "noParamsMatching": "لا توجد معلمات مطابقة لـ \"{{search}}\""
   },
   "redux": {
     "searchPlaceholder": "بحث في الحالة أو الإجراءات...",
@@ -1245,7 +1265,7 @@
     "title": "دفع الإخطارات",
     "preview": "معاينة",
     "payload": "الحمولة المخصصة",
-    "deliveryMetadata": "التسليم والبيانات الوصفية للرسالة",
+    "deliveryMetadata": "بيانات التسليم والرسالة",
     "rawPayload": "الحمولة الخام",
     "link": "رابط",
     "appNotification": "إشعار التطبيق",
@@ -1257,7 +1277,17 @@
     "filterTitle": "تصفية الإخطارات",
     "clearTitle": "مسح سجل الدفع",
     "clearMessage": "هل أنت متأكد أنك تريد مسح جميع سجلات الإشعارات المؤقتة؟",
-    "cleared": "تم مسح سجل الإشعارات المؤقتة"
+    "cleared": "تم مسح سجل الإشعارات المؤقتة",
+    "messageId": "معرف الرسالة:",
+    "sourceDomain": "المصدر / النطاق:",
+    "appState": "حالة التطبيق:",
+    "actionType": "نوع الإجراء:",
+    "timestamp": "الطابع الزمني:",
+    "channelId": "معرف القناة:",
+    "sound": "الصوت:",
+    "badgeCount": "عدد الشارات:",
+    "collapseKey": "مفتاح التجميع:",
+    "noCustomData": "لم يتم العثور على بيانات مخصصة في الحمولة"
   },
   "about": {
     "title": "حول والمواصفات",
@@ -1413,12 +1443,49 @@
     "showingFilteredConnections": "يتم عرض {{filtered}} من {{total}} من الاتصالات",
     "deletedCount": "تم حذف {{count}} من سجلات WebSocket",
     "copiedUrls": "{{count}} تم نسخ عناوين URL إلى الحافظة",
-    "webSocketTraffic": "حركة مرور WebSocket (اتصالات {{count}})"
+    "webSocketTraffic": "حركة مرور WebSocket (اتصالات {{count}})",
+    "connectionDetails": "تفاصيل الاتصال",
+    "url": "URL",
+    "clientEngine": "محرك العميل",
+    "readyState": "حالة الاستعداد",
+    "connectedAt": "متصل في",
+    "closedAt": "مغلق في",
+    "closeCodeReason": "رمز وسبب الإغلاق",
+    "subprotocols": "البروتوكولات الفرعية",
+    "callerStack": "مكدس الاستدعاء",
+    "error": "خطأ",
+    "handshakeHeaders": "ترويسات المصافحة",
+    "handshakeParams": "معلمات استعلام المصافحة",
+    "noQueryParams": "لم يتم تمرير معلمات استعلام في رابط الاتصال",
+    "jsClientCode": "كود عميل JAVASCRIPT",
+    "terminalWscat": "أمر WSCAT في الطرفية",
+    "rawDump": "تفريغ JSON الأولي للاتصال"
   },
   "debugging": {
     "title": "التصحيح والأدوات",
     "buildSuccess": "تم إنشاء APK Build بنجاح!",
     "buildFailed": "فشل البناء: {{error}}",
     "buildCancelled": "تم إلغاء البناء من قبل المستخدم"
+  },
+  "telemetry": {
+    "fps": "إطار/ث",
+    "liveTraffic": "شبكة مباشرة",
+    "ram": "الذاكرة",
+    "active": "نشط",
+    "networkSpeed": "سرعة الشبكة",
+    "fpsLive": "معدل الإطارات المباشر",
+    "ramUsage": "استخدام الذاكرة",
+    "battery": "البطارية",
+    "livePerformanceStrip": "شريط الأداء المباشر"
+  },
+  "media": {
+    "animatedGif": "GIF متحرك",
+    "cropDefect": "قص موضع الخلل",
+    "rotate90": "تدوير 90 درجة",
+    "redactPii": "إخفاء البيانات الحساسة",
+    "trim5s": "قص 5 ثوانٍ",
+    "muteAudio": "كتم الصوت",
+    "toGif": "تحويل إلى GIF",
+    "play": "تشغيل"
   }
 }

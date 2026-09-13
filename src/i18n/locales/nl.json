@@ -375,7 +375,9 @@
       "emptyObject": "Leeg voorwerp",
       "emptyTable": "Leeg voorwerp",
       "key": "Sleutel",
-      "value": "Waarde"
+      "value": "WAARDE",
+      "keyProperty": "SLEUTEL / EIGENSCHAP",
+      "noMatchingKeys": "Geen overeenkomende sleutels of waarden gevonden"
     },
     "showingRequests": "Er worden {{count}} verzoeken weergegeven",
     "showingFilteredRequests": "Er worden {{filtered}} van {{total}} verzoeken weergegeven",
@@ -500,7 +502,25 @@
     "searchParameters": "Zoekparameters...",
     "noParamsFound": "Er zijn geen parameters die overeenkomen met uw zoekopdracht",
     "sourceFirebase": "VUURBASIS GA4",
-    "sourceCustom": "AANGEPAST / HANDMATIG"
+    "sourceCustom": "AANGEPAST / HANDMATIG",
+    "dataVisualization": "Gegevensvisualisatie",
+    "dataTypesBreakdown": "Uitsplitsing van gegevenstypen",
+    "highestPayloadStrings": "Langste payload-tekenreeksen",
+    "topLevelMetrics": "Statistieken op het hoogste niveau",
+    "importantDates": "Belangrijke datums",
+    "itemPrices": "Prijzen van items",
+    "sessionIdentity": "SESSIE & IDENTITEIT",
+    "metricParams": "Parameters:",
+    "metricUserProps": "Gebruikerseigenschappen:",
+    "metricSize": "Grootte:",
+    "metricItems": "{{count}} items",
+    "sessionId": "Sessie-ID",
+    "trackingId": "Tracking-ID",
+    "eventParameters": "GEBEURTENISPARAMETERS ({{count}})",
+    "keyValueAttributes": "Sleutel-waarde-attributen",
+    "filterParamsPlaceholder": "Filter parameters op sleutel of waarde...",
+    "noParamsRecorded": "Geen aangepaste parameters geregistreerd voor deze gebeurtenis.",
+    "noParamsMatching": "Geen parameters gevonden die overeenkomen met \"{{search}}\""
   },
   "redux": {
     "title": "Redux",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "Toont {{filtered}} van {{total}} verbindingen",
     "deletedCount": "{{count}} WebSocket-logboeken verwijderd",
     "copiedUrls": "{{count}} URL's gekopieerd naar klembord",
-    "webSocketTraffic": "WebSocket-verkeer ({{count}} verbindingen)"
+    "webSocketTraffic": "WebSocket-verkeer ({{count}} verbindingen)",
+    "connectionDetails": "VERBINDINGSDETAILS",
+    "url": "URL",
+    "clientEngine": "Client-engine",
+    "readyState": "Gereedheidsstatus",
+    "connectedAt": "Verbonden om",
+    "closedAt": "Gesloten om",
+    "closeCodeReason": "Sluitcode & Reden",
+    "subprotocols": "Subprotocollen",
+    "callerStack": "Aanroepende stack",
+    "error": "Fout",
+    "handshakeHeaders": "Handshake-headers",
+    "handshakeParams": "HANDSHAKE-QUERYPARAMETERS",
+    "noQueryParams": "Geen queryparameters doorgegeven in verbindings-URL",
+    "jsClientCode": "JAVASCRIPT-CLIENTCODE",
+    "terminalWscat": "TERMINAL WSCAT-OPDRACHT",
+    "rawDump": "RUWE VERBINDING JSON-DUMP"
   },
   "push": {
     "title": "Pushmeldingen",
     "preview": "Voorbeeld",
     "payload": "Aangepaste lading",
-    "deliveryMetadata": "Metagegevens voor bezorging en berichten",
+    "deliveryMetadata": "Bezorg- en berichtmetagegevens",
     "rawPayload": "Ruwe lading",
     "link": "Koppeling",
     "appNotification": "App-melding",
@@ -1365,7 +1401,17 @@
     "cleared": "Geschiedenis van pushmeldingen gewist",
     "foreground": "Voorgrond",
     "background": "Achtergrond",
-    "quit": "Stoppen"
+    "quit": "Stoppen",
+    "messageId": "Bericht-ID:",
+    "sourceDomain": "Bron / Domein:",
+    "appState": "App-status:",
+    "actionType": "Actietype:",
+    "timestamp": "Tijdstempel:",
+    "channelId": "Kanaal-ID:",
+    "sound": "Geluid:",
+    "badgeCount": "Badge-aantal:",
+    "collapseKey": "Samenvoegsleutel:",
+    "noCustomData": "Geen aangepaste sleutel-waardegegevens gevonden in de payload"
   },
   "debugging": {
     "title": "Foutopsporing en hulpmiddelen",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "Gekopieerde pakketinstallatieopdracht!",
     "footerLicense": "Reageer Native In-App Inspector · MIT-licentie",
     "footerTagline": "Zero-config foutopsporingstool op het apparaat"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "LIVE NETWERK",
+    "ram": "RAM",
+    "active": "ACTIEF",
+    "networkSpeed": "Netwerksnelheid",
+    "fpsLive": "Live FPS",
+    "ramUsage": "RAM-gebruik",
+    "battery": "Batterij",
+    "livePerformanceStrip": "Live prestatiebalk"
+  },
+  "media": {
+    "animatedGif": "GEANIMEERDE GIF",
+    "cropDefect": "Defect bijsnijden",
+    "rotate90": "90° draaien",
+    "redactPii": "PII verbergen",
+    "trim5s": "5s bijsnijden",
+    "muteAudio": "Audio dempen",
+    "toGif": "Naar GIF",
+    "play": "Afspelen"
   }
 }

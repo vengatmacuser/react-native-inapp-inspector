@@ -27,6 +27,7 @@ import {
 } from '../../types/enums';
 import {
   clearCrashRecords,
+  simulateTestCrash,
 } from '../../customHooks/crashHandler';
 import CrashFilterModal, {
   CrashFilters,
@@ -642,7 +643,7 @@ const CrashTab = React.memo(() => {
           </Text>
           {(searchQuery.length > 0 ||
             filterType !== 'all' ||
-            !isCrashFiltersDefault(crashFilters)) && (
+            !isCrashFiltersDefault(crashFilters)) ? (
             <TouchableScale
               onPress={() => {
                 setSearchQuery('');
@@ -665,6 +666,96 @@ const CrashTab = React.memo(() => {
                 Clear Search & Filters
               </Text>
             </TouchableScale>
+          ) : (
+            <View style={{marginTop: 18, alignItems: 'center', width: '100%', paddingHorizontal: 16}}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 10.5,
+                  color: AppColors.grayText,
+                  letterSpacing: 0.6,
+                  marginBottom: 10,
+                }}>
+                TEST CRASH SENTINEL
+              </Text>
+              <View style={{flexDirection: 'row', gap: 7, flexWrap: 'wrap', justifyContent: 'center'}}>
+                <TouchableScale
+                  onPress={() => simulateTestCrash('js', 'Test JavaScript ReferenceError: variable is not defined', undefined, true)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: `${AppColors.amber600}14`,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.amber600}38`,
+                    paddingHorizontal: 9,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                  }}>
+                  <JsIcon size={11} color={AppColors.amber600} />
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
+                    Simulate JS Crash
+                  </Text>
+                </TouchableScale>
+
+                <TouchableScale
+                  onPress={() => simulateTestCrash('native', 'Test Native Crash: SIGSEGV (Segmentation Fault)', undefined, true)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: `${AppColors.cyan600}14`,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.cyan600}38`,
+                    paddingHorizontal: 9,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                  }}>
+                  <ChipIcon size={11} color={AppColors.cyan600} />
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
+                    Simulate Native Crash
+                  </Text>
+                </TouchableScale>
+
+                <TouchableScale
+                  onPress={() => simulateTestCrash('promise', 'Unhandled Promise Rejection: Gateway connection timed out', undefined, true)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: `${AppColors.orange600}14`,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.orange600}38`,
+                    paddingHorizontal: 9,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                  }}>
+                  <HourglassIcon size={11} color={AppColors.orange600} />
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
+                    Simulate Promise
+                  </Text>
+                </TouchableScale>
+
+                <TouchableScale
+                  onPress={() => simulateTestCrash('render', 'Render Error: Cannot read property of undefined in Component', undefined, true)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: `${AppColors.violet600}14`,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.violet600}38`,
+                    paddingHorizontal: 9,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                  }}>
+                  <LayoutIcon size={11} color={AppColors.violet600} />
+                  <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
+                    Simulate Render
+                  </Text>
+                </TouchableScale>
+              </View>
+            </View>
           )}
         </ScrollView>
       ) : (
@@ -680,8 +771,14 @@ const CrashTab = React.memo(() => {
             updateCellsBatchingPeriod={40}
             removeClippedSubviews={true}
             renderToHardwareTextureAndroid={true}
-            contentContainerStyle={localStyles.listContent}
+            style={{flex: 1}}
+            contentContainerStyle={[
+              localStyles.listContent,
+              {flexGrow: 1},
+            ]}
             showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            keyboardShouldPersistTaps="handled"
             ListFooterComponent={
               filteredList.length > 0 ? (
                 <EndOfListFooter

@@ -262,10 +262,16 @@ export const MediaGalleryTab: React.FC = () => {
   };
 
   const renderGridItem = ({item}: {item: CapturedMediaItem}) => {
+    if (!item) return null;
     const isVideo = item.type === 'video';
     const isGif = item.type === 'gif';
-    const thumbUri = isVideo ? item.thumbnailUri : item.uri;
-    const isSelected = selectedIds.has(item.id);
+    const thumbUri = isVideo ? (item.thumbnailUri || item.uri) : item.uri;
+    const isSelected = Boolean(item.id && selectedIds.has(item.id));
+    const formatLabel = (item.format || (isVideo ? 'mp4' : isGif ? 'gif' : 'png')).toUpperCase();
+    const filename = item.filename || (item.uri ? item.uri.split('/').pop() : '') || 'Capture';
+    const timeStr = item.timestamp
+      ? new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+      : '';
 
     return (
       <TouchableScale
@@ -290,7 +296,7 @@ export const MediaGalleryTab: React.FC = () => {
 
           {/* Checkbox top-left */}
           <TouchableOpacity
-            onPress={() => toggleSelect(item.id)}
+            onPress={() => item.id && toggleSelect(item.id)}
             style={[
               galleryStyles.checkbox,
               isSelected && galleryStyles.checkboxSelected,
@@ -313,24 +319,28 @@ export const MediaGalleryTab: React.FC = () => {
               <ImageIcon size={11} color={AppColors.emerald500} />
             )}
             <Text style={galleryStyles.typeBadgeText}>
-              {item.format.toUpperCase()}
+              {formatLabel}
             </Text>
           </View>
         </View>
 
         <View style={galleryStyles.cardInfo}>
           <Text style={galleryStyles.cardTitle} numberOfLines={1}>
-            {item.filename}
+            {filename}
           </Text>
           <View style={galleryStyles.cardMetaRow}>
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1, minWidth: 0}}>
               <Text style={galleryStyles.cardMeta} numberOfLines={1}>
-                {formatBytes(item.sizeBytes)}
+                {formatBytes(item.sizeBytes || 0)}
               </Text>
-              <Text style={galleryStyles.cardMetaDot}>•</Text>
-              <Text style={galleryStyles.cardMeta} numberOfLines={1}>
-                {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-              </Text>
+              {timeStr ? (
+                <>
+                  <Text style={galleryStyles.cardMetaDot}>•</Text>
+                  <Text style={galleryStyles.cardMeta} numberOfLines={1}>
+                    {timeStr}
+                  </Text>
+                </>
+              ) : null}
             </View>
             <TouchableOpacity
               onPress={() => handleCopyItemUri(item)}
@@ -345,10 +355,16 @@ export const MediaGalleryTab: React.FC = () => {
   };
 
   const renderListItem = ({item}: {item: CapturedMediaItem}) => {
+    if (!item) return null;
     const isVideo = item.type === 'video';
     const isGif = item.type === 'gif';
-    const thumbUri = isVideo ? item.thumbnailUri : item.uri;
-    const isSelected = selectedIds.has(item.id);
+    const thumbUri = isVideo ? (item.thumbnailUri || item.uri) : item.uri;
+    const isSelected = Boolean(item.id && selectedIds.has(item.id));
+    const formatLabel = (item.format || (isVideo ? 'mp4' : isGif ? 'gif' : 'png')).toUpperCase();
+    const filename = item.filename || (item.uri ? item.uri.split('/').pop() : '') || 'Capture';
+    const dateStr = item.timestamp
+      ? `${new Date(item.timestamp).toLocaleDateString([], {month: 'short', day: 'numeric'})} ${new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`
+      : '';
 
     return (
       <TouchableScale
@@ -356,7 +372,7 @@ export const MediaGalleryTab: React.FC = () => {
         style={[galleryStyles.listRow, isSelected && galleryStyles.listRowSelected]}>
         {/* Checkbox */}
         <TouchableOpacity
-          onPress={() => toggleSelect(item.id)}
+          onPress={() => item.id && toggleSelect(item.id)}
           style={[
             galleryStyles.listCheckbox,
             isSelected && galleryStyles.checkboxSelected,
@@ -392,7 +408,7 @@ export const MediaGalleryTab: React.FC = () => {
         {/* Text Metadata */}
         <View style={galleryStyles.listInfo}>
           <Text style={galleryStyles.listTitle} numberOfLines={1}>
-            {item.filename}
+            {filename}
           </Text>
           <View style={galleryStyles.listMetaRow}>
             <View style={galleryStyles.listBadge}>
@@ -404,17 +420,20 @@ export const MediaGalleryTab: React.FC = () => {
                 <ImageIcon size={10} color={AppColors.emerald500} />
               )}
               <Text style={galleryStyles.listBadgeText}>
-                {item.format.toUpperCase()}
+                {formatLabel}
               </Text>
             </View>
             <Text style={galleryStyles.cardMeta}>
-              {formatBytes(item.sizeBytes)}
+              {formatBytes(item.sizeBytes || 0)}
             </Text>
-            <Text style={galleryStyles.cardMetaDot}>•</Text>
-            <Text style={galleryStyles.cardMeta}>
-              {new Date(item.timestamp).toLocaleDateString([], {month: 'short', day: 'numeric'})}{' '}
-              {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
-            </Text>
+            {dateStr ? (
+              <>
+                <Text style={galleryStyles.cardMetaDot}>•</Text>
+                <Text style={galleryStyles.cardMeta}>
+                  {dateStr}
+                </Text>
+              </>
+            ) : null}
           </View>
         </View>
 
@@ -587,7 +606,13 @@ export const MediaGalleryTab: React.FC = () => {
         renderItem={viewMode === 'grid' ? renderGridItem : renderListItem}
         numColumns={viewMode === 'grid' ? 2 : 1}
         columnWrapperStyle={viewMode === 'grid' ? galleryStyles.columnWrapper : undefined}
-        contentContainerStyle={galleryStyles.listContent}
+        style={{flex: 1}}
+        contentContainerStyle={[
+          galleryStyles.listContent,
+          {flexGrow: 1},
+        ]}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={AppColors.sky400} />
         }

@@ -305,7 +305,9 @@
       "table": "テーブル",
       "emptyObject": "空のオブジェクト",
       "emptyTable": "空のオブジェクト",
-      "value": "値"
+      "value": "値",
+      "keyProperty": "キー / プロパティ",
+      "noMatchingKeys": "一致するキーまたは値が見つかりません"
     },
     "showingRequests": "{{count}} 件のリクエストを表示",
     "showingFilteredRequests": "{{total}} 件中 {{filtered}} 件のリクエストを表示",
@@ -500,7 +502,25 @@
     "searchParameters": "検索パラメータ...",
     "noParamsFound": "検索に一致するパラメータはありません",
     "sourceFirebase": "ファイアベース GA4",
-    "sourceCustom": "カスタム/マニュアル"
+    "sourceCustom": "カスタム/マニュアル",
+    "dataVisualization": "データ可視化",
+    "dataTypesBreakdown": "データ型内訳",
+    "highestPayloadStrings": "最長ペイロード文字列",
+    "topLevelMetrics": "トップレベルメトリクス",
+    "importantDates": "重要な日付",
+    "itemPrices": "アイテム価格",
+    "sessionIdentity": "セッションとID",
+    "metricParams": "パラメータ:",
+    "metricUserProps": "ユーザープロパティ:",
+    "metricSize": "サイズ:",
+    "metricItems": "{{count}} 件",
+    "sessionId": "セッションID",
+    "trackingId": "トラッキングID",
+    "eventParameters": "イベントパラメータ ({{count}})",
+    "keyValueAttributes": "キーと値の属性",
+    "filterParamsPlaceholder": "キーまたは値でパラメータをフィルタ...",
+    "noParamsRecorded": "このイベントのカスタムパラメータはありません。",
+    "noParamsMatching": "「{{search}}」に一致するパラメータはありません"
   },
   "redux": {
     "searchPlaceholder": "StateまたはActionを検索...",
@@ -1267,7 +1287,23 @@
     "cleared": "すべての WebSocket ログがクリアされました",
     "deleteSelectedTitle": "選択したWebSocketを削除",
     "deleteSelectedMsg": "選択した {{count}} の WebSocket ログを削除してもよろしいですか?",
-    "filterTitle": "WebSocket接続のフィルタリング"
+    "filterTitle": "WebSocket接続のフィルタリング",
+    "connectionDetails": "接続詳細",
+    "url": "URL",
+    "clientEngine": "クライアントエンジン",
+    "readyState": "準備状態",
+    "connectedAt": "接続日時",
+    "closedAt": "切断日時",
+    "closeCodeReason": "終了コードと理由",
+    "subprotocols": "サブプロトコル",
+    "callerStack": "呼び出しスタック",
+    "error": "エラー",
+    "handshakeHeaders": "ハンドシェイクヘッダー",
+    "handshakeParams": "ハンドシェイククエリパラメータ",
+    "noQueryParams": "接続URLにクエリパラメータがありません",
+    "jsClientCode": "JAVASCRIPTクライアントコード",
+    "terminalWscat": "ターミナルWSCATコマンド",
+    "rawDump": "生接続JSONダンプ"
   },
   "push": {
     "clearTitle": "プッシュ履歴を消去",
@@ -1279,7 +1315,7 @@
     "title": "プッシュ通知",
     "preview": "プレビュー",
     "payload": "カスタムペイロード",
-    "deliveryMetadata": "配信とメッセージのメタデータ",
+    "deliveryMetadata": "配信およびメッセージメタデータ",
     "rawPayload": "生のペイロード",
     "link": "リンク",
     "appNotification": "アプリの通知",
@@ -1288,7 +1324,17 @@
     "searchPlaceholder": "プッシュ通知を検索...",
     "noNotifications": "プッシュ通知はありません",
     "noNotificationsDesc": "キャプチャされた Firebase FCM、Apple APN、OneSignal、カスタム プッシュ イベントがリアルタイムでここに表示されます。",
-    "filterTitle": "プッシュ通知のフィルター"
+    "filterTitle": "プッシュ通知のフィルター",
+    "messageId": "メッセージID:",
+    "sourceDomain": "送信元 / ドメイン:",
+    "appState": "アプリ状態:",
+    "actionType": "アクションタイプ:",
+    "timestamp": "タイムスタンプ:",
+    "channelId": "チャンネルID:",
+    "sound": "通知音:",
+    "badgeCount": "バッジ数:",
+    "collapseKey": "コラプスキー:",
+    "noCustomData": "ペイロードにカスタムキー値データはありません"
   },
   "about": {
     "title": "概要と仕様",
@@ -1420,5 +1466,26 @@
     "buildSuccess": "APK ビルドが正常に生成されました。",
     "buildFailed": "ビルドに失敗しました: {{error}}",
     "buildCancelled": "ユーザーによってビルドがキャンセルされました"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "リアルタイム通信",
+    "ram": "メモリ",
+    "active": "稼働中",
+    "networkSpeed": "ネットワーク速度",
+    "fpsLive": "リアルタイムFPS",
+    "ramUsage": "メモリ使用量",
+    "battery": "バッテリー",
+    "livePerformanceStrip": "リアルタイムパフォーマンスバー"
+  },
+  "media": {
+    "animatedGif": "アニメーションGIF",
+    "cropDefect": "不具合箇所を切り抜き",
+    "rotate90": "90°回転",
+    "redactPii": "個人情報を黒塗り",
+    "trim5s": "5秒トリミング",
+    "muteAudio": "音声をミュート",
+    "toGif": "GIFに変換",
+    "play": "再生"
   }
 }

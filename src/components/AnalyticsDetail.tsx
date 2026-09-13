@@ -288,19 +288,19 @@ const AnalyticsDetail = ({
         {/* ── 2. Metric Pills Summary ──────────────────────────────────────── */}
         <View style={detailStyles.metricsBar}>
           <View style={detailStyles.metricPill}>
-            <Text style={detailStyles.metricLabel}>Params:</Text>
+            <Text style={detailStyles.metricLabel}>{t('analytics.metricParams', 'Params:')}</Text>
             <Text style={detailStyles.metricValue}>{paramKeys.length}</Text>
           </View>
 
           {userPropKeys.length > 0 && (
             <View style={detailStyles.metricPill}>
-              <Text style={detailStyles.metricLabel}>User Props:</Text>
+              <Text style={detailStyles.metricLabel}>{t('analytics.metricUserProps', 'User Props:')}</Text>
               <Text style={detailStyles.metricValue}>{userPropKeys.length}</Text>
             </View>
           )}
 
           <View style={detailStyles.metricPill}>
-            <Text style={detailStyles.metricLabel}>Size:</Text>
+            <Text style={detailStyles.metricLabel}>{t('analytics.metricSize', 'Size:')}</Text>
             <Text style={detailStyles.metricValue}>{getSize(fullJsonData)}</Text>
           </View>
 
@@ -317,7 +317,7 @@ const AnalyticsDetail = ({
             <View style={detailStyles.itemsPill}>
               <PackageIcon size={12} color={AppColors.blue700} />
               <Text style={detailStyles.itemsValue}>
-                {itemsCount} items
+                {t('analytics.metricItems', {count: itemsCount}, '{{count}} items')}
               </Text>
             </View>
           )}
@@ -341,24 +341,24 @@ const AnalyticsDetail = ({
             <View style={detailStyles.sectionCard}>
               <View style={detailStyles.sectionHeader}>
                 <LayersIcon color={AppColors.purple} size={12} />
-                <Text style={detailStyles.sectionTitle}>SESSION & IDENTITY</Text>
+                <Text style={detailStyles.sectionTitle}>{t('analytics.sessionIdentity', 'SESSION & IDENTITY')}</Text>
               </View>
               <View style={detailStyles.sectionBody}>
                 {event.userId && (
                   <View style={detailStyles.kvRow}>
-                    <Text style={detailStyles.kvKey}>User ID:</Text>
+                    <Text style={detailStyles.kvKey}>{t('analytics.userId', 'User ID')}:</Text>
                     <Text style={detailStyles.kvVal} selectable>{event.userId}</Text>
                   </View>
                 )}
                 {event.sessionId && (
                   <View style={detailStyles.kvRow}>
-                    <Text style={detailStyles.kvKey}>Session ID:</Text>
+                    <Text style={detailStyles.kvKey}>{t('analytics.sessionId', 'Session ID')}:</Text>
                     <Text style={detailStyles.kvVal} selectable>{event.sessionId}</Text>
                   </View>
                 )}
                 {event.trackingId && (
                   <View style={detailStyles.kvRow}>
-                    <Text style={detailStyles.kvKey}>Tracking ID:</Text>
+                    <Text style={detailStyles.kvKey}>{t('analytics.trackingId', 'Tracking ID')}:</Text>
                     <Text style={detailStyles.kvVal} selectable>{event.trackingId}</Text>
                   </View>
                 )}
@@ -372,11 +372,11 @@ const AnalyticsDetail = ({
               <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                 <TableIcon color={AppColors.brandPurple} size={12} />
                 <Text style={detailStyles.sectionTitle}>
-                  EVENT PARAMETERS ({paramKeys.length})
+                  {t('analytics.eventParameters', {count: paramKeys.length}, 'EVENT PARAMETERS ({{count}})')}
                 </Text>
               </View>
               <Text style={detailStyles.sectionSubtitle}>
-                Key-Value Attributes
+                {t('analytics.keyValueAttributes', 'Key-Value Attributes')}
               </Text>
             </View>
 
@@ -385,7 +385,7 @@ const AnalyticsDetail = ({
               <View style={detailStyles.searchBar}>
                 <SearchIcon color={AppColors.grayTextWeak} size={13} />
                 <TextInput
-                  placeholder="Filter parameters by key or value..."
+                  placeholder={t('analytics.filterParamsPlaceholder', 'Filter parameters by key or value...')}
                   placeholderTextColor={AppColors.grayTextWeak}
                   value={paramSearch}
                   onChangeText={setParamSearch}
@@ -405,13 +405,13 @@ const AnalyticsDetail = ({
               <View style={detailStyles.emptyParamsBox}>
                 <DocIcon color={AppColors.grayTextWeak} size={16} />
                 <Text style={detailStyles.emptyParamsText}>
-                  No custom parameters recorded for this event.
+                  {t('analytics.noParamsRecorded', 'No custom parameters recorded for this event.')}
                 </Text>
               </View>
             ) : filteredParamEntries.length === 0 ? (
               <View style={detailStyles.emptyParamsBox}>
                 <Text style={detailStyles.emptyParamsText}>
-                  No parameters matching "{paramSearch}"
+                  {t('analytics.noParamsMatching', {search: paramSearch}, 'No parameters matching "{{search}}"')}
                 </Text>
               </View>
             ) : (

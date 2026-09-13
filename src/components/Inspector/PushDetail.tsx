@@ -459,39 +459,39 @@ const PushDetail = React.memo(function PushDetail({
                 <Text style={detailStyles.sectionTitle}>{t('push.deliveryMetadata', 'Delivery & Message Metadata')}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Message ID:</Text>
+                <Text style={detailStyles.keyText}>{t('push.messageId', 'Message ID:')}</Text>
                 <Text style={detailStyles.valText} selectable>{item.id || 'N/A'}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Source / Domain:</Text>
+                <Text style={detailStyles.keyText}>{t('push.sourceDomain', 'Source / Domain:')}</Text>
                 <Text style={detailStyles.valText}>{item.domain || item.source || 'N/A'}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>App State:</Text>
+                <Text style={detailStyles.keyText}>{t('push.appState', 'App State:')}</Text>
                 <Text style={detailStyles.valText}>{item.appState}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Action Type:</Text>
+                <Text style={detailStyles.keyText}>{t('push.actionType', 'Action Type:')}</Text>
                 <Text style={detailStyles.valText}>{item.action}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Timestamp:</Text>
+                <Text style={detailStyles.keyText}>{t('push.timestamp', 'Timestamp:')}</Text>
                 <Text style={detailStyles.valText}>{formattedTime}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Channel ID:</Text>
+                <Text style={detailStyles.keyText}>{t('push.channelId', 'Channel ID:')}</Text>
                 <Text style={detailStyles.valText}>{item.channelId || 'default'}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Sound:</Text>
+                <Text style={detailStyles.keyText}>{t('push.sound', 'Sound:')}</Text>
                 <Text style={detailStyles.valText}>{item.sound || 'default'}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Badge Count:</Text>
+                <Text style={detailStyles.keyText}>{t('push.badgeCount', 'Badge Count:')}</Text>
                 <Text style={detailStyles.valText}>{item.badge != null ? item.badge : 'None'}</Text>
               </View>
               <View style={detailStyles.keyValRow}>
-                <Text style={detailStyles.keyText}>Collapse Key:</Text>
+                <Text style={detailStyles.keyText}>{t('push.collapseKey', 'Collapse Key:')}</Text>
                 <Text style={detailStyles.valText}>{item.collapseKey || 'None'}</Text>
               </View>
             </View>

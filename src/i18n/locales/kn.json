@@ -375,7 +375,9 @@
       "emptyObject": "ಖಾಲಿ ವಸ್ತು",
       "emptyTable": "ಖಾಲಿ ವಸ್ತು",
       "key": "ಕೀ",
-      "value": "ಮೌಲ್ಯ"
+      "value": "ಮೌಲ್ಯ",
+      "keyProperty": "ಕೀ / ಆಸ್ತಿ",
+      "noMatchingKeys": "ಯಾವುದೇ ಹೊಂದಾಣಿಕೆಯ ಕೀಗಳು ಅಥವಾ ಮೌಲ್ಯಗಳು ಕಂಡುಬಂದಿಲ್ಲ"
     },
     "showingRequests": "{{count}} ವಿನಂತಿಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ",
     "showingFilteredRequests": "{{total}} ವಿನಂತಿಗಳಲ್ಲಿ {{filtered}} ತೋರಿಸಲಾಗುತ್ತಿದೆ",
@@ -500,7 +502,25 @@
     "searchParameters": "ಹುಡುಕಾಟ ನಿಯತಾಂಕಗಳು...",
     "noParamsFound": "ನಿಮ್ಮ ಹುಡುಕಾಟಕ್ಕೆ ಯಾವುದೇ ಪ್ಯಾರಾಮೀಟರ್‌ಗಳು ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ",
     "sourceFirebase": "ಫೈರ್ಬೇಸ್ GA4",
-    "sourceCustom": "ಕಸ್ಟಮ್ / ಮ್ಯಾನುಯಲ್"
+    "sourceCustom": "ಕಸ್ಟಮ್ / ಮ್ಯಾನುಯಲ್",
+    "dataVisualization": "ಡೇಟಾ ದೃಶ್ಯೀಕರಣ",
+    "dataTypesBreakdown": "ಡೇಟಾ ಪ್ರಕಾರಗಳ ವಿವರಣೆ",
+    "highestPayloadStrings": "ದೊಡ್ಡ ಪೇಲೋಡ್ ತಂತಿಗಳು",
+    "topLevelMetrics": "ಉನ್ನತ ಮಟ್ಟದ ಮೆಟ್ರಿಕ್‌ಗಳು",
+    "importantDates": "ಮುಖ್ಯ ದಿನಾಂಕಗಳು",
+    "itemPrices": "ವಸ್ತುಗಳ ಬೆಲೆಗಳು",
+    "sessionIdentity": "ಅಧಿವೇಶನ ಮತ್ತು ಗುರುತು",
+    "metricParams": "ಪ್ಯಾರಾಮೀಟರ್‌ಗಳು:",
+    "metricUserProps": "ಬಳಕೆದಾರ ಗುಣಲಕ್ಷಣಗಳು:",
+    "metricSize": "ಗಾತ್ರ:",
+    "metricItems": "{{count}} ವಸ್ತುಗಳು",
+    "sessionId": "ಅಧಿವೇಶನ ID",
+    "trackingId": "ಟ್ರ್ಯಾಕಿಂಗ್ ID",
+    "eventParameters": "ಈವೆಂಟ್ ಪ್ಯಾರಾಮೀಟರ್‌ಗಳು ({{count}})",
+    "keyValueAttributes": "ಕೀ-ಮೌಲ್ಯ ಗುಣಲಕ್ಷಣಗಳು",
+    "filterParamsPlaceholder": "ಪ್ಯಾರಾಮೀಟರ್‌ಗಳನ್ನು ಫಿಲ್ಟರ್ ಮಾಡಿ...",
+    "noParamsRecorded": "ಈ ಈವೆಂಟ್‌ಗೆ ಯಾವುದೇ ಕಸ್ಟಮ್ ಪ್ಯಾರಾಮೀಟರ್‌ಗಳಿಲ್ಲ.",
+    "noParamsMatching": "\"{{search}}\" ಗೆ ಹೊಂದಿಕೆಯಾಗುವ ಯಾವುದೇ ಪ್ಯಾರಾಮೀಟರ್‌ಗಳಿಲ್ಲ"
   },
   "redux": {
     "title": "ರಿಡಕ್ಸ್",
@@ -1344,7 +1364,23 @@
     "showingFilteredConnections": "{{total}} ರಲ್ಲಿ {{filtered}} ಸಂಪರ್ಕಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ",
     "deletedCount": "{{count}} ವೆಬ್‌ಸಾಕೆಟ್ ಲಾಗ್‌ಗಳನ್ನು ಅಳಿಸಲಾಗಿದೆ",
     "copiedUrls": "{{count}} URL ಗಳನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ",
-    "webSocketTraffic": "WebSocket ಟ್ರಾಫಿಕ್ ({{count}} ಸಂಪರ್ಕಗಳು)"
+    "webSocketTraffic": "WebSocket ಟ್ರಾಫಿಕ್ ({{count}} ಸಂಪರ್ಕಗಳು)",
+    "connectionDetails": "ಸಂಪರ್ಕ ವಿವರಗಳು",
+    "url": "URL",
+    "clientEngine": "ಕ್ಲೈಂಟ್ ಎಂಜಿನ್",
+    "readyState": "ಸಿದ್ಧ ಸ್ಥಿತಿ",
+    "connectedAt": "ಸಂಪರ್ಕಗೊಂಡ ಸಮಯ",
+    "closedAt": "ಮುಚ್ಚಿದ ಸಮಯ",
+    "closeCodeReason": "ಮುಕ್ತಾಯ ಕೋಡ್ ಮತ್ತು ಕಾರಣ",
+    "subprotocols": "ಉಪ-ಪ್ರೋಟೋಕಾಲ್‌ಗಳು",
+    "callerStack": "ಕಾಲರ್ ಸ್ಟ್ಯಾಕ್",
+    "error": "ದೋಷ",
+    "handshakeHeaders": "ಹ್ಯಾಂಡ್‌ಶೇಕ್ ಹೆಡರ್‌ಗಳು",
+    "handshakeParams": "ಹ್ಯಾಂಡ್‌ಶೇಕ್ ಪ್ರಶ್ನೆ ನಿಯತಾಂಕಗಳು",
+    "noQueryParams": "ಸಂಪರ್ಕ URL ನಲ್ಲಿ ಯಾವುದೇ ಪ್ರಶ್ನೆ ನಿಯತಾಂಕಗಳನ್ನು ಕಳುಹಿಸಲಾಗಿಲ್ಲ",
+    "jsClientCode": "ಜಾವಾಸ್ಕ್ರಿಪ್ಟ್ ಕ್ಲೈಂಟ್ ಕೋಡ್",
+    "terminalWscat": "ಟರ್ಮಿನಲ್ WSCAT ಆದೇಶ",
+    "rawDump": "ಕಚ್ಚಾ ಸಂಪರ್ಕ JSON ಡಂಪ್"
   },
   "push": {
     "title": "ಪುಶ್ ಅಧಿಸೂಚನೆಗಳು",
@@ -1365,7 +1401,17 @@
     "cleared": "ಪುಶ್ ಅಧಿಸೂಚನೆ ಇತಿಹಾಸವನ್ನು ತೆರವುಗೊಳಿಸಲಾಗಿದೆ",
     "foreground": "ಮುನ್ನೆಲೆ",
     "background": "ಹಿನ್ನೆಲೆ",
-    "quit": "ತ್ಯಜಿಸು"
+    "quit": "ತ್ಯಜಿಸು",
+    "messageId": "ಸಂದೇಶ ID:",
+    "sourceDomain": "ಮೂಲ / ಡೊಮೇನ್:",
+    "appState": "ಅಪ್ಲಿಕೇಶನ್ ಸ್ಥಿತಿ:",
+    "actionType": "ಕ್ರಿಯೆಯ ಪ್ರಕಾರ:",
+    "timestamp": "ಸಮಯ ಮುದ್ರೆ:",
+    "channelId": "ಚಾನಲ್ ID:",
+    "sound": "ಧ್ವನಿ:",
+    "badgeCount": "ಬ್ಯಾಡ್ಜ್ ಎಣಿಕೆ:",
+    "collapseKey": "ಕುಸಿತ ಕೀ:",
+    "noCustomData": "ಪೇಲೋಡ್‌ನಲ್ಲಿ ಯಾವುದೇ ಕಸ್ಟಮ್ ಡೇಟಾ ಇಲ್ಲ"
   },
   "debugging": {
     "title": "ಡೀಬಗ್ ಮಾಡುವಿಕೆ ಮತ್ತು ಪರಿಕರಗಳು",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "ಪ್ಯಾಕೇಜ್ ಸ್ಥಾಪನೆ ಆಜ್ಞೆಯನ್ನು ನಕಲಿಸಲಾಗಿದೆ!",
     "footerLicense": "ರಿಯಾಕ್ಟ್ ಸ್ಥಳೀಯ ಅಪ್ಲಿಕೇಶನ್ ಇನ್‌ಸ್ಪೆಕ್ಟರ್ · MIT ಪರವಾನಗಿ",
     "footerTagline": "ಝೀರೋ-ಕಾನ್ಫಿಗ್ ಆನ್-ಡಿವೈಸ್ ಡೀಬಗ್ ಮಾಡುವ ಟೂಲ್"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "ಲೈವ್ ನೆಟ್‌ವರ್ಕ್",
+    "ram": "RAM",
+    "active": "ಸಕ್ರಿಯ",
+    "networkSpeed": "ನೆಟ್‌ವರ್ಕ್ ವೇಗ",
+    "fpsLive": "ಲೈವ್ FPS",
+    "ramUsage": "RAM ಬಳಕೆ",
+    "battery": "ಬ್ಯಾಟರಿ",
+    "livePerformanceStrip": "ಲೈವ್ ಕಾರ್ಯಕ್ಷಮತೆ ಪಟ್ಟಿ"
+  },
+  "media": {
+    "animatedGif": "ಆನಿಮೇಟೆಡ್ GIF",
+    "cropDefect": "ದೋಷವನ್ನು ಕ್ರಾಪ್ ಮಾಡಿ",
+    "rotate90": "90° ತಿರುಗಿಸಿ",
+    "redactPii": "ಖಾಸಗಿ ಮಾಹಿತಿಯನ್ನು ಮರೆಮಾಡಿ",
+    "trim5s": "5ಸೆ ಟ್ರಿಮ್ ಮಾಡಿ",
+    "muteAudio": "ಧ್ವನಿಯನ್ನು ಮ್ಯೂಟ್ ಮಾಡಿ",
+    "toGif": "GIF ಗೆ ಬದಲಾಯಿಸಿ",
+    "play": "ಪ್ಲೇ ಮಾಡಿ"
   }
 }

@@ -109,6 +109,31 @@ const LightColors = {
   slate800: '#1E293B',
   slate850: '#0F172A',
 
+  // ─── Telemetry Sub-Header & Performance Ribbon (Dimmed / Subtle) ───
+  telemetrySubHeaderBg: '#0D111E',
+  telemetrySubHeaderBorder: 'rgba(255, 255, 255, 0.07)',
+  telemetrySubHeaderGradStart: '#0B0F1C',
+  telemetrySubHeaderGradMid: '#111524',
+  telemetrySubHeaderGradEnd: '#0B0F1C',
+  telemetryPillBg: 'rgba(255, 255, 255, 0.05)',
+  telemetryTextMuted: 'rgba(255, 255, 255, 0.60)',
+
+  // ─── Graphic & Spectrum Tokens ───
+  teal300: '#5EEAD4',
+  sky300: '#7DD3FC',
+  amber200: '#FDE68A',
+  amber300: '#FCD34D',
+  orange400: '#FB923C',
+  rose300: '#FDA4AF',
+  rose400: '#FB7185',
+  navy700: '#24345F',
+  navy800: '#1D2A4F',
+  navy900: '#121B35',
+  navy950: '#080F22',
+  steel500: '#52709E',
+  steel600: '#4A659E',
+  steel700: '#22325A',
+
   // ─── Bundle / Extended Spectrum ───
   reanimatedNavy: '#001A72',
   expoViolet: '#5A29E4',
@@ -126,7 +151,6 @@ const LightColors = {
   red50: '#FFFBFB',
   red100: '#FEE2E2',
   amber100: '#FEF3C7',
-  amber200: '#FDE68A',
   amber800Warm: '#B45309',
   yellow200: '#FEF08A',
   yellow800: '#854D0E',

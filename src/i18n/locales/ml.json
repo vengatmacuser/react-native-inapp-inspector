@@ -375,7 +375,9 @@
       "emptyObject": "ശൂന്യമായ വസ്തു",
       "emptyTable": "ശൂന്യമായ വസ്തു",
       "key": "താക്കോൽ",
-      "value": "മൂല്യം"
+      "value": "മൂല്യം",
+      "keyProperty": "കീ / പ്രോപ്പർട്ടി",
+      "noMatchingKeys": "പൊരുത്തപ്പെടുന്ന വിവരങ്ങൾ ഒന്നും കണ്ടെത്തിയില്ല"
     },
     "showingRequests": "{{count}} അഭ്യർത്ഥനകൾ കാണിക്കുന്നു",
     "showingFilteredRequests": "{{total}} അഭ്യർത്ഥനകളിൽ {{filtered}} കാണിക്കുന്നു",
@@ -500,7 +502,25 @@
     "searchParameters": "തിരയൽ പാരാമീറ്ററുകൾ...",
     "noParamsFound": "നിങ്ങളുടെ തിരയലുമായി പൊരുത്തപ്പെടുന്ന പാരാമീറ്ററുകളൊന്നുമില്ല",
     "sourceFirebase": "ഫയർബേസ് GA4",
-    "sourceCustom": "കസ്റ്റം / മാനുവൽ"
+    "sourceCustom": "കസ്റ്റം / മാനുവൽ",
+    "dataVisualization": "ഡാറ്റ വിഷ്വലൈസേഷൻ",
+    "dataTypesBreakdown": "ഡാറ്റാ തരം വിശകലനം",
+    "highestPayloadStrings": "ഏറ്റവും നീളമുള്ള സ്ട്രിംഗുകൾ",
+    "topLevelMetrics": "പ്രധാന അളവുകൾ",
+    "importantDates": "പ്രധാന തീയതികൾ",
+    "itemPrices": "സാധനങ്ങളുടെ വില",
+    "sessionIdentity": "സെഷനും ഐഡന്റിറ്റിയും",
+    "metricParams": "പാരാമീറ്ററുകൾ:",
+    "metricUserProps": "ഉപയോക്തൃ ഗുണവിശേഷങ്ങൾ:",
+    "metricSize": "വലിപ്പം:",
+    "metricItems": "{{count}} ഇനങ്ങൾ",
+    "sessionId": "സെഷൻ ഐഡി",
+    "trackingId": "ട്രാക്കിംഗ് ഐഡി",
+    "eventParameters": "ഇവന്റ് പാരാമീറ്ററുകൾ ({{count}})",
+    "keyValueAttributes": "കീ-മൂല്യ വിശേഷണങ്ങൾ",
+    "filterParamsPlaceholder": "പാരാമീറ്ററുകൾ ഫിൽട്ടർ ചെയ്യുക...",
+    "noParamsRecorded": "ഈ ഇവന്റിനായി പാരാമീറ്ററുകൾ രേഖപ്പെടുത്തിയിട്ടില്ല.",
+    "noParamsMatching": "\"{{search}}\" നോട് പൊരുത്തപ്പെടുന്ന പാരാമീറ്ററുകളില്ല"
   },
   "redux": {
     "title": "Redux",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "{{total}} കണക്ഷനുകളിൽ {{filtered}} കാണിക്കുന്നു",
     "deletedCount": "{{count}} വെബ്‌സോക്കറ്റ് ലോഗുകൾ ഇല്ലാതാക്കി",
     "copiedUrls": "{{count}} URL-കൾ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി",
-    "webSocketTraffic": "WebSocket ട്രാഫിക് ({{count}} കണക്ഷനുകൾ)"
+    "webSocketTraffic": "WebSocket ട്രാഫിക് ({{count}} കണക്ഷനുകൾ)",
+    "connectionDetails": "കണക്ഷൻ വിശദാംശങ്ങൾ",
+    "url": "URL",
+    "clientEngine": "ക്ലയന്റ് എഞ്ചിൻ",
+    "readyState": "തയ്യാറായ അവസ്ഥ",
+    "connectedAt": "കണക്റ്റുചെയ്‌ത സമയം",
+    "closedAt": "അവസാനിച്ച സമയം",
+    "closeCodeReason": "അവസാനിപ്പിക്കൽ കോഡും കാരണവും",
+    "subprotocols": "സബ് പ്രോട്ടോക്കോളുകൾ",
+    "callerStack": "കോളർ സ്റ്റാക്ക്",
+    "error": "പിശക്",
+    "handshakeHeaders": "ഹാൻഡ്ഷേക്ക് ഹെഡറുകൾ",
+    "handshakeParams": "ഹാൻഡ്ഷേക്ക് പാരാമീറ്ററുകൾ",
+    "noQueryParams": "കണക്ഷൻ URL-ൽ പാരാമീറ്ററുകൾ നൽകിയിട്ടില്ല",
+    "jsClientCode": "ജാവാസ്ക്രിപ്റ്റ് ക്ലയന്റ് കോഡ്",
+    "terminalWscat": "ടെർമിനൽ WSCAT കമാൻഡ്",
+    "rawDump": "റോ കണക്ഷൻ JSON ഡംപ്"
   },
   "push": {
     "title": "പുഷ് അറിയിപ്പുകൾ",
     "preview": "പ്രിവ്യൂ",
     "payload": "കസ്റ്റം പേലോഡ്",
-    "deliveryMetadata": "ഡെലിവറി & സന്ദേശ മെറ്റാഡാറ്റ",
+    "deliveryMetadata": "ഡെലിവറിയും സന്ദേശ മെറ്റാഡാറ്റയും",
     "rawPayload": "അസംസ്കൃത പേലോഡ്",
     "link": "ലിങ്ക്",
     "appNotification": "ആപ്പ് അറിയിപ്പ്",
@@ -1365,7 +1401,17 @@
     "cleared": "പുഷ് അറിയിപ്പ് ചരിത്രം മായ്‌ച്ചു",
     "foreground": "മുൻഭാഗം",
     "background": "പശ്ചാത്തലം",
-    "quit": "ഉപേക്ഷിക്കുക"
+    "quit": "ഉപേക്ഷിക്കുക",
+    "messageId": "സന്ദേശ ഐഡി:",
+    "sourceDomain": "ഉറവിടം / ഡൊമെയ്ൻ:",
+    "appState": "ആപ്പ് അവസ്ഥ:",
+    "actionType": "പ്രവർത്തന തരം:",
+    "timestamp": "സമയമുദ്ര:",
+    "channelId": "ചാനൽ ഐഡി:",
+    "sound": "ശബ്ദം:",
+    "badgeCount": "ബാഡ്ജ് എണ്ണം:",
+    "collapseKey": "കൊളാപ്സ് കീ:",
+    "noCustomData": "പേലോഡിൽ വിവരങ്ങൾ ഒന്നും കണ്ടെത്തിയില്ല"
   },
   "debugging": {
     "title": "ഡീബഗ്ഗിംഗ് & ടൂളുകൾ",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "പാക്കേജ് ഇൻസ്റ്റാൾ കമാൻഡ് പകർത്തി!",
     "footerLicense": "റിയാക്ട് നേറ്റീവ് ഇൻ-ആപ്പ് ഇൻസ്പെക്ടർ · MIT ലൈസൻസ്",
     "footerTagline": "സീറോ-കോൺഫിഗ് ഓൺ-ഡിവൈസ് ഡീബഗ്ഗിംഗ് ടൂൾ"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "തത്സമയ നെറ്റ്‌വർക്ക്",
+    "ram": "RAM",
+    "active": "സജീവം",
+    "networkSpeed": "നെറ്റ്‌വർക്ക് വേഗത",
+    "fpsLive": "തത്സമയ FPS",
+    "ramUsage": "RAM ഉപയോഗം",
+    "battery": "ബാറ്ററി",
+    "livePerformanceStrip": "തത്സമയ പ്രകടന സ്ട്രിപ്പ്"
+  },
+  "media": {
+    "animatedGif": "ആനിമേഷൻ GIF",
+    "cropDefect": "തകരാറ് ക്രോപ്പ് ചെയ്യുക",
+    "rotate90": "90° തിരിക്കുക",
+    "redactPii": "വ്യക്തിഗതവിവരങ്ങൾ മറയ്ക്കുക",
+    "trim5s": "5 സെക്കൻഡ് മുറിക്കുക",
+    "muteAudio": "ഓഡിയോ നിശബ്ദമാക്കുക",
+    "toGif": "GIF ആക്കുക",
+    "play": "പ്ലേ ചെയ്യുക"
   }
 }

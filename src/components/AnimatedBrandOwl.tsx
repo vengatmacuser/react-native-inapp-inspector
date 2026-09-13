@@ -12,6 +12,7 @@ import Svg, {
   Rect,
   Stop,
 } from 'react-native-svg';
+import {AppColors} from '../styles/AppColors';
 
 export interface AnimatedBrandOwlProps {
   size?: number;
@@ -88,15 +89,15 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="194"
               y2="187"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#5EEAD4" />
-              <Stop offset="0.5" stopColor="#38BDF8" />
-              <Stop offset="1" stopColor="#A78BFA" />
+              <Stop offset="0" stopColor={AppColors.teal300} />
+              <Stop offset="0.5" stopColor={AppColors.sky400} />
+              <Stop offset="1" stopColor={AppColors.purple400} />
             </LinearGradient>
 
             {/* Glowing Cyan Halo */}
             <RadialGradient id="owl_halo" cx="0.5" cy="0.45" r="0.55">
-              <Stop offset="0" stopColor="#38BDF8" stopOpacity={0.25} />
-              <Stop offset="1" stopColor="#38BDF8" stopOpacity={0} />
+              <Stop offset="0" stopColor={AppColors.sky400} stopOpacity={0.25} />
+              <Stop offset="1" stopColor={AppColors.sky400} stopOpacity={0} />
             </RadialGradient>
 
             {/* Main Body Gradient */}
@@ -107,8 +108,8 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="178"
               y2="186"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#24345F" />
-              <Stop offset="1" stopColor="#121B35" />
+              <Stop offset="0" stopColor={AppColors.navy700} />
+              <Stop offset="1" stopColor={AppColors.navy900} />
             </LinearGradient>
 
             {/* Beak / Claws Gradient */}
@@ -119,21 +120,21 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="136"
               y2="168"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#FCD34D" />
-              <Stop offset="1" stopColor="#FB923C" />
+              <Stop offset="0" stopColor={AppColors.amber300} />
+              <Stop offset="1" stopColor={AppColors.orange400} />
             </LinearGradient>
 
             {/* Iris Gradient */}
             <RadialGradient id="owl_iris" cx="0.42" cy="0.38" r="0.72">
-              <Stop offset="0" stopColor="#FDE68A" />
-              <Stop offset="0.5" stopColor="#FBBF24" />
-              <Stop offset="1" stopColor="#F59E0B" />
+              <Stop offset="0" stopColor={AppColors.amber200} />
+              <Stop offset="0.5" stopColor={AppColors.amber400} />
+              <Stop offset="1" stopColor={AppColors.amber500} />
             </RadialGradient>
 
             {/* Blush Gradient */}
             <RadialGradient id="owl_blush" cx="0.5" cy="0.5" r="0.5">
-              <Stop offset="0" stopColor="#FB7185" stopOpacity={0.6} />
-              <Stop offset="1" stopColor="#FB7185" stopOpacity={0} />
+              <Stop offset="0" stopColor={AppColors.rose400} stopOpacity={0.6} />
+              <Stop offset="1" stopColor={AppColors.rose400} stopOpacity={0} />
             </RadialGradient>
 
             {/* Wing Gradient */}
@@ -144,8 +145,8 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="190"
               y2="206"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#1D2A4F" />
-              <Stop offset="1" stopColor="#0F1735" />
+              <Stop offset="0" stopColor={AppColors.navy800} />
+              <Stop offset="1" stopColor={AppColors.navy950} />
             </LinearGradient>
 
             {/* Faceplate Gradient */}
@@ -156,15 +157,15 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="186"
               y2="152"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#3B528D" />
-              <Stop offset="1" stopColor="#223358" />
+              <Stop offset="0" stopColor={AppColors.steel500} />
+              <Stop offset="1" stopColor={AppColors.navy700} />
             </LinearGradient>
 
             {/* Magnifier Lens Glass */}
             <RadialGradient id="owl_lensglass" cx="0.4" cy="0.32" r="0.75">
-              <Stop offset="0" stopColor="#7DE8FF" stopOpacity={0.25} />
-              <Stop offset="0.7" stopColor="#7DE8FF" stopOpacity={0.06} />
-              <Stop offset="1" stopColor="#7DE8FF" stopOpacity={0} />
+              <Stop offset="0" stopColor={AppColors.sky300} stopOpacity={0.25} />
+              <Stop offset="0.7" stopColor={AppColors.sky300} stopOpacity={0.06} />
+              <Stop offset="1" stopColor={AppColors.sky300} stopOpacity={0} />
             </RadialGradient>
 
             {/* Belly Plate Gradient */}
@@ -175,8 +176,8 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="162"
               y2="212"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#384F88" />
-              <Stop offset="1" stopColor="#20305C" />
+              <Stop offset="0" stopColor={AppColors.steel600} />
+              <Stop offset="1" stopColor={AppColors.navy700} />
             </LinearGradient>
 
             {/* Dark Midnight/Black Tile Background Gradient */}
@@ -187,8 +188,8 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="210"
               y2="222"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#141B33" />
-              <Stop offset="1" stopColor="#0A0E1C" />
+              <Stop offset="0" stopColor={AppColors.navy900} />
+              <Stop offset="1" stopColor={AppColors.navy950} />
             </LinearGradient>
 
             {/* Subtle Metallic Edge Ring Gradient */}
@@ -199,8 +200,8 @@ export const AnimatedBrandOwl: React.FC<AnimatedBrandOwlProps> = ({
               x2="220"
               y2="228"
               gradientUnits="userSpaceOnUse">
-              <Stop offset="0" stopColor="#3A4E7A" />
-              <Stop offset="1" stopColor="#1A2238" />
+              <Stop offset="0" stopColor={AppColors.steel600} />
+              <Stop offset="1" stopColor={AppColors.navy800} />
             </LinearGradient>
           </Defs>
 

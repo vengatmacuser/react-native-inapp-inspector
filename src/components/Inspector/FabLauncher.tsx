@@ -83,6 +83,55 @@ const FabLauncher = () => {
     };
   }, [fabPan]);
 
+  // Clamp FAB within screen bounds after drag
+  const FAB_SIZE = 68;
+  const EDGE_PADDING = 8;
+  const clampFabPosition = useCallback(() => {
+    const currentX = fabPanRef.current.x;
+    const currentY = fabPanRef.current.y;
+
+    // Calculate the FAB's absolute position on screen
+    // The FAB base position is: right: 20, bottom: 180
+    // So its resting center is approximately at (screenWidth - 20 - FAB_SIZE/2, screenHeight - 180 - FAB_SIZE/2)
+    const baseRight = 20;
+    const baseBottom = 180;
+    const absX = screenWidth - baseRight - FAB_SIZE / 2 + currentX;
+    const absY = screenHeight - baseBottom - FAB_SIZE / 2 + currentY;
+
+    let clampedX = currentX;
+    let clampedY = currentY;
+    let needsClamp = false;
+
+    // Clamp horizontally
+    if (absX < EDGE_PADDING + FAB_SIZE / 2) {
+      clampedX = currentX + (EDGE_PADDING + FAB_SIZE / 2 - absX);
+      needsClamp = true;
+    } else if (absX > screenWidth - EDGE_PADDING - FAB_SIZE / 2) {
+      clampedX = currentX - (absX - (screenWidth - EDGE_PADDING - FAB_SIZE / 2));
+      needsClamp = true;
+    }
+
+    // Clamp vertically
+    const topSafe = Platform.OS === 'ios' ? 60 : 40;
+    const bottomSafe = Platform.OS === 'ios' ? 40 : 24;
+    if (absY < topSafe + FAB_SIZE / 2) {
+      clampedY = currentY + (topSafe + FAB_SIZE / 2 - absY);
+      needsClamp = true;
+    } else if (absY > screenHeight - bottomSafe - FAB_SIZE / 2) {
+      clampedY = currentY - (absY - (screenHeight - bottomSafe - FAB_SIZE / 2));
+      needsClamp = true;
+    }
+
+    if (needsClamp) {
+      Animated.spring(fabPan, {
+        toValue: {x: clampedX, y: clampedY},
+        useNativeDriver: false,
+        tension: 80,
+        friction: 8,
+      }).start();
+    }
+  }, [fabPan, screenWidth, screenHeight]);
+
   // Pan responder for the circular FAB with bottom-center drag-to-dismiss
   const circularPanResponder = useRef(
     PanResponder.create({
@@ -160,6 +209,9 @@ const FabLauncher = () => {
               'In-App Inspector closed for this session',
             ),
           );
+        } else {
+          // Clamp FAB within screen bounds after drag
+          clampFabPosition();
         }
 
         setTimeout(() => {
@@ -213,6 +265,21 @@ const FabLauncher = () => {
       ),
       onPanResponderRelease: () => {
         playerPan.flattenOffset();
+
+        // Clamp player bar vertically within safe area
+        const currentY = playerPanRef.current.y;
+        const topLimit = -(screenHeight - (Platform.OS === 'ios' ? 34 : 18) - 70);
+        const bottomLimit = Platform.OS === 'ios' ? 34 : 18;
+        if (currentY < topLimit || currentY > bottomLimit) {
+          const clampedY = Math.max(topLimit, Math.min(bottomLimit, currentY));
+          Animated.spring(playerPan, {
+            toValue: {x: playerPanRef.current.x, y: clampedY},
+            useNativeDriver: false,
+            tension: 80,
+            friction: 8,
+          }).start();
+        }
+
         setTimeout(() => {
           playerDraggedRef.current = false;
         }, 50);
@@ -678,6 +745,7 @@ const fabStyles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     paddingVertical: 2,
+    overflow: 'hidden',
   },
   titleWrapper: {
     flex: 1,

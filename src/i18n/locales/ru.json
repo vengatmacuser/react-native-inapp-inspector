@@ -305,7 +305,9 @@
       "table": "Таблица",
       "emptyObject": "Пустой объект",
       "emptyTable": "Пустой объект",
-      "value": "Значение"
+      "value": "ЗНАЧЕНИЕ",
+      "keyProperty": "КЛЮЧ / СВОЙСТВО",
+      "noMatchingKeys": "Совпадающие ключи или значения не найдены"
     },
     "title": "API",
     "searchPlaceholder": "Поиск по URL, статусу или методу...",
@@ -500,7 +502,25 @@
     "searchParameters": "Параметры поиска...",
     "noParamsFound": "Нет параметров, соответствующих вашему запросу",
     "sourceFirebase": "ПОЖАРНАЯ БАЗА GA4",
-    "sourceCustom": "ТАМОЖЕННЫЙ / РУЧНОЙ"
+    "sourceCustom": "ТАМОЖЕННЫЙ / РУЧНОЙ",
+    "dataVisualization": "Визуализация данных",
+    "dataTypesBreakdown": "Распределение типов данных",
+    "highestPayloadStrings": "Самые длинные строки полезной нагрузки",
+    "topLevelMetrics": "Ключевые метрики",
+    "importantDates": "Важные даты",
+    "itemPrices": "Цены товаров",
+    "sessionIdentity": "СЕССИЯ И ИДЕНТИФИКАТОРЫ",
+    "metricParams": "Параметры:",
+    "metricUserProps": "Свойства пользователя:",
+    "metricSize": "Размер:",
+    "metricItems": "{{count}} элементов",
+    "sessionId": "ID сессии",
+    "trackingId": "ID отслеживания",
+    "eventParameters": "ПАРАМЕТРЫ СОБЫТИЯ ({{count}})",
+    "keyValueAttributes": "Атрибуты ключ-значение",
+    "filterParamsPlaceholder": "Фильтр параметров по ключу или значению...",
+    "noParamsRecorded": "Для этого события нет записанных параметров.",
+    "noParamsMatching": "Нет параметров, соответствующих \"{{search}}\""
   },
   "redux": {
     "searchPlaceholder": "Поиск состояния или действий...",
@@ -1245,7 +1265,7 @@
     "title": "Push-уведомления",
     "preview": "Предварительный просмотр",
     "payload": "Пользовательская полезная нагрузка",
-    "deliveryMetadata": "Метаданные доставки и сообщений",
+    "deliveryMetadata": "Метаданные доставки и сообщения",
     "rawPayload": "Необработанная полезная нагрузка",
     "link": "Ссылка",
     "appNotification": "Уведомление приложения",
@@ -1257,7 +1277,17 @@
     "filterTitle": "Фильтровать push-уведомления",
     "clearTitle": "Очистить историю push-уведомлений",
     "clearMessage": "Вы уверены, что хотите удалить все записи push-уведомлений?",
-    "cleared": "История push-уведомлений очищена."
+    "cleared": "История push-уведомлений очищена.",
+    "messageId": "ID сообщения:",
+    "sourceDomain": "Источник / Домен:",
+    "appState": "Состояние приложения:",
+    "actionType": "Тип действия:",
+    "timestamp": "Время:",
+    "channelId": "ID канала:",
+    "sound": "Звук:",
+    "badgeCount": "Счетчик бейджа:",
+    "collapseKey": "Ключ группировки:",
+    "noCustomData": "В полезной нагрузке не найдены пользовательские данные"
   },
   "about": {
     "title": "О программе и спецификации",
@@ -1413,12 +1443,49 @@
     "showingFilteredConnections": "Показаны соединения {{filtered}} из {{total}}",
     "deletedCount": "Удалены журналы WebSocket {{count}}",
     "copiedUrls": "{{count}} URL-адреса скопированы в буфер обмена",
-    "webSocketTraffic": "Трафик WebSocket (подключения {{count}})"
+    "webSocketTraffic": "Трафик WebSocket (подключения {{count}})",
+    "connectionDetails": "ДЕТАЛИ ПОДКЛЮЧЕНИЯ",
+    "url": "URL",
+    "clientEngine": "Клиентский движок",
+    "readyState": "Состояние готовности",
+    "connectedAt": "Подключено в",
+    "closedAt": "Закрыто в",
+    "closeCodeReason": "Код и причина закрытия",
+    "subprotocols": "Субпротоколы",
+    "callerStack": "Стек вызовов",
+    "error": "Ошибка",
+    "handshakeHeaders": "Заголовки Handshake",
+    "handshakeParams": "ПАРАМЕТРЫ ЗАПРОСА HANDSHAKE",
+    "noQueryParams": "В URL подключения не переданы параметры запроса",
+    "jsClientCode": "КОД КЛИЕНТА JAVASCRIPT",
+    "terminalWscat": "КОМАНДА ТЕРМИНАЛА WSCAT",
+    "rawDump": "СЫРОЙ ДАМП JSON ПОДКЛЮЧЕНИЯ"
   },
   "debugging": {
     "title": "Отладка и инструменты",
     "buildSuccess": "Сборка APK успешно создана!",
     "buildFailed": "Не удалось построить: {{error}}",
     "buildCancelled": "Сборка отменена пользователем"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "СЕТЬ ОНЛАЙН",
+    "ram": "ОЗУ",
+    "active": "АКТИВЕН",
+    "networkSpeed": "Скорость сети",
+    "fpsLive": "Текущий FPS",
+    "ramUsage": "Использование ОЗУ",
+    "battery": "Батарея",
+    "livePerformanceStrip": "Индикатор производительности"
+  },
+  "media": {
+    "animatedGif": "АНИМИРОВАННЫЙ GIF",
+    "cropDefect": "Обрезать дефект",
+    "rotate90": "Повернуть 90°",
+    "redactPii": "Скрыть ПДн",
+    "trim5s": "Обрезать 5с",
+    "muteAudio": "Выключить звук",
+    "toGif": "В GIF",
+    "play": "Воспроизвести"
   }
 }

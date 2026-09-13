@@ -42,7 +42,9 @@ export interface NativeCrashEvent {
 
 // Seamless TurboModule (New Architecture / JSI) & Legacy NativeModules Bridge resolution
 const NativeModule: any =
-  NativeNetworkInspector || NativeModules.NetworkInspectorModule;
+  NativeNetworkInspector ||
+  NativeModules.NetworkInspectorModule ||
+  NativeModules.NetworkInspector;
 
 export const isNativeModuleAvailable = (): boolean => {
   return !!NativeModule;
@@ -611,9 +613,9 @@ export const fetchCapturedMediaList = async (): Promise<CapturedMediaItem[]> => 
     return [];
   }
   try {
-    const jsonStr: string = await NativeModule.getCapturedMedia();
-    if (!jsonStr) return [];
-    const parsed = JSON.parse(jsonStr);
+    const raw: any = await NativeModule.getCapturedMedia();
+    if (!raw) return [];
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -663,6 +665,57 @@ export const copyMediaToClipboard = async (filePath: string): Promise<boolean> =
     return Boolean(result?.success);
   } catch {
     return false;
+  }
+};
+
+/**
+ * 100% Native photo editing (lossless crop, rotate, flip, and GPU color grading).
+ */
+export const editNativePhoto = async (
+  options: import('../types/editor').PhotoEditOptions,
+): Promise<import('../types/editor').PhotoEditResult | null> => {
+  if (!NativeModule || !NativeModule.editPhoto) {
+    return null;
+  }
+  try {
+    const result = await NativeModule.editPhoto(options);
+    return result as import('../types/editor').PhotoEditResult;
+  } catch (err) {
+    return null;
+  }
+};
+
+/**
+ * 100% Native hardware-accelerated video trimming and export.
+ */
+export const trimNativeVideo = async (
+  options: import('../types/editor').VideoTrimOptions,
+): Promise<import('../types/editor').VideoTrimResult | null> => {
+  if (!NativeModule || !NativeModule.trimVideo) {
+    return null;
+  }
+  try {
+    const result = await NativeModule.trimVideo(options);
+    return result as import('../types/editor').VideoTrimResult;
+  } catch (err) {
+    return null;
+  }
+};
+
+/**
+ * 100% Native video filmstrip thumbnail generator for timeline scrubbers.
+ */
+export const generateNativeFilmstrip = async (
+  options: import('../types/editor').FilmstripOptions,
+): Promise<import('../types/editor').FilmstripResult | null> => {
+  if (!NativeModule || !NativeModule.generateFilmstrip) {
+    return null;
+  }
+  try {
+    const result = await NativeModule.generateFilmstrip(options);
+    return result as import('../types/editor').FilmstripResult;
+  } catch (err) {
+    return null;
   }
 };
 

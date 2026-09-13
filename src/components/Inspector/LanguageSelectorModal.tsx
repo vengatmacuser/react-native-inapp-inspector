@@ -7,9 +7,12 @@ import {
   ScrollView,
   StyleSheet,
   Pressable,
+  TouchableWithoutFeedback,
   Platform,
   Dimensions,
+  DevSettings,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import TouchableScale from '../TouchableScale';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -17,6 +20,8 @@ import {
   GlobeIcon,
   CheckIcon,
   CloseWhite,
+  SearchIcon,
+  ResetIcon,
 } from '../NetworkIcons';
 import {
   useTranslation,
@@ -42,49 +47,49 @@ export const COUNTRY_OPTIONS: CountryOption[] = [
     id: 'in',
     name: 'India',
     flag: '🇮🇳',
-    badge: '38% Vol',
+    badge: '9',
     langCodes: ['hi', 'ta', 'te', 'kn', 'ml', 'bn', 'mr', 'gu', 'pa'],
   },
   {
     id: 'us',
     name: 'United States',
     flag: '🇺🇸',
-    badge: '24% Vol',
+    badge: '2',
     langCodes: ['en', 'es'],
   },
   {
     id: 'gb',
     name: 'United Kingdom',
     flag: '🇬🇧',
-    badge: '15% Vol',
+    badge: '1',
     langCodes: ['en'],
   },
   {
     id: 'de',
     name: 'Germany',
     flag: '🇩🇪',
-    badge: '9% Vol',
+    badge: '1',
     langCodes: ['de'],
   },
   {
     id: 'jp',
     name: 'Japan',
     flag: '🇯🇵',
-    badge: '6% Vol',
+    badge: '1',
     langCodes: ['ja'],
   },
   {
     id: 'ca',
     name: 'Canada',
     flag: '🇨🇦',
-    badge: '5% Vol',
+    badge: '2',
     langCodes: ['en', 'fr'],
   },
   {
     id: 'global',
-    name: 'Global / ROW',
-    flag: '🌐',
-    badge: '3% Vol',
+    name: 'Global / Europe & Asia',
+    flag: '🌍',
+    badge: '11',
     langCodes: [
       'it',
       'id',
@@ -101,6 +106,40 @@ export const COUNTRY_OPTIONS: CountryOption[] = [
   },
 ];
 
+const LANGUAGE_ENGLISH_NAMES: Record<string, string> = {
+  en: 'English (Default)',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  zh: 'Chinese (Simplified)',
+  ja: 'Japanese',
+  ko: 'Korean',
+  pt: 'Portuguese',
+  ru: 'Russian',
+  hi: 'Hindi',
+  ta: 'Tamil',
+  te: 'Telugu',
+  kn: 'Kannada',
+  ml: 'Malayalam',
+  bn: 'Bengali',
+  mr: 'Marathi',
+  gu: 'Gujarati',
+  pa: 'Punjabi',
+  ar: 'Arabic',
+  it: 'Italian',
+  id: 'Indonesian',
+  tr: 'Turkish',
+  vi: 'Vietnamese',
+  nl: 'Dutch',
+  pl: 'Polish',
+};
+
+interface PendingLang {
+  code: string;
+  flag: string;
+  nativeName: string;
+}
+
 interface LanguageSelectorModalProps {
   visible: boolean;
   onClose: () => void;
@@ -110,6 +149,7 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
   const {t} = useTranslation();
   const [search, setSearch] = useState('');
   const [selectedCountryId, setSelectedCountryId] = useState<string>('all');
+  const [pendingLang, setPendingLang] = useState<PendingLang | null>(null);
 
   const currentLangCode = getLanguage();
   const isDark = AppColors.primaryLight !== AppColors.white;
@@ -127,27 +167,48 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
         }
       }
 
-      // 2. Search query filter across name, native name, code, flag
+      // 2. Search query filter across name, native name, code, flag, and english name
       if (!search.trim()) return true;
       const q = search.trim().toLowerCase();
+      const engName = LANGUAGE_ENGLISH_NAMES[lang.code]?.toLowerCase() || '';
       return (
         lang.name.toLowerCase().includes(q) ||
         lang.nativeName.toLowerCase().includes(q) ||
-        lang.code.toLowerCase().includes(q)
+        lang.code.toLowerCase().includes(q) ||
+        engName.includes(q)
       );
     });
   }, [search, selectedCountryId, selectedCountry]);
 
-  const handleSelectLanguage = async (code: string, flag: string, nativeName: string) => {
+  const handleSelectLanguage = (code: string, flag: string, nativeName: string) => {
+    // If already selected, do nothing
+    if (code === currentLangCode) return;
     triggerNativeHaptic('light');
-    setLanguage(code);
+    setPendingLang({code, flag, nativeName});
+  };
+
+  const handleConfirmLanguageChange = async () => {
+    if (!pendingLang) return;
+    triggerNativeHaptic('medium');
+    setLanguage(pendingLang.code);
     try {
       const current = await loadSettings();
-      saveSettings({...current, language: code});
+      await saveSettings({...current, language: pendingLang.code});
     } catch (_) {}
+    const {flag, nativeName} = pendingLang;
+    setPendingLang(null);
     onClose();
     setSearch('');
-    showToast(`${flag} ${nativeName}`);
+    showToast(`🔄 ${flag} ${nativeName}`);
+
+    if (__DEV__ && DevSettings && DevSettings.reload) {
+      DevSettings.reload();
+    }
+  };
+
+  const handleCancelLanguageChange = () => {
+    triggerNativeHaptic('light');
+    setPendingLang(null);
   };
 
   return (
@@ -155,15 +216,17 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
       visible={visible}
       transparent={true}
       animationType="slide"
+      statusBarTranslucent={true}
       onRequestClose={onClose}>
       <View style={styles.overlay}>
         {/* Backdrop tap to dismiss */}
-        <Pressable
-          style={styles.backdrop}
+        <TouchableWithoutFeedback
           onPress={onClose}
+          accessible={true}
           accessibilityRole="button"
-          accessibilityLabel="Close bottom sheet"
-        />
+          accessibilityLabel="Close bottom sheet">
+          <View style={styles.backdrop} />
+        </TouchableWithoutFeedback>
 
         {/* Bottom Sheet Container */}
         <View
@@ -190,13 +253,22 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
-              <View style={styles.globeIconWrap}>
-                <GlobeIcon size={16} color={AppColors.blue600} />
-              </View>
+              <LinearGradient
+                colors={[AppColors.indigo600, AppColors.violet600]}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={styles.globeIconWrap}>
+                <GlobeIcon size={17} color={AppColors.white} />
+              </LinearGradient>
               <View>
-                <Text style={styles.titleText}>
-                  {t('settings.general.selectLanguage', 'Select Language')}
-                </Text>
+                <View style={styles.titleRow}>
+                  <Text style={styles.titleText}>
+                    {t('settings.general.selectLanguage', 'Select Language')}
+                  </Text>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>25</Text>
+                  </View>
+                </View>
                 <Text style={styles.subTitleText}>
                   {t('settings.general.languageDescription', 'Choose preferred display language')}
                 </Text>
@@ -204,14 +276,31 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
             </View>
             <TouchableScale
               onPress={onClose}
-              hitSlop={10}
-              style={styles.closeBtn}>
-              <CloseWhite size={12} color={AppColors.grayText} />
+              hitSlop={12}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Close language selector"
+              style={[
+                styles.closeBtn,
+                {
+                  backgroundColor: isDark
+                    ? 'rgba(255, 255, 255, 0.16)'
+                    : 'rgba(0, 0, 0, 0.08)',
+                  borderColor: isDark
+                    ? 'rgba(255, 255, 255, 0.30)'
+                    : 'rgba(0, 0, 0, 0.18)',
+                },
+              ]}>
+              <CloseWhite
+                size={14}
+                color={isDark ? AppColors.white : '#0F172A'}
+              />
             </TouchableScale>
           </View>
 
-          {/* Search bar */}
+          {/* Search bar with dedicated icon and clear action */}
           <View style={styles.searchContainer}>
+            <SearchIcon color={AppColors.grayTextWeak} size={15} />
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -220,18 +309,19 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
               style={styles.searchInput}
               autoCapitalize="none"
               autoCorrect={false}
-              clearButtonMode="while-editing"
+              clearButtonMode="never"
             />
             {search.length > 0 && (
               <TouchableScale
                 onPress={() => setSearch('')}
+                hitSlop={8}
                 style={styles.searchClearBtn}>
                 <CloseWhite size={11} color={AppColors.grayText} />
               </TouchableScale>
             )}
           </View>
 
-          {/* Horizontal All Countries Filter List */}
+          {/* Horizontal Country Filter Chips */}
           <View style={styles.countryScrollWrap}>
             <ScrollView
               horizontal
@@ -294,6 +384,9 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
             ) : (
               filteredLanguages.map(lang => {
                 const isSelected = lang.code === currentLangCode;
+                const englishSubtitle =
+                  LANGUAGE_ENGLISH_NAMES[lang.code] || lang.name;
+
                 return (
                   <TouchableScale
                     key={lang.code}
@@ -304,8 +397,17 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                       styles.langRow,
                       isSelected && styles.langRowSelected,
                     ]}>
+                    {/* Active Accent Left Indicator */}
+                    {isSelected && <View style={styles.activeAccentBar} />}
+
                     <View style={styles.langRowLeft}>
-                      <Text style={styles.langFlag}>{lang.flag}</Text>
+                      <View
+                        style={[
+                          styles.flagContainer,
+                          isSelected && styles.flagContainerSelected,
+                        ]}>
+                        <Text style={styles.langFlag}>{lang.flag}</Text>
+                      </View>
                       <View style={styles.langTextCol}>
                         <View style={styles.langTitleRow}>
                           <Text
@@ -315,21 +417,40 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                             ]}>
                             {lang.nativeName}
                           </Text>
-                          <View style={styles.codePill}>
-                            <Text style={styles.codePillText}>
+                          <View
+                            style={[
+                              styles.codePill,
+                              isSelected && styles.codePillSelected,
+                            ]}>
+                            <Text
+                              style={[
+                                styles.codePillText,
+                                isSelected && styles.codePillTextSelected,
+                              ]}>
                               {lang.code.toUpperCase()}
                             </Text>
                           </View>
                         </View>
-                        <Text style={styles.langEnglishName}>
-                          {lang.name}
+                        <Text
+                          style={[
+                            styles.langEnglishName,
+                            isSelected && styles.langEnglishNameSelected,
+                          ]}>
+                          {englishSubtitle}
                         </Text>
                       </View>
                     </View>
-                    {isSelected && (
-                      <View style={styles.checkIconWrap}>
-                        <CheckIcon size={13} color={AppColors.white} />
-                      </View>
+
+                    {isSelected ? (
+                      <LinearGradient
+                        colors={[AppColors.indigo600, AppColors.violet600]}
+                        start={{x: 0, y: 0}}
+                        end={{x: 1, y: 1}}
+                        style={styles.checkIconWrap}>
+                        <CheckIcon size={12} color={AppColors.white} />
+                      </LinearGradient>
+                    ) : (
+                      <View style={styles.uncheckPlaceholder} />
                     )}
                   </TouchableScale>
                 );
@@ -337,6 +458,96 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
             )}
           </ScrollView>
         </View>
+
+        {/* ─── Language Change Confirmation Dialog ─── */}
+        {pendingLang != null && (
+          <View style={[StyleSheet.absoluteFill, confirmStyles.overlay]}>
+            <TouchableWithoutFeedback onPress={handleCancelLanguageChange}>
+              <View style={confirmStyles.backdrop} />
+            </TouchableWithoutFeedback>
+            <View style={confirmStyles.card}>
+              {/* Close corner button */}
+              <TouchableScale
+                onPress={handleCancelLanguageChange}
+                hitSlop={8}
+                style={confirmStyles.cornerCloseBtn}>
+                <CloseWhite size={11} color={AppColors.grayTextWeak} />
+              </TouchableScale>
+
+              {/* Top icon badge with flag */}
+              <View style={confirmStyles.iconBadge}>
+                <Text style={confirmStyles.iconFlag}>{pendingLang.flag}</Text>
+              </View>
+
+              {/* Title & Message */}
+              <Text style={confirmStyles.title}>
+                {t('language.confirmTitle', 'Change Language?')}
+              </Text>
+              <Text style={confirmStyles.message}>
+                {t(
+                  'language.confirmMessage',
+                  `Switch to ${pendingLang.nativeName} (${LANGUAGE_ENGLISH_NAMES[pendingLang.code] || pendingLang.nativeName})? The inspector will reload to apply the new language.`,
+                )}
+              </Text>
+
+              {/* Language switch preview */}
+              <View style={confirmStyles.switchPreview}>
+                <View style={confirmStyles.switchItem}>
+                  <Text style={confirmStyles.switchLabel}>
+                    {t('language.current', 'Current')}
+                  </Text>
+                  <Text style={confirmStyles.switchValue}>
+                    {SUPPORTED_LANGUAGES.find(l => l.code === currentLangCode)?.flag || '🌐'}{' '}
+                    {currentLangCode.toUpperCase()}
+                  </Text>
+                </View>
+                <View style={confirmStyles.switchArrow}>
+                  <Text style={confirmStyles.switchArrowText}>→</Text>
+                </View>
+                <View style={confirmStyles.switchItem}>
+                  <Text style={[confirmStyles.switchLabel, {color: AppColors.indigo600}]}>
+                    {t('language.new', 'New')}
+                  </Text>
+                  <Text style={[confirmStyles.switchValue, {color: AppColors.indigo600, fontFamily: AppFonts.interBold}]}>
+                    {pendingLang.flag} {pendingLang.code.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={confirmStyles.buttonRow}>
+                <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.cancel', 'Cancel')}
+                  onPress={handleCancelLanguageChange}
+                  style={confirmStyles.cancelBtn}>
+                  <Text style={confirmStyles.cancelBtnText}>
+                    {t('common.cancel', 'Cancel')}
+                  </Text>
+                </TouchableScale>
+
+                <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('language.confirmApply', 'Apply & Reload')}
+                  onPress={handleConfirmLanguageChange}
+                  style={confirmStyles.confirmBtn}>
+                  <LinearGradient
+                    colors={[AppColors.indigo600, AppColors.violet600]}
+                    start={{x: 0, y: 0}}
+                    end={{x: 1, y: 1}}
+                    style={confirmStyles.confirmBtnGradient}>
+                    <ResetIcon size={13} color={AppColors.white} />
+                    <Text style={confirmStyles.confirmBtnText}>
+                      {t('language.confirmApply', 'Apply & Reload')}
+                    </Text>
+                  </LinearGradient>
+                </TouchableScale>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -345,7 +556,7 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: 'rgba(10, 15, 30, 0.60)',
     justifyContent: 'flex-end',
   },
   backdrop: {
@@ -353,25 +564,25 @@ const styles = StyleSheet.create({
   },
   bottomSheet: {
     width: '100%',
-    height: Math.min(Math.max(Dimensions.get('window').height * 0.70, 480), 580),
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    height: Math.min(Math.max(Dimensions.get('window').height * 0.74, 520), 620),
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     paddingTop: 8,
     paddingBottom: Platform.OS === 'ios' ? 28 : 16,
     shadowColor: AppColors.black,
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    shadowOffset: {width: 0, height: -4},
-    elevation: 12,
+    shadowOpacity: 0.28,
+    shadowRadius: 20,
+    shadowOffset: {width: 0, height: -6},
+    elevation: 16,
   },
   handleBarWrap: {
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 5,
   },
   handleBar: {
-    width: 38,
-    height: 4.5,
-    borderRadius: 2.5,
+    width: 36,
+    height: 4,
+    borderRadius: 2,
   },
   header: {
     flexDirection: 'row',
@@ -388,17 +599,38 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   globeIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: `${AppColors.blue600}14`,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: AppColors.indigo600,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   titleText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 15,
+    fontSize: 15.5,
     color: AppColors.primaryBlack,
+    letterSpacing: -0.2,
+  },
+  countBadge: {
+    backgroundColor: `${AppColors.indigo600}18`,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+  },
+  countBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.indigo600,
   },
   subTitleText: {
     fontFamily: AppFonts.interRegular,
@@ -407,17 +639,14 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: AppColors.grayBackground,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: `${AppColors.black}0D`,
+    borderWidth: 1,
+    borderColor: `${AppColors.black}1A`,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 12,
-    color: AppColors.grayText,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -426,32 +655,33 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 6,
     paddingHorizontal: 10,
-    height: 38,
-    borderRadius: 10,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
     borderColor: AppColors.grayBorderSecondary,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
     height: '100%',
     fontSize: 12.5,
-    fontFamily: AppFonts.interRegular,
+    fontFamily: AppFonts.interMedium,
     color: AppColors.primaryBlack,
     paddingVertical: 0,
   },
   searchClearBtn: {
-    padding: 4,
-  },
-  searchClearText: {
-    fontSize: 12,
-    color: AppColors.grayText,
-    fontFamily: AppFonts.interBold,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: `${AppColors.grayText}22`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   countryScrollWrap: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: AppColors.grayBorderSecondary,
-    paddingVertical: 6,
+    paddingVertical: 7,
   },
   countryScrollContent: {
     paddingHorizontal: 14,
@@ -464,15 +694,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
     borderColor: AppColors.grayBorderSecondary,
     gap: 5,
   },
   countryChipActive: {
-    backgroundColor: `${AppColors.purple}14`,
-    borderColor: `${AppColors.purple}55`,
+    backgroundColor: `${AppColors.brandPurple}14`,
+    borderColor: `${AppColors.brandPurple}55`,
   },
   countryChipFlag: {
     fontSize: 13,
@@ -484,16 +714,16 @@ const styles = StyleSheet.create({
   },
   countryChipTextActive: {
     fontFamily: AppFonts.interBold,
-    color: AppColors.purple,
+    color: AppColors.brandPurple,
   },
   countryChipBadge: {
-    paddingHorizontal: 5,
+    paddingHorizontal: 5.5,
     paddingVertical: 1,
     borderRadius: 8,
     backgroundColor: `${AppColors.black}0A`,
   },
   countryChipBadgeActive: {
-    backgroundColor: `${AppColors.purple}22`,
+    backgroundColor: `${AppColors.brandPurple}22`,
   },
   countryChipBadgeText: {
     fontFamily: AppFonts.interSemiBold,
@@ -501,7 +731,7 @@ const styles = StyleSheet.create({
     color: AppColors.grayText,
   },
   countryChipBadgeTextActive: {
-    color: AppColors.purple,
+    color: AppColors.brandPurple,
     fontFamily: AppFonts.interBold,
   },
   scrollList: {
@@ -511,13 +741,13 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   emptyStateWrap: {
-    padding: 30,
+    padding: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyStateText: {
-    fontFamily: AppFonts.interRegular,
-    fontSize: 12.5,
+    fontFamily: AppFonts.interMedium,
+    fontSize: 13,
     color: AppColors.grayText,
   },
   langRow: {
@@ -525,12 +755,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: AppColors.grayBorderSecondary,
+    position: 'relative',
   },
   langRowSelected: {
-    backgroundColor: `${AppColors.purple}10`,
+    backgroundColor: `${AppColors.indigo600}0C`,
+  },
+  activeAccentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 4,
+    bottom: 4,
+    width: 3.5,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
+    backgroundColor: AppColors.indigo600,
   },
   langRowLeft: {
     flexDirection: 'row',
@@ -538,8 +779,22 @@ const styles = StyleSheet.create({
     gap: 12,
     flex: 1,
   },
+  flagContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: AppColors.grayBackground,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+  },
+  flagContainerSelected: {
+    borderColor: `${AppColors.indigo600}44`,
+    backgroundColor: `${AppColors.indigo600}14`,
+  },
   langFlag: {
-    fontSize: 20,
+    fontSize: 19,
   },
   langTextCol: {
     flex: 1,
@@ -551,37 +806,233 @@ const styles = StyleSheet.create({
   },
   langNativeName: {
     fontFamily: AppFonts.interSemiBold,
-    fontSize: 13.5,
+    fontSize: 14,
     color: AppColors.primaryBlack,
   },
   langNativeNameSelected: {
     fontFamily: AppFonts.interBold,
-    color: AppColors.purple,
+    color: AppColors.indigo600,
   },
   codePill: {
-    backgroundColor: `${AppColors.purple}14`,
+    backgroundColor: `${AppColors.black}0A`,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
   },
+  codePillSelected: {
+    backgroundColor: `${AppColors.indigo600}18`,
+  },
   codePillText: {
     fontSize: 9.5,
     fontFamily: AppFonts.interBold,
-    color: AppColors.purple,
-    letterSpacing: 0.5,
+    color: AppColors.grayText,
+    letterSpacing: 0.4,
+  },
+  codePillTextSelected: {
+    color: AppColors.indigo600,
   },
   langEnglishName: {
     fontFamily: AppFonts.interRegular,
-    fontSize: 11,
+    fontSize: 11.5,
     color: AppColors.grayText,
-    marginTop: 1,
+    marginTop: 1.5,
+  },
+  langEnglishNameSelected: {
+    color: AppColors.indigo600,
+    fontFamily: AppFonts.interMedium,
   },
   checkIconWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: AppColors.purple,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: AppColors.indigo600,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  uncheckPlaceholder: {
+    width: 24,
+    height: 24,
+  },
+});
+
+const confirmStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 15, 30, 0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    zIndex: 999999,
+    elevation: 999,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: AppColors.white,
+    borderRadius: 22,
+    paddingTop: 24,
+    paddingBottom: 18,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: `${AppColors.white}CC`,
+    ...Platform.select({
+      ios: {
+        shadowColor: AppColors.indigo600,
+        shadowOffset: {width: 0, height: 12},
+        shadowOpacity: 0.28,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
+  },
+  cornerCloseBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: AppColors.graySurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconBadge: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    borderWidth: 1.5,
+    borderColor: `${AppColors.indigo600}33`,
+    backgroundColor: `${AppColors.indigo600}14`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  iconFlag: {
+    fontSize: 28,
+  },
+  title: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 17,
+    color: AppColors.slate900,
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+  },
+  message: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 13,
+    color: AppColors.grayTextWeak,
+    textAlign: 'center',
+    lineHeight: 19,
+    paddingHorizontal: 4,
+    marginBottom: 16,
+  },
+  switchPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: AppColors.grayBackground,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+    width: '100%',
+  },
+  switchItem: {
+    alignItems: 'center',
+    gap: 3,
+    flex: 1,
+  },
+  switchLabel: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 10,
+    color: AppColors.grayText,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  switchValue: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 14,
+    color: AppColors.primaryBlack,
+  },
+  switchArrow: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: `${AppColors.indigo600}18`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  switchArrowText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 14,
+    color: AppColors.indigo600,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+  },
+  cancelBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: AppColors.graySurface,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 14,
+    color: AppColors.grayText,
+  },
+  confirmBtn: {
+    flex: 1.15,
+    height: 44,
+    borderRadius: 12,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: AppColors.indigo600,
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  confirmBtnGradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: 12,
+  },
+  confirmBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 13.5,
+    color: AppColors.white,
+    letterSpacing: 0.2,
+  },
 });
+
+export default LanguageSelectorModal;

@@ -6,6 +6,7 @@
 #import <ReplayKit/ReplayKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <AVKit/AVKit.h>
+#import <CoreImage/CoreImage.h>
 #import <ImageIO/ImageIO.h>
 #import <MobileCoreServices/MobileCoreServices.h>
 
@@ -1907,6 +1908,434 @@ RCT_EXPORT_METHOD(clearAllCapturedMedia:(RCTPromiseResolveBlock)resolve
             resolve(@(YES));
         } @catch (NSException *ex) {
             resolve(@(NO));
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 100% Native Media Editor: Photo Editing (CoreImage + ImageIO)
+// ─────────────────────────────────────────────────────────────────────────────
+
+RCT_EXPORT_METHOD(editPhoto:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            NSString *rawUri = options[@"uri"];
+            if (!rawUri || rawUri.length == 0) {
+                reject(@"INVALID_URI", @"Image URI is missing or empty", nil);
+                return;
+            }
+
+            NSString *cleanPath = rawUri;
+            if ([cleanPath hasPrefix:@"file://"]) {
+                cleanPath = [cleanPath substringFromIndex:7];
+            }
+            cleanPath = [cleanPath stringByRemovingPercentEncoding];
+
+            UIImage *sourceImage = [UIImage imageWithContentsOfFile:cleanPath];
+            if (!sourceImage) {
+                reject(@"IMAGE_LOAD_FAILED", @"Failed to load source image", nil);
+                return;
+            }
+
+            // 1. Convert to CIImage
+            CIImage *ciImage = [CIImage imageWithCGImage:sourceImage.CGImage];
+            if (!ciImage) {
+                ciImage = [CIImage imageWithContentsOfURL:[NSURL fileURLWithPath:cleanPath]];
+            }
+            if (!ciImage) {
+                reject(@"CIIMAGE_FAILED", @"Failed to initialize CoreImage pipeline", nil);
+                return;
+            }
+
+            // 2. Apply Rotation & Flip
+            NSInteger rotation = [options[@"rotation"] integerValue];
+            BOOL flipH = [options[@"flipHorizontal"] boolValue];
+            BOOL flipV = [options[@"flipVertical"] boolValue];
+
+            CGAffineTransform transform = CGAffineTransformIdentity;
+            if (rotation == 90) {
+                transform = CGAffineTransformRotate(transform, -M_PI_2);
+            } else if (rotation == 180) {
+                transform = CGAffineTransformRotate(transform, M_PI);
+            } else if (rotation == 270) {
+                transform = CGAffineTransformRotate(transform, M_PI_2);
+            }
+            if (flipH) {
+                transform = CGAffineTransformScale(transform, -1, 1);
+            }
+            if (flipV) {
+                transform = CGAffineTransformScale(transform, 1, -1);
+            }
+            if (!CGAffineTransformIsIdentity(transform)) {
+                ciImage = [ciImage imageByApplyingTransform:transform];
+                CGRect newExtent = ciImage.extent;
+                CGAffineTransform fixOrigin = CGAffineTransformMakeTranslation(-newExtent.origin.x, -newExtent.origin.y);
+                ciImage = [ciImage imageByApplyingTransform:fixOrigin];
+            }
+
+            // 3. Apply Crop
+            NSDictionary *cropDict = options[@"crop"];
+            if (cropDict && [cropDict isKindOfClass:[NSDictionary class]]) {
+                CGFloat x = [cropDict[@"x"] doubleValue];
+                CGFloat y = [cropDict[@"y"] doubleValue];
+                CGFloat width = [cropDict[@"width"] doubleValue];
+                CGFloat height = [cropDict[@"height"] doubleValue];
+                BOOL isNorm = [cropDict[@"isNormalized"] boolValue];
+
+                CGRect extent = ciImage.extent;
+                if (isNorm) {
+                    x *= extent.size.width;
+                    y *= extent.size.height;
+                    width *= extent.size.width;
+                    height *= extent.size.height;
+                }
+                // CoreImage coordinate system (bottom-left origin)
+                CGFloat ciY = extent.size.height - (y + height);
+                CGRect cropRect = CGRectMake(x, ciY, width, height);
+                CGRect intersection = CGRectIntersection(extent, cropRect);
+                if (!CGRectIsNull(intersection) && intersection.size.width > 0 && intersection.size.height > 0) {
+                    ciImage = [ciImage imageByCroppingToRect:intersection];
+                }
+            }
+
+            // 4. Color Grading Adjustments (CIColorControls, CITemperatureAndTint, CIVignette)
+            NSDictionary *adjustments = options[@"adjustments"];
+            if (adjustments && [adjustments isKindOfClass:[NSDictionary class]]) {
+                NSNumber *brightness = adjustments[@"brightness"];
+                NSNumber *contrast = adjustments[@"contrast"];
+                NSNumber *saturation = adjustments[@"saturation"];
+
+                if (brightness || contrast || saturation) {
+                    CIFilter *colorControls = [CIFilter filterWithName:@"CIColorControls"];
+                    [colorControls setValue:ciImage forKey:kCIInputImageKey];
+                    if (brightness) [colorControls setValue:brightness forKey:kCIInputBrightnessKey];
+                    if (contrast) [colorControls setValue:contrast forKey:kCIInputContrastKey];
+                    if (saturation) [colorControls setValue:saturation forKey:kCIInputSaturationKey];
+                    ciImage = colorControls.outputImage ?: ciImage;
+                }
+
+                NSNumber *temperature = adjustments[@"temperature"];
+                if (temperature && [temperature doubleValue] != 0) {
+                    CIFilter *tempFilter = [CIFilter filterWithName:@"CITemperatureAndTint"];
+                    [tempFilter setValue:ciImage forKey:kCIInputImageKey];
+                    CIVector *neutral = [CIVector vectorWithX:6500 Y:0];
+                    CGFloat shift = [temperature doubleValue] * 2000;
+                    CIVector *target = [CIVector vectorWithX:6500 + shift Y:0];
+                    [tempFilter setValue:neutral forKey:@"inputNeutral"];
+                    [tempFilter setValue:target forKey:@"inputTargetNeutral"];
+                    ciImage = tempFilter.outputImage ?: ciImage;
+                }
+
+                NSNumber *vignette = adjustments[@"vignette"];
+                if (vignette && [vignette doubleValue] > 0) {
+                    CIFilter *vigFilter = [CIFilter filterWithName:@"CIVignette"];
+                    [vigFilter setValue:ciImage forKey:kCIInputImageKey];
+                    [vigFilter setValue:@([vignette doubleValue] * 2.0) forKey:kCIInputIntensityKey];
+                    [vigFilter setValue:@(1.0) forKey:kCIInputRadiusKey];
+                    ciImage = vigFilter.outputImage ?: ciImage;
+                }
+
+                NSNumber *sharpen = adjustments[@"sharpen"];
+                if (sharpen && [sharpen doubleValue] > 0) {
+                    CIFilter *sharpFilter = [CIFilter filterWithName:@"CISharpenLuminance"];
+                    [sharpFilter setValue:ciImage forKey:kCIInputImageKey];
+                    [sharpFilter setValue:@([sharpen doubleValue] * 2.0) forKey:kCIInputSharpnessKey];
+                    ciImage = sharpFilter.outputImage ?: ciImage;
+                }
+            }
+
+            // 5. Preset Filters
+            NSString *preset = options[@"filterPreset"];
+            if (preset && preset.length > 0 && ![preset isEqualToString:@"none"]) {
+                NSString *filterName = nil;
+                if ([preset isEqualToString:@"mono"]) filterName = @"CIPhotoEffectMono";
+                else if ([preset isEqualToString:@"noir"]) filterName = @"CIPhotoEffectNoir";
+                else if ([preset isEqualToString:@"sepia"]) filterName = @"CISepiaTone";
+                else if ([preset isEqualToString:@"vibrant"]) filterName = @"CIPhotoEffectChrome";
+                else if ([preset isEqualToString:@"fade"]) filterName = @"CIPhotoEffectFade";
+                else if ([preset isEqualToString:@"vintage"]) filterName = @"CIPhotoEffectInstant";
+
+                if (filterName) {
+                    CIFilter *pFilter = [CIFilter filterWithName:filterName];
+                    [pFilter setValue:ciImage forKey:kCIInputImageKey];
+                    ciImage = pFilter.outputImage ?: ciImage;
+                }
+            }
+
+            // 6. GPU Render to File
+            CIContext *context = [CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer: @(NO)}];
+            CGImageRef cgImage = [context createCGImage:ciImage fromRect:ciImage.extent];
+            if (!cgImage) {
+                reject(@"RENDER_FAILED", @"Failed to render CGImage", nil);
+                return;
+            }
+
+            UIImage *resultImage = [UIImage imageWithCGImage:cgImage];
+            CGImageRelease(cgImage);
+
+            // 7. Apply Redactions & Annotations Overlay if provided
+            NSArray *redactions = options[@"redactions"];
+            NSArray *annotations = options[@"annotations"];
+            if ((redactions && [redactions isKindOfClass:[NSArray class]] && redactions.count > 0) ||
+                (annotations && [annotations isKindOfClass:[NSArray class]] && annotations.count > 0)) {
+                UIGraphicsBeginImageContextWithOptions(resultImage.size, NO, 1.0);
+                [resultImage drawInRect:CGRectMake(0, 0, resultImage.size.width, resultImage.size.height)];
+                CGContextRef ctx = UIGraphicsGetCurrentContext();
+
+                if (redactions && [redactions isKindOfClass:[NSArray class]]) {
+                    for (NSDictionary *box in redactions) {
+                        CGFloat x = [box[@"x"] doubleValue];
+                        CGFloat y = [box[@"y"] doubleValue];
+                        CGFloat w = [box[@"width"] doubleValue];
+                        CGFloat h = [box[@"height"] doubleValue];
+                        BOOL isNorm = [box[@"isNormalized"] boolValue];
+                        if (isNorm) {
+                            x *= resultImage.size.width;
+                            y *= resultImage.size.height;
+                            w *= resultImage.size.width;
+                            h *= resultImage.size.height;
+                        }
+                        CGContextSetFillColorWithColor(ctx, [UIColor blackColor].CGColor);
+                        CGContextFillRect(ctx, CGRectMake(x, y, w, h));
+                    }
+                }
+
+                if (annotations && [annotations isKindOfClass:[NSArray class]]) {
+                    for (NSDictionary *ann in annotations) {
+                        CGFloat x = [ann[@"x"] doubleValue];
+                        CGFloat y = [ann[@"y"] doubleValue];
+                        CGFloat w = [ann[@"width"] doubleValue];
+                        CGFloat h = [ann[@"height"] doubleValue];
+                        BOOL isNorm = [ann[@"isNormalized"] boolValue];
+                        if (isNorm) {
+                            x *= resultImage.size.width;
+                            y *= resultImage.size.height;
+                            w *= resultImage.size.width;
+                            h *= resultImage.size.height;
+                        }
+                        CGContextSetStrokeColorWithColor(ctx, [UIColor redColor].CGColor);
+                        CGContextSetLineWidth(ctx, 4.0);
+                        CGContextStrokeRect(ctx, CGRectMake(x, y, w, h));
+                    }
+                }
+
+                resultImage = UIGraphicsGetImageFromCurrentImageContext();
+                UIGraphicsEndImageContext();
+            }
+
+            NSString *format = [options[@"format"] lowercaseString] ?: @"jpeg";
+            CGFloat quality = options[@"quality"] ? [options[@"quality"] doubleValue] : 0.9;
+            NSData *imageData = nil;
+            NSString *ext = @"jpg";
+            NSString *mime = @"image/jpeg";
+
+            if ([format isEqualToString:@"png"]) {
+                imageData = UIImagePNGRepresentation(resultImage);
+                ext = @"png";
+                mime = @"image/png";
+            } else {
+                imageData = UIImageJPEGRepresentation(resultImage, quality);
+            }
+
+            NSDateFormatter *df = [[NSDateFormatter alloc] init];
+            [df setDateFormat:@"yyyyMMdd_HHmmss_SSS"];
+            NSString *fileName = [NSString stringWithFormat:@"edit_%@.%@", [df stringFromDate:[NSDate date]], ext];
+            NSString *outPath = [[self getCapturesDirectory] stringByAppendingPathComponent:fileName];
+            [imageData writeToFile:outPath atomically:YES];
+
+            resolve(@{
+                @"uri": [NSURL fileURLWithPath:outPath].absoluteString,
+                @"width": @(resultImage.size.width),
+                @"height": @(resultImage.size.height),
+                @"size": @(imageData.length),
+                @"mimeType": mime,
+                @"format": format,
+            });
+        } @catch (NSException *ex) {
+            reject(@"EDIT_FAILED", ex.reason ?: @"Photo edit failed", nil);
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 100% Native Media Editor: Video Trimming (AVFoundation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+RCT_EXPORT_METHOD(trimVideo:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            NSString *rawUri = options[@"uri"];
+            if (!rawUri || rawUri.length == 0) {
+                reject(@"INVALID_URI", @"Video URI is missing", nil);
+                return;
+            }
+
+            NSURL *sourceUrl = [NSURL URLWithString:rawUri];
+            if (!sourceUrl.scheme) {
+                sourceUrl = [NSURL fileURLWithPath:rawUri];
+            }
+
+            AVURLAsset *asset = [AVURLAsset URLAssetWithURL:sourceUrl options:nil];
+            double startMs = [options[@"startTimeMs"] doubleValue];
+            double endMs = [options[@"endTimeMs"] doubleValue];
+            BOOL mute = [options[@"mute"] boolValue] || [options[@"muteAudio"] boolValue];
+
+            AVAssetTrack *videoTrack = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
+            if (!videoTrack) {
+                reject(@"NO_VIDEO_TRACK", @"Source video has no valid video track", nil);
+                return;
+            }
+
+            double trackDurationSec = CMTimeGetSeconds(videoTrack.timeRange.duration);
+            if (isnan(trackDurationSec) || trackDurationSec <= 0) {
+                trackDurationSec = CMTimeGetSeconds(asset.duration);
+            }
+            double trackDurationMs = trackDurationSec * 1000.0;
+            if (endMs > trackDurationMs || endMs <= 0) {
+                endMs = trackDurationMs;
+            }
+            if (startMs >= endMs) {
+                startMs = 0;
+            }
+
+            AVMutableComposition *composition = [AVMutableComposition composition];
+            AVMutableCompositionTrack *compVideoTrack = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
+
+            CMTime startTime = CMTimeMakeWithSeconds(startMs / 1000.0, 600);
+            CMTime durationTime = CMTimeMakeWithSeconds((endMs - startMs) / 1000.0, 600);
+            CMTimeRange timeRange = CMTimeRangeMake(startTime, durationTime);
+
+            NSError *error = nil;
+            [compVideoTrack insertTimeRange:timeRange ofTrack:videoTrack atTime:kCMTimeZero error:&error];
+            compVideoTrack.preferredTransform = videoTrack.preferredTransform;
+
+            if (!mute) {
+                AVAssetTrack *audioTrack = [[asset tracksWithMediaType:AVMediaTypeAudio] firstObject];
+                if (audioTrack) {
+                    AVMutableCompositionTrack *compAudioTrack = [composition addMutableTrackWithMediaType:AVMediaTypeAudio preferredTrackID:kCMPersistentTrackID_Invalid];
+                    CMTimeRange audioTimeRange = timeRange;
+                    double audioDurationSec = CMTimeGetSeconds(audioTrack.timeRange.duration);
+                    if (!isnan(audioDurationSec) && audioDurationSec > 0) {
+                        double audioDurationMs = audioDurationSec * 1000.0;
+                        if (endMs > audioDurationMs) {
+                            audioTimeRange = CMTimeRangeMake(startTime, CMTimeMakeWithSeconds((audioDurationMs - startMs) / 1000.0, 600));
+                        }
+                    }
+                    [compAudioTrack insertTimeRange:audioTimeRange ofTrack:audioTrack atTime:kCMTimeZero error:nil];
+                }
+            }
+
+            NSString *preset = AVAssetExportPresetHighestQuality;
+            NSString *quality = options[@"quality"];
+            if ([quality isEqualToString:@"medium"]) preset = AVAssetExportPreset1280x720;
+            else if ([quality isEqualToString:@"low"]) preset = AVAssetExportPreset640x480;
+
+            AVAssetExportSession *exportSession = [AVAssetExportSession exportSessionWithAsset:composition presetName:preset];
+            NSDateFormatter *df = [[NSDateFormatter alloc] init];
+            [df setDateFormat:@"yyyyMMdd_HHmmss_SSS"];
+            NSString *fileName = [NSString stringWithFormat:@"trim_%@.mp4", [df stringFromDate:[NSDate date]]];
+            NSString *outPath = [[self getCapturesDirectory] stringByAppendingPathComponent:fileName];
+            NSURL *outUrl = [NSURL fileURLWithPath:outPath];
+
+            exportSession.outputURL = outUrl;
+            exportSession.outputFileType = AVFileTypeMPEG4;
+            exportSession.shouldOptimizeForNetworkUse = YES;
+
+            [exportSession exportAsynchronouslyWithCompletionHandler:^{
+                if (exportSession.status == AVAssetExportSessionStatusCompleted) {
+                    NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:outPath error:nil];
+                    CGSize natSize = CGSizeApplyAffineTransform(videoTrack.naturalSize, videoTrack.preferredTransform);
+                    resolve(@{
+                        @"uri": outUrl.absoluteString,
+                        @"durationMs": @(endMs - startMs),
+                        @"size": @([attrs fileSize]),
+                        @"width": @(fabs(natSize.width)),
+                        @"height": @(fabs(natSize.height)),
+                        @"format": @"mp4",
+                    });
+                } else {
+                    reject(@"EXPORT_FAILED", exportSession.error.localizedDescription ?: @"Video export failed", exportSession.error);
+                }
+            }];
+        } @catch (NSException *ex) {
+            reject(@"TRIM_FAILED", ex.reason ?: @"Video trim failed", nil);
+        }
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 100% Native Media Editor: Filmstrip Thumbnail Generator (AVAssetImageGenerator)
+// ─────────────────────────────────────────────────────────────────────────────
+
+RCT_EXPORT_METHOD(generateFilmstrip:(NSDictionary *)options
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            NSString *rawUri = options[@"uri"];
+            if (!rawUri || rawUri.length == 0) {
+                reject(@"INVALID_URI", @"Video URI is missing", nil);
+                return;
+            }
+
+            NSURL *sourceUrl = [NSURL URLWithString:rawUri];
+            if (!sourceUrl.scheme) {
+                sourceUrl = [NSURL fileURLWithPath:rawUri];
+            }
+
+            AVURLAsset *asset = [AVURLAsset URLAssetWithURL:sourceUrl options:nil];
+            NSInteger count = options[@"count"] ? [options[@"count"] integerValue] : 10;
+            if (count <= 0) count = 10;
+            if (count > 50) count = 50;
+
+            CGFloat targetWidth = options[@"maxWidth"] ? [options[@"maxWidth"] doubleValue] : (options[@"targetWidth"] ? [options[@"targetWidth"] doubleValue] : 120);
+            CGFloat targetHeight = options[@"maxHeight"] ? [options[@"maxHeight"] doubleValue] : (options[@"targetHeight"] ? [options[@"targetHeight"] doubleValue] : 120);
+            CGFloat quality = options[@"quality"] ? [options[@"quality"] doubleValue] : 0.7;
+
+            double durationSeconds = CMTimeGetSeconds(asset.duration);
+            if (durationSeconds <= 0) {
+                reject(@"INVALID_DURATION", @"Unable to determine video duration", nil);
+                return;
+            }
+
+            AVAssetImageGenerator *generator = [AVAssetImageGenerator assetImageGeneratorWithAsset:asset];
+            generator.appliesPreferredTrackTransform = YES;
+            generator.maximumSize = CGSizeMake(targetWidth, targetHeight);
+            generator.requestedTimeToleranceBefore = kCMTimeZero;
+            generator.requestedTimeToleranceAfter = kCMTimeZero;
+
+            NSMutableArray *thumbnails = [NSMutableArray arrayWithCapacity:count];
+            double step = durationSeconds / (double)count;
+
+            for (NSInteger i = 0; i < count; i++) {
+                double targetSec = i * step;
+                CMTime time = CMTimeMakeWithSeconds(targetSec, 600);
+                NSError *genErr = nil;
+                CGImageRef cgImage = [generator copyCGImageAtTime:time actualTime:NULL error:&genErr];
+                if (cgImage) {
+                    UIImage *img = [UIImage imageWithCGImage:cgImage];
+                    CGImageRelease(cgImage);
+                    NSData *data = UIImageJPEGRepresentation(img, quality);
+                    NSString *b64 = [data base64EncodedStringWithOptions:0];
+                    NSString *dataUrl = [NSString stringWithFormat:@"data:image/jpeg;base64,%@", b64];
+                    [thumbnails addObject:@{
+                        @"timeMs": @(targetSec * 1000.0),
+                        @"uri": dataUrl,
+                        @"index": @(i),
+                    }];
+                }
+            }
+
+            resolve(@{
+                @"thumbnails": thumbnails,
+                @"durationMs": @(durationSeconds * 1000.0),
+            });
+        } @catch (NSException *ex) {
+            reject(@"FILMSTRIP_FAILED", ex.reason ?: @"Filmstrip generation failed", nil);
         }
     });
 }

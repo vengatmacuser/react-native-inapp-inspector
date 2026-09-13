@@ -889,6 +889,7 @@ const NetworkTab = React.memo(() => {
           removeClippedSubviews={true}
           renderToHardwareTextureAndroid={true}
           showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
           ListEmptyComponent={
           <EmptyState
             isSearch={
@@ -932,9 +933,10 @@ const NetworkTab = React.memo(() => {
             />
           ) : null
         }
+        style={{flex: 1}}
         contentContainerStyle={[
           styles.listContent,
-          filteredLogs.length === 0 && {flexGrow: 1},
+          {flexGrow: 1},
         ]}
         keyboardShouldPersistTaps="handled"
       />

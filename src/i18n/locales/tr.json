@@ -375,7 +375,9 @@
       "emptyObject": "Boş Nesne",
       "emptyTable": "Boş Nesne",
       "key": "Anahtar",
-      "value": "Değer"
+      "value": "DEĞER",
+      "keyProperty": "ANAHTAR / ÖZELLİK",
+      "noMatchingKeys": "Eşleşen anahtar veya değer bulunamadı"
     },
     "showingRequests": "{{count}} istek gösteriliyor",
     "showingFilteredRequests": "{{total}} istekten {{filtered}} tanesi gösteriliyor",
@@ -500,7 +502,25 @@
     "searchParameters": "Arama parametreleri...",
     "noParamsFound": "Aramanızla eşleşen parametre yok",
     "sourceFirebase": "YANGIN ÜSSÜ GA4",
-    "sourceCustom": "ÖZEL / MANUEL"
+    "sourceCustom": "ÖZEL / MANUEL",
+    "dataVisualization": "Veri Görselleştirme",
+    "dataTypesBreakdown": "Veri Türü Dağılımı",
+    "highestPayloadStrings": "En Uzun Yük Dizeleri",
+    "topLevelMetrics": "Üst Düzey Metrikler",
+    "importantDates": "Önemli Tarihler",
+    "itemPrices": "Öğe Fiyatları",
+    "sessionIdentity": "OTURUM VE KİMLİK",
+    "metricParams": "Parametreler:",
+    "metricUserProps": "Kullanıcı Özellikleri:",
+    "metricSize": "Boyut:",
+    "metricItems": "{{count}} öğe",
+    "sessionId": "Oturum Kimliği",
+    "trackingId": "İzleme Kimliği",
+    "eventParameters": "ETKİNLİK PARAMETRELERİ ({{count}})",
+    "keyValueAttributes": "Anahtar-Değer Özellikleri",
+    "filterParamsPlaceholder": "Parametreleri filtrele...",
+    "noParamsRecorded": "Bu etkinlik için kaydedilmiş özel parametre yok.",
+    "noParamsMatching": "\"{{search}}\" ile eşleşen parametre bulunamadı"
   },
   "redux": {
     "title": "Redux",
@@ -1344,7 +1364,23 @@
     "showingFilteredConnections": "{{total}} bağlantıdan {{filtered}} tanesi gösteriliyor",
     "deletedCount": "{{count}} WebSocket günlüğü silindi",
     "copiedUrls": "{{count}} URL'ler panoya kopyalandı",
-    "webSocketTraffic": "WebSocket Trafiği ({{count}} bağlantı)"
+    "webSocketTraffic": "WebSocket Trafiği ({{count}} bağlantı)",
+    "connectionDetails": "BAĞLANTI AYRINTILARI",
+    "url": "URL",
+    "clientEngine": "İstemci Motoru",
+    "readyState": "Hazır Durumu",
+    "connectedAt": "Bağlantı Zamanı",
+    "closedAt": "Kapanış Zamanı",
+    "closeCodeReason": "Kapanış Kodu ve Nedeni",
+    "subprotocols": "Alt Protokoller",
+    "callerStack": "Arayan Yığını",
+    "error": "Hata",
+    "handshakeHeaders": "Handshake Başlıkları",
+    "handshakeParams": "HANDSHAKE SORGU PARAMETRELERİ",
+    "noQueryParams": "Bağlantı URL'sinde sorgu parametresi iletilmedi",
+    "jsClientCode": "JAVASCRIPT İSTEMCİ KODU",
+    "terminalWscat": "TERMİNAL WSCAT KOMUTU",
+    "rawDump": "HAM BAĞLANTI JSON DÖKÜMÜ"
   },
   "push": {
     "title": "Anında Bildirimler",
@@ -1365,7 +1401,17 @@
     "cleared": "Anlık bildirim geçmişi temizlendi",
     "foreground": "Ön plan",
     "background": "Arkaplan",
-    "quit": "Çık"
+    "quit": "Çık",
+    "messageId": "Mesaj Kimliği:",
+    "sourceDomain": "Kaynak / Alan Adı:",
+    "appState": "Uygulama Durumu:",
+    "actionType": "Eylem Türü:",
+    "timestamp": "Zaman Damgası:",
+    "channelId": "Kanal Kimliği:",
+    "sound": "Ses:",
+    "badgeCount": "Rozet Sayısı:",
+    "collapseKey": "Daraltma Anahtarı:",
+    "noCustomData": "Yükte özel anahtar-değer verisi bulunamadı"
   },
   "debugging": {
     "title": "Hata Ayıklama ve Araçlar",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "Paket yükleme komutu kopyalandı!",
     "footerLicense": "React Yerel Uygulama İçi Denetleyici · MIT Lisansı",
     "footerTagline": "Sıfır yapılandırmalı cihaz içi hata ayıklama aracı"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "CANLI AĞ",
+    "ram": "RAM",
+    "active": "AKTİF",
+    "networkSpeed": "Ağ Hızı",
+    "fpsLive": "Canlı FPS",
+    "ramUsage": "RAM Kullanımı",
+    "battery": "Pil",
+    "livePerformanceStrip": "Canlı Performans Çubuğu"
+  },
+  "media": {
+    "animatedGif": "HAREKETLİ GIF",
+    "cropDefect": "Kusuru Kırp",
+    "rotate90": "90° Döndür",
+    "redactPii": "Kişisel Verileri Gizle",
+    "trim5s": "5sn Kırp",
+    "muteAudio": "Sesi Kapat",
+    "toGif": "GIF'e Dönüştür",
+    "play": "Oynat"
   }
 }

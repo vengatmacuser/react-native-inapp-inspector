@@ -13,6 +13,7 @@ import ErrorBoundary from '../ErrorBoundary';
 import ModuleErrorBoundary from '../ModuleErrorBoundary';
 import FabLauncher from './FabLauncher';
 import InspectorHeader from './InspectorHeader';
+import {SecondaryTelemetryStrip} from './SecondaryTelemetryStrip';
 import TabBar from './TabBar';
 import NetworkTab from './NetworkTab';
 import NetworkDetail from './NetworkDetail';
@@ -75,6 +76,8 @@ const MainScreen = () => {
     setNavState,
     confirmModal,
     setConfirmModal,
+    peekMode,
+    peekOpacity,
   } = useInspector();
 
   const isDetailActive =
@@ -140,7 +143,14 @@ const MainScreen = () => {
         statusBarTranslucent={true}
         onRequestClose={closeModal}>
         <ErrorBoundary onClose={closeModal}>
-          <View style={styles.modalBackdrop}>
+          <View
+            style={[
+              styles.modalBackdrop,
+              {
+                zIndex: 999999,
+                elevation: 999999,
+              },
+            ]}>
             <Pressable
               style={styles.modalBackdropPressable}
               onPress={closeModal}
@@ -152,7 +162,11 @@ const MainScreen = () => {
                   height: `${modalHeightPercent}%`,
                   borderTopLeftRadius: modalHeightPercent >= 100 ? 0 : 20,
                   borderTopRightRadius: modalHeightPercent >= 100 ? 0 : 20,
-                  backgroundColor: 'transparent',
+                  backgroundColor:
+                    AppColors.contentBg || AppColors.grayBackground,
+                  opacity: peekMode ? Math.max(peekOpacity || 0.75, 0.7) : 1,
+                  zIndex: 9999999,
+                  elevation: 999999,
                 },
               ]}>
               <StatusBar
@@ -162,6 +176,7 @@ const MainScreen = () => {
               />
 
               <InspectorHeader />
+              <SecondaryTelemetryStrip />
 
               <View
                 style={{

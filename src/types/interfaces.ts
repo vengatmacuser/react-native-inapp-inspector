@@ -212,6 +212,8 @@ export interface PersistedSettings {
   captureBitrate?: number;
   captureMaxDurationSeconds?: number;
   captureAutoGif?: boolean;
+  // ─── Peek-Through Mode ──────────────────────────────────────────────────────
+  peekOpacity?: number;
 }
 
 // ─── Inspector component props / context ──────────────────────────────────────
@@ -507,6 +509,12 @@ export interface InspectorContextValue {
   setCaptureAutoHide: React.Dispatch<React.SetStateAction<boolean>>;
   captureAutoGif: boolean;
   setCaptureAutoGif: React.Dispatch<React.SetStateAction<boolean>>;
+
+  // ─── Peek-Through Mode ──────────────────────────────────────────────────────
+  peekMode: boolean;
+  setPeekMode: React.Dispatch<React.SetStateAction<boolean>>;
+  peekOpacity: number;
+  setPeekOpacity: React.Dispatch<React.SetStateAction<number>>;
 }
 
 // ─── Shared component props ───────────────────────────────────────────────────

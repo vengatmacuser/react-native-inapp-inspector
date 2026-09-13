@@ -375,7 +375,9 @@
       "emptyObject": "ਖਾਲੀ ਵਸਤੂ",
       "emptyTable": "ਖਾਲੀ ਵਸਤੂ",
       "key": "ਕੁੰਜੀ",
-      "value": "ਮੁੱਲ"
+      "value": "ਮੁੱਲ",
+      "keyProperty": "ਕੁੰਜੀ / ਵਿਸ਼ੇਸ਼ਤਾ",
+      "noMatchingKeys": "ਕੋਈ ਮੇਲ ਖਾਂਦੀ ਕੁੰਜੀ ਜਾਂ ਮੁੱਲ ਨਹੀਂ ਮਿਲਿਆ"
     },
     "showingRequests": "{{count}} ਬੇਨਤੀਆਂ ਦਿਖਾਈਆਂ ਜਾ ਰਹੀਆਂ ਹਨ",
     "showingFilteredRequests": "{{total}} ਬੇਨਤੀਆਂ ਵਿੱਚੋਂ {{filtered}} ਨੂੰ ਦਿਖਾਇਆ ਜਾ ਰਿਹਾ ਹੈ",
@@ -500,7 +502,25 @@
     "searchParameters": "ਮਾਪਦੰਡ ਖੋਜੋ...",
     "noParamsFound": "ਕੋਈ ਪੈਰਾਮੀਟਰ ਤੁਹਾਡੀ ਖੋਜ ਨਾਲ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ",
     "sourceFirebase": "ਫਾਇਰਬੇਸ GA4",
-    "sourceCustom": "ਕਸਟਮ / ਮੈਨੂਅਲ"
+    "sourceCustom": "ਕਸਟਮ / ਮੈਨੂਅਲ",
+    "dataVisualization": "ਡੇਟਾ ਵਿਜ਼ੂਅਲਾਈਜ਼ੇਸ਼ਨ",
+    "dataTypesBreakdown": "ਡੇਟਾ ਕਿਸਮਾਂ ਦਾ ਵੇਰਵਾ",
+    "highestPayloadStrings": "ਸਭ ਤੋਂ ਵੱਡੀਆਂ ਪੇਲੋਡ ਸਤਰਾਂ",
+    "topLevelMetrics": "ਮੁੱਖ ਮੈਟ੍ਰਿਕਸ",
+    "importantDates": "ਮਹੱਤਵਪੂਰਨ ਤਾਰੀਖਾਂ",
+    "itemPrices": "ਵਸਤੂਆਂ ਦੀਆਂ ਕੀਮਤਾਂ",
+    "sessionIdentity": "ਸੈਸ਼ਨ ਅਤੇ ਪਛਾਣ",
+    "metricParams": "ਪੈਰਾਮੀਟਰ:",
+    "metricUserProps": "ਉਪਭੋਗਤਾ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ:",
+    "metricSize": "ਆਕਾਰ:",
+    "metricItems": "{{count}} ਵਸਤੂਆਂ",
+    "sessionId": "ਸੈਸ਼ਨ ID",
+    "trackingId": "ਟ੍ਰੈਕਿੰਗ ID",
+    "eventParameters": "ਇਵੈਂਟ ਪੈਰਾਮੀਟਰ ({{count}})",
+    "keyValueAttributes": "ਕੁੰਜੀ-ਮੁੱਲ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+    "filterParamsPlaceholder": "ਪੈਰਾਮੀਟਰ ਫਿਲਟਰ ਕਰੋ...",
+    "noParamsRecorded": "ਇਸ ਇਵੈਂਟ ਲਈ ਕੋਈ ਕਸਟਮ ਪੈਰਾਮੀਟਰ ਨਹੀਂ ਹੈ।",
+    "noParamsMatching": "\"{{search}}\" ਨਾਲ ਮੇਲ ਖਾਂਦਾ ਕੋਈ ਪੈਰਾਮੀਟਰ ਨਹੀਂ ਮਿਲਿਆ"
   },
   "redux": {
     "title": "Redux",
@@ -1344,7 +1364,23 @@
     "showingFilteredConnections": "{{total}} ਕਨੈਕਸ਼ਨਾਂ ਵਿੱਚੋਂ {{filtered}} ਦਿਖਾ ਰਿਹਾ ਹੈ",
     "deletedCount": "ਮਿਟਾਏ ਗਏ {{count}} WebSocket ਲੌਗ",
     "copiedUrls": "{{count}} URL ਨੂੰ ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤਾ ਗਿਆ",
-    "webSocketTraffic": "WebSocket ਆਵਾਜਾਈ ({{count}} ਕਨੈਕਸ਼ਨ)"
+    "webSocketTraffic": "WebSocket ਆਵਾਜਾਈ ({{count}} ਕਨੈਕਸ਼ਨ)",
+    "connectionDetails": "ਕਨੈਕਸ਼ਨ ਵੇਰਵੇ",
+    "url": "URL",
+    "clientEngine": "ਕਲਾਇੰਟ ਇੰਜਣ",
+    "readyState": "ਤਿਆਰ ਸਥਿਤੀ",
+    "connectedAt": "ਕਨੈਕਟ ਹੋਣ ਦਾ ਸਮਾਂ",
+    "closedAt": "ਬੰਦ ਹੋਣ ਦਾ ਸਮਾਂ",
+    "closeCodeReason": "ਸਮਾਪਤੀ ਕੋਡ ਅਤੇ ਕਾਰਨ",
+    "subprotocols": "ਉਪ-ਪ੍ਰੋਟੋਕੋਲ",
+    "callerStack": "ਕਾਲਰ ਸਟੈਕ",
+    "error": "ਗਲਤੀ",
+    "handshakeHeaders": "ਹੈਂਡਸ਼ੇਕ ਹੈਡਰ",
+    "handshakeParams": "ਹੈਂਡਸ਼ੇਕ ਪੁੱਛਗਿੱਛ ਪੈਰਾਮੀਟਰ",
+    "noQueryParams": "ਕਨੈਕਸ਼ਨ URL ਵਿੱਚ ਕੋਈ ਪੈਰਾਮੀਟਰ ਨਹੀਂ ਹੈ",
+    "jsClientCode": "ਜਾਵਾਸਕ੍ਰਿਪਟ ਕਲਾਇੰਟ ਕੋਡ",
+    "terminalWscat": "ਟਰਮੀਨਲ WSCAT ਕਮਾਂਡ",
+    "rawDump": "ਰਾਅ ਕਨੈਕਸ਼ਨ JSON ਡੰਪ"
   },
   "push": {
     "title": "ਪੁਸ਼ ਸੂਚਨਾਵਾਂ",
@@ -1365,7 +1401,17 @@
     "cleared": "ਪੁਸ਼ ਸੂਚਨਾ ਇਤਿਹਾਸ ਸਾਫ਼ ਕੀਤਾ ਗਿਆ",
     "foreground": "ਫੋਰਗਰਾਉਂਡ",
     "background": "ਪਿਛੋਕੜ",
-    "quit": "ਛੱਡੋ"
+    "quit": "ਛੱਡੋ",
+    "messageId": "ਸੁਨੇਹਾ ID:",
+    "sourceDomain": "ਸਰੋਤ / ਡੋਮੇਨ:",
+    "appState": "ਐਪ ਸਥਿਤੀ:",
+    "actionType": "ਕਾਰਵਾਈ ਕਿਸਮ:",
+    "timestamp": "ਸਮਾਂ ਮੋਹਰ:",
+    "channelId": "ਚੈਨਲ ID:",
+    "sound": "ਧੁਨੀ:",
+    "badgeCount": "ਬੈਜ ਗਿਣਤੀ:",
+    "collapseKey": "ਸੰਖੇਪ ਕੁੰਜੀ:",
+    "noCustomData": "ਪੇਲੋਡ ਵਿੱਚ ਕੋਈ ਕਸਟਮ ਡੇਟਾ ਨਹੀਂ ਮਿਲਿਆ"
   },
   "debugging": {
     "title": "ਡੀਬੱਗਿੰਗ ਅਤੇ ਟੂਲ",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "ਪੈਕੇਜ ਇੰਸਟਾਲ ਕਮਾਂਡ ਦੀ ਨਕਲ ਕੀਤੀ ਗਈ!",
     "footerLicense": "ਨੇਟਿਵ ਇਨ-ਐਪ ਇੰਸਪੈਕਟਰ ਪ੍ਰਤੀਕਿਰਿਆ ਕਰੋ · MIT ਲਾਇਸੈਂਸ",
     "footerTagline": "ਜ਼ੀਰੋ-ਸੰਰਚਨਾ ਔਨ-ਡਿਵਾਈਸ ਡੀਬਗਿੰਗ ਟੂਲ"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "ਲਾਈਵ ਨੈੱਟਵਰਕ",
+    "ram": "ਰੈਮ",
+    "active": "ਸਰਗਰਮ",
+    "networkSpeed": "ਨੈੱਟਵਰਕ ਗਤੀ",
+    "fpsLive": "ਲਾਈਵ FPS",
+    "ramUsage": "ਰੈਮ ਵਰਤੋਂ",
+    "battery": "ਬੈਟਰੀ",
+    "livePerformanceStrip": "ਲਾਈਵ ਕਾਰਗੁਜ਼ਾਰੀ ਪੱਟੀ"
+  },
+  "media": {
+    "animatedGif": "ਐਨੀਮੇਟਡ GIF",
+    "cropDefect": "ਨੁਕਸ ਹਿੱਸਾ ਕੱਟੋ",
+    "rotate90": "90° ਘੁਮਾਓ",
+    "redactPii": "ਨਿੱਜੀ ਡੇਟਾ ਛੁਪਾਓ",
+    "trim5s": "5 ਸਕਿੰਟ ਕੱਟੋ",
+    "muteAudio": "ਆਵਾਜ਼ ਬੰਦ ਕਰੋ",
+    "toGif": "GIF ਬਣਾਓ",
+    "play": "ਚਲਾਓ"
   }
 }

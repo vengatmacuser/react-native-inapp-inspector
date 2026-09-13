@@ -1,15 +1,19 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   Animated,
+  Dimensions,
   PanResponder,
   Platform,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import {useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
 import {
+  GripVerticalIcon,
   ScreenshotCaptureIcon,
   ScreenRecordIcon,
 } from '../NetworkIcons';
@@ -29,6 +33,9 @@ export const FloatingCaptureWidget: React.FC = () => {
     captureBitrate,
     captureMaxDurationSeconds,
     captureAudioMode,
+    activeTab,
+    settingsPage,
+    peekMode,
   } = useInspector();
 
   const {t} = useTranslation();
@@ -61,8 +68,11 @@ export const FloatingCaptureWidget: React.FC = () => {
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_e, g) =>
-        Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
+        Math.abs(g.dx) > 2 || Math.abs(g.dy) > 2,
+      onMoveShouldSetPanResponderCapture: (_e, g) =>
+        Math.abs(g.dx) > 2 || Math.abs(g.dy) > 2,
       onPanResponderGrant: () => {
         isDraggedRef.current = true;
         pan.setOffset({
@@ -71,15 +81,37 @@ export const FloatingCaptureWidget: React.FC = () => {
         });
         pan.setValue({x: 0, y: 0});
       },
-      onPanResponderMove: Animated.event(
-        [null, {dx: pan.x, dy: pan.y}],
-        {useNativeDriver: false},
-      ),
+      onPanResponderMove: (_e, gestureState) => {
+        pan.setValue({x: gestureState.dx, y: gestureState.dy});
+      },
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderRelease: () => {
         pan.flattenOffset();
         setTimeout(() => {
           isDraggedRef.current = false;
-        }, 120);
+        }, 150);
+        const {width, height} = Dimensions.get('window');
+        const maxX = width / 2 - 30;
+        const minX = -maxX;
+        const maxY = 20;
+        const minY = -(height - 120);
+        const currentX = panRef.current.x;
+        const currentY = panRef.current.y;
+        if (currentX < minX || currentX > maxX || currentY < minY || currentY > maxY) {
+          const clampedX = Math.min(Math.max(currentX, minX), maxX);
+          const clampedY = Math.min(Math.max(currentY, minY), maxY);
+          Animated.spring(pan, {
+            toValue: {x: clampedX, y: clampedY},
+            friction: 7,
+            tension: 50,
+            useNativeDriver: false,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        pan.flattenOffset();
+        isDraggedRef.current = false;
       },
     }),
   ).current;
@@ -260,13 +292,16 @@ export const FloatingCaptureWidget: React.FC = () => {
     t,
   ]);
 
-  const formatTimer = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs
-      .toString()
-      .padStart(2, '0')}`;
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   };
+
+  // When inside the screencast/media gallery module or media settings, hide the floating widget
+  if (activeTab === 'media' || settingsPage === 'media') {
+    return null;
+  }
 
   return (
     <>
@@ -290,58 +325,88 @@ export const FloatingCaptureWidget: React.FC = () => {
               transform: [{translateX: pan.x}, {translateY: pan.y}],
             },
           ]}>
-          {/* Recording active state: Glowing pill with live timer */}
+          {/* Recording active state: Glowing studio capsule with live timer */}
           {isRecording ? (
-            <TouchableScale
-              onPress={handleToggleVideoRecording}
-              style={styles.recordingPill}>
-              <Animated.View
-                style={[
-                  styles.recordingDot,
-                  {transform: [{scale: pulseAnim}]},
-                ]}
-              />
-              <Text style={styles.recordingText}>
-                REC {formatTimer(recordingSeconds)}
-              </Text>
-              <View style={styles.stopIconBadge}>
-                <View style={styles.stopIconSquare} />
-              </View>
-            </TouchableScale>
-          ) : (
-            /* Directly Rendered Centered Floating Capture Dock */
-            <View style={styles.dockBar}>
-              {/* 1. Take Screenshot Action */}
-              <TouchableScale
-                onPress={handleTakeScreenshot}
-                style={styles.menuItemBtn}
-                accessible={true}
-                accessibilityLabel="Take Screenshot">
-                <View
-                  style={[
-                    styles.menuItemIconCircle,
-                    {backgroundColor: 'rgba(56, 189, 248, 0.22)'},
-                  ]}>
-                  <ScreenshotCaptureIcon size={14} color="#38BDF8" />
-                </View>
-                <Text style={styles.menuItemText}>Screenshot</Text>
-              </TouchableScale>
-
-              {/* 2. Record Screen Action */}
+            <View style={styles.recordingShadowWrapper}>
               <TouchableScale
                 onPress={handleToggleVideoRecording}
-                style={styles.menuItemBtn}
-                accessible={true}
-                accessibilityLabel="Record Screen">
-                <View
-                  style={[
-                    styles.menuItemIconCircle,
-                    {backgroundColor: 'rgba(239, 68, 68, 0.22)'},
-                  ]}>
-                  <ScreenRecordIcon size={14} color="#EF4444" />
-                </View>
-                <Text style={styles.menuItemText}>Record</Text>
+                style={styles.recordingPillWrapper}>
+                <LinearGradient
+                  colors={['#E11D48', '#BE123C']}
+                  start={{x: 0, y: 0}}
+                  end={{x: 1, y: 0}}
+                  style={styles.recordingPill}>
+                  <Animated.View
+                    style={[
+                      styles.recordingDot,
+                      {transform: [{scale: pulseAnim}]},
+                    ]}
+                  />
+                  <Text style={styles.recordingText}>
+                    REC {formatTimer(recordingSeconds)}
+                  </Text>
+                  <View style={styles.stopIconBadge}>
+                    <View style={styles.stopIconSquare} />
+                  </View>
+                </LinearGradient>
               </TouchableScale>
+            </View>
+          ) : (
+            /* Modern Studio Floating Capture Dock */
+            <View style={styles.dockShadowWrapper}>
+              <LinearGradient
+                colors={[
+                  '#0E1326',
+                  '#1A1E38',
+                  '#0E1326',
+                ]}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 0}}
+                style={styles.dockBar}>
+                {/* Visual Drag Handle Grip */}
+                <View style={styles.dragGripArea} pointerEvents="none">
+                  <GripVerticalIcon size={13} color="rgba(255, 255, 255, 0.45)" />
+                </View>
+
+                {/* 1. Take Screenshot Action */}
+                <TouchableScale
+                  onPress={handleTakeScreenshot}
+                  style={styles.menuItemBtn}
+                  accessible={true}
+                  accessibilityLabel="Take Screenshot">
+                  <View
+                    style={[
+                      styles.menuItemIconCircle,
+                      {backgroundColor: 'rgba(56, 189, 248, 0.22)'},
+                    ]}>
+                    <ScreenshotCaptureIcon size={14} color={AppColors.sky400} />
+                  </View>
+                  <Text style={styles.menuItemText}>
+                    {t('header.screenshot', 'Screenshot')}
+                  </Text>
+                </TouchableScale>
+
+                {/* Vertical Studio Divider */}
+                <View style={styles.dockDivider} />
+
+                {/* 2. Record Screen Action */}
+                <TouchableScale
+                  onPress={handleToggleVideoRecording}
+                  style={styles.menuItemBtn}
+                  accessible={true}
+                  accessibilityLabel={t('header.recordScreen', 'Record Screen')}>
+                  <View
+                    style={[
+                      styles.menuItemIconCircle,
+                      {backgroundColor: 'rgba(244, 63, 94, 0.24)'},
+                    ]}>
+                    <ScreenRecordIcon size={14} color={AppColors.rose400 || '#FB7185'} />
+                  </View>
+                  <Text style={styles.menuItemText}>
+                    {t('header.record', 'Record')}
+                  </Text>
+                </TouchableScale>
+              </LinearGradient>
             </View>
           )}
         </Animated.View>
@@ -384,85 +449,103 @@ export const FloatingCaptureWidget: React.FC = () => {
 const styles = StyleSheet.create({
   flashOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.white,
     zIndex: 999999,
   },
   container: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 22 : 16,
-    left: 0,
-    right: 0,
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 9999,
-    elevation: 20,
-    pointerEvents: 'box-none',
+    zIndex: 999999,
+    elevation: 999999,
+  },
+  dockShadowWrapper: {
+    borderRadius: 24,
+    backgroundColor: '#0D1120',
+    ...Platform.select({
+      ios: {
+        shadowColor: AppColors.black,
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.45,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 16,
+      },
+    }),
   },
   dockBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.94)',
-    borderRadius: 22,
-    paddingVertical: 4.5,
-    paddingHorizontal: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: 24,
+    width: 272,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    overflow: 'hidden',
+  },
+  dragGripArea: {
+    paddingLeft: 10,
+    paddingRight: 2,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dockDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  menuItemBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+  },
+  menuItemIconCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuItemText: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 12,
+    color: AppColors.white,
+    letterSpacing: 0.1,
+  },
+  recordingShadowWrapper: {
+    borderRadius: 20,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 8},
-        shadowOpacity: 0.45,
-        shadowRadius: 16,
+        shadowColor: AppColors.black,
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.40,
+        shadowRadius: 10,
       },
       android: {
         elevation: 12,
       },
     }),
   },
-  menuItemBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5.5,
-    paddingVertical: 4.5,
-    paddingHorizontal: 8.5,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  menuItemIconCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuItemText: {
-    fontFamily: AppFonts.interSemiBold,
-    fontSize: 10.5,
-    color: AppColors.white,
-    letterSpacing: 0.1,
+  recordingPillWrapper: {
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   recordingPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    backgroundColor: 'rgba(225, 29, 72, 0.95)',
     paddingVertical: 6.5,
-    paddingHorizontal: 11,
+    paddingHorizontal: 12,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#FDA4AF',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#E11D48',
-        shadowOffset: {width: 0, height: 6},
-        shadowOpacity: 0.5,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
+    borderColor: 'rgba(255, 255, 255, 0.35)',
   },
   recordingDot: {
     width: 7,
@@ -477,17 +560,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   stopIconBadge: {
-    width: 15,
-    height: 15,
-    borderRadius: 7.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 2,
   },
   stopIconSquare: {
-    width: 5,
-    height: 5,
+    width: 5.5,
+    height: 5.5,
     borderRadius: 1,
     backgroundColor: AppColors.white,
   },

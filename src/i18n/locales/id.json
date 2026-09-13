@@ -375,7 +375,9 @@
       "emptyObject": "Objek Kosong",
       "emptyTable": "Objek Kosong",
       "key": "Kunci",
-      "value": "Nilai"
+      "value": "NILAI",
+      "keyProperty": "KUNCI / PROPERTI",
+      "noMatchingKeys": "Tidak ditemukan kunci atau nilai yang cocok"
     },
     "showingRequests": "Menampilkan permintaan {{count}}",
     "showingFilteredRequests": "Menampilkan {{filtered}} dari {{total}} permintaan",
@@ -500,7 +502,25 @@
     "searchParameters": "Parameter pencarian...",
     "noParamsFound": "Tidak ada parameter yang cocok dengan penelusuran Anda",
     "sourceFirebase": "FIREBASE GA4",
-    "sourceCustom": "KHUSUS / MANUAL"
+    "sourceCustom": "KHUSUS / MANUAL",
+    "dataVisualization": "Visualisasi Data",
+    "dataTypesBreakdown": "Rincian Jenis Data",
+    "highestPayloadStrings": "String Payload Terbesar",
+    "topLevelMetrics": "Metrik Tingkat Atas",
+    "importantDates": "Tanggal Penting",
+    "itemPrices": "Harga Item",
+    "sessionIdentity": "SESI & IDENTITAS",
+    "metricParams": "Parameter:",
+    "metricUserProps": "Properti Pengguna:",
+    "metricSize": "Ukuran:",
+    "metricItems": "{{count}} item",
+    "sessionId": "ID Sesi",
+    "trackingId": "ID Pelacakan",
+    "eventParameters": "PARAMETER EVENT ({{count}})",
+    "keyValueAttributes": "Atribut Kunci-Nilai",
+    "filterParamsPlaceholder": "Filter parameter berdasarkan kunci atau nilai...",
+    "noParamsRecorded": "Tidak ada parameter kustom yang direkam untuk event ini.",
+    "noParamsMatching": "Tidak ada parameter yang cocok dengan \"{{search}}\""
   },
   "redux": {
     "title": "reduks",
@@ -1344,7 +1364,23 @@
     "showingFilteredConnections": "Menampilkan {{filtered}} dari {{total}} koneksi",
     "deletedCount": "Log WebSocket {{count}} dihapus",
     "copiedUrls": "{{count}} URL disalin ke papan klip",
-    "webSocketTraffic": "Lalu Lintas WebSocket (koneksi {{count}})"
+    "webSocketTraffic": "Lalu Lintas WebSocket (koneksi {{count}})",
+    "connectionDetails": "RINCIAN KONEKSI",
+    "url": "URL",
+    "clientEngine": "Mesin Klien",
+    "readyState": "Status Siap",
+    "connectedAt": "Terhubung pada",
+    "closedAt": "Ditutup pada",
+    "closeCodeReason": "Kode & Alasan Penutupan",
+    "subprotocols": "Sub-protokol",
+    "callerStack": "Tumpukan Pemanggil",
+    "error": "Kesalahan",
+    "handshakeHeaders": "Header Handshake",
+    "handshakeParams": "PARAMETER QUERY HANDSHAKE",
+    "noQueryParams": "Tidak ada parameter query dalam URL koneksi",
+    "jsClientCode": "KODE KLIEN JAVASCRIPT",
+    "terminalWscat": "PERINTAH TERMINAL WSCAT",
+    "rawDump": "DUMP JSON KONEKSI MENTAH"
   },
   "push": {
     "title": "Pemberitahuan Dorong",
@@ -1365,7 +1401,17 @@
     "cleared": "Riwayat pemberitahuan push dihapus",
     "foreground": "Latar depan",
     "background": "Latar Belakang",
-    "quit": "Berhenti"
+    "quit": "Berhenti",
+    "messageId": "ID Pesan:",
+    "sourceDomain": "Sumber / Domain:",
+    "appState": "Status Aplikasi:",
+    "actionType": "Jenis Tindakan:",
+    "timestamp": "Stempel Waktu:",
+    "channelId": "ID Saluran:",
+    "sound": "Suara:",
+    "badgeCount": "Jumlah Lencana:",
+    "collapseKey": "Kunci Ciutkan:",
+    "noCustomData": "Tidak ada data kunci-nilai kustom dalam payload"
   },
   "debugging": {
     "title": "Debugging & Alat",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "Perintah instalasi paket disalin!",
     "footerLicense": "React Native In-App Inspector · Lisensi MIT",
     "footerTagline": "Alat debugging pada perangkat tanpa konfigurasi"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "JARINGAN LANGSUNG",
+    "ram": "RAM",
+    "active": "AKTIF",
+    "networkSpeed": "Kecepatan Jaringan",
+    "fpsLive": "FPS Langsung",
+    "ramUsage": "Penggunaan RAM",
+    "battery": "Baterai",
+    "livePerformanceStrip": "Bilah Performa Langsung"
+  },
+  "media": {
+    "animatedGif": "GIF BERANIMASI",
+    "cropDefect": "Pangkas Cacat",
+    "rotate90": "Putar 90°",
+    "redactPii": "Samarkan PII",
+    "trim5s": "Potong 5d",
+    "muteAudio": "Bisukan Audio",
+    "toGif": "Ke GIF",
+    "play": "Putar"
   }
 }

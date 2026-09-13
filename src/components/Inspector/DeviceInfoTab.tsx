@@ -672,9 +672,11 @@ export const DeviceInfoTab = React.memo(() => {
 
       {/* ─── Main Content Scroll View ─── */}
       <ScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+        style={[styles.scrollArea, {flex: 1}]}
+        contentContainerStyle={[styles.scrollContent, {flexGrow: 1}]}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled">
         {/* ── Featured Device UUID Card (Always at top with Copy option) ── */}
         {(!search.trim() || isMatch('UDID Identifier', pseudoUDID) || isMatch('UUID', pseudoUDID) || isMatch('Device UUID', pseudoUDID)) && (
           <View style={styles.featuredUuidCard}>

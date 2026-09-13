@@ -145,6 +145,8 @@ const SettingsPanel = () => {
     setCaptureMaxDurationSeconds,
     captureAutoGif,
     setCaptureAutoGif,
+    peekOpacity,
+    setPeekOpacity,
   } = useInspector();
 
   const [stagedHeight, setStagedHeight] = useState(modalHeightPercent);
@@ -267,32 +269,32 @@ const SettingsPanel = () => {
     Record<ActiveTab, boolean>
   >(() => ({
     apis: true,
-    logs: Boolean(tabVisibility?.logs),
-    analytics: Boolean(tabVisibility?.analytics),
-    redux: Boolean(tabVisibility?.redux),
-    storage: Boolean(tabVisibility?.storage),
-    device: Boolean(tabVisibility?.device),
-    crash: Boolean(tabVisibility?.crash),
-    debugging: Boolean(tabVisibility?.debugging),
+    logs: Boolean(tabVisibility?.logs ?? true),
+    analytics: Boolean(tabVisibility?.analytics ?? true),
+    redux: Boolean(tabVisibility?.redux ?? true),
+    storage: Boolean(tabVisibility?.storage ?? true),
+    device: Boolean(tabVisibility?.device ?? true),
+    crash: Boolean(tabVisibility?.crash ?? true),
+    debugging: Boolean(tabVisibility?.debugging ?? true),
     media: Boolean(tabVisibility?.media ?? true),
     push: Boolean(tabVisibility?.push ?? true),
-    socket: Boolean(tabVisibility?.socket ?? false),
+    socket: Boolean(tabVisibility?.socket ?? true),
   }));
 
   // Synchronize staged state with tabVisibility when tabVisibility updates
   useEffect(() => {
     setStagedTabVisibility({
       apis: true,
-      logs: Boolean(tabVisibility?.logs),
-      analytics: Boolean(tabVisibility?.analytics),
-      redux: Boolean(tabVisibility?.redux),
-      storage: Boolean(tabVisibility?.storage),
-      device: Boolean(tabVisibility?.device),
-      crash: Boolean(tabVisibility?.crash),
-      debugging: Boolean(tabVisibility?.debugging),
+      logs: Boolean(tabVisibility?.logs ?? true),
+      analytics: Boolean(tabVisibility?.analytics ?? true),
+      redux: Boolean(tabVisibility?.redux ?? true),
+      storage: Boolean(tabVisibility?.storage ?? true),
+      device: Boolean(tabVisibility?.device ?? true),
+      crash: Boolean(tabVisibility?.crash ?? true),
+      debugging: Boolean(tabVisibility?.debugging ?? true),
       media: Boolean(tabVisibility?.media ?? true),
       push: Boolean(tabVisibility?.push ?? true),
-      socket: Boolean(tabVisibility?.socket ?? false),
+      socket: Boolean(tabVisibility?.socket ?? true),
     });
   }, [tabVisibility]);
 
@@ -1561,9 +1563,11 @@ const SettingsPanel = () => {
                     borderWidth: 1,
                     borderColor: `${AppColors.purple}20`,
                   }}>
-                  <Text style={{fontSize: 13}}>
-                    {currentLangObj?.flag || '🌐'}
-                  </Text>
+                  {currentLangObj?.flag ? (
+                    <Text style={{fontSize: 13}}>{currentLangObj.flag}</Text>
+                  ) : (
+                    <GlobeIcon size={14} color={AppColors.purple} />
+                  )}
                   <Text
                     style={{
                       fontFamily: AppFonts.interSemiBold,
@@ -1690,6 +1694,96 @@ const SettingsPanel = () => {
                     step={5}
                     quickPresets={[50, 60, 70, 80, 90]}
                     formatLabel={val => `${Math.round(val)}%`}
+                  />
+                </View>
+              </View>
+
+              <View
+                style={{height: 1, backgroundColor: AppColors.dividerColor}}
+              />
+
+              {/* Peek-Through Opacity */}
+              <View style={{gap: 8}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 10,
+                      flex: 1,
+                    }}>
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <EyeIcon color={'#06B6D4'} size={15} />
+                    </View>
+                    <View style={{flex: 1}}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 13.5,
+                          lineHeight: 18,
+                          color: AppColors.primaryBlack,
+                        }}>
+                        {t('settings.general.peekOpacity', 'Peek-Through Opacity')}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interRegular,
+                          fontSize: 11,
+                          lineHeight: 15,
+                          color: AppColors.grayText,
+                          marginTop: 1,
+                        }}>
+                        {t('settings.general.peekOpacityDescription', 'Transparency level when the eye icon is enabled')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={{
+                      backgroundColor: 'rgba(6, 182, 212, 0.14)',
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                      borderWidth: 1,
+                      borderColor: 'rgba(6, 182, 212, 0.30)',
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 12,
+                        color: '#06B6D4',
+                      }}>
+                      {peekOpacity.toFixed(1)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{marginTop: 6}}>
+                  <Slider
+                    value={peekOpacity}
+                    onValueChange={(val: number) => {
+                      const rounded = Math.round(val * 10) / 10;
+                      setPeekOpacity(rounded);
+                    }}
+                    min={0.1}
+                    max={1.0}
+                    step={0.1}
+                    quickPresets={[0.1, 0.3, 0.5, 0.7, 1.0]}
+                    formatLabel={(val: number) => val.toFixed(1)}
                   />
                 </View>
               </View>

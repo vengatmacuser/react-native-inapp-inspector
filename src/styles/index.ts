@@ -10,9 +10,9 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 9,
+    paddingVertical: 4,
     zIndex: 10,
-    minHeight: 54,
+    minHeight: 44,
     overflow: 'visible',
     shadowColor: colors.black,
     shadowOffset: {width: 0, height: 2},
@@ -151,7 +151,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     letterSpacing: 0.2,
   },
 
-  listContent: {paddingBottom: Platform.OS === 'ios' ? 44 : 32},
+  listContent: {paddingBottom: Platform?.OS === 'ios' ? 44 : 32},
   // Floating Support & Feedback FAB, in place of scroll-to-top button
   supportFab: {
     position: 'absolute',
@@ -299,7 +299,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     backgroundColor: colors.primaryLight,
     borderWidth: 1.5,
     borderColor: colors.grayBorderSecondary,
-    ...(Platform.OS === 'ios'
+    ...(Platform?.OS === 'ios'
       ? {
           shadowColor: colors.black,
           shadowOffset: {width: 0, height: 1},
@@ -335,7 +335,6 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     fontFamily: AppFonts.interBold,
     fontSize: 9,
   },
-
   filtersContainer: {
     paddingHorizontal: 8,
     paddingBottom: 8,
@@ -401,7 +400,6 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     color: colors.grayText,
     fontSize: 11.5,
   },
-
   resultCount: {
     fontFamily: AppFonts.interRegular,
     color: colors.grayTextWeak,
@@ -411,7 +409,6 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     marginTop: 4,
     letterSpacing: 0.2,
   },
-
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -432,7 +429,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flex: 1,
     fontFamily: AppFonts.interRegular,
     color: colors.primaryBlack,
-    paddingVertical: Platform.OS === 'ios' ? 5 : 2,
+    paddingVertical: Platform?.OS === 'ios' ? 5 : 2,
     marginLeft: 6,
     fontSize: 14,
   },
@@ -671,7 +668,7 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
-    ...(Platform.OS === 'ios'
+    ...(Platform?.OS === 'ios'
       ? {
           shadowColor: colors.black,
           shadowOffset: {width: 0, height: 1},
@@ -1456,6 +1453,8 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     flex: 1,
     backgroundColor: `${colors.black}73`,
     justifyContent: 'flex-end',
+    zIndex: 999999,
+    elevation: 999999,
   },
   modalBackdropPressable: {
     ...StyleSheet.absoluteFillObject,
@@ -1470,7 +1469,8 @@ export const getRawStyles = (colors: typeof AppColors) => ({
     shadowOffset: {width: 0, height: -4},
     shadowOpacity: 0.15,
     shadowRadius: 10,
-    elevation: 24,
+    zIndex: 9999999,
+    elevation: 999999,
   },
   tabBarContainer: {
     backgroundColor: colors.primaryLight,

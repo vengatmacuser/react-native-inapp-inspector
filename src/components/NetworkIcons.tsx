@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, {Circle, Ellipse, Line, Path, Rect} from 'react-native-svg';
+import Svg, {Circle, Ellipse, Line, Path, Polygon, Polyline, Rect} from 'react-native-svg';
 
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
@@ -1523,7 +1523,7 @@ export const PackageBoxIcon = ({
 };
 
 export const StarIcon = ({
-  color = '#F59E0B',
+  color = AppColors.amber500,
   size = 14,
 }: IconProps) => {
   return (
@@ -1930,7 +1930,7 @@ export const AppFramesIcon = ({
       />
       <Path
         d="M18 12.5l2 2 3-3.5"
-        stroke="#059669"
+        stroke={AppColors.emerald600}
         strokeWidth="1.8"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -3201,3 +3201,186 @@ export const HeartIcon = ({
     />
   </Svg>
 );
+
+export const CropIcon = ({color = AppColors.white, size = 18}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M1 6.13L16 6a2 2 0 0 1 2 2v15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const RotateIcon = ({color = AppColors.white, size = 18}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const RedactIcon = ({color = AppColors.white, size = 18}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="1" y1="1" x2="23" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const AnnotateIcon = ({color = AppColors.white, size = 18}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 20h9" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const ScissorsIcon = ({color = AppColors.white, size = 18}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="6" cy="6" r="3" stroke={color} strokeWidth="2" />
+    <Circle cx="6" cy="18" r="3" stroke={color} strokeWidth="2" />
+    <Line x1="20" y1="4" x2="8.12" y2="15.88" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="14.47" y1="14.48" x2="20" y2="20" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="8.12" y1="8.12" x2="12" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const VolumeXIcon = ({color = AppColors.white, size = 18}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="23" y1="9" x2="17" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="17" y1="9" x2="23" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const MailIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M22 6l-10 7L2 6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const ActivityIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const SpeedIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 2v4M4.93 4.93l2.83 2.83M2 12h4M4.93 19.07l2.83-2.83M12 22v-4M19.07 19.07l-2.83-2.83M22 12h-4M19.07 4.93l-2.83 2.83" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const BatteryChargingIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2M19 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2M23 13v-2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M11 6l-4 7h6l-4 7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const BatteryFullIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="1" y="6" width="18" height="12" rx="2" stroke={color} strokeWidth="2" />
+    <Line x1="23" y1="13" x2="23" y2="11" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Rect x="4" y="9" width="12" height="6" fill={color} rx="1" />
+  </Svg>
+);
+
+export const PenIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 19l7-7 3 3-7 7-3-3z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M2 2l7.586 7.586" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Circle cx="11" cy="11" r="2" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+export const ShapesIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="3" width="8" height="8" rx="1.5" stroke={color} strokeWidth="2" />
+    <Circle cx="17.5" cy="17.5" r="4.5" stroke={color} strokeWidth="2" />
+    <Polygon points="18,3 22,11 14,11" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const RectangleIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="5" width="18" height="14" rx="2" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+export const CircleIconOutline = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+export const EllipseIconOutline = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Ellipse cx="12" cy="12" rx="10" ry="6" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+export const TypeIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Polyline points="4 7 4 4 20 4 20 7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="9" y1="20" x2="15" y2="20" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="12" y1="4" x2="12" y2="20" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const BlurIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path d="M12 2a10 10 0 0 1 0 20V2z" fill={color} opacity={0.4} />
+    <Line x1="12" y1="2" x2="12" y2="22" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
+export const ZoomInIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="11" cy="11" r="8" stroke={color} strokeWidth="2" />
+    <Line x1="21" y1="21" x2="16.65" y2="16.65" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="11" y1="8" x2="11" y2="14" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="8" y1="11" x2="14" y2="11" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const ZoomOutIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="11" cy="11" r="8" stroke={color} strokeWidth="2" />
+    <Line x1="21" y1="21" x2="16.65" y2="16.65" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="8" y1="11" x2="14" y2="11" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const UndoIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M3 7v6h6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const ResizeIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Polyline points="15 3 21 3 21 9" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Polyline points="9 21 3 21 3 15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="21" y1="3" x2="14" y2="10" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="3" y1="21" x2="10" y2="14" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const AspectRatioIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="2" y="4" width="20" height="16" rx="2" stroke={color} strokeWidth="2" />
+    <Path d="M8 8H5v3M16 16h3v-3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const GripVerticalIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="9" cy="5" r="1.5" fill={color} />
+    <Circle cx="9" cy="12" r="1.5" fill={color} />
+    <Circle cx="9" cy="19" r="1.5" fill={color} />
+    <Circle cx="15" cy="5" r="1.5" fill={color} />
+    <Circle cx="15" cy="12" r="1.5" fill={color} />
+    <Circle cx="15" cy="19" r="1.5" fill={color} />
+  </Svg>
+);
+
+

@@ -607,11 +607,14 @@ const SocketTab = React.memo(() => {
         updateCellsBatchingPeriod={40}
         removeClippedSubviews={true}
         renderToHardwareTextureAndroid={true}
+        style={{flex: 1}}
         contentContainerStyle={[
           socketTabStyles.listContent,
-          displayedSocketRecords.length === 0 && {flex: 1},
+          {flexGrow: 1},
         ]}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={socketTabStyles.emptyWrapper}>
             <EmptyState

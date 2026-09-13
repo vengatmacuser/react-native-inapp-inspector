@@ -305,7 +305,9 @@
       "table": "테이블",
       "emptyObject": "빈 개체",
       "emptyTable": "빈 개체",
-      "value": "가치"
+      "value": "값",
+      "keyProperty": "키 / 속성",
+      "noMatchingKeys": "일치하는 키 또는 값을 찾을 수 없습니다"
     },
     "title": "API",
     "searchPlaceholder": "URL, 상태, 방법으로 검색하세요...",
@@ -500,7 +502,25 @@
     "searchParameters": "검색 매개변수...",
     "noParamsFound": "검색어와 일치하는 매개변수가 없습니다.",
     "sourceFirebase": "파이어베이스 GA4",
-    "sourceCustom": "맞춤형 / 수동"
+    "sourceCustom": "맞춤형 / 수동",
+    "dataVisualization": "데이터 시각화",
+    "dataTypesBreakdown": "데이터 유형 분석",
+    "highestPayloadStrings": "최대 페이로드 문자열",
+    "topLevelMetrics": "최상위 지표",
+    "importantDates": "중요 날짜",
+    "itemPrices": "항목 가격",
+    "sessionIdentity": "세션 및 식별 정보",
+    "metricParams": "매개변수:",
+    "metricUserProps": "사용자 속성:",
+    "metricSize": "크기:",
+    "metricItems": "{{count}}개 항목",
+    "sessionId": "세션 ID",
+    "trackingId": "추적 ID",
+    "eventParameters": "이벤트 매개변수 ({{count}})",
+    "keyValueAttributes": "키-값 속성",
+    "filterParamsPlaceholder": "키 또는 값으로 매개변수 필터링...",
+    "noParamsRecorded": "이 이벤트에 기록된 사용자 정의 매개변수가 없습니다.",
+    "noParamsMatching": "\"{{search}}\"와 일치하는 매개변수가 없습니다"
   },
   "redux": {
     "searchPlaceholder": "State 또는 Action 검색...",
@@ -1245,7 +1265,7 @@
     "title": "푸시 알림",
     "preview": "미리보기",
     "payload": "맞춤형 페이로드",
-    "deliveryMetadata": "배달 및 메시지 메타데이터",
+    "deliveryMetadata": "전달 및 메시지 메타데이터",
     "rawPayload": "원시 페이로드",
     "link": "링크",
     "appNotification": "앱 알림",
@@ -1257,7 +1277,17 @@
     "filterTitle": "푸시 알림 필터링",
     "clearTitle": "푸시 기록 지우기",
     "clearMessage": "모든 푸시 알림 기록을 지우시겠습니까?",
-    "cleared": "푸시 알림 기록이 삭제되었습니다."
+    "cleared": "푸시 알림 기록이 삭제되었습니다.",
+    "messageId": "메시지 ID:",
+    "sourceDomain": "출처 / 도메인:",
+    "appState": "앱 상태:",
+    "actionType": "작업 유형:",
+    "timestamp": "타임스탬프:",
+    "channelId": "채널 ID:",
+    "sound": "사운드:",
+    "badgeCount": "배지 수:",
+    "collapseKey": "축소 키:",
+    "noCustomData": "페이로드에 사용자 지정 키-값 데이터가 없습니다"
   },
   "about": {
     "title": "소개 및 사양",
@@ -1413,12 +1443,49 @@
     "showingFilteredConnections": "{{total}}개 연결 중 {{filtered}}개 표시 중",
     "deletedCount": "{{count}} WebSocket 로그가 삭제되었습니다.",
     "copiedUrls": "{{count}} URL이 클립보드에 복사되었습니다.",
-    "webSocketTraffic": "WebSocket 트래픽({{count}} 연결)"
+    "webSocketTraffic": "WebSocket 트래픽({{count}} 연결)",
+    "connectionDetails": "연결 세부정보",
+    "url": "URL",
+    "clientEngine": "클라이언트 엔진",
+    "readyState": "준비 상태",
+    "connectedAt": "연결 시간",
+    "closedAt": "종료 시간",
+    "closeCodeReason": "종료 코드 및 사유",
+    "subprotocols": "서브프로토콜",
+    "callerStack": "호출 스택",
+    "error": "오류",
+    "handshakeHeaders": "핸드셰이크 헤더",
+    "handshakeParams": "핸드셰이크 쿼리 매개변수",
+    "noQueryParams": "연결 URL에 전달된 쿼리 매개변수가 없습니다",
+    "jsClientCode": "JAVASCRIPT 클라이언트 코드",
+    "terminalWscat": "터미널 WSCAT 명령",
+    "rawDump": "원시 연결 JSON 덤프"
   },
   "debugging": {
     "title": "디버깅 및 도구",
     "buildSuccess": "APK 빌드가 성공적으로 생성되었습니다!",
     "buildFailed": "빌드 실패: {{error}}",
     "buildCancelled": "사용자가 빌드를 취소했습니다."
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "실시간 네트워크",
+    "ram": "RAM",
+    "active": "활성",
+    "networkSpeed": "네트워크 속도",
+    "fpsLive": "실시간 FPS",
+    "ramUsage": "RAM 사용량",
+    "battery": "배터리",
+    "livePerformanceStrip": "실시간 성능 표시줄"
+  },
+  "media": {
+    "animatedGif": "애니메이션 GIF",
+    "cropDefect": "결함 영역 자르기",
+    "rotate90": "90° 회전",
+    "redactPii": "개인정보 가리기",
+    "trim5s": "5초 트리밍",
+    "muteAudio": "오디오 음소거",
+    "toGif": "GIF로 변환",
+    "play": "재생"
   }
 }

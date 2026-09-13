@@ -1,60 +1,61 @@
 import React from 'react';
 import Svg, {Circle, Path, G, Defs, LinearGradient, RadialGradient, Stop, Rect, Ellipse, Line} from 'react-native-svg';
+import {AppColors} from '../styles/AppColors';
 
 export const BrandSquareIcon = ({size = 56}: {size?: number}) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256" fill="none">
       <Defs>
         <LinearGradient id="sq_tile" x1="30" y1="30" x2="210" y2="222" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#141B33"/>
-          <Stop offset="1" stopColor="#0A0E1C"/>
+          <Stop offset="0" stopColor={AppColors.navy900}/>
+          <Stop offset="1" stopColor={AppColors.navy950}/>
         </LinearGradient>
         <LinearGradient id="sq_edge" x1="14" y1="22" x2="220" y2="228" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#3A4E7A"/>
-          <Stop offset="1" stopColor="#1A2238"/>
+          <Stop offset="0" stopColor={AppColors.steel600}/>
+          <Stop offset="1" stopColor={AppColors.navy800}/>
         </LinearGradient>
         <LinearGradient id="sq_beam" x1="70" y1="74" x2="194" y2="187" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#5EEAD4"/>
-          <Stop offset="0.5" stopColor="#38BDF8"/>
-          <Stop offset="1" stopColor="#A78BFA"/>
+          <Stop offset="0" stopColor={AppColors.teal300}/>
+          <Stop offset="0.5" stopColor={AppColors.sky400}/>
+          <Stop offset="1" stopColor={AppColors.purple400}/>
         </LinearGradient>
         <RadialGradient id="sq_halo" cx="0.5" cy="0.45" r="0.55">
-          <Stop offset="0" stopColor="#38BDF8" stopOpacity={0.12}/>
-          <Stop offset="1" stopColor="#38BDF8" stopOpacity={0}/>
+          <Stop offset="0" stopColor={AppColors.sky400} stopOpacity={0.12}/>
+          <Stop offset="1" stopColor={AppColors.sky400} stopOpacity={0}/>
         </RadialGradient>
         <LinearGradient id="sq_owlbody" x1="78" y1="60" x2="178" y2="186" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#202E55"/>
-          <Stop offset="1" stopColor="#10182F"/>
+          <Stop offset="0" stopColor={AppColors.navy700}/>
+          <Stop offset="1" stopColor={AppColors.navy900}/>
         </LinearGradient>
         <LinearGradient id="sq_beak" x1="120" y1="151" x2="136" y2="168" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#FCD34D"/>
-          <Stop offset="1" stopColor="#FB923C"/>
+          <Stop offset="0" stopColor={AppColors.amber300}/>
+          <Stop offset="1" stopColor={AppColors.orange400}/>
         </LinearGradient>
         <RadialGradient id="sq_iris" cx="0.42" cy="0.38" r="0.72">
-          <Stop offset="0" stopColor="#FDE68A"/>
-          <Stop offset="0.5" stopColor="#FBBF24"/>
-          <Stop offset="1" stopColor="#F59E0B"/>
+          <Stop offset="0" stopColor={AppColors.amber200}/>
+          <Stop offset="0.5" stopColor={AppColors.amber400}/>
+          <Stop offset="1" stopColor={AppColors.amber500}/>
         </RadialGradient>
         <RadialGradient id="sq_blush" cx="0.5" cy="0.5" r="0.5">
-          <Stop offset="0" stopColor="#FB7185" stopOpacity={0.5}/>
-          <Stop offset="1" stopColor="#FB7185" stopOpacity={0}/>
+          <Stop offset="0" stopColor={AppColors.rose400} stopOpacity={0.5}/>
+          <Stop offset="1" stopColor={AppColors.rose400} stopOpacity={0}/>
         </RadialGradient>
         <LinearGradient id="sq_wing" x1="70" y1="120" x2="190" y2="206" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#1A2545"/>
-          <Stop offset="1" stopColor="#0E1530"/>
+          <Stop offset="0" stopColor={AppColors.navy800}/>
+          <Stop offset="1" stopColor={AppColors.navy950}/>
         </LinearGradient>
         <LinearGradient id="sq_faceplate" x1="70" y1="72" x2="186" y2="152" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#35497E"/>
-          <Stop offset="1" stopColor="#1E2D4D"/>
+          <Stop offset="0" stopColor={AppColors.steel500}/>
+          <Stop offset="1" stopColor={AppColors.navy700}/>
         </LinearGradient>
         <RadialGradient id="sq_lensglass" cx="0.4" cy="0.32" r="0.75">
-          <Stop offset="0" stopColor="#7DE8FF" stopOpacity={0.22}/>
-          <Stop offset="0.7" stopColor="#7DE8FF" stopOpacity={0.05}/>
-          <Stop offset="1" stopColor="#7DE8FF" stopOpacity={0}/>
+          <Stop offset="0" stopColor={AppColors.sky300} stopOpacity={0.22}/>
+          <Stop offset="0.7" stopColor={AppColors.sky300} stopOpacity={0.05}/>
+          <Stop offset="1" stopColor={AppColors.sky300} stopOpacity={0}/>
         </RadialGradient>
         <LinearGradient id="sq_belly" x1="94" y1="126" x2="162" y2="212" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#33477A"/>
-          <Stop offset="1" stopColor="#1D2B53"/>
+          <Stop offset="0" stopColor={AppColors.steel600}/>
+          <Stop offset="1" stopColor={AppColors.navy700}/>
         </LinearGradient>
       </Defs>
 
@@ -120,8 +121,8 @@ export const BrandSquareIcon = ({size = 56}: {size?: number}) => {
         {/* normal eye: big cute yellow iris, dark pupil, sparkles */}
         <Circle cx={153} cy={107} r={17} fill="url(#sq_iris)" stroke="#1A1205" strokeWidth={2.2}/>
         <Circle cx={153} cy={108} r={8.2} fill="#0A0E18"/>
-        <Circle cx={156.2} cy={104} r={3.1} fill="#ffffff" opacity={0.95}/>
-        <Circle cx={149.6} cy={111} r={1.6} fill="#ffffff" opacity={0.7}/>
+        <Circle cx={156.2} cy={104} r={3.1} fill={AppColors.white} opacity={0.95}/>
+        <Circle cx={149.6} cy={111} r={1.6} fill={AppColors.white} opacity={0.7}/>
 
         {/* beak */}
         <Path d="M123.5 123 Q128 121 132.5 123 Q131 132 128 134.5 Q125 132 123.5 123 Z" fill="url(#sq_beak)"/>
@@ -129,10 +130,10 @@ export const BrandSquareIcon = ({size = 56}: {size?: number}) => {
         {/* magnifier held to the big (debug) eye */}
         <Circle cx={95} cy={103} r={20} fill="url(#sq_iris)" stroke="#1A1205" strokeWidth={2.6}/>
         <Circle cx={95} cy={104} r={10} fill="#0A0E18"/>
-        <Circle cx={98.6} cy={100} r={3.4} fill="#ffffff" opacity={0.95}/>
-        <Circle cx={91} cy={107} r={1.8} fill="#ffffff" opacity={0.7}/>
+        <Circle cx={98.6} cy={100} r={3.4} fill={AppColors.white} opacity={0.95}/>
+        <Circle cx={91} cy={107} r={1.8} fill={AppColors.white} opacity={0.7}/>
         <Circle cx={95} cy={103} r={28} fill="url(#sq_lensglass)"/>
-        <Path d="M77 87 A28 28 0 0 1 106 79" fill="none" stroke="#ffffff" strokeWidth={4} strokeLinecap="round" strokeOpacity={0.5}/>
+        <Path d="M77 87 A28 28 0 0 1 106 79" fill="none" stroke={AppColors.white} strokeWidth={4} strokeLinecap="round" strokeOpacity={0.5}/>
         <Line x1={75} y1={123} x2={54} y2={147} stroke="#0A0F1C" strokeWidth={14} strokeLinecap="round"/>
         <Line x1={75} y1={123} x2={54} y2={147} stroke="url(#sq_beam)" strokeWidth={8.5} strokeLinecap="round"/>
         <Circle cx={95} cy={103} r={28} fill="none" stroke="url(#sq_beam)" strokeWidth={7}/>

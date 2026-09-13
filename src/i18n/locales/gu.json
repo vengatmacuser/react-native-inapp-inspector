@@ -375,7 +375,9 @@
       "emptyObject": "ખાલી ઑબ્જેક્ટ",
       "emptyTable": "ખાલી ઑબ્જેક્ટ",
       "key": "કી",
-      "value": "મૂલ્ય"
+      "value": "મૂલ્ય",
+      "keyProperty": "કી / ગુણધર્મ",
+      "noMatchingKeys": "કોઈ મેળ ખાતી કી અથવા મૂલ્ય મળ્યું નથી"
     },
     "showingRequests": "{{count}} વિનંતીઓ બતાવી રહ્યું છે",
     "showingFilteredRequests": "{{total}} વિનંતીઓમાંથી {{filtered}} દર્શાવે છે",
@@ -500,7 +502,25 @@
     "searchParameters": "પરિમાણો શોધો...",
     "noParamsFound": "કોઈ પરિમાણો તમારી શોધ સાથે મેળ ખાતા નથી",
     "sourceFirebase": "ફાયરબેઝ GA4",
-    "sourceCustom": "કસ્ટમ / મેન્યુઅલ"
+    "sourceCustom": "કસ્ટમ / મેન્યુઅલ",
+    "dataVisualization": "ડેટા વિઝ્યુઅલાઈઝેશન",
+    "dataTypesBreakdown": "ડેટા પ્રકાર વિશ્લેષણ",
+    "highestPayloadStrings": "સૌથી લાંબી પેલોડ સ્ટ્રિંગ્સ",
+    "topLevelMetrics": "ટોચના મેટ્રિક્સ",
+    "importantDates": "મહત્વપૂર્ણ તારીખો",
+    "itemPrices": "વસ્તુઓની કિંમતો",
+    "sessionIdentity": "સત્ર અને ઓળખ",
+    "metricParams": "પેરામીટર્સ:",
+    "metricUserProps": "વપરાશકર્તા ગુણધર્મો:",
+    "metricSize": "કદ:",
+    "metricItems": "{{count}} વસ્તુઓ",
+    "sessionId": "સત્ર ID",
+    "trackingId": "ટ્રેકિંગ ID",
+    "eventParameters": "ઇવેન્ટ પેરામીટર્સ ({{count}})",
+    "keyValueAttributes": "કી-વેલ્યુ ગુણધર્મો",
+    "filterParamsPlaceholder": "પેરામીટર્સ ફિલ્ટર કરો...",
+    "noParamsRecorded": "આ ઇવેન્ટ માટે કોઈ કસ્ટમ પેરામીટર્સ નથી.",
+    "noParamsMatching": "\"{{search}}\" સાથે મેળ ખાતા કોઈ પેરામીટર્સ નથી"
   },
   "redux": {
     "title": "રેડક્સ",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "{{total}} કનેક્શનમાંથી {{filtered}} બતાવી રહ્યું છે",
     "deletedCount": "{{count}} વેબસોકેટ લૉગ કાઢી નાખ્યા",
     "copiedUrls": "{{count}} URL ક્લિપબોર્ડ પર કૉપિ કર્યા",
-    "webSocketTraffic": "વેબસોકેટ ટ્રાફિક ({{count}} જોડાણો)"
+    "webSocketTraffic": "વેબસોકેટ ટ્રાફિક ({{count}} જોડાણો)",
+    "connectionDetails": "કનેક્શન વિગતો",
+    "url": "URL",
+    "clientEngine": "ક્લાયંટ એન્જિન",
+    "readyState": "તૈયાર સ્થિતિ",
+    "connectedAt": "કનેક્ટ થયેલ સમય",
+    "closedAt": "બંધ થયેલ સમય",
+    "closeCodeReason": "સમાપ્તિ કોડ અને કારણ",
+    "subprotocols": "પેટા-પ્રોટોકોલ્સ",
+    "callerStack": "કોલર સ્ટેક",
+    "error": "ભૂલ",
+    "handshakeHeaders": "હેન્ડશેક હેડર્સ",
+    "handshakeParams": "હેન્ડશેક ક્વેરી પેરામીટર્સ",
+    "noQueryParams": "કનેક્શન URL માં કોઈ ક્વેરી પેરામીટર્સ નથી",
+    "jsClientCode": "જાવાસ્ક્રિપ્ટ ક્લાયંટ કોડ",
+    "terminalWscat": "ટર્મિનલ WSCAT આદેશ",
+    "rawDump": "રો કનેક્શન JSON ડમ્પ"
   },
   "push": {
     "title": "પુશ સૂચનાઓ",
     "preview": "પૂર્વાવલોકન",
     "payload": "કસ્ટમ પેલોડ",
-    "deliveryMetadata": "ડિલિવરી અને મેસેજ મેટાડેટા",
+    "deliveryMetadata": "ડિલિવરી અને સંદેશ મેટાડેટા",
     "rawPayload": "કાચો પેલોડ",
     "link": "લિંક",
     "appNotification": "એપ્લિકેશન સૂચના",
@@ -1365,7 +1401,17 @@
     "cleared": "પુશ સૂચના ઇતિહાસ સાફ કર્યો",
     "foreground": "ફોરગ્રાઉન્ડ",
     "background": "પૃષ્ઠભૂમિ",
-    "quit": "છોડો"
+    "quit": "છોડો",
+    "messageId": "સંદેશ ID:",
+    "sourceDomain": "સ્રોત / ડોમેન:",
+    "appState": "એપ સ્થિતિ:",
+    "actionType": "ક્રિયા પ્રકાર:",
+    "timestamp": "સમય સ્ટેમ્પ:",
+    "channelId": "ચેનલ ID:",
+    "sound": "ધ્વનિ:",
+    "badgeCount": "બેજ ગણતરી:",
+    "collapseKey": "સંકુચિત કી:",
+    "noCustomData": "પેલોડમાં કોઈ કસ્ટમ ડેટા મળ્યો નથી"
   },
   "debugging": {
     "title": "ડીબગીંગ અને ટૂલ્સ",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "કૉપિ કરેલ પેકેજ ઇન્સ્ટોલ આદેશ!",
     "footerLicense": "રીએક્ટ નેટિવ ઇન-એપ ઇન્સ્પેક્ટર · MIT લાઇસન્સ",
     "footerTagline": "ઝીરો-કોન્ફિગ ઓન-ડિવાઈસ ડીબગીંગ ટૂલ"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "લાઈવ નેટવર્ક",
+    "ram": "રેમ",
+    "active": "સક્રિય",
+    "networkSpeed": "નેટવર્ક ગતિ",
+    "fpsLive": "લાઈવ FPS",
+    "ramUsage": "રેમ વપરાશ",
+    "battery": "બેટરી",
+    "livePerformanceStrip": "લાઈવ પર્ફોર્મન્સ સ્ટ્રીપ"
+  },
+  "media": {
+    "animatedGif": "એનિમેટેડ GIF",
+    "cropDefect": "ખામી ભાગ ક્રોપ કરો",
+    "rotate90": "90° ફેરવો",
+    "redactPii": "ખાનગી માહિતી છુપાવો",
+    "trim5s": "5 સેકન્ડ કાપો",
+    "muteAudio": "ઓડિયો મ્યૂટ કરો",
+    "toGif": "GIF બનાવો",
+    "play": "ચલાવો"
   }
 }

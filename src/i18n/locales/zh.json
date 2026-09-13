@@ -305,7 +305,9 @@
       "table": "表",
       "emptyObject": "空对象",
       "emptyTable": "空对象",
-      "value": "价值"
+      "value": "值",
+      "keyProperty": "键 / 属性",
+      "noMatchingKeys": "未找到匹配的键或值"
     },
     "showingRequests": "显示 {{count}} 个请求",
     "showingFilteredRequests": "显示 {{filtered}} / {{total}} 个请求",
@@ -500,7 +502,25 @@
     "searchParameters": "搜索参数...",
     "noParamsFound": "没有与您的搜索匹配的参数",
     "sourceFirebase": "火力基地 GA4",
-    "sourceCustom": "定制/手动"
+    "sourceCustom": "定制/手动",
+    "dataVisualization": "数据可视化",
+    "dataTypesBreakdown": "数据类型分布",
+    "highestPayloadStrings": "最长有效负载字符串",
+    "topLevelMetrics": "顶级指标",
+    "importantDates": "重要日期",
+    "itemPrices": "商品价格",
+    "sessionIdentity": "会话与身份标识",
+    "metricParams": "参数：",
+    "metricUserProps": "用户属性：",
+    "metricSize": "大小：",
+    "metricItems": "{{count}} 个项目",
+    "sessionId": "会话 ID",
+    "trackingId": "跟踪 ID",
+    "eventParameters": "事件参数 ({{count}})",
+    "keyValueAttributes": "键值属性",
+    "filterParamsPlaceholder": "按键或值过滤参数...",
+    "noParamsRecorded": "此事件未记录任何自定义参数。",
+    "noParamsMatching": "未找到匹配 \"{{search}}\" 的参数"
   },
   "redux": {
     "searchPlaceholder": "搜索状态或动作...",
@@ -1267,7 +1287,23 @@
     "cleared": "所有 WebSocket 日志均已清除",
     "deleteSelectedTitle": "删除选定的 WebSocket",
     "deleteSelectedMsg": "您确定要删除 {{count}} 选定的 WebSocket 日志吗？",
-    "filterTitle": "过滤 WebSocket 连接"
+    "filterTitle": "过滤 WebSocket 连接",
+    "connectionDetails": "连接详情",
+    "url": "URL",
+    "clientEngine": "客户端引擎",
+    "readyState": "就绪状态",
+    "connectedAt": "连接时间",
+    "closedAt": "关闭时间",
+    "closeCodeReason": "关闭代码与原因",
+    "subprotocols": "子协议",
+    "callerStack": "调用堆栈",
+    "error": "错误",
+    "handshakeHeaders": "握手请求头",
+    "handshakeParams": "握手查询参数",
+    "noQueryParams": "连接 URL 中未传递任何查询参数",
+    "jsClientCode": "JAVASCRIPT 客户端代码",
+    "terminalWscat": "终端 WSCAT 命令",
+    "rawDump": "原始连接 JSON 转储"
   },
   "push": {
     "clearTitle": "清除推送历史",
@@ -1279,7 +1315,7 @@
     "title": "推送通知",
     "preview": "预览",
     "payload": "自定义有效负载",
-    "deliveryMetadata": "传递和消息元数据",
+    "deliveryMetadata": "投递与消息元数据",
     "rawPayload": "原始有效负载",
     "link": "链接",
     "appNotification": "应用程序通知",
@@ -1288,7 +1324,17 @@
     "searchPlaceholder": "搜索推送通知...",
     "noNotifications": "无推送通知",
     "noNotificationsDesc": "捕获的 Firebase FCM、Apple APNs、OneSignal 和自定义推送事件将实时显示在此处。",
-    "filterTitle": "过滤推送通知"
+    "filterTitle": "过滤推送通知",
+    "messageId": "消息 ID：",
+    "sourceDomain": "来源 / 域名：",
+    "appState": "应用状态：",
+    "actionType": "操作类型：",
+    "timestamp": "时间戳：",
+    "channelId": "通道 ID：",
+    "sound": "提示音：",
+    "badgeCount": "角标数：",
+    "collapseKey": "合并键：",
+    "noCustomData": "有效负载中未包含自定义键值数据"
   },
   "about": {
     "title": "关于与规格",
@@ -1420,5 +1466,26 @@
     "buildSuccess": "APK 构建生成成功！",
     "buildFailed": "构建失败：{{error}}",
     "buildCancelled": "构建被用户取消"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "实时网络",
+    "ram": "内存",
+    "active": "运行中",
+    "networkSpeed": "网络速度",
+    "fpsLive": "实时帧率",
+    "ramUsage": "内存占用",
+    "battery": "电池电量",
+    "livePerformanceStrip": "实时性能指示条"
+  },
+  "media": {
+    "animatedGif": "动态 GIF",
+    "cropDefect": "裁剪缺陷区域",
+    "rotate90": "旋转 90°",
+    "redactPii": "遮蔽敏感信息",
+    "trim5s": "截取 5 秒",
+    "muteAudio": "静音音频",
+    "toGif": "转为 GIF",
+    "play": "播放"
   }
 }

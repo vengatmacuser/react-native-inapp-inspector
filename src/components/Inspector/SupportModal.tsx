@@ -19,6 +19,8 @@ import {
   StarIcon,
   BugIcon,
   BookOpenIcon,
+  HeartIcon,
+  MailIcon,
 } from '../NetworkIcons';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {useTranslation} from '../../i18n';
@@ -86,7 +88,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
               onPress={() => openUrl('https://github.com/sponsors/vengatmacuser')}
               style={[styles.itemCard, styles.itemCardHighlight]}>
               <View style={[styles.itemIconWrap, styles.sponsorIconWrap]}>
-                <Text style={styles.emojiIcon}>💖</Text>
+                <HeartIcon size={20} color={AppColors.pink600} fill={AppColors.pink600} />
               </View>
               <View style={styles.itemTextCol}>
                 <View style={styles.itemTitleRow}>
@@ -165,7 +167,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
               onPress={() => openUrl('mailto:vengatmacuser@gmail.com')}
               style={styles.itemCard}>
               <View style={[styles.itemIconWrap, styles.contactIconWrap]}>
-                <Text style={styles.mailEmoji}>✉️</Text>
+                <MailIcon size={18} color={AppColors.purple} />
               </View>
               <View style={styles.itemTextCol}>
                 <Text style={styles.itemTitle}>

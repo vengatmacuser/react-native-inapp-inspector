@@ -375,7 +375,9 @@
       "emptyObject": "Đối tượng trống",
       "emptyTable": "Đối tượng trống",
       "key": "Chìa khóa",
-      "value": "Giá trị"
+      "value": "GIÁ TRỊ",
+      "keyProperty": "KHÓA / THUỘC TÍNH",
+      "noMatchingKeys": "Không tìm thấy khóa hoặc giá trị phù hợp"
     },
     "showingRequests": "Đang hiển thị {{count}} yêu cầu",
     "showingFilteredRequests": "Đang hiển thị {{filtered}} trong số {{total}} yêu cầu",
@@ -500,7 +502,25 @@
     "searchParameters": "Tìm kiếm thông số...",
     "noParamsFound": "Không có thông số nào phù hợp với tìm kiếm của bạn",
     "sourceFirebase": "CHÁY GA4",
-    "sourceCustom": "TÙY CHỈNH/THỦ CÔNG"
+    "sourceCustom": "TÙY CHỈNH/THỦ CÔNG",
+    "dataVisualization": "Trực quan hóa dữ liệu",
+    "dataTypesBreakdown": "Phân tích loại dữ liệu",
+    "highestPayloadStrings": "Chuỗi tải trọng lớn nhất",
+    "topLevelMetrics": "Số liệu cấp cao",
+    "importantDates": "Ngày quan trọng",
+    "itemPrices": "Giá mặt hàng",
+    "sessionIdentity": "PHIÊN & DANH TÍNH",
+    "metricParams": "Tham số:",
+    "metricUserProps": "Thuộc tính người dùng:",
+    "metricSize": "Kích thước:",
+    "metricItems": "{{count}} mục",
+    "sessionId": "ID phiên",
+    "trackingId": "ID theo dõi",
+    "eventParameters": "THAM SỐ SỰ KIỆN ({{count}})",
+    "keyValueAttributes": "Thuộc tính khóa-giá trị",
+    "filterParamsPlaceholder": "Lọc tham số theo khóa hoặc giá trị...",
+    "noParamsRecorded": "Không có tham số tùy chỉnh nào được ghi lại.",
+    "noParamsMatching": "Không có tham số nào khớp với \"{{search}}\""
   },
   "redux": {
     "title": "Chuyển đổi lại",
@@ -1344,13 +1364,29 @@
     "showingFilteredConnections": "Đang hiển thị {{filtered}} trong số {{total}} kết nối",
     "deletedCount": "Đã xóa {{count}} nhật ký WebSocket",
     "copiedUrls": "{{count}} URL được sao chép vào bảng nhớ tạm",
-    "webSocketTraffic": "Lưu lượng truy cập WebSocket ({{count}} kết nối)"
+    "webSocketTraffic": "Lưu lượng truy cập WebSocket ({{count}} kết nối)",
+    "connectionDetails": "CHI TIẾT KẾT NỐI",
+    "url": "URL",
+    "clientEngine": "Động cơ máy khách",
+    "readyState": "Trạng thái sẵn sàng",
+    "connectedAt": "Đã kết nối lúc",
+    "closedAt": "Đã đóng lúc",
+    "closeCodeReason": "Mã & Lý do đóng",
+    "subprotocols": "Giao thức phụ",
+    "callerStack": "Ngăn xếp người gọi",
+    "error": "Lỗi",
+    "handshakeHeaders": "Tiêu đề bắt tay",
+    "handshakeParams": "THAM SỐ TRUY VẤN BẮT TAY",
+    "noQueryParams": "Không có tham số truy vấn nào trong URL kết nối",
+    "jsClientCode": "MÃ MÁY KHÁCH JAVASCRIPT",
+    "terminalWscat": "LỆNH TERMINAL WSCAT",
+    "rawDump": "BẢN DUMP JSON KẾT NỐI THÔ"
   },
   "push": {
     "title": "Thông báo đẩy",
     "preview": "Xem trước",
     "payload": "Tải trọng tùy chỉnh",
-    "deliveryMetadata": "Siêu dữ liệu gửi và tin nhắn",
+    "deliveryMetadata": "Siêu dữ liệu phân phối & tin nhắn",
     "rawPayload": "Tải trọng thô",
     "link": "liên kết",
     "appNotification": "Thông báo ứng dụng",
@@ -1365,7 +1401,17 @@
     "cleared": "Đã xóa lịch sử thông báo đẩy",
     "foreground": "Tiền cảnh",
     "background": "Nền",
-    "quit": "Thoát"
+    "quit": "Thoát",
+    "messageId": "ID tin nhắn:",
+    "sourceDomain": "Nguồn / Tên miền:",
+    "appState": "Trạng thái ứng dụng:",
+    "actionType": "Loại hành động:",
+    "timestamp": "Dấu thời gian:",
+    "channelId": "ID kênh:",
+    "sound": "Âm thanh:",
+    "badgeCount": "Số lượng huy hiệu:",
+    "collapseKey": "Khóa thu gọn:",
+    "noCustomData": "Không tìm thấy dữ liệu khóa-giá trị tùy chỉnh"
   },
   "debugging": {
     "title": "Gỡ lỗi & Công cụ",
@@ -1420,5 +1466,26 @@
     "copiedInstallCommand": "Sao chép lệnh cài đặt gói!",
     "footerLicense": "Trình kiểm tra trong ứng dụng gốc React · Giấy phép MIT",
     "footerTagline": "Công cụ gỡ lỗi trên thiết bị Zero-config"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "MẠNG TRỰC TIẾP",
+    "ram": "RAM",
+    "active": "HOẠT ĐỘNG",
+    "networkSpeed": "Tốc độ mạng",
+    "fpsLive": "FPS trực tiếp",
+    "ramUsage": "Sử dụng RAM",
+    "battery": "Pin",
+    "livePerformanceStrip": "Thanh hiệu năng trực tiếp"
+  },
+  "media": {
+    "animatedGif": "GIF ĐỘNG",
+    "cropDefect": "Cắt lỗi",
+    "rotate90": "Xoay 90°",
+    "redactPii": "Ẩn thông tin cá nhân",
+    "trim5s": "Cắt 5 giây",
+    "muteAudio": "Tắt tiếng",
+    "toGif": "Thành GIF",
+    "play": "Phát"
   }
 }

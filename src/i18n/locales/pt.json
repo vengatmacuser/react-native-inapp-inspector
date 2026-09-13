@@ -305,7 +305,9 @@
       "table": "Mesa",
       "emptyObject": "Objeto vazio",
       "emptyTable": "Objeto vazio",
-      "value": "Valor"
+      "value": "VALOR",
+      "keyProperty": "CHAVE / PROPRIEDADE",
+      "noMatchingKeys": "Nenhuma chave ou valor correspondente encontrado"
     },
     "title": "APIs",
     "searchPlaceholder": "Pesquise por URL, status ou método...",
@@ -500,7 +502,25 @@
     "searchParameters": "Parâmetros de pesquisa...",
     "noParamsFound": "Nenhum parâmetro corresponde à sua pesquisa",
     "sourceFirebase": "FOGO GA4",
-    "sourceCustom": "PERSONALIZADO / MANUAL"
+    "sourceCustom": "PERSONALIZADO / MANUAL",
+    "dataVisualization": "Visualização de dados",
+    "dataTypesBreakdown": "Distribuição dos tipos de dados",
+    "highestPayloadStrings": "Strings de maior payload",
+    "topLevelMetrics": "Métricas principais",
+    "importantDates": "Datas importantes",
+    "itemPrices": "Preços dos itens",
+    "sessionIdentity": "SESSÃO E IDENTIDADE",
+    "metricParams": "Parâmetros:",
+    "metricUserProps": "Props de usuário:",
+    "metricSize": "Tamanho:",
+    "metricItems": "{{count}} itens",
+    "sessionId": "ID da sessão",
+    "trackingId": "ID de rastreamento",
+    "eventParameters": "PARÂMETROS DO EVENTO ({{count}})",
+    "keyValueAttributes": "Atributos chave-valor",
+    "filterParamsPlaceholder": "Filtrar parâmetros por chave ou valor...",
+    "noParamsRecorded": "Nenhum parâmetro personalizado registrado para este evento.",
+    "noParamsMatching": "Nenhum parâmetro corresponde a \"{{search}}\""
   },
   "redux": {
     "searchPlaceholder": "Pesquisar estado ou ações...",
@@ -1245,7 +1265,7 @@
     "title": "Notificações push",
     "preview": "Visualização",
     "payload": "Carga personalizada",
-    "deliveryMetadata": "Metadados de entrega e mensagens",
+    "deliveryMetadata": "Metadados de entrega e mensagem",
     "rawPayload": "Carga Bruta",
     "link": "Ligação",
     "appNotification": "Notificação de aplicativo",
@@ -1257,7 +1277,17 @@
     "filterTitle": "Filtrar notificações push",
     "clearTitle": "Limpar histórico de push",
     "clearMessage": "Tem certeza de que deseja limpar todos os registros de notificação push?",
-    "cleared": "Histórico de notificações push limpo"
+    "cleared": "Histórico de notificações push limpo",
+    "messageId": "ID da mensagem:",
+    "sourceDomain": "Origem / Domínio:",
+    "appState": "Estado do app:",
+    "actionType": "Tipo de ação:",
+    "timestamp": "Carimbo de data/hora:",
+    "channelId": "ID do canal:",
+    "sound": "Som:",
+    "badgeCount": "Contador de badge:",
+    "collapseKey": "Chave de agrupamento:",
+    "noCustomData": "Nenhum dado chave-valor personalizado encontrado no payload"
   },
   "about": {
     "title": "Sobre e especificações",
@@ -1413,12 +1443,49 @@
     "showingFilteredConnections": "Mostrando {{filtered}} de {{total}} conexões",
     "deletedCount": "Registros do WebSocket {{count}} excluídos",
     "copiedUrls": "{{count}} URLs copiados para a área de transferência",
-    "webSocketTraffic": "Tráfego WebSocket ({{count}} conexões)"
+    "webSocketTraffic": "Tráfego WebSocket ({{count}} conexões)",
+    "connectionDetails": "DETALHES DA CONEXÃO",
+    "url": "URL",
+    "clientEngine": "Motor do cliente",
+    "readyState": "Estado",
+    "connectedAt": "Conectado às",
+    "closedAt": "Fechado às",
+    "closeCodeReason": "Código e motivo de fechamento",
+    "subprotocols": "Subprotocolos",
+    "callerStack": "Pilha de chamadas",
+    "error": "Erro",
+    "handshakeHeaders": "Cabeçalhos do Handshake",
+    "handshakeParams": "PARÂMETROS DE CONSULTA DO HANDSHAKE",
+    "noQueryParams": "Nenhum parâmetro de consulta passado na URL de conexão",
+    "jsClientCode": "CÓDIGO CLIENTE JAVASCRIPT",
+    "terminalWscat": "COMANDO DE TERMINAL WSCAT",
+    "rawDump": "DUMP JSON DE CONEXÃO BRUTA"
   },
   "debugging": {
     "title": "Depuração e ferramentas",
     "buildSuccess": "Versão do APK gerada com sucesso!",
     "buildFailed": "Falha na compilação: {{error}}",
     "buildCancelled": "Build cancelada pelo usuário"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "REDE EM TEMPO REAL",
+    "ram": "RAM",
+    "active": "ATIVO",
+    "networkSpeed": "Velocidade da rede",
+    "fpsLive": "FPS em tempo real",
+    "ramUsage": "Uso de RAM",
+    "battery": "Bateria",
+    "livePerformanceStrip": "Barra de desempenho em tempo real"
+  },
+  "media": {
+    "animatedGif": "GIF ANIMADO",
+    "cropDefect": "Recortar defeito",
+    "rotate90": "Girar 90°",
+    "redactPii": "Ocultar PII",
+    "trim5s": "Cortar 5s",
+    "muteAudio": "Mutar áudio",
+    "toGif": "Para GIF",
+    "play": "Reproduzir"
   }
 }

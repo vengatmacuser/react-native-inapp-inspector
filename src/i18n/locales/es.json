@@ -375,7 +375,9 @@
       "emptyObject": "Objeto vacío",
       "emptyTable": "Objeto vacío",
       "key": "Key",
-      "value": "Valor"
+      "value": "VALOR",
+      "keyProperty": "CLAVE / PROPIEDAD",
+      "noMatchingKeys": "No se encontraron claves o valores coincidentes"
     },
     "showingRequests": "Mostrando {{count}} peticiones",
     "showingFilteredRequests": "Mostrando {{filtered}} de {{total}} peticiones",
@@ -500,7 +502,25 @@
     "eventVelocity": "{{rate}} ev/min",
     "time30mAgo": "-30m",
     "time20mAgo": "-20m",
-    "time10mAgo": "-10m"
+    "time10mAgo": "-10m",
+    "dataVisualization": "Visualización de datos",
+    "dataTypesBreakdown": "Desglose de tipos de datos",
+    "highestPayloadStrings": "Cadenas de mayor carga útil",
+    "topLevelMetrics": "Métricas de nivel superior",
+    "importantDates": "Fechas importantes",
+    "itemPrices": "Precios de artículos",
+    "sessionIdentity": "SESIÓN E IDENTIDAD",
+    "metricParams": "Parámetros:",
+    "metricUserProps": "Props de usuario:",
+    "metricSize": "Tamaño:",
+    "metricItems": "{{count}} artículos",
+    "sessionId": "ID de sesión",
+    "trackingId": "ID de seguimiento",
+    "eventParameters": "PARÁMETROS DEL EVENTO ({{count}})",
+    "keyValueAttributes": "Atributos clave-valor",
+    "filterParamsPlaceholder": "Filtrar parámetros por clave o valor...",
+    "noParamsRecorded": "No se registraron parámetros personalizados para este evento.",
+    "noParamsMatching": "Ningún parámetro coincide con \"{{search}}\""
   },
   "redux": {
     "title": "redux",
@@ -1344,13 +1364,29 @@
     "deletedCount": "{{count}} registros de WebSocket eliminados",
     "copiedUrls": "{{count}} URLs copiadas",
     "webSocketTraffic": "Tráfico WebSocket ({{count}} conexiones)",
-    "title": "WebSocket"
+    "title": "WebSocket",
+    "connectionDetails": "DETALLES DE LA CONEXIÓN",
+    "url": "URL",
+    "clientEngine": "Motor cliente",
+    "readyState": "Estado",
+    "connectedAt": "Conectado a las",
+    "closedAt": "Cerrado a las",
+    "closeCodeReason": "Código y motivo de cierre",
+    "subprotocols": "Subprotocolos",
+    "callerStack": "Pila de llamada",
+    "error": "Error",
+    "handshakeHeaders": "Encabezados del Handshake",
+    "handshakeParams": "PARÁMETROS DE CONSULTA DEL HANDSHAKE",
+    "noQueryParams": "No se pasaron parámetros de consulta en la URL de conexión",
+    "jsClientCode": "CÓDIGO CLIENTE JAVASCRIPT",
+    "terminalWscat": "COMANDO DE TERMINAL WSCAT",
+    "rawDump": "VOLCADO JSON DE CONEXIÓN BRUTA"
   },
   "push": {
     "title": "Notificaciones push",
     "preview": "Vista previa",
     "payload": "Carga útil personalizada",
-    "deliveryMetadata": "Metadatos de entrega y mensajes",
+    "deliveryMetadata": "Metadatos de entrega y mensaje",
     "rawPayload": "Carga útil sin procesar",
     "link": "Enlace",
     "appNotification": "Notificación de aplicación",
@@ -1365,7 +1401,17 @@
     "cleared": "Historial de notificaciones push borrado",
     "foreground": "Primer plano",
     "background": "Segundo plano",
-    "quit": "Cerrado"
+    "quit": "Cerrado",
+    "messageId": "ID del mensaje:",
+    "sourceDomain": "Origen / Dominio:",
+    "appState": "Estado de la app:",
+    "actionType": "Tipo de acción:",
+    "timestamp": "Marca de tiempo:",
+    "channelId": "ID del canal:",
+    "sound": "Sonido:",
+    "badgeCount": "Contador de insignias:",
+    "collapseKey": "Clave de colapso:",
+    "noCustomData": "No se encontraron datos clave-valor personalizados en la carga útil"
   },
   "debugging": {
     "title": "Depuración y herramientas",
@@ -1420,5 +1466,26 @@
     "footerTagline": "Herramienta de depuración sin configuración",
     "appleIos": "Apple iOS",
     "github": "GitHub"
+  },
+  "telemetry": {
+    "fps": "FPS",
+    "liveTraffic": "RED EN VIVO",
+    "ram": "RAM",
+    "active": "ACTIVO",
+    "networkSpeed": "Velocidad de red",
+    "fpsLive": "FPS en vivo",
+    "ramUsage": "Uso de RAM",
+    "battery": "Batería",
+    "livePerformanceStrip": "Franja de rendimiento en vivo"
+  },
+  "media": {
+    "animatedGif": "GIF ANIMADO",
+    "cropDefect": "Recortar defecto",
+    "rotate90": "Girar 90°",
+    "redactPii": "Ocultar PII",
+    "trim5s": "Recortar 5s",
+    "muteAudio": "Silenciar audio",
+    "toGif": "A GIF",
+    "play": "Reproducir"
   }
 }
