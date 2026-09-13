@@ -14,11 +14,15 @@ import {ChevronIcon} from './NetworkIcons';
 // Type Definition
 import {SourcePageCardProps} from '../types';
 
+// Localization
+import {useTranslation} from '../i18n';
+
 // Stylesheet
 import {AppColors} from '../styles/AppColors';
 import styles from '../styles';
 
 const SourcePageCard = ({routeInfo}: SourcePageCardProps) => {
+  const {t} = useTranslation();
   const main = useAccordion(true);
   const params = useAccordion(false);
 
@@ -68,7 +72,7 @@ const SourcePageCard = ({routeInfo}: SourcePageCardProps) => {
               </Svg>
             </View>
             <View style={{flex: 1}}>
-              <Text style={styles.sourcePageLabel}>Source Page</Text>
+              <Text style={styles.sourcePageLabel}>{t('errorBoundary.sourcePage', 'Source Page')}</Text>
               <Text style={styles.sourcePageValue} numberOfLines={1}>
                 {routeInfo.path}
               </Text>
@@ -92,7 +96,7 @@ const SourcePageCard = ({routeInfo}: SourcePageCardProps) => {
               <Pressable onPress={params.toggleOpen} hitSlop={10}>
                 <View style={styles.paramsAccordionHeader}>
                   <View style={styles.paramsAccordionLeft}>
-                    <Text style={styles.sourceParamsLabel}>Parameters</Text>
+                    <Text style={styles.sourceParamsLabel}>{t('errorBoundary.parameters', 'Parameters')}</Text>
                     <View style={styles.headerCountBadge}>
                       <Text style={styles.headerCountText}>
                         {Object.keys(routeInfo.params).length}

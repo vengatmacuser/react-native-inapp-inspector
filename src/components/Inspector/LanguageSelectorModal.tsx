@@ -22,7 +22,9 @@ import {
   CloseWhite,
   SearchIcon,
   ResetIcon,
+  ArrowForwardIcon,
 } from '../NetworkIcons';
+import CountryFlag from '../CountryFlag';
 import {
   useTranslation,
   SUPPORTED_LANGUAGES,
@@ -284,16 +286,16 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                 styles.closeBtn,
                 {
                   backgroundColor: isDark
-                    ? 'rgba(255, 255, 255, 0.16)'
-                    : 'rgba(0, 0, 0, 0.08)',
+                    ? AppColors.overlayWhite16
+                    : AppColors.overlayBlack08,
                   borderColor: isDark
-                    ? 'rgba(255, 255, 255, 0.30)'
-                    : 'rgba(0, 0, 0, 0.18)',
+                    ? AppColors.overlayWhite30
+                    : AppColors.overlayBlack18,
                 },
               ]}>
               <CloseWhite
                 size={14}
-                color={isDark ? AppColors.white : '#0F172A'}
+                color={isDark ? AppColors.white : AppColors.slate900}
               />
             </TouchableScale>
           </View>
@@ -340,7 +342,7 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                       styles.countryChip,
                       isActive && styles.countryChipActive,
                     ]}>
-                    <Text style={styles.countryChipFlag}>{country.flag}</Text>
+                    <CountryFlag code={country.id} size={15} style={{marginRight: 6}} />
                     <Text
                       style={[
                         styles.countryChipText,
@@ -406,7 +408,7 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                           styles.flagContainer,
                           isSelected && styles.flagContainerSelected,
                         ]}>
-                        <Text style={styles.langFlag}>{lang.flag}</Text>
+                        <CountryFlag code={lang.code} size={20} />
                       </View>
                       <View style={styles.langTextCol}>
                         <View style={styles.langTitleRow}>
@@ -442,13 +444,9 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                     </View>
 
                     {isSelected ? (
-                      <LinearGradient
-                        colors={[AppColors.indigo600, AppColors.violet600]}
-                        start={{x: 0, y: 0}}
-                        end={{x: 1, y: 1}}
-                        style={styles.checkIconWrap}>
-                        <CheckIcon size={12} color={AppColors.white} />
-                      </LinearGradient>
+                      <View style={styles.checkIconWrap}>
+                        <CheckIcon size={14} color={AppColors.white} />
+                      </View>
                     ) : (
                       <View style={styles.uncheckPlaceholder} />
                     )}
@@ -474,9 +472,9 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                 <CloseWhite size={11} color={AppColors.grayTextWeak} />
               </TouchableScale>
 
-              {/* Top icon badge with flag */}
+              {/* Top Graphic Icon */}
               <View style={confirmStyles.iconBadge}>
-                <Text style={confirmStyles.iconFlag}>{pendingLang.flag}</Text>
+                <CountryFlag code={pendingLang.code} size={28} />
               </View>
 
               {/* Title & Message */}
@@ -496,21 +494,26 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                   <Text style={confirmStyles.switchLabel}>
                     {t('language.current', 'Current')}
                   </Text>
-                  <Text style={confirmStyles.switchValue}>
-                    {SUPPORTED_LANGUAGES.find(l => l.code === currentLangCode)?.flag || '🌐'}{' '}
-                    {currentLangCode.toUpperCase()}
-                  </Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    <CountryFlag code={currentLangCode} size={16} />
+                    <Text style={confirmStyles.switchValue}>
+                      {currentLangCode.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
                 <View style={confirmStyles.switchArrow}>
-                  <Text style={confirmStyles.switchArrowText}>→</Text>
+                  <ArrowForwardIcon size={14} color={AppColors.indigo600} />
                 </View>
                 <View style={confirmStyles.switchItem}>
                   <Text style={[confirmStyles.switchLabel, {color: AppColors.indigo600}]}>
                     {t('language.new', 'New')}
                   </Text>
-                  <Text style={[confirmStyles.switchValue, {color: AppColors.indigo600, fontFamily: AppFonts.interBold}]}>
-                    {pendingLang.flag} {pendingLang.code.toUpperCase()}
-                  </Text>
+                  <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                    <CountryFlag code={pendingLang.code} size={16} />
+                    <Text style={[confirmStyles.switchValue, {color: AppColors.indigo600, fontFamily: AppFonts.interBold}]}>
+                      {pendingLang.code.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
               </View>
 

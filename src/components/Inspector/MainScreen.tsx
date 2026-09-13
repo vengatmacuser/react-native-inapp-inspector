@@ -163,7 +163,7 @@ const MainScreen = () => {
                   borderTopLeftRadius: modalHeightPercent >= 100 ? 0 : 20,
                   borderTopRightRadius: modalHeightPercent >= 100 ? 0 : 20,
                   opacity: peekMode
-                    ? Math.max(0.05, Math.min(1.0, typeof peekOpacity === 'number' ? peekOpacity : 0.75))
+                    ? Math.max(0.05, Math.min(1.0, typeof peekOpacity === 'number' ? peekOpacity : 0.1))
                     : 1,
                   zIndex: 9999999,
                   elevation: 999999,
@@ -176,7 +176,9 @@ const MainScreen = () => {
               />
 
               <InspectorHeader />
-              <SecondaryTelemetryStrip />
+              {!isDetailActive && settingsPage === null && !isAboutOpen && !isSupportOpen && (
+                <SecondaryTelemetryStrip />
+              )}
 
               <View
                 style={{

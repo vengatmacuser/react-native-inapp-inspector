@@ -64,9 +64,15 @@ import {
   UndoIcon,
   VolumeXIcon,
   WhiteBackNavigation,
-  ZapIcon,
   ZoomInIcon,
   ZoomOutIcon,
+  BrightnessIcon,
+  ContrastIcon,
+  SaturationIcon,
+  WarmthIcon,
+  ExposureIcon,
+  VignetteIcon,
+  ZapIcon,
 } from '../NetworkIcons';
 import {CapturedMediaItem, ScreenCapture} from '../../capture';
 import {MediaEditor} from '../../editor';
@@ -4129,39 +4135,40 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
 
                     {/* Fine-Tuning Adjustment Controls */}
                     {([
-                      {key: 'brightness', label: 'Brightness', icon: '☀'},
-                      {key: 'contrast', label: 'Contrast', icon: '◐'},
-                      {key: 'saturation', label: 'Saturation', icon: '🎨'},
-                      {key: 'warmth', label: 'Warmth', icon: '🔥'},
-                      {key: 'exposure', label: 'Exposure', icon: '⚡'},
-                      {key: 'vignette', label: 'Vignette', icon: '◎'},
-                    ] as const).map(adj => (
-                      <TouchableOpacity
-                        key={adj.key}
-                        onPress={() => {
-                          triggerNativeHaptic('light');
-                          setAdjustMode(adj.key);
-                        }}
-                        style={[
-                          previewStyles.modeChip,
-                          adjustMode === adj.key && previewStyles.modeChipActive,
-                        ]}>
-                        <Text
+                      {key: 'brightness', label: t('media.brightness', 'Brightness'), IconComponent: BrightnessIcon},
+                      {key: 'contrast', label: t('media.contrast', 'Contrast'), IconComponent: ContrastIcon},
+                      {key: 'saturation', label: t('media.saturation', 'Saturation'), IconComponent: SaturationIcon},
+                      {key: 'warmth', label: t('media.warmth', 'Warmth'), IconComponent: WarmthIcon},
+                      {key: 'exposure', label: t('media.exposure', 'Exposure'), IconComponent: ExposureIcon},
+                      {key: 'vignette', label: t('media.vignette', 'Vignette'), IconComponent: VignetteIcon},
+                    ] as const).map(adj => {
+                      const Icon = adj.IconComponent;
+                      const isActive = adjustMode === adj.key;
+                      return (
+                        <TouchableOpacity
+                          key={adj.key}
+                          onPress={() => {
+                            triggerNativeHaptic('light');
+                            setAdjustMode(adj.key);
+                          }}
                           style={[
-                            previewStyles.modeChipIconText,
-                            adjustMode === adj.key && {color: AppColors.white},
+                            previewStyles.modeChip,
+                            isActive && previewStyles.modeChipActive,
                           ]}>
-                          {adj.icon}
-                        </Text>
-                        <Text
-                          style={[
-                            previewStyles.modeChipText,
-                            adjustMode === adj.key && previewStyles.modeChipTextActive,
-                          ]}>
-                          {adj.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
+                          <Icon
+                            size={14}
+                            color={isActive ? AppColors.white : AppColors.grayTextWeak}
+                          />
+                          <Text
+                            style={[
+                              previewStyles.modeChipText,
+                              isActive && previewStyles.modeChipTextActive,
+                            ]}>
+                            {adj.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                     <View style={previewStyles.subDivider} />
                     <TouchableOpacity
                       onPress={() => {

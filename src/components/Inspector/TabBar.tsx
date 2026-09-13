@@ -369,11 +369,11 @@ const TabBar = React.memo(() => {
                         paddingVertical: 1,
                         borderRadius: 8,
                         backgroundColor: isActive
-                          ? 'rgba(255,255,255,0.25)'
+                          ? AppColors.overlayWhite25
                           : theme.idBadgeBg,
                         borderWidth: 0.5,
                         borderColor: isActive
-                          ? 'rgba(255,255,255,0.45)'
+                          ? AppColors.overlayWhite45
                           : theme.idBadgeBorder,
                         marginLeft: 1,
                         alignItems: 'center',

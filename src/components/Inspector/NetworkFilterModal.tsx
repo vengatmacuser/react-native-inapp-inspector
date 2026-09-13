@@ -33,6 +33,7 @@ import {
   PackageIcon,
 } from '../NetworkIcons';
 import TouchableScale from '../TouchableScale';
+import {useTranslation} from '../../i18n';
 
 export interface NetworkFilterState {
   statusCodes: Set<string>;
@@ -73,6 +74,7 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
   searchQuery = '',
 }) => {
   const {logs} = useInspector();
+  const {t} = useTranslation();
 
   const [draft, setDraft] = useState<NetworkFilterState>(() => ({
     ...filters,
@@ -259,14 +261,14 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
               </View>
               <View>
                 <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                  <Text style={styles.title}>Network Filters</Text>
+                  <Text style={styles.title}>{t('filters.networkFiltersTitle', 'Network Filters')}</Text>
                   {activeFiltersCount > 0 && (
                     <View style={styles.activeBadge}>
-                      <Text style={styles.activeBadgeText}>{activeFiltersCount} active</Text>
+                      <Text style={styles.activeBadgeText}>{activeFiltersCount} {t('common.active', 'active')}</Text>
                     </View>
                   )}
                 </View>
-                <Text style={styles.subtitle}>Filter requests by status, method & speed</Text>
+                <Text style={styles.subtitle}>{t('filters.networkFiltersSubtitle', 'Filter requests by status, method & speed')}</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} hitSlop={10} style={styles.closeBtn}>
@@ -280,10 +282,10 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
             showsVerticalScrollIndicator={false}>
             {/* Section 1: HTTP Status Codes */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>HTTP STATUS CODE</Text>
+              <Text style={styles.sectionTitle}>{t('filters.httpStatusCode', 'HTTP STATUS CODE')}</Text>
               <View style={styles.chipsWrap}>
                 {[
-                  {key: 'all', label: 'All Statuses', color: AppColors.purple, icon: LayersIcon, count: counts.statusMap.all},
+                  {key: 'all', label: t('common.all', 'All Statuses'), color: AppColors.purple, icon: LayersIcon, count: counts.statusMap.all},
                   {key: '2xx', label: '2xx Success', color: AppColors.greenColor, icon: CircleCheckIcon, count: counts.statusMap['2xx'] || 0},
                   {key: '3xx', label: '3xx Redirect', color: AppColors.warningIconGold, icon: RepeatIcon, count: counts.statusMap['3xx'] || 0},
                   {key: '4xx', label: '4xx Client Error', color: AppColors.darkOrange, icon: CircleAlertIcon, count: counts.statusMap['4xx'] || 0},
@@ -333,7 +335,7 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
 
             {/* Section 2: HTTP Method */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>HTTP METHOD</Text>
+              <Text style={styles.sectionTitle}>{t('filters.httpMethod', 'HTTP METHOD')}</Text>
               <View style={styles.chipsWrap}>
                 <TouchableOpacity
                   activeOpacity={0.7}
@@ -351,7 +353,7 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
                       styles.chipLabel,
                       draft.methods.has('all') && {color: AppColors.purple, fontFamily: AppFonts.interBold},
                     ]}>
-                    All Methods
+                    {t('common.all', 'All Methods')}
                   </Text>
                   <View style={[styles.countPill, draft.methods.has('all') && {backgroundColor: `${AppColors.purple}25`}]}>
                     <Text style={[styles.countPillText, draft.methods.has('all') && {color: AppColors.purple}]}>
@@ -405,10 +407,10 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
 
             {/* Section 3: Latency & Speed */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>LATENCY & SPEED</Text>
+              <Text style={styles.sectionTitle}>{t('filters.latencySpeed', 'LATENCY & SPEED')}</Text>
               <View style={styles.chipsWrap}>
                 {[
-                  {key: 'all' as const, label: 'All Speeds', color: AppColors.purple, icon: LayersIcon},
+                  {key: 'all' as const, label: t('common.all', 'All Speeds'), color: AppColors.purple, icon: LayersIcon},
                   {key: 'fast' as const, label: 'Fast (<200ms)', color: AppColors.greenColor, icon: BoltIcon, count: counts.fastCount},
                   {key: 'normal' as const, label: 'Normal (200-500ms)', color: AppColors.skyBlue, icon: ClockIcon, count: counts.normalCount},
                   {key: 'slow' as const, label: 'Slow (>500ms)', color: AppColors.errorColor, icon: CircleAlertIcon, count: counts.slowCount},
@@ -453,10 +455,10 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
 
             {/* Section 4: Protocol (HTTPS / HTTP) */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>PROTOCOL</Text>
+              <Text style={styles.sectionTitle}>{t('filters.protocol', 'PROTOCOL')}</Text>
               <View style={styles.chipsWrap}>
                 {[
-                  {key: 'all' as const, label: 'All Protocols', color: AppColors.purple, icon: GlobeIcon},
+                  {key: 'all' as const, label: t('common.all', 'All Protocols'), color: AppColors.purple, icon: GlobeIcon},
                   {key: 'https' as const, label: 'HTTPS Secure', color: AppColors.mintGreenText, icon: LockIcon, count: counts.httpsCount},
                   {key: 'http' as const, label: 'HTTP Insecure', color: AppColors.amber700, icon: UnlockIcon, count: counts.httpCount},
                 ].map(item => {
@@ -500,10 +502,10 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
 
             {/* Section 5: Sort By */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>SORT BY</Text>
+              <Text style={styles.sectionTitle}>{t('filters.sortBy', 'SORT BY')}</Text>
               <View style={styles.chipsWrap}>
                 {[
-                  {key: 'time_desc' as const, label: 'Newest First (Default)', icon: ClockIcon},
+                  {key: 'time_desc' as const, label: 'Newest First', icon: ClockIcon},
                   {key: 'time_asc' as const, label: 'Oldest First', icon: HourglassIcon},
                   {key: 'duration_desc' as const, label: 'Slowest Response', icon: TurtleIcon},
                   {key: 'duration_asc' as const, label: 'Fastest Response', icon: RocketIcon},
@@ -544,12 +546,12 @@ export const NetworkFilterModal: React.FC<NetworkFilterModalProps> = ({
           {/* Footer Action Buttons */}
           <View style={styles.footer}>
             <TouchableScale onPress={handleReset} style={styles.resetBtn}>
-              <Text style={styles.resetBtnText}>Reset All</Text>
+              <Text style={styles.resetBtnText}>{t('filters.resetAll', 'Reset All')}</Text>
             </TouchableScale>
 
             <TouchableScale onPress={handleApply} style={styles.applyBtn}>
               <Text style={styles.applyBtnText}>
-                Apply ({previewMatchCount} Request{previewMatchCount === 1 ? '' : 's'})
+                {t('filters.applyFilters', 'Apply')} ({previewMatchCount})
               </Text>
             </TouchableScale>
           </View>

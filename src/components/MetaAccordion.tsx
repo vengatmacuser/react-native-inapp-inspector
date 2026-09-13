@@ -97,7 +97,7 @@ const MetaAccordion = ({
     <View style={styles.metaContainer}>
       <Pressable onPress={toggleOpen} hitSlop={12}>
         <View style={styles.metaHeader}>
-          <Text style={styles.metaTitle}>Metadata</Text>
+          <Text style={styles.metaTitle}>{t('errorBoundary.metadata', 'Metadata')}</Text>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
             <CopyButton
               value={{

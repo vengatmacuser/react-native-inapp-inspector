@@ -336,7 +336,7 @@ export const FloatingCaptureWidget: React.FC = () => {
                 onPress={handleToggleVideoRecording}
                 style={styles.recordingPillWrapper}>
                 <LinearGradient
-                  colors={['#E11D48', '#BE123C']}
+                  colors={[AppColors.rose600, AppColors.rose700]}
                   start={{x: 0, y: 0}}
                   end={{x: 1, y: 0}}
                   style={styles.recordingPill}>
@@ -360,9 +360,9 @@ export const FloatingCaptureWidget: React.FC = () => {
             <View style={styles.dockShadowWrapper}>
               <LinearGradient
                 colors={[
-                  '#0E1326',
-                  '#1A1E38',
-                  '#0E1326',
+                  AppColors.navy900,
+                  AppColors.navy800,
+                  AppColors.navy900,
                 ]}
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 0}}
@@ -376,7 +376,7 @@ export const FloatingCaptureWidget: React.FC = () => {
                   <View
                     style={[
                       styles.menuItemIconCircle,
-                      {backgroundColor: 'rgba(56, 189, 248, 0.22)'},
+                      {backgroundColor: `${AppColors.sky400}38`},
                     ]}>
                     <ScreenshotCaptureIcon size={14} color={AppColors.sky400} />
                   </View>
@@ -397,9 +397,9 @@ export const FloatingCaptureWidget: React.FC = () => {
                   <View
                     style={[
                       styles.menuItemIconCircle,
-                      {backgroundColor: 'rgba(244, 63, 94, 0.24)'},
+                      {backgroundColor: `${AppColors.rose500}3D`},
                     ]}>
-                    <ScreenRecordIcon size={14} color={AppColors.rose400 || '#FB7185'} />
+                    <ScreenRecordIcon size={14} color={AppColors.rose400} />
                   </View>
                   <Text style={styles.menuItemText}>
                     {t('header.record', 'Record')}

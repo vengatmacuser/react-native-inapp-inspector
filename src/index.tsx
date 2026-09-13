@@ -582,7 +582,7 @@ const NetworkInspector = ({
 
   // #7 — Peek-through mode: makes inspector semi-transparent so user can see app behind
   const [peekMode, setPeekMode] = useState<boolean>(false);
-  const [peekOpacity, setPeekOpacity] = useState<number>(0.75);
+  const [peekOpacity, setPeekOpacity] = useState<number>(0.1);
 
   // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');

@@ -258,7 +258,7 @@ export const GlobalCrashScreenModal: React.FC<GlobalCrashScreenModalProps> = Rea
                       </View>
                       {frame.isAppCode && (
                         <View style={styles.appTag}>
-                          <Text style={styles.appTagText}>APP</Text>
+                          <Text style={styles.appTagText}>{t('modals.appTag', 'APP')}</Text>
                         </View>
                       )}
                     </View>
@@ -321,33 +321,33 @@ export const GlobalCrashScreenModal: React.FC<GlobalCrashScreenModalProps> = Rea
                   </Text>
                   <View style={styles.telemetryGrid}>
                     <View style={styles.telemetryPill}>
-                      <Text style={styles.telemetryLabel}>OS</Text>
+                      <Text style={styles.telemetryLabel}>{t('modals.os', 'OS')}</Text>
                       <Text style={styles.telemetryValue}>
                         {crash.deviceInfo.platform?.toUpperCase()}{' '}
                         {crash.deviceInfo.osVersion}
                       </Text>
                     </View>
                     <View style={styles.telemetryPill}>
-                      <Text style={styles.telemetryLabel}>RN Version</Text>
+                      <Text style={styles.telemetryLabel}>{t('modals.rnVersion', 'RN Version')}</Text>
                       <Text style={styles.telemetryValue}>
                         {crash.deviceInfo.rnVersion || 'N/A'}
                       </Text>
                     </View>
                     <View style={styles.telemetryPill}>
-                      <Text style={styles.telemetryLabel}>Engine</Text>
+                      <Text style={styles.telemetryLabel}>{t('modals.engine', 'Engine')}</Text>
                       <Text style={styles.telemetryValue}>
                         {crash.deviceInfo.isHermes ? 'Hermes' : 'JSC'}
                       </Text>
                     </View>
                     <View style={styles.telemetryPill}>
-                      <Text style={styles.telemetryLabel}>Architecture</Text>
+                      <Text style={styles.telemetryLabel}>{t('modals.architecture', 'Architecture')}</Text>
                       <Text style={styles.telemetryValue}>
                         {crash.deviceInfo.isFabric ? 'Fabric (New)' : 'Paper'}
                       </Text>
                     </View>
                     {crash.memoryInfo && (
                       <View style={styles.telemetryPill}>
-                        <Text style={styles.telemetryLabel}>JS Heap</Text>
+                        <Text style={styles.telemetryLabel}>{t('modals.jsHeap', 'JS Heap')}</Text>
                         <Text style={styles.telemetryValue}>
                           {crash.memoryInfo.usedJSHeapSize} / {crash.memoryInfo.totalJSHeapSize} MB
                         </Text>

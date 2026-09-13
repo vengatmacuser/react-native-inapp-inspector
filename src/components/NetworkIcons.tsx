@@ -3514,4 +3514,80 @@ export const EyeCompareIcon = ({color = AppColors.white, size = 16}: IconProps) 
   </Svg>
 );
 
+export const BrightnessIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="4" stroke={color} strokeWidth="2" />
+    <Line x1="12" y1="1" x2="12" y2="3" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="12" y1="21" x2="12" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="1" y1="12" x2="3" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="21" y1="12" x2="23" y2="12" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const ContrastIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+    <Path d="M12 3a9 9 0 0 1 0 18z" fill={color} />
+  </Svg>
+);
+
+export const SaturationIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path d="M12 2.69v17.31a8 8 0 0 0 5.66-2.34" fill={color} opacity={0.4} />
+  </Svg>
+);
+
+export const WarmthIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 2c1 3.5 4 6 4 9a6 6 0 1 1-12 0c0-3 3-5.5 4-9 1 2 2 3 4 0z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const ExposureIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="3" width="18" height="18" rx="3" stroke={color} strokeWidth="2" />
+    <Line x1="3" y1="21" x2="21" y2="3" stroke={color} strokeWidth="2" />
+    {/* Plus top-left */}
+    <Line x1="7.5" y1="5.5" x2="7.5" y2="9.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    <Line x1="5.5" y1="7.5" x2="9.5" y2="7.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+    {/* Minus bottom-right */}
+    <Line x1="14.5" y1="16.5" x2="18.5" y2="16.5" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+  </Svg>
+);
+
+export const VignetteIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="2" y="4" width="20" height="16" rx="3" stroke={color} strokeWidth="2" />
+    <Ellipse cx="12" cy="12" rx="6" ry="4.5" stroke={color} strokeWidth="1.8" strokeDasharray="2,2" />
+  </Svg>
+);
+
+export const ArrowForwardIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M5 12h14M12 5l7 7-7 7"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 

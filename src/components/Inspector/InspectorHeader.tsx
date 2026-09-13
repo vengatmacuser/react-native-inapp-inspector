@@ -39,6 +39,7 @@ import {ScreenCapture, CapturedMediaItem, generateCaptureId} from '../../capture
 import {UpdateAvailableModal} from './UpdateAvailableModal';
 import {MediaPreviewModal} from './MediaPreviewModal';
 import {LanguageSelectorModal} from './LanguageSelectorModal';
+import CountryFlag from '../CountryFlag';
 import {
   WhiteBackNavigation,
   TrashIcon,
@@ -605,9 +606,7 @@ const InspectorHeader = React.memo(() => {
                           borderColor: `${AppColors.white}38`,
                           flexShrink: 0,
                         }}>
-                        <Text style={{fontSize: 9, lineHeight: 11}}>
-                          {currentLang?.flag || '🌐'}
-                        </Text>
+                        <CountryFlag code={currentLang?.code || 'en'} size={9.5} borderRadius={2} />
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,

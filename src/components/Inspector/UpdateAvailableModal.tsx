@@ -223,7 +223,7 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
           {/* Version Diff Card */}
           <View style={styles.versionComparisonCard}>
             <View style={styles.versionColumn}>
-              <Text style={styles.versionLabel}>INSTALLED</Text>
+              <Text style={styles.versionLabel}>{t('modals.installed', 'INSTALLED')}</Text>
               <View style={styles.installedChip}>
                 <Text style={styles.installedText}>v{LIB_VERSION}</Text>
               </View>
@@ -234,7 +234,7 @@ export const UpdateAvailableModal: React.FC<UpdateAvailableModalProps> = ({
             </View>
 
             <View style={styles.versionColumn}>
-              <Text style={styles.versionLabel}>LATEST</Text>
+              <Text style={styles.versionLabel}>{t('modals.latest', 'LATEST')}</Text>
               <View style={styles.latestChip}>
                 <NpmIcon size={12} color={AppColors.npmRed} />
                 <Text style={styles.latestText}>v{latestVersion}</Text>

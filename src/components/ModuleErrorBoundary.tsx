@@ -14,6 +14,7 @@ import {copyToClipboard} from '../helpers';
 import {WarningTriangleIcon, RefreshCcwIcon, CopyIcon} from './NetworkIcons';
 import {handleInterceptedCrash} from '../customHooks/crashHandler';
 import {CrashType} from '../types/enums';
+import {t} from '../i18n';
 
 export interface ModuleErrorBoundaryProps {
   /** Name of the UI module / micro-feature */
@@ -113,7 +114,7 @@ export class ModuleErrorBoundary extends Component<
               </Text>
             </View>
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>FAULT ISOLATED</Text>
+              <Text style={styles.badgeText}>{t('errorBoundary.faultIsolated', 'FAULT ISOLATED')}</Text>
             </View>
           </View>
 
@@ -128,7 +129,7 @@ export class ModuleErrorBoundary extends Component<
               onPress={this.handleRetry}
               activeOpacity={0.7}>
               <RefreshCcwIcon color={AppColors.white} size={12} />
-              <Text style={styles.retryText}>Retry Module</Text>
+              <Text style={styles.retryText}>{t('errorBoundary.retryModule', 'Retry Module')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -137,7 +138,7 @@ export class ModuleErrorBoundary extends Component<
               activeOpacity={0.7}>
               <CopyIcon color={AppColors.slate600} size={12} />
               <Text style={styles.copyText}>
-                {this.state.copied ? 'Copied' : 'Copy Error'}
+                {this.state.copied ? t('common.copied', 'Copied') : t('common.copy', 'Copy Error')}
               </Text>
             </TouchableOpacity>
           </View>

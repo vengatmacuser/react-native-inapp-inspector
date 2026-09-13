@@ -12,6 +12,8 @@ import {EmptyRadarIcon} from './NetworkIcons';
 import {AppColors} from '../styles/AppColors';
 import styles from '../styles';
 
+import {useTranslation} from '../i18n';
+
 interface EmptyStateProps {
   isSearch?: boolean;
   searchQuery?: string;
@@ -29,6 +31,7 @@ const EmptyState = React.memo(function EmptyState({
   onClearSearch,
   showReload = true,
 }: EmptyStateProps) {
+  const {t} = useTranslation();
   const iconPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -58,8 +61,8 @@ const EmptyState = React.memo(function EmptyState({
     }
 
     Alert.alert(
-      'Reload',
-      'App reload is typically only available in development mode.',
+      t('common.reload', 'Reload'),
+      t('common.reloadDevOnly', 'App reload is typically only available in development mode.'),
     );
   };
 
@@ -70,24 +73,24 @@ const EmptyState = React.memo(function EmptyState({
         <EmptyRadarIcon color={AppColors.purple} size={32} />
       </Animated.View>
       <Text style={styles.emptyTitle}>
-        {customTitle || (isSearch ? 'No matching results' : 'No network activity')}
+        {customTitle || (isSearch ? t('common.noMatches', 'No matching results') : t('network.noActivity', 'No network activity'))}
       </Text>
       <Text style={styles.emptySub}>
         {customSub ||
           (isSearch
             ? searchQuery
-              ? `No items matched "${searchQuery}"`
-              : 'Try adjusting your filters or search keywords.'
-            : 'Listening for incoming API calls...')}
+              ? `${t('common.noItemsMatched', 'No items matched')} "${searchQuery}"`
+              : t('common.adjustFilters', 'Try adjusting your filters or search keywords.')
+            : t('network.listening', 'Listening for incoming API calls...'))}
       </Text>
       {isSearch && onClearSearch && (
         <TouchableScale style={styles.reloadBtn} onPress={onClearSearch}>
-          <Text style={styles.reloadBtnText}>Clear Search & Filters</Text>
+          <Text style={styles.reloadBtnText}>{t('common.clearSearchFilters', 'Clear Search & Filters')}</Text>
         </TouchableScale>
       )}
       {!isSearch && showReload && (
         <TouchableScale style={styles.reloadBtn} onPress={handleReload}>
-          <Text style={styles.reloadBtnText}>Reload App</Text>
+          <Text style={styles.reloadBtnText}>{t('common.reloadApp', 'Reload App')}</Text>
         </TouchableScale>
       )}
     </AnimatedEntrance>

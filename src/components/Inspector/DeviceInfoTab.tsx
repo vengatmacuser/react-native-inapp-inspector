@@ -785,7 +785,7 @@ export const DeviceInfoTab = React.memo(() => {
         {/* ── SUB-TAB 1: OVERVIEW ── */}
         {(activeSubTab === 'overview' || search.length > 0) && hasOverviewMatch && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>DEVICE OVERVIEW</Text>
+            <Text style={styles.sectionTitle}>{t('deviceInfo.deviceOverview', 'DEVICE OVERVIEW')}</Text>
             {isMatch('Device Model', fullDeviceData.hardware.model) && (
               <InfoRow
                 label="Device Model"
@@ -855,7 +855,7 @@ export const DeviceInfoTab = React.memo(() => {
         {/* ── SUB-TAB 2: HARDWARE & SYSTEM ── */}
         {(activeSubTab === 'hardware' || search.length > 0) && hasHardwareMatch && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>HARDWARE & SYSTEM SPECIFICATIONS</Text>
+            <Text style={styles.sectionTitle}>{t('deviceInfo.hardwareSpecs', 'HARDWARE & SYSTEM SPECIFICATIONS')}</Text>
             {isMatch('CPU Architecture', fullDeviceData.hardware.cpuAbi) && (
               <InfoRow
                 label="CPU Architecture / ABI"
@@ -923,7 +923,7 @@ export const DeviceInfoTab = React.memo(() => {
         {/* ── SUB-TAB 3: NETWORK & CONNECTIVITY ── */}
         {(activeSubTab === 'network' || search.length > 0) && hasNetworkMatch && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>NETWORK & CONNECTIVITY</Text>
+            <Text style={styles.sectionTitle}>{t('deviceInfo.networkConnectivity', 'NETWORK & CONNECTIVITY')}</Text>
             {isMatch('IP Address', ipAddress) && (
               <InfoRow
                 label="Local Device IP"
@@ -974,7 +974,7 @@ export const DeviceInfoTab = React.memo(() => {
         {/* ── SUB-TAB 4: DISPLAY & SCREEN GEOMETRY ── */}
         {(activeSubTab === 'display' || search.length > 0) && hasDisplayMatch && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>DISPLAY & SCREEN GEOMETRY</Text>
+            <Text style={styles.sectionTitle}>{t('deviceInfo.displayGeometry', 'DISPLAY & SCREEN GEOMETRY')}</Text>
             {isMatch('Window Resolution', `${Math.round(windowDims.width).toLocaleString()} × ${Math.round(windowDims.height).toLocaleString()} pt`) && (
               <InfoRow
                 label="Window Logical Size"
@@ -1030,7 +1030,7 @@ export const DeviceInfoTab = React.memo(() => {
         {/* ── SUB-TAB 5: RUNTIME & APPLICATION ── */}
         {(activeSubTab === 'runtime' || search.length > 0) && hasRuntimeMatch && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>RUNTIME & APPLICATION</Text>
+            <Text style={styles.sectionTitle}>{t('deviceInfo.runtimeApp', 'RUNTIME & APPLICATION')}</Text>
             {isMatch('App Name', fullDeviceData.runtime.appName) && (
               <InfoRow
                 label="Application Name"
@@ -1121,7 +1121,7 @@ export const DeviceInfoTab = React.memo(() => {
         {/* ── SUB-TAB 6: SECURITY & IDENTIFIERS ── */}
         {(activeSubTab === 'security' || search.length > 0) && hasSecurityMatch && (
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>DEVICE IDENTIFIERS & SECURITY</Text>
+            <Text style={styles.sectionTitle}>{t('deviceInfo.deviceSecurity', 'DEVICE IDENTIFIERS & SECURITY')}</Text>
             {isMatch('Pseudo-UDID', pseudoUDID) && (
               <InfoRow
                 label="Deterministic Pseudo-UDID"
@@ -1169,14 +1169,14 @@ export const DeviceInfoTab = React.memo(() => {
         {search.trim().length > 0 && !hasAnyMatch && (
           <View style={styles.emptySearchCard}>
             <SearchIcon size={26} color={AppColors.grayTextWeak} />
-            <Text style={styles.emptySearchTitle}>No matching device specifications</Text>
+            <Text style={styles.emptySearchTitle}>{t('deviceInfo.noMatchingSpecs', 'No matching device specifications')}</Text>
             <Text style={styles.emptySearchSubtitle}>
               No properties matched &ldquo;{search}&rdquo;
             </Text>
             <TouchableScale
               onPress={() => setSearch('')}
               style={styles.clearSearchBtn}>
-              <Text style={styles.clearSearchBtnText}>Clear Search</Text>
+              <Text style={styles.clearSearchBtnText}>{t('deviceInfo.clearSearch', 'Clear Search')}</Text>
             </TouchableScale>
           </View>
         )}

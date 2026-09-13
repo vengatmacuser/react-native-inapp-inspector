@@ -21,6 +21,7 @@ import {
 } from '../NetworkIcons';
 import TouchableScale from '../TouchableScale';
 import type {SocketConnectionRecord, SocketFilterState} from '../../types';
+import {useTranslation} from '../../i18n';
 
 export const DEFAULT_SOCKET_FILTERS: SocketFilterState = {
   search: '',
@@ -49,6 +50,7 @@ export const SocketFilterModal: React.FC<SocketFilterModalProps> = ({
   onApply,
   records,
 }) => {
+  const {t} = useTranslation();
   const [draft, setDraft] = useState<SocketFilterState>(() => ({
     ...filters,
     status: new Set(filters.status),
@@ -67,69 +69,66 @@ export const SocketFilterModal: React.FC<SocketFilterModalProps> = ({
 
   // Live Counts
   const counts = useMemo(() => {
-    let open = 0;
-    let closed = 0;
-    let connecting = 0;
-    let error = 0;
-    let wss = 0;
-    let ws = 0;
-    let sio = 0;
-
-    records.forEach(r => {
-      const s = r.status || 'open';
-      if (s === 'open') open++;
-      else if (s === 'closed') closed++;
-      else if (s === 'connecting') connecting++;
-      else if (s === 'error') error++;
-
-      if (r.client === 'socket.io' || r.url.includes('/socket.io')) sio++;
-      else if (r.url.startsWith('wss://')) wss++;
-      else ws++;
-    });
-
-    return {
+    const res = {
       all: records.length,
-      open,
-      closed,
-      connecting,
-      error,
-      wss,
-      ws,
-      sio,
+      open: 0,
+      closed: 0,
+      connecting: 0,
+      error: 0,
+      wss: 0,
+      ws: 0,
+      sio: 0,
     };
+    records.forEach(r => {
+      if (r.status === 'open') res.open++;
+      else if (r.status === 'closed') res.closed++;
+      else if (r.status === 'connecting') res.connecting++;
+      else if (r.status === 'error') res.error++;
+
+      if (r.client === 'socket.io') res.sio++;
+      else if (r.url && r.url.startsWith('wss://')) res.wss++;
+      else res.ws++;
+    });
+    return res;
   }, [records]);
 
-  const toggleStatus = (st: string) => {
-    const next = new Set(draft.status);
-    if (st === 'all') {
-      next.clear();
-      next.add('all');
-    } else {
+  const toggleStatus = (key: string) => {
+    setDraft(prev => {
+      const next = new Set(prev.status);
+      if (key === 'all') {
+        return {...prev, status: new Set(['all'])};
+      }
       next.delete('all');
-      if (next.has(st)) next.delete(st);
-      else next.add(st);
-      if (next.size === 0) next.add('all');
-    }
-    setDraft(prev => ({...prev, status: next}));
+      if (next.has(key)) {
+        next.delete(key);
+        if (next.size === 0) next.add('all');
+      } else {
+        next.add(key);
+      }
+      return {...prev, status: next};
+    });
   };
 
-  const toggleType = (ty: string) => {
-    const next = new Set(draft.types);
-    if (ty === 'all') {
-      next.clear();
-      next.add('all');
-    } else {
+  const toggleType = (key: string) => {
+    setDraft(prev => {
+      const next = new Set(prev.types);
+      if (key === 'all') {
+        return {...prev, types: new Set(['all'])};
+      }
       next.delete('all');
-      if (next.has(ty)) next.delete(ty);
-      else next.add(ty);
-      if (next.size === 0) next.add('all');
-    }
-    setDraft(prev => ({...prev, types: next}));
+      if (next.has(key)) {
+        next.delete(key);
+        if (next.size === 0) next.add('all');
+      } else {
+        next.add(key);
+      }
+      return {...prev, types: next};
+    });
   };
 
   const handleReset = () => {
     setDraft({
-      search: draft.search,
+      search: '',
       status: new Set(['all']),
       types: new Set(['all']),
       sortBy: 'time_desc',
@@ -154,7 +153,7 @@ export const SocketFilterModal: React.FC<SocketFilterModalProps> = ({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <FilterIcon size={18} color={AppColors.brandPurple} />
-              <Text style={styles.headerTitle}>Filter WebSockets</Text>
+              <Text style={styles.headerTitle}>{t('filters.filterWebSocketsTitle', 'Filter WebSockets')}</Text>
             </View>
             <TouchableOpacity
               onPress={onClose}
@@ -166,10 +165,10 @@ export const SocketFilterModal: React.FC<SocketFilterModalProps> = ({
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             {/* Connection Status Section */}
-            <Text style={styles.sectionTitle}>CONNECTION STATUS</Text>
+            <Text style={styles.sectionTitle}>{t('filters.connectionStatus', 'CONNECTION STATUS')}</Text>
             <View style={styles.chipRow}>
               {[
-                {key: 'all', label: 'All', count: counts.all, color: AppColors.brandPurple},
+                {key: 'all', label: t('common.all', 'All'), count: counts.all, color: AppColors.brandPurple},
                 {key: 'open', label: 'Open', count: counts.open, color: AppColors.greenColor},
                 {key: 'closed', label: 'Closed', count: counts.closed, color: AppColors.slate500},
                 {key: 'connecting', label: 'Connecting', count: counts.connecting, color: AppColors.amber600},
@@ -213,10 +212,10 @@ export const SocketFilterModal: React.FC<SocketFilterModalProps> = ({
             </View>
 
             {/* Protocol & Client Type Section */}
-            <Text style={styles.sectionTitle}>PROTOCOL & CLIENT</Text>
+            <Text style={styles.sectionTitle}>{t('filters.protocolClient', 'PROTOCOL & CLIENT')}</Text>
             <View style={styles.chipRow}>
               {[
-                {key: 'all', label: 'All Protocols', count: counts.all, color: AppColors.brandPurple},
+                {key: 'all', label: t('common.all', 'All Protocols'), count: counts.all, color: AppColors.brandPurple},
                 {key: 'wss', label: 'Secure (WSS)', count: counts.wss, color: AppColors.emerald600},
                 {key: 'ws', label: 'Standard (WS)', count: counts.ws, color: AppColors.blue600},
                 {key: 'sio', label: 'Socket.IO', count: counts.sio, color: AppColors.violet600},
@@ -259,7 +258,7 @@ export const SocketFilterModal: React.FC<SocketFilterModalProps> = ({
             </View>
 
             {/* Sort Order */}
-            <Text style={styles.sectionTitle}>SORT BY</Text>
+            <Text style={styles.sectionTitle}>{t('filters.sortBy', 'SORT BY')}</Text>
             <View style={styles.chipRow}>
               {[
                 {key: 'time_desc', label: 'Newest First'},
@@ -294,10 +293,10 @@ export const SocketFilterModal: React.FC<SocketFilterModalProps> = ({
           {/* Footer Buttons */}
           <View style={styles.footer}>
             <TouchableOpacity onPress={handleReset} style={styles.resetBtn}>
-              <Text style={styles.resetBtnText}>Reset</Text>
+              <Text style={styles.resetBtnText}>{t('common.reset', 'Reset')}</Text>
             </TouchableOpacity>
             <TouchableScale onPress={handleApply} style={styles.applyBtn}>
-              <Text style={styles.applyBtnText}>Apply Filters</Text>
+              <Text style={styles.applyBtnText}>{t('filters.applyFilters', 'Apply Filters')}</Text>
             </TouchableScale>
           </View>
         </View>

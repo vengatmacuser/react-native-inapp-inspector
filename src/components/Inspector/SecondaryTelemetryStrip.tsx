@@ -176,9 +176,9 @@ export const SecondaryTelemetryStrip: React.FC = () => {
   return (
     <LinearGradient
       colors={[
-        AppColors.telemetrySubHeaderGradStart || '#0B0F1C',
-        AppColors.telemetrySubHeaderGradMid || '#111524',
-        AppColors.telemetrySubHeaderGradEnd || '#0B0F1C',
+        AppColors.telemetrySubHeaderGradStart,
+        AppColors.telemetrySubHeaderGradMid,
+        AppColors.telemetrySubHeaderGradEnd,
       ]}
       start={{x: 0, y: 0}}
       end={{x: 1, y: 0}}
@@ -199,8 +199,8 @@ export const SecondaryTelemetryStrip: React.FC = () => {
 
         {/* Network Throughput in kbps / Mbps */}
         <View style={stripStyles.item}>
-          <SpeedIcon size={11.5} color={AppColors.sky300 || '#7DD3FC'} />
-          <Text style={[stripStyles.label, {color: AppColors.sky300 || '#7DD3FC'}]}>
+          <SpeedIcon size={11.5} color={AppColors.sky300} />
+          <Text style={[stripStyles.label, {color: AppColors.sky300}]}>
             {networkSpeedKbps >= 1000
               ? `${(networkSpeedKbps / 1000).toFixed(2)} Mbps`
               : networkSpeedKbps > 0
@@ -214,8 +214,8 @@ export const SecondaryTelemetryStrip: React.FC = () => {
           <>
             <View style={stripStyles.divider} />
             <View style={stripStyles.item}>
-              <BoltIcon size={11} color={AppColors.purple400 || '#A78BFA'} />
-              <Text style={[stripStyles.label, {color: AppColors.purple400 || '#A78BFA'}]}>
+              <BoltIcon size={11} color={AppColors.purple400} />
+              <Text style={[stripStyles.label, {color: AppColors.purple400}]}>
                 {ramUsageStr}
               </Text>
             </View>
@@ -247,9 +247,9 @@ const stripStyles = StyleSheet.create({
   container: {
     width: '100%',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: AppColors.telemetrySubHeaderBorder || 'rgba(255, 255, 255, 0.07)',
+    borderBottomColor: AppColors.telemetrySubHeaderBorder,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0, 0, 0, 0.25)',
+    borderTopColor: AppColors.telemetrySubHeaderBorder,
     zIndex: 9,
   },
   inner: {
@@ -268,13 +268,13 @@ const stripStyles = StyleSheet.create({
   divider: {
     width: 1,
     height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: AppColors.borderSubtle,
   },
   label: {
     fontFamily: AppFonts.interMedium,
     fontSize: 9,
     lineHeight: 11.5,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: AppColors.textPrimary,
     letterSpacing: 0.1,
   },
 });
