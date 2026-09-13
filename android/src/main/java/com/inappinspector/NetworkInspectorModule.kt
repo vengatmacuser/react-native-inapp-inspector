@@ -1,5 +1,6 @@
 package com.inappinspector
 
+import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
@@ -77,13 +78,13 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     private val PICK_MEDIA_REQUEST_CODE = 49281
 
     private val activityEventListener = object : BaseActivityEventListener() {
-        override fun onActivityResult(activity: android.app.Activity?, requestCode: Int, resultCode: Int, data: Intent?) {
+        override fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
             if (requestCode == PICK_MEDIA_REQUEST_CODE) {
                 val promise = pendingPickPromise
                 pendingPickPromise = null
                 if (promise == null) return
 
-                if (resultCode != android.app.Activity.RESULT_OK || data?.data == null) {
+                if (resultCode != Activity.RESULT_OK || data?.data == null) {
                     promise.resolve(null)
                     return
                 }
@@ -1315,7 +1316,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
     @ReactMethod
     fun pickMedia(options: ReadableMap?, promise: Promise) {
-        val activity = currentActivity
+        val activity = reactContext.currentActivity
         if (activity == null) {
             promise.reject("NO_ACTIVITY", "Current activity is null")
             return
