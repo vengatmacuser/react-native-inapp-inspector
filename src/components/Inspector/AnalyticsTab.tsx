@@ -336,7 +336,7 @@ const AnalyticsTab = React.memo(() => {
               flexDirection: 'row',
               alignItems: 'center',
               marginBottom: 8,
-              paddingHorizontal: 12,
+              paddingHorizontal: 8,
               gap: 6,
             }}>
             <ScrollView

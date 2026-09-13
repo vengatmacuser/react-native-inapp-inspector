@@ -35,6 +35,8 @@ import {MediaGalleryTab} from './MediaGalleryTab';
 import SettingsPanel from './SettingsPanel';
 import AboutModal from './AboutModal';
 import {SupportPage} from './SupportPage';
+import {ConfirmationModal} from './ConfirmationModal';
+import {FloatingCaptureWidget} from './FloatingCaptureWidget';
 
 import NpmUpdateToast from './NpmUpdateToast';
 import NpmStarPrompt from './NpmStarPrompt';
@@ -71,6 +73,8 @@ const MainScreen = () => {
     isDismissed,
     hasNavigationContext,
     setNavState,
+    confirmModal,
+    setConfirmModal,
   } = useInspector();
 
   const isDetailActive =
@@ -377,6 +381,24 @@ const MainScreen = () => {
 
               {/* 5-Day Periodic Star & Support Prompt */}
               <NpmStarPrompt />
+
+              {/* Floating Video/Screenshot Quick Capture Widget */}
+              <FloatingCaptureWidget />
+
+              {/* Global Confirmation Dialog */}
+              <ConfirmationModal
+                visible={confirmModal.visible}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                cancelText={confirmModal.cancelText}
+                isDestructive={true}
+                icon="trash"
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() =>
+                  setConfirmModal(prev => ({...prev, visible: false}))
+                }
+              />
             </View>
           </View>
         </ErrorBoundary>

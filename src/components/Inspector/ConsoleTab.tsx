@@ -107,7 +107,7 @@ const ConsoleTab = React.memo(() => {
       !Array.from(logFilters).some(f => f !== 'all');
     if (isAllSelected) {
       return (
-        <View style={{paddingHorizontal: 12, paddingTop: 8, paddingBottom: 3}}>
+        <View style={{paddingHorizontal: 8, paddingTop: 8, paddingBottom: 3}}>
           <Text
             style={{
               fontFamily: AppFonts.interMedium,
@@ -342,7 +342,7 @@ const ConsoleTab = React.memo(() => {
             showsHorizontalScrollIndicator={false}
             style={{marginBottom: 6, maxHeight: 30}}
             contentContainerStyle={{
-              paddingHorizontal: 16,
+              paddingHorizontal: 8,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 6,
@@ -399,7 +399,7 @@ const ConsoleTab = React.memo(() => {
             flexDirection: 'row',
             alignItems: 'center',
             marginBottom: 8,
-            paddingHorizontal: 12,
+            paddingHorizontal: 8,
             gap: 6,
           }}>
           <ScrollView

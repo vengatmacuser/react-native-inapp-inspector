@@ -288,6 +288,24 @@ export interface InspectorContextValue {
   activePulseAnim: Animated.Value;
   unreadPulseAnim: Animated.Value;
   runClearAllWithAnimation: () => void;
+  confirmModal: {
+    visible: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  };
+  setConfirmModal: React.Dispatch<
+    React.SetStateAction<{
+      visible: boolean;
+      title: string;
+      message: string;
+      confirmText?: string;
+      cancelText?: string;
+      onConfirm: () => void;
+    }>
+  >;
 
   // ─── FAB / launcher ────────────────────────────────────────────────────────
   useNativeFab: boolean;

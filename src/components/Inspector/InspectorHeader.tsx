@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useInspector} from './InspectorContext';
 import TouchableScale from '../TouchableScale';
 import AppHeaderLogo from '../AppHeaderLogo';
+import {BrandCircleIcon} from '../BrandCircleIcon';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -317,8 +318,8 @@ const InspectorHeader = React.memo(() => {
     return 0;
   }, [modalHeightPercent, windowWidth]);
 
-  const buttonSize = isNarrow ? 28 : isCompact ? 30 : 32;
-  const logoSize = isNarrow ? 48 : isCompact ? 52 : 56;
+  const buttonSize = isNarrow ? 26 : isCompact ? 28 : 28;
+  const logoSize = isNarrow ? 36 : isCompact ? 38 : 40;
 
   return (
     <>
@@ -326,7 +327,7 @@ const InspectorHeader = React.memo(() => {
         style={[
           styles.headerGradient,
           {
-            minHeight: (isNarrow ? 62 : 66) + headerTopPadding,
+            minHeight: (isNarrow ? 48 : 52) + headerTopPadding,
           },
         ]}>
         {/* LinearGradient as absolute background layer to avoid Fabric view recycling crash.
@@ -354,16 +355,16 @@ const InspectorHeader = React.memo(() => {
               {
                 width: '100%',
                 justifyContent: 'space-between',
-                paddingHorizontal: isNarrow ? 12 : 16,
-                paddingVertical: isNarrow ? 8 : 10,
-                minHeight: isNarrow ? 52 : 56,
+                paddingHorizontal: isNarrow ? 10 : 12,
+                paddingVertical: 7,
+                minHeight: isNarrow ? 48 : 52,
               },
             ]}>
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: isNarrow ? 8 : 10,
+                gap: isNarrow ? 7 : 8,
                 flex: isDetailView ? undefined : 1,
                 flexShrink: isDetailView ? 0 : 1,
                 minWidth: 0,
@@ -533,126 +534,51 @@ const InspectorHeader = React.memo(() => {
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: isNarrow ? 10 : 12,
+                    gap: isNarrow ? 8 : 10,
                     flex: 1,
                     minWidth: 0,
                     marginRight: 4,
                   }}>
-                  <AppHeaderLogo size={logoSize} customIcon={appIcon} />
-                  <View style={{gap: 4, flex: 1, minWidth: 0, justifyContent: 'center'}}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: isNarrow ? 6 : 7,
-                        minWidth: 0,
-                      }}>
-                      <Text
-                        style={[
-                          styles.headerTitle,
-                          {
-                            fontSize: isNarrow ? 15 : isCompact ? 16 : 17,
-                            lineHeight: isNarrow ? 20 : isCompact ? 22 : 23,
-                            flexShrink: 1,
-                            paddingBottom: 0,
-                          },
-                        ]}
-                        numberOfLines={1}
-                        ellipsizeMode="tail">
-                        {getAppName()}
-                      </Text>
-                      <View
-                        style={[
-                          styles.envBadge,
-                          {
-                            backgroundColor: envConfig.bg,
-                            borderColor: envConfig.border,
-                            flexShrink: 0,
-                            paddingHorizontal: isNarrow ? 6 : 7,
-                            paddingVertical: 2.5,
-                            borderRadius: 6,
-                            marginBottom: 0,
-                          },
-                        ]}>
-                        <Text
-                          style={[
-                            styles.envBadgeText,
-                            {
-                              color: envConfig.text,
-                              fontSize: isNarrow ? 9 : 10,
-                              lineHeight: 13,
-                            },
-                          ]}>
-                          {envConfig.label}
-                        </Text>
-                      </View>
-                      {updateAvailable && (
-                        <Pressable
-                          hitSlop={10}
-                          onPress={() => setShowUpdateModal(true)}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: AppColors.warningAmber,
-                            borderRadius: 6,
-                            paddingHorizontal: isNarrow ? 5 : 6.5,
-                            paddingVertical: 2.5,
-                            gap: 3.5,
-                            shadowColor: AppColors.warningAmber,
-                            shadowOffset: {width: 0, height: 1.5},
-                            shadowOpacity: 0.35,
-                            shadowRadius: 3,
-                            elevation: 3,
-                            flexShrink: 0,
-                          }}>
-                          <Animated.View
-                            style={{
-                              width: 5,
-                              height: 5,
-                              borderRadius: 2.5,
-                              backgroundColor: AppColors.white,
-                              opacity: activePulseAnim,
-                              transform: [{scale: unreadPulseAnim}],
-                            }}
-                          />
-                          {!isNarrow && (
-                            <Text
-                              style={{
-                                fontFamily: AppFonts.interBold,
-                                fontSize: 8.5,
-                                lineHeight: 11,
-                                color: AppColors.white,
-                                letterSpacing: 0.3,
-                              }}>
-                              UPDATE
-                            </Text>
-                          )}
-                          <BoltIcon
-                            size={isNarrow ? 8 : 9}
-                            color={AppColors.white}
-                          />
-                        </Pressable>
-                      )}
-                    </View>
+                  <BrandCircleIcon size={isNarrow ? 40 : isCompact ? 44 : 46} />
+                  <View style={{gap: 2, flex: 1, minWidth: 0, justifyContent: 'center'}}>
+                    {/* Top Row: Full prominent package name */}
+                    <Text
+                      style={[
+                        styles.headerTitle,
+                        {
+                          fontFamily: AppFonts.interBold,
+                          fontWeight: '700',
+                          fontSize: isNarrow ? 13 : isCompact ? 13.5 : 14.5,
+                          lineHeight: isNarrow ? 17 : isCompact ? 18 : 19,
+                          color: AppColors.white,
+                          letterSpacing: -0.2,
+                          paddingBottom: 0,
+                        },
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      react-native-inapp-inspector
+                    </Text>
 
-                    {/* OS & NPM Version Representation */}
+                    {/* Sub Row: OS Chip, NPM Version Chip, DEV Env Badge, & Update Pill */}
                     <View
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: isNarrow ? 5 : 6,
+                        gap: 4.5,
                         minWidth: 0,
-                        marginTop: 2,
+                        marginTop: 1.5,
                       }}>
+                      {/* Host OS & Version */}
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
                           backgroundColor: `${AppColors.white}1F`,
-                          borderRadius: 6,
-                          paddingHorizontal: isNarrow ? 6 : 7,
-                          paddingVertical: 3,
-                          gap: 4,
+                          borderRadius: 5,
+                          paddingHorizontal: 5,
+                          paddingVertical: 1.5,
+                          gap: 3.5,
                           borderWidth: 1,
                           borderColor: `${AppColors.white}2E`,
                           flexShrink: 1,
@@ -661,19 +587,19 @@ const InspectorHeader = React.memo(() => {
                         {Platform.OS === 'ios' ? (
                           <AppleIcon
                             color={`${AppColors.white}E6`}
-                            size={isNarrow ? 9.5 : 10.5}
+                            size={9}
                           />
                         ) : (
                           <AndroidIcon
                             color={`${AppColors.white}E6`}
-                            size={isNarrow ? 9.5 : 10.5}
+                            size={9}
                           />
                         )}
                         <Text
                           style={{
                             fontFamily: AppFonts.interMedium,
-                            fontSize: isNarrow ? 9 : 10,
-                            lineHeight: 13,
+                            fontSize: 8.5,
+                            lineHeight: 11,
                             color: `${AppColors.white}EB`,
                             letterSpacing: 0.1,
                           }}
@@ -683,6 +609,7 @@ const InspectorHeader = React.memo(() => {
                         </Text>
                       </View>
 
+                      {/* NPM Package Version */}
                       <Pressable
                         onPress={() => {
                           if (updateAvailable) {
@@ -697,23 +624,23 @@ const InspectorHeader = React.memo(() => {
                           flexDirection: 'row',
                           alignItems: 'center',
                           backgroundColor: `${AppColors.white}1F`,
-                          borderRadius: 6,
-                          paddingHorizontal: isNarrow ? 6 : 7,
-                          paddingVertical: 3,
-                          gap: 4,
+                          borderRadius: 5,
+                          paddingHorizontal: 5,
+                          paddingVertical: 1.5,
+                          gap: 3.5,
                           borderWidth: 1,
                           borderColor: `${AppColors.white}2E`,
                           flexShrink: 0,
                         }}>
                         <NpmIcon
-                          size={isNarrow ? 9.5 : 10.5}
+                          size={9}
                           color={AppColors.npmRedLight}
                         />
                         <Text
                           style={{
                             fontFamily: AppFonts.interMedium,
-                            fontSize: isNarrow ? 9 : 10,
-                            lineHeight: 13,
+                            fontSize: 8.5,
+                            lineHeight: 11,
                             color: `${AppColors.white}EB`,
                             letterSpacing: 0.1,
                           }}
@@ -724,13 +651,89 @@ const InspectorHeader = React.memo(() => {
                           <Text
                             style={{
                               fontFamily: AppFonts.interBold,
-                              fontSize: 8.5,
+                              fontSize: 8,
                               color: AppColors.warningAmber,
                             }}>
                             ●
                           </Text>
                         )}
                       </Pressable>
+
+                      {/* Environment Badge (DEV / STG / PROD) */}
+                      <View
+                        style={[
+                          styles.envBadge,
+                          {
+                            backgroundColor: envConfig.bg,
+                            borderColor: envConfig.border,
+                            flexShrink: 0,
+                            paddingHorizontal: 5,
+                            paddingVertical: 1.5,
+                            borderRadius: 5,
+                            marginBottom: 0,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.envBadgeText,
+                            {
+                              color: envConfig.text,
+                              fontSize: 8.5,
+                              lineHeight: 11,
+                            },
+                          ]}>
+                          {envConfig.label}
+                        </Text>
+                      </View>
+
+                      {/* Update Available Notification Pill */}
+                      {updateAvailable && (
+                        <Pressable
+                          hitSlop={10}
+                          onPress={() => setShowUpdateModal(true)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            backgroundColor: AppColors.warningAmber,
+                            borderRadius: 5,
+                            paddingHorizontal: 4.5,
+                            paddingVertical: 1.5,
+                            gap: 3,
+                            shadowColor: AppColors.warningAmber,
+                            shadowOffset: {width: 0, height: 1.5},
+                            shadowOpacity: 0.35,
+                            shadowRadius: 3,
+                            elevation: 3,
+                            flexShrink: 0,
+                          }}>
+                          <Animated.View
+                            style={{
+                              width: 4.5,
+                              height: 4.5,
+                              borderRadius: 2.25,
+                              backgroundColor: AppColors.white,
+                              opacity: activePulseAnim,
+                              transform: [{scale: unreadPulseAnim}],
+                            }}
+                          />
+                          {!isNarrow && (
+                            <Text
+                              style={{
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 8,
+                                lineHeight: 10,
+                                color: AppColors.white,
+                                letterSpacing: 0.3,
+                              }}>
+                              UPDATE
+                            </Text>
+                          )}
+                          <BoltIcon
+                            size={isNarrow ? 7.5 : 8.5}
+                            color={AppColors.white}
+                          />
+                        </Pressable>
+                      )}
                     </View>
                   </View>
                 </View>
@@ -1562,31 +1565,10 @@ const InspectorHeader = React.memo(() => {
                   alignItems: 'center',
                   justifyContent: 'flex-end',
                   flexShrink: 0,
-                  gap: isNarrow ? 4 : 6,
+                  gap: isNarrow ? 4 : 5,
                 },
               ]}>
-              {/* 1. Minimize button (First) */}
-              <TouchableOpacity
-                onPress={minimizeInspector || closeModal}
-                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.minimize', 'Minimize')}
-                style={[
-                  styles.closeButtonSquare,
-                  {
-                    width: buttonSize,
-                    height: buttonSize,
-                    borderRadius: isNarrow ? 6 : 7,
-                    backgroundColor: 'rgba(56, 189, 248, 0.22)',
-                    borderColor: 'rgba(125, 211, 252, 0.40)',
-                    borderWidth: 1,
-                  },
-                ]}>
-                <ChevronDownIcon size={isNarrow ? 14 : 16} color={AppColors.white} />
-              </TouchableOpacity>
-
-              {/* 2. Settings / Reset button (Second) */}
+              {/* Settings / Reset button */}
               {isSettingsView ? (
                 <TouchableScale
                   onPress={() => {
@@ -1645,7 +1627,28 @@ const InspectorHeader = React.memo(() => {
                 </TouchableScale>
               ) : null}
 
-              {/* 3. Close button (Third) */}
+              {/* Minimize button */}
+              <TouchableOpacity
+                onPress={minimizeInspector || closeModal}
+                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.minimize', 'Minimize')}
+                style={[
+                  styles.closeButtonSquare,
+                  {
+                    width: buttonSize,
+                    height: buttonSize,
+                    borderRadius: isNarrow ? 6 : 7,
+                    backgroundColor: 'rgba(56, 189, 248, 0.22)',
+                    borderColor: 'rgba(125, 211, 252, 0.40)',
+                    borderWidth: 1,
+                  },
+                ]}>
+                <ChevronDownIcon size={isNarrow ? 14 : 16} color={AppColors.white} />
+              </TouchableOpacity>
+
+              {/* Close button */}
               <TouchableOpacity
                 onPress={closeModal}
                 hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
@@ -1667,200 +1670,6 @@ const InspectorHeader = React.memo(() => {
               </TouchableOpacity>
             </View>
           </View>
-
-          {/* Secondary Action Header (Sub-Toolbar) only on main views */}
-          {!isAnySelected && (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingHorizontal: isNarrow ? 10 : 14,
-                paddingBottom: isNarrow ? 8 : 10,
-                paddingTop: 2,
-                gap: 6,
-              }}>
-            <View
-              style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-              {/* Photo Capture Button */}
-              <TouchableScale
-                onPress={handleTakeScreenshot}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 5,
-                  backgroundColor: `${AppColors.white}24`,
-                  paddingHorizontal: isNarrow ? 9 : 11,
-                  paddingVertical: isNarrow ? 5 : 6,
-                  borderRadius: 7,
-                  borderWidth: 1,
-                  borderColor: `${AppColors.white}33`,
-                }}>
-                <CameraIcon
-                  size={isNarrow ? 12 : 13}
-                  color={AppColors.white}
-                />
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interSemiBold,
-                    fontSize: isNarrow ? 10.5 : 11.5,
-                    lineHeight: isNarrow ? 13 : 14,
-                    color: AppColors.white,
-                  }}>
-                  {t('header.photo')}
-                </Text>
-              </TouchableScale>
-
-              {/* Video / GIF Record Button */}
-              <TouchableScale
-                onPress={handleToggleVideoRecording}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 5,
-                  backgroundColor: isRecording
-                    ? `${AppColors.red500}33`
-                    : `${AppColors.white}24`,
-                  paddingHorizontal: isNarrow ? 9 : 11,
-                  paddingVertical: isNarrow ? 5 : 6,
-                  borderRadius: 7,
-                  borderWidth: 1,
-                  borderColor: isRecording
-                    ? AppColors.red500
-                    : `${AppColors.white}33`,
-                }}>
-                {isRecording ? (
-                  <Animated.View
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: AppColors.red500,
-                    }}
-                  />
-                ) : (
-                  <VideoCameraIcon
-                    size={isNarrow ? 12 : 13}
-                    color={AppColors.white}
-                  />
-                )}
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interSemiBold,
-                    fontSize: isNarrow ? 10.5 : 11.5,
-                    lineHeight: isNarrow ? 13 : 14,
-                    color: isRecording ? AppColors.red300 : AppColors.white,
-                  }}>
-                  {isRecording
-                    ? `${t('header.rec')} ${formatTimer(recordingSeconds)}`
-                    : t('header.record')}
-                </Text>
-              </TouchableScale>
-            </View>
-
-            <View
-              style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-              {/* Clear / Trash Button with label */}
-                <TouchableScale
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('common.clearAll')}
-                  onPress={() => {
-                    Alert.alert(
-                      t('header.clearEverythingTitle'),
-                      t('header.clearEverythingMessage'),
-                      [
-                        {text: t('common.cancel'), style: 'cancel'},
-                        {
-                          text: t('common.clearAll'),
-                          onPress: runClearAllWithAnimation,
-                          style: 'destructive',
-                        },
-                      ],
-                    );
-                  }}
-                  hitSlop={10}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 5,
-                    backgroundColor: `${AppColors.white}24`,
-                    paddingHorizontal: isNarrow ? 9 : 11,
-                    paddingVertical: isNarrow ? 5 : 6,
-                    borderRadius: 7,
-                    borderWidth: 1,
-                    borderColor: `${AppColors.white}33`,
-                  }}>
-                  <Animated.View
-                    style={{
-                      transform: [
-                        {
-                          rotate: clearAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ['0deg', '-25deg'],
-                          }),
-                        },
-                        {
-                          scale: clearAnim.interpolate({
-                            inputRange: [0, 0.5, 1],
-                            outputRange: [1, 1.25, 1],
-                          }),
-                        },
-                      ],
-                    }}>
-                    <TrashIcon
-                      color={AppColors.white}
-                      size={isNarrow ? 12 : 13}
-                    />
-                  </Animated.View>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interSemiBold,
-                      fontSize: isNarrow ? 10.5 : 11.5,
-                      lineHeight: isNarrow ? 13 : 14,
-                      color: AppColors.white,
-                    }}>
-                    {t('common.clearAll')}
-                  </Text>
-                </TouchableScale>
-
-                {/* About Button with label */}
-                <TouchableScale
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('header.about')}
-                  onPress={() => {
-                    setIsAboutOpen(true);
-                  }}
-                  hitSlop={10}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 5,
-                    backgroundColor: `${AppColors.white}24`,
-                    paddingHorizontal: isNarrow ? 9 : 11,
-                    paddingVertical: isNarrow ? 5 : 6,
-                    borderRadius: 7,
-                    borderWidth: 1,
-                    borderColor: `${AppColors.white}33`,
-                  }}>
-                  <InfoCircleIcon
-                    color={AppColors.white}
-                    size={isNarrow ? 12 : 13}
-                  />
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interSemiBold,
-                      fontSize: isNarrow ? 10.5 : 11.5,
-                      lineHeight: isNarrow ? 13 : 14,
-                      color: AppColors.white,
-                    }}>
-                    {t('header.about')}
-                  </Text>
-                </TouchableScale>
-              </View>
-            </View>
-          )}
         </View>
       </View>
 

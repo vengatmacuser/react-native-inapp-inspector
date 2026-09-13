@@ -482,7 +482,7 @@ const NetworkTab = React.memo(() => {
           distance={8}
           style={
             !isGroupByPageEnabled
-              ? {marginBottom: 6, marginHorizontal: 2}
+              ? {marginBottom: 5, marginHorizontal: 5}
               : [styles.treeNodeRow, isLast && styles.treeNodeRowLast]
           }>
           {isGroupByPageEnabled && (
@@ -679,7 +679,7 @@ const NetworkTab = React.memo(() => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 marginBottom: 8,
-                paddingHorizontal: 12,
+                paddingHorizontal: 8,
                 gap: 6,
               }}>
               <ScrollView
@@ -836,9 +836,9 @@ const NetworkTab = React.memo(() => {
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  marginHorizontal: 12,
+                  marginHorizontal: 8,
                   marginBottom: 8,
-                  paddingHorizontal: 10,
+                  paddingHorizontal: 8,
                   paddingVertical: 5.5,
                   backgroundColor: `${AppColors.purple}10`,
                   borderRadius: 8,

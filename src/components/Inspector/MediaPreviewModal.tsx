@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
 import {
-  Dimensions,
   Image,
   Modal,
   Platform,
+  SafeAreaView,
   Share,
   StatusBar,
   StyleSheet,
@@ -17,9 +17,8 @@ import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
 import {ConfirmationModal} from './ConfirmationModal';
 import {
-  ChevronDownIcon,
+  CloseWhite,
   CopyIcon,
-  ExpandCollapseIcon,
   FilmIcon,
   GifIcon,
   ImageIcon,
@@ -51,7 +50,6 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
   const {t} = useTranslation();
   const [isConverting, setIsConverting] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -86,9 +84,9 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
     setIsConverting(true);
     try {
       await onConvertToGif(item);
-      showToast(t('mediaGallery.convertedSuccess'));
+      showToast(t('mediaGallery.convertedSuccess', 'Converted to GIF!'));
     } catch {
-      showToast(t('mediaGallery.convertFailed'));
+      showToast(t('mediaGallery.convertFailed', 'Conversion failed'));
     } finally {
       setIsConverting(false);
     }
@@ -149,268 +147,192 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
       />
       <View style={previewStyles.overlay}>
         {/* Top Header Bar with Inspector LinearGradient */}
-        <LinearGradient
-          colors={[AppColors.indigo600, AppColors.violet600]}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={previewStyles.header}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleCopyUri}
-            style={previewStyles.headerLeft}>
-            <View style={previewStyles.badge}>
-              {isVideo ? (
-                <FilmIcon size={12} color={AppColors.white} />
-              ) : isGif ? (
-                <GifIcon size={12} color={AppColors.white} />
-              ) : (
-                <ImageIcon size={12} color={AppColors.white} />
-              )}
-              <Text style={previewStyles.badgeText}>
-                {item.format.toUpperCase()}
-              </Text>
-            </View>
-            <View style={previewStyles.headerTextCol}>
-              <Text style={previewStyles.title} numberOfLines={1}>
-                {item.filename}
-              </Text>
-              <Text style={previewStyles.subtitle}>
-                {formatBytes(item.sizeBytes)} • {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'})}
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Top Actions: Copy, Share, Delete, Expand, Close */}
-          <View style={previewStyles.headerRight}>
-            <TouchableScale
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={t('mediaGallery.copyUri', 'Copy URI')}
-              onPress={handleCopyUri}
-              style={previewStyles.headerActionBtn}
-              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-              <CopyIcon size={13} color={AppColors.white} />
-            </TouchableScale>
-
-            <TouchableScale
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={t('mediaGallery.share', 'Share')}
-              onPress={handleShare}
-              style={previewStyles.headerActionBtn}
-              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-              <ShareIcon size={13} color={AppColors.white} />
-            </TouchableScale>
-
-            <TouchableScale
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={t('mediaGallery.delete')}
-              onPress={handleDelete}
-              style={previewStyles.headerDeleteBtn}
-              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-              <TrashIcon size={13} color={AppColors.white} />
-            </TouchableScale>
-
-            <TouchableOpacity
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={isExpanded ? t('mediaGallery.collapse', 'Exit Fullscreen') : t('mediaGallery.expand', 'Expand Fullscreen')}
-              onPress={() => setIsExpanded(!isExpanded)}
-              style={previewStyles.headerIconBtn}
-              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-              <ExpandCollapseIcon
-                size={13}
-                isExpanded={isExpanded}
-                color={AppColors.white}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={t('mediaGallery.minimize', 'Minimize')}
-              onPress={onClose}
-              style={previewStyles.headerIconBtn}
-              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-              <ChevronDownIcon size={14} color={AppColors.white} />
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
-
-        {/* Media Preview Stage */}
-        <View
-          style={[
-            previewStyles.stage,
-            isExpanded && previewStyles.stageExpanded,
-          ]}>
-          <TouchableOpacity
-            activeOpacity={isVideo ? 0.92 : 1}
-            onPress={isVideo ? handlePlayVideo : undefined}
-            style={[
-              previewStyles.previewCard,
-              isExpanded && previewStyles.previewCardExpanded,
-            ]}>
-            {isVideo ? (
-              item.thumbnailUri && !imageError ? (
-                <>
-                  <Image
-                    source={{uri: item.thumbnailUri}}
-                    style={previewStyles.image}
-                    resizeMode="contain"
-                    onError={() => setImageError(true)}
-                  />
-                  <View style={previewStyles.videoImageOverlay} />
-                </>
-              ) : (
-                <View style={previewStyles.videoFallbackBackdrop}>
-                  <View style={previewStyles.videoFallbackGlow} />
-                  <FilmIcon size={52} color={AppColors.sky400} />
-                  <Text style={previewStyles.videoFallbackTitle}>
-                    {item.width && item.height ? `${item.width} × ${item.height}` : 'HD Video Recording'}
-                  </Text>
-                  <Text style={previewStyles.videoFallbackSubtitle}>
-                    {durationSec ? `${durationSec}s duration` : 'MP4 Video'} • {formatBytes(item.sizeBytes)}
-                  </Text>
-                </View>
-              )
-            ) : (
-              <Image
-                source={{uri: item.uri}}
-                style={previewStyles.image}
-                resizeMode="contain"
-                onError={() => setImageError(true)}
-              />
-            )}
-
-            {/* Central Play Button Overlay for Videos */}
-            {isVideo && (
-              <View style={previewStyles.centerPlayContainer} pointerEvents="box-none">
-                <View style={previewStyles.centerPlayGlow} />
-                <View style={previewStyles.centerPlayCircle}>
-                  <PlayIcon size={28} color={AppColors.white} />
-                </View>
-                <View style={previewStyles.centerPlayPill}>
-                  <Text style={previewStyles.centerPlayText}>
-                    {t('mediaGallery.playVideo', 'Play Video')}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {/* Top-left Duration Badge for Video / GIF */}
-            {isVideo && (
-              <View style={previewStyles.topLeftBadgeOverlay} pointerEvents="none">
-                <View style={previewStyles.metaPill}>
-                  <FilmIcon size={11} color={AppColors.sky400} />
-                  <Text style={previewStyles.metaPillText}>
-                    {formattedDuration || (durationSec ? `${durationSec}s` : 'VIDEO')}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            {isGif && (
-              <View style={previewStyles.topLeftBadgeOverlay} pointerEvents="none">
-                <View style={[previewStyles.metaPill, {backgroundColor: 'rgba(245, 158, 11, 0.85)'}]}>
-                  <GifIcon size={11} color={AppColors.white} />
-                  <Text style={previewStyles.metaPillText}>ANIMATED GIF</Text>
-                </View>
-              </View>
-            )}
-
-            {/* Bottom-right Dimensions & Size Badge */}
+        <View style={previewStyles.header}>
+          <LinearGradient
+            colors={[AppColors.indigo600, AppColors.violet600]}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+          <View style={previewStyles.headerInner}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={handleCopyUri}
-              style={previewStyles.bottomRightBadgeOverlay}>
-              <View style={previewStyles.metaPill}>
-                <CopyIcon size={10} color={AppColors.sky400} />
-                <Text style={previewStyles.metaPillText}>
-                  {item.width && item.height ? `${item.width} × ${item.height} • ` : ''}
-                  {formatBytes(item.sizeBytes)}
+              style={previewStyles.headerLeft}>
+              <View style={previewStyles.badge}>
+                {isVideo ? (
+                  <FilmIcon size={11} color={AppColors.white} />
+                ) : isGif ? (
+                  <GifIcon size={11} color={AppColors.white} />
+                ) : (
+                  <ImageIcon size={11} color={AppColors.white} />
+                )}
+                <Text style={previewStyles.badgeText}>
+                  {item.format.toUpperCase()}
+                </Text>
+              </View>
+              <View style={previewStyles.headerTextCol}>
+                <Text style={previewStyles.title} numberOfLines={1}>
+                  {item.filename}
+                </Text>
+                <Text style={previewStyles.subtitle} numberOfLines={1}>
+                  {formatBytes(item.sizeBytes)} • {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'})}
                 </Text>
               </View>
             </TouchableOpacity>
-          </TouchableOpacity>
-        </View>
 
-        {/* Bottom Actions Panel */}
-        <View style={previewStyles.footer}>
-          {isVideo && (
-            <TouchableScale
-              onPress={handlePlayVideo}
-              style={previewStyles.primaryPlayBtn}>
-              <PlayIcon size={16} color={AppColors.white} />
-              <Text style={previewStyles.primaryPlayText}>
-                {isPlaying
-                  ? t('mediaGallery.playing', 'Playing Video...')
-                  : t('mediaGallery.playInPlayer', 'Play Fullscreen Video')}
-              </Text>
-            </TouchableScale>
-          )}
+            {/* Top Actions: GIF Convert (if video), Copy, Share, Delete, Close */}
+            <View style={previewStyles.headerRight}>
+              {isVideo && onConvertToGif && (
+                <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('mediaGallery.convertToGif', 'Convert to GIF')}
+                  onPress={handleConvert}
+                  disabled={isConverting}
+                  style={[previewStyles.headerActionBtn, {backgroundColor: `${AppColors.warningAmber}33`, borderColor: `${AppColors.warningAmber}66`}]}
+                  hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                  <GifIcon size={13} color={AppColors.warningAmber} />
+                </TouchableScale>
+              )}
 
-          <View style={previewStyles.actionsRow}>
-            <TouchableScale
-              onPress={handleCopyUri}
-              style={previewStyles.actionBtn}>
-              <CopyIcon size={14} color={AppColors.grayText} />
-              <Text style={previewStyles.actionText}>
-                {t('mediaGallery.copyUri', 'Copy URI')}
-              </Text>
-            </TouchableScale>
-
-            {onConvertToGif && isVideo && (
               <TouchableScale
-                onPress={handleConvert}
-                disabled={isConverting}
-                style={[
-                  previewStyles.actionBtn,
-                  {
-                    backgroundColor: AppColors.amber100,
-                    borderColor: AppColors.amber200,
-                  },
-                ]}>
-                <GifIcon size={15} color={AppColors.amber600} />
-                <Text style={[previewStyles.actionText, {color: AppColors.amber600, fontFamily: AppFonts.interBold}]}>
-                  {isConverting ? t('mediaGallery.converting') : t('mediaGallery.convertToGif')}
-                </Text>
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('mediaGallery.copyUri', 'Copy URI')}
+                onPress={handleCopyUri}
+                style={previewStyles.headerActionBtn}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <CopyIcon size={13} color={AppColors.white} />
               </TouchableScale>
-            )}
 
-            <TouchableScale
-              onPress={handleShare}
-              style={[
-                previewStyles.actionBtn,
-                {
-                  backgroundColor: AppColors.indigo600,
-                  borderColor: AppColors.indigo600,
-                },
-              ]}>
-              <ShareIcon size={14} color={AppColors.white} />
-              <Text style={[previewStyles.actionText, {color: AppColors.white, fontFamily: AppFonts.interBold}]}>
-                {t('mediaGallery.share', 'Share')}
-              </Text>
-            </TouchableScale>
-
-            {!isVideo && (
               <TouchableScale
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('mediaGallery.share', 'Share')}
+                onPress={handleShare}
+                style={previewStyles.headerActionBtn}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <ShareIcon size={13} color={AppColors.white} />
+              </TouchableScale>
+
+              <TouchableScale
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('mediaGallery.delete', 'Delete')}
                 onPress={handleDelete}
-                style={[
-                  previewStyles.actionBtn,
-                  {
-                    backgroundColor: AppColors.red100,
-                    borderColor: `${AppColors.red500}4D`,
-                  },
-                ]}>
-                <TrashIcon size={14} color={AppColors.red500} />
-                <Text style={[previewStyles.actionText, {color: AppColors.red500, fontFamily: AppFonts.interBold}]}>
-                  {t('mediaGallery.delete', 'Delete')}
-                </Text>
+                style={previewStyles.headerDeleteBtn}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <TrashIcon size={13} color={AppColors.white} />
               </TouchableScale>
-            )}
+
+              <TouchableOpacity
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.close', 'Close')}
+                onPress={onClose}
+                style={previewStyles.headerCloseBtn}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <CloseWhite size={12} />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
+
+        {/* Media Preview Stage - Sticking directly to SafeAreaView */}
+        <SafeAreaView style={previewStyles.stageSafe}>
+          <View style={previewStyles.stage}>
+            <TouchableOpacity
+              activeOpacity={isVideo ? 0.92 : 1}
+              onPress={isVideo ? handlePlayVideo : undefined}
+              style={previewStyles.previewCard}>
+              {isVideo ? (
+                item.thumbnailUri && !imageError ? (
+                  <>
+                    <Image
+                      source={{uri: item.thumbnailUri}}
+                      style={previewStyles.image}
+                      resizeMode="contain"
+                      onError={() => setImageError(true)}
+                    />
+                    <View style={previewStyles.videoImageOverlay} />
+                  </>
+                ) : (
+                  <View style={previewStyles.videoFallbackBackdrop}>
+                    <View style={previewStyles.videoFallbackGlow} />
+                    <FilmIcon size={52} color={AppColors.sky400} />
+                    <Text style={previewStyles.videoFallbackTitle}>
+                      {item.width && item.height ? `${item.width} × ${item.height}` : 'HD Video Recording'}
+                    </Text>
+                    <Text style={previewStyles.videoFallbackSubtitle}>
+                      {durationSec ? `${durationSec}s duration` : 'MP4 Video'} • {formatBytes(item.sizeBytes)}
+                    </Text>
+                  </View>
+                )
+              ) : (
+                <Image
+                  source={{uri: item.uri}}
+                  style={previewStyles.image}
+                  resizeMode="contain"
+                  onError={() => setImageError(true)}
+                />
+              )}
+
+              {/* Central Play Button Overlay for Videos */}
+              {isVideo && (
+                <View style={previewStyles.centerPlayContainer} pointerEvents="box-none">
+                  <View style={previewStyles.centerPlayGlow} />
+                  <View style={previewStyles.centerPlayCircle}>
+                    <PlayIcon size={28} color={AppColors.white} />
+                  </View>
+                  <View style={previewStyles.centerPlayPill}>
+                    <Text style={previewStyles.centerPlayText}>
+                      {isPlaying
+                        ? t('mediaGallery.playing', 'Playing Video...')
+                        : t('mediaGallery.playVideo', 'Play Video')}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Top-left Duration Badge for Video / GIF */}
+              {isVideo && (
+                <View style={previewStyles.topLeftBadgeOverlay} pointerEvents="none">
+                  <View style={previewStyles.metaPill}>
+                    <FilmIcon size={11} color={AppColors.sky400} />
+                    <Text style={previewStyles.metaPillText}>
+                      {formattedDuration || (durationSec ? `${durationSec}s` : 'VIDEO')}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {isGif && (
+                <View style={previewStyles.topLeftBadgeOverlay} pointerEvents="none">
+                  <View style={[previewStyles.metaPill, {backgroundColor: 'rgba(245, 158, 11, 0.85)'}]}>
+                    <GifIcon size={11} color={AppColors.white} />
+                    <Text style={previewStyles.metaPillText}>ANIMATED GIF</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Bottom-right Dimensions & Size Badge */}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleCopyUri}
+                style={previewStyles.bottomRightBadgeOverlay}>
+                <View style={previewStyles.metaPill}>
+                  <CopyIcon size={10} color={AppColors.sky400} />
+                  <Text style={previewStyles.metaPillText}>
+                    {item.width && item.height ? `${item.width} × ${item.height} • ` : ''}
+                    {formatBytes(item.sizeBytes)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
       </View>
 
       {/* Custom In-App Confirmation Modal */}
@@ -437,33 +359,35 @@ const previewStyles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: AppColors.slate900,
-    justifyContent: 'space-between',
   },
   header: {
-    flexShrink: 0,
-    minHeight: Platform.OS === 'ios' ? 96 : 66,
+    width: '100%',
+    zIndex: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  headerInner: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingTop:
       Platform.OS === 'ios'
-        ? 48
+        ? 52
         : StatusBar.currentHeight
         ? StatusBar.currentHeight + 8
         : 18,
-    paddingBottom: 14,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255, 255, 255, 0.25)',
-    zIndex: 10,
+    paddingBottom: 12,
+    minHeight: Platform.OS === 'ios' ? 94 : 64,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
     flex: 1,
     minWidth: 0,
-    marginRight: 8,
+    marginRight: 6,
   },
   headerTextCol: {
     flex: 1,
@@ -472,40 +396,42 @@ const previewStyles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
+    flexShrink: 0,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 3.5,
-    borderRadius: 6,
+    gap: 3.5,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.38)',
   },
   badgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 10,
+    fontSize: 9.5,
     letterSpacing: 0.4,
     color: AppColors.white,
   },
   title: {
     fontFamily: AppFonts.interSemiBold,
-    fontSize: 13,
+    fontSize: 12.5,
     color: AppColors.white,
+    letterSpacing: -0.1,
   },
   subtitle: {
     fontFamily: AppFonts.interRegular,
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 10.5,
+    color: 'rgba(255, 255, 255, 0.7)',
     marginTop: 1,
   },
   headerActionBtn: {
     width: 30,
     height: 30,
-    borderRadius: 8,
+    borderRadius: 7,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.38)',
@@ -515,52 +441,43 @@ const previewStyles = StyleSheet.create({
   headerDeleteBtn: {
     width: 30,
     height: 30,
-    borderRadius: 8,
+    borderRadius: 7,
     backgroundColor: 'rgba(239, 68, 68, 0.35)',
     borderWidth: 1,
     borderColor: 'rgba(252, 165, 165, 0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerIconBtn: {
+  headerCloseBtn: {
     width: 30,
     height: 30,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    borderRadius: 7,
+    backgroundColor: 'rgba(244, 63, 94, 0.28)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.38)',
+    borderColor: 'rgba(251, 113, 133, 0.48)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  stageSafe: {
+    flex: 1,
+    width: '100%',
   },
   stage: {
     flex: 1,
-    minHeight: 0,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    overflow: 'hidden',
-  },
-  stageExpanded: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+    padding: 8,
   },
   previewCard: {
     flex: 1,
     width: '100%',
-    minHeight: 0,
-    borderRadius: 16,
+    borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: AppColors.slate900,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-  },
-  previewCardExpanded: {
-    borderRadius: 0,
-    borderWidth: 0,
   },
   image: {
     width: '100%',
@@ -665,72 +582,4 @@ const previewStyles = StyleSheet.create({
     color: AppColors.white,
     letterSpacing: 0.2,
   },
-  footer: {
-    flexShrink: 0,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.grayBorderSecondary,
-    backgroundColor: AppColors.white,
-    gap: 10,
-    zIndex: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: AppColors.slate900,
-        shadowOffset: {width: 0, height: -3},
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-  primaryPlayBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    width: '100%',
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: AppColors.indigo600,
-    shadowColor: AppColors.indigo600,
-    shadowOffset: {width: 0, height: 3},
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  primaryPlayText: {
-    fontFamily: AppFonts.interBold,
-    fontSize: 13.5,
-    color: AppColors.white,
-    letterSpacing: 0.3,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  actionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    backgroundColor: AppColors.graySurface,
-    borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
-  },
-  actionText: {
-    fontFamily: AppFonts.interSemiBold,
-    fontSize: 12,
-    color: AppColors.grayText,
-  },
 });
-

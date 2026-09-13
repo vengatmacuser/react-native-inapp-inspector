@@ -455,18 +455,19 @@ const styles = StyleSheet.create({
     backgroundColor: `${AppColors.brandPurple}05`,
   },
   cardBody: {
-    padding: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 5,
   },
   cardHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4.5,
     flex: 1,
     minWidth: 0,
   },

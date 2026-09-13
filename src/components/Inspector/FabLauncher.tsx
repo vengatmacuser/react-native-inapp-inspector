@@ -16,11 +16,11 @@ import AppHeaderLogo from '../AppHeaderLogo';
 import {
   AndroidIcon,
   AppleIcon,
-  CameraIcon,
+  ScreenshotCaptureIcon,
+  ScreenRecordIcon,
   CloseWhite,
   MaximizeIcon,
   NpmIcon,
-  VideoCameraIcon,
 } from '../NetworkIcons';
 import {CapturedMediaItem, ScreenCapture} from '../../capture';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
@@ -52,7 +52,7 @@ const FabLauncher = () => {
     captureMaxDurationSeconds,
     captureAudioMode,
   } = useInspector();
-  const {width: screenWidth} = useWindowDimensions();
+  const {width: screenWidth, height: screenHeight} = useWindowDimensions();
   const {t} = useTranslation();
 
   const [appVersionString] = useState<string>(() => {
@@ -64,6 +64,123 @@ const FabLauncher = () => {
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [previewMediaItem, setPreviewMediaItem] =
     useState<CapturedMediaItem | null>(null);
+
+  // ─── Drag-to-Dismiss Bottom Center Zone State & Animations ───
+  const [isDraggingFab, setIsDraggingFab] = useState(false);
+  const [isOverDismissZone, setIsOverDismissZone] = useState(false);
+  const isOverDismissZoneRef = useRef(false);
+  const dismissZoneAnim = useRef(new Animated.Value(0)).current;
+  const dismissZoneScale = useRef(new Animated.Value(1)).current;
+
+  // Track absolute offset coordinates of the circular FAB
+  const fabPanRef = useRef({x: 0, y: 0});
+  useEffect(() => {
+    const idX = fabPan.x.addListener(v => (fabPanRef.current.x = v.value));
+    const idY = fabPan.y.addListener(v => (fabPanRef.current.y = v.value));
+    return () => {
+      fabPan.x.removeListener(idX);
+      fabPan.y.removeListener(idY);
+    };
+  }, [fabPan]);
+
+  // Pan responder for the circular FAB with bottom-center drag-to-dismiss
+  const circularPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_e, g) =>
+        Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4,
+      onPanResponderGrant: () => {
+        fabDraggedRef.current = true;
+        fabPan.setOffset({
+          x: fabPanRef.current.x,
+          y: fabPanRef.current.y,
+        });
+        fabPan.setValue({x: 0, y: 0});
+        isOverDismissZoneRef.current = false;
+        setIsOverDismissZone(false);
+        setIsDraggingFab(true);
+        dismissZoneScale.setValue(1);
+        Animated.spring(dismissZoneAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 80,
+          friction: 8,
+        }).start();
+      },
+      onPanResponderMove: (_e, g) => {
+        fabPan.setValue({x: g.dx, y: g.dy});
+
+        // Bottom-center dismiss target threshold
+        const touchY = g.moveY;
+        const touchX = g.moveX;
+        const inBottomZone =
+          touchY > screenHeight - 140 &&
+          Math.abs(touchX - screenWidth / 2) < 85;
+
+        if (inBottomZone && !isOverDismissZoneRef.current) {
+          isOverDismissZoneRef.current = true;
+          setIsOverDismissZone(true);
+          triggerNativeHaptic('medium');
+          Animated.spring(dismissZoneScale, {
+            toValue: 1.25,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 6,
+          }).start();
+        } else if (!inBottomZone && isOverDismissZoneRef.current) {
+          isOverDismissZoneRef.current = false;
+          setIsOverDismissZone(false);
+          Animated.spring(dismissZoneScale, {
+            toValue: 1.0,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 6,
+          }).start();
+        }
+      },
+      onPanResponderRelease: () => {
+        const wasInZone = isOverDismissZoneRef.current;
+        fabPan.flattenOffset();
+        Animated.timing(dismissZoneAnim, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }).start(() => {
+          setIsDraggingFab(false);
+          setIsOverDismissZone(false);
+          isOverDismissZoneRef.current = false;
+        });
+
+        if (wasInZone) {
+          triggerNativeHaptic('heavy');
+          dismissInspector();
+          showToast(
+            t(
+              'common.inspectorDismissed',
+              'In-App Inspector closed for this session',
+            ),
+          );
+        }
+
+        setTimeout(() => {
+          fabDraggedRef.current = false;
+        }, 100);
+      },
+      onPanResponderTerminate: () => {
+        fabPan.flattenOffset();
+        fabDraggedRef.current = false;
+        Animated.timing(dismissZoneAnim, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }).start(() => {
+          setIsDraggingFab(false);
+          setIsOverDismissZone(false);
+          isOverDismissZoneRef.current = false;
+        });
+      },
+    }),
+  ).current;
 
   // Draggable pan responder for the minimized floating player bar
   const playerPan = useRef(new Animated.ValueXY({x: 0, y: 0})).current;
@@ -315,7 +432,7 @@ const FabLauncher = () => {
               onPress={handleTakeScreenshot}
               hitSlop={{top: 6, bottom: 6, left: 4, right: 4}}
               style={fabStyles.actionBtn}>
-              <CameraIcon size={12} color={AppColors.white} />
+              <ScreenshotCaptureIcon size={12} color={AppColors.white} />
               <Text style={fabStyles.actionText}>
                 {t('header.photo', 'Photo')}
               </Text>
@@ -332,7 +449,7 @@ const FabLauncher = () => {
               {isRecording ? (
                 <View style={fabStyles.recordingDot} />
               ) : (
-                <VideoCameraIcon size={12} color={AppColors.white} />
+                <ScreenRecordIcon size={12} color={AppColors.white} />
               )}
               <Text
                 style={[
@@ -370,40 +487,58 @@ const FabLauncher = () => {
         /* ─── Case 2: Full Original Circular Draggable FAB Icon (when Inspector is closed) ── */
         <Animated.View
           style={[styles.fabWrapper, {transform: fabPan.getTranslateTransform()}]}
-          {...fabPanResponder.panHandlers}>
-            <TouchableScale
-              style={{alignItems: 'center', justifyContent: 'center'}}
-              onPress={() => {
-                if (fabDraggedRef.current) return;
-                triggerNativeHaptic('light');
-                setVisible(true);
-              }}
-              hitSlop={10}>
-              <Animated.View
-                style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
-              />
-              <AppHeaderLogo size={68} customIcon={appIcon} shape="circle" />
-            </TouchableScale>
-
-          {/* Dismiss / Close Session Button Badge */}
+          {...circularPanResponder.panHandlers}>
           <TouchableScale
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.close', 'Close')}
+            style={{alignItems: 'center', justifyContent: 'center'}}
             onPress={() => {
-              triggerNativeHaptic('medium');
-              dismissInspector();
-              showToast(
-                t(
-                  'common.inspectorDismissed',
-                  'In-App Inspector closed for this session',
-                ),
-              );
+              if (fabDraggedRef.current) return;
+              triggerNativeHaptic('light');
+              setVisible(true);
             }}
-            hitSlop={8}
-            style={styles.fabCloseBadge}>
-            <CloseWhite size={9.5} />
+            hitSlop={10}>
+            <Animated.View
+              style={[styles.fabPulseRing, {transform: [{scale: pulseAnim}]}]}
+            />
+            <AppHeaderLogo size={68} customIcon={appIcon} shape="circle" />
           </TouchableScale>
+        </Animated.View>
+      )}
+
+      {/* ─── Bottom-Center Drag-to-Dismiss Drop Target ─── */}
+      {isDraggingFab && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            fabStyles.dismissTargetContainer,
+            {
+              opacity: dismissZoneAnim,
+              transform: [
+                {
+                  translateY: dismissZoneAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [30, 0],
+                  }),
+                },
+                {scale: dismissZoneScale},
+              ],
+            },
+          ]}>
+          <View
+            style={[
+              fabStyles.dismissTargetCircle,
+              isOverDismissZone && fabStyles.dismissTargetCircleActive,
+            ]}>
+            <CloseWhite size={18} color={AppColors.white} />
+          </View>
+          <Text
+            style={[
+              fabStyles.dismissTargetLabel,
+              isOverDismissZone && fabStyles.dismissTargetLabelActive,
+            ]}>
+            {isOverDismissZone
+              ? t('common.releaseToHide', 'Release to hide')
+              : t('common.dragToHide', 'Drag here to hide')}
+          </Text>
         </Animated.View>
       )}
 
@@ -442,6 +577,53 @@ const FabLauncher = () => {
 };
 
 const fabStyles = StyleSheet.create({
+  // ─── Drag-to-Dismiss Zone Styles ───
+  dismissTargetContainer: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 42 : 26,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999998,
+  },
+  dismissTargetCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: 'rgba(23, 23, 37, 0.82)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 16,
+  },
+  dismissTargetCircleActive: {
+    backgroundColor: AppColors.red600,
+    borderColor: AppColors.red300,
+    shadowColor: AppColors.red600,
+    shadowOpacity: 0.65,
+    shadowRadius: 18,
+    transform: [{scale: 1.06}],
+  },
+  dismissTargetLabel: {
+    marginTop: 6,
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.85)',
+    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    textShadowOffset: {width: 0, height: 1},
+    textShadowRadius: 3,
+  },
+  dismissTargetLabelActive: {
+    color: AppColors.red300,
+    fontFamily: AppFonts.interBold,
+  },
+
   // ─── Music Player Bar Styles (Matching Header Gradient & Aesthetic) ───
   playerContainer: {
     position: 'absolute',

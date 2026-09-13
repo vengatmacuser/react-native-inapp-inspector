@@ -2440,6 +2440,9 @@ const NetworkInspector = ({
       unreadPulseAnim,
       runClearAllWithAnimation,
 
+      confirmModal,
+      setConfirmModal,
+
       // ─── FAB / launcher ─────────────────────────────────────────────────
       useNativeFab,
       fabPan,
@@ -2802,23 +2805,13 @@ const NetworkInspector = ({
       captureAutoGif,
       isMinimized,
       isDismissed,
+      confirmModal,
     ],
   );
 
   return (
     <InspectorContext.Provider value={contextValue}>
       <MainScreen />
-      <ConfirmationModal
-        visible={confirmModal.visible}
-        title={confirmModal.title}
-        message={confirmModal.message}
-        confirmText={confirmModal.confirmText}
-        cancelText={confirmModal.cancelText}
-        isDestructive={true}
-        icon="trash"
-        onConfirm={confirmModal.onConfirm}
-        onCancel={() => setConfirmModal(prev => ({...prev, visible: false}))}
-      />
     </InspectorContext.Provider>
   );
 };

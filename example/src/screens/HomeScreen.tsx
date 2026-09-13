@@ -683,7 +683,14 @@ const CombinedHeroHeader = ({
         Math.max(4, (d.downloads / maxDownload) * usableHeight);
       return {x, y, downloads: d.downloads, day: d.day};
     });
-  }, [trendSeries, chartWidth, chartHeight, bottomPad, usableHeight, maxDownload]);
+  }, [
+    trendSeries,
+    chartWidth,
+    chartHeight,
+    bottomPad,
+    usableHeight,
+    maxDownload,
+  ]);
 
   const {linePath, areaPath} = useMemo(() => {
     if (splinePoints.length === 0) return {linePath: '', areaPath: ''};
@@ -752,7 +759,8 @@ const CombinedHeroHeader = ({
               <SvgNpm size={14} />
             </View>
             <View style={styles.headerNpmInfoCol}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
                 <Text style={styles.headerNpmName}>npm</Text>
                 <View style={styles.headerNpmVersionPill}>
                   <Text style={styles.headerNpmVersionPillText}>
@@ -776,14 +784,17 @@ const CombinedHeroHeader = ({
             pressed && {opacity: 0.8},
           ]}
           onPress={() =>
-            onOpenUrl('https://github.com/vengatmacuser/react-native-inapp-inspector')
+            onOpenUrl(
+              'https://github.com/vengatmacuser/react-native-inapp-inspector',
+            )
           }>
           <View style={styles.headerGithubLinkLeft}>
             <View style={styles.headerGithubIconBadge}>
               <SvgGitHub color="#0F172A" size={14} />
             </View>
             <View style={styles.headerGithubInfoCol}>
-              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                 <Text style={styles.headerGithubName}>GitHub</Text>
                 <View style={styles.headerGithubStarBadge}>
                   <SvgStar color="#EAB308" size={10} />
@@ -869,465 +880,158 @@ const CombinedHeroHeader = ({
       </View>
 
       {/* ─── TAB 1: Live NPM Downloads & Velocity ────────────────────────── */}
-      {activeTab === 'downloads' && (
-        <View style={styles.insightsCardsContainer}>
-          {/* Card 1: 7-Day Velocity Chart Card */}
-          <View
-            onLayout={e => {
-              const w = e.nativeEvent.layout.width - 24;
-              if (w > 0 && Math.abs(w - measuredWidth) > 2) {
-                setMeasuredWidth(w);
-              }
-            }}
-            style={styles.insightsChartBox}>
-            <View style={styles.insightsChartTopRow}>
-              <View style={styles.insightsChartTitleRow}>
-                <SvgAnalytics color="#4F46E5" size={13} />
-                <Text style={styles.insightsChartTitle}>7-Day Download Velocity</Text>
-              </View>
-              <Text style={styles.insightsChartSub}>
-                Peak:{' '}
-                {peakIn7Days > 0
-                  ? `${formatCompactNumber(peakIn7Days)} / day`
-                  : 'Live Sync'}
-              </Text>
-            </View>
-
-            {trendSeries.length > 0 ? (
-              <Svg width={chartWidth} height={chartHeight}>
-                <Defs>
-                  <LinearGradient id="barGradNormal" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor="#818CF8" stopOpacity={0.9} />
-                    <Stop offset="100%" stopColor="#4F46E5" stopOpacity={0.95} />
-                  </LinearGradient>
-                  <LinearGradient id="barGradPeak" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor="#38BDF8" stopOpacity={1} />
-                    <Stop offset="100%" stopColor="#4F46E5" stopOpacity={1} />
-                  </LinearGradient>
-                  <LinearGradient id="barGradTrack" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor="#F1F5F9" stopOpacity={0.8} />
-                    <Stop offset="100%" stopColor="#E2E8F0" stopOpacity={0.5} />
-                  </LinearGradient>
-                </Defs>
-
-                {/* Reference Baseline */}
-                <Line
-                  x1="0"
-                  y1={chartHeight - bottomPad}
-                  x2={chartWidth}
-                  y2={chartHeight - bottomPad}
-                  stroke="#E2E8F0"
-                  strokeWidth="1"
-                />
-                {/* Mid Reference Line */}
-                <Line
-                  x1="0"
-                  y1={topPad + usableHeight / 2}
-                  x2={chartWidth}
-                  y2={topPad + usableHeight / 2}
-                  stroke="#E2E8F0"
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                />
-
-                {trendSeries.map((d, i) => {
-                  const h = Math.max(
-                    10,
-                    (d.downloads / maxDownload) * usableHeight,
-                  );
-                  const x = i * barSlotWidth + (barSlotWidth - barWidth) / 2;
-                  const y = chartHeight - bottomPad - h;
-                  const isToday = i === trendSeries.length - 1;
-                  const isPeak = d.downloads === peakIn7Days;
-
-                  return (
-                    <G key={i}>
-                      <Rect
-                        x={x}
-                        y={topPad}
-                        width={barWidth}
-                        height={usableHeight}
-                        rx={barWidth / 2}
-                        fill="url(#barGradTrack)"
-                      />
-                      <Rect
-                        x={x}
-                        y={y}
-                        width={barWidth}
-                        height={h}
-                        rx={barWidth / 2}
-                        fill={
-                          isToday || isPeak
-                            ? 'url(#barGradPeak)'
-                            : 'url(#barGradNormal)'
-                        }
-                      />
-                      {/* Knockout halo text for crisp visibility over bars */}
-                      <SvgText
-                        x={x + barWidth / 2}
-                        y={Math.max(15, y - 7)}
-                        fontSize="9"
-                        fontWeight="800"
-                        fill="#FFFFFF"
-                        stroke="#FFFFFF"
-                        strokeWidth="3.5"
-                        strokeLinejoin="round"
-                        textAnchor="middle">
-                        {formatCompactNumber(d.downloads)}
-                      </SvgText>
-                      <SvgText
-                        x={x + barWidth / 2}
-                        y={Math.max(15, y - 7)}
-                        fontSize="9"
-                        fontWeight="800"
-                        fill={isToday || isPeak ? '#4F46E5' : '#64748B'}
-                        textAnchor="middle">
-                        {formatCompactNumber(d.downloads)}
-                      </SvgText>
-                    </G>
-                  );
-                })}
-              </Svg>
-            ) : null}
-
-            {/* Weekday Axis Pills */}
-            <View style={styles.insightsDayAxisRow}>
-              {trendSeries.map((d, i) => {
-                const isToday = i === trendSeries.length - 1;
-                const dObj = new Date(d.day);
-                const weekday = isNaN(dObj.getTime())
-                  ? `D${i + 1}`
-                  : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
-                      dObj.getDay()
-                    ];
-                const dayNum = isNaN(dObj.getTime()) ? '' : `${dObj.getDate()}`;
-
-                return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.insightsDayPill,
-                      isToday && styles.insightsDayPillActive,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.insightsDayPillText,
-                        isToday && styles.insightsDayPillTextActive,
-                      ]}
-                      numberOfLines={1}>
-                      {isToday ? 'Today' : `${weekday} ${dayNum}`}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* Velocity Summary Grid */}
-            <View style={styles.statsGrid}>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {formatCompactNumber(insights.monthlyTotal)}
-                </Text>
-                <Text style={styles.statLbl}>30-Day Vol</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {formatCompactNumber(insights.weeklyTotal)}
-                </Text>
-                <Text style={styles.statLbl}>7-Day Vol</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {formatCompactNumber(insights.dailyAvg)}/d
-                </Text>
-                <Text style={styles.statLbl}>Daily Avg</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {formatCompactNumber(insights.peakDay.downloads)}
-                </Text>
-                <Text style={styles.statLbl}>Peak Day</Text>
-              </View>
-            </View>
+      {activeTab === 'downloads' &&
+        (loading ? (
+          <View style={styles.insightsCardsContainer}>
+            <SkeletonPlaceholder cardCount={2} />
           </View>
-
-          {/* ─── GRAPH 2: Country Download Breakdown (100% Dynamic Donut Gauge) ── */}
-          <View style={styles.insightsChartBox}>
-            <View style={styles.insightsChartTopRow}>
-              <View style={styles.insightsChartTitleRow}>
-                <SvgGlobe color="#0284C7" size={13} />
-                <Text style={styles.insightsChartTitle}>
-                  Country Download Breakdown
-                </Text>
-              </View>
-              <Text style={[styles.insightsChartSub, {color: '#0284C7'}]}>
-                Live Global Distribution
-              </Text>
-            </View>
-
-            {/* Radial Donut Ring Chart + Top Countries Legend */}
-            {(() => {
-              const size = 120;
-              const strokeWidth = 14;
-              const radius = (size - strokeWidth) / 2;
-              const circumference = 2 * Math.PI * radius;
-              let accumulatedPct = 0;
-
-              return (
-                <View style={styles.countryDonutSection}>
-                  {/* SVG Donut Ring */}
-                  <View
-                    style={[
-                      styles.countryDonutWrapper,
-                      {width: size, height: size},
-                    ]}>
-                    <Svg width={size} height={size}>
-                      <Circle
-                        cx={size / 2}
-                        cy={size / 2}
-                        r={radius}
-                        stroke="#F1F5F9"
-                        strokeWidth={strokeWidth}
-                        fill="none"
-                      />
-                      {countrySeries.map(c => {
-                        const strokeLength =
-                          (c.percentage / 100) * circumference;
-                        const strokeDashoffset =
-                          -(accumulatedPct / 100) * circumference;
-                        accumulatedPct += c.percentage;
-
-                        return (
-                          <Circle
-                            key={c.code}
-                            cx={size / 2}
-                            cy={size / 2}
-                            r={radius}
-                            stroke={c.color}
-                            strokeWidth={strokeWidth}
-                            strokeDasharray={`${strokeLength} ${
-                              circumference - strokeLength
-                            }`}
-                            strokeDashoffset={strokeDashoffset}
-                            strokeLinecap="butt"
-                            fill="none"
-                            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                          />
-                        );
-                      })}
-                    </Svg>
-                    <View style={styles.countryDonutCenterContent}>
-                      <Text style={styles.countryDonutCenterVal}>
-                        {formatCompactNumber(insights.monthlyTotal)}
-                      </Text>
-                      <Text style={styles.countryDonutCenterLbl}>Total Vol</Text>
-                    </View>
-                  </View>
-
-                  {/* Top Countries Quick Legend Side Column */}
-                  <View style={styles.countryDonutLegendCol}>
-                    {countrySeries.slice(0, 4).map((c, i) => (
-                      <View key={i} style={styles.countryDonutLegendItem}>
-                        <View style={styles.countryDonutLegendLeft}>
-                          <View
-                            style={[
-                              styles.countryDonutLegendDot,
-                              {backgroundColor: c.color},
-                            ]}
-                          />
-                          <SvgMapPin size={10} color={c.color} />
-                          <Text
-                            style={styles.countryDonutLegendName}
-                            numberOfLines={1}>
-                            {c.code}
-                          </Text>
-                        </View>
-                        <Text style={styles.countryDonutLegendVal}>
-                          {c.percentage}%
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              );
-            })()}
-
-            {/* Ranked Country Performance Cards Table */}
-            <View style={styles.gap2Mt4}>
-              {countrySeries.map((c, idx) => {
-                const isDetected = c.isClientRegion;
-                return (
-                  <View
-                    key={idx}
-                    style={[
-                      styles.countryRankCard,
-                      isDetected && styles.countryRankCardActive,
-                    ]}>
-                    <View style={styles.countryRankLeft}>
-                      <Text
-                        style={[
-                          styles.countryRankNum,
-                          idx < 3 && styles.countryRankNumTop,
-                        ]}>
-                        #{idx + 1}
-                      </Text>
-                      <View style={styles.countryCodePill}>
-                        <SvgMapPin size={10} color={c.color} />
-                        <Text style={styles.countryCodePillText}>{c.code}</Text>
-                      </View>
-                      <View style={styles.countryListNameCol}>
-                        <View style={styles.countryListNameRow}>
-                          <Text style={styles.countryListName}>{c.name}</Text>
-                          {isDetected && (
-                            <View style={styles.detectedBadge}>
-                              <SvgMapPin size={9} color="#059669" />
-                              <Text style={styles.detectedBadgeText}>
-                                Your Region
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={styles.countryProgressBarBg}>
-                          <View
-                            style={[
-                              styles.countryProgressBarFill,
-                              {
-                                width: `${c.percentage}%`,
-                                backgroundColor: c.color,
-                              },
-                            ]}
-                          />
-                        </View>
-                      </View>
-                    </View>
-                    <View style={styles.countryListRight}>
-                      <Text style={styles.countryListDownloads}>
-                        {c.downloads.toLocaleString()}
-                      </Text>
-                      <Text style={[styles.countryListPct, {color: c.color}]}>
-                        {c.percentage}% vol
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* ─── GRAPH 3: NPM Daily Ingestion Waveform Graph ──────── */}
-          {trendSeries.length > 0 && (
-            <View style={styles.insightsChartBox}>
+        ) : (
+          <View style={styles.insightsCardsContainer}>
+            {/* Card 1: 7-Day Velocity Chart Card */}
+            <View
+              onLayout={e => {
+                const w = e.nativeEvent.layout.width - 24;
+                if (w > 0 && Math.abs(w - measuredWidth) > 2) {
+                  setMeasuredWidth(w);
+                }
+              }}
+              style={styles.insightsChartBox}>
               <View style={styles.insightsChartTopRow}>
                 <View style={styles.insightsChartTitleRow}>
-                  <SvgActivity color="#8B5CF6" size={13} />
+                  <SvgAnalytics color="#4F46E5" size={13} />
                   <Text style={styles.insightsChartTitle}>
-                    NPM Daily Ingestion Waveform
+                    7-Day Download Velocity
                   </Text>
                 </View>
-                <Text style={[styles.insightsChartSub, {color: '#8B5CF6'}]}>
-                  Live Synced Stream
+                <Text style={styles.insightsChartSub}>
+                  Peak:{' '}
+                  {peakIn7Days > 0
+                    ? `${formatCompactNumber(peakIn7Days)} / day`
+                    : 'Live Sync'}
                 </Text>
               </View>
 
-              {/* Smooth Curved Spline Area SVG */}
-              <Svg width={chartWidth} height={chartHeight}>
-                <Defs>
-                  <LinearGradient id="ingestAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <Stop offset="0%" stopColor="#A855F7" stopOpacity={0.45} />
-                    <Stop offset="60%" stopColor="#8B5CF6" stopOpacity={0.15} />
-                    <Stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.0} />
-                  </LinearGradient>
-                </Defs>
+              {trendSeries.length > 0 ? (
+                <Svg width={chartWidth} height={chartHeight}>
+                  <Defs>
+                    <LinearGradient
+                      id="barGradNormal"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1">
+                      <Stop offset="0%" stopColor="#818CF8" stopOpacity={0.9} />
+                      <Stop
+                        offset="100%"
+                        stopColor="#4F46E5"
+                        stopOpacity={0.95}
+                      />
+                    </LinearGradient>
+                    <LinearGradient
+                      id="barGradPeak"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1">
+                      <Stop offset="0%" stopColor="#38BDF8" stopOpacity={1} />
+                      <Stop offset="100%" stopColor="#4F46E5" stopOpacity={1} />
+                    </LinearGradient>
+                    <LinearGradient
+                      id="barGradTrack"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1">
+                      <Stop offset="0%" stopColor="#F1F5F9" stopOpacity={0.8} />
+                      <Stop
+                        offset="100%"
+                        stopColor="#E2E8F0"
+                        stopOpacity={0.5}
+                      />
+                    </LinearGradient>
+                  </Defs>
 
-                {/* Baseline */}
-                <Line
-                  x1="0"
-                  y1={chartHeight - bottomPad}
-                  x2={chartWidth}
-                  y2={chartHeight - bottomPad}
-                  stroke="#E2E8F0"
-                  strokeWidth="1"
-                />
-                {/* Mid Reference Line */}
-                <Line
-                  x1="0"
-                  y1={topPad + usableHeight / 2}
-                  x2={chartWidth}
-                  y2={topPad + usableHeight / 2}
-                  stroke="#E2E8F0"
-                  strokeWidth="1"
-                  strokeDasharray="3,3"
-                />
-
-                {/* Shaded Area Fill */}
-                {areaPath ? (
-                  <Path d={areaPath} fill="url(#ingestAreaGrad)" />
-                ) : null}
-
-                {/* Smooth Curved Spline Stroke */}
-                {linePath ? (
-                  <Path
-                    d={linePath}
-                    fill="none"
-                    stroke="#7C3AED"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                  {/* Reference Baseline */}
+                  <Line
+                    x1="0"
+                    y1={chartHeight - bottomPad}
+                    x2={chartWidth}
+                    y2={chartHeight - bottomPad}
+                    stroke="#E2E8F0"
+                    strokeWidth="1"
                   />
-                ) : null}
+                  {/* Mid Reference Line */}
+                  <Line
+                    x1="0"
+                    y1={topPad + usableHeight / 2}
+                    x2={chartWidth}
+                    y2={topPad + usableHeight / 2}
+                    stroke="#E2E8F0"
+                    strokeWidth="1"
+                    strokeDasharray="3,3"
+                  />
 
-                {/* Data Pulse Nodes & Numbers */}
-                {splinePoints.map((p, idx) => {
-                  const isPeak = p.downloads === peakIn7Days && p.downloads > 0;
-                  const isLatest = idx === splinePoints.length - 1;
-                  const textY = Math.max(15, p.y - (isPeak ? 13 : 11));
-                  return (
-                    <G key={idx}>
-                      {/* Outer halo */}
-                      <Circle
-                        cx={p.x}
-                        cy={p.y}
-                        r={isPeak ? 7 : 5}
-                        fill={isPeak ? '#F3E8FF' : '#FFFFFF'}
-                        stroke={isPeak ? '#7C3AED' : '#8B5CF6'}
-                        strokeWidth={isPeak ? 2.5 : 2}
-                      />
-                      {/* Inner dot */}
-                      <Circle
-                        cx={p.x}
-                        cy={p.y}
-                        r={isPeak ? 3 : 2}
-                        fill={isPeak ? '#7C3AED' : '#6366F1'}
-                      />
-                      {/* Value Callout - Knockout white halo to prevent line collision */}
-                      <SvgText
-                        x={p.x}
-                        y={textY}
-                        fontSize="9"
-                        fontWeight="800"
-                        fill="#FFFFFF"
-                        stroke="#FFFFFF"
-                        strokeWidth="3.5"
-                        strokeLinejoin="round"
-                        textAnchor="middle">
-                        {formatCompactNumber(p.downloads)}
-                      </SvgText>
-                      {/* Value Callout - Foreground text */}
-                      <SvgText
-                        x={p.x}
-                        y={textY}
-                        fontSize="9"
-                        fontWeight="800"
-                        fill={isPeak ? '#7C3AED' : isLatest ? '#4F46E5' : '#64748B'}
-                        textAnchor="middle">
-                        {formatCompactNumber(p.downloads)}
-                      </SvgText>
-                    </G>
-                  );
-                })}
-              </Svg>
+                  {trendSeries.map((d, i) => {
+                    const h = Math.max(
+                      10,
+                      (d.downloads / maxDownload) * usableHeight,
+                    );
+                    const x = i * barSlotWidth + (barSlotWidth - barWidth) / 2;
+                    const y = chartHeight - bottomPad - h;
+                    const isToday = i === trendSeries.length - 1;
+                    const isPeak = d.downloads === peakIn7Days;
 
-              {/* Day & Ingestion Delta Axis Pills */}
+                    return (
+                      <G key={i}>
+                        <Rect
+                          x={x}
+                          y={topPad}
+                          width={barWidth}
+                          height={usableHeight}
+                          rx={barWidth / 2}
+                          fill="url(#barGradTrack)"
+                        />
+                        <Rect
+                          x={x}
+                          y={y}
+                          width={barWidth}
+                          height={h}
+                          rx={barWidth / 2}
+                          fill={
+                            isToday || isPeak
+                              ? 'url(#barGradPeak)'
+                              : 'url(#barGradNormal)'
+                          }
+                        />
+                        {/* Knockout halo text for crisp visibility over bars */}
+                        <SvgText
+                          x={x + barWidth / 2}
+                          y={Math.max(15, y - 7)}
+                          fontSize="9"
+                          fontWeight="800"
+                          fill="#FFFFFF"
+                          stroke="#FFFFFF"
+                          strokeWidth="3.5"
+                          strokeLinejoin="round"
+                          textAnchor="middle">
+                          {formatCompactNumber(d.downloads)}
+                        </SvgText>
+                        <SvgText
+                          x={x + barWidth / 2}
+                          y={Math.max(15, y - 7)}
+                          fontSize="9"
+                          fontWeight="800"
+                          fill={isToday || isPeak ? '#4F46E5' : '#64748B'}
+                          textAnchor="middle">
+                          {formatCompactNumber(d.downloads)}
+                        </SvgText>
+                      </G>
+                    );
+                  })}
+                </Svg>
+              ) : null}
+
+              {/* Weekday Axis Pills */}
               <View style={styles.insightsDayAxisRow}>
                 {trendSeries.map((d, i) => {
                   const isToday = i === trendSeries.length - 1;
@@ -1337,15 +1041,9 @@ const CombinedHeroHeader = ({
                     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
                         dObj.getDay()
                       ];
-                  const dayNum = isNaN(dObj.getTime()) ? '' : `${dObj.getDate()}`;
-                  const prev = i > 0 ? trendSeries[i - 1]?.downloads : undefined;
-                  const diff =
-                    prev !== undefined && prev > 0
-                      ? Math.round(((d.downloads - prev) / prev) * 100)
-                      : d.downloads > 0
-                      ? 100
-                      : 0;
-                  const isUp = diff >= 0;
+                  const dayNum = isNaN(dObj.getTime())
+                    ? ''
+                    : `${dObj.getDate()}`;
 
                   return (
                     <View
@@ -1353,7 +1051,6 @@ const CombinedHeroHeader = ({
                       style={[
                         styles.insightsDayPill,
                         isToday && styles.insightsDayPillActive,
-                        {alignItems: 'center'},
                       ]}>
                       <Text
                         style={[
@@ -1363,301 +1060,718 @@ const CombinedHeroHeader = ({
                         numberOfLines={1}>
                         {isToday ? 'Today' : `${weekday} ${dayNum}`}
                       </Text>
-                      <View
-                        style={[
-                          styles.ingestDeltaBadge,
-                          {
-                            backgroundColor: isUp ? '#F0FDF4' : '#FEF2F2',
-                          },
-                        ]}>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Velocity Summary Grid */}
+              <View style={styles.statsGrid}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {formatCompactNumber(insights.monthlyTotal)}
+                  </Text>
+                  <Text style={styles.statLbl}>30-Day Vol</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {formatCompactNumber(insights.weeklyTotal)}
+                  </Text>
+                  <Text style={styles.statLbl}>7-Day Vol</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {formatCompactNumber(insights.dailyAvg)}/d
+                  </Text>
+                  <Text style={styles.statLbl}>Daily Avg</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {formatCompactNumber(insights.peakDay.downloads)}
+                  </Text>
+                  <Text style={styles.statLbl}>Peak Day</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* ─── GRAPH 2: Country Download Breakdown (100% Dynamic Donut Gauge) ── */}
+            <View style={styles.insightsChartBox}>
+              <View style={styles.insightsChartTopRow}>
+                <View style={styles.insightsChartTitleRow}>
+                  <SvgGlobe color="#0284C7" size={13} />
+                  <Text style={styles.insightsChartTitle}>
+                    Country Download Breakdown
+                  </Text>
+                </View>
+                <Text style={[styles.insightsChartSub, {color: '#0284C7'}]}>
+                  Live Global Distribution
+                </Text>
+              </View>
+
+              {/* Radial Donut Ring Chart + Top Countries Legend */}
+              {(() => {
+                const size = 120;
+                const strokeWidth = 14;
+                const radius = (size - strokeWidth) / 2;
+                const circumference = 2 * Math.PI * radius;
+                let accumulatedPct = 0;
+
+                return (
+                  <View style={styles.countryDonutSection}>
+                    {/* SVG Donut Ring */}
+                    <View
+                      style={[
+                        styles.countryDonutWrapper,
+                        {width: size, height: size},
+                      ]}>
+                      <Svg width={size} height={size}>
+                        <Circle
+                          cx={size / 2}
+                          cy={size / 2}
+                          r={radius}
+                          stroke="#F1F5F9"
+                          strokeWidth={strokeWidth}
+                          fill="none"
+                        />
+                        {countrySeries.map(c => {
+                          const strokeLength =
+                            (c.percentage / 100) * circumference;
+                          const strokeDashoffset =
+                            -(accumulatedPct / 100) * circumference;
+                          accumulatedPct += c.percentage;
+
+                          return (
+                            <Circle
+                              key={c.code}
+                              cx={size / 2}
+                              cy={size / 2}
+                              r={radius}
+                              stroke={c.color}
+                              strokeWidth={strokeWidth}
+                              strokeDasharray={`${strokeLength} ${
+                                circumference - strokeLength
+                              }`}
+                              strokeDashoffset={strokeDashoffset}
+                              strokeLinecap="butt"
+                              fill="none"
+                              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+                            />
+                          );
+                        })}
+                      </Svg>
+                      <View style={styles.countryDonutCenterContent}>
+                        <Text style={styles.countryDonutCenterVal}>
+                          {formatCompactNumber(insights.monthlyTotal)}
+                        </Text>
+                        <Text style={styles.countryDonutCenterLbl}>
+                          Total Vol
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Top Countries Quick Legend Side Column */}
+                    <View style={styles.countryDonutLegendCol}>
+                      {countrySeries.slice(0, 4).map((c, i) => (
+                        <View key={i} style={styles.countryDonutLegendItem}>
+                          <View style={styles.countryDonutLegendLeft}>
+                            <View
+                              style={[
+                                styles.countryDonutLegendDot,
+                                {backgroundColor: c.color},
+                              ]}
+                            />
+                            <SvgMapPin size={10} color={c.color} />
+                            <Text
+                              style={styles.countryDonutLegendName}
+                              numberOfLines={1}>
+                              {c.code}
+                            </Text>
+                          </View>
+                          <Text style={styles.countryDonutLegendVal}>
+                            {c.percentage}%
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                );
+              })()}
+
+              {/* Ranked Country Performance Cards Table */}
+              <View style={styles.gap2Mt4}>
+                {countrySeries.map((c, idx) => {
+                  const isDetected = c.isClientRegion;
+                  return (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.countryRankCard,
+                        isDetected && styles.countryRankCardActive,
+                      ]}>
+                      <View style={styles.countryRankLeft}>
                         <Text
                           style={[
-                            styles.ingestDeltaText,
-                            {
-                              color: isUp ? '#16A34A' : '#DC2626',
-                            },
+                            styles.countryRankNum,
+                            idx < 3 && styles.countryRankNumTop,
                           ]}>
-                          {isUp ? `+${diff}%` : `${diff}%`}
+                          #{idx + 1}
+                        </Text>
+                        <View style={styles.countryCodePill}>
+                          <SvgMapPin size={10} color={c.color} />
+                          <Text style={styles.countryCodePillText}>
+                            {c.code}
+                          </Text>
+                        </View>
+                        <View style={styles.countryListNameCol}>
+                          <View style={styles.countryListNameRow}>
+                            <Text style={styles.countryListName}>{c.name}</Text>
+                            {isDetected && (
+                              <View style={styles.detectedBadge}>
+                                <SvgMapPin size={9} color="#059669" />
+                                <Text style={styles.detectedBadgeText}>
+                                  Your Region
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                          <View style={styles.countryProgressBarBg}>
+                            <View
+                              style={[
+                                styles.countryProgressBarFill,
+                                {
+                                  width: `${c.percentage}%`,
+                                  backgroundColor: c.color,
+                                },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.countryListRight}>
+                        <Text style={styles.countryListDownloads}>
+                          {c.downloads.toLocaleString()}
+                        </Text>
+                        <Text style={[styles.countryListPct, {color: c.color}]}>
+                          {c.percentage}% vol
                         </Text>
                       </View>
                     </View>
                   );
                 })}
               </View>
+            </View>
 
-              {/* Ingestion Stream Summary Row */}
-              <View style={styles.ingestStatsRow}>
-                <View style={styles.ingestStatItem}>
-                  <Text style={styles.ingestStatVal}>
-                    {trendSeries.reduce((s, d) => s + d.downloads, 0).toLocaleString()}
+            {/* ─── GRAPH 3: NPM Daily Ingestion Waveform Graph ──────── */}
+            {trendSeries.length > 0 && (
+              <View style={styles.insightsChartBox}>
+                <View style={styles.insightsChartTopRow}>
+                  <View style={styles.insightsChartTitleRow}>
+                    <SvgActivity color="#8B5CF6" size={13} />
+                    <Text style={styles.insightsChartTitle}>
+                      NPM Daily Ingestion Waveform
+                    </Text>
+                  </View>
+                  <Text style={[styles.insightsChartSub, {color: '#8B5CF6'}]}>
+                    Live Synced Stream
                   </Text>
-                  <Text style={styles.ingestStatLbl}>Ingested</Text>
                 </View>
-                <View style={styles.ingestStatItem}>
-                  <Text style={styles.ingestStatVal}>
-                    {peakIn7Days > 0 ? `${formatCompactNumber(peakIn7Days)}/d` : '0/d'}
-                  </Text>
-                  <Text style={styles.ingestStatLbl}>Peak Rate</Text>
+
+                {/* Smooth Curved Spline Area SVG */}
+                <Svg width={chartWidth} height={chartHeight}>
+                  <Defs>
+                    <LinearGradient
+                      id="ingestAreaGrad"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1">
+                      <Stop
+                        offset="0%"
+                        stopColor="#A855F7"
+                        stopOpacity={0.45}
+                      />
+                      <Stop
+                        offset="60%"
+                        stopColor="#8B5CF6"
+                        stopOpacity={0.15}
+                      />
+                      <Stop
+                        offset="100%"
+                        stopColor="#8B5CF6"
+                        stopOpacity={0.0}
+                      />
+                    </LinearGradient>
+                  </Defs>
+
+                  {/* Baseline */}
+                  <Line
+                    x1="0"
+                    y1={chartHeight - bottomPad}
+                    x2={chartWidth}
+                    y2={chartHeight - bottomPad}
+                    stroke="#E2E8F0"
+                    strokeWidth="1"
+                  />
+                  {/* Mid Reference Line */}
+                  <Line
+                    x1="0"
+                    y1={topPad + usableHeight / 2}
+                    x2={chartWidth}
+                    y2={topPad + usableHeight / 2}
+                    stroke="#E2E8F0"
+                    strokeWidth="1"
+                    strokeDasharray="3,3"
+                  />
+
+                  {/* Shaded Area Fill */}
+                  {areaPath ? (
+                    <Path d={areaPath} fill="url(#ingestAreaGrad)" />
+                  ) : null}
+
+                  {/* Smooth Curved Spline Stroke */}
+                  {linePath ? (
+                    <Path
+                      d={linePath}
+                      fill="none"
+                      stroke="#7C3AED"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  ) : null}
+
+                  {/* Data Pulse Nodes & Numbers */}
+                  {splinePoints.map((p, idx) => {
+                    const isPeak =
+                      p.downloads === peakIn7Days && p.downloads > 0;
+                    const isLatest = idx === splinePoints.length - 1;
+                    const textY = Math.max(15, p.y - (isPeak ? 13 : 11));
+                    return (
+                      <G key={idx}>
+                        {/* Outer halo */}
+                        <Circle
+                          cx={p.x}
+                          cy={p.y}
+                          r={isPeak ? 7 : 5}
+                          fill={isPeak ? '#F3E8FF' : '#FFFFFF'}
+                          stroke={isPeak ? '#7C3AED' : '#8B5CF6'}
+                          strokeWidth={isPeak ? 2.5 : 2}
+                        />
+                        {/* Inner dot */}
+                        <Circle
+                          cx={p.x}
+                          cy={p.y}
+                          r={isPeak ? 3 : 2}
+                          fill={isPeak ? '#7C3AED' : '#6366F1'}
+                        />
+                        {/* Value Callout - Knockout white halo to prevent line collision */}
+                        <SvgText
+                          x={p.x}
+                          y={textY}
+                          fontSize="9"
+                          fontWeight="800"
+                          fill="#FFFFFF"
+                          stroke="#FFFFFF"
+                          strokeWidth="3.5"
+                          strokeLinejoin="round"
+                          textAnchor="middle">
+                          {formatCompactNumber(p.downloads)}
+                        </SvgText>
+                        {/* Value Callout - Foreground text */}
+                        <SvgText
+                          x={p.x}
+                          y={textY}
+                          fontSize="9"
+                          fontWeight="800"
+                          fill={
+                            isPeak
+                              ? '#7C3AED'
+                              : isLatest
+                              ? '#4F46E5'
+                              : '#64748B'
+                          }
+                          textAnchor="middle">
+                          {formatCompactNumber(p.downloads)}
+                        </SvgText>
+                      </G>
+                    );
+                  })}
+                </Svg>
+
+                {/* Day & Ingestion Delta Axis Pills */}
+                <View style={styles.insightsDayAxisRow}>
+                  {trendSeries.map((d, i) => {
+                    const isToday = i === trendSeries.length - 1;
+                    const dObj = new Date(d.day);
+                    const weekday = isNaN(dObj.getTime())
+                      ? `D${i + 1}`
+                      : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+                          dObj.getDay()
+                        ];
+                    const dayNum = isNaN(dObj.getTime())
+                      ? ''
+                      : `${dObj.getDate()}`;
+                    const prev =
+                      i > 0 ? trendSeries[i - 1]?.downloads : undefined;
+                    const diff =
+                      prev !== undefined && prev > 0
+                        ? Math.round(((d.downloads - prev) / prev) * 100)
+                        : d.downloads > 0
+                        ? 100
+                        : 0;
+                    const isUp = diff >= 0;
+
+                    return (
+                      <View
+                        key={i}
+                        style={[
+                          styles.insightsDayPill,
+                          isToday && styles.insightsDayPillActive,
+                          {alignItems: 'center'},
+                        ]}>
+                        <Text
+                          style={[
+                            styles.insightsDayPillText,
+                            isToday && styles.insightsDayPillTextActive,
+                          ]}
+                          numberOfLines={1}>
+                          {isToday ? 'Today' : `${weekday} ${dayNum}`}
+                        </Text>
+                        <View
+                          style={[
+                            styles.ingestDeltaBadge,
+                            {
+                              backgroundColor: isUp ? '#F0FDF4' : '#FEF2F2',
+                            },
+                          ]}>
+                          <Text
+                            style={[
+                              styles.ingestDeltaText,
+                              {
+                                color: isUp ? '#16A34A' : '#DC2626',
+                              },
+                            ]}>
+                            {isUp ? `+${diff}%` : `${diff}%`}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })}
                 </View>
-                <View style={styles.ingestStatItem}>
-                  <Text style={styles.ingestStatVal}>100%</Text>
-                  <Text style={styles.ingestStatLbl}>Sync Health</Text>
-                </View>
-                <View style={styles.ingestStatItem}>
-                  <Text style={styles.ingestStatVal}>
-                    {trendSeries.length} Points
-                  </Text>
-                  <Text style={styles.ingestStatLbl}>Timeline</Text>
+
+                {/* Ingestion Stream Summary Row */}
+                <View style={styles.ingestStatsRow}>
+                  <View style={styles.ingestStatItem}>
+                    <Text style={styles.ingestStatVal}>
+                      {trendSeries
+                        .reduce((s, d) => s + d.downloads, 0)
+                        .toLocaleString()}
+                    </Text>
+                    <Text style={styles.ingestStatLbl}>Ingested</Text>
+                  </View>
+                  <View style={styles.ingestStatItem}>
+                    <Text style={styles.ingestStatVal}>
+                      {peakIn7Days > 0
+                        ? `${formatCompactNumber(peakIn7Days)}/d`
+                        : '0/d'}
+                    </Text>
+                    <Text style={styles.ingestStatLbl}>Peak Rate</Text>
+                  </View>
+                  <View style={styles.ingestStatItem}>
+                    <Text style={styles.ingestStatVal}>100%</Text>
+                    <Text style={styles.ingestStatLbl}>Sync Health</Text>
+                  </View>
+                  <View style={styles.ingestStatItem}>
+                    <Text style={styles.ingestStatVal}>
+                      {trendSeries.length} Points
+                    </Text>
+                    <Text style={styles.ingestStatLbl}>Timeline</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
-        </View>
-      )}
+            )}
+          </View>
+        ))}
 
       {/* ─── TAB 2: Live NPM Registry & Releases ─────────────────────────── */}
-      {activeTab === 'releases' && (
-        <View style={styles.insightsCardsContainer}>
-          {/* Card 1: NPM Package Vitals */}
-          <View style={styles.insightsSubCard}>
-            <View style={styles.insightsCardHeaderRow}>
-              <View style={styles.insightsCardTitleGroup}>
-                <SvgDatabase color="#0284C7" size={13} />
-                <Text style={styles.insightsCardTitle}>
-                  NPM Registry &amp; Package Vitals
-                </Text>
-              </View>
-              <Text style={styles.insightsCardBadge}>
-                v{insights.registry.latestVersion || npmMeta.version}
-              </Text>
-            </View>
-
-            <View style={styles.statsGrid}>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {insights.registry.unpackedSizeMB}
-                </Text>
-                <Text style={styles.statLbl}>Unpacked</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {insights.registry.totalVersions}
-                </Text>
-                <Text style={styles.statLbl}>Releases</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {insights.registry.fileCount}
-                </Text>
-                <Text style={styles.statLbl}>Files</Text>
-              </View>
-              <View style={styles.statBox}>
-                <Text style={styles.statVal}>
-                  {insights.registry.dependenciesCount}
-                </Text>
-                <Text style={styles.statLbl}>Deps</Text>
-              </View>
-            </View>
-
-            <View style={styles.gap2Mt4}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>License</Text>
-                <Text style={styles.infoValue}>
-                  {insights.registry.license || 'MIT'}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Maintainers Count</Text>
-                <Text style={styles.infoValue}>
-                  {insights.registry.maintainersCount}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Latest Release Date</Text>
-                <Text style={[styles.infoValue, {color: '#0284C7'}]}>
-                  {insights.registry.publishedDate || 'Active'}
-                </Text>
-              </View>
-            </View>
+      {activeTab === 'releases' &&
+        (loading ? (
+          <View style={styles.insightsCardsContainer}>
+            <SkeletonPlaceholder cardCount={2} />
           </View>
-
-          {/* Card 2: Recent Version History */}
-          {insights.registry.recentReleases.length > 0 && (
+        ) : (
+          <View style={styles.insightsCardsContainer}>
+            {/* Card 1: NPM Package Vitals */}
             <View style={styles.insightsSubCard}>
               <View style={styles.insightsCardHeaderRow}>
                 <View style={styles.insightsCardTitleGroup}>
-                  <SvgBolt color="#0284C7" size={13} />
+                  <SvgDatabase color="#0284C7" size={13} />
                   <Text style={styles.insightsCardTitle}>
-                    Recent Version Releases
+                    NPM Registry &amp; Package Vitals
                   </Text>
                 </View>
-                <Text style={styles.insightsCardBadge}>Live Registry</Text>
+                <Text style={styles.insightsCardBadge}>
+                  v{insights.registry.latestVersion || npmMeta.version}
+                </Text>
+              </View>
+
+              <View style={styles.statsGrid}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {insights.registry.unpackedSizeMB}
+                  </Text>
+                  <Text style={styles.statLbl}>Unpacked</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {insights.registry.totalVersions}
+                  </Text>
+                  <Text style={styles.statLbl}>Releases</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {insights.registry.fileCount}
+                  </Text>
+                  <Text style={styles.statLbl}>Files</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>
+                    {insights.registry.dependenciesCount}
+                  </Text>
+                  <Text style={styles.statLbl}>Deps</Text>
+                </View>
               </View>
 
               <View style={styles.gap2Mt4}>
-                {insights.registry.recentReleases.map((rel, idx) => (
-                  <View key={idx} style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>v{rel.version}</Text>
-                    <Text style={styles.infoValue}>
-                      {rel.date} • {rel.sizeMB}
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>License</Text>
+                  <Text style={styles.infoValue}>
+                    {insights.registry.license || 'MIT'}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Maintainers Count</Text>
+                  <Text style={styles.infoValue}>
+                    {insights.registry.maintainersCount}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Latest Release Date</Text>
+                  <Text style={[styles.infoValue, {color: '#0284C7'}]}>
+                    {insights.registry.publishedDate || 'Active'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Card 2: Recent Version History */}
+            {insights.registry.recentReleases.length > 0 && (
+              <View style={styles.insightsSubCard}>
+                <View style={styles.insightsCardHeaderRow}>
+                  <View style={styles.insightsCardTitleGroup}>
+                    <SvgBolt color="#0284C7" size={13} />
+                    <Text style={styles.insightsCardTitle}>
+                      Recent Version Releases
                     </Text>
                   </View>
-                ))}
+                  <Text style={styles.insightsCardBadge}>Live Registry</Text>
+                </View>
+
+                <View style={styles.gap2Mt4}>
+                  {insights.registry.recentReleases.map((rel, idx) => (
+                    <View key={idx} style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>v{rel.version}</Text>
+                      <Text style={styles.infoValue}>
+                        {rel.date} • {rel.sizeMB}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
               </View>
-            </View>
-          )}
-        </View>
-      )}
+            )}
+          </View>
+        ))}
 
       {/* ─── TAB 3: Live Host Geo & System Telemetry ────────────────────── */}
-      {activeTab === 'telemetry' && (
-        <View style={styles.insightsCardsContainer}>
-          {/* Card 1: Client Geo & ISP Telemetry */}
-          <View style={styles.insightsSubCard}>
-            <View style={styles.insightsCardHeaderRow}>
-              <View style={styles.insightsCardTitleGroup}>
-                <SvgGlobe color="#10B981" size={13} />
-                <Text style={styles.insightsCardTitle}>
-                  Host &amp; Network Telemetry
-                </Text>
+      {activeTab === 'telemetry' &&
+        (loading ? (
+          <View style={styles.insightsCardsContainer}>
+            <SkeletonPlaceholder cardCount={2} />
+          </View>
+        ) : (
+          <View style={styles.insightsCardsContainer}>
+            {/* Card 1: Client Geo & ISP Telemetry */}
+            <View style={styles.insightsSubCard}>
+              <View style={styles.insightsCardHeaderRow}>
+                <View style={styles.insightsCardTitleGroup}>
+                  <SvgGlobe color="#10B981" size={13} />
+                  <Text style={styles.insightsCardTitle}>
+                    Host &amp; Network Telemetry
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.insightsCardBadge,
+                    {
+                      backgroundColor: '#ECFDF5',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                    },
+                  ]}>
+                  <SvgMapPin size={10} color="#10B981" />
+                  <Text
+                    style={{fontSize: 10, fontWeight: '800', color: '#10B981'}}>
+                    {insights.geo.countryCode}
+                  </Text>
+                </View>
               </View>
-              <View
-                style={[
-                  styles.insightsCardBadge,
-                  {
-                    backgroundColor: '#ECFDF5',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 4,
-                  },
-                ]}>
-                <SvgMapPin size={10} color="#10B981" />
+
+              <View style={styles.gap2Mt4}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Detected Location</Text>
+                  <Text style={styles.infoValue}>
+                    {insights.geo.city ? `${insights.geo.city}, ` : ''}
+                    {insights.geo.country}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>ISP / Carrier</Text>
+                  <Text style={styles.infoValue}>{insights.geo.isp}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Timezone</Text>
+                  <Text style={styles.infoValue}>{insights.geo.timezone}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Client IP</Text>
+                  <Text style={styles.infoValue}>{insights.geo.ip}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Card 2: Live Runtime & Engine Telemetry */}
+            <View style={styles.insightsSubCard}>
+              <View style={styles.insightsCardHeaderRow}>
+                <View style={styles.insightsCardTitleGroup}>
+                  <SvgLayers color="#6366F1" size={13} />
+                  <Text style={styles.insightsCardTitle}>
+                    Device &amp; Architecture
+                  </Text>
+                </View>
                 <Text
-                  style={{fontSize: 10, fontWeight: '800', color: '#10B981'}}>
-                  {insights.geo.countryCode}
+                  style={[
+                    styles.insightsCardBadge,
+                    {color: '#6366F1', backgroundColor: '#EEF2FF'},
+                  ]}>
+                  {insights.runtime.os}
                 </Text>
+              </View>
+
+              <View style={styles.platformPillsGrid}>
+                <View style={styles.platformDynamicPill}>
+                  <SvgCpu size={12} color="#6366F1" />
+                  <Text
+                    style={styles.platformDynamicPillText}
+                    numberOfLines={1}>
+                    {insights.runtime.os} {insights.runtime.osVersion}
+                  </Text>
+                </View>
+                <View style={styles.platformDynamicPill}>
+                  <SvgLayers size={12} color="#0284C7" />
+                  <Text
+                    style={styles.platformDynamicPillText}
+                    numberOfLines={1}>
+                    {insights.runtime.resolution} ({insights.runtime.pixelRatio}
+                    x)
+                  </Text>
+                </View>
+                <View style={styles.platformDynamicPill}>
+                  <SvgZap size={12} color="#F59E0B" />
+                  <Text
+                    style={styles.platformDynamicPillText}
+                    numberOfLines={1}>
+                    Hermes: {insights.runtime.isHermes ? 'Active' : 'JSC'}
+                  </Text>
+                </View>
+                <View style={styles.platformDynamicPill}>
+                  <SvgLayers size={12} color="#4F46E5" />
+                  <Text
+                    style={styles.platformDynamicPillText}
+                    numberOfLines={1}>
+                    Fabric: {insights.runtime.isFabric ? 'Enabled' : 'Legacy'}
+                  </Text>
+                </View>
+                <View style={styles.platformDynamicPill}>
+                  <SvgActivity size={12} color="#10B981" />
+                  <Text
+                    style={styles.platformDynamicPillText}
+                    numberOfLines={1}>
+                    Bridgeless: {insights.runtime.isBridgeless ? 'Yes' : 'No'}
+                  </Text>
+                </View>
+                <View style={styles.platformDynamicPill}>
+                  <SvgBolt size={12} color="#0284C7" />
+                  <Text
+                    style={styles.platformDynamicPillText}
+                    numberOfLines={1}>
+                    RN {insights.runtime.rnVersion}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            <View style={styles.gap2Mt4}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Detected Location</Text>
-                <Text style={styles.infoValue}>
-                  {insights.geo.city ? `${insights.geo.city}, ` : ''}{insights.geo.country}
+            {/* Card 3: Live Inspector Session Telemetry */}
+            <View style={styles.insightsSubCard}>
+              <View style={styles.insightsCardHeaderRow}>
+                <View style={styles.insightsCardTitleGroup}>
+                  <SvgActivity color="#8B5CF6" size={13} />
+                  <Text style={styles.insightsCardTitle}>
+                    Live Session Diagnostics
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.insightsCardBadge,
+                    {color: '#8B5CF6', backgroundColor: '#F3E8FF'},
+                  ]}>
+                  Realtime
                 </Text>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>ISP / Carrier</Text>
-                <Text style={styles.infoValue}>{insights.geo.isp}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Timezone</Text>
-                <Text style={styles.infoValue}>{insights.geo.timezone}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Client IP</Text>
-                <Text style={styles.infoValue}>{insights.geo.ip}</Text>
+
+              <View style={styles.gap2Mt4}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Captured Network Logs</Text>
+                  <Text style={styles.infoValue}>
+                    {insights.telemetry.networkCount} requests
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Recorded Crashes</Text>
+                  <Text style={styles.infoValue}>
+                    {insights.telemetry.crashCount} events
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Redux Store Inspector</Text>
+                  <Text style={styles.infoValue}>
+                    {insights.telemetry.reduxConnected
+                      ? 'Connected ✅'
+                      : 'Not Attached'}
+                  </Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Native TurboModule FAB</Text>
+                  <Text style={styles.infoValue}>
+                    {insights.telemetry.nativeFABAvailable
+                      ? 'Available ✅'
+                      : 'JS Fallback'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-
-          {/* Card 2: Live Runtime & Engine Telemetry */}
-          <View style={styles.insightsSubCard}>
-            <View style={styles.insightsCardHeaderRow}>
-              <View style={styles.insightsCardTitleGroup}>
-                <SvgLayers color="#6366F1" size={13} />
-                <Text style={styles.insightsCardTitle}>
-                  Device &amp; Architecture
-                </Text>
-              </View>
-              <Text
-                style={[
-                  styles.insightsCardBadge,
-                  {color: '#6366F1', backgroundColor: '#EEF2FF'},
-                ]}>
-                {insights.runtime.os}
-              </Text>
-            </View>
-
-            <View style={styles.platformPillsGrid}>
-              <View style={styles.platformDynamicPill}>
-                <SvgCpu size={12} color="#6366F1" />
-                <Text style={styles.platformDynamicPillText} numberOfLines={1}>
-                  {insights.runtime.os} {insights.runtime.osVersion}
-                </Text>
-              </View>
-              <View style={styles.platformDynamicPill}>
-                <SvgLayers size={12} color="#0284C7" />
-                <Text style={styles.platformDynamicPillText} numberOfLines={1}>
-                  {insights.runtime.resolution} ({insights.runtime.pixelRatio}x)
-                </Text>
-              </View>
-              <View style={styles.platformDynamicPill}>
-                <SvgZap size={12} color="#F59E0B" />
-                <Text style={styles.platformDynamicPillText} numberOfLines={1}>
-                  Hermes: {insights.runtime.isHermes ? 'Active' : 'JSC'}
-                </Text>
-              </View>
-              <View style={styles.platformDynamicPill}>
-                <SvgLayers size={12} color="#4F46E5" />
-                <Text style={styles.platformDynamicPillText} numberOfLines={1}>
-                  Fabric: {insights.runtime.isFabric ? 'Enabled' : 'Legacy'}
-                </Text>
-              </View>
-              <View style={styles.platformDynamicPill}>
-                <SvgActivity size={12} color="#10B981" />
-                <Text style={styles.platformDynamicPillText} numberOfLines={1}>
-                  Bridgeless: {insights.runtime.isBridgeless ? 'Yes' : 'No'}
-                </Text>
-              </View>
-              <View style={styles.platformDynamicPill}>
-                <SvgBolt size={12} color="#0284C7" />
-                <Text style={styles.platformDynamicPillText} numberOfLines={1}>
-                  RN {insights.runtime.rnVersion}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Card 3: Live Inspector Session Telemetry */}
-          <View style={styles.insightsSubCard}>
-            <View style={styles.insightsCardHeaderRow}>
-              <View style={styles.insightsCardTitleGroup}>
-                <SvgActivity color="#8B5CF6" size={13} />
-                <Text style={styles.insightsCardTitle}>
-                  Live Session Diagnostics
-                </Text>
-              </View>
-              <Text
-                style={[
-                  styles.insightsCardBadge,
-                  {color: '#8B5CF6', backgroundColor: '#F3E8FF'},
-                ]}>
-                Realtime
-              </Text>
-            </View>
-
-            <View style={styles.gap2Mt4}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Captured Network Logs</Text>
-                <Text style={styles.infoValue}>{insights.telemetry.networkCount} requests</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Recorded Crashes</Text>
-                <Text style={styles.infoValue}>{insights.telemetry.crashCount} events</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Redux Store Inspector</Text>
-                <Text style={styles.infoValue}>{insights.telemetry.reduxConnected ? 'Connected ✅' : 'Not Attached'}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Native TurboModule FAB</Text>
-                <Text style={styles.infoValue}>{insights.telemetry.nativeFABAvailable ? 'Available ✅' : 'JS Fallback'}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
+        ))}
     </View>
   );
 };
@@ -1748,7 +1862,9 @@ export function HomeScreen() {
       dimensions: `${Math.round(SCREEN_WIDTH)} × ${Math.round(
         Dimensions.get('window').height,
       )} pt`,
-      resolution: `${Math.round(SCREEN_WIDTH * PixelRatio.get())} × ${Math.round(
+      resolution: `${Math.round(
+        SCREEN_WIDTH * PixelRatio.get(),
+      )} × ${Math.round(
         Dimensions.get('window').height * PixelRatio.get(),
       )} px`,
       pixelRatio: PixelRatio.get(),
@@ -1995,13 +2111,13 @@ export function HomeScreen() {
         architecture: isFabric
           ? 'New Architecture (Fabric)'
           : 'Paper Bridge Architecture',
-        jsEngine: isHermes
-          ? 'Hermes Engine'
-          : 'JavaScriptCore (JSC)',
+        jsEngine: isHermes ? 'Hermes Engine' : 'JavaScriptCore (JSC)',
         dimensions: `${Math.round(SCREEN_WIDTH)} × ${Math.round(
           Dimensions.get('window').height,
         )} pt`,
-        resolution: `${Math.round(SCREEN_WIDTH * PixelRatio.get())} × ${Math.round(
+        resolution: `${Math.round(
+          SCREEN_WIDTH * PixelRatio.get(),
+        )} × ${Math.round(
           Dimensions.get('window').height * PixelRatio.get(),
         )} px`,
         pixelRatio: PixelRatio.get(),
@@ -2232,21 +2348,17 @@ export function HomeScreen() {
       <ScrollView
         contentContainerStyle={[styles.content, {paddingBottom: bottomPadding}]}
         showsVerticalScrollIndicator={false}>
-        {liveInsights.loading ? (
-          <SkeletonPlaceholder cardCount={4} />
-        ) : (
-          <ModuleErrorBoundary moduleName="Combined Hero Header">
-            <CombinedHeroHeader
-              npmMeta={npmMeta}
-              githubMeta={githubMeta}
-              insights={liveInsights}
-              copiedInstall={copiedInstall}
-              onCopyInstall={copyInstallCommand}
-              onRefresh={fetchLiveInsightsData}
-              onOpenUrl={openUrl}
-            />
-          </ModuleErrorBoundary>
-        )}
+        <ModuleErrorBoundary moduleName="Combined Hero Header">
+          <CombinedHeroHeader
+            npmMeta={npmMeta}
+            githubMeta={githubMeta}
+            insights={liveInsights}
+            copiedInstall={copiedInstall}
+            onCopyInstall={copyInstallCommand}
+            onRefresh={fetchLiveInsightsData}
+            onOpenUrl={openUrl}
+          />
+        </ModuleErrorBoundary>
       </ScrollView>
 
       {/* ─── STATIC FOOTER ACTION BAR: FAST BATCH SIMULATION ──────────────── */}

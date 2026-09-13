@@ -86,64 +86,63 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     : AppColors.purple200;
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={handleCancel}>
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleCancel} />
+    <View
+      style={[
+        StyleSheet.absoluteFill,
+        styles.overlay,
+        {zIndex: 999999, elevation: 999},
+      ]}>
+      <Pressable style={styles.backdrop} onPress={handleCancel} />
 
-        <View style={styles.card}>
-          {/* Close corner button */}
+      <View style={styles.card}>
+        {/* Close corner button */}
+        <TouchableScale
+          onPress={handleCancel}
+          hitSlop={8}
+          style={styles.cornerCloseBtn}>
+          <CloseWhite size={11} color={AppColors.grayTextWeak} />
+        </TouchableScale>
+
+        {/* Top glowing icon badge */}
+        <View
+          style={[
+            styles.iconBadge,
+            {backgroundColor: badgeBg, borderColor: badgeBorder},
+          ]}>
+          {renderIcon()}
+        </View>
+
+        {/* Title & Message */}
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.message}>{message}</Text>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonRow}>
           <TouchableScale
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={resolvedCancelText}
             onPress={handleCancel}
-            hitSlop={8}
-            style={styles.cornerCloseBtn}>
-            <CloseWhite size={11} color={AppColors.grayTextWeak} />
+            style={styles.cancelBtn}>
+            <Text style={styles.cancelBtnText}>{resolvedCancelText}</Text>
           </TouchableScale>
 
-          {/* Top glowing icon badge */}
-          <View
+          <TouchableScale
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={resolvedConfirmText}
+            onPress={handleConfirm}
             style={[
-              styles.iconBadge,
-              {backgroundColor: badgeBg, borderColor: badgeBorder},
+              styles.confirmBtn,
+              isDestructive
+                ? styles.confirmBtnDestructive
+                : styles.confirmBtnPrimary,
             ]}>
-            {renderIcon()}
-          </View>
-
-          {/* Title & Message */}
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
-
-          {/* Action Buttons */}
-          <View style={styles.buttonRow}>
-            <TouchableScale
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={resolvedCancelText}
-              onPress={handleCancel}
-              style={styles.cancelBtn}>
-              <Text style={styles.cancelBtnText}>{resolvedCancelText}</Text>
-            </TouchableScale>
-
-            <TouchableScale
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={resolvedConfirmText}
-              onPress={handleConfirm}
-              style={[
-                styles.confirmBtn,
-                isDestructive
-                  ? styles.confirmBtnDestructive
-                  : styles.confirmBtnPrimary,
-              ]}>
-              <Text style={styles.confirmBtnText}>{resolvedConfirmText}</Text>
-            </TouchableScale>
-          </View>
+            <Text style={styles.confirmBtnText}>{resolvedConfirmText}</Text>
+          </TouchableScale>
         </View>
       </View>
-    </Modal>
+    </View>
   );
 };
 

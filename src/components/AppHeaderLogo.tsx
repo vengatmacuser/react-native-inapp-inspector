@@ -5,10 +5,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-
-// Bundled animated GIF logo for the Inspector brand
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const BRAND_GIF_LOGO = require('../../../assets/inapp_inspector_icon.gif');
+import {BrandCircleIcon} from './BrandCircleIcon';
 
 interface AppHeaderLogoProps {
   size?: number;
@@ -19,7 +16,7 @@ interface AppHeaderLogoProps {
 export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
   size = 64,
   customIcon,
-  shape = 'square',
+  shape = 'circle',
 }) => {
   const cornerRadius = shape === 'circle' ? size / 2 : Math.round(size * 0.2265);
 
@@ -67,22 +64,18 @@ export const AppHeaderLogo: React.FC<AppHeaderLogoProps> = ({
     );
   }
 
-  // 2. Default: Inspector's Animated GIF Brand Logo
+  // 2. Default: Ultra Crisp High-Resolution Vector Brand Icon
   return (
     <View
       style={[
-        logoStyles.imageContainer,
+        logoStyles.container,
         {
           width: size,
           height: size,
           borderRadius: cornerRadius,
         },
       ]}>
-      <Image
-        source={BRAND_GIF_LOGO}
-        style={[logoStyles.image, {borderRadius: cornerRadius}]}
-        resizeMode="cover"
-      />
+      <BrandCircleIcon size={size} />
     </View>
   );
 };

@@ -2495,6 +2495,60 @@ export const CameraIcon = ({
   </Svg>
 );
 
+export const ScreenshotCaptureIcon = ({
+  color = AppColors.white,
+  size = 18,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 7V4a1 1 0 0 1 1-1h3M17 3h3a1 1 0 0 1 1 1v3M21 17v3a1 1 0 0 1-1 1h-3M7 21H4a1 1 0 0 1-1-1v-3"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="12" cy="12" r="4.2" stroke={color} strokeWidth="2" />
+    <Circle cx="12" cy="12" r="1.8" fill={color} />
+  </Svg>
+);
+
+export const CameraLensIcon = ({
+  color = AppColors.white,
+  size = 20,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
+    <Circle cx="12" cy="12" r="6" stroke={color} strokeWidth="1.4" strokeDasharray="3 2" />
+    <Circle cx="12" cy="12" r="3" fill={color} />
+    <Path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+  </Svg>
+);
+
+export const ScreenRecordIcon = ({
+  color = AppColors.white,
+  size = 18,
+}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect
+      x="2"
+      y="4"
+      width="14"
+      height="16"
+      rx="3"
+      stroke={color}
+      strokeWidth="2"
+    />
+    <Path
+      d="M16 10l5-3.5v11L16 14v-4z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="9" cy="12" r="2.5" fill={color} />
+  </Svg>
+);
+
 export const VideoCameraIcon = ({
   color = AppColors.white,
   size = 18,

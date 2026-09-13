@@ -845,7 +845,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   driverTabsContainer: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -907,7 +907,7 @@ const styles = StyleSheet.create({
   actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     backgroundColor: AppColors.primaryLight,
     borderBottomWidth: 1,
@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 5,
     backgroundColor: `${AppColors.grayBorderSecondary}40`,
   },
@@ -973,14 +973,14 @@ const styles = StyleSheet.create({
   statsSubtext: {
     fontFamily: AppFonts.interBold,
     fontSize: 9.5,
-    color: AppColors.grayTextWeak,
+    color: AppColors.purple,
   },
   scrollArea: {
     flex: 1,
   },
   scrollContent: {
-    padding: 12,
-    gap: 10,
+    padding: 8,
+    gap: 8,
     paddingBottom: 100,
   },
   emptyScrollContent: {

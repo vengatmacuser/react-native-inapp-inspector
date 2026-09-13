@@ -329,7 +329,7 @@ const AnalyticsEventCard = React.memo(function AnalyticsEventCard({
 
 const cardStyles = StyleSheet.create({
   container: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
     paddingVertical: 4,
     height: 86,
     justifyContent: 'center',
@@ -357,8 +357,8 @@ const cardStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
     shadowColor: AppColors.black,
     shadowOpacity: 0.03,
     shadowRadius: 3,
