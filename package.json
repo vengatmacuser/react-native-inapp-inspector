@@ -134,8 +134,13 @@
     "watch": "tsc -w",
     "prepack": "npm run build",
     "release": "node release.cjs",
-    "bundle-visualizer": "react-native-bundle-visualizer",
-    "serve-apk": "node ./bin/cli.js 8083"
+    "serve-apk": "node ./bin/cli.js 8083",
+    "e2e:build:ios": "cd example && npm run e2e:build:ios",
+    "e2e:test:ios": "cd example && npm run e2e:test:ios",
+    "e2e:build:android": "cd example && npm run e2e:build:android",
+    "e2e:test:android": "cd example && npm run e2e:test:android",
+    "e2e:coverage": "cd example && npm run e2e:coverage",
+    "e2e:report": "cd example && npm run e2e:report"
   },
   "bin": {
     "react-native-inapp-inspector": "./bin/cli.js"

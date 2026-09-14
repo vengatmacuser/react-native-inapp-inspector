@@ -562,6 +562,7 @@ export interface LogCardProps {
   isSelected: boolean;
   onToggleSelect: (id: number) => void;
   searchStr?: string;
+  testID?: string;
 }
 
 export interface MetaAccordionProps {
@@ -624,6 +625,7 @@ export interface ConsoleLogCardProps {
   item: ConsoleLog;
   searchStr?: string;
   onPress?: (item: ConsoleLog) => void;
+  testID?: string;
 }
 
 export interface JsonContent {

@@ -385,6 +385,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   item,
   searchStr = '',
   onPress,
+  testID,
 }: ConsoleLogCardProps) {
   const {setSelectedLog} = useInspector();
   const {t} = useTranslation();
@@ -501,6 +502,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   return (
     <View style={styles.container}>
       <TouchableScale
+        testID={testID}
         onPress={openDetail}
         style={[
           styles.card,

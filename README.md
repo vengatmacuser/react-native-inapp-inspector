@@ -513,6 +513,25 @@ npm run android
 
 ---
 
+## 🧪 E2E Simulation & Visual Regression Testing
+
+`react-native-inapp-inspector` includes a comprehensive 15-suite gray-box E2E test suite powered by **Detox**, **Page Object Model (POM)**, **Pixel-Diff Visual Regression**, and **Interactive HTML Test Reports**:
+
+```bash
+# Run all 15 E2E test suites on iOS simulator
+npm run e2e:test:ios
+
+# Run on Android emulator
+npm run e2e:test:android
+
+# Generate & open interactive HTML visual test report
+npm run e2e:report
+```
+
+For the complete testing architecture, POM locators taxonomy, and chaos scenarios, see the [Detox E2E Testing Guide](docs/DETOX_E2E_GUIDE.md).
+
+---
+
 ## 🤝 Contributing
 
 Contributions are warmly welcomed! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) to get started with local development and testing.

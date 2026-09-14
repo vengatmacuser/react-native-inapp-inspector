@@ -93,7 +93,7 @@ const TabBar = React.memo(() => {
   const isAnalyticsAvail = isAnalyticsConnected();
 
   const isMediaActive = activeTab === 'media';
-  const showMediaTab = (tabVisibility?.media ?? true) && mediaCount > 0;
+  const showMediaTab = (tabVisibility?.media ?? true) && (mediaCount > 0 || isMediaActive || __DEV__);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -155,6 +155,7 @@ const TabBar = React.memo(() => {
 
       {/* Scrollable Main Tabs (#1 - #10) */}
       <ScrollView
+        testID="inspector.tab.scrollview"
         ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -271,6 +272,7 @@ const TabBar = React.memo(() => {
             return (
               <TouchableScale
                 key={tab.key}
+                testID={`inspector.tab.${tab.key}`}
                 onPress={() => {
                   switchActiveTab(tab.key);
                 }}
@@ -458,6 +460,7 @@ const TabBar = React.memo(() => {
           }}>
           <TouchableScale
             key="media"
+            testID="inspector.tab.media"
             onPress={() => {
               switchActiveTab('media');
             }}

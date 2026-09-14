@@ -76,6 +76,7 @@ const ConsoleTab = React.memo(() => {
     ({item, index}: {item: any; index: number}) => (
       <AnimatedEntrance index={index} distance={8}>
         <ConsoleLogCard
+          testID={`inspector.console.item.${index}`}
           item={item}
           searchStr={logSearch}
           onPress={handleSelectLog}
@@ -423,6 +424,7 @@ const ConsoleTab = React.memo(() => {
 
               return (
                 <TouchableScale
+                  testID={`inspector.console.filter.${chip.id}`}
                   key={chip.id}
                   onPress={() => {
                     if (chip.id === 'all') {

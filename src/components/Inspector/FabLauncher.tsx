@@ -558,6 +558,7 @@ const FabLauncher = () => {
           style={[styles.fabWrapper, {transform: fabPan.getTranslateTransform()}]}
           {...circularPanResponder.panHandlers}>
           <TouchableScale
+            testID="inspector.fab.launcher"
             style={{alignItems: 'center', justifyContent: 'center'}}
             onPress={() => {
               if (fabDraggedRef.current) return;

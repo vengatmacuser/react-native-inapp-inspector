@@ -476,6 +476,7 @@ const NetworkTab = React.memo(() => {
       }
 
       const {log, isLast, color} = item;
+      const logItemIndex = displayedData.slice(0, index).filter(i => !i.type).length;
       return (
         <AnimatedEntrance
           index={index}
@@ -501,6 +502,7 @@ const NetworkTab = React.memo(() => {
           )}
           <View style={isGroupByPageEnabled ? styles.treeCardWrapper : {flex: 1}}>
             <LogCard
+              testID={`inspector.network.item.${logItemIndex}`}
               item={log}
               isSelected={selectedLogs.has(log.id)}
               onToggleSelect={toggleSelect}
@@ -517,6 +519,7 @@ const NetworkTab = React.memo(() => {
       );
     },
     [
+      displayedData,
       isGroupByPageEnabled,
       minStart,
       totalRange,
@@ -698,6 +701,7 @@ const NetworkTab = React.memo(() => {
                   const iconColor = isActive ? AppColors.white : chipColor;
                   return (
                     <TouchableScale
+                      testID={`inspector.network.filter.${chip.id.toLowerCase()}`}
                       key={chip.id}
                       onPress={() => {
                         setQuickFilter(isActive ? 'all' : chip.id);

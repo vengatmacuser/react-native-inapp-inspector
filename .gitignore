@@ -48,3 +48,9 @@ android/.settings/
 
 # Xcode workspace shared data (generated)
 example/ios/example.xcworkspace/xcshareddata/
+
+# Detox & E2E Testing Artifacts
+example/e2e/artifacts/
+!example/e2e/artifacts/golden/
+.nyc_output/
+*.detox.json

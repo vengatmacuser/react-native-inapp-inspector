@@ -1687,6 +1687,7 @@ const InspectorHeader = React.memo(() => {
 
               {/* Minimize button */}
               <TouchableOpacity
+                testID="inspector.header.minimizeBtn"
                 onPress={minimizeInspector || closeModal}
                 hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
                 activeOpacity={0.7}
@@ -1708,6 +1709,7 @@ const InspectorHeader = React.memo(() => {
 
               {/* Close button */}
               <TouchableOpacity
+                testID="inspector.header.closeBtn"
                 onPress={closeModal}
                 hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
                 activeOpacity={0.7}

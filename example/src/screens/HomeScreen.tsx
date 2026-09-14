@@ -2354,6 +2354,7 @@ export function HomeScreen() {
           {paddingBottom: Math.max(14, insets.bottom + 8)},
         ]}>
         <Pressable
+          testID="home.trigger.get"
           style={({pressed}) => [
             styles.footerButton,
             batchSuccess && {backgroundColor: '#059669'},
@@ -2375,6 +2376,78 @@ export function HomeScreen() {
               : 'Trigger Fast Batch'}
           </Text>
         </Pressable>
+
+        {/* Dedicated Test Triggers for Detox E2E Runner */}
+        {__DEV__ && (
+          <View
+            pointerEvents="box-none"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              opacity: 0.05,
+              zIndex: -1,
+            }}>
+            <Pressable
+              testID="home.trigger.post"
+              style={{width: 30, height: 30}}
+              onPress={() => axiosClient.post('/posts', {title: 'Detox Test Post'})}
+            />
+            <Pressable
+              testID="home.trigger.graphql"
+              style={{width: 30, height: 30}}
+              onPress={() => axiosClient.post('/graphql', {query: '{ user { id name } }'})}
+            />
+            <Pressable
+              testID="home.trigger.error"
+              style={{width: 30, height: 30}}
+              onPress={() => fetch('https://jsonplaceholder.typicode.com/invalid-route-404').catch(() => {})}
+            />
+            <Pressable
+              testID="home.trigger.consoleLog"
+              style={{width: 30, height: 30}}
+              onPress={() => console.log('[Detox] Automated test log event')}
+            />
+            <Pressable
+              testID="home.trigger.consoleWarn"
+              style={{width: 30, height: 30}}
+              onPress={() => console.warn('[Detox] Automated test warning event')}
+            />
+            <Pressable
+              testID="home.trigger.consoleError"
+              style={{width: 30, height: 30}}
+              onPress={() => console.error('[Detox] Automated test error event')}
+            />
+            <Pressable
+              testID="home.trigger.reduxAction"
+              style={{width: 30, height: 30}}
+              onPress={() => mockStore.dispatch({type: 'DETOX_TEST_ACTION', payload: {tested: true}})}
+            />
+            <Pressable
+              testID="home.trigger.crash"
+              style={{width: 30, height: 30}}
+              onPress={() => console.error(new Error('Detox simulated runtime exception'))}
+            />
+            <Pressable
+              testID="home.trigger.analytics"
+              style={{width: 30, height: 30}}
+              onPress={() => logAnalyticsEvent('detox_e2e_simulation_event', {platform: Platform.OS})}
+            />
+            <Pressable
+              testID="home.trigger.socket"
+              style={{width: 30, height: 30}}
+              onPress={() => simulateTestSocket('chat')}
+            />
+            <Pressable
+              testID="home.trigger.push"
+              style={{width: 30, height: 30}}
+              onPress={() => console.log('[Push] Simulated push payload received')}
+            />
+          </View>
+        )}
       </View>
     </View>
   );

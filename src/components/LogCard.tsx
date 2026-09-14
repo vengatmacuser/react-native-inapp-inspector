@@ -46,6 +46,7 @@ function LogCard({
   isSelected,
   onToggleSelect,
   searchStr,
+  testID,
 }: LogCardProps) {
   const {t} = useTranslation();
   const methodColor = METHOD_COLORS[item.method as Method] ?? METHOD_COLORS.ALL;
@@ -75,15 +76,9 @@ function LogCard({
         {
           text: t('common.open') || 'Open',
           onPress: () => {
-            Linking.canOpenURL(item.url)
-              .then(supported => {
-                if (supported) {
-                  Linking.openURL(item.url);
-                } else {
-                  Linking.openURL(item.url).catch(() => {});
-                }
-              })
-              .catch(() => {});
+            Linking.openURL(item.url).catch(() => {
+              Alert.alert(t('common.error') || 'Error', t('common.cannotOpenUrl') || 'Could not open URL');
+            });
           },
         },
       ],
@@ -154,6 +149,7 @@ function LogCard({
   return (
     <View style={styles.container}>
       <TouchableScale
+        testID={testID}
         onPress={onPress}
         style={[
           styles.card,
