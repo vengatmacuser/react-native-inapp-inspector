@@ -10,6 +10,7 @@ import {
   setupNetworkLogger,
   clearNetworkLogs,
   subscribeNetworkLogs,
+  getNetworkLogs,
   setupConsoleLogger,
   clearConsoleLogs,
   subscribeConsoleLogs,
@@ -63,6 +64,33 @@ describe('Inspector Full Regression & Safety Test Suite', () => {
       const unsubscribe = subscribeNetworkLogs(jest.fn());
       expect(typeof unsubscribe).toBe('function');
       unsubscribe();
+      clearNetworkLogs();
+    });
+
+    it('captures failed GET requests and preserves method and error status', async () => {
+      clearNetworkLogs();
+
+      // Test logging a failed GET request
+      const logger = (globalThis as any).__NETWORK_LOGGER__;
+      expect(typeof logger).toBe('function');
+      logger({
+        id: 9999,
+        url: 'https://api.example.com/failed-get',
+        method: 'GET',
+        status: 0,
+        startTime: Date.now(),
+        response: 'Network request failed',
+        client: 'fetch',
+      });
+
+      const logs = getNetworkLogs();
+      expect(logs.length).toBeGreaterThan(0);
+      const failedGetLog = logs.find(l => l.url.includes('failed-get'));
+      expect(failedGetLog).toBeDefined();
+      expect(failedGetLog?.method).toBe('GET');
+      expect(failedGetLog?.status).toBe(0);
+      expect(failedGetLog?.response).toContain('Network request failed');
+
       clearNetworkLogs();
     });
   });

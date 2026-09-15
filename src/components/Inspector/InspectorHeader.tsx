@@ -36,7 +36,6 @@ import {
   triggerNativeHaptic,
 } from '../../native/NativeInspector';
 import {ScreenCapture, CapturedMediaItem, generateCaptureId} from '../../capture';
-import {UpdateAvailableModal} from './UpdateAvailableModal';
 import {MediaPreviewModal} from './MediaPreviewModal';
 import {LanguageSelectorModal} from './LanguageSelectorModal';
 import CountryFlag from '../CountryFlag';
@@ -77,11 +76,7 @@ const InspectorHeader = React.memo(() => {
     setSelectedReduxAction,
     reduxState,
     reduxLastActionMap,
-    updateAvailable,
-    latestNpmVersion,
     clearAnim,
-    activePulseAnim,
-    unreadPulseAnim,
     runClearAllWithAnimation,
     settingsPage,
     setSettingsPage,
@@ -110,7 +105,6 @@ const InspectorHeader = React.memo(() => {
   const isNarrow = windowWidth < 360;
   const isCompact = windowWidth < 400;
 
-  const [showUpdateModal, setShowUpdateModal] = React.useState<boolean>(false);
   const [showCopyBanner, setShowCopyBanner] = React.useState<boolean>(false);
   const [showLanguageModal, setShowLanguageModal] = React.useState<boolean>(false);
   const [appVersionString] = React.useState<string>(() => {
@@ -664,13 +658,9 @@ const InspectorHeader = React.memo(() => {
                       {/* NPM Package Version */}
                       <Pressable
                         onPress={() => {
-                          if (updateAvailable) {
-                            setShowUpdateModal(true);
-                          } else {
-                            Linking.openURL(
-                              'https://www.npmjs.com/package/react-native-inapp-inspector',
-                            ).catch(() => {});
-                          }
+                          Linking.openURL(
+                            'https://www.npmjs.com/package/react-native-inapp-inspector',
+                          ).catch(() => {});
                         }}
                         style={{
                           flexDirection: 'row',
@@ -698,66 +688,7 @@ const InspectorHeader = React.memo(() => {
                           }}>
                           v{LIB_VERSION}
                         </Text>
-                        {updateAvailable && (
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 8,
-                              color: AppColors.warningAmber,
-                            }}>
-                            ●
-                          </Text>
-                        )}
                       </Pressable>
-
-                      {/* Update Available Notification Pill */}
-                      {updateAvailable && (
-                        <Pressable
-                          hitSlop={10}
-                          onPress={() => setShowUpdateModal(true)}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: AppColors.warningAmber,
-                            borderRadius: 5,
-                            paddingHorizontal: 4.5,
-                            paddingVertical: 1.5,
-                            gap: 3,
-                            shadowColor: AppColors.warningAmber,
-                            shadowOffset: {width: 0, height: 1.5},
-                            shadowOpacity: 0.35,
-                            shadowRadius: 3,
-                            elevation: 3,
-                            flexShrink: 0,
-                          }}>
-                          <Animated.View
-                            style={{
-                              width: 4.5,
-                              height: 4.5,
-                              borderRadius: 2.25,
-                              backgroundColor: AppColors.white,
-                              opacity: activePulseAnim,
-                              transform: [{scale: unreadPulseAnim}],
-                            }}
-                          />
-                          {!isNarrow && (
-                            <Text
-                              style={{
-                                fontFamily: AppFonts.interBold,
-                                fontSize: 8,
-                                lineHeight: 10,
-                                color: AppColors.white,
-                                letterSpacing: 0.3,
-                              }}>
-                              UPDATE
-                            </Text>
-                          )}
-                          <BoltIcon
-                            size={isNarrow ? 7.5 : 8.5}
-                            color={AppColors.white}
-                          />
-                        </Pressable>
-                      )}
                     </View>
                   </View>
                 </View>
@@ -1732,13 +1663,6 @@ const InspectorHeader = React.memo(() => {
           </View>
         </View>
       </View>
-
-      {/* Dedicated Update Available Details Modal */}
-      <UpdateAvailableModal
-        visible={showUpdateModal}
-        latestVersion={latestNpmVersion}
-        onClose={() => setShowUpdateModal(false)}
-      />
 
       {/* Country / Language Selector Bottom Sheet Modal */}
       <LanguageSelectorModal

@@ -1,11 +1,14 @@
 import React from 'react';
-import Svg, {Circle, Path, G, Defs, LinearGradient, RadialGradient, Stop, Rect, Ellipse, Line} from 'react-native-svg';
+import Svg, {Circle, Path, G, Defs, LinearGradient, RadialGradient, Stop, Rect, Ellipse, Line, ClipPath} from 'react-native-svg';
 import {AppColors} from '../styles/AppColors';
 
 export const BrandCircleIcon = ({size = 56}: {size?: number}) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 256 256" fill="none">
       <Defs>
+        <ClipPath id="brand_circle_clip">
+          <Circle cx="128" cy="128" r="127" />
+        </ClipPath>
         <LinearGradient id="tile" x1="30" y1="30" x2="210" y2="222" gradientUnits="userSpaceOnUse">
           <Stop offset="0" stopColor={AppColors.navy900}/>
           <Stop offset="1" stopColor={AppColors.navy950}/>
@@ -58,9 +61,10 @@ export const BrandCircleIcon = ({size = 56}: {size?: number}) => {
           <Stop offset="1" stopColor={AppColors.navy700}/>
         </LinearGradient>
       </Defs>
-      <Circle cx="128" cy="128" r="122" fill="url(#tile)"/>
-      <Circle cx="128" cy="128" r="121.4" fill="none" stroke="url(#edge)" strokeOpacity={0.7} strokeWidth={1.4}/>
-      <Circle cx="128" cy="128" r="100" fill="url(#halo)"/>
+      <Circle cx="128" cy="128" r="127" fill="url(#tile)"/>
+      <Circle cx="128" cy="128" r="126" fill="none" stroke="url(#edge)" strokeOpacity={0.7} strokeWidth={1.5}/>
+      <Circle cx="128" cy="128" r="110" fill="url(#halo)"/>
+      <G clipPath="url(#brand_circle_clip)">
       <G transform="translate(128 132) scale(1.05) translate(-128 -134)">
         {/* wing 1 */}
         <Path d="M74 124 C58 154 60 190 86 204 C79 176 77 148 88 126 Z" fill="url(#wing)" stroke="url(#beam)" strokeWidth={2.5} strokeOpacity={0.45}/>
@@ -137,6 +141,7 @@ export const BrandCircleIcon = ({size = 56}: {size?: number}) => {
         {/* rosy cheeks */}
         <Ellipse cx={83} cy={127} rx={9} ry={6} fill="url(#blush)"/>
         <Ellipse cx={167} cy={122} rx={9} ry={6} fill="url(#blush)"/>
+      </G>
       </G>
     </Svg>
   );

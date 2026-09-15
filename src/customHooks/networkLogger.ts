@@ -1,22 +1,6 @@
 import axios from "axios";
 import {setupGlobalCrashHandler} from "./crashHandler";
-import {RouteInfo} from "../types";
-
-type NetworkLog = {
-  id: number;
-  url: string;
-  method: string;
-  status?: number;
-  request?: any;
-  response?: any;
-  duration?: number;
-  startTime: number;
-  caller?: string; // ✅ Captures the file and line number
-  client?: string; // ✅ Captures request client: axios, fetch, xhr, apollo, etc.
-  requestHeaders?: Record<string, string>;
-  responseHeaders?: Record<string, string>;
-  routeInfo?: RouteInfo;
-};
+import {NetworkLog, RouteInfo} from "../types";
 
 let logs: NetworkLog[] = [];
 let listeners: ((logs: NetworkLog[]) => void)[] = [];
@@ -186,18 +170,22 @@ const notify = () => {
 
 const addOrUpdateLog = (log: NetworkLog) => {
   if (!isNetworkModuleEnabled) return;
-  const method = log.method?.toUpperCase();
+  const method = (log.method || "GET").toUpperCase();
 
   if (method && !ALLOWED_METHODS.includes(method)) return;
 
   if (shouldIgnoreUrl(log.url)) return;
 
+  const sanitizedLog: NetworkLog = { ...log, method };
   const index = logs.findIndex((l) => l.id === log.id);
 
   if (index >= 0) {
-    logs[index] = { ...logs[index], ...log };
+    logs[index] = { ...logs[index], ...sanitizedLog };
   } else {
-    logs.unshift(log);
+    logs.unshift(sanitizedLog);
+    if (logs.length > maxNetworkLogsLimit) {
+      logs = logs.slice(0, maxNetworkLogsLimit);
+    }
   }
 
   notify();
@@ -341,10 +329,26 @@ export const setupNetworkLogger = () => {
         });
       };
 
+      // Ensure listeners for all possible completion/failure states
       this.addEventListener("load", onFinished);
       this.addEventListener("error", onErrorOrAbort);
       this.addEventListener("abort", onErrorOrAbort);
       this.addEventListener("timeout", onErrorOrAbort);
+
+      // React Native XMLHttpRequest hook for onreadystatechange and handlers
+      const prevOnReadyStateChange = this.onreadystatechange;
+      this.onreadystatechange = function (...args: any[]) {
+        if (this.readyState === 4) {
+          if (this.status >= 200) {
+            onFinished();
+          } else {
+            onErrorOrAbort();
+          }
+        }
+        if (typeof prevOnReadyStateChange === "function") {
+          return prevOnReadyStateChange.apply(this, args);
+        }
+      };
 
       return originalSend.apply(this, [body]);
     };
@@ -360,7 +364,10 @@ export const setupNetworkLogger = () => {
 
       const id = counter++;
       const start = Date.now();
-      const finalUrl = typeof url === "string" ? url : url?.url;
+      const finalUrl =
+        typeof url === "string"
+          ? url
+          : url?.url || url?.href || (url ? String(url) : "");
 
       if (shouldIgnoreUrl(finalUrl)) return originalFetch(url, options);
 
@@ -442,13 +449,17 @@ export const setupNetworkLogger = () => {
         return response;
       } catch (error) {
         try {
+          const errorMsg =
+            error instanceof Error
+              ? error.message || error.name || "Network request failed"
+              : String(error || "Network request failed");
           addOrUpdateLog({
             id,
             url: finalUrl,
             method,
             status: 0,
             startTime: start,
-            response: error,
+            response: errorMsg,
             client,
             duration: Date.now() - start,
           });
@@ -556,7 +567,11 @@ export const addAxiosInterceptors = (axiosInstance: any) => {
           url,
           method,
           status: error.response?.status ?? 0,
-          response: error.response?.data ?? error.message,
+          response:
+            error.response?.data ??
+            (error instanceof Error
+              ? error.message
+              : String(error || "Network request failed")),
           startTime: start || Date.now(),
           duration: start != null ? Date.now() - start : undefined,
           client: "axios",

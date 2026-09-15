@@ -559,7 +559,13 @@ const FabLauncher = () => {
           {...circularPanResponder.panHandlers}>
           <TouchableScale
             testID="inspector.fab.launcher"
-            style={{alignItems: 'center', justifyContent: 'center'}}
+            style={{
+              width: 68,
+              height: 68,
+              borderRadius: 34,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             onPress={() => {
               if (fabDraggedRef.current) return;
               triggerNativeHaptic('light');

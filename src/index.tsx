@@ -54,6 +54,7 @@ import {
   setupNetworkLogger,
   clearNetworkLogs,
   subscribeNetworkLogs,
+  getNetworkLogs,
   setNetworkModuleEnabled,
   setMaxNetworkLogsLimit,
   setRouteInfoProvider,
@@ -582,12 +583,13 @@ const NetworkInspector = ({
 
   // #7 — Peek-through mode: makes inspector semi-transparent so user can see app behind
   const [peekMode, setPeekMode] = useState<boolean>(false);
-  const [peekOpacity, setPeekOpacity] = useState<number>(0.1);
+  const [peekOpacity, setPeekOpacity] = useState<number>(0.3);
 
   // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
   const [showDuplicateLogs, setShowDuplicateLogs] = useState<boolean>(false);
   const [showUpdateToast, setShowUpdateToast] = useState<boolean>(true);
+  const [isUpdatePopupVisible, setIsUpdatePopupVisible] = useState<boolean>(false);
 
   // Synchronize runtime background listeners with active settings
   useEffect(() => {
@@ -657,6 +659,7 @@ const NetworkInspector = ({
     setReduxExpandDepth(1);
     setShowDuplicateLogs(false);
     setShowUpdateToast(true);
+    setPeekOpacity(0.3);
     Alert.alert('Settings Reset', 'All settings have been reset to default values.');
   };
 
@@ -1282,10 +1285,21 @@ const NetworkInspector = ({
 
 
       // Instant synchronization of data collected while modal was closed
-      if (latestNetworkLogsRef.current.length > 0) {
-        const deduped = deduplicateLogs(latestNetworkLogsRef.current);
+      const currentNetwork =
+        latestNetworkLogsRef.current.length > 0
+          ? latestNetworkLogsRef.current
+          : getNetworkLogs();
+      if (currentNetwork.length > 0) {
+        const deduped = deduplicateLogs(currentNetwork);
         const incoming = new Set(deduped.map(l => l.id));
         prevLogIdsRef.current = incoming;
+        deduped.forEach(l => {
+          if (!logRouteMapRef.current.has(l.id)) {
+            const resolvedRoute =
+              (l as any)?.routeInfo || currentRouteRef.current;
+            logRouteMapRef.current.set(l.id, resolvedRoute);
+          }
+        });
         setLogs(deduped);
       }
       if (latestConsoleLogsRef.current.length > 0) {
@@ -2688,6 +2702,8 @@ const NetworkInspector = ({
       setPeekOpacity,
       previewMediaItem,
       setPreviewMediaItem,
+      isUpdatePopupVisible,
+      setIsUpdatePopupVisible,
     }),
     [
       visible,
@@ -2829,6 +2845,7 @@ const NetworkInspector = ({
       isMinimized,
       isDismissed,
       confirmModal,
+      isUpdatePopupVisible,
     ],
   );
 

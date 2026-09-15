@@ -123,8 +123,8 @@ export interface NetworkLog {
   id: number;
   url: string;
   method: string;
-  status: number | null;
-  duration: number | null;
+  status?: number | null;
+  duration?: number | null;
   startTime: number;
   request?: unknown;
   response?: unknown;
@@ -521,6 +521,10 @@ export interface InspectorContextValue {
   setPreviewMediaItem: React.Dispatch<
     React.SetStateAction<import('../capture').CapturedMediaItem | null>
   >;
+
+  // ─── Update Popup Visibility ─────────────────────────────────────────────────
+  isUpdatePopupVisible?: boolean;
+  setIsUpdatePopupVisible?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // ─── Shared component props ───────────────────────────────────────────────────

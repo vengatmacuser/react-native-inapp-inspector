@@ -90,7 +90,7 @@ const TOAST_TIMEOUT_MS = 7000;
 
 export const NpmUpdateToast = () => {
   const {t} = useTranslation();
-  const {updateAvailable, latestNpmVersion, showUpdateToast} = useInspector();
+  const {updateAvailable, latestNpmVersion, showUpdateToast, setIsUpdatePopupVisible} = useInspector();
   const [dismissed, setDismissed] = useState(false);
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -103,6 +103,7 @@ export const NpmUpdateToast = () => {
   useEffect(() => {
     if (showUpdateToast && updateAvailable && latestNpmVersion && !dismissed) {
       setVisible(true);
+      setIsUpdatePopupVisible?.(true);
 
       // Slide and fade in
       Animated.parallel([
@@ -137,8 +138,9 @@ export const NpmUpdateToast = () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
+      setIsUpdatePopupVisible?.(false);
     };
-  }, [showUpdateToast, updateAvailable, latestNpmVersion, dismissed]);
+  }, [showUpdateToast, updateAvailable, latestNpmVersion, dismissed, setIsUpdatePopupVisible]);
 
   const handleDismiss = () => {
     Animated.parallel([
@@ -155,6 +157,7 @@ export const NpmUpdateToast = () => {
     ]).start(() => {
       setVisible(false);
       setDismissed(true);
+      setIsUpdatePopupVisible?.(false);
     });
   };
 

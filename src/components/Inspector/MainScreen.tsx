@@ -163,7 +163,7 @@ const MainScreen = () => {
                   borderTopLeftRadius: modalHeightPercent >= 100 ? 0 : 20,
                   borderTopRightRadius: modalHeightPercent >= 100 ? 0 : 20,
                   opacity: peekMode
-                    ? Math.max(0.05, Math.min(1.0, typeof peekOpacity === 'number' ? peekOpacity : 0.1))
+                    ? Math.max(0.05, Math.min(1.0, typeof peekOpacity === 'number' ? peekOpacity : 0.3))
                     : 1,
                   zIndex: 9999999,
                   elevation: 999999,

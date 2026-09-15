@@ -38,6 +38,7 @@ export const FloatingCaptureWidget: React.FC = () => {
     peekMode,
     previewMediaItem,
     setPreviewMediaItem,
+    isUpdatePopupVisible,
   } = useInspector();
 
   const {t} = useTranslation();
@@ -302,8 +303,8 @@ export const FloatingCaptureWidget: React.FC = () => {
     return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  // When inside the screencast/media gallery module or media settings, hide the floating widget
-  if (activeTab === 'media' || settingsPage === 'media') {
+  // When inside the screencast/media gallery module or media settings, or update popup is visible, hide the floating widget
+  if (activeTab === 'media' || settingsPage === 'media' || isUpdatePopupVisible) {
     return null;
   }
 
