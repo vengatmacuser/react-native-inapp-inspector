@@ -507,10 +507,37 @@
     "info": "Info",
     "warning": "Warn",
     "error": "Error",
-    "debug": "Debug",
     "clearLogsTitle": "Clear Console Logs",
     "clearLogsMsg": "Are you sure you want to clear all console logs?",
-    "analytics": "Analytics"
+    "analytics": "Analytics",
+    "exportTitle": "Export Console Logs",
+    "exportScope": "LOG SOURCE SCOPE",
+    "filteredView": "Active Filter",
+    "allLogsScope": "All Logs",
+    "howManyLogs": "HOW MANY LOGS TO EXPORT?",
+    "enterCount": "Enter number of logs:",
+    "exportFormat": "EXPORT FORMAT",
+    "exportSummary": "Estimated Export Size",
+    "selectedLogs": "SELECTED LOGS",
+    "estSize": "ESTIMATED SIZE",
+    "format": "FORMAT",
+    "exportLogsAction": "Export {{count}} Logs ({{size}})",
+    "exportingLogs": "Exporting Console Logs...",
+    "processingItem": "Processing",
+    "records": "records",
+    "exportSuccessTitle": "Logs Export Ready!",
+    "exportSuccessDesc": "Generated full formatted log bundle ready to share or save.",
+    "shareReport": "Share Logs",
+    "saveToDisk": "Save to Disk",
+    "copyToClipboard": "Copy Content",
+    "exportAnother": "← Export Another",
+    "noLogsToExport": "No logs available to export",
+    "savePromptOpened": "Opened save to disk dialog",
+    "copiedLogs": "Logs copied to clipboard!",
+    "ignorePatterns": "Ignore Patterns (Regex)",
+    "ignorePatternsDesc": "Logs matching this regex will be excluded from export.",
+    "invalidRegex": "Invalid regular expression syntax",
+    "logsExcluded": "{{count}} logs excluded"
   },
   "analytics": {
     "title": "Analytics",
@@ -1227,11 +1254,11 @@
     "reload": "Reload"
   },
   "errorBoundary": {
-    "title": "Something went wrong",
-    "message": "An unexpected error occurred.",
-    "retry": "Try Again",
-    "reset": "Reset",
-    "close": "Close"
+    "faultIsolated": "FAULT ISOLATED",
+    "retryModule": "Retry Module",
+    "sourcePage": "Source Page",
+    "parameters": "Parameters",
+    "metadata": "Metadata"
   },
   "crash": {
     "title": "Crash",
@@ -1649,13 +1676,6 @@
     "live": "LIVE",
     "noMatchingSpecs": "No matching device specifications",
     "clearSearch": "Clear Search"
-  },
-  "errorBoundary": {
-    "faultIsolated": "FAULT ISOLATED",
-    "retryModule": "Retry Module",
-    "sourcePage": "Source Page",
-    "parameters": "Parameters",
-    "metadata": "Metadata"
   },
   "modals": {
     "installed": "INSTALLED",

@@ -9,18 +9,18 @@ export interface SkeletonPlaceholderProps {
 export const SkeletonPlaceholder = React.memo(function SkeletonPlaceholder({
   cardCount = 4,
 }: SkeletonPlaceholderProps) {
-  const shimmerAnim = useRef(new Animated.Value(0.35)).current;
+  const shimmerAnim = useRef(new Animated.Value(0.45)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, {
-          toValue: 0.85,
+          toValue: 0.95,
           duration: 750,
           useNativeDriver: false,
         }),
         Animated.timing(shimmerAnim, {
-          toValue: 0.35,
+          toValue: 0.45,
           duration: 750,
           useNativeDriver: false,
         }),
@@ -162,31 +162,31 @@ const skeletonStyles = StyleSheet.create({
     width: 38,
     height: 18,
     borderRadius: 4,
-    backgroundColor: AppColors.graySurface,
+    backgroundColor: AppColors.slate200,
   },
   methodBadgeSkeleton: {
     width: 44,
     height: 18,
     borderRadius: 4,
-    backgroundColor: AppColors.graySurface,
+    backgroundColor: AppColors.slate200,
   },
   timeSkeleton: {
     width: 48,
     height: 12,
     borderRadius: 4,
-    backgroundColor: AppColors.graySurface,
+    backgroundColor: AppColors.slate200,
   },
   urlLineLong: {
     height: 13,
     borderRadius: 4,
-    backgroundColor: AppColors.graySurface,
+    backgroundColor: AppColors.slate200,
     marginBottom: 5,
     width: '90%',
   },
   urlLineShort: {
     height: 11,
     borderRadius: 4,
-    backgroundColor: AppColors.graySurface,
+    backgroundColor: AppColors.slate200,
     marginBottom: 8,
     width: '55%',
   },
@@ -199,7 +199,7 @@ const skeletonStyles = StyleSheet.create({
     width: 52,
     height: 14,
     borderRadius: 4,
-    backgroundColor: AppColors.graySurface,
+    backgroundColor: AppColors.slate200,
   },
 });
 

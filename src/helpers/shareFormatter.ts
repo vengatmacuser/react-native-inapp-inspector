@@ -431,3 +431,197 @@ export async function shareSocketReport(record: SocketConnectionRecord): Promise
   await triggerNativeShare(title, message);
 }
 
+export type ConsoleLogExportFormat = 'txt' | 'log' | 'json' | 'text' | 'markdown' | 'csv';
+
+export interface ConsoleLogExportOptions {
+  includeStackTrace?: boolean;
+  includeArguments?: boolean;
+  includeCaller?: boolean;
+  includeTimestamps?: boolean;
+  includeAppInfo?: boolean;
+  includeDuplicates?: boolean;
+  ignorePattern?: string;
+}
+
+export const DEFAULT_CONSOLE_EXPORT_OPTIONS: ConsoleLogExportOptions = {
+  includeStackTrace: false,
+  includeArguments: false,
+  includeCaller: false,
+  includeTimestamps: false,
+  includeAppInfo: false,
+  includeDuplicates: false,
+  ignorePattern: '',
+};
+
+/**
+ * Generates filename in format: log_DDMMYY_random6digittext.txt or .log
+ */
+export function generateConsoleLogsFilename(
+  format: ConsoleLogExportFormat = 'txt',
+): string {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const random6 = Math.random().toString(36).substring(2, 8).padEnd(6, '0');
+  const ext = format === 'log' ? 'log' : 'txt';
+  return `log_${dd}${mm}${yy}_${random6}.${ext}`;
+}
+
+/**
+ * Formats a list of console logs for export with clean structured separators and customizable options.
+ */
+export function formatConsoleLogsExport(
+  logs: ConsoleLog[],
+  format: ConsoleLogExportFormat = 'txt',
+  options: ConsoleLogExportOptions = DEFAULT_CONSOLE_EXPORT_OPTIONS,
+): string {
+  if (!logs || logs.length === 0) {
+    return 'No console logs to export.';
+  }
+
+  const {
+    includeStackTrace = false,
+    includeArguments = false,
+    includeCaller = false,
+    includeTimestamps = false,
+    includeAppInfo = false,
+    includeDuplicates = false,
+    ignorePattern = '',
+  } = options;
+
+  let activeLogs = logs;
+  if (ignorePattern && ignorePattern.trim().length > 0) {
+    try {
+      const reg = new RegExp(ignorePattern.trim(), 'i');
+      activeLogs = logs.filter(l => {
+        const msg = l.message || '';
+        const argsStr = l.rawArgs ? safeStringify(l.rawArgs) : '';
+        const callerStr = l.caller || '';
+        return !reg.test(msg) && !reg.test(argsStr) && !reg.test(callerStr);
+      });
+    } catch {
+      // Keep logs as is if pattern is invalid
+    }
+  }
+
+  if (activeLogs.length === 0) {
+    return 'No console logs to export (all filtered out).';
+  }
+
+  const now = new Date();
+  const timeHeader = now.toLocaleString();
+  const sepLine = '********************************************************************************';
+
+  const headerLines: string[] = [];
+  if (includeAppInfo) {
+    headerLines.push(
+      `/${sepLine}`,
+      ` * 📜 CONSOLE LOGS EXPORT (${format.toUpperCase()})`,
+      ` * 🕒 Exported At: ${timeHeader}`,
+      ` * 📊 Total Logs:   ${logs.length}`,
+      ` * ⚙️ Generator:   React Native InApp Inspector`,
+      ` ${sepLine}/`,
+      '',
+    );
+  }
+
+  const body = logs
+    .map((l, index) => {
+      const logNum = index + 1;
+      const dt = formatDateTime(l.timestamp);
+      const lvl = (l.type || 'info').toUpperCase();
+      const dup =
+        includeDuplicates && l.duplicateCount && l.duplicateCount > 1
+          ? ` [DUPLICATES: ×${l.duplicateCount}]`
+          : '';
+
+      const lines: string[] = [
+        `/${sepLine}`,
+        ` * 📌 LOG #${logNum} Starts [${lvl}]${includeTimestamps ? ` - ${dt}` : ''}${dup}`,
+        ` ${sepLine}/`,
+      ];
+
+      if (includeCaller && l.caller) {
+        lines.push(`📍 Caller:    ${l.caller}`);
+      }
+      if (includeTimestamps) {
+        lines.push(`🕒 Time:      ${dt}`);
+      }
+      lines.push(`🏷️ Level:     ${lvl}`);
+      if (l.sourceMethod && l.sourceMethod !== l.type) {
+        lines.push(`⚙️ Method:    console.${l.sourceMethod}()`);
+      }
+
+      lines.push('');
+      lines.push('💬 Message:');
+      lines.push(l.message || '(Empty message)');
+
+      if (includeArguments && l.rawArgs && l.rawArgs.length > 0) {
+        lines.push('');
+        lines.push('📦 Arguments / Data:');
+        lines.push(safeStringify(l.rawArgs));
+      }
+
+      if (includeStackTrace && (l.stack || l.errorStack)) {
+        lines.push('');
+        lines.push('📜 Stack Trace & Frames:');
+        const cleanStack = (l.stack || l.errorStack || '')
+          .split('\n')
+          .map(line => `  ${line}`)
+          .join('\n');
+        lines.push(cleanStack);
+      }
+
+      lines.push('');
+      lines.push(`/${sepLine}`);
+      lines.push(` * 🏁 LOG #${logNum} Ends`);
+      lines.push(` ${sepLine}/`);
+
+      return lines.join('\n');
+    })
+    .join('\n\n');
+
+  const footer = includeAppInfo
+    ? [
+        '',
+        `/${sepLine}`,
+        ' * 🏁 END OF CONSOLE LOGS EXPORT',
+        ` ${sepLine}/`,
+      ].join('\n')
+    : '';
+
+  return `${headerLines.join('\n')}${body}${footer}`;
+}
+
+/**
+ * Rapid byte size estimator for selected logs and export format before full string export.
+ */
+export function estimateConsoleLogsExportSize(
+  logs: ConsoleLog[],
+  format: ConsoleLogExportFormat = 'txt',
+  options: ConsoleLogExportOptions = DEFAULT_CONSOLE_EXPORT_OPTIONS,
+): number {
+  if (!logs || logs.length === 0) return 0;
+  const sampleCount = Math.min(logs.length, 20);
+  const sampleLogs = logs.slice(0, sampleCount);
+  const sampleOutput = formatConsoleLogsExport(sampleLogs, format, options);
+  const avgBytesPerLog = sampleOutput.length / sampleCount;
+  return Math.round(avgBytesPerLog * logs.length);
+}
+
+/**
+ * Triggers native share sheet for exported console logs.
+ */
+export async function shareConsoleLogs(
+  logs: ConsoleLog[],
+  format: ConsoleLogExportFormat = 'txt',
+  options: ConsoleLogExportOptions = DEFAULT_CONSOLE_EXPORT_OPTIONS,
+  customTitle?: string,
+): Promise<void> {
+  const content = formatConsoleLogsExport(logs, format, options);
+  const filename = generateConsoleLogsFilename(format);
+  const title = customTitle || filename;
+  await triggerNativeShare(title, content);
+}
+

@@ -2217,6 +2217,17 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                   <SaveIcon size={14} color={AppColors.white} />
                   <Text style={previewStyles.headerSaveText}>{t('common.save', 'Save')}</Text>
                 </TouchableScale>
+
+                {/* Explicit Close (X) Button */}
+                <TouchableScale
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.close', 'Close')}
+                  onPress={onClose}
+                  style={previewStyles.headerCloseBtn}
+                  hitSlop={{top: 8, bottom: 8, left: 6, right: 6}}>
+                  <CloseWhite size={15} color={AppColors.white} />
+                </TouchableScale>
               </View>
             </View>
           </View>
@@ -4724,6 +4735,16 @@ const previewStyles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCloseBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },

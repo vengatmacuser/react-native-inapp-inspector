@@ -565,96 +565,73 @@ const CombinedHeroHeader = ({
     trendSeries.length > 0 ? chartWidth / trendSeries.length : 40;
   const barWidth = Math.max(14, Math.min(26, barSlotWidth - 12));
 
-  // 100% Dynamic Country Download Breakdown calculated from live telemetry and real NPM volume
-  const countrySeries = useMemo(() => {
-    const total = insights.monthlyTotal || 0;
+  // 100% Dynamic Weekly Download Distribution computed directly from live NPM 30-day API points
+  const weeklySeries = useMemo(() => {
+    const all = insights.allDailyPoints || [];
+    if (all.length === 0) return [];
+
+    const total =
+      insights.monthlyTotal ||
+      all.reduce((sum, d) => sum + (d.downloads || 0), 0);
     if (total === 0) return [];
 
-    const clientCode =
-      insights.geo?.countryCode && insights.geo?.countryCode !== 'UN'
-        ? insights.geo.countryCode
-        : 'US';
-    const clientName =
-      insights.geo?.country && insights.geo?.country !== 'Resolving Host...'
-        ? insights.geo.country
-        : 'United States';
+    const weeks: Array<{
+      id: string;
+      label: string;
+      dateRange: string;
+      downloads: number;
+      percentage: number;
+      color: string;
+      dailyAvg: number;
+      daysCount: number;
+      isCurrentWeek: boolean;
+    }> = [];
 
-    const baseRegions = [
-      {
-        code: clientCode,
-        name: clientName,
-        isClient: true,
-        color: '#4F46E5',
-        share: 0.38,
-      },
-      {
-        code: clientCode === 'US' ? 'DE' : 'US',
-        name: clientCode === 'US' ? 'Germany' : 'United States',
-        isClient: false,
-        color: '#0284C7',
-        share: 0.24,
-      },
-      {
-        code: clientCode === 'IN' ? 'GB' : 'IN',
-        name: clientCode === 'IN' ? 'United Kingdom' : 'India',
-        isClient: false,
-        color: '#10B981',
-        share: 0.15,
-      },
-      {
-        code: 'DE',
-        name: 'Germany',
-        isClient: false,
-        color: '#F59E0B',
-        share: 0.09,
-      },
-      {
-        code: 'JP',
-        name: 'Japan',
-        isClient: false,
-        color: '#EC4899',
-        share: 0.06,
-      },
-      {
-        code: 'CA',
-        name: 'Canada',
-        isClient: false,
-        color: '#8B5CF6',
-        share: 0.05,
-      },
-      {
-        code: 'ROW',
-        name: 'Global Edge Relay',
-        isClient: false,
-        color: '#64748B',
-        share: 0.03,
-      },
-    ];
+    const colors = ['#4F46E5', '#0284C7', '#10B981', '#F59E0B', '#8B5CF6'];
+    const chunkSize = 7;
+    let colorIdx = 0;
 
-    const seen = new Set<string>();
-    const unique = baseRegions.filter(r => {
-      if (seen.has(r.code)) return false;
-      seen.add(r.code);
-      return true;
-    });
+    for (let i = 0; i < all.length; i += chunkSize) {
+      const chunk = all.slice(i, i + chunkSize);
+      const weekDownloads = chunk.reduce(
+        (sum, d) => sum + (d.downloads || 0),
+        0,
+      );
+      const startDay = chunk[0]?.day
+        ? new Date(chunk[0].day).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+          })
+        : '';
+      const endDay = chunk[chunk.length - 1]?.day
+        ? new Date(chunk[chunk.length - 1].day).toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+          })
+        : '';
+      const weekNum = Math.floor(i / chunkSize) + 1;
+      const percentage =
+        total > 0 ? Math.max(1, Math.round((weekDownloads / total) * 100)) : 0;
+      const isCurrent = i + chunkSize >= all.length;
 
-    const sumShare = unique.reduce((sum, r) => sum + r.share, 0);
+      weeks.push({
+        id: `week-${weekNum}`,
+        label: `Week ${weekNum}`,
+        dateRange:
+          startDay && endDay ? `${startDay} – ${endDay}` : `Block ${weekNum}`,
+        downloads: weekDownloads,
+        percentage,
+        color: colors[colorIdx % colors.length],
+        dailyAvg:
+          chunk.length > 0 ? Math.round(weekDownloads / chunk.length) : 0,
+        daysCount: chunk.length,
+        isCurrentWeek: isCurrent,
+      });
+      colorIdx++;
+    }
 
-    return unique
-      .map(r => {
-        const percentage = Math.max(1, Math.round((r.share / sumShare) * 100));
-        const downloads = Math.round((total * percentage) / 100);
-        return {
-          code: r.code,
-          name: r.name,
-          color: r.color,
-          downloads,
-          percentage,
-          isClientRegion: r.isClient,
-        };
-      })
-      .sort((a, b) => b.downloads - a.downloads);
-  }, [insights.monthlyTotal, insights.geo?.countryCode, insights.geo?.country]);
+    return weeks;
+  }, [insights.allDailyPoints, insights.monthlyTotal]);
 
   // Smooth Spline Waveform Calculation for NPM Ingestion Log
   const splinePoints = useMemo(() => {
@@ -1021,8 +998,18 @@ const CombinedHeroHeader = ({
               {/* Weekday Axis Pills */}
               <View style={styles.insightsDayAxisRow}>
                 {trendSeries.map((d, i) => {
-                  const isToday = i === trendSeries.length - 1;
-                  const dObj = new Date(d.day);
+                  const todayIso = new Date().toISOString().slice(0, 10);
+                  const isToday = d.day === todayIso;
+                  const isLastItem = i === trendSeries.length - 1;
+                  const parts = (d.day || '').split('-');
+                  const dObj =
+                    parts.length === 3
+                      ? new Date(
+                          parseInt(parts[0], 10),
+                          parseInt(parts[1], 10) - 1,
+                          parseInt(parts[2], 10),
+                        )
+                      : new Date();
                   const weekday = isNaN(dObj.getTime())
                     ? `D${i + 1}`
                     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
@@ -1037,12 +1024,12 @@ const CombinedHeroHeader = ({
                       key={d.day || `axis-pill-${i}`}
                       style={[
                         styles.insightsDayPill,
-                        isToday && styles.insightsDayPillActive,
+                        (isToday || isLastItem) && styles.insightsDayPillActive,
                       ]}>
                       <Text
                         style={[
                           styles.insightsDayPillText,
-                          isToday && styles.insightsDayPillTextActive,
+                          (isToday || isLastItem) && styles.insightsDayPillTextActive,
                         ]}
                         numberOfLines={1}>
                         {isToday ? 'Today' : `${weekday} ${dayNum}`}
@@ -1081,21 +1068,21 @@ const CombinedHeroHeader = ({
               </View>
             </View>
 
-            {/* ─── GRAPH 2: Country Download Breakdown (100% Dynamic Donut Gauge) ── */}
+            {/* ─── GRAPH 2: Weekly Download Batch Distribution (100% Dynamic Donut Gauge) ── */}
             <View style={styles.insightsChartBox}>
               <View style={styles.insightsChartTopRow}>
                 <View style={styles.insightsChartTitleRow}>
                   <SvgGlobe color="#0284C7" size={13} />
                   <Text style={styles.insightsChartTitle}>
-                    Country Download Breakdown
+                    Monthly Volume Distribution
                   </Text>
                 </View>
                 <Text style={[styles.insightsChartSub, {color: '#0284C7'}]}>
-                  Live Global Distribution
+                  Live 30-Day Batch Ingestion
                 </Text>
               </View>
 
-              {/* Radial Donut Ring Chart + Top Countries Legend */}
+              {/* Radial Donut Ring Chart + Weekly Legend */}
               {(() => {
                 const size = 120;
                 const strokeWidth = 14;
@@ -1120,20 +1107,20 @@ const CombinedHeroHeader = ({
                           strokeWidth={strokeWidth}
                           fill="none"
                         />
-                        {countrySeries.map(c => {
+                        {weeklySeries.map(w => {
                           const strokeLength =
-                            (c.percentage / 100) * circumference;
+                            (w.percentage / 100) * circumference;
                           const strokeDashoffset =
                             -(accumulatedPct / 100) * circumference;
-                          accumulatedPct += c.percentage;
+                          accumulatedPct += w.percentage;
 
                           return (
                             <Circle
-                              key={c.code}
+                              key={w.id}
                               cx={size / 2}
                               cy={size / 2}
                               r={radius}
-                              stroke={c.color}
+                              stroke={w.color}
                               strokeWidth={strokeWidth}
                               strokeDasharray={`${strokeLength} ${
                                 circumference - strokeLength
@@ -1151,31 +1138,30 @@ const CombinedHeroHeader = ({
                           {formatCompactNumber(insights.monthlyTotal)}
                         </Text>
                         <Text style={styles.countryDonutCenterLbl}>
-                          Total Vol
+                          Monthly Vol
                         </Text>
                       </View>
                     </View>
 
-                    {/* Top Countries Quick Legend Side Column */}
+                    {/* Weekly Quick Legend Side Column */}
                     <View style={styles.countryDonutLegendCol}>
-                      {countrySeries.slice(0, 4).map((c, i) => (
-                        <View key={c.code || `legend-${i}`} style={styles.countryDonutLegendItem}>
+                      {weeklySeries.slice(0, 4).map((w, i) => (
+                        <View key={w.id || `legend-${i}`} style={styles.countryDonutLegendItem}>
                           <View style={styles.countryDonutLegendLeft}>
                             <View
                               style={[
                                 styles.countryDonutLegendDot,
-                                {backgroundColor: c.color},
+                                {backgroundColor: w.color},
                               ]}
                             />
-                            <SvgMapPin size={10} color={c.color} />
                             <Text
                               style={styles.countryDonutLegendName}
                               numberOfLines={1}>
-                              {c.code}
+                              {w.label}
                             </Text>
                           </View>
                           <Text style={styles.countryDonutLegendVal}>
-                            {c.percentage}%
+                            {w.percentage}%
                           </Text>
                         </View>
                       ))}
@@ -1184,16 +1170,16 @@ const CombinedHeroHeader = ({
                 );
               })()}
 
-              {/* Ranked Country Performance Cards Table */}
+              {/* Ranked Weekly Performance Cards Table */}
               <View style={styles.gap2Mt4}>
-                {countrySeries.map((c, idx) => {
-                  const isDetected = c.isClientRegion;
+                {weeklySeries.map((w, idx) => {
+                  const isCurrent = w.isCurrentWeek;
                   return (
                     <View
-                      key={c.code || `rank-${idx}`}
+                      key={w.id || `rank-${idx}`}
                       style={[
                         styles.countryRankCard,
-                        isDetected && styles.countryRankCardActive,
+                        isCurrent && styles.countryRankCardActive,
                       ]}>
                       <View style={styles.countryRankLeft}>
                         <Text
@@ -1204,19 +1190,17 @@ const CombinedHeroHeader = ({
                           #{idx + 1}
                         </Text>
                         <View style={styles.countryCodePill}>
-                          <SvgMapPin size={10} color={c.color} />
                           <Text style={styles.countryCodePillText}>
-                            {c.code}
+                            {w.label}
                           </Text>
                         </View>
                         <View style={styles.countryListNameCol}>
                           <View style={styles.countryListNameRow}>
-                            <Text style={styles.countryListName}>{c.name}</Text>
-                            {isDetected && (
+                            <Text style={styles.countryListName}>{w.dateRange}</Text>
+                            {isCurrent && (
                               <View style={styles.detectedBadge}>
-                                <SvgMapPin size={9} color="#059669" />
                                 <Text style={styles.detectedBadgeText}>
-                                  Your Region
+                                  Active Period
                                 </Text>
                               </View>
                             )}
@@ -1226,8 +1210,8 @@ const CombinedHeroHeader = ({
                               style={[
                                 styles.countryProgressBarFill,
                                 {
-                                  width: `${c.percentage}%`,
-                                  backgroundColor: c.color,
+                                  width: `${w.percentage}%`,
+                                  backgroundColor: w.color,
                                 },
                               ]}
                             />
@@ -1236,10 +1220,10 @@ const CombinedHeroHeader = ({
                       </View>
                       <View style={styles.countryListRight}>
                         <Text style={styles.countryListDownloads}>
-                          {c.downloads.toLocaleString()}
+                          {w.downloads.toLocaleString()} dl
                         </Text>
-                        <Text style={[styles.countryListPct, {color: c.color}]}>
-                          {c.percentage}% vol
+                        <Text style={[styles.countryListPct, {color: w.color}]}>
+                          {w.percentage}% vol • {w.dailyAvg}/d
                         </Text>
                       </View>
                     </View>
@@ -1388,8 +1372,18 @@ const CombinedHeroHeader = ({
                 {/* Day & Ingestion Delta Axis Pills */}
                 <View style={styles.insightsDayAxisRow}>
                   {trendSeries.map((d, i) => {
-                    const isToday = i === trendSeries.length - 1;
-                    const dObj = new Date(d.day);
+                    const todayIso = new Date().toISOString().slice(0, 10);
+                    const isToday = d.day === todayIso;
+                    const isLastItem = i === trendSeries.length - 1;
+                    const parts = (d.day || '').split('-');
+                    const dObj =
+                      parts.length === 3
+                        ? new Date(
+                            parseInt(parts[0], 10),
+                            parseInt(parts[1], 10) - 1,
+                            parseInt(parts[2], 10),
+                          )
+                        : new Date();
                     const weekday = isNaN(dObj.getTime())
                       ? `D${i + 1}`
                       : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
@@ -2134,7 +2128,7 @@ export function HomeScreen() {
 
       if (isMountedRef.current) {
         setLiveInsights({
-          dailyPoints: rawDownloads.slice(-7),
+          dailyPoints: rawDownloads.length >= 7 ? rawDownloads.slice(-7) : rawDownloads,
           allDailyPoints: rawDownloads,
           monthlyTotal,
           weeklyTotal,

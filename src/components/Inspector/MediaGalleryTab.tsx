@@ -28,6 +28,8 @@ import {
   ScreencastIcon,
   ShareIcon,
   TrashIcon,
+  WhiteBackNavigation,
+  CloseWhite,
 } from '../NetworkIcons';
 import {MediaPreviewModal} from './MediaPreviewModal';
 import {
@@ -495,6 +497,28 @@ export const MediaGalleryTab: React.FC = () => {
 
   return (
     <View style={galleryStyles.container}>
+      {/* Top Header Navigation Bar with Back & Close */}
+      <View style={galleryStyles.topHeaderBar}>
+        <TouchableOpacity
+          onPress={() => switchActiveTab('apis')}
+          style={galleryStyles.backToTabBtn}
+          accessibilityLabel="Back to Inspector"
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+          <WhiteBackNavigation size={15} color={AppColors.purple} />
+          <Text style={galleryStyles.backToTabText}>
+            {t('common.back', 'Back to Inspector')}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => switchActiveTab('apis')}
+          style={galleryStyles.closeCircleBtn}
+          accessibilityLabel="Close Screencast"
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+          <CloseWhite size={14} color={AppColors.grayTextStrong} />
+        </TouchableOpacity>
+      </View>
+
       {/* Top Bar with Filter Chips on Left & Grid/List Toggle on Right */}
       <View style={galleryStyles.filterBar}>
         <View style={galleryStyles.chipGroup}>
@@ -730,6 +754,38 @@ const galleryStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: AppColors.slate850,
+  },
+  topHeaderBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: AppColors.primaryLight,
+    borderBottomWidth: 1,
+    borderBottomColor: AppColors.dividerColor,
+  },
+  backToTabBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+  },
+  backToTabText: {
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 12,
+    color: AppColors.purple,
+  },
+  closeCircleBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: AppColors.grayBackground,
+    borderWidth: 1,
+    borderColor: AppColors.dividerColor,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterBar: {
     flexDirection: 'row',

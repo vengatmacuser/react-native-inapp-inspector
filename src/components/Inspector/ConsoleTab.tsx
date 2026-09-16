@@ -15,6 +15,7 @@ import AnimatedEntrance from '../AnimatedEntrance';
 import {ConsoleLogCard} from '../ConsoleLogCard';
 import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
+import ConsoleExportModal from './ConsoleExportModal';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -30,6 +31,7 @@ import {
   WarningTriangleIcon,
   ErrorCircleIcon,
   AnalyticsIcon,
+  ExportIcon,
 } from '../NetworkIcons';
 
 const LOAD_MORE_STEP = 10;
@@ -54,6 +56,7 @@ const ConsoleTab = React.memo(() => {
   const initialLimit = maxConsoleLogs || 100;
   const listRef = useRef<FlatList>(null);
   const [displayLimit, setDisplayLimit] = React.useState<number>(initialLimit);
+  const [isExportModalVisible, setIsExportModalVisible] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     setDisplayLimit(maxConsoleLogs || 100);
@@ -303,6 +306,22 @@ const ConsoleTab = React.memo(() => {
 
           <View style={styles.toolbarRight}>
             <TouchableScale
+              style={[
+                styles.toolbarBtn,
+                {
+                  borderColor: `${AppColors.purple}38`,
+                  backgroundColor: `${AppColors.purple}0F`,
+                },
+              ]}
+              onPress={() => setIsExportModalVisible(true)}
+              hitSlop={6}
+              testID="inspector.console.exportBtn">
+              <ExportIcon
+                color={AppColors.purple}
+                size={15}
+              />
+            </TouchableScale>
+            <TouchableScale
               style={styles.toolbarBtn}
               onPress={() =>
                 setLogSortOrder(o =>
@@ -546,6 +565,13 @@ const ConsoleTab = React.memo(() => {
           {flexGrow: 1},
         ]}
         keyboardShouldPersistTaps="handled"
+      />
+
+      <ConsoleExportModal
+        visible={isExportModalVisible}
+        onClose={() => setIsExportModalVisible(false)}
+        filteredLogs={filteredConsoleLogs}
+        allLogs={visibleConsoleLogs}
       />
     </View>
   );
