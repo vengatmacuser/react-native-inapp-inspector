@@ -60,7 +60,7 @@ export class ModuleErrorBoundary extends Component<
         error,
         error?.stack,
         false,
-        CrashType.Js,
+        CrashType.Render,
         errorInfo.componentStack || undefined,
       );
     } catch {

@@ -7,7 +7,7 @@ import {
   AppState,
   Dimensions,
 } from 'react-native';
-import {CrashRecord, ParsedStackFrame, CrashBreadcrumb} from '../types';
+import {CrashRecord, ParsedStackFrame, CrashBreadcrumb, CrashIgnoredTypes, CrashModalTriggerPolicy} from '../types';
 import {CrashExportFormat, CrashType} from '../types/enums';
 import {addLogFromCrash} from './consoleLogger';
 import {
@@ -24,21 +24,87 @@ export interface CrashEventPayload {
   timestamp: number;
   logId?: number;
   crashRecord?: CrashRecord;
+  shouldShowModal?: boolean;
 }
 
 export {CrashExportFormat};
+
+export const DEFAULT_CRASH_IGNORED_TYPES: CrashIgnoredTypes = {
+  js: true,        // Disabled / Ignored by default
+  native: false,   // Protected by default
+  render: true,    // Disabled / Ignored by default
+  promise: false,  // Protected by default
+  custom: false,   // Protected by default
+};
 
 type CrashListener = (payload: CrashEventPayload) => void;
 
 let crashListeners: CrashListener[] = [];
 let isCrashHandlerInitialized = false;
 let lastHandledErrorTimestamp = 0;
+let lastHandledErrorFingerprint = '';
 let crashRecordsStore: CrashRecord[] = [];
 let breadcrumbsStore: CrashBreadcrumb[] = [];
 const MAX_BREADCRUMBS = 50;
 let maxStoredCrashes = 100;
 const appStartTime = Date.now();
 let isCrashModuleEnabled = false;
+
+let crashIgnoredTypesConfig: CrashIgnoredTypes = {...DEFAULT_CRASH_IGNORED_TYPES};
+let crashModalTriggerPolicyConfig: CrashModalTriggerPolicy = 'fatal_only';
+let crashThrottleDuplicatesConfig = true;
+
+export const setCrashIgnoredTypesConfig = (config: Partial<CrashIgnoredTypes>): void => {
+  crashIgnoredTypesConfig = {
+    ...crashIgnoredTypesConfig,
+    ...config,
+  };
+};
+
+export const getCrashIgnoredTypesConfig = (): CrashIgnoredTypes => ({
+  ...crashIgnoredTypesConfig,
+});
+
+export const setCrashModalTriggerPolicyConfig = (policy: CrashModalTriggerPolicy): void => {
+  crashModalTriggerPolicyConfig = policy;
+};
+
+export const getCrashModalTriggerPolicyConfig = (): CrashModalTriggerPolicy =>
+  crashModalTriggerPolicyConfig;
+
+export const setCrashThrottleDuplicatesConfig = (throttle: boolean): void => {
+  crashThrottleDuplicatesConfig = throttle;
+};
+
+export const applyCrashPolicyPreset = (
+  preset: 'balanced' | 'max_shield' | 'silent',
+): CrashIgnoredTypes => {
+  switch (preset) {
+    case 'max_shield':
+      crashIgnoredTypesConfig = {
+        js: false,
+        native: false,
+        render: false,
+        promise: false,
+        custom: false,
+      };
+      break;
+    case 'silent':
+      crashIgnoredTypesConfig = {
+        js: true,
+        native: true,
+        render: true,
+        promise: true,
+        custom: true,
+      };
+      break;
+    case 'balanced':
+    default:
+      crashIgnoredTypesConfig = {...DEFAULT_CRASH_IGNORED_TYPES};
+      break;
+  }
+  return {...crashIgnoredTypesConfig};
+};
 
 export const setCrashModuleEnabled = (enabled: boolean) => {
   isCrashModuleEnabled = enabled;
@@ -448,11 +514,44 @@ export const handleInterceptedCrash = (
       }
     }
 
+    // Check if this error category is configured to be ignored in settings
+    const isCategoryIgnored = Boolean(
+      crashIgnoredTypesConfig[inferredType as keyof CrashIgnoredTypes],
+    );
+    if (isCategoryIgnored) {
+      return {
+        id: `crash_ignored_${Date.now()}`,
+        isFatal,
+        type: inferredType,
+        message: rawMsg,
+        timestamp: Date.now(),
+        dateStr: new Date().toLocaleDateString(),
+        timeStr: new Date().toLocaleTimeString(),
+      };
+    }
+
     const now = new Date();
     const dateStr = now.toLocaleDateString();
     const timeStr = now.toLocaleTimeString();
 
     const parsedStack = parseCrashStackTrace(stackString);
+
+    // Rapid crash loop suppressor (500ms duplicate throttling)
+    const fingerprint = `${inferredType}_${rawMsg}_${stackString.slice(0, 80)}`;
+    const nowMs = Date.now();
+    if (
+      crashThrottleDuplicatesConfig &&
+      fingerprint === lastHandledErrorFingerprint &&
+      nowMs - lastHandledErrorTimestamp < 500
+    ) {
+      if (crashRecordsStore.length > 0) {
+        (crashRecordsStore[0] as any).duplicateCount =
+          ((crashRecordsStore[0] as any).duplicateCount || 1) + 1;
+      }
+      return crashRecordsStore[0];
+    }
+    lastHandledErrorFingerprint = fingerprint;
+    lastHandledErrorTimestamp = nowMs;
 
     const log = addLogFromCrash(
       errorObj,
@@ -500,6 +599,16 @@ export const handleInterceptedCrash = (
       crashRecordsStore = crashRecordsStore.slice(0, maxStoredCrashes);
     }
 
+    // Determine if full-screen crash modal should be triggered
+    let shouldShowModal = false;
+    if (crashModalTriggerPolicyConfig === 'all_errors') {
+      shouldShowModal = true;
+    } else if (crashModalTriggerPolicyConfig === 'fatal_only') {
+      shouldShowModal = isFatal || inferredType === CrashType.Native;
+    } else if (crashModalTriggerPolicyConfig === 'silent_tab_only') {
+      shouldShowModal = false;
+    }
+
     emitCrashEvent({
       error: errorObj,
       isFatal,
@@ -508,6 +617,7 @@ export const handleInterceptedCrash = (
       timestamp: Date.now(),
       logId: log?.id,
       crashRecord,
+      shouldShowModal,
     });
 
     // Ensure native floating icon is visible & badged even if React UI is broken

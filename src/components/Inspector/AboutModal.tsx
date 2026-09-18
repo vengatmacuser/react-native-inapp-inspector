@@ -21,6 +21,7 @@ import {
   copyToClipboard,
   showToast,
 } from '../../helpers';
+import {DeveloperSponsorCard} from './DeveloperSponsorCard';
 import {
   PackageIcon,
   GitHubIcon,
@@ -105,6 +106,9 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
             </TouchableScale>
           )}
         </View>
+
+        {/* Developer Sponsor / Partner Spotlight Card */}
+        <DeveloperSponsorCard />
 
         {/* Section: Application Outline */}
         <View style={styles.sectionCard}>

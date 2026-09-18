@@ -33,6 +33,7 @@ export const FloatingCaptureWidget: React.FC = () => {
     captureBitrate,
     captureMaxDurationSeconds,
     captureAudioMode,
+    captureWidgetEnabled,
     activeTab,
     settingsPage,
     peekMode,
@@ -303,8 +304,8 @@ export const FloatingCaptureWidget: React.FC = () => {
     return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  // When inside the screencast/media gallery module or media settings, or update popup is visible, hide the floating widget
-  if (activeTab === 'media' || settingsPage === 'media' || isUpdatePopupVisible) {
+  // When disabled in settings, inside the screencast/media gallery module or media settings, or update popup is visible, hide the floating widget
+  if (!captureWidgetEnabled || activeTab === 'media' || settingsPage === 'media' || isUpdatePopupVisible) {
     return null;
   }
 

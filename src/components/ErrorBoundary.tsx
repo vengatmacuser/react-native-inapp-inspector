@@ -118,15 +118,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     try {
       const stack = error?.stack || errorInfo?.componentStack || '';
-      handleInterceptedCrash(
+      const rec = handleInterceptedCrash(
         error,
         stack,
         false,
         CrashType.Render,
         errorInfo?.componentStack,
       );
-      showNativeFloatingButton();
-      setNativeFloatingButtonBadge(true);
+      if (rec && !rec.id.startsWith('crash_ignored_')) {
+        showNativeFloatingButton();
+        setNativeFloatingButtonBadge(true);
+      }
     } catch {}
   }
 

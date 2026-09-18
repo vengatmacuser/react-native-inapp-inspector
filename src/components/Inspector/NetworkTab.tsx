@@ -15,6 +15,7 @@ import DomainHeader from '../DomainHeader';
 import LogCard from '../LogCard';
 import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
+import {DeveloperSponsorCard} from './DeveloperSponsorCard';
 import NetworkFilterModal, {
   NetworkFilterState,
 } from './NetworkFilterModal';
@@ -921,20 +922,29 @@ const NetworkTab = React.memo(() => {
         }
         ListFooterComponent={
           groupedData.length > 0 ? (
-            <EndOfListFooter
-              count={
-                isGroupByPageEnabled
-                  ? filteredLogs.length
-                  : Math.min(displayLimit, filteredLogs.length)
-              }
-              totalCount={filteredLogs.length}
-              label="requests"
-              hasMore={
-                !isGroupByPageEnabled && filteredLogs.length > displayLimit
-              }
-              loadMoreStep={30}
-              onLoadMore={() => setDisplayLimit(p => p + 30)}
-            />
+            <View style={{paddingBottom: 24}}>
+              <DeveloperSponsorCard
+                containerStyle={{
+                  marginHorizontal: 10,
+                  marginTop: 10,
+                  marginBottom: 10,
+                }}
+              />
+              <EndOfListFooter
+                count={
+                  isGroupByPageEnabled
+                    ? filteredLogs.length
+                    : Math.min(displayLimit, filteredLogs.length)
+                }
+                totalCount={filteredLogs.length}
+                label="requests"
+                hasMore={
+                  !isGroupByPageEnabled && filteredLogs.length > displayLimit
+                }
+                loadMoreStep={30}
+                onLoadMore={() => setDisplayLimit(p => p + 30)}
+              />
+            </View>
           ) : null
         }
         style={{flex: 1}}

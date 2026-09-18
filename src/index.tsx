@@ -78,7 +78,12 @@ import {
   setMaxCrashLogsLimit,
   setCrashModuleEnabled,
   triggerGlobalCrashScreen,
+  DEFAULT_CRASH_IGNORED_TYPES,
+  setCrashIgnoredTypesConfig,
+  setCrashModalTriggerPolicyConfig,
+  applyCrashPolicyPreset as applyPresetToCrashHandler,
 } from './customHooks/crashHandler';
+import {CrashIgnoredTypes, CrashModalTriggerPolicy} from './types';
 
 import {
   subscribePushEvents,
@@ -135,7 +140,13 @@ import {
 
 import {
   fetchRemoteConfigModuleStatus,
+  fetchRemoteConfigSettings,
+  type InspectorRemoteConfigResult,
 } from './helpers/remoteConfig';
+import {
+  setSponsorPublisherId,
+  setCustomSponsorEndpoint,
+} from './helpers/sponsorService';
 import {ScreenCapture, CapturedMediaItem} from './capture';
 
 // Constants
@@ -172,6 +183,7 @@ const NetworkInspector = ({
   initialVisible = false,
   visible: controlledVisible,
   remoteConfig,
+  captureWidgetEnabled: propCaptureWidgetEnabled,
 }: NetworkInspectorProps): React.JSX.Element | null => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
@@ -323,10 +335,31 @@ const NetworkInspector = ({
   const [selectedCrash, setSelectedCrash] = useState<CrashRecord | null>(null);
   const [activeGlobalCrash, setActiveGlobalCrash] = useState<CrashRecord | null>(null);
   const [maxCrashLogs, setMaxCrashLogs] = useState<number>(50);
+  const [crashIgnoredTypes, setCrashIgnoredTypes] = useState<CrashIgnoredTypes>(() => ({
+    ...DEFAULT_CRASH_IGNORED_TYPES,
+  }));
+  const [crashModalTriggerPolicy, setCrashModalTriggerPolicyState] =
+    useState<CrashModalTriggerPolicy>('fatal_only');
 
   useEffect(() => {
     setMaxCrashLogsLimit(maxCrashLogs);
   }, [maxCrashLogs]);
+
+  useEffect(() => {
+    setCrashIgnoredTypesConfig(crashIgnoredTypes);
+  }, [crashIgnoredTypes]);
+
+  useEffect(() => {
+    setCrashModalTriggerPolicyConfig(crashModalTriggerPolicy);
+  }, [crashModalTriggerPolicy]);
+
+  const applyCrashPolicyPreset = useCallback(
+    (preset: 'balanced' | 'max_shield' | 'silent') => {
+      const updated = applyPresetToCrashHandler(preset);
+      setCrashIgnoredTypes(updated);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (visible) {
@@ -580,6 +613,9 @@ const NetworkInspector = ({
   const [captureAudioMode, setCaptureAudioMode] = useState<'none' | 'app' | 'mic'>('none');
   const [captureAutoHide, setCaptureAutoHide] = useState<boolean>(true);
   const [captureAutoGif, setCaptureAutoGif] = useState<boolean>(true);
+  const [captureWidgetEnabled, setCaptureWidgetEnabled] = useState<boolean>(
+    propCaptureWidgetEnabled ?? false,
+  );
 
   // #7 — Peek-through mode: makes inspector semi-transparent so user can see app behind
   const [peekMode, setPeekMode] = useState<boolean>(false);
@@ -694,6 +730,15 @@ const NetworkInspector = ({
       if (saved.maxAnalyticsEventsLimit != null)
         setMaxAnalyticsEventsLimit(saved.maxAnalyticsEventsLimit);
       if (saved.maxCrashLogs != null) setMaxCrashLogs(saved.maxCrashLogs);
+      if (saved.crashIgnoredTypes != null) {
+        setCrashIgnoredTypes({
+          ...DEFAULT_CRASH_IGNORED_TYPES,
+          ...saved.crashIgnoredTypes,
+        });
+      }
+      if (saved.crashModalTriggerPolicy != null) {
+        setCrashModalTriggerPolicyState(saved.crashModalTriggerPolicy);
+      }
       if (saved.showConsoleLevels)
         setShowConsoleLevels(saved.showConsoleLevels);
       if (saved.reduxAutoRefresh != null)
@@ -709,6 +754,8 @@ const NetworkInspector = ({
       if (saved.captureAudioMode) setCaptureAudioMode(saved.captureAudioMode);
       if (saved.captureAutoHide != null) setCaptureAutoHide(saved.captureAutoHide);
       if (saved.captureAutoGif != null) setCaptureAutoGif(saved.captureAutoGif);
+      if (saved.captureWidgetEnabled != null)
+        setCaptureWidgetEnabled(saved.captureWidgetEnabled);
       if (saved.peekOpacity != null)
         setPeekOpacity(Math.max(0.05, Math.min(1.0, saved.peekOpacity)));
       if (saved.showDuplicateLogs != null)
@@ -741,19 +788,35 @@ const NetworkInspector = ({
     };
   }, []);
 
-  // Fetch and apply module enable/disable statuses from Firebase Remote Config if configured or available
+  // Fetch and apply dynamic settings from Firebase Remote Config if configured or available
   useEffect(() => {
     let isMounted = true;
     if (remoteConfig === false) return;
 
-    fetchRemoteConfigModuleStatus(typeof remoteConfig === 'object' ? remoteConfig : undefined)
-      .then(remoteModules => {
-        if (isMounted && remoteModules) {
+    fetchRemoteConfigSettings(
+      typeof remoteConfig === 'object' ? remoteConfig : undefined,
+    )
+      .then(remoteSettings => {
+        if (!isMounted || !remoteSettings) return;
+
+        if (remoteSettings.modules) {
           setTabVisibility(prev => ({
             ...prev,
-            ...remoteModules,
-            apis: remoteModules.apis ?? true,
+            ...remoteSettings.modules,
+            apis: remoteSettings.modules?.apis ?? true,
           }));
+        }
+
+        if (remoteSettings.sponsorPublisherId) {
+          setSponsorPublisherId(remoteSettings.sponsorPublisherId);
+        }
+
+        if (remoteSettings.sponsorEndpoint) {
+          setCustomSponsorEndpoint(remoteSettings.sponsorEndpoint);
+        }
+
+        if (remoteSettings.captureWidgetEnabled !== undefined) {
+          setCaptureWidgetEnabled(remoteSettings.captureWidgetEnabled);
         }
       })
       .catch(() => {});
@@ -776,6 +839,8 @@ const NetworkInspector = ({
       maxConsoleLogs,
       maxAnalyticsEventsLimit,
       maxCrashLogs,
+      crashIgnoredTypes,
+      crashModalTriggerPolicy,
       isAutoRamLimitEnabled,
       isGroupByPageEnabled,
       showConsoleLevels,
@@ -791,6 +856,7 @@ const NetworkInspector = ({
       captureAudioMode,
       captureAutoHide,
       captureAutoGif,
+      captureWidgetEnabled,
       peekOpacity,
     });
   }, [
@@ -803,6 +869,8 @@ const NetworkInspector = ({
     maxConsoleLogs,
     maxAnalyticsEventsLimit,
     maxCrashLogs,
+    crashIgnoredTypes,
+    crashModalTriggerPolicy,
     isAutoRamLimitEnabled,
     isGroupByPageEnabled,
     showConsoleLevels,
@@ -817,6 +885,7 @@ const NetworkInspector = ({
     captureAudioMode,
     captureAutoHide,
     captureAutoGif,
+    captureWidgetEnabled,
     peekOpacity,
   ]);
 
@@ -1353,7 +1422,7 @@ const NetworkInspector = ({
         pushNativeLogRecord('crash', JSON.stringify(updated[0]));
       }
       setCrashRecords(updated);
-      if (crashInfo.crashRecord) {
+      if (crashInfo.crashRecord && crashInfo.shouldShowModal !== false) {
         setActiveGlobalCrash(crashInfo.crashRecord);
       }
     });
@@ -2590,6 +2659,11 @@ const NetworkInspector = ({
         setCrashRecords([]);
         setSelectedCrash(null);
       },
+      crashIgnoredTypes,
+      setCrashIgnoredTypes,
+      crashModalTriggerPolicy,
+      setCrashModalTriggerPolicyState,
+      applyCrashPolicyPreset,
 
       // ─── Push Notifications ──────────────────────────────────────────────
       pushRecords,
@@ -2696,6 +2770,8 @@ const NetworkInspector = ({
       setCaptureAutoHide,
       captureAutoGif,
       setCaptureAutoGif,
+      captureWidgetEnabled,
+      setCaptureWidgetEnabled,
       peekMode,
       setPeekMode,
       peekOpacity,
@@ -2802,6 +2878,9 @@ const NetworkInspector = ({
       selectedCrash,
       lastReadCrashesCount,
       maxCrashLogs,
+      crashIgnoredTypes,
+      crashModalTriggerPolicy,
+      applyCrashPolicyPreset,
       pushRecords,
       filteredPushRecords,
       selectedPush,
@@ -2840,6 +2919,7 @@ const NetworkInspector = ({
       captureAudioMode,
       captureAutoHide,
       captureAutoGif,
+      captureWidgetEnabled,
       peekMode,
       peekOpacity,
       isMinimized,
@@ -3185,7 +3265,9 @@ export {
 
 export {
   fetchRemoteConfigModuleStatus,
+  fetchRemoteConfigSettings,
   isFirebaseRemoteConfigAvailable,
+  type InspectorRemoteConfigResult,
 } from './helpers/remoteConfig';
 
 export {
@@ -3219,5 +3301,19 @@ export {
   type ImageOutputFormat,
   type VideoExportQuality,
 } from './editor';
+
+export {
+  DeveloperSponsorCard,
+  type DeveloperSponsorCardProps,
+} from './components/Inspector/DeveloperSponsorCard';
+
+export {
+  fetchDeveloperSponsor,
+  setSponsorPublisherId,
+  setCustomSponsorEndpoint,
+  trackSponsorImpression,
+  handleSponsorClick,
+  type DeveloperSponsorAd,
+} from './helpers/sponsorService';
 
 export { LIB_VERSION } from './constants/version';

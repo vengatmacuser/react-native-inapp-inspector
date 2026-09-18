@@ -171,6 +171,16 @@ export interface InspectorStorage {
   removeItem?: (key: string) => void | Promise<void>;
 }
 
+export interface CrashIgnoredTypes {
+  js: boolean;
+  native: boolean;
+  render: boolean;
+  promise: boolean;
+  custom: boolean;
+}
+
+export type CrashModalTriggerPolicy = 'fatal_only' | 'all_errors' | 'silent_tab_only';
+
 export interface PersistedSettings {
   isDark?: boolean;
   language?: string;
@@ -182,6 +192,9 @@ export interface PersistedSettings {
   maxConsoleLogs?: number;
   maxAnalyticsEventsLimit?: number;
   maxCrashLogs?: number;
+  crashIgnoredTypes?: CrashIgnoredTypes;
+  crashModalTriggerPolicy?: CrashModalTriggerPolicy;
+  crashThrottleDuplicates?: boolean;
   maxPushLogsLimit?: number;
   maxSocketLogsLimit?: number;
   isSocketAutoCaptureEnabled?: boolean;
@@ -212,6 +225,7 @@ export interface PersistedSettings {
   captureBitrate?: number;
   captureMaxDurationSeconds?: number;
   captureAutoGif?: boolean;
+  captureWidgetEnabled?: boolean;
   // ─── Peek-Through Mode ──────────────────────────────────────────────────────
   peekOpacity?: number;
 }
@@ -220,6 +234,7 @@ export interface PersistedSettings {
 
 export interface NetworkInspectorProps {
   enabled?: boolean;
+  captureWidgetEnabled?: boolean;
   telemetry?: boolean;
   storage?: InspectorStorage;
   navigationRef?: any;
@@ -426,6 +441,11 @@ export interface InspectorContextValue {
   maxCrashLogs: number;
   setMaxCrashLogs: React.Dispatch<React.SetStateAction<number>>;
   clearAllCrashes: () => void;
+  crashIgnoredTypes: CrashIgnoredTypes;
+  setCrashIgnoredTypes: React.Dispatch<React.SetStateAction<CrashIgnoredTypes>>;
+  crashModalTriggerPolicy: CrashModalTriggerPolicy;
+  setCrashModalTriggerPolicyState: React.Dispatch<React.SetStateAction<CrashModalTriggerPolicy>>;
+  applyCrashPolicyPreset: (preset: 'balanced' | 'max_shield' | 'silent') => void;
 
   // ─── Push Notifications ──────────────────────────────────────────────────
   pushRecords: PushNotificationRecord[];
@@ -509,6 +529,8 @@ export interface InspectorContextValue {
   setCaptureAutoHide: React.Dispatch<React.SetStateAction<boolean>>;
   captureAutoGif: boolean;
   setCaptureAutoGif: React.Dispatch<React.SetStateAction<boolean>>;
+  captureWidgetEnabled: boolean;
+  setCaptureWidgetEnabled: React.Dispatch<React.SetStateAction<boolean>>;
 
   // ─── Peek-Through Mode ──────────────────────────────────────────────────────
   peekMode: boolean;

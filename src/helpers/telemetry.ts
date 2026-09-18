@@ -84,6 +84,62 @@ function getCollectUrl(): string {
   return `https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${apiSecret}`;
 }
 
+function getPlatformUserAgent(params: Record<string, any>): string {
+  try {
+    const os = Platform.OS;
+    const osVer = String(params.os_version || (os === 'ios' ? '17.0' : '13.0'));
+    const locale = (params.device_locale || 'en_US').replace('_', '-');
+    if (os === 'android') {
+      const model = params.device_model || 'Android';
+      return `Mozilla/5.0 (Linux; U; Android ${osVer}; ${locale}; ${model}) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.0.0 Mobile Safari/537.36 (react-native-inapp-inspector/${LIB_VERSION})`;
+    } else if (os === 'ios') {
+      const iosVer = osVer.replace(/\./g, '_');
+      const model = params.device_model || 'iPhone';
+      return `Mozilla/5.0 (${model}; CPU iPhone OS ${iosVer} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 (react-native-inapp-inspector/${LIB_VERSION})`;
+    }
+    return `${params.app_name || 'App'}/${params.app_version || '1.0'} (${os}; ${osVer}) react-native-inapp-inspector/${LIB_VERSION}`;
+  } catch {
+    return `react-native-inapp-inspector/${LIB_VERSION}`;
+  }
+}
+
+function getClientCollectUrl(
+  eventName: string,
+  params: Record<string, any>,
+  clientId: string,
+): string {
+  const {measurementId} = getCredentials();
+  if (!measurementId) return '';
+  const nowSec = String(Math.floor(Date.now() / 1000));
+  const queryParams = new URLSearchParams({
+    v: '2',
+    tid: measurementId,
+    cid: clientId,
+    en: eventName,
+    _p: String(Math.floor(1000000 + Math.random() * 9000000)),
+    ul: (params.device_locale || 'en_US').toLowerCase().replace('_', '-'),
+    sr: params.screen_resolution || '1080x1920',
+    _s: '1',
+    _ee: '1',
+    seg: '1',
+    _et: '1000',
+    sid: nowSec,
+    sct: '1',
+    dl: `https://${params.bundle_id || 'app.native'}/inspector`,
+    dt: `${params.app_name || 'App'} - Inspector`,
+    'ep.country_code': params.country_code || 'unknown',
+    'ep.app_name': params.app_name || 'App',
+    'ep.platform': params.platform || Platform.OS,
+    'ep.pkg_version': params.pkg_version || LIB_VERSION,
+    'ep.install_type': params.install_type || 'local_dev',
+    'ep.js_engine': params.js_engine || 'hermes',
+    'ep.rn_version': params.rn_version || '',
+    'ep.device_brand': params.device_brand || '',
+    'ep.device_model': params.device_model || '',
+  });
+  return `https://www.google-analytics.com/g/collect?${queryParams.toString()}`;
+}
+
 // ─── Telemetry State & Heartbeat ───────────────────────────────────────────
 
 const PING_INTERVAL_MS = 24 * 60 * 60 * 1000;
@@ -394,15 +450,35 @@ export async function trackActiveTelemetryHeartbeat(
 
     const eventsToDispatch = isNewDevice
       ? [
-          {name: 'active_device', params: deviceParams},
+          {name: 'first_open', params: deviceParams},
           {name: 'first_device_install', params: deviceParams},
+          {name: 'session_start', params: deviceParams},
+          {name: 'active_device', params: deviceParams},
           {name: 'inspector_active_heartbeat', params: deviceParams},
         ]
       : [
+          {name: 'session_start', params: deviceParams},
+          {name: 'app_open', params: deviceParams},
           {name: 'active_device', params: deviceParams},
           {name: 'inspector_active_heartbeat', params: deviceParams},
         ];
 
+    // Channel 1: Direct Google Analytics client collection (resolves IP -> Country/Region/City automatically)
+    const clientUrl = getClientCollectUrl(
+      isNewDevice ? 'first_open' : 'session_start',
+      params,
+      clientId,
+    );
+    if (clientUrl) {
+      fetch(clientUrl, {
+        method: 'POST',
+        headers: {
+          'User-Agent': getPlatformUserAgent(params),
+        },
+      }).catch(() => {});
+    }
+
+    // Channel 2: Measurement Protocol with rich structured parameters
     await fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -483,6 +559,16 @@ export async function trackTelemetryEvent(
       ...eventParams,
       engagement_time_msec: 100,
     };
+
+    const clientUrl = getClientCollectUrl(eventName, params, clientId);
+    if (clientUrl) {
+      fetch(clientUrl, {
+        method: 'POST',
+        headers: {
+          'User-Agent': getPlatformUserAgent(metadata),
+        },
+      }).catch(() => {});
+    }
 
     await fetch(url, {
       method: 'POST',

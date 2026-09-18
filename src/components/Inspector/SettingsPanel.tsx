@@ -48,6 +48,16 @@ import {
   ReduxIcon,
   CrashIcon,
   ShieldAlertIcon,
+  ShieldCheckIcon,
+  ShieldBanIcon,
+  ScaleBalanceIcon,
+  VolumeMuteIcon,
+  JsIcon,
+  ChipIcon,
+  LayoutIcon,
+  HourglassIcon,
+  CodeBracketsIcon,
+  RefreshCcwIcon,
   ForwardChevronIcon,
   ChevronDownIcon,
   BrainIcon,
@@ -68,6 +78,7 @@ import {
 import {ScreenCapture} from '../../capture';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 
+import {DeveloperSponsorCard} from './DeveloperSponsorCard';
 import {
   isLocalDebugEnvironment,
 } from '../../helpers';
@@ -119,6 +130,11 @@ const SettingsPanel = () => {
     crashRecords,
     maxCrashLogs,
     setMaxCrashLogs,
+    crashIgnoredTypes,
+    setCrashIgnoredTypes,
+    crashModalTriggerPolicy,
+    setCrashModalTriggerPolicyState,
+    applyCrashPolicyPreset,
     pushRecords,
     maxPushLogs,
     setMaxPushLogs,
@@ -145,6 +161,8 @@ const SettingsPanel = () => {
     setCaptureMaxDurationSeconds,
     captureAutoGif,
     setCaptureAutoGif,
+    captureWidgetEnabled,
+    setCaptureWidgetEnabled,
     peekOpacity,
     setPeekOpacity,
   } = useInspector();
@@ -399,6 +417,7 @@ const SettingsPanel = () => {
 
   // Helper: settings row with icon + label + optional description
   const renderSettingRow = (opts: {
+    key?: React.Key;
     icon: React.ReactNode;
     label: string;
     description?: string;
@@ -422,6 +441,7 @@ const SettingsPanel = () => {
   }) => {
     return (
       <View
+        key={opts.key}
         style={{
           paddingVertical: 12,
           borderBottomWidth: opts.isLast ? 0 : 1,
@@ -2658,7 +2678,115 @@ const SettingsPanel = () => {
           </View>
         )}
         {settingsActiveSubTab === 'capture' && (
-          <View style={{gap: 12}}>
+          <View style={{gap: 16}}>
+            {/* Floating Quick Capture Widget Card */}
+            <View
+              style={{
+                backgroundColor: AppColors.primaryLight,
+                padding: 16,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: AppColors.grayBorderSecondary,
+                gap: 12,
+              }}>
+              <View
+                style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    backgroundColor: `${AppColors.rose500}1A`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                  <VideoCameraIcon color={AppColors.rose500} size={16} />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interBold,
+                      fontSize: 14,
+                      lineHeight: 18,
+                      color: AppColors.primaryBlack,
+                    }}>
+                    {t(
+                      'settings.media.floatingWidgetTitle',
+                      'Floating Capture Widget',
+                    )}
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: AppFonts.interRegular,
+                      fontSize: 11,
+                      lineHeight: 15,
+                      color: AppColors.grayText,
+                      marginTop: 1,
+                    }}>
+                    {t(
+                      'settings.media.floatingWidgetDesc',
+                      'On-screen floating button to quickly take screenshots and record videos (Disabled by default)',
+                    )}
+                  </Text>
+                </View>
+              </View>
+
+              {renderSettingRow({
+                icon: <CameraIcon color={AppColors.purple} size={16} />,
+                label: t(
+                  'settings.media.enableFloatingWidget',
+                  'Enable Floating Widget',
+                ),
+                description: t(
+                  'settings.media.enableFloatingWidgetDesc',
+                  'Shows draggable quick screenshot & video recording button on screen',
+                ),
+                isLast: true,
+                onPress: () => {
+                  triggerNativeHaptic('light');
+                  setCaptureWidgetEnabled(prev => !prev);
+                  showToast(
+                    `Capture widget: ${!captureWidgetEnabled ? 'ON' : 'OFF'}`,
+                  );
+                },
+                right: (
+                  <TouchableScale
+                    onPress={() => {
+                      triggerNativeHaptic('light');
+                      setCaptureWidgetEnabled(prev => !prev);
+                      showToast(
+                        `Capture widget: ${!captureWidgetEnabled ? 'ON' : 'OFF'}`,
+                      );
+                    }}
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 7,
+                      backgroundColor: captureWidgetEnabled
+                        ? `${AppColors.emerald500}26`
+                        : `${AppColors.grayText}20`,
+                      borderWidth: 1,
+                      borderColor: captureWidgetEnabled
+                        ? `${AppColors.emerald500}4D`
+                        : `${AppColors.grayText}33`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 10.5,
+                        color: captureWidgetEnabled
+                          ? AppColors.emerald500
+                          : AppColors.grayText,
+                      }}>
+                      {captureWidgetEnabled
+                        ? t('settings.media.enabled', 'ON')
+                        : 'OFF'}
+                    </Text>
+                  </TouchableScale>
+                ),
+              })}
+            </View>
+
             {/* Screenshot Preferences Card */}
             <View
               style={{
@@ -3088,6 +3216,10 @@ const SettingsPanel = () => {
             </View>
           </View>
         )}
+
+        {/* Developer Sponsor / Partner Spotlight Banner */}
+        <DeveloperSponsorCard containerStyle={{marginTop: 14}} />
+
         <View style={{height: 48}} />
       </ScrollView>
 
@@ -3663,10 +3795,379 @@ const SettingsPanel = () => {
       </ScrollView>
     );
   } else if (settingsPage === 'crash') {
+    const isBalancedPreset =
+      Boolean(crashIgnoredTypes?.js) &&
+      !crashIgnoredTypes?.native &&
+      Boolean(crashIgnoredTypes?.render) &&
+      !crashIgnoredTypes?.promise &&
+      !crashIgnoredTypes?.custom;
+
+    const isMaxShieldPreset =
+      !crashIgnoredTypes?.js &&
+      !crashIgnoredTypes?.native &&
+      !crashIgnoredTypes?.render &&
+      !crashIgnoredTypes?.promise &&
+      !crashIgnoredTypes?.custom;
+
+    const isSilentPreset =
+      Boolean(crashIgnoredTypes?.js) &&
+      Boolean(crashIgnoredTypes?.native) &&
+      Boolean(crashIgnoredTypes?.render) &&
+      Boolean(crashIgnoredTypes?.promise) &&
+      Boolean(crashIgnoredTypes?.custom);
+
+    const protectedCount = (['js', 'native', 'render', 'promise', 'custom'] as const).filter(
+      k => !crashIgnoredTypes?.[k],
+    ).length;
+
+    const crashCategories = [
+      {
+        key: 'js' as const,
+        label: t('settings.crash.ignoreJs', 'Ignore JS Runtime Crashes'),
+        desc: t(
+          'settings.crash.ignoreJsDesc',
+          'Bypasses unhandled JS runtime exceptions, TypeError, SyntaxError & ErrorUtils',
+        ),
+        icon: <JsIcon size={16} color={AppColors.yellow400} />,
+      },
+      {
+        key: 'native' as const,
+        label: t('settings.crash.ignoreNative', 'Ignore Native Platform Crashes'),
+        desc: t(
+          'settings.crash.ignoreNativeDesc',
+          'Bypasses iOS Mach-O signals, SIGSEGV, NullPointerException & ExceptionsManager',
+        ),
+        icon: <ChipIcon size={16} color={AppColors.cyan600} />,
+      },
+      {
+        key: 'render' as const,
+        label: t('settings.crash.ignoreRender', 'Ignore React Render Errors'),
+        desc: t(
+          'settings.crash.ignoreRenderDesc',
+          'Bypasses React component tree render failures & ErrorBoundary',
+        ),
+        icon: <LayoutIcon size={16} color={AppColors.purple400} />,
+      },
+      {
+        key: 'promise' as const,
+        label: t('settings.crash.ignorePromise', 'Ignore Promise Rejections'),
+        desc: t(
+          'settings.crash.ignorePromiseDesc',
+          'Bypasses unhandled asynchronous Promise rejections',
+        ),
+        icon: <HourglassIcon size={16} color={AppColors.amber400} />,
+      },
+      {
+        key: 'custom' as const,
+        label: t('settings.crash.ignoreCustom', 'Ignore Custom Recorded Errors'),
+        desc: t(
+          'settings.crash.ignoreCustomDesc',
+          'Bypasses manual recordCustomCrash exceptions & telemetry triggers',
+        ),
+        icon: <CodeBracketsIcon size={16} color={AppColors.emerald400} />,
+      },
+    ];
+
     content = (
       <ScrollView
         style={{flex: 1}}
-        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
+        contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 14}}
+        showsVerticalScrollIndicator={false}>
+        {/* ─── Governance Status Banner & Presets Card ─── */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 12,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+              <ShieldCheckIcon size={16} color={AppColors.purple} />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 12.5,
+                  letterSpacing: 0.5,
+                  color: AppColors.purple,
+                }}>
+                {t('settings.crash.governancePresets', 'GOVERNANCE PRESETS')}
+              </Text>
+            </View>
+            <View
+              style={{
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 6,
+                backgroundColor: `${AppColors.purple}14`,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 10.5,
+                  color: AppColors.purple,
+                }}>
+                {protectedCount} / 5 PROTECTED
+              </Text>
+            </View>
+          </View>
+
+          {/* Preset Buttons Grid */}
+          <View style={{flexDirection: 'row', gap: 8}}>
+            <TouchableScale
+              onPress={() => applyCrashPolicyPreset('balanced')}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                paddingHorizontal: 6,
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: isBalancedPreset
+                  ? AppColors.purple
+                  : AppColors.grayBorderSecondary,
+                backgroundColor: isBalancedPreset
+                  ? `${AppColors.purple}12`
+                  : AppColors.grayBackground,
+                alignItems: 'center',
+                gap: 4,
+              }}>
+              <ScaleBalanceIcon
+                size={16}
+                color={isBalancedPreset ? AppColors.purple : AppColors.grayText}
+              />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  color: isBalancedPreset
+                    ? AppColors.purple
+                    : AppColors.primaryBlack,
+                }}>
+                {t('settings.crash.presetBalanced', 'Balanced')}
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => applyCrashPolicyPreset('max_shield')}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                paddingHorizontal: 6,
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: isMaxShieldPreset
+                  ? AppColors.greenColor
+                  : AppColors.grayBorderSecondary,
+                backgroundColor: isMaxShieldPreset
+                  ? `${AppColors.greenColor}12`
+                  : AppColors.grayBackground,
+                alignItems: 'center',
+                gap: 4,
+              }}>
+              <ShieldCheckIcon
+                size={16}
+                color={isMaxShieldPreset ? AppColors.greenColor : AppColors.grayText}
+              />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  color: isMaxShieldPreset
+                    ? AppColors.greenColor
+                    : AppColors.primaryBlack,
+                }}>
+                {t('settings.crash.presetMaxShield', 'Max Shield')}
+              </Text>
+            </TouchableScale>
+
+            <TouchableScale
+              onPress={() => applyCrashPolicyPreset('silent')}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                paddingHorizontal: 6,
+                borderRadius: 10,
+                borderWidth: 1.5,
+                borderColor: isSilentPreset
+                  ? AppColors.grayTextWeak
+                  : AppColors.grayBorderSecondary,
+                backgroundColor: isSilentPreset
+                  ? `${AppColors.grayTextWeak}1A`
+                  : AppColors.grayBackground,
+                alignItems: 'center',
+                gap: 4,
+              }}>
+              <VolumeMuteIcon
+                size={16}
+                color={isSilentPreset ? AppColors.grayText : AppColors.grayTextWeak}
+              />
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  color: isSilentPreset
+                    ? AppColors.grayText
+                    : AppColors.primaryBlack,
+                }}>
+                {t('settings.crash.presetSilent', 'Silent Mode')}
+              </Text>
+            </TouchableScale>
+          </View>
+
+          <Text
+            style={{
+              fontFamily: AppFonts.interRegular,
+              fontSize: 11,
+              lineHeight: 15,
+              color: AppColors.grayText,
+            }}>
+            {isBalancedPreset
+              ? t(
+                  'settings.crash.presetBalancedDesc',
+                  'Recommended: Native & Promise protected; JS & Render ignored for clean dev workflow',
+                )
+              : isMaxShieldPreset
+              ? t(
+                  'settings.crash.presetMaxShieldDesc',
+                  '100% Protection: Intercepts & captures all 5 error categories',
+                )
+              : isSilentPreset
+              ? t(
+                  'settings.crash.presetSilentDesc',
+                  'Bypasses all error modals & badges for screencasts & clean demos',
+                )
+              : t(
+                  'settings.crash.categoryMatrix',
+                  'Customized rule matrix actively configured below',
+                )}
+          </Text>
+        </View>
+
+        {/* ─── Category Matrix (5 Interactive Ignored Toggles) ─── */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            gap: 4,
+          }}>
+          <Text
+            style={{
+              fontFamily: AppFonts.interBold,
+              fontSize: 12.5,
+              letterSpacing: 0.5,
+              color: AppColors.purple,
+              marginBottom: 4,
+            }}>
+            {t('settings.crash.categoryMatrix', 'ERROR INTERCEPTION & IGNORED CATEGORIES')}
+          </Text>
+
+          {crashCategories.map((cat, idx) => {
+            const isIgnored = Boolean(crashIgnoredTypes?.[cat.key]);
+            const isLast = idx === crashCategories.length - 1;
+
+            return renderSettingRow({
+              key: cat.key,
+              icon: cat.icon,
+              label: cat.label,
+              description: cat.desc,
+              isLast,
+              onPress: () => {
+                setCrashIgnoredTypes(prev => ({
+                  ...prev,
+                  [cat.key]: !prev[cat.key],
+                }));
+              },
+              right: (
+                <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                  <View
+                    style={{
+                      paddingHorizontal: 6,
+                      paddingVertical: 2.5,
+                      borderRadius: 5,
+                      backgroundColor: isIgnored
+                        ? `${AppColors.warningIconGold}18`
+                        : `${AppColors.greenColor}18`,
+                    }}>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interBold,
+                        fontSize: 9.5,
+                        color: isIgnored
+                          ? AppColors.warningIconGold
+                          : AppColors.greenColor,
+                      }}>
+                      {isIgnored
+                        ? t('settings.crash.ignoredBadge', 'IGNORED')
+                        : t('settings.crash.protectedBadge', 'PROTECTED')}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      borderColor: isIgnored
+                        ? AppColors.purple
+                        : AppColors.grayTextWeak,
+                      backgroundColor: isIgnored
+                        ? `${AppColors.purple}1A`
+                        : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                    {isIgnored && (
+                      <CheckIcon size={12} color={AppColors.purple} />
+                    )}
+                  </View>
+                </View>
+              ),
+            });
+          })}
+        </View>
+
+        {/* ─── Modal Alert Display Policy Picker ─── */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            padding: 16,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+          }}>
+          {renderSettingRow({
+            icon: <ShieldAlertIcon color={AppColors.purple} size={16} />,
+            label: t('settings.crash.modalTriggerTitle', 'Modal Alert Display Policy'),
+            description: t(
+              'settings.crash.modalTriggerDesc',
+              'Configure when the full-screen diagnostic modal appears',
+            ),
+            isLast: true,
+            picker: {
+              options: ['fatal_only', 'all_errors', 'silent_tab_only'] as const,
+              selectedValue: crashModalTriggerPolicy || 'fatal_only',
+              onSelect: val => setCrashModalTriggerPolicyState(val),
+              formatLabel: val =>
+                val === 'fatal_only'
+                  ? t('settings.crash.policyFatalOnly', 'Fatal Only')
+                  : val === 'all_errors'
+                  ? t('settings.crash.policyAllErrors', 'All Caught')
+                  : t('settings.crash.policySilent', 'Silent Only'),
+            },
+          })}
+        </View>
+
+        {/* ─── Buffer Limit & Reset / Clear Maintenance Actions ─── */}
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
@@ -3678,55 +4179,61 @@ const SettingsPanel = () => {
           }}>
           {renderSettingRow({
             icon: <LayersIcon color={AppColors.purple} size={16} />,
-            label: t('settings.crash.maxCrashLogs'),
-            description: t('settings.crash.maxCrashLogsDesc'),
+            label: t('settings.crash.maxCrashLogs', 'Max Crash Logs Buffer'),
+            description: t(
+              'settings.crash.maxCrashLogsDesc',
+              'How many crash records to preserve in history (5-100)',
+            ),
             numericInput: {
               value: maxCrashLogs,
               onChange: setMaxCrashLogs,
               min: 5,
-              max: 50,
-              placeholder: 'Enter max crashes (5-50)',
+              max: 100,
+              placeholder: 'Enter max crashes (5-100)',
             },
           })}
           <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
           {renderSettingRow({
-            icon: <ShieldAlertIcon color={AppColors.greenColor} size={16} />,
-            label: t('settings.crash.globalGuard'),
-            description: t('settings.crash.globalGuardDesc'),
-            isLast: true,
+            icon: <RefreshCcwIcon color={AppColors.purple} size={16} />,
+            label: t('settings.crash.resetDefaults', 'Reset to Defaults'),
+            description: t(
+              'settings.crash.resetDefaultsDesc',
+              'Restore recommended balanced crash protection settings',
+            ),
+            onPress: () => {
+              applyCrashPolicyPreset('balanced');
+              setMaxCrashLogs(50);
+              setCrashModalTriggerPolicyState('fatal_only');
+              Alert.alert(
+                t('common.success', 'Success'),
+                t('settings.crash.resetDefaultsDesc', 'Restore recommended balanced crash protection settings'),
+              );
+            },
             right: (
               <View
                 style={{
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 6,
-                  backgroundColor: `${AppColors.greenColor}1F`,
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 8,
+                  backgroundColor: `${AppColors.purple}14`,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.purple}33`,
                 }}>
                 <Text
                   style={{
                     fontFamily: AppFonts.interBold,
-                    fontSize: 10,
-                    lineHeight: 13,
-                    color: AppColors.greenColor,
+                    fontSize: 11,
+                    color: AppColors.purple,
                   }}>
-                  {t('settings.protectedBadge')}
+                  {t('settings.reset', 'Reset')}
                 </Text>
               </View>
             ),
           })}
-        </View>
-
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            padding: 16,
-          }}>
+          <View style={{height: 1, backgroundColor: AppColors.dividerColor}} />
           {renderSettingRow({
             icon: <TrashIcon color={AppColors.errorColor} size={16} />,
-            label: t('settings.crash.clearHistory'),
+            label: t('settings.crash.clearHistory', 'Clear Crash History'),
             description: t('settings.crash.clearHistoryDesc', {
               count: crashRecords?.length || 0,
             }),
@@ -3734,8 +4241,8 @@ const SettingsPanel = () => {
             onPress: () => {
               clearCrashRecords();
               Alert.alert(
-                t('common.success'),
-                t('settings.crash.historyCleared'),
+                t('common.success', 'Success'),
+                t('settings.crash.historyCleared', 'Crash logs cleared.'),
               );
             },
             right: (
@@ -3755,7 +4262,7 @@ const SettingsPanel = () => {
                     lineHeight: 14,
                     color: AppColors.errorColor,
                   }}>
-                  {t('common.clear')}
+                  {t('common.clear', 'Clear')}
                 </Text>
               </View>
             ),

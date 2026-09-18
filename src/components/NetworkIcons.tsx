@@ -944,16 +944,17 @@ export const UserIcon = ({color = AppColors.grayTextWeak, size = 12}: IconProps)
 
 export const InfoCircleIcon = ({
   color = AppColors.grayTextWeak,
-  size = 12,
+  size = 14,
 }: IconProps) => {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+      <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
       <Path
-        d="M12 16v-4M12 8h.01"
+        d="M12 16v-4M12 8.5h.01"
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="2.2"
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </Svg>
   );
@@ -3590,4 +3591,36 @@ export const ArrowForwardIcon = ({color = AppColors.white, size = 16}: IconProps
     />
   </Svg>
 );
+
+export const ScaleBalanceIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 3v18" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M4 6l8-3 8 3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M4 10l4 8H0l4-8z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M20 10l4 8h-8l4-8z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M8 21h8" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const VolumeMuteIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="23" y1="9" x2="17" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Line x1="17" y1="9" x2="23" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+export const ShieldBanIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Line x1="4.5" y1="4.5" x2="19.5" y2="19.5" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
 

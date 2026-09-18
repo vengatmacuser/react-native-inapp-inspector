@@ -1,23 +1,31 @@
 import {ActiveTab} from '../types';
 
 /**
- * Supported Remote Config keys for each module:
+ * Supported Remote Config parameters in Firebase Console:
  *
  * 1. JSON Configuration:
- *    - `inspector_modules` (e.g. `{"apis": true, "logs": true, "analytics": true, ...}`)
+ *    - `inspector_modules` (e.g. `{"apis": true, "logs": true, "media": true, ...}`)
  *    - `inapp_inspector_modules`
  *
- * 2. Individual Boolean Keys:
- *    - `inspector_module_apis` / `inapp_inspector_apis` / `inspector_apis`
- *    - `inspector_module_logs` / `inapp_inspector_logs` / `inspector_logs`
- *    - `inspector_module_analytics` / `inapp_inspector_analytics` / `inspector_analytics`
- *    - `inspector_module_redux` / `inapp_inspector_redux` / `inspector_redux`
- *    - `inspector_module_storage` / `inapp_inspector_storage` / `inspector_storage`
- *    - `inspector_module_device` / `inapp_inspector_device` / `inspector_device`
- *    - `inspector_module_crash` / `inapp_inspector_crash` / `inspector_crash`
- *    - `inspector_module_bundle` / `inapp_inspector_bundle` / `inspector_bundle`
- *    - `inspector_module_performance` / `inapp_inspector_performance` / `inspector_performance`
- *    - `inspector_module_debugging` / `inapp_inspector_debugging` / `inspector_debugging`
+ * 2. Individual Module Boolean Keys:
+ *    - `inspector_module_apis` / `inapp_inspector_apis`
+ *    - `inspector_module_logs` / `inapp_inspector_logs`
+ *    - `inspector_module_analytics` / `inapp_inspector_analytics`
+ *    - `inspector_module_redux` / `inapp_inspector_redux`
+ *    - `inspector_module_storage` / `inapp_inspector_storage`
+ *    - `inspector_module_device` / `inapp_inspector_device`
+ *    - `inspector_module_crash` / `inapp_inspector_crash`
+ *    - `inspector_module_debugging` / `inapp_inspector_debugging`
+ *    - `inspector_module_media` / `inapp_inspector_media`
+ *    - `inspector_module_socket` / `inapp_inspector_socket`
+ *
+ * 3. Dynamic Sponsor & Monetization Keys:
+ *    - `inspector_sponsor_publisher_id` (e.g. your approved EthicalAds publisher slug)
+ *    - `inspector_sponsor_endpoint` (custom JSON ad API endpoint)
+ *
+ * 4. Feature & Kill-switch Flags:
+ *    - `inspector_enabled` (boolean kill switch)
+ *    - `inspector_capture_widget_enabled` (floating capture widget switch)
  */
 
 const MODULE_KEYS: ActiveTab[] = [
@@ -29,9 +37,19 @@ const MODULE_KEYS: ActiveTab[] = [
   'device',
   'crash',
   'debugging',
+  'media',
+  'socket',
 ];
 
 let cachedRemoteConfigInstance: any = null;
+
+export interface InspectorRemoteConfigResult {
+  modules?: Partial<Record<ActiveTab, boolean>>;
+  sponsorPublisherId?: string;
+  sponsorEndpoint?: string;
+  captureWidgetEnabled?: boolean;
+  enabled?: boolean;
+}
 
 /**
  * Dynamically resolves Firebase Remote Config instance if installed.
@@ -102,16 +120,25 @@ function extractValue(val: any): any {
 }
 
 /**
- * Fetches and activates latest values from Firebase Remote Config, then parses module enable/disable statuses.
- * Returns a partial or complete mapping of module visibility flags, or null if Remote Config is unavailable.
- *
- * @param customInstance Optional custom remoteConfig instance from consumer app
- * @param fetchTimeoutMs Timeout for fetch operation in ms (default: 8000)
+ * Helper to extract string values (such as publisher IDs or custom endpoints)
  */
-export async function fetchRemoteConfigModuleStatus(
+function extractStringValue(val: any): string | undefined {
+  if (val === null || val === undefined) return undefined;
+  if (typeof val === 'string' && val.trim().length > 0) return val.trim();
+  if (typeof val.asString === 'function') {
+    const str = val.asString();
+    if (typeof str === 'string' && str.trim().length > 0) return str.trim();
+  }
+  return undefined;
+}
+
+/**
+ * Fetches and activates latest values from Firebase Remote Config, returning full dynamic config.
+ */
+export async function fetchRemoteConfigSettings(
   customInstance?: any,
   fetchTimeoutMs = 8000,
-): Promise<Partial<Record<ActiveTab, boolean>> | null> {
+): Promise<InspectorRemoteConfigResult | null> {
   const rc = getFirebaseRemoteConfig(customInstance);
   if (!rc) {
     return null;
@@ -140,10 +167,21 @@ export async function fetchRemoteConfigModuleStatus(
       // If network fetch fails/times out, we still read cached/activated values
     });
 
-    // 2. Read values from Remote Config
-    const result: Partial<Record<ActiveTab, boolean>> = {};
+    const getParamVal = (key: string) => {
+      if (typeof rc.getValue === 'function') {
+        try {
+          return rc.getValue(key);
+        } catch {
+          return undefined;
+        }
+      }
+      return rc[key];
+    };
 
-    // Check JSON bundle key first: `inspector_modules` or `inapp_inspector_modules`
+    const result: InspectorRemoteConfigResult = {};
+    const modules: Partial<Record<ActiveTab, boolean>> = {};
+
+    // ─── 1. JSON Modules Object ──────────────────────────────────────────────
     const jsonKeys = [
       'inspector_modules',
       'inapp_inspector_modules',
@@ -151,26 +189,18 @@ export async function fetchRemoteConfigModuleStatus(
     ];
 
     for (const jKey of jsonKeys) {
-      let rawVal: any;
-      if (typeof rc.getValue === 'function') {
-        try {
-          rawVal = rc.getValue(jKey);
-        } catch {}
-      } else if (rc[jKey] !== undefined) {
-        rawVal = rc[jKey];
-      }
-
+      const rawVal = getParamVal(jKey);
       const parsed = extractValue(rawVal);
       if (parsed && typeof parsed === 'object') {
         for (const modKey of MODULE_KEYS) {
           if (typeof parsed[modKey] === 'boolean') {
-            result[modKey] = parsed[modKey];
+            modules[modKey] = parsed[modKey];
           }
         }
       }
     }
 
-    // Check individual module boolean flags (overrides JSON if explicitly defined)
+    // ─── 2. Individual Module Boolean Flags ──────────────────────────────────
     for (const modKey of MODULE_KEYS) {
       const paramKeys = [
         `inspector_module_${modKey}`,
@@ -181,30 +211,88 @@ export async function fetchRemoteConfigModuleStatus(
       ];
 
       for (const pKey of paramKeys) {
-        let rawVal: any;
-        if (typeof rc.getValue === 'function') {
-          try {
-            rawVal = rc.getValue(pKey);
-          } catch {}
-        } else if (rc[pKey] !== undefined) {
-          rawVal = rc[pKey];
-        }
-
+        const rawVal = getParamVal(pKey);
         const boolVal = extractValue(rawVal);
         if (typeof boolVal === 'boolean') {
-          result[modKey] = boolVal;
+          modules[modKey] = boolVal;
           break;
         }
       }
     }
 
-    // APIs module is fundamental core, keep true unless explicitly disabled via remote config
-    if (result.apis === undefined) {
-      result.apis = true;
+    if (Object.keys(modules).length > 0) {
+      if (modules.apis === undefined) {
+        modules.apis = true;
+      }
+      result.modules = modules;
+    }
+
+    // ─── 3. Sponsor Publisher ID (EthicalAds) ────────────────────────────────
+    const publisherIdKeys = [
+      'inspector_sponsor_publisher_id',
+      'inapp_inspector_sponsor_publisher_id',
+      'inspector_publisher_id',
+      'ethicalads_publisher_id',
+    ];
+    for (const pKey of publisherIdKeys) {
+      const strVal = extractStringValue(getParamVal(pKey));
+      if (strVal) {
+        result.sponsorPublisherId = strVal;
+        break;
+      }
+    }
+
+    // ─── 4. Custom Sponsor Endpoint ──────────────────────────────────────────
+    const endpointKeys = [
+      'inspector_sponsor_endpoint',
+      'inapp_inspector_sponsor_endpoint',
+      'inspector_custom_sponsor_endpoint',
+    ];
+    for (const eKey of endpointKeys) {
+      const strVal = extractStringValue(getParamVal(eKey));
+      if (strVal) {
+        result.sponsorEndpoint = strVal;
+        break;
+      }
+    }
+
+    // ─── 5. Capture Widget Enabled ───────────────────────────────────────────
+    const captureWidgetKeys = [
+      'inspector_capture_widget_enabled',
+      'inapp_inspector_capture_widget',
+      'inspector_floating_capture_enabled',
+    ];
+    for (const cKey of captureWidgetKeys) {
+      const val = extractValue(getParamVal(cKey));
+      if (typeof val === 'boolean') {
+        result.captureWidgetEnabled = val;
+        break;
+      }
+    }
+
+    // ─── 6. Global Inspector Kill Switch ─────────────────────────────────────
+    const enabledKeys = ['inspector_enabled', 'inapp_inspector_enabled'];
+    for (const enKey of enabledKeys) {
+      const val = extractValue(getParamVal(enKey));
+      if (typeof val === 'boolean') {
+        result.enabled = val;
+        break;
+      }
     }
 
     return Object.keys(result).length > 0 ? result : null;
-  } catch (error) {
+  } catch {
     return null;
   }
+}
+
+/**
+ * Backward compatibility: Fetches and activates latest values from Firebase Remote Config, returning module statuses.
+ */
+export async function fetchRemoteConfigModuleStatus(
+  customInstance?: any,
+  fetchTimeoutMs = 8000,
+): Promise<Partial<Record<ActiveTab, boolean>> | null> {
+  const result = await fetchRemoteConfigSettings(customInstance, fetchTimeoutMs);
+  return result?.modules || null;
 }
