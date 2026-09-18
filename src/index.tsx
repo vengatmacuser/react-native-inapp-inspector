@@ -182,7 +182,7 @@ const NetworkInspector = ({
   environment,
   initialVisible = false,
   visible: controlledVisible,
-  remoteConfig,
+  remoteConfig = false,
   captureWidgetEnabled: propCaptureWidgetEnabled,
 }: NetworkInspectorProps): React.JSX.Element | null => {
   // Set custom storage synchronously during render phase
@@ -788,10 +788,10 @@ const NetworkInspector = ({
     };
   }, []);
 
-  // Fetch and apply dynamic settings from Firebase Remote Config if configured or available
+  // Fetch and apply dynamic settings from Firebase Remote Config (Disabled by default)
   useEffect(() => {
     let isMounted = true;
-    if (remoteConfig === false) return;
+    if (!remoteConfig) return;
 
     fetchRemoteConfigSettings(
       typeof remoteConfig === 'object' ? remoteConfig : undefined,
