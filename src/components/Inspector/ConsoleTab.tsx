@@ -51,6 +51,8 @@ const ConsoleTab = React.memo(() => {
     visibleConsoleLogs,
     maxConsoleLogs,
     setSelectedLog,
+    selectedConsoleLogs,
+    toggleSelectConsoleLog,
   } = useInspector();
 
   const initialLimit = maxConsoleLogs || 100;
@@ -83,10 +85,12 @@ const ConsoleTab = React.memo(() => {
           item={item}
           searchStr={logSearch}
           onPress={handleSelectLog}
+          isSelected={selectedConsoleLogs.has(item.id)}
+          onToggleSelect={toggleSelectConsoleLog}
         />
       </AnimatedEntrance>
     ),
-    [logSearch, handleSelectLog],
+    [logSearch, handleSelectLog, selectedConsoleLogs, toggleSelectConsoleLog],
   );
 
   const getItemLayout = useCallback(
@@ -351,6 +355,13 @@ const ConsoleTab = React.memo(() => {
                 color={AppColors.errorColor}
                 size={15}
               />
+              {selectedConsoleLogs.size > 0 && (
+                <View style={styles.trashBadge}>
+                  <Text style={styles.trashBadgeText}>
+                    {selectedConsoleLogs.size}
+                  </Text>
+                </View>
+              )}
             </TouchableScale>
           </View>
         </View>

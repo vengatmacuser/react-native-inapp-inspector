@@ -19,6 +19,7 @@ import {
   getSize,
   getPath,
   getBaseUrl,
+  openWithPostman,
 } from '../helpers';
 import {
   CalendarIcon,
@@ -30,6 +31,7 @@ import {
   RepeatIcon,
   ForwardChevronIcon,
   GlobeIcon,
+  PostmanIcon,
 } from './NetworkIcons';
 import {AppFonts} from '../styles/AppFonts';
 import {LogCardProps} from '../types';
@@ -69,12 +71,16 @@ function LogCard({
   const handleOpenUrl = (e?: any) => {
     e?.stopPropagation?.();
     Alert.alert(
-      t('common.openInBrowser') || 'Open in Browser',
-      `${t('common.openInBrowserPrompt') || 'Are you sure you want to open this URL in your external browser?'}\n\n${item.url}`,
+      t('common.openInBrowser') || 'Open URL',
+      `${t('common.openInBrowserPrompt') || 'Choose how you want to open or inspect this URL:'}\n\n${item.url}`,
       [
         {text: t('common.cancel') || 'Cancel', style: 'cancel'},
         {
-          text: t('common.open') || 'Open',
+          text: 'Open in Postman',
+          onPress: () => openWithPostman(item),
+        },
+        {
+          text: t('common.open') || 'Browser',
           onPress: () => {
             Linking.openURL(item.url).catch(() => {
               Alert.alert(t('common.error') || 'Error', t('common.cannotOpenUrl') || 'Could not open URL');
@@ -83,6 +89,11 @@ function LogCard({
         },
       ],
     );
+  };
+
+  const handleOpenPostman = (e?: any) => {
+    e?.stopPropagation?.();
+    openWithPostman(item);
   };
 
   const isFailed =
@@ -296,6 +307,20 @@ function LogCard({
                 accessibilityRole="button"
                 accessibilityLabel="Open in Browser">
                 <GlobeIcon color={AppColors.grayTextWeak} size={12} />
+              </Pressable>
+              <Pressable
+                onPress={handleOpenPostman}
+                hitSlop={8}
+                style={[
+                  styles.globeBtn,
+                  {
+                    backgroundColor: 'rgba(255, 108, 55, 0.12)',
+                    borderColor: 'rgba(255, 108, 55, 0.28)',
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Open with Postman">
+                <PostmanIcon color="#FF6C37" size={11} />
               </Pressable>
               <ForwardChevronIcon color={AppColors.grayTextWeak} size={13} />
             </View>

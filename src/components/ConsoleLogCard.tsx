@@ -1,6 +1,7 @@
 import React from 'react';
 import {useTranslation} from '../i18n';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import Svg, {Path} from 'react-native-svg';
 import {AppColors} from '../styles/AppColors';
 import {AppFonts} from '../styles/AppFonts';
 import {ConsoleLogCardProps} from '../types';
@@ -386,6 +387,8 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   searchStr = '',
   onPress,
   testID,
+  isSelected,
+  onToggleSelect,
 }: ConsoleLogCardProps) {
   const {setSelectedLog} = useInspector();
   const {t} = useTranslation();
@@ -513,9 +516,35 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           },
         ]}>
         <View style={styles.cardBody}>
-          {/* Row 1: Header Row (Serial, Method Badge, JSON Type / Source Chip, Duplicate Badge, Chevron) */}
+          {/* Row 1: Header Row (Checkbox, Serial, Method Badge, JSON Type / Source Chip, Duplicate Badge, Chevron) */}
           <View style={styles.cardHeaderRow}>
             <View style={styles.cardHeaderLeft}>
+              {onToggleSelect && item.id != null && (
+                <Pressable
+                  testID={`inspector.console.checkbox.${item.id}`}
+                  onPress={e => {
+                    e.stopPropagation();
+                    onToggleSelect(item.id);
+                  }}
+                  hitSlop={8}
+                  style={[
+                    styles.smallCheckbox,
+                    isSelected && styles.smallCheckboxChecked,
+                  ]}>
+                  {isSelected && (
+                    <Svg width={9} height={9} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M20 6L9 17l-5-5"
+                        stroke={AppColors.white}
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                  )}
+                </Pressable>
+              )}
+
               <Text style={styles.serialNumber}>
                 #{item.id != null ? item.id + 1 : 1}
               </Text>
@@ -932,6 +961,21 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
     marginTop: 2,
   },
+  smallCheckbox: {
+    width: 14,
+    height: 14,
+    borderRadius: 3.5,
+    borderWidth: 1.2,
+    borderColor: AppColors.grayBorderSecondary,
+    backgroundColor: AppColors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 2,
+  },
+  smallCheckboxChecked: {
+    backgroundColor: AppColors.purple,
+    borderColor: AppColors.purple,
+  },
 });
 function areConsoleLogPropsEqual(
   prev: ConsoleLogCardProps,
@@ -940,7 +984,9 @@ function areConsoleLogPropsEqual(
   return (
     prev.item === next.item &&
     prev.searchStr === next.searchStr &&
-    prev.onPress === next.onPress
+    prev.onPress === next.onPress &&
+    prev.isSelected === next.isSelected &&
+    prev.onToggleSelect === next.onToggleSelect
   );
 }
 

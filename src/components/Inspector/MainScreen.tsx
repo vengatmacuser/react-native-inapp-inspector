@@ -19,6 +19,7 @@ import NetworkTab from './NetworkTab';
 import NetworkDetail from './NetworkDetail';
 import LogDetail from './LogDetail';
 import ConsoleTab from './ConsoleTab';
+import {PerformanceTab} from './PerformanceTab';
 import AnalyticsTab from './AnalyticsTab';
 import AnalyticsDetail from '../AnalyticsDetail';
 import ReduxTab from './ReduxTab';
@@ -208,6 +209,11 @@ const MainScreen = () => {
                       {activeTab === 'logs' && (
                         <ModuleErrorBoundary moduleName="Console Logs Monitor">
                           <ConsoleTab />
+                        </ModuleErrorBoundary>
+                      )}
+                      {activeTab === 'perf' && (
+                        <ModuleErrorBoundary moduleName="Performance & FPS Profiler">
+                          <PerformanceTab />
                         </ModuleErrorBoundary>
                       )}
                       {activeTab === 'analytics' && (

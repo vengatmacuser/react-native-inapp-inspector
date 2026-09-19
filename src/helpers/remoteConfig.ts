@@ -27,6 +27,7 @@ import {ActiveTab} from '../types';
 const MODULE_KEYS: ActiveTab[] = [
   'apis',
   'logs',
+  'perf',
   'analytics',
   'redux',
   'storage',

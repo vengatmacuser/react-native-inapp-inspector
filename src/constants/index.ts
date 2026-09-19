@@ -35,6 +35,14 @@ export const DOMAIN_COLORS: string[] = AppColors.domainColors;
 export const DURATION_FAST_MS = 200;
 export const DURATION_SLOW_MS = 800;
 
+export const DEFAULT_HIDDEN_URL_PATTERNS: string[] = [
+  'https://google-analytics.com/g/collect',
+  'https://api.npmjs.org',
+  'https://api.github.com',
+  'https://registry.npmjs.org',
+];
+
 // Package version — auto-generated from package.json at build time.
 // See scripts/gen-version.js (wired to the "prebuild" npm script).
 export {LIB_VERSION} from './version';
+

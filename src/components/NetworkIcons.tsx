@@ -960,6 +960,23 @@ export const InfoCircleIcon = ({
   );
 };
 
+export const PostmanIcon = ({
+  color = '#FF6C37',
+  size = 14,
+}: IconProps) => {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21.5 2.5L10.5 13.5M21.5 2.5L14.5 21.5L10.5 13.5M21.5 2.5L2.5 9.5L10.5 13.5"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+};
+
 export const WarningTriangleIcon = ({
   color = AppColors.grayTextWeak,
   size = 12,
@@ -3622,5 +3639,84 @@ export const ShieldBanIcon = ({color = AppColors.white, size = 16}: IconProps) =
     <Line x1="4.5" y1="4.5" x2="19.5" y2="19.5" stroke={color} strokeWidth="2" strokeLinecap="round" />
   </Svg>
 );
+
+export const SpeedometerIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M12 2a10 10 0 0 0-7.07 17.07L12 12l5.07-5.07"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M2 12a10 10 0 1 0 20 0 10 10 0 0 0-20 0z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="12" cy="12" r="2" fill={color} />
+  </Svg>
+);
+
+export const CpuChipIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="4" y="4" width="16" height="16" rx="2" stroke={color} strokeWidth="2" />
+    <Rect x="9" y="9" width="6" height="6" stroke={color} strokeWidth="1.5" />
+    <Line x1="9" y1="1" x2="9" y2="4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="15" y1="1" x2="15" y2="4" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="9" y1="20" x2="9" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="15" y1="20" x2="15" y2="23" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="20" y1="9" x2="23" y2="9" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="20" y1="15" x2="23" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="1" y1="9" x2="4" y2="9" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="1" y1="15" x2="4" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const PulseGraphIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Polyline
+      points="22 12 18 12 15 21 9 3 6 12 2 12"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const GaugeIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3.34 17a10 10 0 1 1 17.32 0"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <Path
+      d="M12 12l4-4"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <Circle cx="12" cy="12" r="2" fill={color} />
+  </Svg>
+);
+
+export const MemoryRamIcon = ({color = AppColors.white, size = 16}: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="2" y="6" width="20" height="12" rx="2" stroke={color} strokeWidth="2" />
+    <Line x1="6" y1="18" x2="6" y2="21" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="10" y1="18" x2="10" y2="21" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="14" y1="18" x2="14" y2="21" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Line x1="18" y1="18" x2="18" y2="21" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Rect x="5" y="9" width="3" height="5" fill={color} />
+    <Rect x="10.5" y="9" width="3" height="5" fill={color} />
+    <Rect x="16" y="9" width="3" height="5" fill={color} />
+  </Svg>
+);
+
 
 

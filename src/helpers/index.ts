@@ -237,6 +237,127 @@ export const getFetchCommand = (log: NetworkLog): string => {
   return `fetch("${log.url}", ${JSON.stringify(opts, null, 2)})`;
 };
 
+/**
+ * Generates a Postman Collection v2.1 compatible request JSON from a NetworkLog.
+ */
+export const getPostmanRequestJson = (log: NetworkLog): string => {
+  let urlObj: {raw: string; host?: string[]; path?: string[]; query?: any[]};
+  try {
+    const parsed = new URL(log.url);
+    const hostParts = parsed.hostname.split('.');
+    const pathParts = parsed.pathname.replace(/^\//, '').split('/').filter(Boolean);
+    const queryParams: any[] = [];
+    parsed.searchParams.forEach((val, key) => {
+      queryParams.push({key, value: val});
+    });
+    urlObj = {
+      raw: log.url,
+      host: hostParts,
+      path: pathParts,
+      query: queryParams.length > 0 ? queryParams : undefined,
+    };
+  } catch {
+    urlObj = {raw: log.url};
+  }
+
+  const headerList: any[] = [];
+  if (log.requestHeaders && typeof log.requestHeaders === 'object') {
+    Object.entries(log.requestHeaders).forEach(([key, value]) => {
+      headerList.push({
+        key,
+        value: String(value),
+        type: 'text',
+      });
+    });
+  }
+
+  let bodyData: any = undefined;
+  if (log.request) {
+    const bodySource = log.request;
+    let bodyRaw = '';
+    if (typeof bodySource === 'object') {
+      try {
+        bodyRaw = JSON.stringify(bodySource, null, 2);
+      } catch {
+        bodyRaw = String(bodySource);
+      }
+    } else {
+      bodyRaw = String(bodySource);
+    }
+    bodyData = {
+      mode: 'raw',
+      raw: bodyRaw,
+      options: {
+        raw: {
+          language: 'json',
+        },
+      },
+    };
+  }
+
+  const postmanItem = {
+    info: {
+      name: `${log.method} ${getPath(log.url) || log.url}`,
+      schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+      _exporter_id: 'inapp-inspector',
+    },
+    item: [
+      {
+        name: `${log.method} ${getPath(log.url) || log.url}`,
+        request: {
+          method: log.method || 'GET',
+          header: headerList,
+          body: bodyData,
+          url: urlObj,
+          description: `Captured by React Native In-App Inspector`,
+        },
+        response: [],
+      },
+    ],
+  };
+
+  return JSON.stringify(postmanItem, null, 2);
+};
+
+/**
+ * Opens request in Postman or copies formatted cURL to clipboard ready for Postman import.
+ */
+export const openWithPostman = async (
+  log: NetworkLog,
+  toastFn?: (msg: string) => void,
+) => {
+  const curl = getCurlCommand(log);
+  Clipboard.setString(curl);
+
+  // Try opening Postman desktop/mobile app if scheme is supported
+  const postmanScheme = 'postman://';
+  try {
+    const supported = await Linking.canOpenURL(postmanScheme);
+    if (supported) {
+      await Linking.openURL(postmanScheme);
+      if (toastFn) toastFn('Opened Postman (cURL copied to clipboard)');
+      else showToast('Opened Postman (cURL copied to clipboard)');
+      return;
+    }
+  } catch {
+    // Ignore and fallback to dialog
+  }
+
+  Alert.alert(
+    'Open with Postman',
+    `cURL for "${log.method} ${getPath(log.url) || log.url}" copied to clipboard!\n\nIn Postman: Click "Import" > paste the cURL to load this request.`,
+    [
+      {text: 'Done', style: 'cancel'},
+      {
+        text: 'Open Postman Web',
+        onPress: () => {
+          Linking.openURL('https://web.postman.co/').catch(() => {});
+        },
+      },
+    ],
+  );
+};
+
 export const deduplicateLogs = (raw: NetworkLog[]): NetworkLog[] => {
   const map = new Map<number, NetworkLog>();
   raw.forEach(entry => {
@@ -1240,3 +1361,53 @@ export const getRuntimeDiagnostics = (): RuntimeDiagnostics => {
     totalAllocMb,
   };
 };
+
+/**
+ * Checks whether a given URL matches any pattern (regex, substring, or wildcard) in the hidden patterns list.
+ */
+export const isUrlHidden = (
+  url: string | undefined | null,
+  patterns: string[] | undefined | null,
+): boolean => {
+  if (!url || !patterns || patterns.length === 0) return false;
+  const cleanUrl = url.trim();
+  if (!cleanUrl) return false;
+  const lowerUrl = cleanUrl.toLowerCase();
+
+  for (let i = 0; i < patterns.length; i++) {
+    const rawPattern = patterns[i]?.trim();
+    if (!rawPattern) continue;
+    const lowerPattern = rawPattern.toLowerCase();
+
+    // 1. Direct case-insensitive substring match (handles domains & URLs with special characters)
+    if (lowerUrl.includes(lowerPattern)) return true;
+
+    // 2. Also check if pattern without protocol matches URL without protocol
+    const strippedPattern = lowerPattern.replace(/^https?:\/\//, '');
+    const strippedUrl = lowerUrl.replace(/^https?:\/\//, '');
+    if (strippedPattern && strippedUrl.includes(strippedPattern)) return true;
+
+    // 3. Wildcard pattern matching (e.g. *.github.com or *analytics*)
+    if (rawPattern.includes('*')) {
+      try {
+        const regexStr = rawPattern
+          .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*');
+        const wildcardReg = new RegExp(regexStr, 'i');
+        if (wildcardReg.test(cleanUrl)) return true;
+      } catch {
+        // Fallback to regex test below
+      }
+    }
+
+    // 4. Standard regular expression test
+    try {
+      const reg = new RegExp(rawPattern, 'i');
+      if (reg.test(cleanUrl)) return true;
+    } catch {
+      // If regex compilation fails, already evaluated via substring match
+    }
+  }
+  return false;
+};
+

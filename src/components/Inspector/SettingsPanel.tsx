@@ -7,6 +7,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -18,6 +19,7 @@ import Slider from '../Slider';
 import {toggleGlobalTheme} from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
+import {DEFAULT_HIDDEN_URL_PATTERNS} from '../../constants';
 import {
   calculateRamBasedLimits,
 } from '../../helpers/settingsStore';
@@ -57,6 +59,7 @@ import {
   LayoutIcon,
   HourglassIcon,
   CodeBracketsIcon,
+  LockIcon,
   RefreshCcwIcon,
   ForwardChevronIcon,
   ChevronDownIcon,
@@ -73,6 +76,7 @@ import {
   ImageIcon,
   BellIcon,
   WebsocketIcon,
+  SpeedometerIcon,
   BoltIcon,
 } from '../NetworkIcons';
 import {ScreenCapture} from '../../capture';
@@ -164,8 +168,11 @@ const SettingsPanel = () => {
     setCaptureWidgetEnabled,
     peekOpacity,
     setPeekOpacity,
+    hiddenUrlPatterns,
+    setHiddenUrlPatterns,
   } = useInspector();
 
+  const [newUrlPattern, setNewUrlPattern] = useState('');
   const [stagedHeight, setStagedHeight] = useState(modalHeightPercent);
 
   const [showLanguageModal, setShowLanguageModal] = useState(false);
@@ -174,9 +181,51 @@ const SettingsPanel = () => {
     SUPPORTED_LANGUAGES.find(l => l.code === currentLangCode) ||
     SUPPORTED_LANGUAGES[0];
 
+  const handleAddUrlPattern = () => {
+    const trimmed = newUrlPattern.trim();
+    if (!trimmed) return;
+    if (hiddenUrlPatterns.includes(trimmed)) {
+      showToast('Pattern already exists in filter list');
+      return;
+    }
+    // Validate regex syntax
+    try {
+      new RegExp(trimmed);
+    } catch {
+      // Still allow string matching but warn user
+    }
+    triggerNativeHaptic('light');
+    setHiddenUrlPatterns(prev => [...prev, trimmed]);
+    setNewUrlPattern('');
+    showToast('Hidden URL pattern added');
+  };
+
+  const handleRemoveUrlPattern = (indexToRemove: number) => {
+    const targetPattern = hiddenUrlPatterns[indexToRemove];
+    if (DEFAULT_HIDDEN_URL_PATTERNS.includes(targetPattern)) {
+      showToast('Default system filter cannot be removed');
+      return;
+    }
+    triggerNativeHaptic('light');
+    setHiddenUrlPatterns(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    showToast('Pattern removed');
+  };
+
+
   useEffect(() => {
     setStagedHeight(modalHeightPercent);
   }, [modalHeightPercent]);
+
+  const subTabTransitionAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    subTabTransitionAnim.setValue(0);
+    Animated.spring(subTabTransitionAnim, {
+      toValue: 1,
+      friction: 8,
+      tension: 65,
+      useNativeDriver: true,
+    }).start();
+  }, [settingsActiveSubTab]);
 
   const autoRamProfile = calculateRamBasedLimits(deviceFreeRamMb);
 
@@ -202,6 +251,14 @@ const SettingsPanel = () => {
           },
           {
             id: 3,
+            key: 'perf',
+            label: 'Performance & FPS',
+            category: 'telemetry',
+            icon: 'perf',
+            desc: 'Live 60 FPS graph, JS event loop queue lag, memory heap & jank monitor',
+          },
+          {
+            id: 4,
             key: 'analytics',
             label: 'Analytics Logger',
             category: 'telemetry',
@@ -209,7 +266,7 @@ const SettingsPanel = () => {
             desc: 'Firebase & custom analytics events, user properties & params',
           },
           {
-            id: 4,
+            id: 5,
             key: 'redux',
             label: 'Redux Inspector',
             category: 'telemetry',
@@ -217,7 +274,7 @@ const SettingsPanel = () => {
             desc: 'Store state diffing, action history & reducer timeline',
           },
           {
-            id: 5,
+            id: 6,
             key: 'storage',
             label: 'Storage Inspector',
             category: 'telemetry',
@@ -225,7 +282,7 @@ const SettingsPanel = () => {
             desc: 'AsyncStorage & MMKV key-value store viewer with full CRUD support',
           },
           {
-            id: 6,
+            id: 7,
             key: 'device',
             label: 'Device Info',
             category: 'diagnostic',
@@ -233,7 +290,7 @@ const SettingsPanel = () => {
             desc: 'Hardware specs, IP address, screen metrics, UDID & runtime stats',
           },
           {
-            id: 7,
+            id: 8,
             key: 'crash',
             label: 'Crash Protection',
             category: 'diagnostic',
@@ -241,7 +298,7 @@ const SettingsPanel = () => {
             desc: 'Runtime exception guard, breadcrumbs & memory snapshot',
           },
           {
-            id: 8,
+            id: 9,
             key: 'debugging',
             label: 'Multi-Device Debugging',
             category: 'diagnostic',
@@ -249,7 +306,7 @@ const SettingsPanel = () => {
             desc: 'QR Code bridge for direct Debug APK download & Metro live-reload sync',
           },
           {
-            id: 9,
+            id: 10,
             key: 'media',
             label: 'Screencast',
             category: 'diagnostic',
@@ -257,7 +314,7 @@ const SettingsPanel = () => {
             desc: 'Screenshots, video recordings, audio narration & animated GIFs',
           },
           {
-            id: 10,
+            id: 11,
             key: 'push',
             label: 'Push Notifications',
             category: 'telemetry',
@@ -265,7 +322,7 @@ const SettingsPanel = () => {
             desc: 'Universal push & local notification logger (Salesforce, FCM, APNs, Braze, Expo)',
           },
           {
-            id: 11,
+            id: 12,
             key: 'socket',
             label: 'WebSocket & Socket.IO',
             category: 'telemetry',
@@ -281,51 +338,71 @@ const SettingsPanel = () => {
     [],
   );
 
-  // Staged selection state for checkboxes before clicking "Save Changes"
-  const [stagedTabVisibility, setStagedTabVisibility] = useState<
-    Record<ActiveTab, boolean>
-  >(() => ({
-    apis: true,
-    logs: Boolean(tabVisibility?.logs ?? true),
-    analytics: Boolean(tabVisibility?.analytics ?? true),
-    redux: Boolean(tabVisibility?.redux ?? true),
-    storage: Boolean(tabVisibility?.storage ?? true),
-    device: Boolean(tabVisibility?.device ?? true),
-    crash: Boolean(tabVisibility?.crash ?? true),
-    debugging: Boolean(tabVisibility?.debugging ?? true),
-    media: Boolean(tabVisibility?.media ?? true),
-    push: Boolean(tabVisibility?.push ?? true),
-    socket: Boolean(tabVisibility?.socket ?? true),
-  }));
-
-  // Synchronize staged state with tabVisibility when tabVisibility updates
-  useEffect(() => {
-    setStagedTabVisibility({
-      apis: true,
-      logs: Boolean(tabVisibility?.logs ?? true),
-      analytics: Boolean(tabVisibility?.analytics ?? true),
-      redux: Boolean(tabVisibility?.redux ?? true),
-      storage: Boolean(tabVisibility?.storage ?? true),
-      device: Boolean(tabVisibility?.device ?? true),
-      crash: Boolean(tabVisibility?.crash ?? true),
-      debugging: Boolean(tabVisibility?.debugging ?? true),
-      media: Boolean(tabVisibility?.media ?? true),
-      push: Boolean(tabVisibility?.push ?? true),
-      socket: Boolean(tabVisibility?.socket ?? true),
-    });
-  }, [tabVisibility]);
-
-  const hasUnsavedChanges = useMemo(() => {
-    return allModules.some(
-      m =>
-        Boolean(stagedTabVisibility[m.key as ActiveTab]) !==
-        Boolean(tabVisibility?.[m.key as ActiveTab]),
-    );
-  }, [stagedTabVisibility, tabVisibility, allModules]);
-
-  const stagedActiveCount = allModules.filter(
-    m => m.key === 'apis' || Boolean(stagedTabVisibility[m.key as ActiveTab]),
-  ).length;
+  const MODULE_THEMES: Record<
+    string,
+    {color: string; bg: string; border: string}
+  > = {
+    apis: {
+      color: AppColors.blue500,
+      bg: `${AppColors.blue500}14`,
+      border: `${AppColors.blue500}2E`,
+    },
+    logs: {
+      color: AppColors.purple,
+      bg: `${AppColors.purple}14`,
+      border: `${AppColors.purple}2E`,
+    },
+    perf: {
+      color: AppColors.purple,
+      bg: `${AppColors.purple}14`,
+      border: `${AppColors.purple}2E`,
+    },
+    analytics: {
+      color: AppColors.amber600,
+      bg: `${AppColors.amber600}14`,
+      border: `${AppColors.amber600}2E`,
+    },
+    redux: {
+      color: AppColors.violet600,
+      bg: `${AppColors.violet600}14`,
+      border: `${AppColors.violet600}2E`,
+    },
+    storage: {
+      color: AppColors.cyan600,
+      bg: `${AppColors.cyan600}14`,
+      border: `${AppColors.cyan600}2E`,
+    },
+    device: {
+      color: AppColors.emerald600,
+      bg: `${AppColors.emerald600}14`,
+      border: `${AppColors.emerald600}2E`,
+    },
+    crash: {
+      color: AppColors.red600,
+      bg: `${AppColors.red600}14`,
+      border: `${AppColors.red600}2E`,
+    },
+    debugging: {
+      color: AppColors.indigo600,
+      bg: `${AppColors.indigo600}14`,
+      border: `${AppColors.indigo600}2E`,
+    },
+    media: {
+      color: AppColors.pink600,
+      bg: `${AppColors.pink600}14`,
+      border: `${AppColors.pink600}2E`,
+    },
+    push: {
+      color: AppColors.orange600,
+      bg: `${AppColors.orange600}14`,
+      border: `${AppColors.orange600}2E`,
+    },
+    socket: {
+      color: AppColors.teal600,
+      bg: `${AppColors.teal600}14`,
+      border: `${AppColors.teal600}2E`,
+    },
+  };
 
   const selectableModules = useMemo(() => {
     return allModules.filter(m => {
@@ -336,79 +413,33 @@ const SettingsPanel = () => {
     });
   }, [allModules]);
 
+  const activeModulesCount = allModules.filter(
+    m => m.key === 'apis' || Boolean(tabVisibility?.[m.key as ActiveTab]),
+  ).length;
+
   const isAllSelectableChecked = useMemo(() => {
     if (selectableModules.length === 0) return false;
     return selectableModules.every(
-      m => Boolean(stagedTabVisibility[m.key as ActiveTab]),
+      m => Boolean(tabVisibility?.[m.key as ActiveTab]),
     );
-  }, [selectableModules, stagedTabVisibility]);
+  }, [selectableModules, tabVisibility]);
 
-  const handleToggleSelectAll = () => {
-    const nextState = !isAllSelectableChecked;
-    setStagedTabVisibility(prev => {
-      const updated = {...prev};
-      selectableModules.forEach(m => {
-        updated[m.key as ActiveTab] = nextState;
-      });
-      return updated;
-    });
+  const handleToggleModule = (key: string) => {
+    if (key === 'apis') return;
+    triggerNativeHaptic('light');
+    toggleTabVisibility(key as ActiveTab);
   };
 
-  const handleSaveChanges = () => {
-    if (!hasUnsavedChanges) return;
-
-    Alert.alert(
-      'Apply Changes & Reload',
-      'Are you sure you want to save module changes? The inspector will close and reload the app to apply the new configuration.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-          onPress: () => {
-            // Discard: Revert staged visibility back to saved tabVisibility
-            setStagedTabVisibility({
-              apis: true,
-              logs: Boolean(tabVisibility?.logs),
-              analytics: Boolean(tabVisibility?.analytics),
-              redux: Boolean(tabVisibility?.redux),
-              storage: Boolean(tabVisibility?.storage),
-              device: Boolean(tabVisibility?.device),
-              crash: Boolean(tabVisibility?.crash),
-              debugging: Boolean(tabVisibility?.debugging),
-              media: Boolean(tabVisibility?.media ?? true),
-              push: Boolean(tabVisibility?.push ?? true),
-              socket: Boolean(tabVisibility?.socket ?? false),
-            });
-          },
-        },
-        {
-          text: 'Save & Reload',
-          style: 'default',
-          onPress: () => {
-            animateNextLayout();
-            allModules.forEach(m => {
-              if (m.key !== 'apis') {
-                const isStagedOn = Boolean(
-                  stagedTabVisibility[m.key as ActiveTab],
-                );
-                const isCurrentOn = Boolean(
-                  tabVisibility?.[m.key as ActiveTab],
-                );
-                if (isStagedOn !== isCurrentOn) {
-                  toggleTabVisibility(m.key as ActiveTab);
-                }
-              }
-            });
-            closeModal();
-            setTimeout(() => {
-              if (__DEV__ && DevSettings && DevSettings.reload) {
-                DevSettings.reload();
-              }
-            }, 350);
-          },
-        },
-      ],
-    );
+  const handleToggleSelectAll = () => {
+    triggerNativeHaptic('medium');
+    const nextState = !isAllSelectableChecked;
+    selectableModules.forEach(m => {
+      const isCurrentOn = Boolean(tabVisibility?.[m.key as ActiveTab]);
+      if (isCurrentOn !== nextState) {
+        toggleTabVisibility(m.key as ActiveTab);
+      }
+    });
+    showToast(nextState ? 'All modules enabled' : 'Optional modules disabled');
   };
 
   const [isDefaultTabDropdownOpen, setIsDefaultTabDropdownOpen] =
@@ -612,205 +643,150 @@ const SettingsPanel = () => {
         style={{flex: 1}}
         contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 14}}
         showsVerticalScrollIndicator={false}>
-        {/* Segmented Top Navigation Sub-Tabs */}
-        {/* ─── Modern Scrollable Settings Sub-Tabs Bar ─── */}
+        {/* ─── Modern Segmented 4-Column Category Bar (100% Width, Zero Scroll Cutoff) ─── */}
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
-            borderRadius: 13,
-            paddingVertical: 4,
-            paddingHorizontal: 4,
+            borderRadius: 12,
+            padding: 3,
             borderWidth: 1,
             borderColor: AppColors.grayBorderSecondary,
+            flexDirection: 'row',
+            alignItems: 'center',
             shadowColor: AppColors.black,
             shadowOpacity: 0.04,
             shadowRadius: 4,
             shadowOffset: {width: 0, height: 2},
+            elevation: 2,
           }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              paddingHorizontal: 2,
-            }}>
-            {[
-              {
-                key: 'module' as const,
-                label: t('settings.modulesAndTools', 'Modules & Tools'),
-                Icon: LayersIcon,
-                badge: `${
-                  allModules.filter(
-                    m =>
-                      stagedTabVisibility?.[m.key as ActiveTab] ||
-                      m.key === 'apis',
-                  ).length
-                }/${allModules.length}`,
-              },
-              {
-                key: 'ui' as const,
-                label: t('settings.uiPreferences', 'UI Preferences'),
-                Icon: ScreenIcon,
-              },
-              {
-                key: 'limits' as const,
-                label: t('settings.ramLimits', 'RAM & Limits'),
-                Icon: BrainIcon,
-              },
-              {
-                key: 'capture' as const,
-                label: t(
-                  'settings.screenVideoCapture',
-                  'Screen & Video Capture',
-                ),
-                Icon: CameraIcon,
-              },
-            ].map(tab => {
-              const isActive = settingsActiveSubTab === tab.key;
-              const IconComp = tab.Icon;
-              return (
-                <TouchableScale
-                  key={tab.key}
-                  accessible={true}
-                  accessibilityRole="tab"
-                  accessibilityLabel={tab.label}
-                  accessibilityState={{selected: isActive}}
-                  onPress={() => {
-                    animateNextLayout();
-                    setSettingsActiveSubTab(tab.key);
-                  }}
+          {[
+            {
+              key: 'module' as const,
+              label: t('settings.navModules', 'Modules'),
+              Icon: LayersIcon,
+            },
+            {
+              key: 'ui' as const,
+              label: t('settings.navDisplay', 'Display'),
+              Icon: ScreenIcon,
+            },
+            {
+              key: 'limits' as const,
+              label: t('settings.navLimits', 'Limits'),
+              Icon: BrainIcon,
+            },
+            {
+              key: 'capture' as const,
+              label: t('settings.navCapture', 'Capture'),
+              Icon: CameraIcon,
+            },
+          ].map(tab => {
+            const isActive = settingsActiveSubTab === tab.key;
+            const IconComp = tab.Icon;
+            return (
+              <TouchableScale
+                key={tab.key}
+                accessible={true}
+                accessibilityRole="tab"
+                accessibilityLabel={tab.label}
+                accessibilityState={{selected: isActive}}
+                onPress={() => {
+                  triggerNativeHaptic('light');
+                  animateNextLayout();
+                  setSettingsActiveSubTab(tab.key);
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  paddingVertical: 8,
+                  paddingHorizontal: 2,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 4,
+                  borderRadius: 9,
+                  backgroundColor: isActive ? AppColors.purple : 'transparent',
+                }}>
+                <IconComp
+                  color={isActive ? AppColors.white : AppColors.grayText}
+                  size={12}
+                />
+                <Text
                   style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 14,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    borderRadius: 9,
-                    backgroundColor: isActive
-                      ? AppColors.purple
-                      : 'transparent',
-                  }}>
-                  <IconComp
-                    color={isActive ? AppColors.white : AppColors.grayText}
-                    size={13}
-                  />
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interBold,
-                      fontSize: 12.5,
-                      lineHeight: 16,
-                      color: isActive ? AppColors.white : AppColors.grayText,
-                    }}>
-                    {tab.label}
-                  </Text>
-                  {tab.badge && (
-                    <View
-                      style={{
-                        backgroundColor: isActive
-                          ? 'rgba(255,255,255,0.25)'
-                          : `${AppColors.purple}18`,
-                        paddingHorizontal: 5.5,
-                        paddingVertical: 1,
-                        borderRadius: 10,
-                      }}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 9.5,
-                          color: isActive ? AppColors.white : AppColors.purple,
-                        }}>
-                        {tab.badge}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableScale>
-              );
-            })}
-          </ScrollView>
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: isActive ? AppColors.white : AppColors.grayText,
+                  }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail">
+                  {tab.label}
+                </Text>
+              </TouchableScale>
+            );
+          })}
         </View>
 
         {settingsActiveSubTab === 'module' && (
-          <View style={{gap: 12}}>
-            {/* Select All / Deselect All Action Bar */}
+          <Animated.View
+            style={{
+              gap: 10,
+              opacity: subTabTransitionAnim,
+              transform: [
+                {
+                  translateY: subTabTransitionAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [10, 0],
+                  }),
+                },
+              ],
+            }}>
+            {/* Header Control Row: Active count on the left, Select/Deselect All button on the right */}
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                backgroundColor: AppColors.primaryLight,
-                borderRadius: 12,
-                paddingVertical: 10,
-                paddingHorizontal: 14,
-                borderWidth: 1,
-                borderColor: isAllSelectableChecked
-                  ? `${AppColors.purple}40`
-                  : AppColors.grayBorderSecondary,
-                shadowColor: AppColors.black,
-                shadowOpacity: 0.02,
-                shadowRadius: 3,
-                shadowOffset: {width: 0, height: 1},
+                paddingHorizontal: 4,
+                paddingVertical: 2,
               }}>
-              <TouchableScale
-                accessible={true}
-                accessibilityRole="checkbox"
-                accessibilityLabel="Toggle Select All Modules"
-                accessibilityState={{checked: isAllSelectableChecked}}
-                onPress={handleToggleSelectAll}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                  flex: 1,
-                }}>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 12.5,
+                    lineHeight: 16,
+                    color: AppColors.primaryBlack,
+                  }}>
+                  Active Modules
+                </Text>
                 <View
                   style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 6,
-                    borderWidth: isAllSelectableChecked ? 0 : 1.8,
-                    borderColor: AppColors.grayBorderSecondary,
-                    backgroundColor: isAllSelectableChecked
-                      ? AppColors.purple
-                      : AppColors.grayBackground,
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    backgroundColor: `${AppColors.purple}14`,
+                    paddingHorizontal: 6,
+                    paddingVertical: 1.5,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: `${AppColors.purple}25`,
                   }}>
-                  {isAllSelectableChecked && (
-                    <CheckIcon size={12} color={AppColors.white} />
-                  )}
-                </View>
-                <View>
                   <Text
                     style={{
                       fontFamily: AppFonts.interBold,
-                      fontSize: 13,
-                      color: AppColors.primaryBlack,
+                      fontSize: 9.5,
+                      color: AppColors.purple,
                     }}>
-                    {isAllSelectableChecked
-                      ? 'Deselect All Modules'
-                      : 'Select All Modules'}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: AppFonts.interRegular,
-                      fontSize: 10.5,
-                      color: AppColors.grayText,
-                      marginTop: 1,
-                    }}>
-                    {stagedActiveCount} of {allModules.length} modules active
+                    {activeModulesCount} of {allModules.length}
                   </Text>
                 </View>
-              </TouchableScale>
+              </View>
 
               <TouchableScale
                 onPress={handleToggleSelectAll}
+                hitSlop={6}
                 style={{
                   paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderRadius: 8,
+                  paddingVertical: 4.5,
+                  borderRadius: 7,
                   backgroundColor: isAllSelectableChecked
                     ? `${AppColors.purple}14`
                     : AppColors.purple,
@@ -832,8 +808,8 @@ const SettingsPanel = () => {
               </TouchableScale>
             </View>
 
-            {/* Individual Module Cards with Left Checkboxes */}
-            <View style={{gap: 10}}>
+            {/* Individual Module Cards */}
+            <View style={{gap: 8}}>
               {allModules.map(moduleItem => {
                 const isReduxAvail = isReduxConnected();
                 const isAnalyticsAvail = isAnalyticsConnected();
@@ -843,10 +819,24 @@ const SettingsPanel = () => {
                 const isLocked = moduleItem.key === 'apis' || isUnavailable;
                 const isChecked =
                   moduleItem.key === 'apis' ||
-                  (Boolean(
-                    stagedTabVisibility?.[moduleItem.key as ActiveTab],
-                  ) &&
+                  (Boolean(tabVisibility?.[moduleItem.key as ActiveTab]) &&
                     !isUnavailable);
+
+                const theme =
+                  MODULE_THEMES[moduleItem.key] || {
+                    color: AppColors.purple,
+                    bg: `${AppColors.purple}14`,
+                    border: `${AppColors.purple}2E`,
+                  };
+
+                const hasConfigurePage =
+                  moduleItem.key === 'apis' ||
+                  moduleItem.key === 'logs' ||
+                  moduleItem.key === 'analytics' ||
+                  moduleItem.key === 'redux' ||
+                  moduleItem.key === 'crash' ||
+                  moduleItem.key === 'push' ||
+                  moduleItem.key === 'socket';
 
                 const liveStats =
                   moduleItem.key === 'apis'
@@ -855,27 +845,27 @@ const SettingsPanel = () => {
                       : ''
                     : moduleItem.key === 'logs'
                     ? consoleLogs.length > 0
-                      ? `${consoleLogs.length} logs • Limit: ${maxConsoleLogs}`
+                      ? `${consoleLogs.length} logs`
                       : ''
                     : moduleItem.key === 'crash'
                     ? crashRecords && crashRecords.length > 0
-                      ? `${crashRecords.length} crashes recorded • Crash Guard`
+                      ? `${crashRecords.length} crashes`
                       : ''
                     : moduleItem.key === 'analytics'
                     ? analyticsEvents.length > 0
-                      ? `${analyticsEvents.length} events logged`
+                      ? `${analyticsEvents.length} events`
                       : ''
                     : moduleItem.key === 'redux'
                     ? reduxState && Object.keys(reduxState).length > 0
-                      ? `${Object.keys(reduxState).length} slices • Depth: ${reduxExpandDepth}`
+                      ? `${Object.keys(reduxState).length} slices`
                       : ''
                     : moduleItem.key === 'push'
                     ? pushRecords && pushRecords.length > 0
-                      ? `${pushRecords.length} notifications logged`
+                      ? `${pushRecords.length} notifications`
                       : ''
                     : moduleItem.key === 'socket'
                     ? socketRecords && socketRecords.length > 0
-                      ? `${socketRecords.length} connections active`
+                      ? `${socketRecords.length} sockets`
                       : ''
                     : '';
 
@@ -884,520 +874,333 @@ const SettingsPanel = () => {
                     key={moduleItem.key}
                     style={{
                       backgroundColor: AppColors.primaryLight,
-                      borderRadius: 14,
-                      borderWidth: 1.5,
+                      borderRadius: 13,
+                      borderWidth: 1,
                       borderColor: isChecked
-                        ? `${AppColors.purple}38`
+                        ? `${theme.color}38`
                         : AppColors.grayBorderSecondary,
-                      padding: 14,
-                      gap: 10,
+                      padding: 12,
+                      gap: 8,
                       shadowColor: AppColors.black,
-                      shadowOpacity: isChecked ? 0.04 : 0.02,
-                      shadowRadius: 5,
-                      shadowOffset: {width: 0, height: 2},
+                      shadowOpacity: isChecked ? 0.03 : 0.01,
+                      shadowRadius: 3,
+                      shadowOffset: {width: 0, height: 1.5},
+                      elevation: 1.5,
                     }}>
-                    {/* Top Row: [Checkbox] -> [Icon Tile] -> [Title & Subtitle] */}
+                    {/* Top Row: Icon Tile + Title/Badges/Desc + Switch Toggle */}
                     <View
                       style={{
                         flexDirection: 'row',
-                        alignItems: 'flex-start',
+                        alignItems: 'center',
                         gap: 10,
                       }}>
-                      {/* 1. Checkbox on the Left */}
-                      <TouchableScale
-                        accessible={true}
-                        accessibilityRole="checkbox"
-                        accessibilityLabel={`Select ${moduleItem.label}`}
-                        accessibilityState={{
-                          checked: isChecked,
-                          disabled: isLocked,
-                        }}
-                        disabled={isLocked}
-                        onPress={() => {
-                          if (isLocked) return;
-                          setStagedTabVisibility(prev => ({
-                            ...prev,
-                            [moduleItem.key]:
-                              !prev[moduleItem.key as ActiveTab],
-                          }));
-                        }}
-                        hitSlop={8}
+                      {/* Left: Icon Tile */}
+                      <View
                         style={{
-                          width: 22,
-                          height: 22,
-                          borderRadius: 6,
-                          borderWidth: isChecked ? 0 : 1.8,
-                          borderColor: isLocked
-                            ? AppColors.dividerColor
-                            : AppColors.grayBorderSecondary,
-                          backgroundColor:
-                            moduleItem.key === 'apis'
-                              ? `${AppColors.blue500}22`
-                              : isChecked
-                              ? AppColors.purple
-                              : AppColors.grayBackground,
+                          width: 38,
+                          height: 38,
+                          borderRadius: 10,
+                          backgroundColor: isChecked ? theme.bg : AppColors.grayBackground,
+                          borderWidth: 1,
+                          borderColor: isChecked ? theme.border : AppColors.grayBorderSecondary,
                           alignItems: 'center',
                           justifyContent: 'center',
-                          marginTop: 7,
-                          shadowColor: isChecked
-                            ? AppColors.purple
-                            : 'transparent',
-                          shadowOpacity: isChecked ? 0.25 : 0,
-                          shadowRadius: 2,
-                          elevation: isChecked ? 2 : 0,
+                          flexShrink: 0,
                         }}>
-                        {moduleItem.key === 'apis' ? (
-                          <CheckIcon size={12} color={AppColors.blue500} />
-                        ) : isChecked ? (
-                          <CheckIcon size={12} color={AppColors.white} />
-                        ) : isLocked ? (
-                          <Svg
-                            width={10}
-                            height={10}
-                            viewBox="0 0 24 24"
-                            fill="none">
-                            <Path
-                              d="M7 10V7a5 5 0 0 1 10 0v3"
-                              stroke={AppColors.grayText}
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                            />
-                            <Path
-                              d="M5 10h14v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"
-                              fill={AppColors.grayText}
-                            />
-                          </Svg>
-                        ) : null}
-                      </TouchableScale>
+                        {moduleItem.icon === 'apis' && (
+                          <SignalIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'logs' && (
+                          <TerminalIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'perf' && (
+                          <SpeedometerIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'crash' && (
+                          <CrashIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'analytics' && (
+                          <AnalyticsIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'redux' && (
+                          <ReduxIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'device' && (
+                          <SmartphoneIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'storage' && (
+                          <DatabaseIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'debugging' && (
+                          <QrCodeIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'media' && (
+                          <ScreencastIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'push' && (
+                          <BellIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                        {moduleItem.icon === 'socket' && (
+                          <WebsocketIcon
+                            color={isChecked ? theme.color : AppColors.grayTextWeak}
+                            size={16}
+                          />
+                        )}
+                      </View>
 
-                      {/* 2. Middle Tap Zone: Icon + Title & Desc */}
-                      <TouchableScale
-                        accessible={true}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${moduleItem.label} settings`}
-                        disabled={isUnavailable}
-                        onPress={() => {
-                          animateNextLayout();
-                          setSettingsPage(moduleItem.key);
-                        }}
-                        style={{
-                          flex: 1,
-                          flexDirection: 'row',
-                          alignItems: 'flex-start',
-                          gap: 10,
-                        }}>
-                        {/* Icon Tile */}
+                      {/* Middle: Title, Status Pills & 1-line Description with full width */}
+                      <View style={{flex: 1, minWidth: 0, justifyContent: 'center'}}>
                         <View
                           style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 10,
-                            backgroundColor: isLocked
-                              ? `${AppColors.grayBorderSecondary}4D`
-                              : isChecked
-                              ? `${AppColors.purple}14`
-                              : AppColors.grayBackground,
-                            borderWidth: 1,
-                            borderColor: isLocked
-                              ? AppColors.dividerColor
-                              : isChecked
-                              ? `${AppColors.purple}33`
-                              : AppColors.grayBorderSecondary,
+                            flexDirection: 'row',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            marginTop: 1,
+                            gap: 5,
                           }}>
-                          {moduleItem.icon === 'apis' && (
-                            <SignalIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'logs' && (
-                            <TerminalIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'crash' && (
-                            <CrashIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'analytics' && (
-                            <AnalyticsIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'redux' && (
-                            <ReduxIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'device' && (
-                            <SmartphoneIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'storage' && (
-                            <DatabaseIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'debugging' && (
-                            <QrCodeIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'media' && (
-                            <ScreencastIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'push' && (
-                            <BellIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                          {moduleItem.icon === 'socket' && (
-                            <WebsocketIcon
-                              color={
-                                isChecked
-                                  ? AppColors.purple
-                                  : AppColors.grayTextWeak
-                              }
-                              size={16}
-                            />
-                          )}
-                        </View>
-
-                        {/* Titles & Status Pill */}
-                        <View style={{flex: 1, gap: 2}}>
-                          <View
+                          <Text
                             style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              gap: 6,
-                              flexWrap: 'wrap',
-                            }}>
+                              fontFamily: AppFonts.interBold,
+                              fontSize: 13.5,
+                              lineHeight: 18,
+                              color: isLocked
+                                ? AppColors.grayText
+                                : AppColors.primaryBlack,
+                            }}
+                            numberOfLines={1}>
+                            {moduleItem.label}
+                          </Text>
+
+                          {/* Status / Feature Pills */}
+                          {moduleItem.key === 'apis' && (
                             <View
                               style={{
-                                minWidth: 22,
-                                height: 22,
-                                paddingHorizontal: 5,
-                                borderRadius: 11,
-                                backgroundColor: isChecked
-                                  ? `${AppColors.purple}1C`
-                                  : `${AppColors.grayBorderSecondary}80`,
+                                backgroundColor: `${AppColors.blue500}14`,
+                                paddingHorizontal: 4.5,
+                                paddingVertical: 1,
+                                borderRadius: 4,
                                 borderWidth: 1,
-                                borderColor: isChecked
-                                  ? `${AppColors.purple}44`
-                                  : AppColors.grayBorderSecondary,
-                                alignItems: 'center',
-                                justifyContent: 'center',
+                                borderColor: `${AppColors.blue500}33`,
                               }}>
                               <Text
                                 style={{
                                   fontFamily: AppFonts.interBold,
-                                  fontSize: 10,
-                                  lineHeight: 13,
-                                  color: isChecked
-                                    ? AppColors.purple
-                                    : AppColors.grayText,
+                                  fontSize: 7.5,
+                                  lineHeight: 10,
+                                  color: AppColors.blue500,
+                                  letterSpacing: 0.3,
                                 }}>
-                                #{moduleItem.id}
+                                CORE
                               </Text>
                             </View>
-                            <Text
+                          )}
+
+                          {moduleItem.key === defaultTab && (
+                            <View
                               style={{
-                                fontFamily: AppFonts.interBold,
-                                fontSize: 14,
-                                lineHeight: 18,
-                                color: isLocked
-                                  ? AppColors.grayText
-                                  : AppColors.primaryBlack,
+                                backgroundColor: `${AppColors.purple}14`,
+                                paddingHorizontal: 4.5,
+                                paddingVertical: 1,
+                                borderRadius: 4,
+                                borderWidth: 1,
+                                borderColor: `${AppColors.purple}2E`,
                               }}>
-                              {moduleItem.label}
-                            </Text>
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 7.5,
+                                  lineHeight: 10,
+                                  color: AppColors.purple,
+                                  letterSpacing: 0.3,
+                                }}>
+                                DEFAULT
+                              </Text>
+                            </View>
+                          )}
 
-                            {/* Default Startup Tab Badge */}
-                            {moduleItem.key === defaultTab &&
-                              !isUnavailable && (
-                                <View
-                                  style={{
-                                    flexDirection: 'row',
-                                    alignItems: 'center',
-                                    backgroundColor: `${AppColors.purple}14`,
-                                    borderRadius: 12,
-                                    paddingHorizontal: 5,
-                                    paddingVertical: 1.5,
-                                    borderWidth: 1,
-                                    borderColor: `${AppColors.purple}2E`,
-                                    gap: 3,
-                                  }}>
-                                  <View
-                                    style={{
-                                      width: 4,
-                                      height: 4,
-                                      borderRadius: 2,
-                                      backgroundColor: AppColors.purple,
-                                    }}
-                                  />
-                                  <Text
-                                    style={{
-                                      fontFamily: AppFonts.interBold,
-                                      fontSize: 8,
-                                      lineHeight: 11,
-                                      color: AppColors.purple,
-                                      letterSpacing: 0.4,
-                                    }}>
-                                    {t('settings.defaultBadge')}
-                                  </Text>
-                                </View>
-                              )}
-
-                            {/* Status Pill */}
-                            {moduleItem.key === 'apis' ? (
-                              <View
+                          {isUnavailable && (
+                            <View
+                              style={{
+                                backgroundColor: `${AppColors.amber500}14`,
+                                paddingHorizontal: 4.5,
+                                paddingVertical: 1,
+                                borderRadius: 4,
+                                borderWidth: 1,
+                                borderColor: `${AppColors.amber500}33`,
+                              }}>
+                              <Text
                                 style={{
-                                  backgroundColor: `${AppColors.blue500}14`,
-                                  borderRadius: 4,
-                                  paddingHorizontal: 5,
-                                  paddingVertical: 1.5,
-                                  borderWidth: 1,
-                                  borderColor: `${AppColors.blue500}33`,
+                                  fontFamily: AppFonts.interBold,
+                                  fontSize: 7.5,
+                                  lineHeight: 10,
+                                  color: AppColors.amber700,
+                                  letterSpacing: 0.3,
                                 }}>
-                                <Text
-                                  style={{
-                                    fontFamily: AppFonts.interBold,
-                                    fontSize: 8,
-                                    lineHeight: 11,
-                                    color: AppColors.blue500,
-                                    letterSpacing: 0.3,
-                                  }}>
-                                  {t('settings.coreBadge')}
-                                </Text>
-                              </View>
-                            ) : isUnavailable ? (
-                              <View
-                                style={{
-                                  backgroundColor: `${AppColors.amber500}18`,
-                                  borderRadius: 4,
-                                  paddingHorizontal: 5,
-                                  paddingVertical: 1.5,
-                                  borderWidth: 1,
-                                  borderColor: `${AppColors.amber500}35`,
-                                }}>
-                                <Text
-                                  style={{
-                                    fontFamily: AppFonts.interBold,
-                                    fontSize: 8,
-                                    lineHeight: 11,
-                                    color: AppColors.amber700,
-                                    letterSpacing: 0.3,
-                                  }}>
-                                  {moduleItem.key === 'redux'
-                                    ? t('settings.notConnectedBadge')
-                                    : t('settings.notDetectedBadge')}
-                                </Text>
-                              </View>
-                            ) : isChecked ? (
-                              <View
-                                style={{
-                                  backgroundColor: `${AppColors.liveGreen}18`,
-                                  borderRadius: 4,
-                                  paddingHorizontal: 5,
-                                  paddingVertical: 1.5,
-                                  borderWidth: 1,
-                                  borderColor: `${AppColors.liveGreen}38`,
-                                }}>
-                                <Text
-                                  style={{
-                                    fontFamily: AppFonts.interBold,
-                                    fontSize: 8,
-                                    lineHeight: 11,
-                                    color: AppColors.green700,
-                                    letterSpacing: 0.3,
-                                  }}>
-                                  {t('settings.activeBadge')}
-                                </Text>
-                              </View>
-                            ) : (
-                              <View
-                                style={{
-                                  backgroundColor: `${AppColors.grayTextWeak}18`,
-                                  borderRadius: 4,
-                                  paddingHorizontal: 5,
-                                  paddingVertical: 1.5,
-                                  borderWidth: 1,
-                                  borderColor: `${AppColors.grayTextWeak}2E`,
-                                }}>
-                                <Text
-                                  style={{
-                                    fontFamily: AppFonts.interBold,
-                                    fontSize: 8,
-                                    lineHeight: 11,
-                                    color: AppColors.grayTextWeak,
-                                    letterSpacing: 0.3,
-                                  }}>
-                                  {t('settings.dormantBadge')}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interRegular,
-                              fontSize: 11,
-                              color: AppColors.grayText,
-                              lineHeight: 15,
-                              marginTop: 1,
-                            }}>
-                            {moduleItem.desc}
-                          </Text>
+                                OFFLINE
+                              </Text>
+                            </View>
+                          )}
                         </View>
-                      </TouchableScale>
+
+                        <Text
+                          style={{
+                            fontFamily: AppFonts.interRegular,
+                            fontSize: 11,
+                            lineHeight: 15,
+                            color: AppColors.grayTextWeak,
+                            marginTop: 1.5,
+                          }}
+                          numberOfLines={1}
+                          ellipsizeMode="tail">
+                          {moduleItem.desc}
+                        </Text>
+                      </View>
+
+                      {/* Right: Switch Toggle */}
+                      <Switch
+                        value={isChecked}
+                        disabled={isLocked}
+                        onValueChange={() => handleToggleModule(moduleItem.key)}
+                        trackColor={{
+                          false: AppColors.grayBorderSecondary,
+                          true: AppColors.purple,
+                        }}
+                        thumbColor={AppColors.white}
+                        ios_backgroundColor={AppColors.grayBorderSecondary}
+                        style={{transform: [{scaleX: 0.8}, {scaleY: 0.8}]}}
+                      />
                     </View>
 
-                    {/* Card Footer: Live Stats + Configure Button */}
-                    {!isUnavailable && (
+                    {/* Bottom Metadata & Configure Row (Only if stats exist OR configure page is available) */}
+                    {(liveStats || hasConfigurePage || moduleItem.key === 'media') && (
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          paddingTop: 8,
+                          paddingTop: 7,
                           borderTopWidth: 1,
-                          borderTopColor: AppColors.dividerColor,
+                          borderTopColor: `${AppColors.dividerColor}99`,
+                          marginTop: 1,
                         }}>
-                        {/* Live Info Pill */}
-                        {liveStats && liveStats.trim().length > 0 ? (
-                          <View
+                        {/* Left: Live stats counter dot indicator */}
+                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, flex: 1}}>
+                          {liveStats ? (
+                            <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
+                              <View
+                                style={{
+                                  width: 5.5,
+                                  height: 5.5,
+                                  borderRadius: 3,
+                                  backgroundColor: isChecked ? theme.color : AppColors.grayTextWeak,
+                                }}
+                              />
+                              <Text
+                                style={{
+                                  fontFamily: AppFonts.interMedium,
+                                  fontSize: 10.5,
+                                  lineHeight: 14,
+                                  color: isChecked ? AppColors.grayTextStrong : AppColors.grayTextWeak,
+                                }}>
+                                {liveStats}
+                              </Text>
+                            </View>
+                          ) : (
+                            <View />
+                          )}
+                        </View>
+
+                        {/* Right: Dedicated Configure Button */}
+                        {(hasConfigurePage || moduleItem.key === 'media') && (
+                          <TouchableScale
+                            onPress={() => {
+                              triggerNativeHaptic('light');
+                              if (moduleItem.key === 'media') {
+                                animateNextLayout();
+                                setSettingsActiveSubTab('capture');
+                              } else {
+                                setSettingsPage(moduleItem.key);
+                              }
+                            }}
+                            hitSlop={6}
                             style={{
                               flexDirection: 'row',
                               alignItems: 'center',
-                              gap: 6,
-                              flex: 1,
+                              gap: 3.5,
+                              paddingHorizontal: 8.5,
+                              paddingVertical: 4,
+                              borderRadius: 6.5,
+                              backgroundColor: `${theme.color}14`,
+                              borderWidth: 1,
+                              borderColor: `${theme.color}2A`,
                             }}>
-                            <View
-                              style={{
-                                width: 6,
-                                height: 6,
-                                borderRadius: 3,
-                                backgroundColor: isChecked
-                                  ? AppColors.liveGreen
-                                  : AppColors.grayTextWeak,
-                              }}
-                            />
+                            <SettingsIcon color={theme.color} size={10} />
                             <Text
                               style={{
-                                fontFamily: AppFonts.interMedium,
-                                fontSize: 11,
-                                color: AppColors.grayText,
-                                lineHeight: 14,
+                                fontFamily: AppFonts.interBold,
+                                fontSize: 10,
+                                lineHeight: 13,
+                                color: theme.color,
                               }}>
-                              {liveStats}
+                              {t('settings.configure', 'Configure')}
                             </Text>
-                          </View>
-                        ) : (
-                          <View style={{flex: 1}} />
+                            <ForwardChevronIcon color={theme.color} size={8} />
+                          </TouchableScale>
                         )}
-
-                        {/* Sleek Configure Button */}
-                        <TouchableScale
-                          accessible={true}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Configure ${moduleItem.label} settings`}
-                          onPress={() => {
-                            animateNextLayout();
-                            setSettingsPage(moduleItem.key);
-                          }}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 5,
-                            backgroundColor: `${AppColors.purple}12`,
-                            paddingHorizontal: 10,
-                            paddingVertical: 5,
-                            borderRadius: 8,
-                            borderWidth: 1,
-                            borderColor: `${AppColors.purple}26`,
-                          }}>
-                          <SettingsIcon color={AppColors.purple} size={11} />
-                          <Text
-                            style={{
-                              fontFamily: AppFonts.interBold,
-                              fontSize: 11,
-                              lineHeight: 14,
-                              color: AppColors.purple,
-                            }}>
-                            {t('settings.configure')}
-                          </Text>
-                          <ForwardChevronIcon
-                            color={AppColors.purple}
-                            size={9}
-                          />
-                        </TouchableScale>
                       </View>
                     )}
                   </View>
                 );
               })}
             </View>
-          </View>
+          </Animated.View>
         )}
 
         {settingsActiveSubTab === 'ui' && (
-          <View style={{gap: 14}}>
+          <Animated.View
+            style={{
+              gap: 14,
+              opacity: subTabTransitionAnim,
+              transform: [
+                {
+                  translateY: subTabTransitionAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [10, 0],
+                  }),
+                },
+              ],
+            }}>
             {/* Section 1: Appearance */}
             <View
               style={{
@@ -2062,7 +1865,6 @@ const SettingsPanel = () => {
                       .filter(
                         tab =>
                           tab.key === 'apis' ||
-                          stagedTabVisibility?.[tab.key as ActiveTab] ||
                           tabVisibility?.[tab.key as ActiveTab],
                       )
                       .map((tab, idx, arr) => {
@@ -2233,11 +2035,23 @@ const SettingsPanel = () => {
                 </TouchableScale>
               </View>
             </View>
-          </View>
+          </Animated.View>
         )}
 
         {settingsActiveSubTab === 'limits' && (
-          <View style={{gap: 14}}>
+          <Animated.View
+            style={{
+              gap: 14,
+              opacity: subTabTransitionAnim,
+              transform: [
+                {
+                  translateY: subTabTransitionAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [10, 0],
+                  }),
+                },
+              ],
+            }}>
             {/* Section 1: Device RAM & Auto Profile */}
             <View
               style={{
@@ -2674,10 +2488,22 @@ const SettingsPanel = () => {
                 </TouchableScale>
               </View>
             </View>
-          </View>
+          </Animated.View>
         )}
         {settingsActiveSubTab === 'capture' && (
-          <View style={{gap: 16}}>
+          <Animated.View
+            style={{
+              gap: 16,
+              opacity: subTabTransitionAnim,
+              transform: [
+                {
+                  translateY: subTabTransitionAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [10, 0],
+                  }),
+                },
+              ],
+            }}>
             {/* Floating Quick Capture Widget Card */}
             <View
               style={{
@@ -3213,89 +3039,11 @@ const SettingsPanel = () => {
                 ),
               })}
             </View>
-          </View>
+          </Animated.View>
         )}
 
         <View style={{height: 48}} />
       </ScrollView>
-
-      {/* Bottom Sticky Action Bar for Save Changes */}
-      {settingsActiveSubTab === 'module' && (
-        <View
-          style={{
-            paddingHorizontal: 16,
-            paddingTop: 12,
-            paddingBottom: Platform.OS === 'ios' ? 36 : 24,
-            backgroundColor: AppColors.primaryLight,
-            borderTopWidth: 1,
-            borderTopColor: AppColors.dividerColor,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-            shadowColor: AppColors.black,
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            shadowOffset: {width: 0, height: -3},
-            elevation: 8,
-          }}>
-          <View style={{flex: 1}}>
-            <Text
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 13,
-                lineHeight: 17,
-                color: AppColors.primaryBlack,
-              }}>
-              {stagedActiveCount} of {allModules.length} Modules Active
-            </Text>
-            <Text
-              style={{
-                fontFamily: AppFonts.interRegular,
-                fontSize: 11,
-                lineHeight: 15,
-                color: hasUnsavedChanges
-                  ? AppColors.purple
-                  : AppColors.grayText,
-                marginTop: 1,
-              }}>
-              {hasUnsavedChanges
-                ? t('settings.unsavedPending')
-                : t('settings.allSynchronized')}
-            </Text>
-          </View>
-
-          <TouchableScale
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Save Changes"
-            onPress={handleSaveChanges}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6,
-              backgroundColor: hasUnsavedChanges
-                ? AppColors.purple
-                : `${AppColors.purple}22`,
-              paddingHorizontal: 18,
-              paddingVertical: 10,
-              borderRadius: 10,
-            }}>
-            <CheckIcon
-              size={14}
-              color={hasUnsavedChanges ? AppColors.white : AppColors.purple}
-            />
-            <Text
-              style={{
-                fontFamily: AppFonts.interBold,
-                fontSize: 13,
-                lineHeight: 17,
-                color: hasUnsavedChanges ? AppColors.white : AppColors.purple,
-              }}>
-              {t('settings.saveChanges')}
-            </Text>
-          </TouchableScale>
-        </View>
-      )}
     </View>
   );
 
@@ -3307,6 +3055,237 @@ const SettingsPanel = () => {
         style={{flex: 1}}
         contentContainerStyle={{padding: 16, paddingBottom: 100, gap: 12}}>
 
+        {/* Hidden URL Filters (Regex) Configuration */}
+        <View
+          style={{
+            backgroundColor: AppColors.primaryLight,
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: AppColors.grayBorderSecondary,
+            padding: 16,
+            gap: 12,
+          }}>
+          <View style={{flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8}}>
+            <View style={{flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1}}>
+              <EyeIcon color={AppColors.purple} size={16} />
+              <View style={{flex: 1}}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interBold,
+                    fontSize: 13.5,
+                    lineHeight: 18,
+                    color: AppColors.primaryBlack,
+                  }}>
+                  {t('settings.apis.hideUrlRegexTitle', 'Hidden URL Filters (Regex)')}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interRegular,
+                    fontSize: 11,
+                    lineHeight: 15,
+                    color: AppColors.grayTextWeak,
+                    marginTop: 2,
+                  }}>
+                  {t(
+                    'settings.apis.hideUrlRegexDesc',
+                    'Hide matching URLs from Network list and search results (calls will still execute normally).',
+                  )}
+                </Text>
+              </View>
+            </View>
+            {hiddenUrlPatterns.length > 0 && (
+              <TouchableScale
+                onPress={() => {
+                  triggerNativeHaptic('light');
+                  setHiddenUrlPatterns([...DEFAULT_HIDDEN_URL_PATTERNS]);
+                  showToast(t('settings.apis.resetFilterToast', 'Reset to default URL filters'));
+                }}
+                hitSlop={8}
+                style={{
+                  paddingHorizontal: 8,
+                  paddingVertical: 4.5,
+                  borderRadius: 6,
+                  backgroundColor: `${AppColors.purple}14`,
+                  borderWidth: 1,
+                  borderColor: `${AppColors.purple}33`,
+                  alignSelf: 'flex-start',
+                }}>
+                <Text
+                  style={{
+                    fontFamily: AppFonts.interSemiBold,
+                    fontSize: 10,
+                    lineHeight: 13,
+                    color: AppColors.purple,
+                  }}>
+                  {t('common.resetDefaults', 'Reset Defaults')}
+                </Text>
+              </TouchableScale>
+            )}
+          </View>
+
+          {/* Add New Regex / URL Pattern Input */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              backgroundColor: AppColors.grayBackground,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: AppColors.grayBorderSecondary,
+              paddingHorizontal: 10,
+              paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+            }}>
+            <CodeBracketsIcon size={14} color={AppColors.grayTextWeak} />
+            <TextInput
+              style={{
+                flex: 1,
+                fontFamily: AppFonts.interMedium,
+                fontSize: 12,
+                lineHeight: 16,
+                color: AppColors.primaryBlack,
+                padding: 0,
+              }}
+              placeholder={t('settings.apis.addPatternPlaceholder', 'e.g. https://api.example.com or .*analytics.*')}
+              placeholderTextColor={AppColors.grayTextWeak}
+              value={newUrlPattern}
+              onChangeText={setNewUrlPattern}
+              autoCapitalize="none"
+              autoCorrect={false}
+              onSubmitEditing={handleAddUrlPattern}
+              returnKeyType="done"
+            />
+            <TouchableScale
+              onPress={handleAddUrlPattern}
+              disabled={!newUrlPattern.trim()}
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 5.5,
+                borderRadius: 7,
+                backgroundColor: newUrlPattern.trim() ? AppColors.purple : `${AppColors.purple}33`,
+              }}>
+              <Text
+                style={{
+                  fontFamily: AppFonts.interBold,
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: AppColors.white,
+                }}>
+                {t('common.add', '+ Add')}
+              </Text>
+            </TouchableScale>
+          </View>
+
+          {/* List of active patterns */}
+          <View style={{gap: 6}}>
+            {hiddenUrlPatterns.map((pattern, idx) => {
+              const isDefault = DEFAULT_HIDDEN_URL_PATTERNS.includes(pattern);
+              return (
+                <View
+                  key={`${pattern}-${idx}`}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: isDefault
+                      ? `${AppColors.slate200}44`
+                      : AppColors.grayBackground,
+                    borderRadius: 8,
+                    paddingHorizontal: 10,
+                    paddingVertical: 7,
+                    borderWidth: 1,
+                    borderColor: isDefault
+                      ? `${AppColors.grayBorderSecondary}`
+                      : AppColors.grayBorderSecondary,
+                    gap: 8,
+                  }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      flex: 1,
+                      minWidth: 0,
+                    }}>
+                    <View
+                      style={{
+                        paddingHorizontal: 5,
+                        paddingVertical: 1.5,
+                        borderRadius: 4,
+                        backgroundColor: isDefault
+                          ? `${AppColors.blue500}18`
+                          : `${AppColors.purple}1F`,
+                      }}>
+                      <Text
+                        style={{
+                          fontFamily: AppFonts.interBold,
+                          fontSize: 9,
+                          lineHeight: 11,
+                          color: isDefault
+                            ? AppColors.blue600
+                            : AppColors.purple,
+                        }}>
+                        {isDefault ? 'DEFAULT' : 'CUSTOM'}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: AppFonts.interMedium,
+                        fontSize: 11.5,
+                        lineHeight: 15,
+                        color: isDefault
+                          ? AppColors.grayTextStrong
+                          : AppColors.primaryBlack,
+                        flex: 1,
+                      }}
+                      numberOfLines={1}
+                      ellipsizeMode="middle">
+                      {pattern}
+                    </Text>
+                  </View>
+                  {isDefault ? (
+                    <View
+                      style={{
+                        padding: 5,
+                        borderRadius: 5,
+                        backgroundColor: `${AppColors.grayTextWeak}18`,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <LockIcon size={12} color={AppColors.grayTextWeak} />
+                    </View>
+                  ) : (
+                    <TouchableScale
+                      onPress={() => handleRemoveUrlPattern(idx)}
+                      hitSlop={8}
+                      style={{
+                        padding: 5,
+                        borderRadius: 5,
+                        backgroundColor: `${AppColors.errorColor}14`,
+                      }}>
+                      <TrashIcon size={12} color={AppColors.errorColor} />
+                    </TouchableScale>
+                  )}
+                </View>
+              );
+            })}
+            {hiddenUrlPatterns.length === 0 && (
+              <Text
+                style={{
+                  fontFamily: AppFonts.interRegular,
+                  fontSize: 11,
+                  lineHeight: 15,
+                  color: AppColors.grayTextWeak,
+                  textAlign: 'center',
+                  paddingVertical: 8,
+                }}>
+                {t('settings.apis.noFiltersActive', 'No URL filters active. All URLs will be displayed.')}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Clear Network Logs Card */}
         <View
           style={{
             backgroundColor: AppColors.primaryLight,

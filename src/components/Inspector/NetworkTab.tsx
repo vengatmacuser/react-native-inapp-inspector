@@ -22,6 +22,7 @@ import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {METHOD_COLORS} from '../../constants';
+import {isUrlHidden} from '../../helpers';
 import {GroupedListItem, Method} from '../../types';
 import {useTranslation} from '../../i18n';
 import {
@@ -68,6 +69,7 @@ const NetworkTab = React.memo(() => {
     setNetworkSortBy,
     filteredLogs,
     logs,
+    hiddenUrlPatterns,
     toggleSectionFilter,
     toggleSectionCollapse,
     minStart,
@@ -163,6 +165,11 @@ const NetworkTab = React.memo(() => {
     [setStatusFilters, setMethodFilters, setLatencyFilter, setProtocolFilter, setNetworkSortBy, setSortOrder],
   );
 
+  const visibleLogs = useMemo(() => {
+    if (!hiddenUrlPatterns || hiddenUrlPatterns.length === 0) return logs;
+    return logs.filter(l => !isUrlHidden(l.url, hiddenUrlPatterns));
+  }, [logs, hiddenUrlPatterns]);
+
   const quickCounts = useMemo(() => {
     let errorCount = 0;
     let successCount = 0;
@@ -171,7 +178,7 @@ const NetworkTab = React.memo(() => {
     let getCount = 0;
     let gqlCount = 0;
 
-    logs.forEach(l => {
+    visibleLogs.forEach(l => {
       const s =
         typeof l.status === 'number'
           ? l.status
@@ -199,7 +206,7 @@ const NetworkTab = React.memo(() => {
     });
 
     return {
-      all: logs.length,
+      all: visibleLogs.length,
       errors: errorCount,
       success: successCount,
       slow: slowCount,
@@ -207,7 +214,7 @@ const NetworkTab = React.memo(() => {
       get: getCount,
       graphql: gqlCount,
     };
-  }, [logs]);
+  }, [visibleLogs]);
 
   const QUICK_CHIPS = useMemo(
     () => [
@@ -855,7 +862,7 @@ const NetworkTab = React.memo(() => {
                     fontSize: 10.5,
                     color: AppColors.purple,
                   }}>
-                  Showing {filteredLogs.length} of {logs.length} requests
+                  Showing {filteredLogs.length} of {visibleLogs.length} requests
                 </Text>
                 <TouchableScale
                   onPress={() => {

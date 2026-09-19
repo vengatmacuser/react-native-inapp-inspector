@@ -32,6 +32,7 @@ import {
   formatDateTime,
   getFetchCommand,
   getCurlCommand,
+  openWithPostman,
 } from '../../helpers';
 import {shareApiReport} from '../../helpers/shareFormatter';
 import {
@@ -44,6 +45,7 @@ import {
   ClearIcon,
   SizeIcon,
   ExternalLinkIcon,
+  PostmanIcon,
   ClockIcon,
 } from '../NetworkIcons';
 
@@ -71,12 +73,20 @@ const NetworkDetail = React.memo(() => {
 
   const handleOpenUrl = () => {
     Alert.alert(
-      t('common.openInBrowser') || 'Open in Browser',
-      `${t('common.openInBrowserPrompt') || 'Are you sure you want to open this URL in your external browser?'}\n\n${detailDisplayUrl}`,
+      t('common.openInBrowser') || 'Open URL',
+      `${t('common.openInBrowserPrompt') || 'Choose how you want to open or inspect this URL:'}\n\n${detailDisplayUrl}`,
       [
         {text: t('common.cancel') || 'Cancel', style: 'cancel'},
         {
-          text: t('common.open') || 'Open',
+          text: 'Open in Postman',
+          onPress: () => {
+            if (selected) {
+              openWithPostman(selected);
+            }
+          },
+        },
+        {
+          text: t('common.open') || 'Browser',
           onPress: () => {
             Linking.canOpenURL(detailDisplayUrl)
               .then(supported => {
@@ -381,7 +391,7 @@ const NetworkDetail = React.memo(() => {
                       </Text>
                     </View>
 
-                    {/* Action Buttons: cURL, fetch, Copy URL, Open */}
+                    {/* Action Buttons: cURL, fetch, Copy URL, Postman, Open */}
                     <View style={{flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 0}}>
                       <CopyButton
                         value={getCurlCommand(selected)}
@@ -401,6 +411,22 @@ const NetworkDetail = React.memo(() => {
                         label="URL"
                         iconType="copy"
                       />
+                      <TouchableScale
+                        style={[
+                          styles.iconSquareBtn,
+                          {
+                            backgroundColor: 'rgba(255, 108, 55, 0.12)',
+                            borderColor: 'rgba(255, 108, 55, 0.35)',
+                          },
+                        ]}
+                        onPress={() => openWithPostman(selected)}
+                        hitSlop={10}
+                        accessibilityLabel="Open in Postman">
+                        <PostmanIcon
+                          color="#FF6C37"
+                          size={13}
+                        />
+                      </TouchableScale>
                       <TouchableScale
                         style={[
                           styles.iconSquareBtn,

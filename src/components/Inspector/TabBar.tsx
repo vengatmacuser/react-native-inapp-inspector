@@ -27,6 +27,7 @@ import {
   ScreencastIcon,
   ChevronIcon,
   WebsocketIcon,
+  SpeedometerIcon,
 } from '../NetworkIcons';
 
 import {isReduxConnected} from '../../customHooks/reduxLogger';
@@ -57,6 +58,7 @@ const TAB_THEMES: Record<
 > = {
   apis: HEADER_TAB_THEME,
   logs: HEADER_TAB_THEME,
+  perf: HEADER_TAB_THEME,
   analytics: HEADER_TAB_THEME,
   redux: HEADER_TAB_THEME,
   storage: HEADER_TAB_THEME,
@@ -184,55 +186,62 @@ const TabBar = React.memo(() => {
             },
             {
               id: 3,
+              key: 'perf',
+              label: 'Perf / FPS',
+              count: 0,
+              icon: 'perf',
+            },
+            {
+              id: 4,
               key: 'analytics',
               label: 'Analytics',
               count: analyticsEvents.length,
               icon: 'analytics',
             },
             {
-              id: 4,
+              id: 5,
               key: 'redux',
               label: 'Redux',
               count: 0,
               icon: 'redux',
             },
             {
-              id: 5,
+              id: 6,
               key: 'storage',
               label: 'Storage',
               count: 0,
               icon: 'storage',
             },
             {
-              id: 6,
+              id: 7,
               key: 'device',
               label: 'Device',
               count: 0,
               icon: 'device',
             },
             {
-              id: 7,
+              id: 8,
               key: 'crash',
               label: 'Crash',
               count: crashRecords?.length || 0,
               icon: 'crash',
             },
             {
-              id: 8,
+              id: 9,
               key: 'push',
               label: 'Push',
               count: pushRecords?.length || 0,
               icon: 'push',
             },
             {
-              id: 9,
+              id: 10,
               key: 'socket',
               label: 'WebSocket',
               count: socketRecords?.length || 0,
               icon: 'socket',
             },
             {
-              id: 10,
+              id: 11,
               key: 'debugging',
               label: 'Debugging',
               count: 0,
@@ -301,6 +310,9 @@ const TabBar = React.memo(() => {
                   )}
                   {tab.icon === 'logs' && (
                     <TerminalIcon color={iconColor} size={14} />
+                  )}
+                  {tab.icon === 'perf' && (
+                    <SpeedometerIcon color={iconColor} size={14} />
                   )}
                   {tab.icon === 'analytics' && (
                     <AnalyticsIcon color={iconColor} size={14} />

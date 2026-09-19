@@ -40,6 +40,7 @@ import {
   getEventCategory,
   matchNetworkLogQuery,
   setupMemoryWarningHandler,
+  isUrlHidden,
 } from './helpers';
 // #5 — settings persistence
 import {
@@ -171,7 +172,7 @@ import {
   SocketConnectionRecord,
   SearchScope,
 } from './types';
-import {LIB_VERSION} from './constants';
+import {LIB_VERSION, DEFAULT_HIDDEN_URL_PATTERNS} from './constants';
 
 // Stylesheet
 import {toggleGlobalTheme} from './styles';
@@ -231,6 +232,9 @@ const NetworkInspector = ({
   const [isReady, setIsReady] = useState(false);
   const [selected, setSelected] = useState<NetworkLog | null>(null);
   const [selectedLogs, setSelectedLogs] = useState<Set<number>>(new Set());
+  const [selectedConsoleLogs, setSelectedConsoleLogs] = useState<Set<number>>(
+    new Set(),
+  );
   const [confirmModal, setConfirmModal] = useState<{
     visible: boolean;
     title: string;
@@ -250,6 +254,9 @@ const NetworkInspector = ({
   const [isCaseSensitive, setIsCaseSensitive] = useState<boolean>(false);
   const [isGroupByPageEnabled, setIsGroupByPageEnabled] =
     useState<boolean>(true);
+  const [hiddenUrlPatterns, setHiddenUrlPatterns] = useState<string[]>(() => [
+    ...DEFAULT_HIDDEN_URL_PATTERNS,
+  ]);
   const [quickFilter, setQuickFilter] = useState<string>('all');
   const [detailSearch, setDetailSearch] = useState('');
   const [reduxSearch, setReduxSearch] = useState('');
@@ -612,7 +619,7 @@ const NetworkInspector = ({
   const [logSearch, setLogSearch] = useState('');
   const [logFilters, setLogFilters] = useState<
     Set<'all' | 'info' | 'warn' | 'error' | 'user-log' | 'analytics'>
-  >(new Set(['all']));
+  >(new Set(['user-log']));
 
   // ─── Settings state ──────────────────────────────────────────────────────────
   const [settingsPage, setSettingsPage] = useState<
@@ -627,6 +634,7 @@ const NetworkInspector = ({
   >({
     apis: true,
     logs: true,
+    perf: true,
     analytics: true,
     redux: true,
     crash: true,
@@ -720,6 +728,7 @@ const NetworkInspector = ({
     setTabVisibility({
       apis: true,
       logs: true,
+      perf: true,
       analytics: true,
       redux: true,
       crash: true,
@@ -758,6 +767,8 @@ const NetworkInspector = ({
     setShowDuplicateLogs(false);
     setShowUpdateToast(true);
     setPeekOpacity(0.3);
+    setLogFilters(new Set(['user-log']));
+    setHiddenUrlPatterns([...DEFAULT_HIDDEN_URL_PATTERNS]);
     Alert.alert(
       'Settings Reset',
       'All settings have been reset to default values.',
@@ -834,6 +845,12 @@ const NetworkInspector = ({
         setShowUpdateToast(saved.showUpdateToast);
       if (saved.isGroupByPageEnabled != null)
         setIsGroupByPageEnabled(saved.isGroupByPageEnabled);
+      if (Array.isArray(saved.hiddenUrlPatterns)) {
+        const merged = Array.from(
+          new Set([...DEFAULT_HIDDEN_URL_PATTERNS, ...saved.hiddenUrlPatterns]),
+        );
+        setHiddenUrlPatterns(merged);
+      }
       if (saved.defaultTab) {
         const dt = saved.defaultTab as ActiveTab;
         const vis = {
@@ -864,7 +881,7 @@ const NetworkInspector = ({
     if (!remoteConfig) return;
 
     fetchRemoteConfigSettings(
-      typeof remoteConfig === 'object' ? remoteConfig : undefined,
+      typeof remoteConfig === 'object' ? remoteConfig : {},
     )
       .then(remoteSettings => {
         if (!isMounted || !remoteSettings) return;
@@ -920,6 +937,7 @@ const NetworkInspector = ({
       captureAutoGif,
       captureWidgetEnabled,
       peekOpacity,
+      hiddenUrlPatterns,
     });
   }, [
     isDark,
@@ -1484,6 +1502,7 @@ const NetworkInspector = ({
     } else {
       setIsReady(false);
       setSelectedLogs(new Set());
+      setSelectedConsoleLogs(new Set());
     }
   }, [visible]);
 
@@ -1696,6 +1715,13 @@ const NetworkInspector = ({
 
   const filteredLogs = useMemo(() => {
     let result = logs.filter(log => {
+      // 0. Hidden URL Filter Check (Regex / URL Patterns)
+      if (hiddenUrlPatterns && hiddenUrlPatterns.length > 0) {
+        if (isUrlHidden(log.url, hiddenUrlPatterns)) {
+          return false;
+        }
+      }
+
       // 1. Quick Filter Check (All, Errors, Success, Slow, GET, POST, GraphQL)
       if (quickFilter && quickFilter !== 'all') {
         if (quickFilter === 'errors') {
@@ -1839,6 +1865,7 @@ const NetworkInspector = ({
     return result;
   }, [
     logs,
+    hiddenUrlPatterns,
     search,
     searchScope,
     isRegexSearch,
@@ -2506,27 +2533,36 @@ const NetworkInspector = ({
     // Also clear console logs
     clearConsoleLogs();
     setConsoleLogs([]);
+    setSelectedConsoleLogs(new Set());
     setLogFilters(new Set(['all']));
     setLogSearch('');
   }
 
   function handleDelete() {
     if (activeTab === 'logs') {
-      setConfirmModal({
-        visible: true,
-        title: t('console.clearLogsTitle', 'Clear Console Logs'),
-        message: t(
-          'console.clearLogsMsg',
-          'Are you sure you want to clear all console logs?',
-        ),
-        confirmText: t('common.clearAll', 'Clear All'),
-        cancelText: t('common.cancel', 'Cancel'),
-        onConfirm: () => {
-          setConfirmModal(prev => ({...prev, visible: false}));
-          clearConsoleLogs();
-          setConsoleLogs([]);
-        },
-      });
+      if (selectedConsoleLogs.size > 0) {
+        setConsoleLogs(prev =>
+          prev.filter(l => !selectedConsoleLogs.has(l.id)),
+        );
+        setSelectedConsoleLogs(new Set());
+      } else {
+        setConfirmModal({
+          visible: true,
+          title: t('console.clearLogsTitle', 'Clear Console Logs'),
+          message: t(
+            'console.clearLogsMsg',
+            'Are you sure you want to clear all console logs?',
+          ),
+          confirmText: t('common.clearAll', 'Clear All'),
+          cancelText: t('common.cancel', 'Cancel'),
+          onConfirm: () => {
+            setConfirmModal(prev => ({...prev, visible: false}));
+            clearConsoleLogs();
+            setConsoleLogs([]);
+            setSelectedConsoleLogs(new Set());
+          },
+        });
+      }
       return;
     }
     if (activeTab === 'analytics') {
@@ -2647,6 +2683,15 @@ const NetworkInspector = ({
     });
   }, []);
 
+  const toggleSelectConsoleLog = useCallback((id: number) => {
+    setSelectedConsoleLogs(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const contextValue: InspectorContextValue = useMemo(
     () => ({
       // ─── Modal / launcher ───────────────────────────────────────────────
@@ -2752,6 +2797,8 @@ const NetworkInspector = ({
       handleDelete,
       isGroupByPageEnabled,
       setIsGroupByPageEnabled,
+      hiddenUrlPatterns,
+      setHiddenUrlPatterns,
 
       // ─── Network detail ─────────────────────────────────────────────────
       detailTitle,
@@ -2783,6 +2830,9 @@ const NetworkInspector = ({
       logCounts,
       logSortOrder,
       setLogSortOrder,
+      selectedConsoleLogs,
+      setSelectedConsoleLogs,
+      toggleSelectConsoleLog,
 
       // ─── Analytics ──────────────────────────────────────────────────────
       analyticsEvents,
@@ -3008,6 +3058,7 @@ const NetworkInspector = ({
       handleDelete,
       isGroupByPageEnabled,
       setIsGroupByPageEnabled,
+      hiddenUrlPatterns,
       detailTitle,
       detailDisplayUrl,
       apiDetailActiveTab,
@@ -3025,6 +3076,8 @@ const NetworkInspector = ({
       logFilters,
       logCounts,
       logSortOrder,
+      selectedConsoleLogs,
+      toggleSelectConsoleLog,
       analyticsEvents,
       filteredAnalyticsEvents,
       analyticsSearch,
@@ -3310,6 +3363,8 @@ export {
 export {default as SocketTab} from './components/Inspector/SocketTab';
 export {default as SocketDetail} from './components/Inspector/SocketDetail';
 export {default as SocketCard} from './components/Inspector/SocketCard';
+export {PerformanceTab} from './components/Inspector/PerformanceTab';
+export {usePerformanceMonitor} from './helpers/performanceSampler';
 
 export {
   shareApiReport,

@@ -1,6 +1,5 @@
 import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {
-  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -14,10 +13,11 @@ import {
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
-import EmptyState from '../EmptyState';
 import {
+  CameraIcon,
   CameraRollIcon,
   CheckIcon,
+  CloseWhite,
   CopyIcon,
   FilmIcon,
   GifIcon,
@@ -28,29 +28,44 @@ import {
   ScreencastIcon,
   ShareIcon,
   TrashIcon,
+  VideoCameraIcon,
   WhiteBackNavigation,
-  CloseWhite,
 } from '../NetworkIcons';
 import {MediaPreviewModal} from './MediaPreviewModal';
 import {
   ScreenCapture,
   CapturedMediaItem,
+  generateCaptureId,
 } from '../../capture';
-import {copyImageOrMediaToClipboard, copyToClipboard, formatBytes} from '../../helpers';
+import {
+  copyImageOrMediaToClipboard,
+  copyToClipboard,
+  formatBytes,
+} from '../../helpers';
+import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {showToast} from '../../helpers/toast';
 import {useTranslation} from '../../i18n';
-
 import {useInspector} from './InspectorContext';
 import {ConfirmationModal} from './ConfirmationModal';
 
 export const MediaGalleryTab: React.FC = () => {
   const {t} = useTranslation();
-  const {refreshMediaCount, switchActiveTab, previewMediaItem, setPreviewMediaItem} = useInspector();
+  const {
+    refreshMediaCount,
+    switchActiveTab,
+    previewMediaItem,
+    setPreviewMediaItem,
+  } = useInspector();
+
   const [mediaList, setMediaList] = useState<CapturedMediaItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'image' | 'video' | 'gif'>('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const recordingTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
   const [confirmConfig, setConfirmConfig] = useState<{
     visible: boolean;
     title: string;
@@ -64,35 +79,6 @@ export const MediaGalleryTab: React.FC = () => {
     message: '',
     onConfirm: () => {},
   });
-
-  const handleOpenPicker = async () => {
-    try {
-      // If user selected photos filter ('image'), filter photos only (restricts video/gif)
-      // If user selected videos filter ('video'), filter videos only (restricts photos)
-      // If 'all' or 'gif', allow any media
-      const mediaType: 'image' | 'video' | 'any' =
-        selectedFilter === 'image'
-          ? 'image'
-          : selectedFilter === 'video'
-          ? 'video'
-          : 'any';
-
-      const pickedItem = await ScreenCapture.pickMedia({mediaType});
-      if (pickedItem) {
-        await loadMedia();
-        refreshMediaCount?.().catch(() => {});
-        showToast(
-          pickedItem.type === 'video'
-            ? t('mediaGallery.importedVideo', 'Video imported from Camera Roll')
-            : t('mediaGallery.importedPhoto', 'Photo imported from Camera Roll'),
-        );
-        // Automatically open the imported media in preview modal for editing / inspecting
-        setPreviewMediaItem(pickedItem);
-      }
-    } catch {
-      showToast(t('mediaGallery.importFailed', 'Failed to import media'));
-    }
-  };
 
   const loadMedia = useCallback(async () => {
     try {
@@ -108,11 +94,50 @@ export const MediaGalleryTab: React.FC = () => {
     loadMedia();
   }, [loadMedia]);
 
+  // Sync active recording status
+  useEffect(() => {
+    ScreenCapture.isRecording()
+      .then(active => setIsRecording(active))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (isRecording) {
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds(s => s + 1);
+      }, 1000);
+    } else {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      setRecordingSeconds(0);
+    }
+    return () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+    };
+  }, [isRecording]);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadMedia();
     setRefreshing(false);
   };
+
+  const counts = useMemo(() => {
+    let images = 0;
+    let videos = 0;
+    let gifs = 0;
+    mediaList.forEach(item => {
+      if (item.type === 'image') images++;
+      else if (item.type === 'video') videos++;
+      else if (item.type === 'gif') gifs++;
+    });
+    return {all: mediaList.length, image: images, video: videos, gif: gifs};
+  }, [mediaList]);
 
   const filteredMedia = useMemo(() => {
     if (selectedFilter === 'all') return mediaList;
@@ -123,7 +148,121 @@ export const MediaGalleryTab: React.FC = () => {
     return mediaList.reduce((sum, item) => sum + (item.sizeBytes || 0), 0);
   }, [mediaList]);
 
+  // Capture Actions
+  const handleTakeScreenshot = useCallback(async () => {
+    try {
+      triggerNativeHaptic('light');
+      const result = await ScreenCapture.takeScreenshot({
+        format: 'png',
+        quality: 0.9,
+        hideInspector: true,
+      });
+      if (result) {
+        triggerNativeHaptic('success');
+        const captureId = generateCaptureId('screenshot', result.format || 'png');
+        const newItem: CapturedMediaItem = {
+          id: captureId,
+          type: 'image',
+          format: result.format,
+          uri: result.uri,
+          filename: result.uri.split('/').pop() || captureId,
+          sizeBytes: result.sizeBytes,
+          timestamp: result.timestamp,
+          width: result.width,
+          height: result.height,
+        };
+        setPreviewMediaItem(newItem);
+        await loadMedia();
+        refreshMediaCount?.().catch(() => {});
+        showToast(t('header.screenshotCaptured', 'Screenshot captured & saved'));
+      } else {
+        showToast(t('header.screenshotFailed', 'Failed to capture screenshot'));
+      }
+    } catch {
+      showToast(t('header.screenshotError', 'Error capturing screenshot'));
+    }
+  }, [loadMedia, refreshMediaCount, setPreviewMediaItem, t]);
+
+  const handleToggleVideoRecording = useCallback(async () => {
+    try {
+      if (isRecording) {
+        triggerNativeHaptic('medium');
+        const result = await ScreenCapture.stopRecording();
+        setIsRecording(false);
+        if (result) {
+          triggerNativeHaptic('success');
+          const captureId = generateCaptureId('video', result.format);
+          const newItem: CapturedMediaItem = {
+            id: captureId,
+            type: result.format === 'gif' ? 'gif' : 'video',
+            format: result.format,
+            uri: result.uri,
+            filename: result.uri.split('/').pop() || captureId,
+            sizeBytes: result.sizeBytes,
+            timestamp: result.timestamp,
+            durationMs: result.durationMs,
+            width: result.width,
+            height: result.height,
+            hasAudio: result.hasAudio,
+          };
+          setPreviewMediaItem(newItem);
+          await loadMedia();
+          refreshMediaCount?.().catch(() => {});
+          showToast(
+            t('header.recordingSaved', {
+              duration: (result.durationMs / 1000).toFixed(1),
+              defaultValue: `Recording saved (${(result.durationMs / 1000).toFixed(1)}s)`,
+            }),
+          );
+        }
+      } else {
+        triggerNativeHaptic('medium');
+        const started = await ScreenCapture.startRecording({
+          fps: 24,
+          audioSource: 'none',
+        });
+        if (started) {
+          setIsRecording(true);
+          showToast(t('header.recordingStarted', 'Screen recording started'));
+        } else {
+          showToast(t('header.recordingStartFailed', 'Failed to start screen recording'));
+        }
+      }
+    } catch {
+      showToast(t('header.recordingError', 'Screen recording error'));
+      setIsRecording(false);
+    }
+  }, [isRecording, loadMedia, refreshMediaCount, setPreviewMediaItem, t]);
+
+  const handleOpenPicker = async () => {
+    try {
+      triggerNativeHaptic('light');
+      const mediaType: 'image' | 'video' | 'any' =
+        selectedFilter === 'image'
+          ? 'image'
+          : selectedFilter === 'video'
+          ? 'video'
+          : 'any';
+
+      const pickedItem = await ScreenCapture.pickMedia({mediaType});
+      if (pickedItem) {
+        triggerNativeHaptic('success');
+        await loadMedia();
+        refreshMediaCount?.().catch(() => {});
+        showToast(
+          pickedItem.type === 'video'
+            ? t('mediaGallery.importedVideo', 'Video imported from Camera Roll')
+            : t('mediaGallery.importedPhoto', 'Photo imported from Camera Roll'),
+        );
+        setPreviewMediaItem(pickedItem);
+      }
+    } catch {
+      showToast(t('mediaGallery.importFailed', 'Failed to import media'));
+    }
+  };
+
   const toggleSelect = useCallback((id: string) => {
+    triggerNativeHaptic('light');
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -136,6 +275,7 @@ export const MediaGalleryTab: React.FC = () => {
   }, []);
 
   const handleDeleteItem = async (item: CapturedMediaItem) => {
+    triggerNativeHaptic('medium');
     await ScreenCapture.deleteMedia(item.uri);
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -143,15 +283,13 @@ export const MediaGalleryTab: React.FC = () => {
       return next;
     });
     await loadMedia();
-    const count = await refreshMediaCount?.();
-    if (count === 0) {
-      switchActiveTab('apis');
-    }
-    showToast(t('mediaGallery.deleted'));
+    await refreshMediaCount?.();
+    showToast(t('mediaGallery.deleted', 'Media deleted'));
   };
 
   const handleCopyItemUri = (item: CapturedMediaItem) => {
     if (!item?.uri) return;
+    triggerNativeHaptic('light');
     copyImageOrMediaToClipboard(
       item.uri,
       item.type === 'image' ? 'Image' : 'Media',
@@ -161,6 +299,7 @@ export const MediaGalleryTab: React.FC = () => {
   const handleCopySelectedUris = () => {
     const itemsToCopy = mediaList.filter(item => selectedIds.has(item.id));
     if (itemsToCopy.length === 0) return;
+    triggerNativeHaptic('light');
     const urisText = itemsToCopy.map(i => i.uri).join('\n');
     copyToClipboard(urisText, `${itemsToCopy.length} Media URIs`);
     showToast(`${itemsToCopy.length} file URIs copied to clipboard`);
@@ -168,6 +307,7 @@ export const MediaGalleryTab: React.FC = () => {
 
   const handleShareItem = async (item: CapturedMediaItem) => {
     try {
+      triggerNativeHaptic('light');
       const shareUri =
         item.uri.startsWith('file://') ||
         item.uri.startsWith('content://') ||
@@ -192,6 +332,7 @@ export const MediaGalleryTab: React.FC = () => {
     if (itemsToShare.length === 0) return;
 
     try {
+      triggerNativeHaptic('light');
       const firstItem = itemsToShare[0];
       const shareUri =
         firstItem.uri.startsWith('file://') ||
@@ -236,11 +377,8 @@ export const MediaGalleryTab: React.FC = () => {
         }
         setSelectedIds(new Set());
         await loadMedia();
-        const remainingCount = await refreshMediaCount?.();
-        if (remainingCount === 0) {
-          switchActiveTab('apis');
-        }
-        showToast(t('mediaGallery.deletedCount', {count: itemsToDelete.length}));
+        await refreshMediaCount?.();
+        showToast(t('mediaGallery.deletedCount', {count: itemsToDelete.length, defaultValue: `Deleted ${itemsToDelete.length} items`}));
       },
     });
   };
@@ -262,8 +400,7 @@ export const MediaGalleryTab: React.FC = () => {
         setSelectedIds(new Set());
         await loadMedia();
         await refreshMediaCount?.();
-        switchActiveTab('apis');
-        showToast(t('mediaGallery.allPurged'));
+        showToast(t('mediaGallery.allPurged', 'All screencast files deleted'));
       },
     });
   };
@@ -276,20 +413,10 @@ export const MediaGalleryTab: React.FC = () => {
     }
   };
 
-  const renderFilterIcon = (filterKey: 'all' | 'image' | 'video' | 'gif', isActive: boolean) => {
-    const iconColor = isActive ? AppColors.sky400 : AppColors.slate400;
-    const iconSize = 12;
-
-    switch (filterKey) {
-      case 'all':
-        return <ScreencastIcon size={iconSize} color={iconColor} />;
-      case 'image':
-        return <ImageIcon size={iconSize} color={iconColor} />;
-      case 'video':
-        return <FilmIcon size={iconSize} color={iconColor} />;
-      case 'gif':
-        return <GifIcon size={iconSize} color={iconColor} />;
-    }
+  const formatTimer = (totalSec: number) => {
+    const mins = Math.floor(totalSec / 60);
+    const secs = totalSec % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const renderGridItem = ({item}: {item: CapturedMediaItem}) => {
@@ -312,15 +439,15 @@ export const MediaGalleryTab: React.FC = () => {
           {thumbUri ? (
             <Image
               source={{uri: thumbUri}}
-              style={galleryStyles.thumbnail}
+              style={galleryStyles.thumbnail as any}
               resizeMode="cover"
             />
           ) : (
             <View style={galleryStyles.thumbnailFallback}>
               {isVideo ? (
-                <FilmIcon size={26} color={AppColors.sky400} />
+                <FilmIcon size={28} color={AppColors.sky500} />
               ) : (
-                <ImageIcon size={26} color={AppColors.slate400} />
+                <ImageIcon size={28} color={AppColors.grayTextWeak} />
               )}
             </View>
           )}
@@ -333,26 +460,41 @@ export const MediaGalleryTab: React.FC = () => {
               isSelected && galleryStyles.checkboxSelected,
             ]}
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            {isSelected && <CheckIcon size={12} color={AppColors.white} />}
+            {isSelected && <CheckIcon size={11} color={AppColors.white} />}
           </TouchableOpacity>
 
+          {/* Center Play Icon for Videos */}
           {isVideo && (
             <View style={galleryStyles.miniPlayCircle}>
               <PlayIcon size={14} color={AppColors.white} />
             </View>
           )}
-          <View style={galleryStyles.typeBadge}>
-            {isVideo ? (
-              <FilmIcon size={11} color={AppColors.sky400} />
-            ) : isGif ? (
-              <GifIcon size={11} color={AppColors.warningAmber} />
-            ) : (
-              <ImageIcon size={11} color={AppColors.emerald500} />
-            )}
+
+          {/* Format Badge top-right */}
+          <View
+            style={[
+              galleryStyles.typeBadge,
+              {
+                backgroundColor: isVideo
+                  ? 'rgba(14, 165, 233, 0.88)'
+                  : isGif
+                  ? 'rgba(245, 158, 11, 0.88)'
+                  : 'rgba(16, 185, 129, 0.88)',
+              },
+            ]}>
             <Text style={galleryStyles.typeBadgeText}>
               {formatLabel}
             </Text>
           </View>
+
+          {/* Duration badge bottom-right for video */}
+          {isVideo && item.durationMs ? (
+            <View style={galleryStyles.durationBadge}>
+              <Text style={galleryStyles.durationBadgeText}>
+                {formatTimer(Math.round(item.durationMs / 1000))}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={galleryStyles.cardInfo}>
@@ -377,7 +519,7 @@ export const MediaGalleryTab: React.FC = () => {
               onPress={() => handleCopyItemUri(item)}
               style={galleryStyles.gridCopyBtn}
               hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
-              <CopyIcon size={11} color={AppColors.slate400} />
+              <CopyIcon size={11} color={AppColors.grayText} />
             </TouchableOpacity>
           </View>
         </View>
@@ -409,7 +551,7 @@ export const MediaGalleryTab: React.FC = () => {
             isSelected && galleryStyles.checkboxSelected,
           ]}
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          {isSelected && <CheckIcon size={12} color={AppColors.white} />}
+          {isSelected && <CheckIcon size={11} color={AppColors.white} />}
         </TouchableOpacity>
 
         {/* Square Thumbnail */}
@@ -417,15 +559,15 @@ export const MediaGalleryTab: React.FC = () => {
           {thumbUri ? (
             <Image
               source={{uri: thumbUri}}
-              style={galleryStyles.listThumb}
+              style={galleryStyles.listThumb as any}
               resizeMode="cover"
             />
           ) : (
             <View style={galleryStyles.listThumbFallback}>
               {isVideo ? (
-                <FilmIcon size={18} color={AppColors.sky400} />
+                <FilmIcon size={18} color={AppColors.sky500} />
               ) : (
-                <ImageIcon size={18} color={AppColors.slate400} />
+                <ImageIcon size={18} color={AppColors.grayTextWeak} />
               )}
             </View>
           )}
@@ -442,15 +584,28 @@ export const MediaGalleryTab: React.FC = () => {
             {filename}
           </Text>
           <View style={galleryStyles.listMetaRow}>
-            <View style={galleryStyles.listBadge}>
-              {isVideo ? (
-                <FilmIcon size={10} color={AppColors.sky400} />
-              ) : isGif ? (
-                <GifIcon size={10} color={AppColors.warningAmber} />
-              ) : (
-                <ImageIcon size={10} color={AppColors.emerald500} />
-              )}
-              <Text style={galleryStyles.listBadgeText}>
+            <View
+              style={[
+                galleryStyles.listBadge,
+                {
+                  backgroundColor: isVideo
+                    ? `${AppColors.sky500}18`
+                    : isGif
+                    ? `${AppColors.amber500}18`
+                    : `${AppColors.green600}18`,
+                },
+              ]}>
+              <Text
+                style={[
+                  galleryStyles.listBadgeText,
+                  {
+                    color: isVideo
+                      ? AppColors.sky600
+                      : isGif
+                      ? AppColors.amber500
+                      : AppColors.green600,
+                  },
+                ]}>
                 {formatLabel}
               </Text>
             </View>
@@ -472,21 +627,21 @@ export const MediaGalleryTab: React.FC = () => {
         <View style={galleryStyles.listActionsRow}>
           <TouchableOpacity
             onPress={() => handleCopyItemUri(item)}
-            style={galleryStyles.listCopyBtn}
+            style={galleryStyles.listActionBtn}
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <CopyIcon size={13} color={AppColors.slate200} />
+            <CopyIcon size={13} color={AppColors.grayText} />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => handleShareItem(item)}
-            style={galleryStyles.listShareBtn}
+            style={galleryStyles.listActionBtn}
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-            <ShareIcon size={13} color={AppColors.sky400} />
+            <ShareIcon size={13} color={AppColors.sky600} />
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => handleDeleteItem(item)}
-            style={galleryStyles.listDeleteBtn}
+            style={galleryStyles.listActionBtn}
             hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
             <TrashIcon size={13} color={AppColors.red500} />
           </TouchableOpacity>
@@ -497,103 +652,166 @@ export const MediaGalleryTab: React.FC = () => {
 
   return (
     <View style={galleryStyles.container}>
-      {/* Top Header Navigation Bar with Back & Close */}
+      {/* ─── Top Studio Navigation Bar ─── */}
       <View style={galleryStyles.topHeaderBar}>
         <TouchableOpacity
           onPress={() => switchActiveTab('apis')}
           style={galleryStyles.backToTabBtn}
           accessibilityLabel="Back to Inspector"
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <WhiteBackNavigation size={15} color={AppColors.purple} />
+          <WhiteBackNavigation size={14} color={AppColors.purple} />
           <Text style={galleryStyles.backToTabText}>
-            {t('common.back', 'Back to Inspector')}
+            {t('common.back', 'Back')}
           </Text>
         </TouchableOpacity>
+
+        <View style={galleryStyles.headerCenterTitle}>
+          <ScreencastIcon size={15} color={AppColors.purple} />
+          <Text style={galleryStyles.headerStudioTitle}>
+            {t('tabs.media', 'Screencast')}
+          </Text>
+          {counts.all > 0 && (
+            <View style={galleryStyles.headerBadge}>
+              <Text style={galleryStyles.headerBadgeText}>{counts.all}</Text>
+            </View>
+          )}
+        </View>
 
         <TouchableOpacity
           onPress={() => switchActiveTab('apis')}
           style={galleryStyles.closeCircleBtn}
           accessibilityLabel="Close Screencast"
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <CloseWhite size={14} color={AppColors.grayTextStrong} />
+          <CloseWhite size={12} color={AppColors.grayTextStrong} />
         </TouchableOpacity>
       </View>
 
-      {/* Top Bar with Filter Chips on Left & Grid/List Toggle on Right */}
+      {/* ─── Active Recording Indicator Banner ─── */}
+      {isRecording && (
+        <View style={galleryStyles.recordingBanner}>
+          <View style={galleryStyles.recordingDot} />
+          <Text style={galleryStyles.recordingBannerText}>
+            {t('header.recordingScreen', 'Screen Recording Active')} • {formatTimer(recordingSeconds)}
+          </Text>
+          <TouchableOpacity
+            onPress={handleToggleVideoRecording}
+            style={galleryStyles.stopRecordBtn}
+            activeOpacity={0.8}>
+            <View style={galleryStyles.stopSquare} />
+            <Text style={galleryStyles.stopRecordBtnText}>Stop & Save</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ─── Quick Capture Hero Action Buttons Bar ─── */}
+      <View style={galleryStyles.quickActionsBar}>
+        <TouchableScale
+          onPress={handleTakeScreenshot}
+          style={[galleryStyles.quickBtn, {backgroundColor: `${AppColors.purple}10`, borderColor: `${AppColors.purple}30`}]}>
+          <CameraIcon size={14} color={AppColors.purple} />
+          <Text style={[galleryStyles.quickBtnText, {color: AppColors.purple}]}>
+            {t('header.screenshot', 'Screenshot')}
+          </Text>
+        </TouchableScale>
+
+        <TouchableScale
+          onPress={handleToggleVideoRecording}
+          style={[
+            galleryStyles.quickBtn,
+            isRecording
+              ? {backgroundColor: `${AppColors.red500}18`, borderColor: AppColors.red500}
+              : {backgroundColor: `${AppColors.sky600}10`, borderColor: `${AppColors.sky600}30`},
+          ]}>
+          <VideoCameraIcon size={14} color={isRecording ? AppColors.red500 : AppColors.sky600} />
+          <Text style={[galleryStyles.quickBtnText, {color: isRecording ? AppColors.red500 : AppColors.sky600}]}>
+            {isRecording ? `Stop (${formatTimer(recordingSeconds)})` : t('header.videoRecord', 'Record Video')}
+          </Text>
+        </TouchableScale>
+
+        <TouchableScale
+          onPress={handleOpenPicker}
+          style={[galleryStyles.quickBtn, {backgroundColor: `${AppColors.emerald500}10`, borderColor: `${AppColors.emerald500}30`}]}>
+          <CameraRollIcon size={14} color={AppColors.green600} />
+          <Text style={[galleryStyles.quickBtnText, {color: AppColors.green600}]}>
+            {t('common.import', 'Import')}
+          </Text>
+        </TouchableScale>
+      </View>
+
+      {/* ─── Filter Tabs & View Toggle Bar ─── */}
       <View style={galleryStyles.filterBar}>
         <View style={galleryStyles.chipGroup}>
-          {(['all', 'image', 'video', 'gif'] as const).map(filterKey => {
-            const isActive = selectedFilter === filterKey;
-            const label =
-              filterKey === 'all'
-                ? t('mediaGallery.all', {count: mediaList.length})
-                : filterKey === 'image'
-                ? t('mediaGallery.photos')
-                : filterKey === 'video'
-                ? t('mediaGallery.videos')
-                : t('mediaGallery.gifs');
-
+          {[
+            {key: 'all' as const, label: t('common.all', 'All'), count: counts.all},
+            {key: 'image' as const, label: t('mediaGallery.photos', 'Photos'), count: counts.image},
+            {key: 'video' as const, label: t('mediaGallery.videos', 'Videos'), count: counts.video},
+            {key: 'gif' as const, label: t('mediaGallery.gifs', 'GIFs'), count: counts.gif},
+          ].map(tab => {
+            const isActive = selectedFilter === tab.key;
             return (
               <TouchableOpacity
-                key={filterKey}
-                onPress={() => setSelectedFilter(filterKey)}
+                key={tab.key}
+                onPress={() => {
+                  triggerNativeHaptic('light');
+                  setSelectedFilter(tab.key);
+                }}
                 style={[
                   galleryStyles.chip,
                   isActive && galleryStyles.chipActive,
                 ]}>
-                {renderFilterIcon(filterKey, isActive)}
                 <Text
                   style={[
                     galleryStyles.chipText,
                     isActive && galleryStyles.chipTextActive,
                   ]}>
-                  {label}
+                  {tab.label}
                 </Text>
+                <View
+                  style={[
+                    galleryStyles.chipBadge,
+                    isActive && galleryStyles.chipBadgeActive,
+                  ]}>
+                  <Text
+                    style={[
+                      galleryStyles.chipBadgeText,
+                      isActive && galleryStyles.chipBadgeTextActive,
+                    ]}>
+                    {tab.count}
+                  </Text>
+                </View>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* Right Controls: Camera Roll Import & View Mode Toggle */}
-        <View style={galleryStyles.rightControls}>
+        {/* View Mode Toggle Button Group */}
+        <View style={galleryStyles.viewToggleContainer}>
           <TouchableOpacity
-            onPress={handleOpenPicker}
-            style={galleryStyles.importBtn}
-            accessibilityLabel="Open Camera Roll"
-            hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
-            <CameraRollIcon size={12} color={AppColors.sky400} />
-            <Text style={galleryStyles.importBtnText}>
-              {selectedFilter === 'image'
-                ? 'Photos'
-                : selectedFilter === 'video'
-                ? 'Videos'
-                : 'Import'}
-            </Text>
+            onPress={() => {
+              triggerNativeHaptic('light');
+              setViewMode('grid');
+            }}
+            style={[
+              galleryStyles.viewToggleBtn,
+              viewMode === 'grid' && galleryStyles.viewToggleBtnActive,
+            ]}>
+            <GridIcon size={13} color={viewMode === 'grid' ? AppColors.white : AppColors.grayText} />
           </TouchableOpacity>
-
-          {/* View Mode Toggle Button Group */}
-          <View style={galleryStyles.viewToggleContainer}>
-            <TouchableOpacity
-              onPress={() => setViewMode('grid')}
-              style={[
-                galleryStyles.viewToggleBtn,
-                viewMode === 'grid' && galleryStyles.viewToggleBtnActive,
-              ]}>
-              <GridIcon size={13} color={viewMode === 'grid' ? AppColors.white : AppColors.slate400} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setViewMode('list')}
-              style={[
-                galleryStyles.viewToggleBtn,
-                viewMode === 'list' && galleryStyles.viewToggleBtnActive,
-              ]}>
-              <ListIcon size={13} color={viewMode === 'list' ? AppColors.white : AppColors.slate400} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => {
+              triggerNativeHaptic('light');
+              setViewMode('list');
+            }}
+            style={[
+              galleryStyles.viewToggleBtn,
+              viewMode === 'list' && galleryStyles.viewToggleBtnActive,
+            ]}>
+            <ListIcon size={13} color={viewMode === 'list' ? AppColors.white : AppColors.grayText} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Sub Bar with Results Counter on Left & Actions on Right */}
+      {/* ─── Batch Action Sub-Bar ─── */}
       {mediaList.length > 0 && (
         <View style={galleryStyles.subBar}>
           <View style={galleryStyles.resultCountWrapper}>
@@ -603,34 +821,21 @@ export const MediaGalleryTab: React.FC = () => {
                 selectedIds.size > 0 && galleryStyles.resultCountTextSelected,
               ]}>
               {selectedIds.size > 0
-                ? t('mediaGallery.selectedOfResults', {
-                    selected: selectedIds.size,
-                    total: filteredMedia.length,
-                    defaultValue: `Selected ${selectedIds.size} of ${filteredMedia.length} results`,
-                  })
-                : filteredMedia.length !== mediaList.length
-                ? t('mediaGallery.showingFilteredResults', {
-                    count: filteredMedia.length,
-                    total: mediaList.length,
-                    defaultValue: `Showing ${filteredMedia.length} of ${mediaList.length} results`,
-                  })
-                : t('mediaGallery.showingResults', {
-                    count: filteredMedia.length,
-                    defaultValue: `Showing ${filteredMedia.length} results`,
-                  })}
+                ? `${selectedIds.size} of ${filteredMedia.length} selected`
+                : `${filteredMedia.length} ${filteredMedia.length === 1 ? 'item' : 'items'} • ${formatBytes(totalStorageBytes)}`}
             </Text>
           </View>
 
           <View style={galleryStyles.actionsGroup}>
-            {selectedIds.size > 0 && (
+            {selectedIds.size > 0 ? (
               <>
                 <TouchableOpacity
                   onPress={handleCopySelectedUris}
                   style={galleryStyles.copySelectedBtn}
                   hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                  <CopyIcon size={12} color={AppColors.slate200} />
+                  <CopyIcon size={11} color={AppColors.grayTextStrong} />
                   <Text style={galleryStyles.copySelectedBtnText}>
-                    {t('mediaGallery.copyUri', 'Copy URI')}
+                    Copy
                   </Text>
                 </TouchableOpacity>
 
@@ -638,9 +843,9 @@ export const MediaGalleryTab: React.FC = () => {
                   onPress={handleShareSelected}
                   style={galleryStyles.shareSelectedBtn}
                   hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                  <ShareIcon size={12} color={AppColors.sky400} />
+                  <ShareIcon size={11} color={AppColors.sky600} />
                   <Text style={galleryStyles.shareSelectedBtnText}>
-                    {t('mediaGallery.share', 'Share')}
+                    Share
                   </Text>
                 </TouchableOpacity>
 
@@ -648,28 +853,28 @@ export const MediaGalleryTab: React.FC = () => {
                   onPress={handleDeleteSelected}
                   style={galleryStyles.deleteBtn}
                   hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                  <TrashIcon size={13} color={AppColors.red500} />
+                  <TrashIcon size={11} color={AppColors.red500} />
                   <Text style={galleryStyles.deleteBtnText}>
-                    {t('mediaGallery.deleteSelected', {count: selectedIds.size})}
+                    Delete ({selectedIds.size})
                   </Text>
                 </TouchableOpacity>
               </>
+            ) : (
+              <TouchableOpacity
+                onPress={handleClearAll}
+                style={galleryStyles.clearBtn}
+                hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <TrashIcon size={11} color={AppColors.red500} />
+                <Text style={galleryStyles.clearBtnText}>
+                  Purge All
+                </Text>
+              </TouchableOpacity>
             )}
-
-            <TouchableOpacity
-              onPress={handleClearAll}
-              style={galleryStyles.clearBtn}
-              hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-              <TrashIcon size={13} color={AppColors.red500} />
-              <Text style={galleryStyles.clearBtnText}>
-                {t('mediaGallery.purge', {size: formatBytes(totalStorageBytes)})}
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* Media Items (Grid or List) */}
+      {/* ─── Media Items Grid/List or Polished Studio Empty State ─── */}
       <FlatList
         key={viewMode}
         data={filteredMedia}
@@ -685,40 +890,83 @@ export const MediaGalleryTab: React.FC = () => {
         nestedScrollEnabled={true}
         keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={AppColors.sky400} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={AppColors.purple} />
         }
         ListEmptyComponent={
-          <View style={galleryStyles.emptyContainer}>
-            <EmptyState
-              customTitle={
-                selectedFilter === 'image'
-                  ? 'No Photos Found'
-                  : selectedFilter === 'video'
-                  ? 'No Videos Found'
-                  : t('mediaGallery.noMediaTitle')
-              }
-              customSub={
-                selectedFilter === 'image'
-                  ? 'Take a screenshot or import photos from Camera Roll.'
-                  : selectedFilter === 'video'
-                  ? 'Record a video or import videos from Camera Roll.'
-                  : t('mediaGallery.noMediaDesc')
-              }
-              showReload={false}
-            />
-            <TouchableOpacity
-              onPress={handleOpenPicker}
-              style={galleryStyles.emptyImportBtn}
-              activeOpacity={0.8}>
-              <CameraRollIcon size={14} color={AppColors.white} />
-              <Text style={galleryStyles.emptyImportBtnText}>
-                {selectedFilter === 'image'
-                  ? t('mediaGallery.importPhotos', 'Import Photos from Camera Roll')
-                  : selectedFilter === 'video'
-                  ? t('mediaGallery.importVideos', 'Import Videos from Camera Roll')
-                  : t('mediaGallery.openCameraRoll', 'Open Camera Roll')}
-              </Text>
-            </TouchableOpacity>
+          <View style={galleryStyles.emptyHeroCard}>
+            <View style={galleryStyles.emptyIconCircle}>
+              <ScreencastIcon size={32} color={AppColors.purple} />
+            </View>
+
+            <Text style={galleryStyles.emptyHeroTitle}>
+              {selectedFilter === 'image'
+                ? 'No Screenshots Yet'
+                : selectedFilter === 'video'
+                ? 'No Screen Recordings Yet'
+                : selectedFilter === 'gif'
+                ? 'No Animated GIFs Yet'
+                : 'Screencast & Media Studio'}
+            </Text>
+
+            <Text style={galleryStyles.emptyHeroSubtitle}>
+              {selectedFilter === 'image'
+                ? 'Take a full-screen application snapshot or import photos from your device library.'
+                : selectedFilter === 'video'
+                ? 'Record high-FPS screen videos with audio narration to reproduce and debug issues.'
+                : 'Capture pixel-perfect screenshots, record 60fps screen videos, and export GIF animations with zero background overhead.'}
+            </Text>
+
+            {/* 3 Interactive Quick Launch Studio Cards */}
+            <View style={galleryStyles.emptyActionsGrid}>
+              <TouchableScale
+                onPress={handleTakeScreenshot}
+                style={galleryStyles.emptyActionCard}>
+                <View style={[galleryStyles.actionCardIconBox, {backgroundColor: `${AppColors.purple}14`}]}>
+                  <CameraIcon size={18} color={AppColors.purple} />
+                </View>
+                <View style={galleryStyles.actionCardTextBox}>
+                  <Text style={galleryStyles.actionCardTitle}>Take Screenshot</Text>
+                  <Text style={galleryStyles.actionCardDesc}>Full-window lossless PNG</Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={handleToggleVideoRecording}
+                style={galleryStyles.emptyActionCard}>
+                <View style={[galleryStyles.actionCardIconBox, {backgroundColor: `${AppColors.sky600}14`}]}>
+                  <VideoCameraIcon size={18} color={AppColors.sky600} />
+                </View>
+                <View style={galleryStyles.actionCardTextBox}>
+                  <Text style={galleryStyles.actionCardTitle}>Record Screen Video</Text>
+                  <Text style={galleryStyles.actionCardDesc}>High-FPS MP4 with audio</Text>
+                </View>
+              </TouchableScale>
+
+              <TouchableScale
+                onPress={handleOpenPicker}
+                style={galleryStyles.emptyActionCard}>
+                <View style={[galleryStyles.actionCardIconBox, {backgroundColor: `${AppColors.emerald500}14`}]}>
+                  <CameraRollIcon size={18} color={AppColors.green600} />
+                </View>
+                <View style={galleryStyles.actionCardTextBox}>
+                  <Text style={galleryStyles.actionCardTitle}>Import from Camera Roll</Text>
+                  <Text style={galleryStyles.actionCardDesc}>Device photos & videos</Text>
+                </View>
+              </TouchableScale>
+            </View>
+
+            {/* Micro Feature Highlights Footer */}
+            <View style={galleryStyles.featurePillsRow}>
+              <View style={galleryStyles.featurePill}>
+                <Text style={galleryStyles.featurePillText}>⚡ Zero Overhead</Text>
+              </View>
+              <View style={galleryStyles.featurePill}>
+                <Text style={galleryStyles.featurePillText}>✂️ Crop & Annotate</Text>
+              </View>
+              <View style={galleryStyles.featurePill}>
+                <Text style={galleryStyles.featurePillText}>🎞️ Convert to GIF</Text>
+              </View>
+            </View>
           </View>
         }
       />
@@ -732,6 +980,7 @@ export const MediaGalleryTab: React.FC = () => {
         onConvertToGif={handleConvertToGif}
       />
 
+      {/* Confirmation Modal */}
       <ConfirmationModal
         visible={confirmConfig.visible}
         title={confirmConfig.title}
@@ -753,28 +1002,51 @@ const CARD_WIDTH = (WINDOW_WIDTH - 36) / 2;
 const galleryStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppColors.slate850,
+    backgroundColor: AppColors.grayBackground,
   },
   topHeaderBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     backgroundColor: AppColors.primaryLight,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.dividerColor,
+    borderBottomColor: AppColors.grayBorderSecondary,
   },
   backToTabBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: `${AppColors.purple}12`,
   },
   backToTabText: {
-    fontFamily: AppFonts.interSemiBold,
-    fontSize: 12,
+    fontFamily: AppFonts.interBold,
+    fontSize: 11.5,
+    color: AppColors.purple,
+  },
+  headerCenterTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerStudioTitle: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 13.5,
+    color: AppColors.grayTextStrong,
+  },
+  headerBadge: {
+    backgroundColor: `${AppColors.purple}1A`,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 10,
+  },
+  headerBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9.5,
     color: AppColors.purple,
   },
   closeCircleBtn: {
@@ -783,18 +1055,84 @@ const galleryStyles = StyleSheet.create({
     borderRadius: 13,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
-    borderColor: AppColors.dividerColor,
+    borderColor: AppColors.grayBorderSecondary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  recordingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: `${AppColors.red500}15`,
+    borderBottomWidth: 1,
+    borderBottomColor: `${AppColors.red500}30`,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: AppColors.red500,
+    marginRight: 6,
+  },
+  recordingBannerText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 12,
+    color: AppColors.red500,
+    flex: 1,
+  },
+  stopRecordBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: AppColors.red500,
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 6,
+  },
+  stopSquare: {
+    width: 8,
+    height: 8,
+    backgroundColor: AppColors.white,
+    borderRadius: 1,
+  },
+  stopRecordBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 11,
+    color: AppColors.white,
+  },
+  quickActionsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  quickBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  quickBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 11,
   },
   filterBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.borderGlassLight,
+    borderBottomColor: AppColors.grayBorderSecondary,
     gap: 8,
   },
   chipGroup: {
@@ -806,177 +1144,178 @@ const galleryStyles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4.5,
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4.5,
-    borderRadius: 6,
-    backgroundColor: AppColors.whiteAlpha06,
+    borderRadius: 8,
+    backgroundColor: AppColors.primaryLight,
     borderWidth: 1,
-    borderColor: AppColors.whiteAlpha10,
+    borderColor: AppColors.grayBorderSecondary,
   },
   chipActive: {
-    backgroundColor: `${AppColors.sky400}2E`,
-    borderColor: AppColors.sky400,
+    backgroundColor: `${AppColors.purple}14`,
+    borderColor: AppColors.purple,
   },
   chipText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 11,
-    color: AppColors.slate400,
+    color: AppColors.grayText,
   },
   chipTextActive: {
     fontFamily: AppFonts.interBold,
-    color: AppColors.sky400,
+    color: AppColors.purple,
+  },
+  chipBadge: {
+    backgroundColor: AppColors.grayBackground,
+    paddingHorizontal: 4.5,
+    paddingVertical: 1,
+    borderRadius: 6,
+  },
+  chipBadgeActive: {
+    backgroundColor: AppColors.purple,
+  },
+  chipBadgeText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 9,
+    color: AppColors.grayTextWeak,
+  },
+  chipBadgeTextActive: {
+    color: AppColors.white,
+  },
+  viewToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+    padding: 2,
+  },
+  viewToggleBtn: {
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  viewToggleBtnActive: {
+    backgroundColor: AppColors.purple,
   },
   subBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: `${AppColors.slate900}99`,
+    paddingVertical: 6.5,
+    backgroundColor: AppColors.primaryLight,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.borderGlassLight,
-    gap: 8,
+    borderBottomColor: AppColors.grayBorderSecondary,
   },
   resultCountWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
+    flex: 1,
   },
   resultCountText: {
     fontFamily: AppFonts.interMedium,
     fontSize: 11,
-    color: AppColors.slate400,
+    color: AppColors.grayTextWeak,
   },
   resultCountTextSelected: {
-    fontFamily: AppFonts.interSemiBold,
-    color: AppColors.sky400,
+    fontFamily: AppFonts.interBold,
+    color: AppColors.purple,
   },
   actionsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  rightControls: {
+  copySelectedBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-  },
-  importBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: `${AppColors.sky500}1F`,
-    borderColor: `${AppColors.sky400}44`,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 4.5,
-    borderRadius: 6,
-  },
-  importBtnText: {
-    fontFamily: AppFonts.interSemiBold,
-    fontSize: 11,
-    color: AppColors.sky400,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 36,
-  },
-  emptyImportBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: AppColors.sky500,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 18,
-    shadowColor: AppColors.sky500,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  emptyImportBtnText: {
-    fontFamily: AppFonts.interSemiBold,
-    fontSize: 13,
-    color: AppColors.white,
-  },
-  viewToggleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: AppColors.whiteAlpha06,
-    borderRadius: 6,
-    padding: 2,
-    borderWidth: 1,
-    borderColor: AppColors.whiteAlpha10,
-  },
-  viewToggleBtn: {
+    gap: 3.5,
     paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 3.5,
+    borderRadius: 6,
+    backgroundColor: AppColors.grayBackground,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
   },
-  viewToggleBtnActive: {
-    backgroundColor: `${AppColors.violet600}80`,
+  copySelectedBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.grayTextStrong,
+  },
+  shareSelectedBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    paddingHorizontal: 7,
+    paddingVertical: 3.5,
+    borderRadius: 6,
+    backgroundColor: `${AppColors.sky600}14`,
+    borderWidth: 1,
+    borderColor: `${AppColors.sky600}30`,
+  },
+  shareSelectedBtnText: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
+    color: AppColors.sky600,
   },
   deleteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 3.5,
+    paddingHorizontal: 7,
+    paddingVertical: 3.5,
     borderRadius: 6,
-    backgroundColor: `${AppColors.red500}26`,
+    backgroundColor: `${AppColors.red500}14`,
     borderWidth: 1,
-    borderColor: `${AppColors.red500}80`,
+    borderColor: `${AppColors.red500}30`,
   },
   deleteBtnText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 10.5,
+    fontSize: 10,
     color: AppColors.red500,
   },
   clearBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    gap: 3.5,
+    paddingHorizontal: 7,
+    paddingVertical: 3.5,
     borderRadius: 6,
-    backgroundColor: `${AppColors.red500}1F`,
-    borderWidth: 1,
-    borderColor: `${AppColors.red500}4D`,
+    backgroundColor: `${AppColors.red500}10`,
   },
   clearBtnText: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 10.5,
+    fontFamily: AppFonts.interBold,
+    fontSize: 10,
     color: AppColors.red500,
   },
   listContent: {
     padding: 12,
-    gap: 10,
+    paddingBottom: 40,
   },
   columnWrapper: {
-    gap: 12,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   card: {
     width: CARD_WIDTH,
-    backgroundColor: AppColors.slate800,
-    borderRadius: 8,
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: AppColors.borderGlassLight,
+    borderColor: AppColors.grayBorderSecondary,
     overflow: 'hidden',
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   cardSelected: {
-    borderColor: AppColors.violet600,
-    borderWidth: 1.5,
+    borderColor: AppColors.purple,
+    borderWidth: 2,
   },
   thumbnailContainer: {
     width: '100%',
     height: 110,
-    backgroundColor: AppColors.slate850,
+    backgroundColor: AppColors.grayBackground,
     position: 'relative',
   },
   thumbnail: {
@@ -984,122 +1323,123 @@ const galleryStyles = StyleSheet.create({
     height: '100%',
   },
   thumbnailFallback: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: AppColors.slate900,
   },
   checkbox: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    width: 22,
-    height: 22,
+    top: 7,
+    left: 7,
+    width: 19,
+    height: 19,
     borderRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    borderColor: AppColors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
+    zIndex: 5,
   },
   checkboxSelected: {
-    backgroundColor: AppColors.violet600,
-    borderColor: AppColors.violet600,
+    backgroundColor: AppColors.purple,
+    borderColor: AppColors.purple,
   },
   miniPlayCircle: {
     position: 'absolute',
     top: '50%',
     left: '50%',
+    transform: [{translateX: -16}, {translateY: -16}],
     width: 32,
     height: 32,
-    marginTop: -16,
-    marginLeft: -16,
     borderRadius: 16,
-    backgroundColor: `${AppColors.sky400}D9`,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 2,
-    shadowColor: AppColors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 4,
   },
   typeBadge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: AppColors.badgeGlassDark,
+    top: 7,
+    right: 7,
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: AppColors.borderGlassMedium,
   },
   typeBadgeText: {
     fontFamily: AppFonts.interBold,
+    fontSize: 8.5,
+    color: AppColors.white,
+    letterSpacing: 0.3,
+  },
+  durationBadge: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  durationBadgeText: {
+    fontFamily: AppFonts.interBold,
     fontSize: 9,
-    color: AppColors.slate200,
+    color: AppColors.white,
   },
   cardInfo: {
     padding: 8,
-    gap: 3,
+    gap: 4,
   },
   cardTitle: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 11.5,
-    color: AppColors.white,
+    fontFamily: AppFonts.interSemiBold,
+    fontSize: 11,
+    color: AppColors.grayTextStrong,
   },
   cardMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'space-between',
   },
   cardMeta: {
     fontFamily: AppFonts.interRegular,
     fontSize: 10,
-    color: AppColors.slate400,
+    color: AppColors.grayTextWeak,
   },
   cardMetaDot: {
-    fontSize: 10,
-    color: AppColors.whiteAlpha30,
+    fontSize: 9,
+    color: AppColors.grayTextWeak,
   },
-  /* List View Styles */
+  gridCopyBtn: {
+    padding: 2,
+  },
   listRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.slate800,
-    borderRadius: 8,
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: AppColors.borderGlassLight,
+    borderColor: AppColors.grayBorderSecondary,
     padding: 8,
+    marginBottom: 8,
     gap: 10,
   },
   listRowSelected: {
-    borderColor: AppColors.violet600,
+    borderColor: AppColors.purple,
     borderWidth: 1.5,
-    backgroundColor: `${AppColors.violet600}14`,
   },
   listCheckbox: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.65)',
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    borderColor: AppColors.grayBorderSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   listThumbContainer: {
-    width: 46,
-    height: 46,
-    borderRadius: 6,
-    backgroundColor: AppColors.slate850,
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: AppColors.grayBackground,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -1108,120 +1448,148 @@ const galleryStyles = StyleSheet.create({
     height: '100%',
   },
   listThumbFallback: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: AppColors.slate900,
   },
   listMiniPlay: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    width: 20,
-    height: 20,
-    marginTop: -10,
-    marginLeft: -10,
-    borderRadius: 10,
-    backgroundColor: `${AppColors.sky400}D9`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingLeft: 1,
+    bottom: 2,
+    right: 2,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    borderRadius: 3,
+    padding: 1.5,
   },
   listInfo: {
     flex: 1,
-    gap: 4,
-    minWidth: 0,
+    gap: 3,
   },
   listTitle: {
-    fontFamily: AppFonts.interMedium,
+    fontFamily: AppFonts.interSemiBold,
     fontSize: 12,
-    color: AppColors.white,
+    color: AppColors.grayTextStrong,
   },
   listMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
+    gap: 5,
   },
   listBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: AppColors.badgeGlassDark,
-    paddingHorizontal: 4,
-    paddingVertical: 1.5,
+    paddingHorizontal: 4.5,
+    paddingVertical: 1,
     borderRadius: 4,
-    borderWidth: 1,
-    borderColor: AppColors.borderGlassMedium,
   },
   listBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 8.5,
-    color: AppColors.slate200,
-  },
-  gridCopyBtn: {
-    padding: 3,
-    borderRadius: 4,
-    backgroundColor: AppColors.whiteAlpha08,
+    fontSize: 9,
+    letterSpacing: 0.3,
   },
   listActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-  },
-  listCopyBtn: {
-    padding: 6,
-    borderRadius: 6,
-    backgroundColor: AppColors.whiteAlpha10,
-    borderWidth: 1,
-    borderColor: AppColors.whiteAlpha15,
-  },
-  listShareBtn: {
-    padding: 6,
-    borderRadius: 6,
-    backgroundColor: `${AppColors.sky400}18`,
-    borderWidth: 1,
-    borderColor: `${AppColors.sky400}40`,
-  },
-  listDeleteBtn: {
-    padding: 6,
-    borderRadius: 6,
-    backgroundColor: `${AppColors.red500}14`,
-    borderWidth: 1,
-    borderColor: `${AppColors.red500}33`,
-  },
-  copySelectedBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  },
+  listActionBtn: {
+    padding: 5,
     borderRadius: 6,
-    backgroundColor: AppColors.whiteAlpha10,
+    backgroundColor: AppColors.grayBackground,
+  },
+  emptyHeroCard: {
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: AppColors.whiteAlpha20,
-  },
-  copySelectedBtnText: {
-    fontFamily: AppFonts.interSemiBold,
-    fontSize: 10.5,
-    color: AppColors.slate200,
-  },
-  shareSelectedBtn: {
-    flexDirection: 'row',
+    borderColor: AppColors.grayBorderSecondary,
+    padding: 20,
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: `${AppColors.sky400}20`,
-    borderWidth: 1,
-    borderColor: `${AppColors.sky400}60`,
+    marginTop: 8,
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  shareSelectedBtnText: {
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${AppColors.purple}14`,
+    borderWidth: 1,
+    borderColor: `${AppColors.purple}25`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyHeroTitle: {
     fontFamily: AppFonts.interBold,
+    fontSize: 16,
+    color: AppColors.grayTextStrong,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  emptyHeroSubtitle: {
+    fontFamily: AppFonts.interRegular,
+    fontSize: 12,
+    lineHeight: 17,
+    color: AppColors.grayText,
+    textAlign: 'center',
+    marginBottom: 18,
+    paddingHorizontal: 8,
+  },
+  emptyActionsGrid: {
+    width: '100%',
+    gap: 8,
+    marginBottom: 16,
+  },
+  emptyActionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: AppColors.grayBackground,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+    padding: 10,
+    gap: 12,
+  },
+  actionCardIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionCardTextBox: {
+    flex: 1,
+    gap: 1.5,
+  },
+  actionCardTitle: {
+    fontFamily: AppFonts.interBold,
+    fontSize: 12.5,
+    color: AppColors.grayTextStrong,
+  },
+  actionCardDesc: {
+    fontFamily: AppFonts.interRegular,
     fontSize: 10.5,
-    color: AppColors.sky400,
+    color: AppColors.grayTextWeak,
+  },
+  featurePillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+    paddingTop: 4,
+  },
+  featurePill: {
+    backgroundColor: AppColors.grayBackground,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: AppColors.grayBorderSecondary,
+  },
+  featurePillText: {
+    fontFamily: AppFonts.interMedium,
+    fontSize: 9.5,
+    color: AppColors.grayTextWeak,
   },
 });
-

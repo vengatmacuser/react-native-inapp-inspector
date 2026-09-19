@@ -498,7 +498,7 @@ const InspectorHeader = React.memo(() => {
                       style={{
                         fontFamily: AppFonts.interBold,
                         fontSize: isNarrow ? 14.5 : 16,
-                        lineHeight: isNarrow ? 18 : 20,
+                        lineHeight: isNarrow ? 19 : 21,
                         color: AppColors.white,
                         letterSpacing: -0.2,
                       }}
@@ -531,9 +531,9 @@ const InspectorHeader = React.memo(() => {
                     style={{
                       fontFamily: AppFonts.interRegular,
                       fontSize: isNarrow ? 10 : 11,
-                      lineHeight: isNarrow ? 13.5 : 14.5,
+                      lineHeight: isNarrow ? 14 : 15,
                       color: `${AppColors.white}CC`,
-                      marginTop: 0.5,
+                      marginTop: 2,
                     }}
                     numberOfLines={1}
                     ellipsizeMode="tail">
@@ -553,7 +553,7 @@ const InspectorHeader = React.memo(() => {
                     marginRight: 6,
                   }}>
                   <BrandCircleIcon size={isNarrow ? 38 : isCompact ? 40 : 42} />
-                  <View style={{gap: 2, flex: 1, minWidth: 0, justifyContent: 'center'}}>
+                  <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
                     {/* Top Row: Full prominent package name */}
                     <Text
                       style={[
@@ -562,7 +562,7 @@ const InspectorHeader = React.memo(() => {
                           fontFamily: AppFonts.interBold,
                           fontWeight: '700',
                           fontSize: isNarrow ? 12.5 : isCompact ? 13 : 14,
-                          lineHeight: isNarrow ? 16 : isCompact ? 17 : 18,
+                          lineHeight: isNarrow ? 17 : isCompact ? 18 : 19,
                           color: AppColors.white,
                           letterSpacing: -0.2,
                           paddingBottom: 0,
@@ -578,9 +578,9 @@ const InspectorHeader = React.memo(() => {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 3.5,
+                        gap: 4,
                         minWidth: 0,
-                        marginTop: 1,
+                        marginTop: 2,
                         flexWrap: 'nowrap',
                         overflow: 'hidden',
                       }}>
@@ -1603,8 +1603,8 @@ const InspectorHeader = React.memo(() => {
                         width: buttonSize,
                         height: buttonSize,
                         borderRadius: isNarrow ? 6 : 7,
-                        backgroundColor: 'rgba(99, 102, 241, 0.28)',
-                        borderColor: 'rgba(165, 180, 252, 0.45)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                        borderColor: 'rgba(255, 255, 255, 0.45)',
                         borderWidth: 1,
                       },
                     ]}>

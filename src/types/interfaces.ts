@@ -228,7 +228,10 @@ export interface PersistedSettings {
   captureWidgetEnabled?: boolean;
   // ─── Peek-Through Mode ──────────────────────────────────────────────────────
   peekOpacity?: number;
+  // ─── Hidden URL Filters ───────────────────────────────────────────────────
+  hiddenUrlPatterns?: string[];
 }
+
 
 // ─── Inspector component props / context ──────────────────────────────────────
 
@@ -370,6 +373,9 @@ export interface InspectorContextValue {
   handleDelete: () => void;
   isGroupByPageEnabled: boolean;
   setIsGroupByPageEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  hiddenUrlPatterns: string[];
+  setHiddenUrlPatterns: React.Dispatch<React.SetStateAction<string[]>>;
+
 
   // ─── Network detail ────────────────────────────────────────────────────────
   detailTitle: string;
@@ -403,6 +409,9 @@ export interface InspectorContextValue {
   logCounts: Record<string, string>;
   logSortOrder: SortOrder;
   setLogSortOrder: React.Dispatch<React.SetStateAction<SortOrder>>;
+  selectedConsoleLogs: Set<number>;
+  setSelectedConsoleLogs: React.Dispatch<React.SetStateAction<Set<number>>>;
+  toggleSelectConsoleLog: (id: number) => void;
 
   // ─── Analytics ─────────────────────────────────────────────────────────────
   analyticsEvents: AnalyticsEvent[];
@@ -652,6 +661,8 @@ export interface ConsoleLogCardProps {
   searchStr?: string;
   onPress?: (item: ConsoleLog) => void;
   testID?: string;
+  isSelected?: boolean;
+  onToggleSelect?: (id: number) => void;
 }
 
 export interface JsonContent {

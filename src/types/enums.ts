@@ -6,6 +6,7 @@ export const ActiveTab = {
   Apis: 'apis',
   Analytics: 'analytics',
   Logs: 'logs',
+  Perf: 'perf',
   Redux: 'redux',
   Crash: 'crash',
   Push: 'push',

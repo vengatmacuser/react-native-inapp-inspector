@@ -25,14 +25,6 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_light.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg">
-    <img alt="React Native In-App Inspector Banner" src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/banner_dark.svg" width="100%">
-  </picture>
-</p>
-
-<p align="center">
   <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/v/react-native-inapp-inspector?color=6366f1&label=npm&logo=npm" alt="npm version" /></a>
   <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/dm/react-native-inapp-inspector?color=3b82f6&label=downloads" alt="npm downloads" /></a>
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/github/stars/vengatmacuser/react-native-inapp-inspector?color=f59e0b&label=stars&logo=github" alt="GitHub stars" /></a>
@@ -94,23 +86,23 @@ The **zero-config, all-in-one in-app debugging toolkit for React Native & Expo**
 
 ## ⚡ Why Choose `react-native-inapp-inspector`?
 
-| Capability | **react-native-inapp-inspector** | Flipper | Charles / Proxyman | RN Debugger |
-| :--- | :---: | :---: | :---: | :---: |
-| **Standalone on Device (No PC/Cable Required)** | ✅ | ❌ | ❌ | ❌ |
-| **Zero-Render Inactive Mode (0% Background CPU)** | ✅ | ❌ | ❌ | ❌ |
-| **HTTP/HTTPS Network Logger (Fetch / Axios / XHR)** | ✅ | ✅ | ✅ | ✅ |
-| **Timing Waterfall & P95 Telemetry** | ✅ | ⚠️ | ⚠️ | ❌ |
-| **cURL & Fetch Snippet Instant Export** | ✅ | ⚠️ | ⚠️ | ❌ |
-| **WebSocket & Socket.IO Packet Inspector** | ✅ | ❌ | ⚠️ | ⚠️ |
-| **Storage Inspector & Editor (AsyncStorage & MMKV)** | ✅ (Live CRUD) | ⚠️ (Read-only) | ❌ | ⚠️ |
-| **Push Notification Logger (APNs, FCM, Salesforce)** | ✅ | ❌ | ❌ | ❌ |
-| **Console Logger + Metro Source-Map Symbolication** | ✅ (Accurate Line #) | ✅ | ❌ | ✅ |
-| **Redux State Diffs & Action Timeline** | ✅ | ⚠️ | ❌ | ✅ |
-| **Crash Protection & Multi-type Breadcrumbs** | ✅ | ❌ | ❌ | ❌ |
-| **Native Hardware, RAM, Storage & Battery Telemetry** | ✅ | ⚠️ | ❌ | ❌ |
-| **Screen Capture (Screenshots, MP4 Video, GIF)** | ✅ | ❌ | ❌ | ❌ |
-| **25 Global Languages with Bottom Sheet Picker** | ✅ | ❌ (English only) | ❌ | ❌ |
-| **Expo (Bare & Managed) & React Native** | ✅ | ⚠️ | ⚠️ | ⚠️ |
+| Capability | **react-native-inapp-inspector** | Flipper (Deprecated) | Chucker | Charles / Proxyman | Reactotron | RN Debugger |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Standalone on Device (No PC/Cable Required)** | ✅ | ❌ | ✅ (Android only) | ❌ | ❌ | ❌ |
+| **Zero-Render Inactive Mode (0% Background CPU)** | ✅ | ❌ | ⚠️ | ❌ | ⚠️ | ❌ |
+| **HTTP/HTTPS Network Logger (Fetch / Axios / XHR)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Timing Waterfall & P95 Telemetry** | ✅ | ⚠️ | ❌ | ⚠️ | ❌ | ❌ |
+| **cURL & Fetch Snippet Instant Export** | ✅ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ |
+| **WebSocket & Socket.IO Packet Inspector** | ✅ | ❌ | ❌ | ⚠️ | ⚠️ | ⚠️ |
+| **Storage Inspector & Editor (AsyncStorage & MMKV)** | ✅ (Live CRUD) | ⚠️ (Read-only) | ❌ | ❌ | ✅ | ⚠️ |
+| **Push Notification Logger (APNs, FCM, Salesforce)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Console Logger + Metro Source-Map Symbolication** | ✅ (Accurate Line #) | ✅ | ❌ | ❌ | ⚠️ | ✅ |
+| **Redux State Diffs & Action Timeline** | ✅ | ⚠️ | ❌ | ❌ | ✅ | ✅ |
+| **Crash Protection & Multi-type Breadcrumbs** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Native Hardware, RAM, Storage & Battery Telemetry** | ✅ | ⚠️ | ❌ | ❌ | ❌ | ❌ |
+| **Screen Capture & Video Recording Suite** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **25 Global Languages with Bottom Sheet Picker** | ✅ | ❌ (English only) | ❌ | ❌ | ❌ | ❌ |
+| **Expo (Bare & Managed) & React Native** | ✅ | ⚠️ | ⚠️ | ⚠️ | ⚠️ | ⚠️ |
 
 ---
 
@@ -556,13 +548,41 @@ Contributions are warmly welcomed! Please check out [CONTRIBUTING.md](CONTRIBUTI
   </tr>
 </table>
 
+## 🏷️ Popular Search Keywords & Developer Topics Index (SEO)
+
+<details>
+<summary><b>🔍 Click to view comprehensive Developer Search Keywords & Framework Integrations</b></summary>
+
+### 🛠️ Core Debugging & DevTools Alternatives
+`react-native-debugger` · `in-app-debugger` · `react-native-devtools` · `flipper-alternative` · `flipper-alternative-react-native` · `chucker-for-react-native` · `chucker-react-native` · `charles-proxy-alternative` · `proxyman-alternative` · `reactotron-alternative` · `zero-config-debugging` · `mobile-devtools` · `on-device-debugging` · `react-native-debug-menu`
+
+### 🌐 Network, APIs & Real-time Protocols
+`react-native-network-logger` · `react-native-network-inspector` · `http-logger` · `api-inspector` · `api-debugger` · `axios-interceptor` · `fetch-logger` · `graphql-inspector` · `websocket-logger` · `websocket-inspector` · `socketio-debugger` · `curl-export` · `copy-as-curl` · `latency-waterfall` · `p95-latency-monitor` · `ssl-pinning-safe-logger` · `rest-api-debugger`
+
+### 💾 State Management & Device Storage
+`redux-devtools-react-native` · `redux-inspector` · `redux-logger` · `redux-toolkit-debugger` · `rtk-query-inspector` · `redux-persist-debugger` · `asyncstorage-viewer` · `asyncstorage-inspector` · `asyncstorage-editor` · `mmkv-inspector` · `mmkv-viewer` · `mmkv-debugger` · `live-storage-crud`
+
+### 🪵 Console, Logging & Crash Diagnostics
+`console-logger` · `metro-symbolication` · `stacktrace-symbolication` · `hermes-stacktrace` · `crash-reporter` · `crash-logger` · `error-boundary` · `breadcrumb-tracker` · `uncaught-exception-handler` · `native-crash-protection` · `ram-monitor` · `hermes-memory-debugger` · `heap-size-inspector` · `live-fps-counter` · `hardware-telemetry`
+
+### 🔔 Push Notifications & Telemetry
+`push-notification-logger` · `fcm-debugger` · `apns-logger` · `notifee-debugger` · `onesignal-inspector` · `firebase-analytics-debugger` · `ga4-debugger` · `mixpanel-inspector` · `segment-analytics-logger` · `amplitude-debugger`
+
+### 📸 QA Testing, Screen Capture & Annotation Studio
+`react-native-screen-recorder` · `screen-capture` · `screenshot-capture` · `qa-annotation-tools` · `video-trimmer` · `gif-generator` · `bug-repro-recorder` · `testflight-qa-tool` · `on-device-qa` · `gridline-overlay` · `watermark-qa`
+
+### 📱 Platforms, Frameworks & Modern Architecture
+`expo-network-logger` · `expo-network-inspector` · `expo-in-app-debugger` · `expo-devtools` · `expo-go` · `expo-prebuild` · `expo-sdk-50` · `expo-sdk-51` · `expo-sdk-52` · `turbomodules` · `fabric` · `react-native-new-architecture` · `hermes-engine` · `jsc-engine` · `react-native-ios` · `react-native-android`
+
+</details>
+
 ## 🔍 Global Search Keywords & Regional Topics
 
 `react-native-inapp-inspector` is index-optimized for developers and teams searching across all world markets, languages, and regional dev ecosystems:
 
 | Region / Market | Primary Countries | Search Keywords & Native Regional Developer Terms |
 | :--- | :--- | :--- |
-| 🇺🇸 🇬🇧 🇨🇦 🇦🇺 🇳🇿 🇮🇪 | **USA, UK, Canada, Australia, New Zealand, Ireland** | React Native network logger, Flipper alternative, Charles proxy alternative, Chucker for React Native, Proxyman alternative, in-app inspector, WebSocket inspector, AsyncStorage editor, MMKV debugger, push notification logger, Metro source-map symbolication, Hermes bytecode visualizer, mobile devtools, zero-config network debugger. |
+| 🇺🇸 🇬🇧 🇨🇦 🇦🇺 🇳🇿 🇮🇪 | **USA, UK, Canada, Australia, New Zealand, Ireland** | React Native network logger, Flipper alternative, Charles proxy alternative, Chucker for React Native, Proxyman alternative, Reactotron alternative, in-app inspector, WebSocket inspector, AsyncStorage editor, MMKV debugger, push notification logger, Metro source-map symbolication, Hermes bytecode visualizer, mobile devtools, zero-config network debugger. |
 | 🇨🇳 🇹🇼 🇭🇰 🇸🇬 | **China, Taiwan, Hong Kong, Singapore** | React Native 抓包工具, 移动端抓包, 网络监控, 移动端控制台, 调试工具, Flipper 替代方案, Charles 替代, Chucker 替代, Proxyman 替代, WebSocket 实时抓包, MMKV 查看器, AsyncStorage 查看器, 免电脑抓包, 行動端偵錯, 網路封包側錄, 移动端网络调试, 真机调试工具. |
 | 🇮🇳 | **India & South Asia** | react-native-india, नेटवर्क लॉगर, मोबाइल ऐप डिबगिंग, इन-ऐप इंस्पेक्टर, வலைப்பின்னல் பதிவர் (Tamil), நெட்வொர்க் இன்ஸ்பெக்டர், வலைப்பின்னல் ஆய்வாளர், నెట్‌వర్క్ లాగర్ (Telugu), నెట్‌వర్క్ ఇన్‌స్పెక్టర్, ನೆಟ್‌ವರ್ಕ್ ಲಾಗರ್ (Kannada), നെറ്റ്‌വർക്ക് ലോഗർ (Malayalam), নেটওয়ার্ক লগার (Bengali), नेटवर्क लॉगर मराठी (Marathi), react-native-bangalore, react-native-hyderabad. |
 | 🇯🇵 | **Japan** | リアクトネイティブ デバッガー, ネットワークロガー, パケットキャプチャ, 開発ツール, フリッパー代替, 通信ログ監視, チャールズ代替, アプリ内デバッガー, モバイル開発ツール, 通信監視ツール, WebSocket デバッグ, 端末内インスペクター, 通信ログ. |
@@ -578,6 +598,14 @@ Contributions are warmly welcomed! Please check out [CONTRIBUTING.md](CONTRIBUTI
 | 🇵🇱 | **Poland & Central Europe** | Debuger React Native Polska, inspektor sieci mobilnej, narzędzia programistyczne, rejestrator pakietów, rejestrator sieci, alternatywa dla Flipper. |
 | 🇹🇷 | **Turkey & Central Asia** | Ağ günlükçüsü Türkçe, hata ayıklayıcı, ağ denetleyicisi, Flipper alternatifi, React Native geliştirici araçları, mobil paket yakalama. |
 | 🇮🇩 🇻🇳 🇹🇭 🇵🇭 🇲🇾 | **Southeast Asia (ASEAN)** | Alat debug React Native Indonesia, pelacak jaringan mobile, kiểm tra mạng React Native Vietnam, ghi log mạng mobile, ดีบักเกอร์ React Native Thai, เครื่องมือตรวจสอบเครือข่าย, tagasuri ng network React Native Philippines. |
+| 🇸🇪 🇳🇴 🇩🇰 🇫🇮 | **Nordic Countries (Sweden, Norway, Denmark, Finland)** | Nätverkslogg Sverige, felsökare React Native, utvecklarverktyg React Native, mobildebuggning. |
+| 🇮🇱 | **Israel** | מנפה שגיאות ריאקט נייטיב, ניטור רשת מובייל, כלי פיתוח מובייל, לוכד תעבורת רשת. |
+| 🇿🇦 🇳🇬 🇰🇪 | **Sub-Saharan Africa (South Africa, Nigeria, Kenya)** | React Native Nigeria, React Native South Africa, mobile debugging Kenya, in-app inspector Africa. |
+
+---
+
+## 📄 License
+
 | 🇸🇪 🇳🇴 🇩🇰 🇫🇮 | **Nordic Countries (Sweden, Norway, Denmark, Finland)** | Nätverkslogg Sverige, felsökare React Native, utvecklarverktyg React Native, mobildebuggning. |
 | 🇮🇱 | **Israel** | מנפה שגיאות ריאקט נייטיב, ניטור רשת מובייל, כלי פיתוח מובייל, לוכד תעבורת רשת. |
 | 🇿🇦 🇳🇬 🇰🇪 | **Sub-Saharan Africa (South Africa, Nigeria, Kenya)** | React Native Nigeria, React Native South Africa, mobile debugging Kenya, in-app inspector Africa. |
