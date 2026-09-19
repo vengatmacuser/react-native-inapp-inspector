@@ -19,11 +19,7 @@ import {ActiveTab} from '../types';
  *    - `inspector_module_media` / `inapp_inspector_media`
  *    - `inspector_module_socket` / `inapp_inspector_socket`
  *
- * 3. Dynamic Sponsor & Monetization Keys:
- *    - `inspector_sponsor_publisher_id` (e.g. your approved EthicalAds publisher slug)
- *    - `inspector_sponsor_endpoint` (custom JSON ad API endpoint)
- *
- * 4. Feature & Kill-switch Flags:
+ * 3. Feature & Kill-switch Flags:
  *    - `inspector_enabled` (boolean kill switch)
  *    - `inspector_capture_widget_enabled` (floating capture widget switch)
  */
@@ -45,8 +41,6 @@ let cachedRemoteConfigInstance: any = null;
 
 export interface InspectorRemoteConfigResult {
   modules?: Partial<Record<ActiveTab, boolean>>;
-  sponsorPublisherId?: string;
-  sponsorEndpoint?: string;
   captureWidgetEnabled?: boolean;
   enabled?: boolean;
 }
@@ -115,19 +109,6 @@ function extractValue(val: any): any {
     } catch {
       return undefined;
     }
-  }
-  return undefined;
-}
-
-/**
- * Helper to extract string values (such as publisher IDs or custom endpoints)
- */
-function extractStringValue(val: any): string | undefined {
-  if (val === null || val === undefined) return undefined;
-  if (typeof val === 'string' && val.trim().length > 0) return val.trim();
-  if (typeof val.asString === 'function') {
-    const str = val.asString();
-    if (typeof str === 'string' && str.trim().length > 0) return str.trim();
   }
   return undefined;
 }
@@ -227,36 +208,7 @@ export async function fetchRemoteConfigSettings(
       result.modules = modules;
     }
 
-    // ─── 3. Sponsor Publisher ID (EthicalAds) ────────────────────────────────
-    const publisherIdKeys = [
-      'inspector_sponsor_publisher_id',
-      'inapp_inspector_sponsor_publisher_id',
-      'inspector_publisher_id',
-      'ethicalads_publisher_id',
-    ];
-    for (const pKey of publisherIdKeys) {
-      const strVal = extractStringValue(getParamVal(pKey));
-      if (strVal) {
-        result.sponsorPublisherId = strVal;
-        break;
-      }
-    }
-
-    // ─── 4. Custom Sponsor Endpoint ──────────────────────────────────────────
-    const endpointKeys = [
-      'inspector_sponsor_endpoint',
-      'inapp_inspector_sponsor_endpoint',
-      'inspector_custom_sponsor_endpoint',
-    ];
-    for (const eKey of endpointKeys) {
-      const strVal = extractStringValue(getParamVal(eKey));
-      if (strVal) {
-        result.sponsorEndpoint = strVal;
-        break;
-      }
-    }
-
-    // ─── 5. Capture Widget Enabled ───────────────────────────────────────────
+    // ─── 3. Capture Widget Enabled ───────────────────────────────────────────
     const captureWidgetKeys = [
       'inspector_capture_widget_enabled',
       'inapp_inspector_capture_widget',
@@ -270,7 +222,7 @@ export async function fetchRemoteConfigSettings(
       }
     }
 
-    // ─── 6. Global Inspector Kill Switch ─────────────────────────────────────
+    // ─── 4. Global Inspector Kill Switch ─────────────────────────────────────
     const enabledKeys = ['inspector_enabled', 'inapp_inspector_enabled'];
     for (const enKey of enabledKeys) {
       const val = extractValue(getParamVal(enKey));

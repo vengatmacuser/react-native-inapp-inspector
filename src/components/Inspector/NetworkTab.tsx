@@ -15,7 +15,6 @@ import DomainHeader from '../DomainHeader';
 import LogCard from '../LogCard';
 import EmptyState from '../EmptyState';
 import EndOfListFooter from '../EndOfListFooter';
-import {DeveloperSponsorCard} from './DeveloperSponsorCard';
 import NetworkFilterModal, {
   NetworkFilterState,
 } from './NetworkFilterModal';
@@ -923,13 +922,6 @@ const NetworkTab = React.memo(() => {
         ListFooterComponent={
           groupedData.length > 0 ? (
             <View style={{paddingBottom: 24}}>
-              <DeveloperSponsorCard
-                containerStyle={{
-                  marginHorizontal: 10,
-                  marginTop: 10,
-                  marginBottom: 10,
-                }}
-              />
               <EndOfListFooter
                 count={
                   isGroupByPageEnabled

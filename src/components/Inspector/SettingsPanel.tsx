@@ -78,7 +78,6 @@ import {
 import {ScreenCapture} from '../../capture';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 
-import {DeveloperSponsorCard} from './DeveloperSponsorCard';
 import {
   isLocalDebugEnvironment,
 } from '../../helpers';
@@ -3216,9 +3215,6 @@ const SettingsPanel = () => {
             </View>
           </View>
         )}
-
-        {/* Developer Sponsor / Partner Spotlight Banner */}
-        <DeveloperSponsorCard containerStyle={{marginTop: 14}} />
 
         <View style={{height: 48}} />
       </ScrollView>
