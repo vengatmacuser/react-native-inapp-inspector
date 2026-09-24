@@ -62,6 +62,25 @@ describe('MediaEditor (Pure Native & Zero-Dependency)', () => {
         },
         quality: 0.85,
         format: 'jpeg',
+        drawings: [
+          {
+            type: 'brush',
+            points: [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.4 }],
+            color: '#EF4444',
+            strokeWidth: 4,
+            isNormalized: true,
+          },
+        ],
+        texts: [
+          {
+            text: 'Bug here',
+            x: 0.5,
+            y: 0.5,
+            color: '#FFFFFF',
+            bgColor: '#EF4444',
+            isNormalized: true,
+          },
+        ],
       };
 
       const result = await MediaEditor.editPhoto(options);
@@ -73,6 +92,8 @@ describe('MediaEditor (Pure Native & Zero-Dependency)', () => {
           flipHorizontal: true,
           quality: 0.85,
           filterPreset: 'vibrant',
+          drawings: expect.any(Array),
+          texts: expect.any(Array),
         })
       );
       expect(result).toEqual(mockResult);

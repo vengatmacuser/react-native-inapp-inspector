@@ -320,7 +320,9 @@ export const getPostmanRequestJson = (log: NetworkLog): string => {
 };
 
 /**
- * Opens request in Postman or copies formatted cURL to clipboard ready for Postman import.
+ * Copies cURL to clipboard and optionally launches local Postman desktop/mobile app if installed.
+ * When running in simulator/emulator without mobile Postman installed, copies directly to the host
+ * clipboard so developers can instantly paste into desktop Postman without unwanted browser redirects.
  */
 export const openWithPostman = async (
   log: NetworkLog,
@@ -329,33 +331,31 @@ export const openWithPostman = async (
   const curl = getCurlCommand(log);
   Clipboard.setString(curl);
 
-  // Try opening Postman desktop/mobile app if scheme is supported
+  const notify = (msg: string) => {
+    if (toastFn) toastFn(msg);
+    else showToast(msg);
+  };
+
   const postmanScheme = 'postman://';
+
+  // 1. Try opening local Postman desktop / mobile app if available
   try {
     const supported = await Linking.canOpenURL(postmanScheme);
     if (supported) {
-      await Linking.openURL(postmanScheme);
-      if (toastFn) toastFn('Opened Postman (cURL copied to clipboard)');
-      else showToast('Opened Postman (cURL copied to clipboard)');
-      return;
+      try {
+        await Linking.openURL(postmanScheme);
+        notify('Opened Postman (cURL copied to clipboard)');
+        return;
+      } catch {
+        // Fallback to clipboard notification
+      }
     }
   } catch {
-    // Ignore and fallback to dialog
+    // Scheme check failed
   }
 
-  Alert.alert(
-    'Open with Postman',
-    `cURL for "${log.method} ${getPath(log.url) || log.url}" copied to clipboard!\n\nIn Postman: Click "Import" > paste the cURL to load this request.`,
-    [
-      {text: 'Done', style: 'cancel'},
-      {
-        text: 'Open Postman Web',
-        onPress: () => {
-          Linking.openURL('https://web.postman.co/').catch(() => {});
-        },
-      },
-    ],
-  );
+  // 2. Default emulator/device flow: Copy to clipboard and inform user
+  notify('cURL copied! Ready to paste into Postman');
 };
 
 export const deduplicateLogs = (raw: NetworkLog[]): NetworkLog[] => {

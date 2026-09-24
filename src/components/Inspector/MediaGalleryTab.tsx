@@ -978,6 +978,10 @@ export const MediaGalleryTab: React.FC = () => {
         onClose={() => setPreviewMediaItem(null)}
         onDelete={handleDeleteItem}
         onConvertToGif={handleConvertToGif}
+        onSave={savedItem => {
+          setPreviewMediaItem(savedItem);
+          loadMedia();
+        }}
       />
 
       {/* Confirmation Modal */}

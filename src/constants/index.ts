@@ -40,6 +40,7 @@ export const DEFAULT_HIDDEN_URL_PATTERNS: string[] = [
   'https://api.npmjs.org',
   'https://api.github.com',
   'https://registry.npmjs.org',
+  'clients3.google.com',
 ];
 
 // Package version — auto-generated from package.json at build time.

@@ -448,6 +448,10 @@ export const FloatingCaptureWidget: React.FC = () => {
             });
           }
         }}
+        onSave={savedItem => {
+          setPreviewMediaItem(savedItem);
+          refreshMediaCount?.().catch(() => {});
+        }}
       />
     </>
   );

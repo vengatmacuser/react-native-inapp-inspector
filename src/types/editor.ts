@@ -57,6 +57,33 @@ export interface AnnotationBox {
   isNormalized?: boolean;
 }
 
+export interface DrawingPoint {
+  x: number;
+  y: number;
+}
+
+export interface DrawingStroke {
+  id?: string;
+  type: 'brush' | 'highlighter' | 'arrow' | 'rect' | 'circle' | 'step' | 'spotlight';
+  points: DrawingPoint[];
+  color?: string;
+  strokeWidth?: number;
+  rect?: {x: number; y: number; width: number; height: number};
+  stepNumber?: number;
+  isNormalized?: boolean;
+}
+
+export interface TextAnnotation {
+  id?: string;
+  text: string;
+  x: number;
+  y: number;
+  color?: string;
+  bgColor?: string;
+  fontSize?: number;
+  isNormalized?: boolean;
+}
+
 export interface PhotoAdjustments {
   /** Brightness adjustment (-1.0 to 1.0, default: 0.0) */
   brightness?: number;
@@ -81,6 +108,10 @@ export interface PhotoEditOptions {
   redactions?: RedactionBox[];
   /** High-visibility defect annotation boxes & callouts */
   annotations?: AnnotationBox[];
+  /** Freehand drawing paths and shapes (brush, highlighter, arrow, rect, circle, step) */
+  drawings?: DrawingStroke[];
+  /** Text annotation badges and notes */
+  texts?: TextAnnotation[];
   /** Rotation angle in degrees (90, 180, 270) */
   rotation?: number;
   /** Flip horizontally */

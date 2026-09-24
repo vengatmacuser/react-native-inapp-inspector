@@ -456,6 +456,7 @@ export const handleInterceptedCrash = (
   isFatal = false,
   customType?: CrashType,
   componentStack?: string,
+  bypassIgnoredCheck = false,
 ): CrashRecord => {
   try {
     const errorObj =
@@ -515,19 +516,21 @@ export const handleInterceptedCrash = (
     }
 
     // Check if this error category is configured to be ignored in settings
-    const isCategoryIgnored = Boolean(
-      crashIgnoredTypesConfig[inferredType as keyof CrashIgnoredTypes],
-    );
-    if (isCategoryIgnored) {
-      return {
-        id: `crash_ignored_${Date.now()}`,
-        isFatal,
-        type: inferredType,
-        message: rawMsg,
-        timestamp: Date.now(),
-        dateStr: new Date().toLocaleDateString(),
-        timeStr: new Date().toLocaleTimeString(),
-      };
+    if (!bypassIgnoredCheck) {
+      const isCategoryIgnored = Boolean(
+        crashIgnoredTypesConfig[inferredType as keyof CrashIgnoredTypes],
+      );
+      if (isCategoryIgnored) {
+        return {
+          id: `crash_ignored_${Date.now()}`,
+          isFatal,
+          type: inferredType,
+          message: rawMsg,
+          timestamp: Date.now(),
+          dateStr: new Date().toLocaleDateString(),
+          timeStr: new Date().toLocaleTimeString(),
+        };
+      }
     }
 
     const now = new Date();
@@ -691,6 +694,7 @@ export const simulateTestCrash = (
     isFatal,
     type,
     type === CrashType.Render ? _buildComponentStack() : undefined,
+    true,
   );
 };
 

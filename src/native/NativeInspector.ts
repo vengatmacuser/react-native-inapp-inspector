@@ -741,4 +741,41 @@ export const pickNativeMedia = async (
   }
 };
 
+/**
+ * Writes an exported string file to the app's captures/cache directory and returns the absolute file URI.
+ */
+export const writeNativeExportFile = async (
+  filename: string,
+  content: string,
+): Promise<string | null> => {
+  if (!NativeModule || !NativeModule.writeExportFile) {
+    return null;
+  }
+  try {
+    const uri = await NativeModule.writeExportFile(filename, content);
+    return uri;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Opens native OS share sheet for a file at filePath.
+ */
+export const shareNativeFile = async (
+  filePath: string,
+  mimeType: string = 'text/plain',
+  title: string = 'Export',
+): Promise<boolean> => {
+  if (!NativeModule || !NativeModule.shareFile) {
+    return false;
+  }
+  try {
+    const success = await NativeModule.shareFile(filePath, mimeType, title);
+    return Boolean(success);
+  } catch {
+    return false;
+  }
+};
+
 

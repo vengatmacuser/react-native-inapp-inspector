@@ -1988,7 +1988,8 @@ const NetworkInspector = ({
   );
 
   const groupedData = useMemo(() => {
-    if (!isGroupByPageEnabled) {
+    const isSearching = Boolean(search && search.trim().length > 0);
+    if (!isGroupByPageEnabled || isSearching) {
       return filteredLogs.map((log, index) => {
         const routeInfo =
           logRouteMapRef.current.get(log.id) || (log as any)?.routeInfo;
@@ -2022,8 +2023,6 @@ const NetworkInspector = ({
       }
       group.logs.push(log);
     }
-
-    const isSearching = Boolean(search && search.trim().length > 0);
 
     let idx = 0;
     groupMap.forEach(g => {
@@ -3393,6 +3392,8 @@ export {
   shareAnalyticsReport,
   shareReduxReport,
   shareLogReport,
+  shareConsoleLogs,
+  shareNetworkLogs,
   formatApiReport,
   formatPushReport,
   formatSocketReport,
@@ -3400,7 +3401,22 @@ export {
   formatAnalyticsReport,
   formatReduxReport,
   formatLogReport,
+  formatConsoleLogsExport,
+  formatNetworkLogsExport,
+  estimateConsoleLogsExportSize,
+  estimateNetworkLogsExportSize,
+  generateConsoleLogsFilename,
+  generateNetworkLogsFilename,
+  DEFAULT_CONSOLE_EXPORT_OPTIONS,
+  DEFAULT_NETWORK_EXPORT_OPTIONS,
+  type ConsoleLogExportFormat,
+  type ConsoleLogExportOptions,
+  type NetworkLogExportFormat,
+  type NetworkLogExportOptions,
 } from './helpers/shareFormatter';
+
+export {default as ConsoleExportModal} from './components/Inspector/ConsoleExportModal';
+export {default as NetworkExportModal} from './components/Inspector/NetworkExportModal';
 
 export {
   BrandCircleIcon,

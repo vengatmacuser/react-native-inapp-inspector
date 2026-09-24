@@ -302,7 +302,7 @@ function LogCard({
               </View>
               <Pressable
                 onPress={handleOpenUrl}
-                hitSlop={8}
+                hitSlop={{top: 6, bottom: 6, left: 3, right: 3}}
                 style={styles.globeBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Open in Browser">
@@ -310,7 +310,7 @@ function LogCard({
               </Pressable>
               <Pressable
                 onPress={handleOpenPostman}
-                hitSlop={8}
+                hitSlop={{top: 6, bottom: 6, left: 3, right: 3}}
                 style={[
                   styles.globeBtn,
                   {
@@ -322,7 +322,9 @@ function LogCard({
                 accessibilityLabel="Open with Postman">
                 <PostmanIcon color="#FF6C37" size={11} />
               </Pressable>
-              <ForwardChevronIcon color={AppColors.grayTextWeak} size={13} />
+              <View style={styles.chevronWrapper}>
+                <ForwardChevronIcon color={AppColors.grayTextWeak} size={13} />
+              </View>
             </View>
           </View>
 
@@ -501,7 +503,7 @@ const styles = StyleSheet.create({
   cardHeaderRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 7,
     flexShrink: 0,
   },
   smallCheckbox: {
@@ -564,9 +566,17 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   globeBtn: {
-    padding: 3,
-    borderRadius: 4,
-    backgroundColor: `${AppColors.grayTextWeak}12`,
+    width: 26,
+    height: 22,
+    borderRadius: 5,
+    backgroundColor: `${AppColors.grayTextWeak}14`,
+    borderWidth: 1,
+    borderColor: `${AppColors.grayTextWeak}28`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronWrapper: {
+    paddingLeft: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

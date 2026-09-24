@@ -1791,6 +1791,10 @@ const InspectorHeader = React.memo(() => {
             });
           }
         }}
+        onSave={savedItem => {
+          setPreviewMediaItem(savedItem);
+          refreshMediaCount?.().catch(() => {});
+        }}
       />
     </>
   );

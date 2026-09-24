@@ -276,7 +276,7 @@ function SocketCard({
 
               <Pressable
                 onPress={handleOpenUrl}
-                hitSlop={8}
+                hitSlop={{top: 6, bottom: 6, left: 3, right: 3}}
                 style={styles.globeBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Open in Browser">
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   cardHeaderRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
   },
   statusPill: {
     flexDirection: 'row',
@@ -539,9 +539,14 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.greenColor,
   },
   globeBtn: {
-    padding: 3,
-    borderRadius: 4,
-    backgroundColor: `${AppColors.grayTextWeak}12`,
+    width: 26,
+    height: 22,
+    borderRadius: 5,
+    backgroundColor: `${AppColors.grayTextWeak}14`,
+    borderWidth: 1,
+    borderColor: `${AppColors.grayTextWeak}28`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   urlBox: {
     marginBottom: 8,

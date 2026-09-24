@@ -648,6 +648,10 @@ const FabLauncher = () => {
             });
           }
         }}
+        onSave={savedItem => {
+          setPreviewMediaItem(savedItem);
+          refreshMediaCount?.().catch(() => {});
+        }}
       />
     </>
   );

@@ -18,6 +18,7 @@ import EndOfListFooter from '../EndOfListFooter';
 import NetworkFilterModal, {
   NetworkFilterState,
 } from './NetworkFilterModal';
+import NetworkExportModal from './NetworkExportModal';
 import styles from '../../styles';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
@@ -40,6 +41,7 @@ import {
   RequestIcon,
   ResponseIcon,
   AtomIcon,
+  ExportIcon,
 } from '../NetworkIcons';
 
 const NetworkTab = React.memo(() => {
@@ -84,17 +86,24 @@ const NetworkTab = React.memo(() => {
   const apisListRef = useRef<FlatList<any>>(null);
 
   const [isFilterModalOpen, setIsFilterModalOpen] = React.useState(false);
+  const [isExportModalVisible, setIsExportModalVisible] = React.useState(false);
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
   const [displayLimit, setDisplayLimit] = React.useState<number>(maxNetworkLogs || 50);
 
+  const isSearchActive = Boolean(search && search.trim().length > 0);
+  const effectiveGroupByPage = isGroupByPageEnabled && !isSearchActive;
+
   React.useEffect(() => {
     setDisplayLimit(maxNetworkLogs || 50);
-  }, [search, quickFilter, maxNetworkLogs]);
+    if (isSearchActive) {
+      apisListRef.current?.scrollToOffset({offset: 0, animated: false});
+    }
+  }, [search, quickFilter, maxNetworkLogs, isSearchActive]);
 
   const displayedData = useMemo(() => {
-    if (isGroupByPageEnabled) return groupedData;
+    if (effectiveGroupByPage) return groupedData;
     return groupedData.slice(0, displayLimit);
-  }, [isGroupByPageEnabled, groupedData, displayLimit]);
+  }, [effectiveGroupByPage, groupedData, displayLimit]);
 
   const keyExtractor = useCallback((item: GroupedListItem) => {
     return item?.id ? String(item.id) : '';
@@ -489,11 +498,11 @@ const NetworkTab = React.memo(() => {
           index={index}
           distance={8}
           style={
-            !isGroupByPageEnabled
+            !effectiveGroupByPage
               ? {marginBottom: 5, marginHorizontal: 5}
               : [styles.treeNodeRow, isLast && styles.treeNodeRowLast]
           }>
-          {isGroupByPageEnabled && (
+          {effectiveGroupByPage && (
             <View style={styles.treeLines}>
               <View
                 style={[
@@ -507,7 +516,7 @@ const NetworkTab = React.memo(() => {
               )}
             </View>
           )}
-          <View style={isGroupByPageEnabled ? styles.treeCardWrapper : {flex: 1}}>
+          <View style={effectiveGroupByPage ? styles.treeCardWrapper : {flex: 1}}>
             <LogCard
               testID={`inspector.network.item.${logItemIndex}`}
               item={log}
@@ -527,7 +536,7 @@ const NetworkTab = React.memo(() => {
     },
     [
       displayedData,
-      isGroupByPageEnabled,
+      effectiveGroupByPage,
       minStart,
       totalRange,
       newLogIds,
@@ -564,7 +573,7 @@ const NetworkTab = React.memo(() => {
                   size={15}
                 />
                 <TextInput
-                  placeholder="Search URL, status, method, headers, body..."
+                  placeholder={t('network.searchPlaceholder', 'Search APIs...')}
                   placeholderTextColor={AppColors.grayTextWeak}
                   value={search}
                   onChangeText={setSearch}
@@ -616,6 +625,23 @@ const NetworkTab = React.memo(() => {
                   style={[
                     styles.toolbarBtn,
                     {
+                      borderColor: `${AppColors.purple}38`,
+                      backgroundColor: `${AppColors.purple}0F`,
+                    },
+                  ]}
+                  onPress={() => setIsExportModalVisible(true)}
+                  hitSlop={6}
+                  testID="inspector.network.exportBtn">
+                  <ExportIcon
+                    color={AppColors.purple}
+                    size={15}
+                  />
+                </TouchableScale>
+
+                <TouchableScale
+                  style={[
+                    styles.toolbarBtn,
+                    {
                       borderColor: `${AppColors.errorColor}38`,
                       backgroundColor: `${AppColors.errorColor}0F`,
                     },
@@ -646,7 +672,9 @@ const NetworkTab = React.memo(() => {
                   onPress={() => setIsGroupByPageEnabled(prev => !prev)}
                   hitSlop={6}
                   accessibilityLabel={
-                    isGroupByPageEnabled
+                    isSearchActive
+                      ? 'Page Accordion Grouping Preserved (Temporarily in List View for Search Results)'
+                      : isGroupByPageEnabled
                       ? 'Page Accordion Grouping Enabled (Tap for Plain List)'
                       : 'Plain List Enabled (Tap for Page Accordion)'
                   }
@@ -931,14 +959,14 @@ const NetworkTab = React.memo(() => {
             <View style={{paddingBottom: 24}}>
               <EndOfListFooter
                 count={
-                  isGroupByPageEnabled
+                  effectiveGroupByPage
                     ? filteredLogs.length
                     : Math.min(displayLimit, filteredLogs.length)
                 }
                 totalCount={filteredLogs.length}
                 label="requests"
                 hasMore={
-                  !isGroupByPageEnabled && filteredLogs.length > displayLimit
+                  !effectiveGroupByPage && filteredLogs.length > displayLimit
                 }
                 loadMoreStep={30}
                 onLoadMore={() => setDisplayLimit(p => p + 30)}
@@ -961,6 +989,14 @@ const NetworkTab = React.memo(() => {
         filters={modalFilterState}
         onApply={handleApplyNetworkFilters}
         searchQuery={search}
+      />
+
+      {/* Network Export Modal */}
+      <NetworkExportModal
+        visible={isExportModalVisible}
+        onClose={() => setIsExportModalVisible(false)}
+        filteredLogs={filteredLogs}
+        allLogs={visibleLogs}
       />
     </View>
   );

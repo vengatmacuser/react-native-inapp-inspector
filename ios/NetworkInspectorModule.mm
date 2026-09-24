@@ -2085,6 +2085,36 @@ RCT_EXPORT_METHOD(clearAllCapturedMedia:(RCTPromiseResolveBlock)resolve
 // 100% Native Media Editor: Photo Editing (CoreImage + ImageIO)
 // ─────────────────────────────────────────────────────────────────────────────
 
+static UIColor *inspectorColorFromHex(NSString *hexString, UIColor *defaultColor) {
+    if (!hexString || ![hexString isKindOfClass:[NSString class]]) {
+        return defaultColor ?: [UIColor redColor];
+    }
+    NSString *cleanHex = [hexString stringByReplacingOccurrencesOfString:@"#" withString:@""];
+    cleanHex = [cleanHex stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    unsigned int rgbValue = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:cleanHex];
+    [scanner scanHexInt:&rgbValue];
+    
+    if (cleanHex.length == 8) {
+        CGFloat r = ((rgbValue & 0xFF000000) >> 24) / 255.0;
+        CGFloat g = ((rgbValue & 0x00FF0000) >> 16) / 255.0;
+        CGFloat b = ((rgbValue & 0x0000FF00) >> 8) / 255.0;
+        CGFloat a = (rgbValue & 0x000000FF) / 255.0;
+        return [UIColor colorWithRed:r green:g blue:b alpha:a];
+    } else if (cleanHex.length == 6) {
+        CGFloat r = ((rgbValue & 0xFF0000) >> 16) / 255.0;
+        CGFloat g = ((rgbValue & 0x00FF00) >> 8) / 255.0;
+        CGFloat b = (rgbValue & 0x0000FF) / 255.0;
+        return [UIColor colorWithRed:r green:g blue:b alpha:1.0];
+    } else if (cleanHex.length == 3) {
+        CGFloat r = (((rgbValue & 0xF00) >> 8) * 17) / 255.0;
+        CGFloat g = (((rgbValue & 0x0F0) >> 4) * 17) / 255.0;
+        CGFloat b = ((rgbValue & 0x00F) * 17) / 255.0;
+        return [UIColor colorWithRed:r green:g blue:b alpha:1.0];
+    }
+    return defaultColor ?: [UIColor redColor];
+}
+
 RCT_EXPORT_METHOD(editPhoto:(NSDictionary *)options
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
@@ -2245,34 +2275,223 @@ RCT_EXPORT_METHOD(editPhoto:(NSDictionary *)options
                 UIImage *resultImage = [UIImage imageWithCGImage:cgImage];
                 CGImageRelease(cgImage);
 
-                // 7. Apply Redactions & Annotations Overlay if provided
+                // 7. Apply Redactions, Freehand Drawings, Draggable Texts & Annotations Overlay if provided
                 NSArray *redactions = options[@"redactions"];
                 NSArray *annotations = options[@"annotations"];
-                if ((redactions && [redactions isKindOfClass:[NSArray class]] && redactions.count > 0) ||
-                    (annotations && [annotations isKindOfClass:[NSArray class]] && annotations.count > 0)) {
+                NSArray *drawings = options[@"drawings"];
+                NSArray *texts = options[@"texts"];
+
+                BOOL hasOverlay = (redactions && [redactions isKindOfClass:[NSArray class]] && redactions.count > 0) ||
+                                  (annotations && [annotations isKindOfClass:[NSArray class]] && annotations.count > 0) ||
+                                  (drawings && [drawings isKindOfClass:[NSArray class]] && drawings.count > 0) ||
+                                  (texts && [texts isKindOfClass:[NSArray class]] && texts.count > 0);
+
+                if (hasOverlay) {
                     UIGraphicsBeginImageContextWithOptions(resultImage.size, NO, 1.0);
                     [resultImage drawInRect:CGRectMake(0, 0, resultImage.size.width, resultImage.size.height)];
                     CGContextRef ctx = UIGraphicsGetCurrentContext();
 
+                    CGFloat canvasW = resultImage.size.width;
+                    CGFloat canvasH = resultImage.size.height;
+                    CGFloat baseScale = MAX(1.0, canvasW / 380.0);
+
+                    // A. Redactions (Blackout or Blur/Pixelate Box)
                     if (redactions && [redactions isKindOfClass:[NSArray class]]) {
                         for (NSDictionary *box in redactions) {
                             CGFloat x = [box[@"x"] doubleValue];
                             CGFloat y = [box[@"y"] doubleValue];
                             CGFloat w = [box[@"width"] doubleValue];
                             CGFloat h = [box[@"height"] doubleValue];
-                            BOOL isNorm = [box[@"isNormalized"] boolValue];
+                            BOOL isNorm = box[@"isNormalized"] ? [box[@"isNormalized"] boolValue] : YES;
                             if (isNorm) {
-                                x *= resultImage.size.width;
-                                y *= resultImage.size.height;
-                                w *= resultImage.size.width;
-                                h *= resultImage.size.height;
+                                x *= canvasW;
+                                y *= canvasH;
+                                w *= canvasW;
+                                h *= canvasH;
                             }
-                            CGContextSetFillColorWithColor(ctx, [UIColor blackColor].CGColor);
+                            NSString *style = box[@"style"] ?: @"blackout";
+                            if ([style isEqualToString:@"blur"] || [style isEqualToString:@"pixelate"]) {
+                                CGContextSetFillColorWithColor(ctx, [UIColor colorWithWhite:0.12 alpha:0.92].CGColor);
+                            } else {
+                                CGContextSetFillColorWithColor(ctx, [UIColor blackColor].CGColor);
+                            }
                             CGContextFillRect(ctx, CGRectMake(x, y, w, h));
                         }
                     }
 
-                    if (annotations && [annotations isKindOfClass:[NSArray class]]) {
+                    // B. Freehand Drawings & Vector Shapes (Brush, Highlighter, Arrow, Rect, Circle, Step)
+                    if (drawings && [drawings isKindOfClass:[NSArray class]]) {
+                        for (NSDictionary *stroke in drawings) {
+                            NSString *type = stroke[@"type"] ?: @"brush";
+                            NSString *hexColor = stroke[@"color"] ?: @"#EF4444";
+                            UIColor *strokeColor = inspectorColorFromHex(hexColor, [UIColor redColor]);
+                            CGFloat strokeWidth = stroke[@"strokeWidth"] ? [stroke[@"strokeWidth"] doubleValue] * baseScale : 4.0 * baseScale;
+                            BOOL isNorm = stroke[@"isNormalized"] ? [stroke[@"isNormalized"] boolValue] : YES;
+                            NSArray *points = stroke[@"points"];
+
+                            if ([type isEqualToString:@"brush"]) {
+                                if (points && points.count > 1) {
+                                    CGContextSetStrokeColorWithColor(ctx, strokeColor.CGColor);
+                                    CGContextSetLineWidth(ctx, strokeWidth);
+                                    CGContextSetLineCap(ctx, kCGLineCapRound);
+                                    CGContextSetLineJoin(ctx, kCGLineJoinRound);
+                                    CGContextBeginPath(ctx);
+                                    for (NSUInteger pIdx = 0; pIdx < points.count; pIdx++) {
+                                        NSDictionary *pt = points[pIdx];
+                                        CGFloat px = [pt[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                        CGFloat py = [pt[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                        if (pIdx == 0) {
+                                            CGContextMoveToPoint(ctx, px, py);
+                                        } else {
+                                            CGContextAddLineToPoint(ctx, px, py);
+                                        }
+                                    }
+                                    CGContextStrokePath(ctx);
+                                }
+                            } else if ([type isEqualToString:@"highlighter"]) {
+                                if (points && points.count > 1) {
+                                    UIColor *hiColor = [strokeColor colorWithAlphaComponent:0.4];
+                                    CGContextSetStrokeColorWithColor(ctx, hiColor.CGColor);
+                                    CGContextSetLineWidth(ctx, strokeWidth * 2.5);
+                                    CGContextSetLineCap(ctx, kCGLineCapRound);
+                                    CGContextSetLineJoin(ctx, kCGLineJoinRound);
+                                    CGContextBeginPath(ctx);
+                                    for (NSUInteger pIdx = 0; pIdx < points.count; pIdx++) {
+                                        NSDictionary *pt = points[pIdx];
+                                        CGFloat px = [pt[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                        CGFloat py = [pt[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                        if (pIdx == 0) {
+                                            CGContextMoveToPoint(ctx, px, py);
+                                        } else {
+                                            CGContextAddLineToPoint(ctx, px, py);
+                                        }
+                                    }
+                                    CGContextStrokePath(ctx);
+                                }
+                            } else if ([type isEqualToString:@"arrow"]) {
+                                if (points && points.count >= 2) {
+                                    NSDictionary *p0 = points[0];
+                                    NSDictionary *p1 = points[points.count - 1];
+                                    CGFloat x0 = [p0[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                    CGFloat y0 = [p0[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                    CGFloat x1 = [p1[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                    CGFloat y1 = [p1[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+
+                                    CGContextSetStrokeColorWithColor(ctx, strokeColor.CGColor);
+                                    CGContextSetLineWidth(ctx, strokeWidth);
+                                    CGContextSetLineCap(ctx, kCGLineCapRound);
+                                    CGContextBeginPath(ctx);
+                                    CGContextMoveToPoint(ctx, x0, y0);
+                                    CGContextAddLineToPoint(ctx, x1, y1);
+                                    CGContextStrokePath(ctx);
+
+                                    CGFloat dx = x1 - x0;
+                                    CGFloat dy = y1 - y0;
+                                    CGFloat angle = atan2(dy, dx);
+                                    CGFloat headLen = MAX(14.0 * baseScale, MIN(32.0 * baseScale, strokeWidth * 3.5));
+                                    CGFloat headAngle = M_PI / 6.0;
+                                    CGFloat ax1 = x1 - headLen * cos(angle - headAngle);
+                                    CGFloat ay1 = y1 - headLen * sin(angle - headAngle);
+                                    CGFloat ax2 = x1 - headLen * cos(angle + headAngle);
+                                    CGFloat ay2 = y1 - headLen * sin(angle + headAngle);
+
+                                    CGContextSetFillColorWithColor(ctx, strokeColor.CGColor);
+                                    CGContextBeginPath(ctx);
+                                    CGContextMoveToPoint(ctx, x1, y1);
+                                    CGContextAddLineToPoint(ctx, ax1, ay1);
+                                    CGContextAddLineToPoint(ctx, ax2, ay2);
+                                    CGContextClosePath(ctx);
+                                    CGContextFillPath(ctx);
+                                }
+                            } else if ([type isEqualToString:@"rect"]) {
+                                NSDictionary *p0 = (points && points.count > 0) ? points[0] : nil;
+                                NSDictionary *p1 = (points && points.count > 1) ? points[1] : p0;
+                                CGFloat x0 = [p0[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                CGFloat y0 = [p0[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                CGFloat x1 = [p1[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                CGFloat y1 = [p1[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                CGRect rect = CGRectMake(MIN(x0, x1), MIN(y0, y1), ABS(x1 - x0), ABS(y1 - y0));
+                                CGContextSetStrokeColorWithColor(ctx, strokeColor.CGColor);
+                                CGContextSetLineWidth(ctx, strokeWidth);
+                                CGContextStrokeRect(ctx, rect);
+                            } else if ([type isEqualToString:@"circle"] || [type isEqualToString:@"spotlight"]) {
+                                NSDictionary *p0 = (points && points.count > 0) ? points[0] : nil;
+                                NSDictionary *p1 = (points && points.count > 1) ? points[1] : p0;
+                                CGFloat x0 = [p0[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                CGFloat y0 = [p0[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                CGFloat x1 = [p1[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                CGFloat y1 = [p1[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                CGRect rect = CGRectMake(MIN(x0, x1), MIN(y0, y1), ABS(x1 - x0), ABS(y1 - y0));
+                                CGContextSetStrokeColorWithColor(ctx, strokeColor.CGColor);
+                                CGContextSetLineWidth(ctx, strokeWidth);
+                                CGContextStrokeEllipseInRect(ctx, rect);
+                            } else if ([type isEqualToString:@"step"]) {
+                                NSDictionary *p0 = (points && points.count > 0) ? points[0] : nil;
+                                CGFloat cx = [p0[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                                CGFloat cy = [p0[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                                CGFloat radius = 16.0 * baseScale;
+                                CGRect badgeRect = CGRectMake(cx - radius, cy - radius, radius * 2, radius * 2);
+
+                                CGContextSetFillColorWithColor(ctx, strokeColor.CGColor);
+                                CGContextFillEllipseInRect(ctx, badgeRect);
+
+                                CGContextSetStrokeColorWithColor(ctx, [UIColor whiteColor].CGColor);
+                                CGContextSetLineWidth(ctx, 2.0 * baseScale);
+                                CGContextStrokeEllipseInRect(ctx, badgeRect);
+
+                                NSInteger stepNum = stroke[@"stepNumber"] ? [stroke[@"stepNumber"] integerValue] : 1;
+                                NSString *stepStr = [NSString stringWithFormat:@"%ld", (long)stepNum];
+                                UIFont *font = [UIFont boldSystemFontOfSize:14.0 * baseScale];
+                                NSDictionary *attrs = @{
+                                    NSFontAttributeName: font,
+                                    NSForegroundColorAttributeName: [UIColor whiteColor]
+                                };
+                                CGSize strSize = [stepStr sizeWithAttributes:attrs];
+                                CGPoint strOrigin = CGPointMake(cx - strSize.width / 2.0, cy - strSize.height / 2.0);
+                                [stepStr drawAtPoint:strOrigin withAttributes:attrs];
+                            }
+                        }
+                    }
+
+                    // C. Draggable Text Badges / Notes
+                    if (texts && [texts isKindOfClass:[NSArray class]]) {
+                        for (NSDictionary *tItem in texts) {
+                            NSString *textStr = tItem[@"text"] ?: @"";
+                            if (textStr.length == 0) continue;
+                            BOOL isNorm = tItem[@"isNormalized"] ? [tItem[@"isNormalized"] boolValue] : YES;
+                            CGFloat tx = [tItem[@"x"] doubleValue] * (isNorm ? canvasW : 1.0);
+                            CGFloat ty = [tItem[@"y"] doubleValue] * (isNorm ? canvasH : 1.0);
+                            NSString *textColorHex = tItem[@"color"] ?: @"#FFFFFF";
+                            NSString *bgColorHex = tItem[@"bgColor"] ?: @"#EF4444";
+                            UIColor *textColor = inspectorColorFromHex(textColorHex, [UIColor whiteColor]);
+                            UIColor *bgColor = inspectorColorFromHex(bgColorHex, [UIColor redColor]);
+
+                            UIFont *font = [UIFont boldSystemFontOfSize:15.0 * baseScale];
+                            NSDictionary *attrs = @{
+                                NSFontAttributeName: font,
+                                NSForegroundColorAttributeName: textColor
+                            };
+                            CGSize strSize = [textStr sizeWithAttributes:attrs];
+                            CGFloat padH = 12.0 * baseScale;
+                            CGFloat padV = 6.0 * baseScale;
+                            CGRect pillRect = CGRectMake(tx, ty, strSize.width + padH * 2.0, strSize.height + padV * 2.0);
+                            UIBezierPath *roundedPill = [UIBezierPath bezierPathWithRoundedRect:pillRect cornerRadius:pillRect.size.height / 2.0];
+
+                            CGContextSetFillColorWithColor(ctx, bgColor.CGColor);
+                            CGContextAddPath(ctx, roundedPill.CGPath);
+                            CGContextFillPath(ctx);
+
+                            CGContextSetStrokeColorWithColor(ctx, [[UIColor whiteColor] colorWithAlphaComponent:0.4].CGColor);
+                            CGContextSetLineWidth(ctx, 1.5 * baseScale);
+                            CGContextAddPath(ctx, roundedPill.CGPath);
+                            CGContextStrokePath(ctx);
+
+                            [textStr drawAtPoint:CGPointMake(tx + padH, ty + padV) withAttributes:attrs];
+                        }
+                    }
+
+                    // D. Legacy / Standalone Annotations
+                    if (annotations && [annotations isKindOfClass:[NSArray class]] && (!drawings || drawings.count == 0)) {
                         for (NSDictionary *ann in annotations) {
                             CGFloat x = [ann[@"x"] doubleValue];
                             CGFloat y = [ann[@"y"] doubleValue];
@@ -2280,14 +2499,32 @@ RCT_EXPORT_METHOD(editPhoto:(NSDictionary *)options
                             CGFloat h = [ann[@"height"] doubleValue];
                             BOOL isNorm = [ann[@"isNormalized"] boolValue];
                             if (isNorm) {
-                                x *= resultImage.size.width;
-                                y *= resultImage.size.height;
-                                w *= resultImage.size.width;
-                                h *= resultImage.size.height;
+                                x *= canvasW;
+                                y *= canvasH;
+                                w *= canvasW;
+                                h *= canvasH;
                             }
-                            CGContextSetStrokeColorWithColor(ctx, [UIColor redColor].CGColor);
-                            CGContextSetLineWidth(ctx, 4.0);
+                            NSString *annColorHex = ann[@"color"] ?: @"#EF4444";
+                            UIColor *annColor = inspectorColorFromHex(annColorHex, [UIColor redColor]);
+                            CGContextSetStrokeColorWithColor(ctx, annColor.CGColor);
+                            CGContextSetLineWidth(ctx, 4.0 * baseScale);
                             CGContextStrokeRect(ctx, CGRectMake(x, y, w, h));
+
+                            NSString *label = ann[@"label"];
+                            if (label && [label isKindOfClass:[NSString class]] && label.length > 0) {
+                                UIFont *font = [UIFont boldSystemFontOfSize:13.0 * baseScale];
+                                NSDictionary *attrs = @{
+                                    NSFontAttributeName: font,
+                                    NSForegroundColorAttributeName: [UIColor whiteColor]
+                                };
+                                CGSize strSize = [label sizeWithAttributes:attrs];
+                                CGFloat padH = 6.0 * baseScale;
+                                CGFloat padV = 3.0 * baseScale;
+                                CGRect tagRect = CGRectMake(x, MAX(0, y - strSize.height - padV * 2.0), strSize.width + padH * 2.0, strSize.height + padV * 2.0);
+                                CGContextSetFillColorWithColor(ctx, annColor.CGColor);
+                                CGContextFillRect(ctx, tagRect);
+                                [label drawAtPoint:CGPointMake(tagRect.origin.x + padH, tagRect.origin.y + padV) withAttributes:attrs];
+                            }
                         }
                     }
 
@@ -2600,9 +2837,70 @@ RCT_EXPORT_METHOD(pickMedia:(NSDictionary *)options
 #pragma clang diagnostic pop
             [rootVC presentViewController:picker animated:YES completion:nil];
         }
+RCT_EXPORT_METHOD(writeExportFile:(NSString *)filename
+                  content:(NSString *)content
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            if (!filename || filename.length == 0) {
+                reject(@"INVALID_FILENAME", @"Filename is missing", nil);
+                return;
+            }
+            NSString *dir = [self getCapturesDirectory];
+            NSString *cleanFilename = [filename lastPathComponent];
+            NSString *outPath = [dir stringByAppendingPathComponent:cleanFilename];
+            NSData *data = [(content ?: @"") dataUsingEncoding:NSUTF8StringEncoding];
+            BOOL success = [data writeToFile:outPath atomically:YES];
+            if (success) {
+                resolve([NSURL fileURLWithPath:outPath].absoluteString);
+            } else {
+                reject(@"WRITE_FAILED", @"Failed to write export file", nil);
+            }
+        } @catch (NSException *e) {
+            reject(@"WRITE_ERROR", e.reason, nil);
+        }
     });
 }
 
+RCT_EXPORT_METHOD(shareFile:(NSString *)filePath
+                  mimeType:(NSString *)mimeType
+                  title:(NSString *)title
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @try {
+            NSString *cleanPath = filePath;
+            if ([cleanPath hasPrefix:@"file://"]) {
+                cleanPath = [cleanPath substringFromIndex:7];
+            }
+            cleanPath = [cleanPath stringByRemovingPercentEncoding];
+            if (![[NSFileManager defaultManager] fileExistsAtPath:cleanPath]) {
+                reject(@"FILE_NOT_FOUND", @"File not found", nil);
+                return;
+            }
+            NSURL *fileUrl = [NSURL fileURLWithPath:cleanPath];
+            UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:@[fileUrl] applicationActivities:nil];
+            if (title && title.length > 0) {
+                [activityVC setValue:title forKey:@"subject"];
+            }
+            UIViewController *rootVC = [UIApplication sharedApplication].delegate.window.rootViewController;
+            while (rootVC.presentedViewController) {
+                rootVC = rootVC.presentedViewController;
+            }
+            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+                activityVC.popoverPresentationController.sourceView = rootVC.view;
+                activityVC.popoverPresentationController.sourceRect = CGRectMake(rootVC.view.bounds.size.width / 2.0, rootVC.view.bounds.size.height / 2.0, 1, 1);
+            }
+            activityVC.completionWithItemsHandler = ^(UIActivityType activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+                resolve(@(completed));
+            };
+            [rootVC presentViewController:activityVC animated:YES completion:nil];
+        } @catch (NSException *e) {
+            reject(@"SHARE_ERROR", e.reason, nil);
+        }
+    });
+}
 
 #ifdef RCT_NEW_ARCH_ENABLED
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:

@@ -167,6 +167,7 @@ interface MediaPreviewModalProps {
   onClose: () => void;
   onDelete: (item: CapturedMediaItem) => void;
   onConvertToGif?: (item: CapturedMediaItem) => void;
+  onSave?: (savedItem: CapturedMediaItem) => void;
 }
 
 const COLOR_PALETTE = [
@@ -509,6 +510,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
   onClose,
   onDelete,
   onConvertToGif,
+  onSave,
 }) => {
   const {t} = useTranslation();
   const inspectorCtx = useContext(InspectorContext);
@@ -1459,11 +1461,21 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
         });
 
         if (res?.uri) {
+          const updatedItem: CapturedMediaItem = {
+            ...item,
+            uri: res.uri,
+            durationMs: res.durationMs || item.durationMs,
+            sizeBytes: res.size || item.sizeBytes,
+            width: res.width || item.width,
+            height: res.height || item.height,
+            filename: res.uri.split('/').pop() || item.filename,
+          };
           setCurrentUri(res.uri);
           if (res.width) setCurrentWidth(res.width);
           if (res.height) setCurrentHeight(res.height);
           if (res.size) setCurrentSizeBytes(res.size);
           if (res.durationMs) setCurrentDurationMs(res.durationMs);
+          onSave?.(updatedItem);
           showToast(t('mediaGallery.videoSaved', 'Video Saved Successfully'));
           inspectorCtx?.refreshMediaCount?.().catch(() => {});
         } else {
@@ -1478,24 +1490,49 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
     }
 
     try {
-      const imgW = Math.max(1, activeWidth || 1000);
-      const imgH = Math.max(1, activeHeight || 1000);
+      const dispW = Math.max(1, imageDisplayRect.width || 380);
+      const dispH = Math.max(1, imageDisplayRect.height || 600);
 
-      const redactions = inkPaths
+      const drawings: import('../../types/editor').DrawingStroke[] = inkPaths
+        .filter(p => p.type !== 'redact' && p.type !== 'pixelate')
+        .map(p => ({
+          id: p.id,
+          type: p.type as any,
+          points: p.points.map(pt => ({
+            x: pt.x / dispW,
+            y: pt.y / dispH,
+          })),
+          color: p.color || '#EF4444',
+          strokeWidth: p.strokeWidth || 4,
+          stepNumber: p.stepNumber,
+          isNormalized: true,
+        }));
+
+      const redactions: import('../../types/editor').RedactionBox[] = inkPaths
         .filter(p => (p.type === 'redact' || p.type === 'pixelate') && p.rect)
         .map(p => {
           const r = p.rect!;
           return {
-            x: r.x / imgW,
-            y: r.y / imgH,
-            width: r.width / imgW,
-            height: r.height / imgH,
+            x: r.x / dispW,
+            y: r.y / dispH,
+            width: r.width / dispW,
+            height: r.height / dispH,
             style: p.type === 'pixelate' ? ('blur' as const) : ('blackout' as const),
             isNormalized: true,
           };
         });
 
-      const annotations = [
+      const textAnnotations: import('../../types/editor').TextAnnotation[] = texts.map(t => ({
+        id: t.id,
+        text: t.text,
+        x: t.x,
+        y: t.y,
+        color: t.color || '#FFFFFF',
+        bgColor: t.bgColor || '#EF4444',
+        isNormalized: true,
+      }));
+
+      const annotations: import('../../types/editor').AnnotationBox[] = [
         ...texts.map(t => ({
           x: t.x,
           y: t.y,
@@ -1515,10 +1552,10 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
             const w = Math.max(10, Math.abs(p1.x - p0.x));
             const h = Math.max(10, Math.abs(p1.y - p0.y));
             return {
-              x: minX / imgW,
-              y: minY / imgH,
-              width: w / imgW,
-              height: h / imgH,
+              x: minX / dispW,
+              y: minY / dispH,
+              width: w / dispW,
+              height: h / dispH,
               color: p.color || '#EF4444',
               isNormalized: true,
             };
@@ -1538,6 +1575,8 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
           vignette: adjustments.vignette / 100,
         },
         filterPreset: activeFilterPreset !== 'none' ? activeFilterPreset : undefined,
+        drawings: drawings.length > 0 ? drawings : undefined,
+        texts: textAnnotations.length > 0 ? textAnnotations : undefined,
         redactions: redactions.length > 0 ? redactions : undefined,
         annotations: annotations.length > 0 ? annotations : undefined,
         format: item.format === 'png' ? 'png' : 'jpeg',
@@ -1545,6 +1584,14 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
       });
 
       if (res?.uri) {
+        const updatedItem: CapturedMediaItem = {
+          ...item,
+          uri: res.uri,
+          width: res.width,
+          height: res.height,
+          sizeBytes: res.size,
+          filename: res.uri.split('/').pop() || item.filename,
+        };
         setCurrentUri(res.uri);
         if (res.width) setCurrentWidth(res.width);
         if (res.height) setCurrentHeight(res.height);
@@ -1562,6 +1609,8 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
         setRotationAngle(0);
         setFlipH(false);
         setFlipV(false);
+        setActiveFilterPreset('none');
+        onSave?.(updatedItem);
         showToast(t('mediaGallery.savedSuccess', 'Image Saved Successfully'));
         inspectorCtx?.refreshMediaCount?.().catch(() => {});
       } else {
@@ -1581,8 +1630,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
     videoTrimEndMs,
     videoIsMuted,
     videoVolume,
-    activeWidth,
-    activeHeight,
+    imageDisplayRect,
     rotationAngle,
     flipH,
     flipV,
@@ -1590,6 +1638,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
     activeFilterPreset,
     inkPaths,
     texts,
+    onSave,
     inspectorCtx,
     t,
   ]);
@@ -1718,12 +1767,21 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
         isNormalized: true,
       });
       if (res?.uri) {
+        const updatedItem: CapturedMediaItem = {
+          ...item,
+          uri: res.uri,
+          width: res.width,
+          height: res.height,
+          sizeBytes: res.size,
+          filename: res.uri.split('/').pop() || item.filename,
+        };
         setCurrentUri(res.uri);
         if (res.width) setCurrentWidth(res.width);
         if (res.height) setCurrentHeight(res.height);
         if (res.size) setCurrentSizeBytes(res.size);
         setCropBox(getCenteredCropBoxForRatio('free', res.width, res.height));
         setAspectRatio('free');
+        onSave?.(updatedItem);
         showToast(t('mediaGallery.croppedSuccess', 'Image Cropped'));
         setActiveTool('none');
       } else {
@@ -1804,12 +1862,21 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
         },
       });
       if (res?.uri) {
-        setCurrentUri(res.uri);
         const newW = Math.round((activeWidth || 1080) * scale);
         const newH = Math.round((activeHeight || 1920) * scale);
+        const updatedItem: CapturedMediaItem = {
+          ...item,
+          uri: res.uri,
+          width: newW,
+          height: newH,
+          sizeBytes: res.size ? Math.round(res.size * scale * scale) : item.sizeBytes,
+          filename: res.uri.split('/').pop() || item.filename,
+        };
+        setCurrentUri(res.uri);
         setCurrentWidth(newW);
         setCurrentHeight(newH);
         if (res.size) setCurrentSizeBytes(Math.round(res.size * scale * scale));
+        onSave?.(updatedItem);
         showToast(
           t(
             'mediaGallery.resizedSuccess',

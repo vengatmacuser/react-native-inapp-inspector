@@ -1407,6 +1407,24 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     // 100% Native Media Editor: Photo Editing (Bitmap + ColorMatrix + Canvas)
     // ─────────────────────────────────────────────────────────────────────────
 
+    private fun parseInspectorHexColor(hex: String?, defaultColor: Int = android.graphics.Color.RED): Int {
+        if (hex.isNullOrBlank()) return defaultColor
+        val clean = hex.trim()
+        return try {
+            if (clean.startsWith("#") && clean.length == 9) {
+                val r = clean.substring(1, 3)
+                val g = clean.substring(3, 5)
+                val b = clean.substring(5, 7)
+                val a = clean.substring(7, 9)
+                android.graphics.Color.parseColor("#$a$r$g$b")
+            } else {
+                android.graphics.Color.parseColor(clean)
+            }
+        } catch (_: Exception) {
+            defaultColor
+        }
+    }
+
     @ReactMethod
     fun editPhoto(options: ReadableMap, promise: Promise) {
         captureExecutor.execute {
@@ -1599,54 +1617,302 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     finalBitmap = croppedBitmap
                 }
 
-                // 5. Apply Redactions & Annotations Overlay if provided
+                // 5. Apply Redactions, Freehand Drawings, Draggable Texts & Annotations Overlay if provided
                 val mutableBitmap = if (finalBitmap.isMutable) finalBitmap else finalBitmap.copy(Bitmap.Config.ARGB_8888, true)
                 val canvas = android.graphics.Canvas(mutableBitmap)
-                val overlayPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+                val canvasW = mutableBitmap.width.toFloat()
+                val canvasH = mutableBitmap.height.toFloat()
+                val baseScale = Math.max(1.0f, canvasW / 380.0f)
 
+                // A. Redactions (Blackout or Blur/Pixelate Box)
                 if (options.hasKey("redactions")) {
                     val redactions = options.getArray("redactions")
                     if (redactions != null) {
-                        overlayPaint.color = android.graphics.Color.BLACK
-                        overlayPaint.style = android.graphics.Paint.Style.FILL
+                        val redactPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                            style = android.graphics.Paint.Style.FILL
+                        }
                         for (i in 0 until redactions.size()) {
                             val box = redactions.getMap(i) ?: continue
                             var x = if (box.hasKey("x")) box.getDouble("x").toFloat() else 0f
                             var y = if (box.hasKey("y")) box.getDouble("y").toFloat() else 0f
                             var w = if (box.hasKey("width")) box.getDouble("width").toFloat() else 0f
                             var h = if (box.hasKey("height")) box.getDouble("height").toFloat() else 0f
-                            val isNorm = if (box.hasKey("isNormalized")) box.getBoolean("isNormalized") else false
+                            val isNorm = if (box.hasKey("isNormalized")) box.getBoolean("isNormalized") else true
                             if (isNorm) {
-                                x *= mutableBitmap.width
-                                y *= mutableBitmap.height
-                                w *= mutableBitmap.width
-                                h *= mutableBitmap.height
+                                x *= canvasW
+                                y *= canvasH
+                                w *= canvasW
+                                h *= canvasH
                             }
-                            canvas.drawRect(x, y, x + w, y + h, overlayPaint)
+                            val style = if (box.hasKey("style")) box.getString("style") else "blackout"
+                            if (style == "blur" || style == "pixelate") {
+                                redactPaint.color = android.graphics.Color.argb(235, 30, 30, 30)
+                            } else {
+                                redactPaint.color = android.graphics.Color.BLACK
+                            }
+                            canvas.drawRect(x, y, x + w, y + h, redactPaint)
                         }
                     }
                 }
 
-                if (options.hasKey("annotations")) {
+                // B. Freehand Drawings & Vector Shapes (Brush, Highlighter, Arrow, Rect, Circle, Step)
+                if (options.hasKey("drawings")) {
+                    val drawings = options.getArray("drawings")
+                    if (drawings != null) {
+                        val strokePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+
+                        for (i in 0 until drawings.size()) {
+                            val stroke = drawings.getMap(i) ?: continue
+                            val type = if (stroke.hasKey("type")) stroke.getString("type") ?: "brush" else "brush"
+                            val colorHex = if (stroke.hasKey("color")) stroke.getString("color") else "#EF4444"
+                            val parsedColor = parseInspectorHexColor(colorHex, android.graphics.Color.RED)
+                            val strokeW = (if (stroke.hasKey("strokeWidth")) stroke.getDouble("strokeWidth").toFloat() else 4.0f) * baseScale
+                            val isNorm = if (stroke.hasKey("isNormalized")) stroke.getBoolean("isNormalized") else true
+                            val points = if (stroke.hasKey("points")) stroke.getArray("points") else null
+
+                            when (type) {
+                                "brush" -> {
+                                    if (points != null && points.size() > 1) {
+                                        strokePaint.style = android.graphics.Paint.Style.STROKE
+                                        strokePaint.color = parsedColor
+                                        strokePaint.strokeWidth = strokeW
+                                        strokePaint.strokeCap = android.graphics.Paint.Cap.ROUND
+                                        strokePaint.strokeJoin = android.graphics.Paint.Join.ROUND
+                                        strokePaint.alpha = 255
+
+                                        val path = android.graphics.Path()
+                                        for (pIdx in 0 until points.size()) {
+                                            val pt = points.getMap(pIdx) ?: continue
+                                            val px = (if (pt.hasKey("x")) pt.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                            val py = (if (pt.hasKey("y")) pt.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+                                            if (pIdx == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                                        }
+                                        canvas.drawPath(path, strokePaint)
+                                    }
+                                }
+                                "highlighter" -> {
+                                    if (points != null && points.size() > 1) {
+                                        strokePaint.style = android.graphics.Paint.Style.STROKE
+                                        strokePaint.color = parsedColor
+                                        strokePaint.strokeWidth = strokeW * 2.5f
+                                        strokePaint.strokeCap = android.graphics.Paint.Cap.ROUND
+                                        strokePaint.strokeJoin = android.graphics.Paint.Join.ROUND
+                                        strokePaint.alpha = (255 * 0.4f).toInt()
+
+                                        val path = android.graphics.Path()
+                                        for (pIdx in 0 until points.size()) {
+                                            val pt = points.getMap(pIdx) ?: continue
+                                            val px = (if (pt.hasKey("x")) pt.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                            val py = (if (pt.hasKey("y")) pt.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+                                            if (pIdx == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                                        }
+                                        canvas.drawPath(path, strokePaint)
+                                    }
+                                }
+                                "arrow" -> {
+                                    if (points != null && points.size() >= 2) {
+                                        val p0 = points.getMap(0)
+                                        val p1 = points.getMap(points.size() - 1)
+                                        if (p0 != null && p1 != null) {
+                                            val x0 = (if (p0.hasKey("x")) p0.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                            val y0 = (if (p0.hasKey("y")) p0.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+                                            val x1 = (if (p1.hasKey("x")) p1.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                            val y1 = (if (p1.hasKey("y")) p1.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+
+                                            strokePaint.style = android.graphics.Paint.Style.STROKE
+                                            strokePaint.color = parsedColor
+                                            strokePaint.strokeWidth = strokeW
+                                            strokePaint.strokeCap = android.graphics.Paint.Cap.ROUND
+                                            strokePaint.alpha = 255
+                                            canvas.drawLine(x0, y0, x1, y1, strokePaint)
+
+                                            val dx = x1 - x0
+                                            val dy = y1 - y0
+                                            val angle = Math.atan2(dy.toDouble(), dx.toDouble())
+                                            val headLen = Math.max(14.0 * baseScale, Math.min(32.0 * baseScale, (strokeW * 3.5).toDouble()))
+                                            val headAngle = Math.PI / 6.0
+                                            val ax1 = (x1 - headLen * Math.cos(angle - headAngle)).toFloat()
+                                            val ay1 = (y1 - headLen * Math.sin(angle - headAngle)).toFloat()
+                                            val ax2 = (x1 - headLen * Math.cos(angle + headAngle)).toFloat()
+                                            val ay2 = (y1 - headLen * Math.sin(angle + headAngle)).toFloat()
+
+                                            val arrowPath = android.graphics.Path().apply {
+                                                moveTo(x1, y1)
+                                                lineTo(ax1, ay1)
+                                                lineTo(ax2, ay2)
+                                                close()
+                                            }
+                                            strokePaint.style = android.graphics.Paint.Style.FILL
+                                            canvas.drawPath(arrowPath, strokePaint)
+                                        }
+                                    }
+                                }
+                                "rect" -> {
+                                    if (points != null && points.size() >= 2) {
+                                        val p0 = points.getMap(0) ?: continue
+                                        val p1 = points.getMap(1) ?: p0
+                                        val x0 = (if (p0.hasKey("x")) p0.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                        val y0 = (if (p0.hasKey("y")) p0.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+                                        val x1 = (if (p1.hasKey("x")) p1.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                        val y1 = (if (p1.hasKey("y")) p1.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+
+                                        strokePaint.style = android.graphics.Paint.Style.STROKE
+                                        strokePaint.color = parsedColor
+                                        strokePaint.strokeWidth = strokeW
+                                        strokePaint.alpha = 255
+                                        canvas.drawRect(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1), strokePaint)
+                                    }
+                                }
+                                "circle", "spotlight" -> {
+                                    if (points != null && points.size() >= 2) {
+                                        val p0 = points.getMap(0) ?: continue
+                                        val p1 = points.getMap(1) ?: p0
+                                        val x0 = (if (p0.hasKey("x")) p0.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                        val y0 = (if (p0.hasKey("y")) p0.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+                                        val x1 = (if (p1.hasKey("x")) p1.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                        val y1 = (if (p1.hasKey("y")) p1.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+
+                                        strokePaint.style = android.graphics.Paint.Style.STROKE
+                                        strokePaint.color = parsedColor
+                                        strokePaint.strokeWidth = strokeW
+                                        strokePaint.alpha = 255
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                            canvas.drawOval(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1), strokePaint)
+                                        } else {
+                                            canvas.drawOval(android.graphics.RectF(Math.min(x0, x1), Math.min(y0, y1), Math.max(x0, x1), Math.max(y0, y1)), strokePaint)
+                                        }
+                                    }
+                                }
+                                "step" -> {
+                                    if (points != null && points.size() > 0) {
+                                        val p0 = points.getMap(0) ?: continue
+                                        val cx = (if (p0.hasKey("x")) p0.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                                        val cy = (if (p0.hasKey("y")) p0.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+                                        val radius = 16f * baseScale
+
+                                        // Badge circle
+                                        strokePaint.style = android.graphics.Paint.Style.FILL
+                                        strokePaint.color = parsedColor
+                                        strokePaint.alpha = 255
+                                        canvas.drawCircle(cx, cy, radius, strokePaint)
+
+                                        // White border
+                                        strokePaint.style = android.graphics.Paint.Style.STROKE
+                                        strokePaint.color = android.graphics.Color.WHITE
+                                        strokePaint.strokeWidth = 2f * baseScale
+                                        canvas.drawCircle(cx, cy, radius, strokePaint)
+
+                                        // Step number
+                                        val stepNum = if (stroke.hasKey("stepNumber")) stroke.getInt("stepNumber") else 1
+                                        val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                            color = android.graphics.Color.WHITE
+                                            textSize = 14f * baseScale
+                                            typeface = android.graphics.Typeface.DEFAULT_BOLD
+                                            textAlign = android.graphics.Paint.Align.CENTER
+                                        }
+                                        val fontMetrics = textPaint.fontMetrics
+                                        val textY = cy - (fontMetrics.ascent + fontMetrics.descent) / 2f
+                                        canvas.drawText(stepNum.toString(), cx, textY, textPaint)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // C. Draggable Text Badges / Notes
+                if (options.hasKey("texts")) {
+                    val texts = options.getArray("texts")
+                    if (texts != null) {
+                        for (i in 0 until texts.size()) {
+                            val tItem = texts.getMap(i) ?: continue
+                            val textStr = if (tItem.hasKey("text")) tItem.getString("text") ?: "" else ""
+                            if (textStr.isEmpty()) continue
+
+                            val isNorm = if (tItem.hasKey("isNormalized")) tItem.getBoolean("isNormalized") else true
+                            val tx = (if (tItem.hasKey("x")) tItem.getDouble("x").toFloat() else 0f) * (if (isNorm) canvasW else 1f)
+                            val ty = (if (tItem.hasKey("y")) tItem.getDouble("y").toFloat() else 0f) * (if (isNorm) canvasH else 1f)
+                            val textColor = parseInspectorHexColor(if (tItem.hasKey("color")) tItem.getString("color") else null, android.graphics.Color.WHITE)
+                            val bgColor = parseInspectorHexColor(if (tItem.hasKey("bgColor")) tItem.getString("bgColor") else null, parseInspectorHexColor("#EF4444"))
+
+                            val textPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                color = textColor
+                                textSize = 15f * baseScale
+                                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                            }
+
+                            val textWidth = textPaint.measureText(textStr)
+                            val fontMetrics = textPaint.fontMetrics
+                            val textHeight = fontMetrics.descent - fontMetrics.ascent
+                            val padH = 12f * baseScale
+                            val padV = 6f * baseScale
+                            val pillW = textWidth + padH * 2f
+                            val pillH = textHeight + padV * 2f
+
+                            val pillRect = android.graphics.RectF(tx, ty, tx + pillW, ty + pillH)
+                            val bgPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                style = android.graphics.Paint.Style.FILL
+                                color = bgColor
+                            }
+                            canvas.drawRoundRect(pillRect, pillH / 2f, pillH / 2f, bgPaint)
+
+                            val borderPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                style = android.graphics.Paint.Style.STROKE
+                                color = android.graphics.Color.argb(100, 255, 255, 255)
+                                strokeWidth = 1.5f * baseScale
+                            }
+                            canvas.drawRoundRect(pillRect, pillH / 2f, pillH / 2f, borderPaint)
+
+                            canvas.drawText(textStr, tx + padH, ty + padV - fontMetrics.ascent, textPaint)
+                        }
+                    }
+                }
+
+                // D. Legacy / Standalone Annotations
+                if (options.hasKey("annotations") && !options.hasKey("drawings")) {
                     val annotations = options.getArray("annotations")
                     if (annotations != null) {
-                        overlayPaint.color = android.graphics.Color.RED
-                        overlayPaint.style = android.graphics.Paint.Style.STROKE
-                        overlayPaint.strokeWidth = 6f
+                        val overlayPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
                         for (i in 0 until annotations.size()) {
                             val ann = annotations.getMap(i) ?: continue
                             var x = if (ann.hasKey("x")) ann.getDouble("x").toFloat() else 0f
                             var y = if (ann.hasKey("y")) ann.getDouble("y").toFloat() else 0f
                             var w = if (ann.hasKey("width")) ann.getDouble("width").toFloat() else 0f
                             var h = if (ann.hasKey("height")) ann.getDouble("height").toFloat() else 0f
-                            val isNorm = if (ann.hasKey("isNormalized")) ann.getBoolean("isNormalized") else false
+                            val isNorm = if (ann.hasKey("isNormalized")) ann.getBoolean("isNormalized") else true
                             if (isNorm) {
-                                x *= mutableBitmap.width
-                                y *= mutableBitmap.height
-                                w *= mutableBitmap.width
-                                h *= mutableBitmap.height
+                                x *= canvasW
+                                y *= canvasH
+                                w *= canvasW
+                                h *= canvasH
                             }
+                            val annColorHex = if (ann.hasKey("color")) ann.getString("color") else "#EF4444"
+                            val annColor = parseInspectorHexColor(annColorHex, android.graphics.Color.RED)
+                            overlayPaint.color = annColor
+                            overlayPaint.style = android.graphics.Paint.Style.STROKE
+                            overlayPaint.strokeWidth = 4f * baseScale
                             canvas.drawRect(x, y, x + w, y + h, overlayPaint)
+
+                            val label = if (ann.hasKey("label")) ann.getString("label") else null
+                            if (!label.isNullOrEmpty()) {
+                                val labelPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                    color = android.graphics.Color.WHITE
+                                    textSize = 13f * baseScale
+                                    typeface = android.graphics.Typeface.DEFAULT_BOLD
+                                }
+                                val textWidth = labelPaint.measureText(label)
+                                val fontMetrics = labelPaint.fontMetrics
+                                val textHeight = fontMetrics.descent - fontMetrics.ascent
+                                val padH = 6f * baseScale
+                                val padV = 3f * baseScale
+                                val tagRect = android.graphics.RectF(x, Math.max(0f, y - textHeight - padV * 2f), x + textWidth + padH * 2f, y)
+                                val bgPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                                    style = android.graphics.Paint.Style.FILL
+                                    color = annColor
+                                }
+                                canvas.drawRect(tagRect, bgPaint)
+                                canvas.drawText(label, tagRect.left + padH, tagRect.bottom - padV - fontMetrics.descent, labelPaint)
+                            }
                         }
                     }
                 }
@@ -1932,6 +2198,100 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     }
 
 
+
+    @ReactMethod
+    fun writeExportFile(filename: String, content: String, promise: Promise) {
+        captureExecutor.execute {
+            try {
+                val dir = getCapturesDirectory()
+                val cleanFilename = File(filename).name
+                val file = File(dir, cleanFilename)
+                file.writeText(content, Charsets.UTF_8)
+                promise.resolve("file://${file.absolutePath}")
+            } catch (e: Exception) {
+                promise.reject("WRITE_ERROR", e.message ?: "Failed to write export file", e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun shareFile(filePath: String, mimeType: String?, title: String?, promise: Promise) {
+        val activity = reactContext.currentActivity
+        if (activity == null) {
+            promise.reject("NO_ACTIVITY", "Current activity is null")
+            return
+        }
+
+        try {
+            val cleanPath = when {
+                filePath.startsWith("file://") -> Uri.parse(filePath).path ?: filePath.substring(7)
+                else -> filePath
+            }
+            val file = File(cleanPath)
+            if (!file.exists()) {
+                promise.reject("FILE_NOT_FOUND", "File does not exist: $filePath")
+                return
+            }
+
+            val uri: Uri = try {
+                androidx.core.content.FileProvider.getUriForFile(
+                    activity,
+                    "${activity.packageName}.inappinspector.provider",
+                    file
+                )
+            } catch (e: Exception) {
+                try {
+                    androidx.core.content.FileProvider.getUriForFile(
+                        activity,
+                        "${activity.packageName}.provider",
+                        file
+                    )
+                } catch (e2: Exception) {
+                    Uri.fromFile(file)
+                }
+            }
+
+            val resolvedMime = mimeType ?: when {
+                file.name.endsWith(".json") -> "application/json"
+                file.name.endsWith(".txt") || file.name.endsWith(".log") -> "text/plain"
+                file.name.endsWith(".png") -> "image/png"
+                file.name.endsWith(".jpg") || file.name.endsWith(".jpeg") -> "image/jpeg"
+                file.name.endsWith(".mp4") -> "video/mp4"
+                file.name.endsWith(".gif") -> "image/gif"
+                else -> "*/*"
+            }
+
+            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                type = resolvedMime
+                putExtra(Intent.EXTRA_STREAM, uri)
+                if (!title.isNullOrEmpty()) {
+                    putExtra(Intent.EXTRA_SUBJECT, title)
+                }
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            val chooser = Intent.createChooser(sendIntent, title ?: "Share File").apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            val resInfoList = activity.packageManager.queryIntentActivities(chooser, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+            for (resolveInfo in resInfoList) {
+                val packageName = resolveInfo.activityInfo.packageName
+                activity.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            activity.startActivity(chooser)
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("SHARE_ERROR", e.message ?: "Failed to share file", e)
+        }
+    }
+
+    @ReactMethod
+    fun addListener(eventName: String) {
+        // Required for React Native NativeEventEmitter
+    }
 
     @ReactMethod
     fun removeListeners(count: Double) {

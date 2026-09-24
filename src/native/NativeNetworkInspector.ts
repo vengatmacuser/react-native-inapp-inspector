@@ -31,6 +31,8 @@ export interface Spec extends TurboModule {
   trimVideo(options: Object): Promise<Object>;
   generateFilmstrip(options: Object): Promise<Object>;
   pickMedia(options: Object): Promise<Object | null>;
+  writeExportFile(filename: string, content: string): Promise<string>;
+  shareFile(filePath: string, mimeType: string, title: string): Promise<boolean>;
   addListener(eventName: string): void;
   removeListeners(count: number): void;
 }

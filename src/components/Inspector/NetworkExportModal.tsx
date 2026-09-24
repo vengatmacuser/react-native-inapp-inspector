@@ -9,7 +9,6 @@ import {
   Animated,
   Easing,
   ScrollView,
-  Platform,
   Share,
 } from 'react-native';
 import TouchableScale from '../TouchableScale';
@@ -21,11 +20,11 @@ import {
   SaveIcon,
   CopyIcon,
   CloseWhite,
-  TerminalIcon,
   CircleCheckIcon,
-  InfoCircleIcon,
-  WarningTriangleIcon,
-  ErrorCircleIcon,
+  CircleXIcon,
+  ClockIcon,
+  RequestIcon,
+  ResponseIcon,
   LayersIcon,
   FilterIcon,
   CheckIcon,
@@ -39,28 +38,28 @@ import {
 } from '../../native/NativeInspector';
 import {copyToClipboard, showToast} from '../../helpers';
 import {
-  formatConsoleLogsExport,
-  estimateConsoleLogsExportSize,
-  generateConsoleLogsFilename,
-  ConsoleLogExportFormat,
-  ConsoleLogExportOptions,
+  formatNetworkLogsExport,
+  estimateNetworkLogsExportSize,
+  generateNetworkLogsFilename,
+  NetworkLogExportFormat,
+  NetworkLogExportOptions,
 } from '../../helpers/shareFormatter';
 import {useTranslation} from '../../i18n';
-import type {ConsoleLog} from '../../types';
+import type {NetworkLog} from '../../types';
 
-export interface ConsoleExportModalProps {
+export interface NetworkExportModalProps {
   visible: boolean;
   onClose: () => void;
-  filteredLogs: ConsoleLog[];
-  allLogs: ConsoleLog[];
+  filteredLogs: NetworkLog[];
+  allLogs: NetworkLog[];
 }
 
 type ExportStage = 'config' | 'progress' | 'complete';
 type ScopeType = 'filtered' | 'all';
-type LevelFilterType = 'all' | 'info' | 'warn' | 'error';
+type CategoryFilterType = 'all' | 'success' | 'error' | 'slow' | 'POST' | 'GET';
 type RangeMode = 'all' | 'custom';
 
-export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
+export const NetworkExportModal: React.FC<NetworkExportModalProps> = ({
   visible,
   onClose,
   filteredLogs,
@@ -70,16 +69,18 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
 
   const [stage, setStage] = useState<ExportStage>('config');
   const [scope, setScope] = useState<ScopeType>('filtered');
-  const [levelFilter, setLevelFilter] = useState<LevelFilterType>('info');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilterType>('all');
   const [rangeMode, setRangeMode] = useState<RangeMode>('all');
   const [customCount, setCustomCount] = useState<string>('50');
   const [ignorePattern, setIgnorePattern] = useState<string>('');
-  const [format, setFormat] = useState<ConsoleLogExportFormat>('txt');
+  const [format, setFormat] = useState<NetworkLogExportFormat>('txt');
 
   // Content options toggles (unselected by default)
-  const [includeStackTrace, setIncludeStackTrace] = useState<boolean>(false);
-  const [includeArguments, setIncludeArguments] = useState<boolean>(false);
-  const [includeCaller, setIncludeCaller] = useState<boolean>(false);
+  const [includeRequestHeaders, setIncludeRequestHeaders] = useState<boolean>(false);
+  const [includeRequestBody, setIncludeRequestBody] = useState<boolean>(false);
+  const [includeResponseHeaders, setIncludeResponseHeaders] = useState<boolean>(false);
+  const [includeResponseBody, setIncludeResponseBody] = useState<boolean>(false);
+  const [includeCurlCommand, setIncludeCurlCommand] = useState<boolean>(false);
   const [includeTimestamps, setIncludeTimestamps] = useState<boolean>(false);
   const [includeAppInfo, setIncludeAppInfo] = useState<boolean>(false);
 
@@ -105,23 +106,26 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
     }
   }, [ignorePattern]);
 
-  const exportOptions: ConsoleLogExportOptions = useMemo(
+  const exportOptions: NetworkLogExportOptions = useMemo(
     () => ({
-      includeStackTrace,
-      includeArguments,
-      includeCaller,
+      includeRequestHeaders,
+      includeRequestBody,
+      includeResponseHeaders,
+      includeResponseBody,
+      includeCurlCommand,
       includeTimestamps,
       includeAppInfo,
-      includeDuplicates: false,
       ignorePattern:
         rangeMode === 'custom' && regexValidation.isValid
           ? ignorePattern.trim()
           : undefined,
     }),
     [
-      includeStackTrace,
-      includeArguments,
-      includeCaller,
+      includeRequestHeaders,
+      includeRequestBody,
+      includeResponseHeaders,
+      includeResponseBody,
+      includeCurlCommand,
       includeTimestamps,
       includeAppInfo,
       rangeMode,
@@ -159,13 +163,15 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
     if (visible) {
       setStage('config');
       setRangeMode('all');
-      setLevelFilter('info');
+      setCategoryFilter('all');
       setFormat('txt');
       setCustomCount('50');
       setIgnorePattern('');
-      setIncludeStackTrace(false);
-      setIncludeArguments(false);
-      setIncludeCaller(false);
+      setIncludeRequestHeaders(false);
+      setIncludeRequestBody(false);
+      setIncludeResponseHeaders(false);
+      setIncludeResponseBody(false);
+      setIncludeCurlCommand(false);
       setIncludeTimestamps(false);
       setIncludeAppInfo(false);
       setProgressPercent(0);
@@ -182,46 +188,70 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
     return scope === 'filtered' ? filteredLogs : allLogs;
   }, [scope, filteredLogs, allLogs]);
 
-  // Filter logs by selected log level (All, Info/Log, Warn, Error)
-  const levelFilteredLogs = useMemo(() => {
-    if (levelFilter === 'all') return targetLogsPool;
+  // Category counts for badges
+  const categoryCounts = useMemo(() => {
+    let success = 0;
+    let error = 0;
+    let slow = 0;
+    let post = 0;
+    let get = 0;
+
+    targetLogsPool.forEach(l => {
+      const s =
+        typeof l.status === 'number'
+          ? l.status
+          : parseInt(String(l.status), 10);
+      if (l.status === 0 || l.status == null || (!isNaN(s) && s >= 400)) {
+        error++;
+      } else if (!isNaN(s) && s >= 200 && s < 400) {
+        success++;
+      }
+      if ((l.duration || 0) >= 500) {
+        slow++;
+      }
+      const m = (l.method || '').toUpperCase();
+      if (m === 'POST') post++;
+      if (m === 'GET') get++;
+    });
+
+    return {
+      all: targetLogsPool.length,
+      success,
+      error,
+      slow,
+      post,
+      get,
+    };
+  }, [targetLogsPool]);
+
+  // Filter logs by selected category
+  const categoryFilteredLogs = useMemo(() => {
+    if (categoryFilter === 'all') return targetLogsPool;
     return targetLogsPool.filter(l => {
-      if (levelFilter === 'info') {
-        return (
-          l.type === 'info' ||
-          l.sourceMethod === 'log' ||
-          l.sourceMethod === 'info'
-        );
-      }
-      if (levelFilter === 'warn') {
-        return l.type === 'warn';
-      }
-      if (levelFilter === 'error') {
-        return l.type === 'error';
-      }
+      const s =
+        typeof l.status === 'number'
+          ? l.status
+          : parseInt(String(l.status), 10);
+      const isErr = l.status === 0 || l.status == null || (!isNaN(s) && s >= 400);
+      const isOk = !isNaN(s) && s >= 200 && s < 400;
+      const isSlow = (l.duration || 0) >= 500;
+      const m = (l.method || '').toUpperCase();
+
+      if (categoryFilter === 'success') return isOk;
+      if (categoryFilter === 'error') return isErr;
+      if (categoryFilter === 'slow') return isSlow;
+      if (categoryFilter === 'POST') return m === 'POST';
+      if (categoryFilter === 'GET') return m === 'GET';
       return true;
     });
-  }, [targetLogsPool, levelFilter]);
-
-  // Level counts for badges
-  const levelCounts = useMemo(() => {
-    let info = 0;
-    let warn = 0;
-    let error = 0;
-    targetLogsPool.forEach(l => {
-      if (l.type === 'error') error++;
-      else if (l.type === 'warn') warn++;
-      else info++;
-    });
-    return {all: targetLogsPool.length, info, warn, error};
-  }, [targetLogsPool]);
+  }, [targetLogsPool, categoryFilter]);
 
   // Target logs to export based on rangeMode, count, and ignore regex pattern
   const {selectedLogs, ignoredCount} = useMemo(() => {
-    const total = levelFilteredLogs.length;
-    if (total === 0) return {selectedLogs: [] as ConsoleLog[], ignoredCount: 0};
+    const total = categoryFilteredLogs.length;
+    if (total === 0) return {selectedLogs: [] as NetworkLog[], ignoredCount: 0};
 
-    let pool = levelFilteredLogs;
+    let pool = categoryFilteredLogs;
     let ignored = 0;
 
     // Apply regex ignore pattern if in custom mode
@@ -229,10 +259,18 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
       const reg = regexValidation.regex;
       const beforeCount = pool.length;
       pool = pool.filter(l => {
-        const msg = l.message || '';
-        const argsStr = l.rawArgs ? JSON.stringify(l.rawArgs) : '';
-        const callerStr = l.caller || '';
-        return !reg.test(msg) && !reg.test(argsStr) && !reg.test(callerStr);
+        const url = l.url || '';
+        const method = l.method || '';
+        const client = l.client || '';
+        const reqStr = l.request ? JSON.stringify(l.request) : '';
+        const resStr = l.response ? JSON.stringify(l.response) : '';
+        return (
+          !reg.test(url) &&
+          !reg.test(method) &&
+          !reg.test(client) &&
+          !reg.test(reqStr) &&
+          !reg.test(resStr)
+        );
       });
       ignored = beforeCount - pool.length;
     }
@@ -250,14 +288,14 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
       selectedLogs: pool.slice(-count),
       ignoredCount: ignored,
     };
-  }, [levelFilteredLogs, rangeMode, customCount, regexValidation.regex]);
+  }, [categoryFilteredLogs, rangeMode, customCount, regexValidation.regex]);
 
   // Live estimated byte size before export
   const estimatedBytes = useMemo(() => {
-    return estimateConsoleLogsExportSize(selectedLogs, format, exportOptions);
+    return estimateNetworkLogsExportSize(selectedLogs, format, exportOptions);
   }, [selectedLogs, format, exportOptions]);
 
-  // Size display formatter: below 1 MB -> KB (e.g. 450 KB), >= 1 MB -> MB (e.g. 1.25 MB)
+  // Size display formatter: below 1 MB -> KB, >= 1 MB -> MB
   const formatEstimatedSize = (bytes: number): string => {
     if (bytes <= 0) return '0 KB';
     if (bytes < 1024) return `${(bytes / 1024).toFixed(2)} KB`;
@@ -269,7 +307,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
 
   const handleStartExport = useCallback(() => {
     if (selectedLogs.length === 0) {
-      showToast(t('console.noLogsToExport', 'No logs available to export'));
+      showToast(t('network.noLogsToExport', 'No API requests available to export'));
       return;
     }
 
@@ -299,12 +337,12 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
       if (currentIdx >= total) {
         clearInterval(interval);
         setTimeout(() => {
-          const content = formatConsoleLogsExport(
+          const content = formatNetworkLogsExport(
             selectedLogs,
             format,
             exportOptions,
           );
-          const filename = generateConsoleLogsFilename(format);
+          const filename = generateNetworkLogsFilename(format);
 
           setExportedContent(content);
           setExportedFilename(filename);
@@ -325,9 +363,13 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
         exportedContent,
       );
       if (fileUri) {
+        const mimeType =
+          format === 'json'
+            ? 'application/json'
+            : 'text/plain';
         const shared = await shareNativeFile(
           fileUri,
-          format === 'log' ? 'text/plain' : 'text/plain',
+          mimeType,
           exportedFilename,
         );
         if (shared) return;
@@ -359,13 +401,17 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
         exportedContent,
       );
       if (fileUri) {
+        const mimeType =
+          format === 'json'
+            ? 'application/json'
+            : 'text/plain';
         const shared = await shareNativeFile(
           fileUri,
-          format === 'log' ? 'text/plain' : 'text/plain',
+          mimeType,
           `Save ${exportedFilename}`,
         );
         if (shared) {
-          showToast(t('console.savePromptOpened', 'Opened save to disk dialog'));
+          showToast(t('network.savePromptOpened', 'Opened save to disk dialog'));
           return;
         }
       }
@@ -380,7 +426,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
           subject: exportedFilename,
         },
       );
-      showToast(t('console.savePromptOpened', 'Opened save to disk dialog'));
+      showToast(t('network.savePromptOpened', 'Opened save to disk dialog'));
     } catch (err: any) {
       if (err?.message !== 'User did not share') {
         showToast(err?.message || 'Save error');
@@ -391,8 +437,8 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
   const handleCopy = useCallback(() => {
     if (!exportedContent) return;
     triggerNativeHaptic('light');
-    copyToClipboard(exportedContent, 'Console Logs');
-    showToast(t('console.copiedLogs', 'Logs copied to clipboard!'));
+    copyToClipboard(exportedContent, 'API Network Logs');
+    showToast(t('network.copiedLogs', 'API requests copied to clipboard!'));
   }, [exportedContent, t]);
 
   const hasFilterDifference = filteredLogs.length !== allLogs.length;
@@ -412,7 +458,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
             <View style={styles.sheetHandle} />
           </View>
 
-          {/* Sticky Header with Glowing Shadow */}
+          {/* Sticky Header */}
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
               <View style={styles.iconBadge}>
@@ -420,11 +466,11 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
               </View>
               <View style={styles.headerTextGroup}>
                 <Text style={styles.title}>
-                  {t('console.exportTitle', 'Export Console Logs')}
+                  {t('network.exportTitle', 'Export API Logs')}
                 </Text>
                 <Text style={styles.subtitle}>
                   {stage === 'config'
-                    ? `${selectedLogs.length} logs ready for export`
+                    ? `${selectedLogs.length} requests ready for export`
                     : stage === 'progress'
                     ? 'Preparing exported file...'
                     : 'Export complete'}
@@ -446,7 +492,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                 {hasFilterDifference && (
                   <View style={styles.section}>
                     <Text style={styles.sectionLabel}>
-                      {t('console.exportScope', 'LOG SOURCE SCOPE')}
+                      {t('network.exportScope', 'REQUEST SOURCE SCOPE')}
                     </Text>
                     <View style={styles.segmentedRow}>
                       <TouchableScale
@@ -471,7 +517,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                             styles.segmentBtnText,
                             scope === 'filtered' && styles.segmentBtnTextActive,
                           ]}>
-                          {t('console.filteredView', 'Active Filter')} (
+                          {t('network.filteredView', 'Active Filter')} (
                           {filteredLogs.length})
                         </Text>
                       </TouchableScale>
@@ -498,55 +544,71 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                             styles.segmentBtnText,
                             scope === 'all' && styles.segmentBtnTextActive,
                           ]}>
-                          {t('console.allLogsScope', 'All Logs')} ({allLogs.length})
+                          {t('network.allLogsScope', 'All Requests')} ({allLogs.length})
                         </Text>
                       </TouchableScale>
                     </View>
                   </View>
                 )}
 
-                {/* Log Level / Severity Filter */}
+                {/* Category / Status Filter */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionLabel}>LOG LEVEL FILTER</Text>
+                  <Text style={styles.sectionLabel}>
+                    {t('network.logCategoryFilter', 'REQUEST CATEGORY FILTER')}
+                  </Text>
                   <View style={styles.levelRow}>
                     {[
                       {
                         id: 'all',
                         label: 'All',
-                        count: levelCounts.all,
+                        count: categoryCounts.all,
                         color: AppColors.purple,
                         Icon: LayersIcon,
                       },
                       {
-                        id: 'info',
-                        label: 'Info / Log',
-                        count: levelCounts.info,
-                        color: AppColors.sky600,
-                        Icon: InfoCircleIcon,
-                      },
-                      {
-                        id: 'warn',
-                        label: 'Warn',
-                        count: levelCounts.warn,
-                        color: AppColors.amber600,
-                        Icon: WarningTriangleIcon,
+                        id: 'success',
+                        label: '2xx OK',
+                        count: categoryCounts.success,
+                        color: AppColors.greenColor,
+                        Icon: CircleCheckIcon,
                       },
                       {
                         id: 'error',
-                        label: 'Error',
-                        count: levelCounts.error,
+                        label: 'Errors',
+                        count: categoryCounts.error,
                         color: AppColors.errorColor,
-                        Icon: ErrorCircleIcon,
+                        Icon: CircleXIcon,
+                      },
+                      {
+                        id: 'slow',
+                        label: 'Slow >500ms',
+                        count: categoryCounts.slow,
+                        color: AppColors.warningIconGold,
+                        Icon: ClockIcon,
+                      },
+                      {
+                        id: 'POST',
+                        label: 'POST',
+                        count: categoryCounts.post,
+                        color: AppColors.blue500 || '#3B82F6',
+                        Icon: RequestIcon,
+                      },
+                      {
+                        id: 'GET',
+                        label: 'GET',
+                        count: categoryCounts.get,
+                        color: AppColors.emerald500 || '#10B981',
+                        Icon: ResponseIcon,
                       },
                     ].map(item => {
-                      const isSelected = levelFilter === item.id;
+                      const isSelected = categoryFilter === item.id;
                       const IconComp = item.Icon;
                       return (
                         <TouchableScale
                           key={item.id}
                           onPress={() => {
                             triggerNativeHaptic('light');
-                            setLevelFilter(item.id as LevelFilterType);
+                            setCategoryFilter(item.id as CategoryFilterType);
                           }}
                           style={[
                             styles.levelChip,
@@ -595,15 +657,17 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                 {/* Range Selection Mode */}
                 <View style={styles.section}>
                   <View style={styles.sectionHeaderRow}>
-                    <Text style={styles.sectionLabel}>LOGS COUNT RANGE</Text>
+                    <Text style={styles.sectionLabel}>
+                      {t('network.logsCountRange', 'REQUESTS COUNT RANGE')}
+                    </Text>
                     <View style={styles.countPill}>
                       <Text style={styles.countPillText}>
-                        Matched: {levelFilteredLogs.length}
+                        Matched: {categoryFilteredLogs.length}
                       </Text>
                     </View>
                   </View>
 
-                  {/* Primary Mode Selector: All Logs | Custom */}
+                  {/* Primary Mode Selector: All | Custom */}
                   <View style={styles.segmentedRow}>
                     <TouchableScale
                       onPress={() => {
@@ -627,7 +691,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                           styles.segmentBtnText,
                           rangeMode === 'all' && styles.segmentBtnTextActive,
                         ]}>
-                        All ({levelFilteredLogs.length})
+                        All ({categoryFilteredLogs.length})
                       </Text>
                     </TouchableScale>
 
@@ -664,7 +728,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                       {/* 1. Custom Count */}
                       <View style={styles.customFieldRow}>
                         <Text style={styles.customFieldLabel}>
-                          {t('console.enterCount', 'Enter number of logs:')}
+                          {t('network.enterCount', 'Enter number of requests:')}
                         </Text>
                         <TextInput
                           keyboardType="number-pad"
@@ -681,7 +745,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                         <View style={styles.regexLabelRow}>
                           <Text style={styles.customFieldLabel}>
                             {t(
-                              'console.ignorePatterns',
+                              'network.ignorePatterns',
                               'Ignore Patterns (Regex):',
                             )}
                           </Text>
@@ -703,7 +767,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                             styles.regexInput,
                             !regexValidation.isValid && styles.regexInputError,
                           ]}
-                          placeholder="e.g. ^\[DEBUG\]|analytics|token=.*"
+                          placeholder="e.g. ^https://analytics|ping|token=.*"
                           placeholderTextColor={AppColors.slate400}
                         />
 
@@ -711,15 +775,15 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                           <Text style={styles.regexErrorText}>
                             ⚠️{' '}
                             {t(
-                              'console.invalidRegex',
+                              'network.invalidRegex',
                               'Invalid regular expression syntax',
                             )}
                           </Text>
                         ) : (
                           <Text style={styles.regexHelpText}>
                             {t(
-                              'console.ignorePatternsDesc',
-                              'Logs matching this regex will be excluded from export.',
+                              'network.ignorePatternsDesc',
+                              'Requests matching this regex in URL, headers, or body will be excluded.',
                             )}
                           </Text>
                         )}
@@ -728,9 +792,11 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   )}
                 </View>
 
-                {/* Export Format in the SAME Row */}
+                {/* Export Format (Plain Text & Log File in same row) */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionLabel}>EXPORT FORMAT</Text>
+                  <Text style={styles.sectionLabel}>
+                    {t('network.exportFormat', 'EXPORT FORMAT')}
+                  </Text>
                   <View style={styles.formatRowInline}>
                     {[
                       {
@@ -750,7 +816,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                           key={fmt.id}
                           onPress={() => {
                             triggerNativeHaptic('light');
-                            setFormat(fmt.id as ConsoleLogExportFormat);
+                            setFormat(fmt.id as NetworkLogExportFormat);
                           }}
                           style={[
                             styles.formatCardInline,
@@ -781,30 +847,44 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
 
                 {/* Export Content Details & Options */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionLabel}>CONTENT OPTIONS</Text>
+                  <Text style={styles.sectionLabel}>
+                    {t('network.contentOptions', 'CONTENT OPTIONS')}
+                  </Text>
                   <View style={styles.optionsGrid}>
                     {[
                       {
-                        key: 'stack',
-                        label: 'Stack Trace & Frames',
-                        value: includeStackTrace,
-                        toggle: () => setIncludeStackTrace(v => !v),
+                        key: 'reqHeaders',
+                        label: 'Request Headers',
+                        value: includeRequestHeaders,
+                        toggle: () => setIncludeRequestHeaders(v => !v),
                       },
                       {
-                        key: 'args',
-                        label: 'Arguments & Payloads',
-                        value: includeArguments,
-                        toggle: () => setIncludeArguments(v => !v),
+                        key: 'reqBody',
+                        label: 'Request Body / Payload',
+                        value: includeRequestBody,
+                        toggle: () => setIncludeRequestBody(v => !v),
                       },
                       {
-                        key: 'caller',
-                        label: 'Caller & File Origin',
-                        value: includeCaller,
-                        toggle: () => setIncludeCaller(v => !v),
+                        key: 'resHeaders',
+                        label: 'Response Headers',
+                        value: includeResponseHeaders,
+                        toggle: () => setIncludeResponseHeaders(v => !v),
+                      },
+                      {
+                        key: 'resBody',
+                        label: 'Response Data / Body',
+                        value: includeResponseBody,
+                        toggle: () => setIncludeResponseBody(v => !v),
+                      },
+                      {
+                        key: 'curl',
+                        label: 'cURL Command',
+                        value: includeCurlCommand,
+                        toggle: () => setIncludeCurlCommand(v => !v),
                       },
                       {
                         key: 'timestamps',
-                        label: 'Exact Timestamps',
+                        label: 'Exact Timestamps & Duration',
                         value: includeTimestamps,
                         toggle: () => setIncludeTimestamps(v => !v),
                       },
@@ -847,13 +927,13 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                 </View>
               </ScrollView>
 
-              {/* Static Glowing Bottom Footer with Action Button & Minimal Size View */}
+              {/* Static Glowing Bottom Footer with Action Button */}
               <View style={styles.staticFooter}>
                 <View style={styles.footerMinimalSummary}>
                   <View style={styles.footerSummaryLeft}>
                     <View style={styles.footerSummaryDot} />
                     <Text style={styles.footerSummaryCountText}>
-                      {selectedLogs.length} logs
+                      {selectedLogs.length} requests
                     </Text>
                     <Text style={styles.footerSummaryDivider}>•</Text>
                     <Text style={styles.footerSummarySizeText}>
@@ -883,10 +963,10 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   ]}>
                   <ExportIcon size={17} color={AppColors.white} />
                   <Text style={styles.exportActionBtnText}>
-                    {t('console.exportLogsAction', {
+                    {t('network.exportLogsAction', {
                       count: selectedLogs.length,
                       size: formatEstimatedSize(estimatedBytes),
-                      defaultValue: `Export ${selectedLogs.length} Logs (${formatEstimatedSize(
+                      defaultValue: `Export ${selectedLogs.length} Requests (${formatEstimatedSize(
                         estimatedBytes,
                       )})`,
                     })}
@@ -908,11 +988,11 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
               </Animated.View>
 
               <Text style={styles.progressHeading}>
-                {t('console.exportingLogs', 'Exporting Console Logs...')}
+                {t('network.exportingLogs', 'Exporting API Requests...')}
               </Text>
               <Text style={styles.progressSub}>
-                {t('console.processingItem', 'Processing')} {processedCount} /{' '}
-                {selectedLogs.length} {t('console.records', 'records')} (
+                {t('network.processingItem', 'Processing')} {processedCount} /{' '}
+                {selectedLogs.length} {t('network.records', 'records')} (
                 {progressPercent}%)
               </Text>
 
@@ -932,7 +1012,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
               </View>
 
               <Text style={styles.progressFootnote}>
-                Formatting .{format.toUpperCase()} payload with separators •{' '}
+                Formatting .{format.toUpperCase()} payload with structured details •{' '}
                 {formatEstimatedSize(estimatedBytes)}
               </Text>
             </View>
@@ -946,31 +1026,37 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
               </View>
 
               <Text style={styles.completeTitle}>
-                {t('console.exportSuccessTitle', 'Logs Export Ready!')}
+                {t('network.exportSuccessTitle', 'API Export Ready!')}
               </Text>
               <Text style={styles.completeSub}>
                 {t(
-                  'console.exportSuccessDesc',
-                  'Generated full formatted log bundle ready to share or save.',
+                  'network.exportSuccessDesc',
+                  'Generated full formatted API request bundle ready to share or save.',
                 )}
               </Text>
 
               {/* Metadata Details Card */}
               <View style={styles.fileDetailsCard}>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>📁 {t('console.exportFileLabel', 'File:')}</Text>
+                  <Text style={styles.fileDetailLabel}>
+                    📁 {t('network.exportFileLabel', 'File:')}
+                  </Text>
                   <Text style={styles.fileDetailValue} numberOfLines={1}>
                     {exportedFilename}
                   </Text>
                 </View>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>📊 {t('console.exportLogCountLabel', 'Log Count:')}</Text>
+                  <Text style={styles.fileDetailLabel}>
+                    📊 {t('network.exportLogCountLabel', 'Request Count:')}
+                  </Text>
                   <Text style={styles.fileDetailValue}>
-                    {selectedLogs.length} logs
+                    {selectedLogs.length} requests
                   </Text>
                 </View>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>💾 {t('console.exportFinalSizeLabel', 'Final Size:')}</Text>
+                  <Text style={styles.fileDetailLabel}>
+                    💾 {t('network.exportFinalSizeLabel', 'Final Size:')}
+                  </Text>
                   <Text
                     style={[
                       styles.fileDetailValue,
@@ -983,7 +1069,9 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   </Text>
                 </View>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>⚙️ {t('console.exportFormatLabel', 'Format:')}</Text>
+                  <Text style={styles.fileDetailLabel}>
+                    ⚙️ {t('network.exportFormatLabel', 'Format:')}
+                  </Text>
                   <Text style={styles.fileDetailValue}>
                     .{format.toUpperCase()}
                   </Text>
@@ -998,7 +1086,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   style={[styles.primaryActionBtn, styles.shareBtn]}>
                   <ShareIcon size={15} color={AppColors.white} />
                   <Text style={styles.primaryActionBtnText}>
-                    {t('console.shareReport', 'Share Logs')}
+                    {t('network.shareReport', 'Share Requests')}
                   </Text>
                 </TouchableScale>
 
@@ -1008,7 +1096,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   style={[styles.primaryActionBtn, styles.saveDiskBtn]}>
                   <SaveIcon size={15} color={AppColors.white} />
                   <Text style={styles.primaryActionBtnText}>
-                    {t('console.saveToDisk', 'Save to Disk')}
+                    {t('network.saveToDisk', 'Save to Disk')}
                   </Text>
                 </TouchableScale>
 
@@ -1018,7 +1106,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   style={styles.secondaryActionBtn}>
                   <CopyIcon size={14} color={AppColors.purple} />
                   <Text style={styles.secondaryActionBtnText}>
-                    {t('console.copyToClipboard', 'Copy Content')}
+                    {t('network.copyToClipboard', 'Copy Content')}
                   </Text>
                 </TouchableScale>
               </View>
@@ -1029,7 +1117,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   onPress={() => setStage('config')}
                   style={styles.textBtn}>
                   <Text style={styles.textBtnText}>
-                    {t('console.exportAnother', '← Export Another')}
+                    {t('network.exportAnother', '← Export Another')}
                   </Text>
                 </TouchableScale>
 
@@ -1231,13 +1319,13 @@ const styles = StyleSheet.create({
     fontFamily: AppFonts.interBold,
   },
   customOptionsContainer: {
-    marginTop: 6,
-    padding: 11,
-    borderRadius: 10,
+    marginTop: 8,
+    padding: 12,
     backgroundColor: '#F8FAFC',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
-    gap: 10,
+    gap: 12,
   },
   customFieldRow: {
     flexDirection: 'row',
@@ -1246,29 +1334,28 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   customFieldLabel: {
-    fontFamily: AppFonts.interSemiBold,
+    fontFamily: AppFonts.interMedium,
     fontSize: 11.5,
     lineHeight: 15,
-    color: AppColors.grayTextStrong,
+    color: AppColors.primaryBlack,
+    flex: 1,
   },
   customCountInput: {
-    width: 90,
-    backgroundColor: AppColors.white,
+    width: 75,
+    height: 32,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
     borderRadius: 7,
-    paddingHorizontal: 10,
-    paddingVertical: 5.5,
+    backgroundColor: AppColors.white,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    fontFamily: AppFonts.interBold,
     fontSize: 12.5,
-    fontFamily: AppFonts.interSemiBold,
     color: AppColors.primaryBlack,
     textAlign: 'center',
   },
   regexFieldBlock: {
     gap: 5,
-    paddingTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: AppColors.dividerColor,
   },
   regexLabelRow: {
     flexDirection: 'row',
@@ -1276,42 +1363,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   regexExclusionBadge: {
-    backgroundColor: `${AppColors.purple}14`,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 5,
+    backgroundColor: `${AppColors.errorColor}15`,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
   },
   regexExclusionBadgeText: {
     fontFamily: AppFonts.interBold,
-    fontSize: 10,
-    color: AppColors.purple,
+    fontSize: 9.5,
+    color: AppColors.errorColor,
   },
   regexInput: {
-    backgroundColor: AppColors.white,
+    height: 34,
     borderWidth: 1,
     borderColor: AppColors.dividerColor,
     borderRadius: 7,
+    backgroundColor: AppColors.white,
     paddingHorizontal: 10,
-    paddingVertical: 6,
-    fontSize: 12,
     fontFamily: AppFonts.interRegular,
+    fontSize: 11.5,
     color: AppColors.primaryBlack,
   },
   regexInputError: {
     borderColor: AppColors.errorColor,
-    backgroundColor: `${AppColors.errorColor}08`,
+    backgroundColor: '#FFF5F5',
   },
   regexErrorText: {
     fontFamily: AppFonts.interMedium,
-    fontSize: 10.5,
-    lineHeight: 14,
+    fontSize: 10,
     color: AppColors.errorColor,
+    marginTop: 2,
   },
   regexHelpText: {
     fontFamily: AppFonts.interRegular,
-    fontSize: 10.5,
-    lineHeight: 14,
+    fontSize: 10,
     color: AppColors.grayTextWeak,
+    marginTop: 2,
   },
   formatRowInline: {
     flexDirection: 'row',
@@ -1371,14 +1458,13 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
   },
   optionsGrid: {
-    flexDirection: 'column',
-    gap: 5,
+    gap: 6,
   },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
     paddingVertical: 7,
+    paddingHorizontal: 10,
     borderRadius: 8,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
@@ -1390,13 +1476,14 @@ const styles = StyleSheet.create({
     borderColor: `${AppColors.purple}30`,
   },
   checkbox: {
-    width: 15,
-    height: 15,
-    borderRadius: 3.5,
+    width: 16,
+    height: 16,
+    borderRadius: 4,
     borderWidth: 1.5,
     borderColor: AppColors.grayTextWeak,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: AppColors.white,
   },
   checkboxActive: {
     backgroundColor: AppColors.purple,
@@ -1409,22 +1496,17 @@ const styles = StyleSheet.create({
     color: AppColors.grayTextStrong,
   },
   optionLabelActive: {
-    fontFamily: AppFonts.interSemiBold,
     color: AppColors.primaryBlack,
+    fontFamily: AppFonts.interSemiBold,
   },
   staticFooter: {
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: Platform.OS === 'ios' ? 26 : 14,
-    backgroundColor: AppColors.white,
+    paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: AppColors.dividerColor,
-    shadowColor: AppColors.purple,
-    shadowOffset: {width: 0, height: -4},
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 8,
-    gap: 8,
+    backgroundColor: '#FAF9FE',
+    gap: 10,
   },
   footerMinimalSummary: {
     flexDirection: 'row',
@@ -1626,8 +1708,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveDiskBtn: {
-    backgroundColor: AppColors.teal600,
-    shadowColor: AppColors.teal600,
+    backgroundColor: AppColors.teal600 || '#0D9488',
+    shadowColor: AppColors.teal600 || '#0D9488',
     shadowOffset: {width: 0, height: 3},
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -1689,4 +1771,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ConsoleExportModal;
+export default NetworkExportModal;

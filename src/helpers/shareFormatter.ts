@@ -1,4 +1,5 @@
 import {Alert, Share} from 'react-native';
+import {writeNativeExportFile, shareNativeFile} from '../native/NativeInspector';
 import type {
   AnalyticsEvent,
   ConsoleLog,
@@ -311,17 +312,34 @@ export function formatLogReport(log: ConsoleLog): string {
 }
 
 /**
- * Universal Native Share Executor
+ * Universal Native Share Executor (saves as attached file and opens native share sheet)
  */
-async function triggerNativeShare(title: string, message: string): Promise<void> {
+async function triggerNativeShare(
+  title: string,
+  message: string,
+  suggestedFilename?: string,
+): Promise<void> {
   try {
+    const filename = suggestedFilename || `export_${Date.now()}.txt`;
+    const fileUri = await writeNativeExportFile(filename, message);
+    if (fileUri) {
+      const mimeType = filename.endsWith('.json')
+        ? 'application/json'
+        : filename.endsWith('.log') || filename.endsWith('.txt')
+        ? 'text/plain'
+        : 'text/plain';
+      const shared = await shareNativeFile(fileUri, mimeType, title);
+      if (shared) return;
+    }
     await Share.share(
       {
         title,
         message,
+        url: fileUri || undefined,
       },
       {
         dialogTitle: title,
+        subject: title,
       },
     );
   } catch (error: any) {
@@ -333,38 +351,44 @@ async function triggerNativeShare(title: string, message: string): Promise<void>
 
 export async function shareApiReport(log: NetworkLog): Promise<void> {
   const message = formatApiReport(log);
+  const filename = `api_${log.id ?? Date.now()}.txt`;
   const title = `API: ${log.method || 'GET'} ${log.url?.substring(0, 40) || ''}`;
-  await triggerNativeShare(title, message);
+  await triggerNativeShare(title, message, filename);
 }
 
 export async function sharePushReport(record: PushNotificationRecord): Promise<void> {
   const message = formatPushReport(record);
+  const filename = `push_${record.id ?? Date.now()}.txt`;
   const title = `Push: ${record.title || record.id || 'Notification'}`;
-  await triggerNativeShare(title, message);
+  await triggerNativeShare(title, message, filename);
 }
 
 export async function shareCrashReport(crash: CrashRecord): Promise<void> {
   const message = formatCrashReport(crash);
+  const filename = `crash_${crash.timestamp ?? Date.now()}.txt`;
   const title = `Crash: ${crash.name || crash.message || 'Error'}`;
-  await triggerNativeShare(title, message);
+  await triggerNativeShare(title, message, filename);
 }
 
 export async function shareAnalyticsReport(event: AnalyticsEvent): Promise<void> {
   const message = formatAnalyticsReport(event);
+  const filename = `analytics_${event.id ?? Date.now()}.txt`;
   const title = `Analytics: ${event.name || 'Event'}`;
-  await triggerNativeShare(title, message);
+  await triggerNativeShare(title, message, filename);
 }
 
 export async function shareReduxReport(action: ReduxHistoryEntry): Promise<void> {
   const message = formatReduxReport(action);
+  const filename = `redux_${action.id ?? Date.now()}.txt`;
   const title = `Redux: ${action.type || 'Action'}`;
-  await triggerNativeShare(title, message);
+  await triggerNativeShare(title, message, filename);
 }
 
 export async function shareLogReport(log: ConsoleLog): Promise<void> {
   const message = formatLogReport(log);
+  const filename = `log_${log.id ?? Date.now()}.txt`;
   const title = `Log: ${(log.type || 'info').toUpperCase()} - ${log.message?.substring(0, 30) || ''}`;
-  await triggerNativeShare(title, message);
+  await triggerNativeShare(title, message, filename);
 }
 
 /**
@@ -427,8 +451,9 @@ export function formatSocketReport(record: SocketConnectionRecord): string {
 
 export async function shareSocketReport(record: SocketConnectionRecord): Promise<void> {
   const message = formatSocketReport(record);
+  const filename = `socket_${record.id ?? Date.now()}.txt`;
   const title = `Socket: ${record.client?.toUpperCase() || 'WS'} ${record.url?.substring(0, 35) || ''}`;
-  await triggerNativeShare(title, message);
+  await triggerNativeShare(title, message, filename);
 }
 
 export type ConsoleLogExportFormat = 'txt' | 'log' | 'json' | 'text' | 'markdown' | 'csv';
@@ -622,6 +647,312 @@ export async function shareConsoleLogs(
   const content = formatConsoleLogsExport(logs, format, options);
   const filename = generateConsoleLogsFilename(format);
   const title = customTitle || filename;
-  await triggerNativeShare(title, content);
+  await triggerNativeShare(title, content, filename);
+}
+
+export type NetworkLogExportFormat = 'txt' | 'log' | 'json' | 'curl';
+
+export interface NetworkLogExportOptions {
+  includeRequestHeaders?: boolean;
+  includeRequestBody?: boolean;
+  includeResponseHeaders?: boolean;
+  includeResponseBody?: boolean;
+  includeCurlCommand?: boolean;
+  includeTimestamps?: boolean;
+  includeAppInfo?: boolean;
+  ignorePattern?: string;
+}
+
+export const DEFAULT_NETWORK_EXPORT_OPTIONS: NetworkLogExportOptions = {
+  includeRequestHeaders: false,
+  includeRequestBody: false,
+  includeResponseHeaders: false,
+  includeResponseBody: false,
+  includeCurlCommand: false,
+  includeTimestamps: false,
+  includeAppInfo: false,
+  ignorePattern: '',
+};
+
+/**
+ * Generates filename in format: api_DDMMYY_random6digittext.txt / .log / .json / .sh
+ */
+export function generateNetworkLogsFilename(
+  format: NetworkLogExportFormat = 'txt',
+): string {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const random6 = Math.random().toString(36).substring(2, 8).padEnd(6, '0');
+  const ext = format === 'log' ? 'log' : 'txt';
+  return `api_${dd}${mm}${yy}_${random6}.${ext}`;
+}
+
+/**
+ * Formats a list of network API logs for export with clean structured separators and customizable options.
+ */
+export function formatNetworkLogsExport(
+  logs: NetworkLog[],
+  format: NetworkLogExportFormat = 'txt',
+  options: NetworkLogExportOptions = DEFAULT_NETWORK_EXPORT_OPTIONS,
+): string {
+  if (!logs || logs.length === 0) {
+    return 'No API requests to export.';
+  }
+
+  const {
+    includeRequestHeaders = false,
+    includeRequestBody = false,
+    includeResponseHeaders = false,
+    includeResponseBody = false,
+    includeCurlCommand = false,
+    includeTimestamps = false,
+    includeAppInfo = false,
+    ignorePattern = '',
+  } = options;
+
+  let activeLogs = logs;
+  if (ignorePattern && ignorePattern.trim().length > 0) {
+    try {
+      const reg = new RegExp(ignorePattern.trim(), 'i');
+      activeLogs = logs.filter(l => {
+        const url = l.url || '';
+        const method = l.method || '';
+        const client = l.client || '';
+        const reqStr = l.request ? safeStringify(l.request) : '';
+        const resStr = l.response ? safeStringify(l.response) : '';
+        const reqHeadersStr = l.requestHeaders ? safeStringify(l.requestHeaders) : '';
+        const resHeadersStr = l.responseHeaders ? safeStringify(l.responseHeaders) : '';
+        return (
+          !reg.test(url) &&
+          !reg.test(method) &&
+          !reg.test(client) &&
+          !reg.test(reqStr) &&
+          !reg.test(resStr) &&
+          !reg.test(reqHeadersStr) &&
+          !reg.test(resHeadersStr)
+        );
+      });
+    } catch {
+      // Keep logs as is if pattern is invalid
+    }
+  }
+
+  if (activeLogs.length === 0) {
+    return 'No API requests to export (all filtered out).';
+  }
+
+  const now = new Date();
+  const timeHeader = now.toLocaleString();
+  const sepLine = '********************************************************************************';
+
+  if (format === 'json') {
+    const serialized = activeLogs.map((l, index) => {
+      const item: any = {
+        index: index + 1,
+        id: l.id,
+        url: l.url,
+        method: (l.method || 'GET').toUpperCase(),
+        status: l.status,
+        duration: l.duration,
+        startTime: l.startTime,
+        client: l.client,
+      };
+      if (includeRequestHeaders && l.requestHeaders) {
+        item.requestHeaders = l.requestHeaders;
+      }
+      if (includeRequestBody && l.request != null) {
+        item.request = l.request;
+      }
+      if (includeResponseHeaders && l.responseHeaders) {
+        item.responseHeaders = l.responseHeaders;
+      }
+      if (includeResponseBody && l.response != null) {
+        item.response = l.response;
+      }
+      if (includeCurlCommand) {
+        item.curl = getCurlCommand(l);
+      }
+      return item;
+    });
+    return JSON.stringify(serialized, null, 2);
+  }
+
+  if (format === 'curl') {
+    const lines: string[] = [
+      '#!/usr/bin/env bash',
+      '# ============================================================================== ',
+      '# 🚀 API Network Logs - cURL Script Export',
+      `# 🕒 Exported At:     ${timeHeader}`,
+      `# 📊 Total Commands:  ${activeLogs.length}`,
+      '# ⚙️ Generator:       React Native InApp Inspector',
+      '# ==============================================================================\n',
+    ];
+
+    activeLogs.forEach((l, index) => {
+      const reqNum = index + 1;
+      const method = (l.method || 'GET').toUpperCase();
+      const statusStr =
+        l.status === 0
+          ? 'Failed / Error'
+          : l.status != null
+          ? String(l.status)
+          : 'Pending';
+      const durationStr = l.duration != null ? `${l.duration}ms` : 'N/A';
+      const dt = formatDateTime(l.startTime || Date.now());
+
+      lines.push(
+        `# Request #${reqNum}: [${method}] ${l.url || 'N/A'} (Status: ${statusStr}, ${durationStr}, ${dt})`,
+      );
+      const curl = getCurlCommand(l);
+      if (curl) {
+        lines.push(curl);
+      } else {
+        lines.push(`curl -X ${method} "${l.url || ''}"`);
+      }
+      lines.push('');
+    });
+
+    return lines.join('\n');
+  }
+
+  // format === 'txt' or 'log'
+  const headerLines: string[] = [];
+  if (includeAppInfo) {
+    headerLines.push(
+      `/${sepLine}`,
+      ` * 🚀 API NETWORK LOGS EXPORT (${format.toUpperCase()})`,
+      ` * 🕒 Exported At:    ${timeHeader}`,
+      ` * 📊 Total Requests: ${activeLogs.length}`,
+      ` * ⚙️ Generator:      React Native InApp Inspector`,
+      ` ${sepLine}/`,
+      '',
+    );
+  }
+
+  const body = activeLogs
+    .map((l, index) => {
+      const reqNum = index + 1;
+      const dt = formatDateTime(l.startTime || Date.now());
+      const method = (l.method || 'GET').toUpperCase();
+      const statusStr =
+        l.status === 0
+          ? 'Failed / Network Error'
+          : l.status != null
+          ? `${l.status} ${l.status === 200 ? 'OK' : ''}`.trim()
+          : 'Pending';
+      const durationStr = l.duration != null ? `${l.duration}ms` : 'N/A';
+
+      const lines: string[] = [
+        `/${sepLine}`,
+        ` * 📌 REQUEST #${reqNum} Starts [${method}] [${statusStr}] [${durationStr}]${
+          includeTimestamps ? ` - ${dt}` : ''
+        }`,
+        ` ${sepLine}/`,
+      ];
+
+      lines.push(`🌐 URL:        ${l.url || 'N/A'}`);
+      lines.push(`📌 Method:     ${method}`);
+      lines.push(`📊 Status:     ${statusStr}`);
+      lines.push(`⏱️ Duration:   ${durationStr}`);
+      if (includeTimestamps) {
+        lines.push(`🕒 Time:       ${dt}`);
+      }
+      if (l.client) {
+        lines.push(`🔌 Client:     ${l.client.toUpperCase()}`);
+      }
+
+      if (
+        includeRequestHeaders &&
+        l.requestHeaders &&
+        Object.keys(l.requestHeaders).length > 0
+      ) {
+        lines.push('');
+        lines.push('📋 Request Headers:');
+        lines.push(safeStringify(l.requestHeaders));
+      }
+
+      if (includeRequestBody && l.request != null && l.request !== '') {
+        lines.push('');
+        lines.push('📝 Request Body:');
+        lines.push(safeStringify(l.request));
+      }
+
+      if (
+        includeResponseHeaders &&
+        l.responseHeaders &&
+        Object.keys(l.responseHeaders).length > 0
+      ) {
+        lines.push('');
+        lines.push('📑 Response Headers:');
+        lines.push(safeStringify(l.responseHeaders));
+      }
+
+      if (includeResponseBody && l.response != null && l.response !== '') {
+        lines.push('');
+        lines.push('📥 Response Data:');
+        lines.push(safeStringify(l.response));
+      }
+
+      if (includeCurlCommand) {
+        const curlCmd = getCurlCommand(l);
+        if (curlCmd) {
+          lines.push('');
+          lines.push('💻 cURL Command:');
+          lines.push(curlCmd);
+        }
+      }
+
+      lines.push('');
+      lines.push(`/${sepLine}`);
+      lines.push(` * 🏁 REQUEST #${reqNum} Ends`);
+      lines.push(` ${sepLine}/`);
+
+      return lines.join('\n');
+    })
+    .join('\n\n');
+
+  const footer = includeAppInfo
+    ? [
+        '',
+        `/${sepLine}`,
+        ' * 🏁 END OF API NETWORK LOGS EXPORT',
+        ` ${sepLine}/`,
+      ].join('\n')
+    : '';
+
+  return `${headerLines.join('\n')}${body}${footer}`;
+}
+
+/**
+ * Rapid byte size estimator for selected network logs and export format before full string export.
+ */
+export function estimateNetworkLogsExportSize(
+  logs: NetworkLog[],
+  format: NetworkLogExportFormat = 'txt',
+  options: NetworkLogExportOptions = DEFAULT_NETWORK_EXPORT_OPTIONS,
+): number {
+  if (!logs || logs.length === 0) return 0;
+  const sampleCount = Math.min(logs.length, 10);
+  const sampleLogs = logs.slice(0, sampleCount);
+  const sampleOutput = formatNetworkLogsExport(sampleLogs, format, options);
+  const avgBytesPerLog = sampleOutput.length / sampleCount;
+  return Math.round(avgBytesPerLog * logs.length);
+}
+
+/**
+ * Triggers native share sheet for exported network logs.
+ */
+export async function shareNetworkLogs(
+  logs: NetworkLog[],
+  format: NetworkLogExportFormat = 'txt',
+  options: NetworkLogExportOptions = DEFAULT_NETWORK_EXPORT_OPTIONS,
+  customTitle?: string,
+): Promise<void> {
+  const content = formatNetworkLogsExport(logs, format, options);
+  const filename = generateNetworkLogsFilename(format);
+  const title = customTitle || filename;
+  await triggerNativeShare(title, content, filename);
 }
 
