@@ -3512,7 +3512,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                           setVideoTrimEndMs(Math.min(maxDur, 3000));
                         }}
                         style={previewStyles.modeChip}>
-                        <Text style={previewStyles.modeChipText}>First 3s</Text>
+                        <Text style={previewStyles.modeChipText}>{t('media.first3s', 'First 3s')}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
@@ -3523,7 +3523,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                           setVideoTrimEndMs(Math.min(maxDur, 5000));
                         }}
                         style={previewStyles.modeChip}>
-                        <Text style={previewStyles.modeChipText}>First 5s</Text>
+                        <Text style={previewStyles.modeChipText}>{t('media.first5s', 'First 5s')}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
@@ -3534,7 +3534,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                           setVideoTrimEndMs(Math.min(maxDur, 10000));
                         }}
                         style={previewStyles.modeChip}>
-                        <Text style={previewStyles.modeChipText}>First 10s</Text>
+                        <Text style={previewStyles.modeChipText}>{t('media.first10s', 'First 10s')}</Text>
                       </TouchableOpacity>
 
                       <View style={previewStyles.subDivider} />
@@ -3542,7 +3542,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                       <TouchableOpacity
                         onPress={handleSave}
                         style={previewStyles.applyActionBtn}>
-                        <Text style={previewStyles.applyActionText}>Apply Trim</Text>
+                        <Text style={previewStyles.applyActionText}>{t('media.applyTrim', 'Apply Trim')}</Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
@@ -3610,7 +3610,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                       <TouchableOpacity
                         onPress={handleMuteVideo}
                         style={previewStyles.applyActionBtn}>
-                        <Text style={previewStyles.applyActionText}>Strip Audio</Text>
+                        <Text style={previewStyles.applyActionText}>{t('media.stripAudio', 'Strip Audio')}</Text>
                       </TouchableOpacity>
                     </>
                   ) : activeTool === 'speed' ? (
@@ -3725,7 +3725,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                         onPress={handlePlayVideo}
                         style={previewStyles.modeChipActive}>
                         <PlayIcon size={14} color={AppColors.white} />
-                        <Text style={previewStyles.modeChipTextActive}>Play Video</Text>
+                        <Text style={previewStyles.modeChipTextActive}>{t('media.playVideo', 'Play Video')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
@@ -3734,7 +3734,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                         }}
                         style={previewStyles.modeChip}>
                         <ScissorsIcon size={14} color="rgba(255,255,255,0.7)" />
-                        <Text style={previewStyles.modeChipText}>Trim Clip</Text>
+                        <Text style={previewStyles.modeChipText}>{t('media.trimClip', 'Trim Clip')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
@@ -3752,7 +3752,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                         }}
                         style={previewStyles.modeChip}>
                         <ZapIcon size={14} color="rgba(255,255,255,0.7)" />
-                        <Text style={previewStyles.modeChipText}>Speed</Text>
+                        <Text style={previewStyles.modeChipText}>{t('media.speed', 'Speed')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
@@ -3761,7 +3761,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                         }}
                         style={previewStyles.modeChip}>
                         <GifIcon size={14} color="rgba(255,255,255,0.7)" />
-                        <Text style={previewStyles.modeChipText}>Export GIF</Text>
+                        <Text style={previewStyles.modeChipText}>{t('media.exportGif', 'Export GIF')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => {
@@ -3770,7 +3770,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                         }}
                         style={previewStyles.modeChip}>
                         <CameraRollIcon size={14} color="rgba(255,255,255,0.7)" />
-                        <Text style={previewStyles.modeChipText}>Snapshot</Text>
+                        <Text style={previewStyles.modeChipText}>{t('media.snapshot', 'Snapshot')}</Text>
                       </TouchableOpacity>
                     </>
                   )
@@ -4240,7 +4240,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                       }}
                       style={previewStyles.modeChip}>
                       <RotateIcon size={13} color="rgba(255,255,255,0.8)" />
-                      <Text style={previewStyles.modeChipText}>Rotate 90°</Text>
+                      <Text style={previewStyles.modeChipText}>{t('media.rotate90', 'Rotate 90°')}</Text>
                     </TouchableOpacity>
                     {/* Flip H */}
                     <TouchableOpacity
@@ -4333,7 +4333,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                     <TouchableOpacity
                       onPress={() => handleOpenTextModal()}
                       style={previewStyles.modeChipActive}>
-                      <Text style={previewStyles.modeChipTextActive}>+ Custom Note</Text>
+                      <Text style={previewStyles.modeChipTextActive}>{t('media.customNote', '+ Custom Note')}</Text>
                     </TouchableOpacity>
 
                     <View style={previewStyles.subDivider} />
@@ -4428,7 +4428,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                       }}
                       style={previewStyles.modeChip}>
                       <PenIcon size={14} color="rgba(255,255,255,0.7)" />
-                      <Text style={previewStyles.modeChipText}>Markup</Text>
+                      <Text style={previewStyles.modeChipText}>{t('media.markup', 'Markup')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
@@ -4444,7 +4444,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                       }}
                       style={previewStyles.modeChip}>
                       <CropIcon size={14} color="rgba(255,255,255,0.7)" />
-                      <Text style={previewStyles.modeChipText}>Crop</Text>
+                      <Text style={previewStyles.modeChipText}>{t('media.crop', 'Crop')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
@@ -4453,7 +4453,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                       }}
                       style={previewStyles.modeChip}>
                       <SunAdjustIcon size={14} color="rgba(255,255,255,0.7)" />
-                      <Text style={previewStyles.modeChipText}>Adjust</Text>
+                      <Text style={previewStyles.modeChipText}>{t('media.adjust', 'Adjust')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => {
@@ -4468,7 +4468,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
                       }}
                       style={previewStyles.modeChip}>
                       <TypeIcon size={14} color="rgba(255,255,255,0.7)" />
-                      <Text style={previewStyles.modeChipText}>Add Text</Text>
+                      <Text style={previewStyles.modeChipText}>{t('media.addText', 'Add Text')}</Text>
                     </TouchableOpacity>
                   </>
                 )}
@@ -4542,7 +4542,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
             </Text>
             <TextInput
               style={previewStyles.textModalInput}
-              placeholder="e.g. Defect: Button overlap"
+              placeholder={t('media.textPlaceholder', 'e.g. Defect: Button overlap')}
               placeholderTextColor="rgba(255,255,255,0.4)"
               value={inputNoteText}
               onChangeText={setInputNoteText}
@@ -4558,7 +4558,7 @@ export const MediaPreviewModal: React.FC<MediaPreviewModalProps> = ({
               <TouchableOpacity
                 onPress={handleSaveTextNote}
                 style={previewStyles.modalConfirmBtn}>
-                <Text style={previewStyles.modalConfirmText}>Place Text</Text>
+                <Text style={previewStyles.modalConfirmText}>{t('media.placeText', 'Place Text')}</Text>
               </TouchableOpacity>
             </View>
           </View>

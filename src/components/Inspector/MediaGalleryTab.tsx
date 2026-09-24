@@ -698,7 +698,7 @@ export const MediaGalleryTab: React.FC = () => {
             style={galleryStyles.stopRecordBtn}
             activeOpacity={0.8}>
             <View style={galleryStyles.stopSquare} />
-            <Text style={galleryStyles.stopRecordBtnText}>Stop & Save</Text>
+            <Text style={galleryStyles.stopRecordBtnText}>{t('media.stopAndSave', 'Stop & Save')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -958,13 +958,13 @@ export const MediaGalleryTab: React.FC = () => {
             {/* Micro Feature Highlights Footer */}
             <View style={galleryStyles.featurePillsRow}>
               <View style={galleryStyles.featurePill}>
-                <Text style={galleryStyles.featurePillText}>⚡ Zero Overhead</Text>
+                <Text style={galleryStyles.featurePillText}>{t('media.zeroOverhead', '⚡ Zero Overhead')}</Text>
               </View>
               <View style={galleryStyles.featurePill}>
-                <Text style={galleryStyles.featurePillText}>✂️ Crop & Annotate</Text>
+                <Text style={galleryStyles.featurePillText}>{t('media.cropAndAnnotate', '✂️ Crop & Annotate')}</Text>
               </View>
               <View style={galleryStyles.featurePill}>
-                <Text style={galleryStyles.featurePillText}>🎞️ Convert to GIF</Text>
+                <Text style={galleryStyles.featurePillText}>{t('media.convertToGif', '🎞️ Convert to GIF')}</Text>
               </View>
             </View>
           </View>

@@ -94,13 +94,13 @@ export const SupportPage: React.FC<SupportPageProps> = () => {
           {/* Quick Pill Badges */}
           <View style={styles.pillRow}>
             <View style={styles.pillBadge}>
-              <Text style={styles.pillBadgeText}>MIT LICENSE</Text>
+              <Text style={styles.pillBadgeText}>{t('support.mitLicense', 'MIT LICENSE')}</Text>
             </View>
             <View style={styles.pillBadge}>
-              <Text style={styles.pillBadgeText}>ZERO CONFIG</Text>
+              <Text style={styles.pillBadgeText}>{t('support.zeroConfig', 'ZERO CONFIG')}</Text>
             </View>
             <View style={styles.pillBadge}>
-              <Text style={styles.pillBadgeText}>FABRIC & TURBO</Text>
+              <Text style={styles.pillBadgeText}>{t('support.fabricTurbo', 'FABRIC & TURBO')}</Text>
             </View>
           </View>
         </View>
@@ -185,7 +185,7 @@ export const SupportPage: React.FC<SupportPageProps> = () => {
                     {t('support.star', 'Star on GitHub')}
                   </Text>
                   <View style={styles.badgeAmber}>
-                    <Text style={styles.badgeAmberText}>RECOMMENDED</Text>
+                    <Text style={styles.badgeAmberText}>{t('support.recommended', 'RECOMMENDED')}</Text>
                   </View>
                 </View>
                 <Text style={styles.itemDesc}>
@@ -323,7 +323,7 @@ export const SupportPage: React.FC<SupportPageProps> = () => {
             <View style={styles.authorTextCol}>
               <Text style={styles.authorName}>Vengateswaran Balakrishnan</Text>
               <Text style={styles.authorRole}>
-                Creator & Core Maintainer • @vengatmacuser
+                {t('support.creatorMaintainer', 'Creator & Core Maintainer • @vengatmacuser')}
               </Text>
               <Text style={styles.authorEmail}>vengatmacuser@gmail.com</Text>
             </View>

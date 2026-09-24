@@ -881,7 +881,7 @@ const ReduxDetail = React.memo(() => {
                   onPress={handleClearPersistence}>
                   <TrashIcon color={AppColors.errorColor} size={14} />
                   <Text style={reduxDetailStyles.clearPersistText}>
-                    Clear Persisted Storage For This Slice
+                    {t('redux.clearPersistedStorageSlice', 'Clear Persisted Storage For This Slice')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -935,11 +935,10 @@ const ReduxDetail = React.memo(() => {
               <View style={reduxDetailStyles.emptyBox}>
                 <StorageIcon color={AppColors.grayTextWeak} size={32} />
                 <Text style={reduxDetailStyles.emptyBoxTitle}>
-                  Not Persisted in Storage
+                  {t('redux.notPersistedInStorage', 'Not Persisted in Storage')}
                 </Text>
                 <Text style={reduxDetailStyles.emptyBoxText}>
-                  This slice is not stored in AsyncStorage or redux-persist.
-                  State exists purely in active JavaScript memory.
+                  {t('redux.notPersistedDesc', 'This slice is not stored in AsyncStorage or redux-persist. State exists purely in active JavaScript memory.')}
                 </Text>
               </View>
             )}
@@ -1201,7 +1200,7 @@ const ReduxDetail = React.memo(() => {
                     fontSize: 8.5,
                     color: AppColors.sky600,
                   }}>
-                  Open in Editor
+                  {t('redux.openInEditor', 'Open in Editor')}
                 </Text>
               </Pressable>
             </View>
@@ -1230,7 +1229,7 @@ const ReduxDetail = React.memo(() => {
             ) : (
               <View style={reduxDetailStyles.emptyBox}>
                 <Text style={reduxDetailStyles.emptyBoxText}>
-                  This action has no payload dispatched.
+                  {t('redux.actionNoPayload', 'This action has no payload dispatched.')}
                 </Text>
               </View>
             )}
@@ -1261,7 +1260,7 @@ const ReduxDetail = React.memo(() => {
                   borderColor: AppColors.dividerColor,
                 }}>
                 <Text style={reduxDetailStyles.expandedSectionTitle}>
-                  Dispatched from call stack:
+                  {t('redux.dispatchedFromCallStack', 'Dispatched from call stack:')}
                 </Text>
                 {selectedReduxAction.stack
                   .split('\n')
@@ -1335,7 +1334,7 @@ const ReduxDetail = React.memo(() => {
             ) : (
               <View style={reduxDetailStyles.emptyBox}>
                 <Text style={reduxDetailStyles.emptyBoxText}>
-                  No call stack trace captured for this action.
+                  {t('redux.noCallStackCaptured', 'No call stack trace captured for this action.')}
                 </Text>
               </View>
             )}
@@ -1358,11 +1357,10 @@ const ReduxDetail = React.memo(() => {
     <View style={reduxDetailStyles.emptyBox}>
       <TerminalIcon color={AppColors.purple} size={32} />
       <Text style={reduxDetailStyles.emptyBoxTitle}>
-        No Redux Slice Selected
+        {t('redux.noSliceSelected', 'No Redux Slice Selected')}
       </Text>
       <Text style={reduxDetailStyles.emptyBoxText}>
-        Select a slice from the Redux tab to inspect its state and dispatched
-        actions.
+        {t('redux.selectSlicePrompt', 'Select a slice from the Redux tab to inspect its state and dispatched actions.')}
       </Text>
     </View>
   );

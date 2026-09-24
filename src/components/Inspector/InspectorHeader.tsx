@@ -483,7 +483,7 @@ const InspectorHeader = React.memo(() => {
                     }}
                     numberOfLines={1}
                     ellipsizeMode="tail">
-                    Package info, runtime specs & diagnostic payload
+                    {t('common.aboutSpecsSubtitle', 'Package info, runtime specs & diagnostic payload')}
                   </Text>
                 </View>
               ) : isSettingsView ? (

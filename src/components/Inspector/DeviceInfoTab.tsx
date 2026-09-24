@@ -687,13 +687,13 @@ export const DeviceInfoTab = React.memo(() => {
                 </View>
                 <View style={{flex: 1, minWidth: 0}}>
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
-                    <Text style={styles.featuredUuidLabel}>DEVICE UUID</Text>
+                    <Text style={styles.featuredUuidLabel}>{t('device.deviceUuid', 'DEVICE UUID')}</Text>
                     <View style={styles.featuredBadge}>
                       <Text style={styles.featuredBadgeText}>FEATURED</Text>
                     </View>
                   </View>
                   <Text style={styles.featuredUuidSubtext}>
-                    Deterministic hardware pseudo-identifier
+                    {t('device.pseudoIdentifierDesc', 'Deterministic hardware pseudo-identifier')}
                   </Text>
                 </View>
               </View>

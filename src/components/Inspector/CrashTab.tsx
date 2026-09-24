@@ -663,7 +663,7 @@ const CrashTab = React.memo(() => {
                   fontSize: 11.5,
                   color: AppColors.white,
                 }}>
-                Clear Search & Filters
+                {t('common.clearSearchFilters', 'Clear Search & Filters')}
               </Text>
             </TouchableScale>
           ) : (
@@ -676,7 +676,7 @@ const CrashTab = React.memo(() => {
                   letterSpacing: 0.6,
                   marginBottom: 10,
                 }}>
-                TEST CRASH SENTINEL
+                {t('crash.testCrashSentinel', 'TEST CRASH SENTINEL')}
               </Text>
               <View style={{flexDirection: 'row', gap: 7, flexWrap: 'wrap', justifyContent: 'center'}}>
                 <TouchableScale
@@ -694,7 +694,7 @@ const CrashTab = React.memo(() => {
                   }}>
                   <JsIcon size={11} color={AppColors.amber600} />
                   <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
-                    Simulate JS Crash
+                    {t('crash.simulateJsCrash', 'Simulate JS Crash')}
                   </Text>
                 </TouchableScale>
 
@@ -713,7 +713,7 @@ const CrashTab = React.memo(() => {
                   }}>
                   <ChipIcon size={11} color={AppColors.cyan600} />
                   <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
-                    Simulate Native Crash
+                    {t('crash.simulateNativeCrash', 'Simulate Native Crash')}
                   </Text>
                 </TouchableScale>
 
@@ -732,7 +732,7 @@ const CrashTab = React.memo(() => {
                   }}>
                   <HourglassIcon size={11} color={AppColors.orange600} />
                   <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
-                    Simulate Promise
+                    {t('crash.simulatePromise', 'Simulate Promise')}
                   </Text>
                 </TouchableScale>
 
@@ -751,7 +751,7 @@ const CrashTab = React.memo(() => {
                   }}>
                   <LayoutIcon size={11} color={AppColors.violet600} />
                   <Text style={{fontFamily: AppFonts.interBold, fontSize: 10.5, color: AppColors.primaryBlack}}>
-                    Simulate Render
+                    {t('crash.simulateRender', 'Simulate Render')}
                   </Text>
                 </TouchableScale>
               </View>

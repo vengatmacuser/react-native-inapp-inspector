@@ -306,7 +306,7 @@ export const DebuggingTab: React.FC = () => {
       style={styles.scrollArea}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}>
-      {/* ─── Hero Card: Multi-Device APK Installer ───────────────────── */}
+      {/* ─── Hero Card: {t('debugging.apkInstallerTitle', 'Multi-Device APK Installer')} ───────────────────── */}
       <View style={styles.heroCard}>
         <View style={styles.heroHeader}>
           <View style={styles.heroIconWrap}>
@@ -314,15 +314,15 @@ export const DebuggingTab: React.FC = () => {
           </View>
           <View style={{flex: 1, minWidth: 0}}>
             <Text style={styles.heroTitle} numberOfLines={1}>
-              Multi-Device APK Installer
+              {t('debugging.apkInstallerTitle', 'Multi-Device APK Installer')}
             </Text>
             <Text style={styles.heroSubtitle} numberOfLines={1}>
-              Scan QR code with another Android device to download
+              {t('debugging.apkInstallerSubtitle', 'Scan QR code with another Android device to download')}
             </Text>
           </View>
           <View style={styles.heroBadge}>
             <View style={styles.pulseDot} />
-            <Text style={styles.heroBadgeText}>Live Metro</Text>
+            <Text style={styles.heroBadgeText}>{t('debugging.liveMetro', 'Live Metro')}</Text>
           </View>
         </View>
 
@@ -367,7 +367,7 @@ export const DebuggingTab: React.FC = () => {
       {/* ─── Section Card: QR Code & Direct Download ─────────────────── */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>QR CODE & DIRECT DOWNLOAD</Text>
+          <Text style={styles.sectionTitle}>{t('debugging.qrCodeTitle', 'QR CODE & DIRECT DOWNLOAD')}</Text>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={fetchMetroTelemetry}
@@ -395,12 +395,12 @@ export const DebuggingTab: React.FC = () => {
         <View style={styles.sectionHeaderRow}>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
             <BoltIcon size={13} color={AppColors.purple} />
-            <Text style={styles.sectionTitle}>BUILD GENERATOR (GRADLE)</Text>
+            <Text style={styles.sectionTitle}>{t('debugging.buildGeneratorTitle', 'BUILD GENERATOR (GRADLE)')}</Text>
           </View>
           {buildStatus.status === 'completed' && (
             <View style={styles.completedBadge}>
               <CheckIcon size={10} color={AppColors.emerald500} />
-              <Text style={styles.completedBadgeText}>100% Ready</Text>
+              <Text style={styles.completedBadgeText}>{t('debugging.ready100', '100% Ready')}</Text>
             </View>
           )}
         </View>
@@ -432,7 +432,7 @@ export const DebuggingTab: React.FC = () => {
                   styles.subTabText,
                   selectedScheme === 'assembleRelease' && styles.subTabTextActive,
                 ]}>
-                Release (assembleRelease)
+                {t('debugging.releaseBuild', 'Release (assembleRelease)')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -462,7 +462,7 @@ export const DebuggingTab: React.FC = () => {
                   styles.subTabText,
                   selectedScheme === 'assembleDebug' && styles.subTabTextActive,
                 ]}>
-                Debug (assembleDebug)
+                {t('debugging.debugBuild', 'Debug (assembleDebug)')}
               </Text>
             </View>
           </TouchableOpacity>
@@ -485,7 +485,7 @@ export const DebuggingTab: React.FC = () => {
             {isCleanBuild && <CheckIcon size={11} color={AppColors.white} />}
           </View>
           <Text style={styles.cleanLabel}>
-            Clean build cache <Text style={styles.cleanCode}>(./gradlew clean)</Text>
+            Clean build cache <Text style={styles.cleanCode}>{t('debugging.cleanBuild', '(./gradlew clean)')}</Text>
           </Text>
         </TouchableOpacity>
 
@@ -537,7 +537,7 @@ export const DebuggingTab: React.FC = () => {
             <View style={styles.consoleHeaderRow}>
               <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                 <TerminalConsoleIcon color={AppColors.sky400} size={12} />
-                <Text style={styles.consoleHeaderTitle}>GRADLE VERBOSE OUTPUT</Text>
+                <Text style={styles.consoleHeaderTitle}>{t('debugging.gradleVerboseOutput', 'GRADLE VERBOSE OUTPUT')}</Text>
               </View>
               <TouchableOpacity
                 activeOpacity={0.7}
@@ -572,7 +572,7 @@ export const DebuggingTab: React.FC = () => {
                   })
                 ) : (
                   <Text style={styles.consoleLogPlaceholder}>
-                    Waiting for Gradle daemon output...
+                    {t('debugging.waitingForGradle', 'Waiting for Gradle daemon output...')}
                   </Text>
                 )}
               </ScrollView>
@@ -594,7 +594,7 @@ export const DebuggingTab: React.FC = () => {
               onPress={handleStopBuild}
               style={styles.stopBtn}>
               <CircleXIcon size={13} color={AppColors.white} />
-              <Text style={styles.stopBtnText}>Stop Build</Text>
+              <Text style={styles.stopBtnText}>{t('debugging.stopBuild', 'Stop Build')}</Text>
             </TouchableScale>
           </View>
         ) : (
@@ -615,7 +615,7 @@ export const DebuggingTab: React.FC = () => {
       <View style={styles.footerNoteRow}>
         <InfoCircleIcon size={13} color={AppColors.grayTextWeak} />
         <Text style={styles.footerNoteText}>
-          Ensure both Android devices are connected to the same Wi-Fi network.
+          {t('debugging.sameWifiNote', 'Ensure both Android devices are connected to the same Wi-Fi network.')}
         </Text>
       </View>
     </ScrollView>

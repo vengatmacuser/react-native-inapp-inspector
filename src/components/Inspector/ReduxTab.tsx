@@ -490,7 +490,7 @@ const ReduxTab = React.memo(() => {
                       <Text
                         style={reduxTabStyles.actionPreviewEmptyText}
                         numberOfLines={1}>
-                        Initial state (no actions dispatched yet)
+                        {t('redux.initialStateNoActions', 'Initial state (no actions dispatched yet)')}
                       </Text>
                     )}
                   </View>

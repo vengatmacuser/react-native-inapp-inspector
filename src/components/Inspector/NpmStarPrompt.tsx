@@ -12,6 +12,7 @@ import {
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import TouchableScale from '../TouchableScale';
+import {t} from '../../i18n';
 import {loadSettings, saveSettings} from '../../helpers/settingsStore';
 import {trackTelemetryEvent} from '../../helpers/telemetry';
 import {
@@ -270,30 +271,29 @@ export const NpmStarPrompt: React.FC = () => {
 
           {/* Pill Badge */}
           <View style={styles.pillBadge}>
-            <Text style={styles.pillBadgeText}>SUPPORT OPEN SOURCE</Text>
+            <Text style={styles.pillBadgeText}>{t('support.supportOpenSource', 'SUPPORT OPEN SOURCE')}</Text>
           </View>
 
           {/* Title & Description */}
-          <Text style={styles.title}>Enjoying In-App Inspector?</Text>
+          <Text style={styles.title}>{t('support.enjoyingTitle', 'Enjoying In-App Inspector?')}</Text>
           <Text style={styles.description}>
-            If this debugging tool saves you time, please consider giving us a
-            star on GitHub & npm. Your support helps us build more features!
+            {t('support.enjoyingSubtitle', 'If this debugging tool saves you time, please consider giving us a star on GitHub & npm. Your support helps us build more features!')}
           </Text>
 
           {/* Quick Metrics Bar */}
           <View style={styles.metricsBar}>
             <View style={styles.metricItem}>
               <GitHubIcon size={13} color={AppColors.grayText} />
-              <Text style={styles.metricText}>GitHub Star</Text>
+              <Text style={styles.metricText}>{t('support.githubStar', 'GitHub Star')}</Text>
             </View>
             <View style={styles.metricDot} />
             <View style={styles.metricItem}>
               <NpmIcon size={13} color={AppColors.npmRed} />
-              <Text style={styles.metricText}>npm Package</Text>
+              <Text style={styles.metricText}>{t('support.npmPackage', 'npm Package')}</Text>
             </View>
             <View style={styles.metricDot} />
             <View style={styles.metricItem}>
-              <Text style={styles.metricText}>100% Free</Text>
+              <Text style={styles.metricText}>{t('support.free100', '100% Free')}</Text>
             </View>
           </View>
 
@@ -306,7 +306,7 @@ export const NpmStarPrompt: React.FC = () => {
             style={styles.primaryButton}>
             <View style={styles.primaryButtonContent}>
               <StarIcon size={16} color={AppColors.white} />
-              <Text style={styles.primaryButtonText}>Star on GitHub & npm</Text>
+              <Text style={styles.primaryButtonText}>{t('support.starOnGithubNpm', 'Star on GitHub & npm')}</Text>
             </View>
           </TouchableScale>
 
@@ -319,7 +319,7 @@ export const NpmStarPrompt: React.FC = () => {
             style={styles.secondaryButton}>
             <View style={styles.secondaryButtonContent}>
               <CheckIcon size={13} color={AppColors.purple} />
-              <Text style={styles.secondaryButtonText}>I Already Starred</Text>
+              <Text style={styles.secondaryButtonText}>{t('support.alreadyStarred', 'I Already Starred')}</Text>
             </View>
           </TouchableScale>
 
@@ -328,7 +328,7 @@ export const NpmStarPrompt: React.FC = () => {
             <TouchableOpacity
               onPress={handleRemindLater}
               hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-              <Text style={styles.footerLinkText}>Remind Me Later</Text>
+              <Text style={styles.footerLinkText}>{t('support.remindMeLater', 'Remind Me Later')}</Text>
             </TouchableOpacity>
 
             <View style={styles.footerSeparator} />
@@ -336,7 +336,7 @@ export const NpmStarPrompt: React.FC = () => {
             <TouchableOpacity
               onPress={handleDontAskAgain}
               hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-              <Text style={styles.footerLinkTextMuted}>Don't Ask Again</Text>
+              <Text style={styles.footerLinkTextMuted}>{t('support.dontAskAgain', "Don't Ask Again")}</Text>
             </TouchableOpacity>
           </View>
         </Animated.View>

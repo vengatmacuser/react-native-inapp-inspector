@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {useInspector} from './InspectorContext';
 import {AnalyticsFilters} from '../../types';
+import {t} from '../../i18n';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {getEventCategory} from '../../helpers';
@@ -375,9 +376,9 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                 <FilterIcon color={AppColors.brandPurple} size={15} />
               </View>
               <View>
-                <Text style={styles.headerTitle}>Analytics Filters</Text>
+                <Text style={styles.headerTitle}>{t('analytics.filtersTitle', 'Analytics Filters')}</Text>
                 <Text style={styles.headerSubtitle}>
-                  GA4 Telemetry Dimensions & Metrics
+                  {t('analytics.filtersSubtitle', 'GA4 Telemetry Dimensions & Metrics')}
                 </Text>
               </View>
             </View>
@@ -387,7 +388,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                 onPress={handleResetDraft}
                 hitSlop={8}
                 style={styles.resetBtn}>
-                <Text style={styles.resetBtnText}>Reset All</Text>
+                <Text style={styles.resetBtnText}>{t('common.resetAll', 'Reset All')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -408,7 +409,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <ClockIcon color={AppColors.grayTextWeak} size={12} />
-                <Text style={styles.sectionTitle}>TIME HORIZON</Text>
+                <Text style={styles.sectionTitle}>{t('analytics.timeHorizon', 'TIME HORIZON')}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 {[
@@ -443,7 +444,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <TargetGoalIcon color={AppColors.grayTextWeak} size={12} />
-                <Text style={styles.sectionTitle}>EVENT CATEGORIES</Text>
+                <Text style={styles.sectionTitle}>{t('analytics.eventCategories', 'EVENT CATEGORIES')}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 <TouchableScale
@@ -460,7 +461,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       isAllCategories && styles.filterPillTextActive,
                     ]}>
-                    All Categories
+                    {t('analytics.allCategories', 'All Categories')}
                   </Text>
                 </TouchableScale>
 
@@ -485,7 +486,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.categories.has('ecommerce') &&
                         styles.filterPillTextActive,
                     ]}>
-                    Ecommerce
+                    {t('analytics.ecommerce', 'Ecommerce')}
                   </Text>
                 </TouchableScale>
 
@@ -510,7 +511,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.categories.has('page_view') &&
                         styles.filterPillTextActive,
                     ]}>
-                    Screens & Pages
+                    {t('analytics.screensAndPages', 'Screens & Pages')}
                   </Text>
                 </TouchableScale>
 
@@ -535,7 +536,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.categories.has('system') &&
                         styles.filterPillTextActive,
                     ]}>
-                    System & Lifecycle
+                    {t('analytics.systemAndLifecycle', 'System & Lifecycle')}
                   </Text>
                 </TouchableScale>
 
@@ -560,7 +561,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.categories.has('custom') &&
                         styles.filterPillTextActive,
                     ]}>
-                    Custom Events
+                    {t('analytics.customEvents', 'Custom Events')}
                   </Text>
                 </TouchableScale>
               </View>
@@ -570,9 +571,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <MoneyIcon color={AppColors.grayTextWeak} size={12} />
-                <Text style={styles.sectionTitle}>
-                  MONETIZATION & ATTRIBUTES
-                </Text>
+                <Text style={styles.sectionTitle}>{t('analytics.monetizationAttributes', 'MONETIZATION & ATTRIBUTES')}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 <TouchableScale
@@ -594,7 +593,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       draft.onlyConversions && styles.filterPillTextActive,
                     ]}>
-                    Conversion Events Only
+                    {t('analytics.conversionEventsOnly', 'Conversion Events Only')}
                   </Text>
                 </TouchableScale>
 
@@ -617,7 +616,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       draft.hasRevenue && styles.filterPillTextActive,
                     ]}>
-                    With Revenue (Value &gt; 0)
+                    {t('analytics.withRevenue', 'With Revenue (Value > 0)')}
                   </Text>
                 </TouchableScale>
 
@@ -640,7 +639,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       draft.hasItems && styles.filterPillTextActive,
                     ]}>
-                    With Items Payload
+                    {t('analytics.withItemsPayload', 'With Items Payload')}
                   </Text>
                 </TouchableScale>
 
@@ -663,7 +662,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       draft.hasUserProps && styles.filterPillTextActive,
                     ]}>
-                    With User Properties
+                    {t('analytics.withUserProperties', 'With User Properties')}
                   </Text>
                 </TouchableScale>
 
@@ -686,7 +685,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       draft.hasParams && styles.filterPillTextActive,
                     ]}>
-                    With Custom Params
+                    {t('analytics.withCustomParams', 'With Custom Params')}
                   </Text>
                 </TouchableScale>
 
@@ -709,7 +708,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       draft.onlyDuplicates && styles.filterPillTextActive,
                     ]}>
-                    Frequent Only (&gt; 1×)
+                    {t('analytics.frequentOnly', 'Frequent Only (> 1×)')}
                   </Text>
                 </TouchableScale>
               </View>
@@ -719,7 +718,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <UserIcon color={AppColors.grayTextWeak} size={12} />
-                <Text style={styles.sectionTitle}>USER IDENTIFICATION</Text>
+                <Text style={styles.sectionTitle}>{t('analytics.userIdentification', 'USER IDENTIFICATION')}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 <TouchableScale
@@ -736,7 +735,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       isAllUserTypes && styles.filterPillTextActive,
                     ]}>
-                    All Users
+                    {t('analytics.allUsers', 'All Users')}
                   </Text>
                 </TouchableScale>
 
@@ -761,7 +760,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.userTypes.has('identified') &&
                         styles.filterPillTextActive,
                     ]}>
-                    Identified (User ID)
+                    {t('analytics.identifiedUser', 'Identified (User ID)')}
                   </Text>
                 </TouchableScale>
 
@@ -786,7 +785,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.userTypes.has('anonymous') &&
                         styles.filterPillTextActive,
                     ]}>
-                    Anonymous
+                    {t('analytics.anonymousUser', 'Anonymous')}
                   </Text>
                 </TouchableScale>
               </View>
@@ -796,7 +795,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <BoltIcon color={AppColors.grayTextWeak} size={12} />
-                <Text style={styles.sectionTitle}>EVENT SOURCE</Text>
+                <Text style={styles.sectionTitle}>{t('analytics.eventSource', 'EVENT SOURCE')}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 <TouchableScale
@@ -813,7 +812,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       styles.filterPillText,
                       isAllSources && styles.filterPillTextActive,
                     ]}>
-                    All Sources
+                    {t('analytics.allSources', 'All Sources')}
                   </Text>
                 </TouchableScale>
 
@@ -830,7 +829,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.sources.has('firebase') &&
                         styles.filterPillTextActive,
                     ]}>
-                    Firebase / GA SDK
+                    {t('analytics.firebaseGaSdk', 'Firebase / GA SDK')}
                   </Text>
                 </TouchableScale>
 
@@ -847,7 +846,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.sources.has('manual') &&
                         styles.filterPillTextActive,
                     ]}>
-                    In-App Logger
+                    {t('analytics.inAppLogger', 'In-App Logger')}
                   </Text>
                 </TouchableScale>
               </View>
@@ -857,7 +856,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <CodeBracketsIcon color={AppColors.grayTextWeak} size={12} />
-                <Text style={styles.sectionTitle}>PAYLOAD COMPLEXITY</Text>
+                <Text style={styles.sectionTitle}>{t('analytics.payloadComplexity', 'PAYLOAD COMPLEXITY')}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 {[
@@ -933,7 +932,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <ClockIcon color={AppColors.grayTextWeak} size={12} />
-                <Text style={styles.sectionTitle}>SORT ORDER</Text>
+                <Text style={styles.sectionTitle}>{t('analytics.sortOrder', 'SORT ORDER')}</Text>
               </View>
               <View style={styles.chipsWrap}>
                 <TouchableScale
@@ -957,7 +956,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.sortBy === 'time_desc' &&
                         styles.filterPillTextActive,
                     ]}>
-                    Newest First (Default)
+                    {t('analytics.newestFirstDefault', 'Newest First (Default)')}
                   </Text>
                 </TouchableScale>
 
@@ -982,7 +981,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.sortBy === 'time_asc' &&
                         styles.filterPillTextActive,
                     ]}>
-                    Oldest First
+                    {t('analytics.oldestFirst', 'Oldest First')}
                   </Text>
                 </TouchableScale>
 
@@ -1007,7 +1006,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.sortBy === 'revenue_desc' &&
                         styles.filterPillTextActive,
                     ]}>
-                    Highest Revenue
+                    {t('analytics.highestRevenue', 'Highest Revenue')}
                   </Text>
                 </TouchableScale>
 
@@ -1032,7 +1031,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
                       draft.sortBy === 'count_desc' &&
                         styles.filterPillTextActive,
                     ]}>
-                    Most Frequent
+                    {t('analytics.mostFrequent', 'Most Frequent')}
                   </Text>
                 </TouchableScale>
               </View>
@@ -1045,7 +1044,7 @@ const AnalyticsFilterModal: React.FC<AnalyticsFilterModalProps> = ({
               onPress={handleDiscard}
               style={styles.discardBtn}
               activeOpacity={0.8}>
-              <Text style={styles.discardBtnText}>Discard</Text>
+              <Text style={styles.discardBtnText}>{t('common.discard', 'Discard')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

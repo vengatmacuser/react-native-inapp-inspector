@@ -1997,8 +1997,7 @@ const SettingsPanel = () => {
                         color: AppColors.grayText,
                         marginTop: 1,
                       }}>
-                      Show a floating toast banner with countdown progress when
-                      a newer release is published on npm.
+                      {t('settings.npmUpdateToastDesc', 'Show a floating toast banner with countdown progress when a newer release is published on npm.')}
                     </Text>
                   </View>
                 </View>
@@ -2117,8 +2116,7 @@ const SettingsPanel = () => {
                         color: AppColors.grayText,
                         marginTop: 1,
                       }}>
-                      Dynamically sets log limits according to available device
-                      memory
+                      {t('settings.autoCalculateLimitsRamDesc', 'Dynamically sets log limits according to available device memory')}
                     </Text>
                   </View>
                 </View>
@@ -2400,8 +2398,7 @@ const SettingsPanel = () => {
                       color: AppColors.grayText,
                       marginTop: 1,
                     }}>
-                    Automatically prunes in-memory buffers by 50% when the OS
-                    signals low memory
+                    {t('settings.osMemoryWarningGuardDesc', 'Automatically prunes in-memory buffers by 50% when the OS signals low memory')}
                   </Text>
                 </View>
                 <View

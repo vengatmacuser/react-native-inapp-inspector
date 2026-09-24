@@ -39,6 +39,7 @@ import {
   getDomainColor,
   getEventCategory,
   matchNetworkLogQuery,
+  scoreNetworkLogQuery,
   setupMemoryWarningHandler,
   isUrlHidden,
 } from './helpers';
@@ -1837,6 +1838,24 @@ const NetworkInspector = ({
           (b.response ? JSON.stringify(b.response).length : 0) +
           (b.request ? JSON.stringify(b.request).length : 0);
         return sizeB - sizeA;
+      });
+    } else if (search && search.trim().length > 0) {
+      // Relevance-First sorting: prioritize exact endpoint and URL hits over deep JSON body mentions
+      const scoreMap = new Map<string | number, number>();
+      for (const log of result) {
+        const routePath = logRouteMapRef.current.get(log.id)?.path || '';
+        const score = scoreNetworkLogQuery(log, search, routePath, {
+          scope: searchScope,
+          isRegex: isRegexSearch,
+          isCaseSensitive: isCaseSensitive,
+        });
+        scoreMap.set(log.id, score);
+      }
+      result = [...result].sort((a, b) => {
+        const scoreDiff =
+          (scoreMap.get(b.id) || 0) - (scoreMap.get(a.id) || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (b.startTime || 0) - (a.startTime || 0);
       });
     }
 

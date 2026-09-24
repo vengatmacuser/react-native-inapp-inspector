@@ -925,19 +925,19 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
               {/* Metadata Details Card */}
               <View style={styles.fileDetailsCard}>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>📁 File:</Text>
+                  <Text style={styles.fileDetailLabel}>📁 {t('console.exportFileLabel', 'File:')}</Text>
                   <Text style={styles.fileDetailValue} numberOfLines={1}>
                     {exportedFilename}
                   </Text>
                 </View>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>📊 Log Count:</Text>
+                  <Text style={styles.fileDetailLabel}>📊 {t('console.exportLogCountLabel', 'Log Count:')}</Text>
                   <Text style={styles.fileDetailValue}>
                     {selectedLogs.length} logs
                   </Text>
                 </View>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>💾 Final Size:</Text>
+                  <Text style={styles.fileDetailLabel}>💾 {t('console.exportFinalSizeLabel', 'Final Size:')}</Text>
                   <Text
                     style={[
                       styles.fileDetailValue,
@@ -950,7 +950,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
                   </Text>
                 </View>
                 <View style={styles.fileDetailsRow}>
-                  <Text style={styles.fileDetailLabel}>⚙️ Format:</Text>
+                  <Text style={styles.fileDetailLabel}>⚙️ {t('console.exportFormatLabel', 'Format:')}</Text>
                   <Text style={styles.fileDetailValue}>
                     .{format.toUpperCase()}
                   </Text>
