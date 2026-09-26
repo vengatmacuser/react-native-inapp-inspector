@@ -3322,6 +3322,8 @@ export {
 export {
   getNativeDeviceMetrics,
   enableNativeCrashProtection,
+  getLastNativeCrash,
+  clearLastNativeCrash,
   subscribeNativeCrashes,
   showNativeFloatingButton,
   hideNativeFloatingButton,

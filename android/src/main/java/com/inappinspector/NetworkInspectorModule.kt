@@ -268,6 +268,43 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     }
 
     @ReactMethod
+    fun getLastNativeCrash(promise: Promise) {
+        try {
+            val crashFile = File(getCapturesDirectory(), "last_native_crash.json")
+            if (crashFile.exists()) {
+                val jsonStr = crashFile.readText(Charsets.UTF_8)
+                val jsonObj = org.json.JSONObject(jsonStr)
+                val map = Arguments.createMap().apply {
+                    putString("platform", jsonObj.optString("platform", "android"))
+                    putString("error", jsonObj.optString("error", ""))
+                    putString("name", jsonObj.optString("name", ""))
+                    putString("stack", jsonObj.optString("stack", ""))
+                    putString("threadName", jsonObj.optString("threadName", ""))
+                    putDouble("timestamp", jsonObj.optDouble("timestamp", 0.0))
+                }
+                promise.resolve(map)
+            } else {
+                promise.resolve(null)
+            }
+        } catch (e: Exception) {
+            promise.reject("GET_CRASH_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
+    fun clearLastNativeCrash(promise: Promise) {
+        try {
+            val crashFile = File(getCapturesDirectory(), "last_native_crash.json")
+            if (crashFile.exists()) {
+                crashFile.delete()
+            }
+            promise.resolve(true)
+        } catch (e: Exception) {
+            promise.reject("CLEAR_CRASH_ERROR", e.message, e)
+        }
+    }
+
+    @ReactMethod
     fun getDeviceMetrics(promise: Promise) {
         try {
             val map = Arguments.createMap()
@@ -848,7 +885,25 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     }
 
     private fun getActiveWindow(): Window? {
-        return reactContext.currentActivity?.window
+        val activity = reactContext.currentActivity
+        if (activity == null || activity.isFinishing || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed)) {
+            return null
+        }
+        return activity.window
+    }
+
+    private fun getOrCreateCaptureHandler(): Handler {
+        synchronized(this) {
+            val handler = captureBackgroundHandler
+            if (handler != null && captureHandlerThread?.isAlive == true) {
+                return handler
+            }
+            val thread = HandlerThread("InAppInspector-PixelCopy").apply { start() }
+            captureHandlerThread = thread
+            val newHandler = Handler(thread.looper)
+            captureBackgroundHandler = newHandler
+            return newHandler
+        }
     }
 
     private fun captureWindowBitmap(window: Window?, scale: Float, callback: (Bitmap?) -> Unit) {
@@ -870,7 +925,7 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val destBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-                    val copyHandler = captureBackgroundHandler ?: mainHandler
+                    val copyHandler = getOrCreateCaptureHandler()
                     try {
                         val srcRect = if (decorView.width > 0 && decorView.height > 0) {
                             android.graphics.Rect(0, 0, decorView.width, decorView.height)
@@ -2319,10 +2374,24 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
     override fun invalidate() {
         super.invalidate()
         try {
+            reactContext.removeActivityEventListener(activityEventListener)
             sensorManager?.unregisterListener(shakeListener)
             if (isFpsMonitoring) {
                 isFpsMonitoring = false
                 android.view.Choreographer.getInstance().removeFrameCallback(frameCallback)
+            }
+            if (isRecordingVideo) {
+                isRecordingVideo = false
+                recordingTimer?.cancel()
+                recordingTimer = null
+                isFrameCapturing.set(false)
+            }
+            captureHandlerThread?.quitSafely()
+            captureHandlerThread = null
+            captureBackgroundHandler = null
+            synchronized(recordedFrames) {
+                recordedFrames.forEach { it.recycle() }
+                recordedFrames.clear()
             }
             floatingButton?.let { btn ->
                 val parent = btn.parent as? android.view.ViewGroup

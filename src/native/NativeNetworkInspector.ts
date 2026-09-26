@@ -3,6 +3,8 @@ import {TurboModuleRegistry} from 'react-native';
 
 export interface Spec extends TurboModule {
   enableNativeCrashProtection(): Promise<boolean>;
+  getLastNativeCrash(): Promise<Object | null>;
+  clearLastNativeCrash(): Promise<boolean>;
   getDeviceMetrics(): Promise<Object>;
   showFloatingButton(options: Object): Promise<boolean>;
   hideFloatingButton(): Promise<boolean>;

@@ -902,6 +902,41 @@ RCT_EXPORT_METHOD(enableNativeCrashProtection:(RCTPromiseResolveBlock)resolve
     resolve(@(YES));
 }
 
+RCT_EXPORT_METHOD(getLastNativeCrash:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    @try {
+        NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+        NSString *crashFile = [[cacheDir stringByAppendingPathComponent:@"inspector_captures"] stringByAppendingPathComponent:@"last_native_crash.json"];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:crashFile]) {
+            NSData *data = [NSData dataWithContentsOfFile:crashFile];
+            if (data) {
+                NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+                if (json) {
+                    resolve(json);
+                    return;
+                }
+            }
+        }
+        resolve([NSNull null]);
+    } @catch (NSException *e) {
+        reject(@"GET_CRASH_ERROR", e.reason, nil);
+    }
+}
+
+RCT_EXPORT_METHOD(clearLastNativeCrash:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+    @try {
+        NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+        NSString *crashFile = [[cacheDir stringByAppendingPathComponent:@"inspector_captures"] stringByAppendingPathComponent:@"last_native_crash.json"];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:crashFile]) {
+            [[NSFileManager defaultManager] removeItemAtPath:crashFile error:nil];
+        }
+        resolve(@(YES));
+    } @catch (NSException *e) {
+        reject(@"CLEAR_CRASH_ERROR", e.reason, nil);
+    }
+}
+
 RCT_EXPORT_METHOD(getDeviceMetrics:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     NSMutableDictionary *metrics = [NSMutableDictionary dictionary];
@@ -1425,7 +1460,7 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
 
     BOOL drewAny = NO;
     for (UIWindow *w in sortedWindows) {
-        if (w.hidden || w.alpha <= 0.01 || w.bounds.size.width <= 0) continue;
+        if (w.hidden || w.alpha <= 0.01 || w.bounds.size.width <= 0 || IsInternalSystemWindow(w)) continue;
         @try {
             BOOL ok = [w drawViewHierarchyInRect:w.bounds afterScreenUpdates:NO];
             if (ok) {
@@ -2939,6 +2974,25 @@ RCT_EXPORT_METHOD(shareFile:(NSString *)filePath
             [rootVC presentViewController:activityVC animated:YES completion:nil];
         } @catch (NSException *e) {
             reject(@"SHARE_ERROR", e.reason, nil);
+        }
+    });
+- (void)invalidate {
+    [super invalidate];
+    hasListeners = NO;
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self->displayLink != nil) {
+            [self->displayLink invalidate];
+            self->displayLink = nil;
+        }
+        if (self->_softwareRecordingTimerSource) {
+            dispatch_source_cancel(self->_softwareRecordingTimerSource);
+            self->_softwareRecordingTimerSource = nil;
+        }
+        if (floatingButtonView != nil) {
+            [floatingButtonView removeFromSuperview];
+            floatingButtonView = nil;
         }
     });
 }

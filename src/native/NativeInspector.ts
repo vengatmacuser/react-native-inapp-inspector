@@ -126,6 +126,36 @@ export const subscribeNativeCrashes = (
   };
 };
 
+/**
+ * Retrieves the recorded crash log from the last fatal native exception (if any).
+ */
+export const getLastNativeCrash = async (): Promise<NativeCrashEvent | null> => {
+  if (!NativeModule || !NativeModule.getLastNativeCrash) {
+    return null;
+  }
+  try {
+    const crash = await NativeModule.getLastNativeCrash();
+    return (crash as NativeCrashEvent) || null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Clears the persisted native crash record from local cache storage.
+ */
+export const clearLastNativeCrash = async (): Promise<boolean> => {
+  if (!NativeModule || !NativeModule.clearLastNativeCrash) {
+    return false;
+  }
+  try {
+    const result = await NativeModule.clearLastNativeCrash();
+    return !!result;
+  } catch {
+    return false;
+  }
+};
+
 export interface FloatingButtonOptions {
   size?: number;
   x?: number;
