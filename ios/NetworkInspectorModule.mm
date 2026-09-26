@@ -10,6 +10,11 @@
 #import <CoreImage/CoreImage.h>
 #import <ImageIO/ImageIO.h>
 #import <MobileCoreServices/MobileCoreServices.h>
+#import <Photos/Photos.h>
+#import <PhotosUI/PhotosUI.h>
+#if __has_include(<UniformTypeIdentifiers/UniformTypeIdentifiers.h>)
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#endif
 
 static NetworkInspectorModule *sharedInstance = nil;
 static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
@@ -329,11 +334,11 @@ static void NativeSignalHandler(int signalNumber) {
 
     NSMutableArray *backtraceArray = [NSMutableArray arrayWithCapacity:frames];
     for (int i = 0; i < frames; i++) {
-        if (strs[i]) {
+        if (strs && strs[i]) {
             [backtraceArray addObject:[NSString stringWithUTF8String:strs[i]]];
         }
     }
-    free(strs);
+    if (strs) free(strs);
 
     NSString *stackTrace = [backtraceArray componentsJoinedByString:@"\n"];
     NSString *signalName = @"UNKNOWN";
@@ -362,35 +367,33 @@ static void NativeExceptionHandler(NSException *exception) {
         [sharedInstance emitCrashEventWithMessage:message stackTrace:stackTrace];
     }
 
-    // Give the crash event a brief window to emit (up to 3 seconds),
-    // then delegate to the previous handler instead of freezing the UI forever.
-    // The old infinite-runloop approach permanently froze the main thread on any
-    // exception (including Fabric view recycling assertions), causing blank screens.
-    CFRunLoopRef runLoop = CFRunLoopGetCurrent();
-    CFArrayRef allModes = CFRunLoopCopyAllModes(runLoop);
-    NSTimeInterval deadline = [NSDate timeIntervalSinceReferenceDate] + 3.0;
-    while ([NSDate timeIntervalSinceReferenceDate] < deadline) {
-        for (NSString *mode in (__bridge NSArray *)allModes) {
-            CFRunLoopRunInMode((CFStringRef)mode, 0.001, false);
-        }
-    }
-    if (allModes) {
-        CFRelease(allModes);
-    }
+    // Save crash record to local cache directory synchronously for persistent debugging
+    @try {
+        NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) firstObject];
+        NSString *crashDir = [cacheDir stringByAppendingPathComponent:@"inspector_captures"];
+        [[NSFileManager defaultManager] createDirectoryAtPath:crashDir withIntermediateDirectories:YES attributes:nil error:nil];
+        NSString *crashFile = [crashDir stringByAppendingPathComponent:@"last_native_crash.json"];
+        NSDictionary *crashDict = @{
+            @"platform": @"ios",
+            @"message": message ?: @"Unknown iOS Exception",
+            @"name": [exception name] ?: @"NSException",
+            @"reason": [exception reason] ?: @"",
+            @"stack": stackTrace ?: @"",
+            @"timestamp": @([[NSDate date] timeIntervalSince1970] * 1000)
+        };
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:crashDict options:NSJSONWritingPrettyPrinted error:nil];
+        [jsonData writeToFile:crashFile atomically:YES];
+    } @catch (NSException *e) {}
 
-    // Delegate to the previous exception handler (e.g. React Native's own handler)
+    // Delegate to previous exception handler (React Native / Crashlytics / default)
     if (previousUncaughtExceptionHandler) {
         previousUncaughtExceptionHandler(exception);
     }
 }
 
 // ─── Fabric View Recycle Safeguard ───────────────────────────────────────────
-// Custom NSAssertionHandler that catches the specific Fabric view recycling
-// assertion ('Attempt to recycle a mounted view') and logs it as a warning
-// instead of crashing. This prevents third-party native views (like
-// BVLinearGradient from react-native-linear-gradient) from causing fatal
-// assertion failures when Fabric's view recycler encounters views whose
-// superview is still attached during conditional unmounting.
+// Custom NSAssertionHandler that catches Fabric view recycling and mounted view assertions
+// and logs them as warnings instead of crashing.
 
 @interface InAppInspectorAssertionHandler : NSAssertionHandler
 @property (nonatomic, strong) NSAssertionHandler *previousHandler;
@@ -402,6 +405,10 @@ static void NativeExceptionHandler(NSException *exception) {
     NSThread *mainThread = [NSThread mainThread];
     NSMutableDictionary *threadDict = [mainThread threadDictionary];
     NSAssertionHandler *current = threadDict[NSAssertionHandlerKey];
+
+    if ([current isKindOfClass:[InAppInspectorAssertionHandler class]]) {
+        return;
+    }
 
     InAppInspectorAssertionHandler *handler = [[InAppInspectorAssertionHandler alloc] init];
     handler.previousHandler = current;
@@ -416,30 +423,30 @@ static void NativeExceptionHandler(NSException *exception) {
                   description:(NSString *)format, ... {
     va_list args;
     va_start(args, format);
-    NSString *desc = [[NSString alloc] initWithFormat:format arguments:args];
+    NSString *desc = format ? [[NSString alloc] initWithFormat:format arguments:args] : @"Assertion failure";
     va_end(args);
 
-    // Intercept the specific Fabric recycle assertion
-    if ([desc containsString:@"Attempt to recycle a mounted view"]) {
+    // Intercept Fabric recycling and layout assertions
+    if ([desc containsString:@"Attempt to recycle a mounted view"] ||
+        [desc containsString:@"recycle a mounted view"] ||
+        [desc containsString:@"Mounted view"] ||
+        [desc containsString:@"Expected component view"]) {
         NSLog(@"[InAppInspector] ⚠️ Suppressed Fabric view recycle assertion: %@ (in %@:%ld)",
-              desc, fileName, (long)line);
+              desc, fileName ?: @"unknown", (long)line);
         return; // Suppress — don't crash
     }
 
-    // Forward all other assertions to the previous handler
+    // Forward all other assertions to previous handler
     if (self.previousHandler) {
-        va_start(args, format);
         [self.previousHandler handleFailureInMethod:selector
                                              object:object
                                                file:fileName
                                          lineNumber:line
                                         description:@"%@", desc];
-        va_end(args);
     } else {
-        // No previous handler — raise as exception (default behavior)
         NSString *reason = [NSString stringWithFormat:
             @"*** Assertion failure in %@, %@:%ld: %@",
-            NSStringFromSelector(selector), fileName, (long)line, desc];
+            NSStringFromSelector(selector), fileName ?: @"unknown", (long)line, desc];
         @throw [NSException exceptionWithName:NSInternalInconsistencyException
                                        reason:reason
                                      userInfo:nil];
@@ -452,28 +459,27 @@ static void NativeExceptionHandler(NSException *exception) {
                     description:(NSString *)format, ... {
     va_list args;
     va_start(args, format);
-    NSString *desc = [[NSString alloc] initWithFormat:format arguments:args];
+    NSString *desc = format ? [[NSString alloc] initWithFormat:format arguments:args] : @"Assertion failure";
     va_end(args);
 
-    // Intercept the specific Fabric recycle assertion
-    if ([desc containsString:@"Attempt to recycle a mounted view"]) {
+    if ([desc containsString:@"Attempt to recycle a mounted view"] ||
+        [desc containsString:@"recycle a mounted view"] ||
+        [desc containsString:@"Mounted view"] ||
+        [desc containsString:@"Expected component view"]) {
         NSLog(@"[InAppInspector] ⚠️ Suppressed Fabric view recycle assertion: %@ (in %@:%ld)",
-              desc, fileName, (long)line);
+              desc, fileName ?: @"unknown", (long)line);
         return; // Suppress — don't crash
     }
 
-    // Forward all other assertions to the previous handler
     if (self.previousHandler) {
-        va_start(args, format);
         [self.previousHandler handleFailureInFunction:functionName
                                                  file:fileName
                                            lineNumber:line
                                           description:@"%@", desc];
-        va_end(args);
     } else {
         NSString *reason = [NSString stringWithFormat:
             @"*** Assertion failure in %@, %@:%ld: %@",
-            functionName, fileName, (long)line, desc];
+            functionName ?: @"unknown", fileName ?: @"unknown", (long)line, desc];
         @throw [NSException exceptionWithName:NSInternalInconsistencyException
                                        reason:reason
                                      userInfo:nil];
@@ -486,7 +492,7 @@ static void NativeExceptionHandler(NSException *exception) {
 // NATIVE CAMERA ROLL / PHOTO & VIDEO PICKER DELEGATE
 // ─────────────────────────────────────────────────────────────────────────────
 
-@interface InAppInspectorPickerDelegate : NSObject <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@interface InAppInspectorPickerDelegate : NSObject <PHPickerViewControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 @property (nonatomic, copy) RCTPromiseResolveBlock resolve;
 @property (nonatomic, copy) RCTPromiseRejectBlock reject;
 @property (nonatomic, copy) NSString *capturesDirectory;
@@ -494,18 +500,18 @@ static void NativeExceptionHandler(NSException *exception) {
 
 @implementation InAppInspectorPickerDelegate
 
-- (void)picker:(id)picker didFinishPicking:(NSArray *)results {
+- (void)picker:(PHPickerViewController *)picker didFinishPicking:(NSArray<PHPickerResult *> *)results API_AVAILABLE(ios(14.0)) {
     [picker dismissViewControllerAnimated:YES completion:nil];
     if (results.count == 0) {
         if (self.resolve) self.resolve([NSNull null]);
         return;
     }
-    
-    id result = results.firstObject;
-    NSItemProvider *provider = [result valueForKey:@"itemProvider"];
+
+    PHPickerResult *result = results.firstObject;
+    NSItemProvider *provider = result.itemProvider;
     long long timestamp = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
     NSString *randomStr = [NSString stringWithFormat:@"%04d", arc4random_uniform(10000)];
-    
+
     if ([provider hasItemConformingToTypeIdentifier:@"public.movie"]) {
         [provider loadFileRepresentationForTypeIdentifier:@"public.movie" completionHandler:^(NSURL * _Nullable url, NSError * _Nullable error) {
             if (error || !url) {
@@ -516,13 +522,13 @@ static void NativeExceptionHandler(NSException *exception) {
             if (ext.length == 0) ext = @"mp4";
             NSString *filename = [NSString stringWithFormat:@"rn_iai_%lld_imported_%@.%@", timestamp, randomStr, ext];
             NSString *destPath = [self.capturesDirectory stringByAppendingPathComponent:filename];
-            
+
             [[NSFileManager defaultManager] removeItemAtPath:destPath error:nil];
             [[NSFileManager defaultManager] copyItemAtURL:url toURL:[NSURL fileURLWithPath:destPath] error:nil];
-            
+
             NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:destPath error:nil];
             long long sizeBytes = [attrs fileSize];
-            
+
             NSMutableDictionary *map = [NSMutableDictionary dictionaryWithDictionary:@{
                 @"id": filename,
                 @"type": @"video",
@@ -532,7 +538,7 @@ static void NativeExceptionHandler(NSException *exception) {
                 @"sizeBytes": @(sizeBytes),
                 @"timestamp": @(timestamp)
             }];
-            
+
             @try {
                 AVURLAsset *asset = [[AVURLAsset alloc] initWithURL:[NSURL fileURLWithPath:destPath] options:nil];
                 AVAssetImageGenerator *gen = [[AVAssetImageGenerator alloc] initWithAsset:asset];
@@ -548,7 +554,7 @@ static void NativeExceptionHandler(NSException *exception) {
                     map[@"thumbnailUri"] = [NSURL fileURLWithPath:thumbPath].absoluteString;
                 }
             } @catch (id ex) {}
-            
+
             if (self.resolve) self.resolve(map);
         }];
     } else {
@@ -559,12 +565,12 @@ static void NativeExceptionHandler(NSException *exception) {
                 NSString *type = [ext isEqualToString:@"gif"] ? @"gif" : @"image";
                 NSString *filename = [NSString stringWithFormat:@"rn_iai_%lld_imported_%@.%@", timestamp, randomStr, ext];
                 NSString *destPath = [self.capturesDirectory stringByAppendingPathComponent:filename];
-                
+
                 [[NSFileManager defaultManager] removeItemAtPath:destPath error:nil];
                 [[NSFileManager defaultManager] copyItemAtURL:url toURL:[NSURL fileURLWithPath:destPath] error:nil];
                 NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:destPath error:nil];
                 long long sizeBytes = [attrs fileSize];
-                
+
                 NSDictionary *map = @{
                     @"id": filename,
                     @"type": type,
@@ -583,10 +589,10 @@ static void NativeExceptionHandler(NSException *exception) {
                         NSString *filename = [NSString stringWithFormat:@"rn_iai_%lld_imported_%@.jpg", timestamp, randomStr];
                         NSString *destPath = [self.capturesDirectory stringByAppendingPathComponent:filename];
                         [data writeToFile:destPath atomically:YES];
-                        
+
                         NSDictionary *attrs = [[NSFileManager defaultManager] attributesOfItemAtPath:destPath error:nil];
                         long long sizeBytes = [attrs fileSize];
-                        
+
                         NSDictionary *map = @{
                             @"id": filename,
                             @"type": @"image",
@@ -619,6 +625,136 @@ static void NativeExceptionHandler(NSException *exception) {
 @end
 
 static InAppInspectorPickerDelegate *g_pickerDelegate = nil;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAFE WINDOW & VIEW CONTROLLER HELPERS (iOS 13 - 18+)
+// ─────────────────────────────────────────────────────────────────────────────
+
+static BOOL IsInternalSystemWindow(UIWindow *w) {
+    if (!w) return YES;
+    NSString *className = NSStringFromClass([w class]);
+    if ([className hasPrefix:@"_"] ||
+        [className containsString:@"Keyboard"] ||
+        [className containsString:@"TextEffect"] ||
+        [className containsString:@"StatusBar"] ||
+        [className containsString:@"InputSet"] ||
+        [className containsString:@"TrackingWindow"]) {
+        return YES;
+    }
+    return NO;
+}
+
+static UIWindow *GetAppActiveWindow(void) {
+    if (@available(iOS 13.0, *)) {
+        // Priority 1: Foreground Active Scene with Key Window
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                UIWindowScene *ws = (UIWindowScene *)scene;
+                for (UIWindow *w in ws.windows) {
+                    if (w.isKeyWindow && !w.hidden && w.alpha > 0.01 && !IsInternalSystemWindow(w)) {
+                        return w;
+                    }
+                }
+                for (UIWindow *w in ws.windows) {
+                    if (w.windowLevel == UIWindowLevelNormal && !w.hidden && w.alpha > 0.01 && !IsInternalSystemWindow(w)) {
+                        return w;
+                    }
+                }
+            }
+        }
+        // Priority 2: Any Scene with usable window
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *ws = (UIWindowScene *)scene;
+                for (UIWindow *w in ws.windows) {
+                    if (!w.hidden && w.alpha > 0.01 && !IsInternalSystemWindow(w) && (w.isKeyWindow || w.windowLevel == UIWindowLevelNormal)) {
+                        return w;
+                    }
+                }
+                if (ws.windows.count > 0 && !IsInternalSystemWindow(ws.windows.firstObject)) {
+                    return ws.windows.firstObject;
+                }
+            }
+        }
+    }
+    for (UIWindow *w in [UIApplication sharedApplication].windows) {
+        if (!IsInternalSystemWindow(w) && (w.isKeyWindow || w.windowLevel == UIWindowLevelNormal)) {
+            return w;
+        }
+    }
+    return [UIApplication sharedApplication].windows.firstObject;
+}
+
+static UIViewController *FindTopViewControllerFrom(UIViewController *vc) {
+    if (!vc) return nil;
+    if ([vc isKindOfClass:[UINavigationController class]]) {
+        UIViewController *visible = [(UINavigationController *)vc visibleViewController];
+        return visible ? FindTopViewControllerFrom(visible) : vc;
+    }
+    if ([vc isKindOfClass:[UITabBarController class]]) {
+        UIViewController *selected = [(UITabBarController *)vc selectedViewController];
+        return selected ? FindTopViewControllerFrom(selected) : vc;
+    }
+    if (vc.presentedViewController && !vc.presentedViewController.isBeingDismissed) {
+        return FindTopViewControllerFrom(vc.presentedViewController);
+    }
+    return vc;
+}
+
+static UIViewController *GetTopViewController(void) {
+    UIWindow *win = GetAppActiveWindow();
+    UIViewController *root = win ? win.rootViewController : nil;
+    if (!root) {
+        if ([[UIApplication sharedApplication].delegate respondsToSelector:@selector(window)]) {
+            root = [UIApplication sharedApplication].delegate.window.rootViewController;
+        }
+    }
+    return root ? FindTopViewControllerFrom(root) : nil;
+}
+
+static CGRect GetAppScreenBounds(void) {
+    UIWindow *w = GetAppActiveWindow();
+    if (w && w.bounds.size.width > 0 && w.bounds.size.height > 0) {
+        return w.bounds;
+    }
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *ws = (UIWindowScene *)scene;
+                if (ws.coordinateSpace.bounds.size.width > 0 && ws.coordinateSpace.bounds.size.height > 0) {
+                    return ws.coordinateSpace.bounds;
+                }
+            }
+        }
+    }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    CGRect b = [UIScreen mainScreen].bounds;
+    if (b.size.width > 0 && b.size.height > 0) return b;
+#pragma clang diagnostic pop
+    return CGRectMake(0, 0, 393, 852);
+}
+
+static CGFloat GetAppScreenScale(void) {
+    UIWindow *w = GetAppActiveWindow();
+    if (w && w.screen) {
+        return w.screen.scale;
+    }
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                UIWindowScene *ws = (UIWindowScene *)scene;
+                if (ws.screen) {
+                    return ws.screen.scale;
+                }
+            }
+        }
+    }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    return [UIScreen mainScreen].scale > 0 ? [UIScreen mainScreen].scale : 2.0;
+#pragma clang diagnostic pop
+}
 
 @implementation NetworkInspectorModule {
     bool hasListeners;
@@ -837,42 +973,15 @@ RCT_EXPORT_METHOD(getDeviceMetrics:(RCTPromiseResolveBlock)resolve
     resolve(metrics);
 }
 
-static UIWindow *GetAppActiveWindow(void) {
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]]) {
-                UIWindowScene *ws = (UIWindowScene *)scene;
-                for (UIWindow *w in ws.windows) {
-                    if (w.isKeyWindow || w.windowLevel == UIWindowLevelNormal) {
-                        return w;
-                    }
-                }
-                if (ws.windows.count > 0) {
-                    return ws.windows.firstObject;
-                }
-            }
-        }
-    }
-    for (UIWindow *w in [UIApplication sharedApplication].windows) {
-        if (w.isKeyWindow || w.windowLevel == UIWindowLevelNormal) {
-            return w;
-        }
-    }
-    return [UIApplication sharedApplication].windows.firstObject;
-}
-
 RCT_EXPORT_METHOD(showFloatingButton:(NSDictionary *)options
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         g_floatingButtonDesiredVisible = YES;
-        UIWindow *targetWindow = GetAppActiveWindow();
-        CGRect screenBounds = targetWindow ? targetWindow.bounds : [UIScreen mainScreen].bounds;
+        CGRect screenBounds = GetAppScreenBounds();
 
-        CGFloat screenWidth = screenBounds.size.width > 0 ? screenBounds.size.width : [UIScreen mainScreen].bounds.size.width;
-        if (screenWidth <= 0) screenWidth = 393.0;
-        CGFloat screenHeight = screenBounds.size.height > 0 ? screenBounds.size.height : [UIScreen mainScreen].bounds.size.height;
-        if (screenHeight <= 0) screenHeight = 852.0;
+        CGFloat screenWidth = screenBounds.size.width > 0 ? screenBounds.size.width : 393.0;
+        CGFloat screenHeight = screenBounds.size.height > 0 ? screenBounds.size.height : 852.0;
 
         CGFloat size = 64.0;
         if (options && options[@"size"]) {
@@ -1271,32 +1380,7 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
 }
 
 - (UIWindow *)findActiveKeyWindow {
-    UIWindow *foundWindow = nil;
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]]) {
-                UIWindowScene *windowScene = (UIWindowScene *)scene;
-                for (UIWindow *w in windowScene.windows) {
-                    if (w.isKeyWindow) {
-                        return w;
-                    }
-                    if (!foundWindow && !w.hidden && w.alpha > 0.01) {
-                        foundWindow = w;
-                    }
-                }
-            }
-        }
-    }
-    if (!foundWindow) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        foundWindow = [UIApplication sharedApplication].keyWindow;
-        if (!foundWindow && [UIApplication sharedApplication].windows.count > 0) {
-            foundWindow = [UIApplication sharedApplication].windows.firstObject;
-        }
-#pragma clang diagnostic pop
-    }
-    return foundWindow;
+    return GetAppActiveWindow();
 }
 
 - (UIImage *)captureScreenHierarchyWithScale:(CGFloat)scale {
@@ -1305,10 +1389,13 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
         return nil;
     }
 
-    CGRect screenBounds = [UIScreen mainScreen].bounds;
-    CGFloat screenScale = [UIScreen mainScreen].scale;
+    CGRect screenBounds = GetAppScreenBounds();
+    CGFloat screenScale = GetAppScreenScale();
     CGFloat finalScale = screenScale * scale;
     if (finalScale <= 0.0) finalScale = screenScale;
+    if (screenBounds.size.width <= 0 || screenBounds.size.height <= 0) {
+        screenBounds = CGRectMake(0, 0, 393, 852);
+    }
 
     UIGraphicsBeginImageContextWithOptions(screenBounds.size, NO, finalScale);
     CGContextRef context = UIGraphicsGetCurrentContext();
@@ -1422,8 +1509,8 @@ RCT_EXPORT_METHOD(getNativeCachedPage:(NSString *)pageKey
                                   resolve:(RCTPromiseResolveBlock)resolve
                                    reject:(RCTPromiseRejectBlock)reject {
     dispatch_async(dispatch_get_main_queue(), ^{
-        CGRect bounds = [UIScreen mainScreen].bounds;
-        CGFloat screenScale = [UIScreen mainScreen].scale;
+        CGRect bounds = GetAppScreenBounds();
+        CGFloat screenScale = GetAppScreenScale();
         double scaleParam = [options[@"scale"] doubleValue];
         if (scaleParam <= 0.0 || scaleParam > 1.0) {
             scaleParam = 0.5;
@@ -1764,15 +1851,7 @@ RCT_EXPORT_METHOD(playVideo:(NSString *)videoUri
             playerController.showsPlaybackControls = YES;
             playerController.modalPresentationStyle = UIModalPresentationFullScreen;
 
-            UIWindow *keyWindow = [self findActiveKeyWindow];
-            UIViewController *rootVC = keyWindow.rootViewController;
-            if (!rootVC) {
-                rootVC = [UIApplication sharedApplication].delegate.window.rootViewController;
-            }
-            while (rootVC.presentedViewController) {
-                rootVC = rootVC.presentedViewController;
-            }
-
+            UIViewController *rootVC = GetTopViewController();
             if (rootVC) {
                 [rootVC presentViewController:playerController animated:YES completion:^{
                     [player play];
@@ -2753,74 +2832,31 @@ RCT_EXPORT_METHOD(pickMedia:(NSDictionary *)options
                   reject:(RCTPromiseRejectBlock)reject) {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSString *mediaType = options[@"mediaType"] ?: @"any";
-        
-        UIWindow *keyWin = nil;
-        if (@available(iOS 13.0, *)) {
-            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-                if (scene.activationState == UISceneActivationStateForegroundActive && [scene isKindOfClass:[UIWindowScene class]]) {
-                    for (UIWindow *w in ((UIWindowScene *)scene).windows) {
-                        if (w.isKeyWindow) {
-                            keyWin = w;
-                            break;
-                        }
-                    }
-                }
-                if (keyWin) break;
-            }
+        UIViewController *rootVC = GetTopViewController();
+        if (!rootVC) {
+            reject(@"PICK_ERROR", @"Unable to find active view controller for media picker", nil);
+            return;
         }
-        if (!keyWin) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            keyWin = [UIApplication sharedApplication].keyWindow ?: [UIApplication sharedApplication].windows.firstObject;
-#pragma clang diagnostic pop
-        }
-        
-        UIViewController *rootVC = keyWin.rootViewController;
-        while (rootVC.presentedViewController) {
-            rootVC = rootVC.presentedViewController;
-        }
-        
+
         g_pickerDelegate = [[InAppInspectorPickerDelegate alloc] init];
         g_pickerDelegate.resolve = resolve;
         g_pickerDelegate.reject = reject;
         g_pickerDelegate.capturesDirectory = [self getCapturesDirectory];
-        
-        Class PHPickerVCClass = NSClassFromString(@"PHPickerViewController");
-        Class PHPickerConfigClass = NSClassFromString(@"PHPickerConfiguration");
-        Class PHPickerFilterClass = NSClassFromString(@"PHPickerFilter");
-        
-        if (PHPickerVCClass && PHPickerConfigClass && PHPickerFilterClass) {
-            id config = [[PHPickerConfigClass alloc] init];
-            [config setValue:@1 forKey:@"selectionLimit"];
-            
-            id filter = nil;
-            SEL imgFilterSel = NSSelectorFromString(@"imagesFilter");
-            SEL vidFilterSel = NSSelectorFromString(@"videosFilter");
-            SEL anyFilterSel = NSSelectorFromString(@"anyFilterMatchingSubfilters:");
-            
+
+        if (@available(iOS 14.0, *)) {
+            PHPickerConfiguration *config = [[PHPickerConfiguration alloc] init];
+            config.selectionLimit = 1;
+
             if ([mediaType isEqualToString:@"image"]) {
-                if ([PHPickerFilterClass respondsToSelector:imgFilterSel]) {
-                    filter = ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, imgFilterSel);
-                }
+                config.filter = [PHPickerFilter imagesFilter];
             } else if ([mediaType isEqualToString:@"video"]) {
-                if ([PHPickerFilterClass respondsToSelector:vidFilterSel]) {
-                    filter = ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, vidFilterSel);
-                }
+                config.filter = [PHPickerFilter videosFilter];
             } else {
-                id imgFilter = [PHPickerFilterClass respondsToSelector:imgFilterSel] ? ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, imgFilterSel) : nil;
-                id vidFilter = [PHPickerFilterClass respondsToSelector:vidFilterSel] ? ((id (*)(id, SEL))objc_msgSend)(PHPickerFilterClass, vidFilterSel) : nil;
-                if (imgFilter && vidFilter && [PHPickerFilterClass respondsToSelector:anyFilterSel]) {
-                    filter = ((id (*)(id, SEL, id))objc_msgSend)(PHPickerFilterClass, anyFilterSel, @[imgFilter, vidFilter]);
-                }
+                config.filter = [PHPickerFilter anyFilterMatchingSubfilters:@[[PHPickerFilter imagesFilter], [PHPickerFilter videosFilter]]];
             }
-            if (filter) {
-                [config setValue:filter forKey:@"filter"];
-            }
-            
-            SEL initConfigSel = NSSelectorFromString(@"initWithConfiguration:");
-            id rawPicker = [PHPickerVCClass alloc];
-            UIViewController *picker = ((UIViewController * (*)(id, SEL, id))objc_msgSend)(rawPicker, initConfigSel, config);
-            [picker setValue:g_pickerDelegate forKey:@"delegate"];
+
+            PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:config];
+            picker.delegate = g_pickerDelegate;
             [rootVC presentViewController:picker animated:YES completion:nil];
         } else {
             UIImagePickerController *picker = [[UIImagePickerController alloc] init];
@@ -2837,6 +2873,9 @@ RCT_EXPORT_METHOD(pickMedia:(NSDictionary *)options
 #pragma clang diagnostic pop
             [rootVC presentViewController:picker animated:YES completion:nil];
         }
+    });
+}
+
 RCT_EXPORT_METHOD(writeExportFile:(NSString *)filename
                   content:(NSString *)content
                   resolve:(RCTPromiseResolveBlock)resolve
@@ -2884,13 +2923,15 @@ RCT_EXPORT_METHOD(shareFile:(NSString *)filePath
             if (title && title.length > 0) {
                 [activityVC setValue:title forKey:@"subject"];
             }
-            UIViewController *rootVC = [UIApplication sharedApplication].delegate.window.rootViewController;
-            while (rootVC.presentedViewController) {
-                rootVC = rootVC.presentedViewController;
+            UIViewController *rootVC = GetTopViewController();
+            if (!rootVC) {
+                reject(@"SHARE_ERROR", @"Unable to find active view controller to share file", nil);
+                return;
             }
-            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad && rootVC.view) {
                 activityVC.popoverPresentationController.sourceView = rootVC.view;
-                activityVC.popoverPresentationController.sourceRect = CGRectMake(rootVC.view.bounds.size.width / 2.0, rootVC.view.bounds.size.height / 2.0, 1, 1);
+                activityVC.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(rootVC.view.bounds), CGRectGetMidY(rootVC.view.bounds), 1, 1);
+                activityVC.popoverPresentationController.permittedArrowDirections = 0;
             }
             activityVC.completionWithItemsHandler = ^(UIActivityType activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
                 resolve(@(completed));

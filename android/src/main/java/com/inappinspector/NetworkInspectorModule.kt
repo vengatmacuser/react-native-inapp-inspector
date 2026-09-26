@@ -197,37 +197,22 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
 
         defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
 
-        // 1. Intercept all uncaught exceptions on background/worker threads (prevents OS force-close)
+        // 1. Intercept all uncaught exceptions
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
                 handleNativeCrash(thread, throwable)
             } catch (e: Exception) {
                 Log.e(TAG, "Error in native crash handler", e)
             }
-            // Suppress defaultHandler?.uncaughtException() to prevent OS killing the process
-        }
-
-        // 2. Main Looper Crash Shield: Protects UI thread from dying on uncaught exceptions
-        try {
-            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                while (true) {
-                    try {
-                        android.os.Looper.loop()
-                    } catch (e: Throwable) {
-                        try {
-                            handleNativeCrash(Thread.currentThread(), e)
-                        } catch (ex: Exception) {
-                            Log.e(TAG, "Error in Main Looper crash protection", ex)
-                        }
-                    }
-                }
+            try {
+                defaultHandler?.uncaughtException(thread, throwable)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error delegating to default handler", e)
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to start Looper crash protection", e)
         }
 
         isProtectionEnabled = true
-        Log.i(TAG, "Native Android Crash Shield enabled (Process kill prevention active)")
+        Log.i(TAG, "Native Android Crash Protection enabled")
     }
 
     private fun handleNativeCrash(thread: Thread, throwable: Throwable) {
@@ -251,6 +236,22 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
                     .emit("onNativeCrash", params)
             }
+
+            // Also persist crash to disk synchronously
+            try {
+                val crashFile = File(getCapturesDirectory(), "last_native_crash.json")
+                val json = org.json.JSONObject().apply {
+                    put("platform", "android")
+                    put("error", throwable.message ?: "Unknown native exception")
+                    put("name", throwable.javaClass.name)
+                    put("stack", stackTrace)
+                    put("threadName", thread.name)
+                    put("timestamp", System.currentTimeMillis())
+                }
+                FileOutputStream(crashFile).use { fos ->
+                    fos.write(json.toString(2).toByteArray(Charsets.UTF_8))
+                }
+            } catch (e: Exception) {}
         } catch (e: Exception) {
             Log.e(TAG, "Failed to emit onNativeCrash to JS", e)
         }
@@ -398,7 +399,10 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                 val sizeDp = if (options != null && options.hasKey("size")) options.getDouble("size").toFloat() else 64f
                 val sizePx = (sizeDp * density).toInt()
 
-                if (floatingButton == null) {
+                if (floatingButton == null || floatingButton?.context != activity) {
+                    floatingButton?.let { oldBtn ->
+                        (oldBtn.parent as? android.view.ViewGroup)?.removeView(oldBtn)
+                    }
                     floatingButton = InAppInspectorFloatingView(activity) {
                         emitFloatingButtonPress()
                     }
@@ -417,7 +421,12 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     floatingButton?.y = initialY
                     decorView.addView(floatingButton, params)
                 } else {
-                    if (floatingButton?.parent == null) {
+                    val currentParent = floatingButton?.parent as? android.view.ViewGroup
+                    if (currentParent == null) {
+                        val params = android.widget.FrameLayout.LayoutParams(sizePx, sizePx)
+                        decorView.addView(floatingButton, params)
+                    } else if (currentParent != decorView) {
+                        currentParent.removeView(floatingButton)
                         val params = android.widget.FrameLayout.LayoutParams(sizePx, sizePx)
                         decorView.addView(floatingButton, params)
                     } else {
@@ -863,7 +872,10 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                     val destBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
                     val copyHandler = captureBackgroundHandler ?: mainHandler
                     try {
-                        PixelCopy.request(targetWindow, null, destBitmap, { copyResult ->
+                        val srcRect = if (decorView.width > 0 && decorView.height > 0) {
+                            android.graphics.Rect(0, 0, decorView.width, decorView.height)
+                        } else null
+                        PixelCopy.request(targetWindow, srcRect, destBitmap, { copyResult ->
                             if (copyResult == PixelCopy.SUCCESS) {
                                 callback(destBitmap)
                             } else {
@@ -2275,11 +2287,17 @@ class NetworkInspectorModule(private val reactContext: ReactApplicationContext) 
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            val resInfoList = activity.packageManager.queryIntentActivities(chooser, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
-            for (resolveInfo in resInfoList) {
-                val packageName = resolveInfo.activityInfo.packageName
-                activity.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
+            try {
+                val resInfoList = activity.packageManager.queryIntentActivities(chooser, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                for (resolveInfo in resInfoList) {
+                    val packageName = resolveInfo.activityInfo?.packageName
+                    if (!packageName.isNullOrEmpty()) {
+                        try {
+                            activity.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        } catch (e: Exception) {}
+                    }
+                }
+            } catch (e: Exception) {}
 
             activity.startActivity(chooser)
             promise.resolve(true)
