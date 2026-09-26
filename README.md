@@ -606,13 +606,5 @@ Contributions are warmly welcomed! Please check out [CONTRIBUTING.md](CONTRIBUTI
 
 ## 📄 License
 
-| 🇸🇪 🇳🇴 🇩🇰 🇫🇮 | **Nordic Countries (Sweden, Norway, Denmark, Finland)** | Nätverkslogg Sverige, felsökare React Native, utvecklarverktyg React Native, mobildebuggning. |
-| 🇮🇱 | **Israel** | מנפה שגיאות ריאקט נייטיב, ניטור רשת מובייל, כלי פיתוח מובייל, לוכד תעבורת רשת. |
-| 🇿🇦 🇳🇬 🇰🇪 | **Sub-Saharan Africa (South Africa, Nigeria, Kenya)** | React Native Nigeria, React Native South Africa, mobile debugging Kenya, in-app inspector Africa. |
-
----
-
-## 📄 License
-
 MIT © [vengatmacuser](LICENSE)
 

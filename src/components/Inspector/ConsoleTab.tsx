@@ -93,15 +93,6 @@ const ConsoleTab = React.memo(() => {
     [logSearch, handleSelectLog, selectedConsoleLogs, toggleSelectConsoleLog],
   );
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: 148,
-      offset: 148 * index,
-      index,
-    }),
-    [],
-  );
-
   const keyExtractor = useCallback(
     (item: any, index: number) => item?.id?.toString() ?? index.toString(),
     [],
@@ -532,7 +523,6 @@ const ConsoleTab = React.memo(() => {
         keyExtractor={keyExtractor}
         ListHeaderComponent={listHeader}
         renderItem={renderItem}
-        getItemLayout={getItemLayout}
         initialNumToRender={10}
         maxToRenderPerBatch={8}
         windowSize={5}

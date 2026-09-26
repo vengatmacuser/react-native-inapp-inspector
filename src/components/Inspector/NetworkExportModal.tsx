@@ -75,14 +75,14 @@ export const NetworkExportModal: React.FC<NetworkExportModalProps> = ({
   const [ignorePattern, setIgnorePattern] = useState<string>('');
   const [format, setFormat] = useState<NetworkLogExportFormat>('txt');
 
-  // Content options toggles (unselected by default)
-  const [includeRequestHeaders, setIncludeRequestHeaders] = useState<boolean>(false);
-  const [includeRequestBody, setIncludeRequestBody] = useState<boolean>(false);
-  const [includeResponseHeaders, setIncludeResponseHeaders] = useState<boolean>(false);
-  const [includeResponseBody, setIncludeResponseBody] = useState<boolean>(false);
-  const [includeCurlCommand, setIncludeCurlCommand] = useState<boolean>(false);
-  const [includeTimestamps, setIncludeTimestamps] = useState<boolean>(false);
-  const [includeAppInfo, setIncludeAppInfo] = useState<boolean>(false);
+  // Content options toggles (selected by default)
+  const [includeRequestHeaders, setIncludeRequestHeaders] = useState<boolean>(true);
+  const [includeRequestBody, setIncludeRequestBody] = useState<boolean>(true);
+  const [includeResponseHeaders, setIncludeResponseHeaders] = useState<boolean>(true);
+  const [includeResponseBody, setIncludeResponseBody] = useState<boolean>(true);
+  const [includeCurlCommand, setIncludeCurlCommand] = useState<boolean>(true);
+  const [includeTimestamps, setIncludeTimestamps] = useState<boolean>(true);
+  const [includeAppInfo, setIncludeAppInfo] = useState<boolean>(true);
 
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [processedCount, setProcessedCount] = useState<number>(0);

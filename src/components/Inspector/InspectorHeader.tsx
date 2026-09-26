@@ -327,7 +327,7 @@ const InspectorHeader = React.memo(() => {
     return 0;
   }, [modalHeightPercent, windowWidth]);
 
-  const buttonSize = isNarrow ? 24 : isCompact ? 25.5 : 26;
+  const buttonSize = isNarrow ? 28 : isCompact ? 30 : 32;
   const logoSize = isNarrow ? 36 : isCompact ? 38 : 40;
 
   return (
@@ -336,7 +336,7 @@ const InspectorHeader = React.memo(() => {
         style={[
           styles.headerGradient,
           {
-            minHeight: (isNarrow ? 44 : 48) + headerTopPadding,
+            minHeight: (isNarrow ? 50 : 54) + headerTopPadding,
           },
         ]}>
         {/* LinearGradient as absolute background layer to avoid Fabric view recycling crash.
@@ -365,8 +365,8 @@ const InspectorHeader = React.memo(() => {
                 width: '100%',
                 justifyContent: 'space-between',
                 paddingHorizontal: isNarrow ? 8 : 10,
-                paddingVertical: 5,
-                minHeight: isNarrow ? 44 : 48,
+                paddingVertical: 7,
+                minHeight: isNarrow ? 50 : 54,
               },
             ]}>
             <View
@@ -554,15 +554,15 @@ const InspectorHeader = React.memo(() => {
                   }}>
                   <BrandCircleIcon size={isNarrow ? 38 : isCompact ? 40 : 42} />
                   <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
-                    {/* Top Row: Full prominent package name */}
+                    {/* Top Row: Prominent clear branding title */}
                     <Text
                       style={[
                         styles.headerTitle,
                         {
                           fontFamily: AppFonts.interBold,
                           fontWeight: '700',
-                          fontSize: isNarrow ? 12.5 : isCompact ? 13 : 14,
-                          lineHeight: isNarrow ? 17 : isCompact ? 18 : 19,
+                          fontSize: isNarrow ? 14 : isCompact ? 15 : 15.5,
+                          lineHeight: isNarrow ? 18 : isCompact ? 19 : 20,
                           color: AppColors.white,
                           letterSpacing: -0.2,
                           paddingBottom: 0,
@@ -570,7 +570,7 @@ const InspectorHeader = React.memo(() => {
                       ]}
                       numberOfLines={1}
                       ellipsizeMode="tail">
-                      react-native-inapp-inspector
+                      {t('header.title', 'In-App Inspector')}
                     </Text>
 
                     {/* Sub Row: Language Selector, OS Chip, NPM Version Chip */}
@@ -1581,7 +1581,7 @@ const InspectorHeader = React.memo(() => {
                   justifyContent: 'flex-end',
                   flexShrink: 0,
                   marginLeft: 6,
-                  gap: isNarrow ? 3.5 : 4.5,
+                  gap: isNarrow ? 6 : 7.5,
                 },
               ]}>
               {/* Settings / Reset & About buttons */}
@@ -1596,13 +1596,13 @@ const InspectorHeader = React.memo(() => {
                       triggerNativeHaptic('light');
                       setIsAboutOpen(true);
                     }}
-                    hitSlop={15}
+                    hitSlop={{top: 8, bottom: 8, left: 2, right: 2}}
                     style={[
                       styles.closeButtonSquare,
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 6 : 7,
+                        borderRadius: isNarrow ? 7 : 8,
                         backgroundColor: 'rgba(255, 255, 255, 0.22)',
                         borderColor: 'rgba(255, 255, 255, 0.45)',
                         borderWidth: 1,
@@ -1610,7 +1610,7 @@ const InspectorHeader = React.memo(() => {
                     ]}>
                     <InfoCircleIcon
                       color={AppColors.white}
-                      size={isNarrow ? 13 : 15}
+                      size={isNarrow ? 14 : 16}
                     />
                   </TouchableScale>
 
@@ -1630,13 +1630,13 @@ const InspectorHeader = React.memo(() => {
                         ],
                       );
                     }}
-                    hitSlop={15}
+                    hitSlop={{top: 8, bottom: 8, left: 2, right: 2}}
                     style={[
                       styles.closeButtonSquare,
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 6 : 7,
+                        borderRadius: isNarrow ? 7 : 8,
                         backgroundColor: 'rgba(245, 158, 11, 0.26)',
                         borderColor: 'rgba(252, 211, 77, 0.45)',
                         borderWidth: 1,
@@ -1644,7 +1644,7 @@ const InspectorHeader = React.memo(() => {
                     ]}>
                     <ResetIcon
                       color={AppColors.white}
-                      size={isNarrow ? 12 : 14}
+                      size={isNarrow ? 13 : 15}
                     />
                   </TouchableScale>
                 </>
@@ -1659,13 +1659,13 @@ const InspectorHeader = React.memo(() => {
                       triggerNativeHaptic('light');
                       setPeekMode(prev => !prev);
                     }}
-                    hitSlop={15}
+                    hitSlop={{top: 8, bottom: 8, left: 2, right: 2}}
                     style={[
                       styles.closeButtonSquare,
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 6 : 7,
+                        borderRadius: isNarrow ? 7 : 8,
                         backgroundColor: peekMode
                           ? 'rgba(6, 182, 212, 0.38)'
                           : 'rgba(6, 182, 212, 0.18)',
@@ -1677,7 +1677,7 @@ const InspectorHeader = React.memo(() => {
                     ]}>
                     <EyeIcon
                       color={AppColors.white}
-                      size={isNarrow ? 12 : 14}
+                      size={isNarrow ? 13 : 15}
                     />
                   </TouchableScale>
 
@@ -1687,13 +1687,13 @@ const InspectorHeader = React.memo(() => {
                     accessibilityRole="button"
                     accessibilityLabel="Settings"
                     onPress={() => setSettingsPage('main')}
-                    hitSlop={15}
+                    hitSlop={{top: 8, bottom: 8, left: 2, right: 2}}
                     style={[
                       styles.closeButtonSquare,
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 6 : 7,
+                        borderRadius: isNarrow ? 7 : 8,
                         backgroundColor: 'rgba(168, 85, 247, 0.28)',
                         borderColor: 'rgba(216, 180, 254, 0.45)',
                         borderWidth: 1,
@@ -1701,7 +1701,7 @@ const InspectorHeader = React.memo(() => {
                     ]}>
                     <SettingsIcon
                       color={AppColors.white}
-                      size={isNarrow ? 12 : 14}
+                      size={isNarrow ? 13 : 15}
                     />
                   </TouchableScale>
                 </>
@@ -1711,7 +1711,7 @@ const InspectorHeader = React.memo(() => {
               <TouchableOpacity
                 testID="inspector.header.minimizeBtn"
                 onPress={minimizeInspector || closeModal}
-                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+                hitSlop={{top: 8, bottom: 8, left: 2, right: 2}}
                 activeOpacity={0.7}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.minimize', 'Minimize')}
@@ -1720,20 +1720,20 @@ const InspectorHeader = React.memo(() => {
                   {
                     width: buttonSize,
                     height: buttonSize,
-                    borderRadius: isNarrow ? 6 : 7,
+                    borderRadius: isNarrow ? 7 : 8,
                     backgroundColor: 'rgba(56, 189, 248, 0.22)',
                     borderColor: 'rgba(125, 211, 252, 0.40)',
                     borderWidth: 1,
                   },
                 ]}>
-                <ChevronDownIcon size={isNarrow ? 14 : 16} color={AppColors.white} />
+                <ChevronDownIcon size={isNarrow ? 15 : 17} color={AppColors.white} />
               </TouchableOpacity>
 
               {/* Close button */}
               <TouchableOpacity
                 testID="inspector.header.closeBtn"
                 onPress={closeModal}
-                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+                hitSlop={{top: 8, bottom: 8, left: 2, right: 2}}
                 activeOpacity={0.7}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.close', 'Close')}
@@ -1742,13 +1742,13 @@ const InspectorHeader = React.memo(() => {
                   {
                     width: buttonSize,
                     height: buttonSize,
-                    borderRadius: isNarrow ? 6 : 7,
+                    borderRadius: isNarrow ? 7 : 8,
                     backgroundColor: 'rgba(244, 63, 94, 0.28)',
                     borderColor: 'rgba(251, 113, 133, 0.48)',
                     borderWidth: 1,
                   },
                 ]}>
-                <CloseWhite size={isNarrow ? 12 : 14} />
+                <CloseWhite size={isNarrow ? 13 : 15} />
               </TouchableOpacity>
             </View>
           </View>

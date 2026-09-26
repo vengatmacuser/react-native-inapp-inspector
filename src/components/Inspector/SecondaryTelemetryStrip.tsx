@@ -1,5 +1,7 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
+  Animated,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,26 +17,64 @@ import {
   BoltIcon,
   SpeedIcon,
 } from '../NetworkIcons';
-import {getNativeDeviceMetrics, NativeDeviceMetrics} from '../../native/NativeInspector';
+import {
+  getNativeDeviceMetrics,
+  getNativeFpsMetrics,
+  NativeDeviceMetrics,
+  startNativeFpsMonitoring,
+  stopNativeFpsMonitoring,
+} from '../../native/NativeInspector';
 import {subscribeNetworkLogs} from '../../customHooks/networkLogger';
 import {useInspector} from './InspectorContext';
 import {useTranslation} from '../../i18n';
 
-export const SecondaryTelemetryStrip: React.FC = () => {
+export const SecondaryTelemetryStrip: React.FC = React.memo(() => {
   const {t} = useTranslation();
-  const {switchActiveTab, peekMode} = useInspector();
+  const {switchActiveTab} = useInspector();
   const [fps, setFps] = useState<number>(60);
+  const [targetFps, setTargetFps] = useState<number>(60);
   const [metrics, setMetrics] = useState<NativeDeviceMetrics | null>(null);
   const [networkSpeedKbps, setNetworkSpeedKbps] = useState<number>(0);
 
-  // ─── Real-Time 60 FPS Engine ───────────────────────────────────────────────
+  // Live pulsing glow dot for telemetry activity
+  const livePulseAnim = useRef(new Animated.Value(0.4)).current;
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(livePulseAnim, {
+          toValue: 1,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(livePulseAnim, {
+          toValue: 0.4,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [livePulseAnim]);
+
+  // ─── Real-Time Native Hardware & JS FPS Engine ───────────────────────────
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(Date.now());
 
   useEffect(() => {
-    let animId: number;
-    const calcFps = () => {
-      frameCountRef.current++;
+    startNativeFpsMonitoring().catch(() => {});
+
+    const fpsPollInterval = setInterval(async () => {
+      try {
+        const nativeFps = await getNativeFpsMetrics();
+        if (nativeFps && typeof nativeFps.fps === 'number' && nativeFps.fps > 0) {
+          setFps(Math.round(nativeFps.fps));
+          if (nativeFps.targetFps) setTargetFps(Math.round(nativeFps.targetFps));
+          return;
+        }
+      } catch {}
+
+      // Fallback: JS frame delta calculation
       const now = Date.now();
       const delta = now - lastTimeRef.current;
       if (delta >= 1000) {
@@ -43,11 +83,20 @@ export const SecondaryTelemetryStrip: React.FC = () => {
         frameCountRef.current = 0;
         lastTimeRef.current = now;
       }
-      animId = requestAnimationFrame(calcFps);
-    };
+    }, 1000);
 
-    animId = requestAnimationFrame(calcFps);
-    return () => cancelAnimationFrame(animId);
+    let animId: number;
+    const countFrames = () => {
+      frameCountRef.current++;
+      animId = requestAnimationFrame(countFrames);
+    };
+    animId = requestAnimationFrame(countFrames);
+
+    return () => {
+      clearInterval(fpsPollInterval);
+      cancelAnimationFrame(animId);
+      stopNativeFpsMonitoring().catch(() => {});
+    };
   }, []);
 
   // ─── Live Network Throughput in kbps / Mbps ──────────────────────────────
@@ -62,7 +111,6 @@ export const SecondaryTelemetryStrip: React.FC = () => {
       }
 
       const now = Date.now();
-      // Look at the 10 most recent logs to compute recent transfer speed
       const recentLogs = allLogs.slice(0, 10);
       let totalBytes = 0;
       let totalDurationMs = 0;
@@ -113,7 +161,6 @@ export const SecondaryTelemetryStrip: React.FC = () => {
     const decayInterval = setInterval(() => {
       const now = Date.now();
       if (now - lastActiveTimeRef.current > 15000 && lastActiveSpeedRef.current > 0) {
-        // Smoothly decay to 0 after 15 seconds of inactivity
         lastActiveSpeedRef.current = 0;
         setNetworkSpeedKbps(0);
       }
@@ -146,32 +193,34 @@ export const SecondaryTelemetryStrip: React.FC = () => {
   }, []);
 
   const fpsColor =
-    fps >= 55
+    fps >= targetFps - 5
       ? AppColors.emerald400
-      : fps >= 30
+      : fps >= targetFps / 2
       ? AppColors.amber400
       : AppColors.rose400;
 
-  // RAM Usage / Total RAM formatted in GB
+  // RAM Usage formatted in MB or GB with resident app memory
   const ramUsageStr = useMemo(() => {
     if (metrics?.usedRAM && metrics?.totalRAM) {
       const usedGB = (metrics.usedRAM / (1024 * 1024 * 1024)).toFixed(2);
       const totalGB = (metrics.totalRAM / (1024 * 1024 * 1024)).toFixed(1);
-      return `${usedGB} / ${totalGB} GB RAM`;
+      return `${usedGB} / ${totalGB} GB`;
     }
     if (metrics?.residentMemory) {
-      const usedGB = (metrics.residentMemory / (1024 * 1024 * 1024)).toFixed(2);
-      return `${usedGB} GB RAM`;
+      const residentMB = Math.round(metrics.residentMemory / (1024 * 1024));
+      return `${residentMB} MB RAM`;
     }
     if (metrics?.usedRAM) {
-      const usedGB = (metrics.usedRAM / (1024 * 1024 * 1024)).toFixed(2);
-      return `${usedGB} GB RAM`;
+      const usedMB = Math.round(metrics.usedRAM / (1024 * 1024));
+      return `${usedMB} MB RAM`;
     }
     return null;
   }, [metrics]);
 
   const batteryPercent = metrics?.batteryPercent;
   const isCharging = metrics?.isCharging;
+
+  const a11ySummary = `Telemetry: ${fps} FPS of ${targetFps}, Network speed ${networkSpeedKbps} kbps, ${ramUsageStr || ''}`;
 
   return (
     <LinearGradient
@@ -184,23 +233,28 @@ export const SecondaryTelemetryStrip: React.FC = () => {
       end={{x: 1, y: 0}}
       style={stripStyles.container}>
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.75}
         onPress={() => switchActiveTab?.('device')}
+        accessible={true}
+        accessibilityRole="summary"
+        accessibilityLabel={a11ySummary}
+        accessibilityHint="Double tap to open Device Diagnostics tab"
         style={stripStyles.inner}>
-        {/* FPS Indicator */}
+        {/* ─── 1. Live Hardware FPS ─── */}
         <View style={stripStyles.item}>
-          <ActivityIcon size={11.5} color={fpsColor} />
-          <Text style={[stripStyles.label, {color: fpsColor, fontFamily: AppFonts.interBold}]}>
+          <Animated.View style={[stripStyles.pulseDot, {backgroundColor: fpsColor, opacity: livePulseAnim}]} />
+          <ActivityIcon size={11} color={fpsColor} />
+          <Text style={[stripStyles.monoLabel, {color: fpsColor}]}>
             {fps} {t('telemetry.fps', 'FPS')}
           </Text>
         </View>
 
         <View style={stripStyles.divider} />
 
-        {/* Network Throughput in kbps / Mbps */}
+        {/* ─── 2. Network Throughput ─── */}
         <View style={stripStyles.item}>
-          <SpeedIcon size={11.5} color={AppColors.sky300} />
-          <Text style={[stripStyles.label, {color: AppColors.sky300}]}>
+          <SpeedIcon size={11} color={AppColors.sky400} />
+          <Text style={[stripStyles.monoLabel, {color: AppColors.sky400}]}>
             {networkSpeedKbps >= 1000
               ? `${(networkSpeedKbps / 1000).toFixed(2)} Mbps`
               : networkSpeedKbps > 0
@@ -209,30 +263,30 @@ export const SecondaryTelemetryStrip: React.FC = () => {
           </Text>
         </View>
 
-        {/* RAM Usage / Total RAM in GB */}
+        {/* ─── 3. RAM / Memory ─── */}
         {ramUsageStr && (
           <>
             <View style={stripStyles.divider} />
             <View style={stripStyles.item}>
               <BoltIcon size={11} color={AppColors.purple400} />
-              <Text style={[stripStyles.label, {color: AppColors.purple400}]}>
+              <Text style={[stripStyles.monoLabel, {color: AppColors.purple400}]}>
                 {ramUsageStr}
               </Text>
             </View>
           </>
         )}
 
-        {/* Battery & Power status if available */}
+        {/* ─── 4. Battery / Power ─── */}
         {batteryPercent !== undefined && batteryPercent >= 0 && (
           <>
             <View style={stripStyles.divider} />
             <View style={stripStyles.item}>
               {isCharging ? (
-                <BatteryChargingIcon size={11.5} color={AppColors.emerald400} />
+                <BatteryChargingIcon size={11} color={AppColors.emerald400} />
               ) : (
-                <BatteryFullIcon size={11.5} color={AppColors.slate400} />
+                <BatteryFullIcon size={11} color={AppColors.slate400} />
               )}
-              <Text style={stripStyles.label}>
+              <Text style={[stripStyles.monoLabel, {color: isCharging ? AppColors.emerald400 : AppColors.slate400}]}>
                 {Math.round(batteryPercent)}%
               </Text>
             </View>
@@ -241,7 +295,7 @@ export const SecondaryTelemetryStrip: React.FC = () => {
       </TouchableOpacity>
     </LinearGradient>
   );
-};
+});
 
 const stripStyles = StyleSheet.create({
   container: {
@@ -257,24 +311,32 @@ const stripStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 3.5,
-    minHeight: 23,
+    paddingVertical: 4.5,
+    minHeight: 25,
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
+  pulseDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 1,
+  },
   divider: {
     width: 1,
     height: 10,
     backgroundColor: AppColors.borderSubtle,
   },
-  label: {
-    fontFamily: AppFonts.interMedium,
-    fontSize: 9,
-    lineHeight: 11.5,
-    color: AppColors.textPrimary,
-    letterSpacing: 0.1,
+  monoLabel: {
+    fontFamily: AppFonts.monoFont,
+    fontSize: 9.5,
+    lineHeight: 12,
+    letterSpacing: 0.2,
+    fontVariant: ['tabular-nums'],
   },
 });
+
+export default SecondaryTelemetryStrip;

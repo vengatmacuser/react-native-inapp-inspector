@@ -66,7 +66,6 @@ const TAB_THEMES: Record<
   crash: HEADER_TAB_THEME,
   push: HEADER_TAB_THEME,
   socket: HEADER_TAB_THEME,
-  debugging: HEADER_TAB_THEME,
   media: HEADER_TAB_THEME,
 };
 
@@ -174,89 +173,65 @@ const TabBar = React.memo(() => {
               id: 1,
               key: 'apis',
               label: 'APIs',
-              count: logs.length,
               icon: 'apis',
             },
             {
               id: 2,
               key: 'logs',
               label: 'Logs',
-              count: consoleLogs.length,
               icon: 'logs',
             },
             {
               id: 3,
               key: 'perf',
               label: 'Perf / FPS',
-              count: 0,
               icon: 'perf',
             },
             {
               id: 4,
               key: 'analytics',
               label: 'Analytics',
-              count: analyticsEvents.length,
               icon: 'analytics',
             },
             {
               id: 5,
               key: 'redux',
               label: 'Redux',
-              count: 0,
               icon: 'redux',
             },
             {
               id: 6,
               key: 'storage',
               label: 'Storage',
-              count: 0,
               icon: 'storage',
             },
             {
               id: 7,
               key: 'device',
               label: 'Device',
-              count: 0,
               icon: 'device',
             },
             {
               id: 8,
               key: 'crash',
               label: 'Crash',
-              count: crashRecords?.length || 0,
               icon: 'crash',
             },
             {
               id: 9,
               key: 'push',
               label: 'Push',
-              count: pushRecords?.length || 0,
               icon: 'push',
             },
             {
               id: 10,
               key: 'socket',
               label: 'WebSocket',
-              count: socketRecords?.length || 0,
               icon: 'socket',
-            },
-            {
-              id: 11,
-              key: 'debugging',
-              label: 'Debugging',
-              count: 0,
-              icon: 'debugging',
             },
           ] as const
         )
           .filter(tab => {
-            if (tab.key === 'debugging') {
-              return (
-                Platform.OS === 'android' &&
-                isLocalDebugEnvironment() &&
-                Boolean(tabVisibility?.debugging)
-              );
-            }
             if (!tabVisibility?.[tab.key]) return false;
             if (tab.key === 'redux' && !isReduxAvail) return false;
             if (tab.key === 'analytics' && !isAnalyticsAvail) return false;
@@ -266,7 +241,6 @@ const TabBar = React.memo(() => {
             const isActive = activeTab === tab.key;
             const theme = TAB_THEMES[tab.key] || TAB_THEMES.apis;
             const iconColor = isActive ? AppColors.white : theme.iconInactive;
-            const countLabel = tab.count > 99 ? '99+' : String(tab.count);
             const hasUnreadApis =
               activeTab !== 'apis' && logs.length > lastReadApisCount;
             const hasUnreadLogs =
@@ -282,6 +256,11 @@ const TabBar = React.memo(() => {
               <TouchableScale
                 key={tab.key}
                 testID={`inspector.tab.${tab.key}`}
+                accessible={true}
+                accessibilityRole="tab"
+                accessibilityState={{selected: isActive}}
+                accessibilityLabel={`${t(`tabs.${tab.key}`, tab.label)} tab`}
+                accessibilityHint={t('accessibility.tabSwitchHint', 'Double tap to switch to this tab')}
                 onPress={() => {
                   switchActiveTab(tab.key);
                 }}
@@ -335,9 +314,6 @@ const TabBar = React.memo(() => {
                   {tab.icon === 'socket' && (
                     <WebsocketIcon color={iconColor} size={14} />
                   )}
-                  {tab.icon === 'debugging' && (
-                    <QrCodeIcon color={iconColor} size={14} />
-                  )}
                   <View
                     style={{
                       minWidth: 20,
@@ -376,34 +352,6 @@ const TabBar = React.memo(() => {
                     ]}>
                     {t(`tabs.${tab.key}`, tab.label)}
                   </Text>
-                  {tab.count > 0 && tab.key !== 'push' && (
-                    <View
-                      style={{
-                        paddingHorizontal: 5,
-                        paddingVertical: 1,
-                        borderRadius: 8,
-                        backgroundColor: isActive
-                          ? AppColors.overlayWhite25
-                          : theme.idBadgeBg,
-                        borderWidth: 0.5,
-                        borderColor: isActive
-                          ? AppColors.overlayWhite45
-                          : theme.idBadgeBorder,
-                        marginLeft: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                      <Text
-                        style={{
-                          fontFamily: AppFonts.interBold,
-                          fontSize: 9.5,
-                          lineHeight: 12,
-                          color: isActive ? AppColors.white : theme.themeColor,
-                        }}>
-                        {countLabel}
-                      </Text>
-                    </View>
-                  )}
                   {((tab.key === 'apis' && hasUnreadApis) ||
                     (tab.key === 'logs' && hasUnreadLogs) ||
                     (tab.key === 'crash' && hasUnreadCrashes) ||
@@ -476,8 +424,11 @@ const TabBar = React.memo(() => {
             onPress={() => {
               switchActiveTab('media');
             }}
-            accessibilityRole="button"
-            accessibilityLabel="Media Gallery"
+            accessible={true}
+            accessibilityRole="tab"
+            accessibilityState={{selected: isMediaActive}}
+            accessibilityLabel={`${t('tabs.media', 'Media')} tab${mediaCount > 0 ? `, ${mediaCount} items` : ''}`}
+            accessibilityHint={t('accessibility.tabSwitchHint', 'Double tap to switch to this tab')}
             style={[
               styles.contentTabButton,
               {

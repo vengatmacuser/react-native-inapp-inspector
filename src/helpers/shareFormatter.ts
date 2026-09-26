@@ -469,11 +469,11 @@ export interface ConsoleLogExportOptions {
 }
 
 export const DEFAULT_CONSOLE_EXPORT_OPTIONS: ConsoleLogExportOptions = {
-  includeStackTrace: false,
-  includeArguments: false,
-  includeCaller: false,
-  includeTimestamps: false,
-  includeAppInfo: false,
+  includeStackTrace: true,
+  includeArguments: true,
+  includeCaller: true,
+  includeTimestamps: true,
+  includeAppInfo: true,
   includeDuplicates: false,
   ignorePattern: '',
 };
@@ -506,11 +506,11 @@ export function formatConsoleLogsExport(
   }
 
   const {
-    includeStackTrace = false,
-    includeArguments = false,
-    includeCaller = false,
-    includeTimestamps = false,
-    includeAppInfo = false,
+    includeStackTrace = true,
+    includeArguments = true,
+    includeCaller = true,
+    includeTimestamps = true,
+    includeAppInfo = true,
     includeDuplicates = false,
     ignorePattern = '',
   } = options;
@@ -664,13 +664,13 @@ export interface NetworkLogExportOptions {
 }
 
 export const DEFAULT_NETWORK_EXPORT_OPTIONS: NetworkLogExportOptions = {
-  includeRequestHeaders: false,
-  includeRequestBody: false,
-  includeResponseHeaders: false,
-  includeResponseBody: false,
-  includeCurlCommand: false,
-  includeTimestamps: false,
-  includeAppInfo: false,
+  includeRequestHeaders: true,
+  includeRequestBody: true,
+  includeResponseHeaders: true,
+  includeResponseBody: true,
+  includeCurlCommand: true,
+  includeTimestamps: true,
+  includeAppInfo: true,
   ignorePattern: '',
 };
 
@@ -702,13 +702,13 @@ export function formatNetworkLogsExport(
   }
 
   const {
-    includeRequestHeaders = false,
-    includeRequestBody = false,
-    includeResponseHeaders = false,
-    includeResponseBody = false,
-    includeCurlCommand = false,
-    includeTimestamps = false,
-    includeAppInfo = false,
+    includeRequestHeaders = true,
+    includeRequestBody = true,
+    includeResponseHeaders = true,
+    includeResponseBody = true,
+    includeCurlCommand = true,
+    includeTimestamps = true,
+    includeAppInfo = true,
     ignorePattern = '',
   } = options;
 

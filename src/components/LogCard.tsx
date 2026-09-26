@@ -157,11 +157,15 @@ function LogCard({
   const triggeredAt = formatDateTime(item.startTime);
   const isJson = item.url.split('?')[0].toLowerCase().endsWith('.json');
 
+  const handleCardPress = React.useCallback(() => {
+    onPress?.(item);
+  }, [onPress, item]);
+
   return (
     <View style={styles.container}>
       <TouchableScale
         testID={testID}
-        onPress={onPress}
+        onPress={handleCardPress}
         style={[
           styles.card,
           {
@@ -747,8 +751,6 @@ function areLogCardPropsEqual(prev: LogCardProps, next: LogCardProps): boolean {
     prev.isSelected === next.isSelected &&
     prev.isNew === next.isNew &&
     prev.searchStr === next.searchStr &&
-    prev.timelineMinStart === next.timelineMinStart &&
-    prev.timelineTotalRange === next.timelineTotalRange &&
     prev.onPress === next.onPress &&
     prev.onToggleSelect === next.onToggleSelect
   );

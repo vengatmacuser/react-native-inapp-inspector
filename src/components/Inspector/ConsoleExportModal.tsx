@@ -76,12 +76,12 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
   const [ignorePattern, setIgnorePattern] = useState<string>('');
   const [format, setFormat] = useState<ConsoleLogExportFormat>('txt');
 
-  // Content options toggles (unselected by default)
-  const [includeStackTrace, setIncludeStackTrace] = useState<boolean>(false);
-  const [includeArguments, setIncludeArguments] = useState<boolean>(false);
-  const [includeCaller, setIncludeCaller] = useState<boolean>(false);
-  const [includeTimestamps, setIncludeTimestamps] = useState<boolean>(false);
-  const [includeAppInfo, setIncludeAppInfo] = useState<boolean>(false);
+  // Content options toggles (selected by default)
+  const [includeStackTrace, setIncludeStackTrace] = useState<boolean>(true);
+  const [includeArguments, setIncludeArguments] = useState<boolean>(true);
+  const [includeCaller, setIncludeCaller] = useState<boolean>(true);
+  const [includeTimestamps, setIncludeTimestamps] = useState<boolean>(true);
+  const [includeAppInfo, setIncludeAppInfo] = useState<boolean>(true);
 
   const [progressPercent, setProgressPercent] = useState<number>(0);
   const [processedCount, setProcessedCount] = useState<number>(0);

@@ -143,6 +143,7 @@ import {
   hideNativeFloatingButton,
   subscribeNativeFloatingButtonPress,
   subscribeNativeDeviceShake,
+  enableNativeCrashProtection,
   isNativeModuleAvailable,
 } from './native/NativeInspector';
 
@@ -643,7 +644,6 @@ const NetworkInspector = ({
     socket: true,
     device: true,
     storage: true,
-    debugging: true,
     media: true,
   });
 
@@ -737,7 +737,6 @@ const NetworkInspector = ({
       socket: true,
       device: true,
       storage: true,
-      debugging: true,
       media: true,
     });
 
@@ -1077,18 +1076,19 @@ const NetworkInspector = ({
       setSelectedCrash(null);
       setSelectedSocket(null);
 
-      if (typeof React.startTransition === 'function') {
-        React.startTransition(() => {
-          setActiveTab(key);
-          loadNativePage(key);
-        });
-      } else {
-        setActiveTab(key);
+      setActiveTab(key);
+
+      if (
+        (key === 'apis' && logs.length === 0) ||
+        (key === 'logs' && consoleLogs.length === 0) ||
+        (key === 'analytics' && analyticsEvents.length === 0) ||
+        (key === 'crash' && crashRecords.length === 0)
+      ) {
         loadNativePage(key);
       }
       trackInspectorTabView(key);
     },
-    [loadNativePage],
+    [logs.length, consoleLogs.length, analyticsEvents.length, crashRecords.length, loadNativePage],
   );
 
   const [selectedEvent, setSelectedEvent] = useState<AnalyticsEvent | null>(
@@ -1509,12 +1509,21 @@ const NetworkInspector = ({
 
   useEffect(() => {
     setupNetworkLogger();
-    clearNetworkLogs();
     setupConsoleLogger();
     autoSetupAnalyticsLogger();
     setupGlobalCrashHandler();
     setupSocketLogger();
+    enableNativeCrashProtection().catch(() => {});
     const cleanupMemoryWarning = setupMemoryWarningHandler();
+
+    // Preserve and sync any early logs recorded before this effect ran
+    const initialNetwork = getNetworkLogs();
+    if (initialNetwork.length > 0) {
+      latestNetworkLogsRef.current = initialNetwork;
+      const deduped = deduplicateLogs(initialNetwork);
+      prevLogIdsRef.current = new Set(deduped.map(l => l.id));
+      setLogs(deduped);
+    }
 
     const isVisibleRef = isVisibleRefObj;
 

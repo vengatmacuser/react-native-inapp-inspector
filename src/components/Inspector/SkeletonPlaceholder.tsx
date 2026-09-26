@@ -1,28 +1,33 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, StyleSheet, View} from 'react-native';
 import {AppColors} from '../../styles/AppColors';
+import {ActiveTab} from '../../types';
 
 export interface SkeletonPlaceholderProps {
+  tab?: ActiveTab;
+  type?: 'card' | 'detail' | 'list' | 'table';
   cardCount?: number;
 }
 
 export const SkeletonPlaceholder = React.memo(function SkeletonPlaceholder({
+  tab = 'apis',
+  type = 'card',
   cardCount = 4,
 }: SkeletonPlaceholderProps) {
-  const shimmerAnim = useRef(new Animated.Value(0.45)).current;
+  const shimmerAnim = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, {
           toValue: 0.95,
-          duration: 750,
-          useNativeDriver: false,
+          duration: 700,
+          useNativeDriver: true,
         }),
         Animated.timing(shimmerAnim, {
-          toValue: 0.45,
-          duration: 750,
-          useNativeDriver: false,
+          toValue: 0.4,
+          duration: 700,
+          useNativeDriver: true,
         }),
       ]),
     );
@@ -30,15 +35,90 @@ export const SkeletonPlaceholder = React.memo(function SkeletonPlaceholder({
     return () => animation.stop();
   }, [shimmerAnim]);
 
+  // ─── Detail View Skeleton ───
+  if (type === 'detail') {
+    return (
+      <View
+        style={skeletonStyles.container}
+        accessible={true}
+        accessibilityRole="progressbar"
+        accessibilityLabel="Loading details, please wait"
+        accessibilityLiveRegion="polite">
+        <Animated.View style={[skeletonStyles.detailHeader, {opacity: shimmerAnim}]} />
+        <View style={skeletonStyles.chipStripSkeleton}>
+          <Animated.View style={[skeletonStyles.chipSkeleton, {width: 70, opacity: shimmerAnim}]} />
+          <Animated.View style={[skeletonStyles.chipSkeleton, {width: 90, opacity: shimmerAnim}]} />
+          <Animated.View style={[skeletonStyles.chipSkeleton, {width: 80, opacity: shimmerAnim}]} />
+        </View>
+        <Animated.View style={[skeletonStyles.detailCodeCard, {opacity: shimmerAnim}]}>
+          <View style={[skeletonStyles.urlLineLong, {width: '85%'}]} />
+          <View style={[skeletonStyles.urlLineLong, {width: '70%', marginTop: 8}]} />
+          <View style={[skeletonStyles.urlLineLong, {width: '92%', marginTop: 8}]} />
+          <View style={[skeletonStyles.urlLineLong, {width: '60%', marginTop: 8}]} />
+          <View style={[skeletonStyles.urlLineLong, {width: '78%', marginTop: 8}]} />
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // ─── Media Gallery Tab Grid Skeleton ───
+  if (tab === 'media') {
+    return (
+      <View
+        style={skeletonStyles.container}
+        accessible={true}
+        accessibilityRole="progressbar"
+        accessibilityLabel="Loading media gallery, please wait"
+        accessibilityLiveRegion="polite">
+        <View style={skeletonStyles.mediaGrid}>
+          {Array.from({length: 6}).map((_, i) => (
+            <Animated.View
+              key={`skeleton_media_${i}`}
+              style={[skeletonStyles.mediaTile, {opacity: shimmerAnim}]}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  }
+
+  // ─── Performance Tab Skeleton ───
+  if (tab === 'perf') {
+    return (
+      <View
+        style={skeletonStyles.container}
+        accessible={true}
+        accessibilityRole="progressbar"
+        accessibilityLabel="Loading performance diagnostics, please wait"
+        accessibilityLiveRegion="polite">
+        <Animated.View style={[skeletonStyles.heroCard, {opacity: shimmerAnim}]}>
+          <View style={skeletonStyles.cardTopRow}>
+            <View style={skeletonStyles.timeSkeleton} />
+            <View style={skeletonStyles.statusBadgeSkeleton} />
+          </View>
+          <View style={[skeletonStyles.urlLineLong, {height: 32, marginTop: 12}]} />
+        </Animated.View>
+        <Animated.View style={[skeletonStyles.cardSkeleton, {opacity: shimmerAnim}]}>
+          <View style={[skeletonStyles.urlLineLong, {width: '40%'}]} />
+          <View style={[skeletonStyles.urlLineShort, {marginTop: 10}]} />
+          <View style={[skeletonStyles.urlLineLong, {marginTop: 8}]} />
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // ─── Standard List Tabs (apis, logs, crash, push, socket, redux, storage, device) ───
   return (
-    <View style={skeletonStyles.container}>
+    <View
+      style={skeletonStyles.container}
+      accessible={true}
+      accessibilityRole="progressbar"
+      accessibilityLabel={`Loading ${tab} data, please wait`}
+      accessibilityLiveRegion="polite">
       {/* ─── Search & Scope Toolbar Skeleton ─── */}
       <View style={skeletonStyles.toolbarSkeleton}>
         <Animated.View
-          style={[
-            skeletonStyles.searchBarSkeleton,
-            {opacity: shimmerAnim},
-          ]}
+          style={[skeletonStyles.searchBarSkeleton, {opacity: shimmerAnim}]}
         />
         <View style={skeletonStyles.actionButtonsRow}>
           <Animated.View
@@ -66,12 +146,12 @@ export const SkeletonPlaceholder = React.memo(function SkeletonPlaceholder({
         />
       </View>
 
-      {/* ─── List Cards Skeleton ─── */}
+      {/* ─── List Cards Skeleton (Tab-Adaptive Layout) ─── */}
       {Array.from({length: cardCount}).map((_, i) => (
         <Animated.View
           key={`skeleton_card_${i}`}
           style={[skeletonStyles.cardSkeleton, {opacity: shimmerAnim}]}>
-          {/* Top row: Status pill + Method + Time */}
+          {/* Top row */}
           <View style={skeletonStyles.cardTopRow}>
             <View style={skeletonStyles.badgeGroup}>
               <View style={skeletonStyles.statusBadgeSkeleton} />
@@ -80,11 +160,11 @@ export const SkeletonPlaceholder = React.memo(function SkeletonPlaceholder({
             <View style={skeletonStyles.timeSkeleton} />
           </View>
 
-          {/* Middle row: URL lines */}
+          {/* Middle row */}
           <View style={skeletonStyles.urlLineLong} />
           <View style={skeletonStyles.urlLineShort} />
 
-          {/* Bottom row: Latency & Size */}
+          {/* Bottom row */}
           <View style={skeletonStyles.cardBottomRow}>
             <View style={skeletonStyles.metaPillSkeleton} />
             <View style={skeletonStyles.metaPillSkeleton} />
@@ -200,6 +280,41 @@ const skeletonStyles = StyleSheet.create({
     height: 14,
     borderRadius: 4,
     backgroundColor: AppColors.slate200,
+  },
+  heroCard: {
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: AppColors.dividerColor,
+  },
+  detailHeader: {
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: AppColors.graySurface,
+    marginBottom: 12,
+  },
+  detailCodeCard: {
+    flex: 1,
+    backgroundColor: AppColors.primaryLight,
+    borderRadius: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: AppColors.dividerColor,
+  },
+  mediaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  mediaTile: {
+    width: '31%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    backgroundColor: AppColors.graySurface,
+    borderWidth: 1,
+    borderColor: AppColors.dividerColor,
   },
 });
 

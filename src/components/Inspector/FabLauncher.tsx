@@ -559,6 +559,10 @@ const FabLauncher = () => {
           {...circularPanResponder.panHandlers}>
           <TouchableScale
             testID="inspector.fab.launcher"
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={t('accessibility.openInspector', 'Open In-App Network and System Inspector')}
+            accessibilityHint={t('accessibility.openInspectorHint', 'Double tap to open the full debug inspector')}
             style={{
               width: 68,
               height: 68,

@@ -590,7 +590,7 @@ export interface TreeNodeProps {
 
 export interface LogCardProps {
   item: NetworkLog;
-  onPress: () => void;
+  onPress: (item?: NetworkLog) => void;
   timelineMinStart: number;
   timelineTotalRange: number;
   isNew?: boolean;

@@ -230,13 +230,11 @@ const SettingsPanel = () => {
   const autoRamProfile = calculateRamBasedLimits(deviceFreeRamMb);
 
   const allModules = useMemo(
-    () =>
-      (
-        [
-          {
-            id: 1,
-            key: 'apis',
-            label: 'APIs (Network)',
+    () => [
+      {
+        id: 1,
+        key: 'apis',
+        label: 'APIs (Network)',
             category: 'core',
             icon: 'apis',
             desc: 'HTTP/HTTPS requests, GraphQL, Axios & WebSocket inspector',
@@ -299,14 +297,6 @@ const SettingsPanel = () => {
           },
           {
             id: 9,
-            key: 'debugging',
-            label: 'Multi-Device Debugging',
-            category: 'diagnostic',
-            icon: 'debugging',
-            desc: 'QR Code bridge for direct Debug APK download & Metro live-reload sync',
-          },
-          {
-            id: 10,
             key: 'media',
             label: 'Screencast',
             category: 'diagnostic',
@@ -314,7 +304,7 @@ const SettingsPanel = () => {
             desc: 'Screenshots, video recordings, audio narration & animated GIFs',
           },
           {
-            id: 11,
+            id: 10,
             key: 'push',
             label: 'Push Notifications',
             category: 'telemetry',
@@ -322,19 +312,14 @@ const SettingsPanel = () => {
             desc: 'Universal push & local notification logger (Salesforce, FCM, APNs, Braze, Expo)',
           },
           {
-            id: 12,
+            id: 11,
             key: 'socket',
             label: 'WebSocket & Socket.IO',
             category: 'telemetry',
             icon: 'socket',
             desc: 'Real-time WebSocket & Socket.IO message inspector, frames & event logger',
           },
-        ] as const
-      ).filter(m =>
-        m.key === 'debugging'
-          ? Platform.OS === 'android' && isLocalDebugEnvironment()
-          : true,
-      ),
+        ] as const,
     [],
   );
 
@@ -381,11 +366,6 @@ const SettingsPanel = () => {
       color: AppColors.red600,
       bg: `${AppColors.red600}14`,
       border: `${AppColors.red600}2E`,
-    },
-    debugging: {
-      color: AppColors.indigo600,
-      bg: `${AppColors.indigo600}14`,
-      border: `${AppColors.indigo600}2E`,
     },
     media: {
       color: AppColors.pink600,
@@ -951,12 +931,6 @@ const SettingsPanel = () => {
                         )}
                         {moduleItem.icon === 'storage' && (
                           <DatabaseIcon
-                            color={isChecked ? theme.color : AppColors.grayTextWeak}
-                            size={16}
-                          />
-                        )}
-                        {moduleItem.icon === 'debugging' && (
-                          <QrCodeIcon
                             color={isChecked ? theme.color : AppColors.grayTextWeak}
                             size={16}
                           />

@@ -275,6 +275,15 @@ const NetworkTab = React.memo(() => {
 
 
 
+  const handleSelectLog = useCallback(
+    (logItem?: any) => {
+      if (logItem) {
+        setSelected(logItem);
+      }
+    },
+    [setSelected],
+  );
+
   const renderItem = useCallback(
     ({item, index}: {item: GroupedListItem; index: number}) => {
       if (item.type === 'header') {
@@ -492,7 +501,6 @@ const NetworkTab = React.memo(() => {
       }
 
       const {log, isLast, color} = item;
-      const logItemIndex = displayedData.slice(0, index).filter(i => !i.type).length;
       return (
         <AnimatedEntrance
           index={index}
@@ -518,13 +526,11 @@ const NetworkTab = React.memo(() => {
           )}
           <View style={effectiveGroupByPage ? styles.treeCardWrapper : {flex: 1}}>
             <LogCard
-              testID={`inspector.network.item.${logItemIndex}`}
+              testID={`inspector.network.item.${log.id}`}
               item={log}
               isSelected={selectedLogs.has(log.id)}
               onToggleSelect={toggleSelect}
-              onPress={() => {
-                setSelected(log);
-              }}
+              onPress={handleSelectLog}
               timelineMinStart={minStart}
               timelineTotalRange={totalRange}
               isNew={newLogIds.has(log.id)}
@@ -535,18 +541,17 @@ const NetworkTab = React.memo(() => {
       );
     },
     [
-      displayedData,
       effectiveGroupByPage,
       minStart,
       totalRange,
       newLogIds,
       selectedLogs,
       toggleSelect,
+      handleSelectLog,
       search,
       toggleSectionFilter,
       toggleSectionCollapse,
       loadMoreSection,
-      setSelected,
       t,
     ],
   );

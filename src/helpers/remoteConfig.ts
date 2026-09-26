@@ -33,7 +33,6 @@ const MODULE_KEYS: ActiveTab[] = [
   'storage',
   'device',
   'crash',
-  'debugging',
   'media',
   'socket',
 ];

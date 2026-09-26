@@ -16,7 +16,7 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #endif
 
-static NetworkInspectorModule *sharedInstance = nil;
+static __weak NetworkInspectorModule *sharedInstance = nil;
 static NSUncaughtExceptionHandler *previousUncaughtExceptionHandler = NULL;
 static BOOL g_floatingButtonPressed = NO;
 
@@ -327,38 +327,8 @@ static BOOL g_floatingButtonPressed = NO;
 static InAppInspectorFloatingView *floatingButtonView = nil;
 static BOOL g_floatingButtonDesiredVisible = NO;
 
-static void NativeSignalHandler(int signalNumber) {
-    void* callstack[128];
-    int frames = backtrace(callstack, 128);
-    char **strs = backtrace_symbols(callstack, frames);
-
-    NSMutableArray *backtraceArray = [NSMutableArray arrayWithCapacity:frames];
-    for (int i = 0; i < frames; i++) {
-        if (strs && strs[i]) {
-            [backtraceArray addObject:[NSString stringWithUTF8String:strs[i]]];
-        }
-    }
-    if (strs) free(strs);
-
-    NSString *stackTrace = [backtraceArray componentsJoinedByString:@"\n"];
-    NSString *signalName = @"UNKNOWN";
-    switch (signalNumber) {
-        case SIGABRT: signalName = @"SIGABRT (Abort)"; break;
-        case SIGSEGV: signalName = @"SIGSEGV (Segmentation Fault)"; break;
-        case SIGBUS:  signalName = @"SIGBUS (Bus Error)"; break;
-        case SIGILL:  signalName = @"SIGILL (Illegal Instruction)"; break;
-        case SIGFPE:  signalName = @"SIGFPE (Floating Point Exception)"; break;
-        case SIGPIPE: signalName = @"SIGPIPE (Broken Pipe)"; break;
-        case SIGTRAP: signalName = @"SIGTRAP (Trace Trap)"; break;
-    }
-
-    NSString *message = [NSString stringWithFormat:@"Native Signal Crash: %@", signalName];
-    if (sharedInstance != nil) {
-        [sharedInstance emitCrashEventWithMessage:message stackTrace:stackTrace];
-    }
-}
-
 static void NativeExceptionHandler(NSException *exception) {
+    if (!exception) return;
     NSArray *callStack = [exception callStackSymbols];
     NSString *stackTrace = [callStack componentsJoinedByString:@"\n"];
     NSString *message = [NSString stringWithFormat:@"%@: %@", [exception name], [exception reason]];
@@ -386,107 +356,10 @@ static void NativeExceptionHandler(NSException *exception) {
     } @catch (NSException *e) {}
 
     // Delegate to previous exception handler (React Native / Crashlytics / default)
-    if (previousUncaughtExceptionHandler) {
+    if (previousUncaughtExceptionHandler && previousUncaughtExceptionHandler != &NativeExceptionHandler) {
         previousUncaughtExceptionHandler(exception);
     }
 }
-
-// ─── Fabric View Recycle Safeguard ───────────────────────────────────────────
-// Custom NSAssertionHandler that catches Fabric view recycling and mounted view assertions
-// and logs them as warnings instead of crashing.
-
-@interface InAppInspectorAssertionHandler : NSAssertionHandler
-@property (nonatomic, strong) NSAssertionHandler *previousHandler;
-@end
-
-@implementation InAppInspectorAssertionHandler
-
-+ (void)install {
-    NSThread *mainThread = [NSThread mainThread];
-    NSMutableDictionary *threadDict = [mainThread threadDictionary];
-    NSAssertionHandler *current = threadDict[NSAssertionHandlerKey];
-
-    if ([current isKindOfClass:[InAppInspectorAssertionHandler class]]) {
-        return;
-    }
-
-    InAppInspectorAssertionHandler *handler = [[InAppInspectorAssertionHandler alloc] init];
-    handler.previousHandler = current;
-    threadDict[NSAssertionHandlerKey] = handler;
-    NSLog(@"[InAppInspector] Fabric view recycle safeguard (assertion handler) installed");
-}
-
-- (void)handleFailureInMethod:(SEL)selector
-                       object:(id)object
-                         file:(NSString *)fileName
-                   lineNumber:(NSInteger)line
-                  description:(NSString *)format, ... {
-    va_list args;
-    va_start(args, format);
-    NSString *desc = format ? [[NSString alloc] initWithFormat:format arguments:args] : @"Assertion failure";
-    va_end(args);
-
-    // Intercept Fabric recycling and layout assertions
-    if ([desc containsString:@"Attempt to recycle a mounted view"] ||
-        [desc containsString:@"recycle a mounted view"] ||
-        [desc containsString:@"Mounted view"] ||
-        [desc containsString:@"Expected component view"]) {
-        NSLog(@"[InAppInspector] ⚠️ Suppressed Fabric view recycle assertion: %@ (in %@:%ld)",
-              desc, fileName ?: @"unknown", (long)line);
-        return; // Suppress — don't crash
-    }
-
-    // Forward all other assertions to previous handler
-    if (self.previousHandler) {
-        [self.previousHandler handleFailureInMethod:selector
-                                             object:object
-                                               file:fileName
-                                         lineNumber:line
-                                        description:@"%@", desc];
-    } else {
-        NSString *reason = [NSString stringWithFormat:
-            @"*** Assertion failure in %@, %@:%ld: %@",
-            NSStringFromSelector(selector), fileName ?: @"unknown", (long)line, desc];
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                       reason:reason
-                                     userInfo:nil];
-    }
-}
-
-- (void)handleFailureInFunction:(NSString *)functionName
-                           file:(NSString *)fileName
-                     lineNumber:(NSInteger)line
-                    description:(NSString *)format, ... {
-    va_list args;
-    va_start(args, format);
-    NSString *desc = format ? [[NSString alloc] initWithFormat:format arguments:args] : @"Assertion failure";
-    va_end(args);
-
-    if ([desc containsString:@"Attempt to recycle a mounted view"] ||
-        [desc containsString:@"recycle a mounted view"] ||
-        [desc containsString:@"Mounted view"] ||
-        [desc containsString:@"Expected component view"]) {
-        NSLog(@"[InAppInspector] ⚠️ Suppressed Fabric view recycle assertion: %@ (in %@:%ld)",
-              desc, fileName ?: @"unknown", (long)line);
-        return; // Suppress — don't crash
-    }
-
-    if (self.previousHandler) {
-        [self.previousHandler handleFailureInFunction:functionName
-                                                 file:fileName
-                                           lineNumber:line
-                                          description:@"%@", desc];
-    } else {
-        NSString *reason = [NSString stringWithFormat:
-            @"*** Assertion failure in %@, %@:%ld: %@",
-            functionName ?: @"unknown", fileName ?: @"unknown", (long)line, desc];
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                       reason:reason
-                                     userInfo:nil];
-    }
-}
-
-@end
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NATIVE CAMERA ROLL / PHOTO & VIDEO PICKER DELEGATE
@@ -677,12 +550,15 @@ static UIWindow *GetAppActiveWindow(void) {
             }
         }
     }
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     for (UIWindow *w in [UIApplication sharedApplication].windows) {
         if (!IsInternalSystemWindow(w) && (w.isKeyWindow || w.windowLevel == UIWindowLevelNormal)) {
             return w;
         }
     }
     return [UIApplication sharedApplication].windows.firstObject;
+#pragma clang diagnostic pop
 }
 
 static UIViewController *FindTopViewControllerFrom(UIViewController *vc) {
@@ -811,6 +687,17 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
     return self;
 }
 
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if (self->displayLink) {
+        [self->displayLink invalidate];
+        self->displayLink = nil;
+    }
+    if (sharedInstance == self) {
+        sharedInstance = nil;
+    }
+}
+
 + (BOOL)requiresMainQueueSetup {
     return YES;
 }
@@ -832,7 +719,6 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
 
 - (void)safeSendEvent:(NSString *)eventName body:(id)body {
     if (!hasListeners) return;
-    if (self.bridge == nil) return;
     @try {
         [self sendEventWithName:eventName body:body];
     } @catch (NSException *ex) {
@@ -857,33 +743,13 @@ RCT_EXPORT_MODULE(NetworkInspectorModule);
 }
 
 - (void)installHandlers {
-    previousUncaughtExceptionHandler = NSGetUncaughtExceptionHandler();
-    NSSetUncaughtExceptionHandler(&NativeExceptionHandler);
-
-    struct sigaction sa;
-    sa.sa_handler = NativeSignalHandler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_NODEFER;
-
-    sigaction(SIGABRT, &sa, NULL);
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGBUS,  &sa, NULL);
-    sigaction(SIGILL,  &sa, NULL);
-    sigaction(SIGFPE,  &sa, NULL);
-    sigaction(SIGPIPE, &sa, NULL);
-    sigaction(SIGTRAP, &sa, NULL);
-
-    // Fabric view recycle safeguard: Install a custom NSAssertionHandler on the
-    // main thread that catches the specific 'Attempt to recycle a mounted view'
-    // assertion from RCTComponentViewRegistry, instead of crashing the app.
-    // This is a defense-in-depth approach — the primary fix is on the JS side
-    // (using LinearGradient as absolute background, not as a container parent).
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [InAppInspectorAssertionHandler install];
-        });
-    });
+    @try {
+        if (!previousUncaughtExceptionHandler) {
+            previousUncaughtExceptionHandler = NSGetUncaughtExceptionHandler();
+            NSSetUncaughtExceptionHandler(&NativeExceptionHandler);
+        }
+        signal(SIGPIPE, SIG_IGN);
+    } @catch (NSException *e) {}
 }
 
 - (void)emitCrashEventWithMessage:(NSString *)message stackTrace:(NSString *)stackTrace {
@@ -1939,7 +1805,7 @@ RCT_EXPORT_METHOD(convertToGif:(NSString *)videoUri
             NSString *filePath = [[self getCapturesDirectory] stringByAppendingPathComponent:filename];
             NSURL *gifUrl = [NSURL fileURLWithPath:filePath];
 
-            CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)gifUrl, kUTTypeGIF, 0, NULL);
+            CGImageDestinationRef destination = CGImageDestinationCreateWithURL((__bridge CFURLRef)gifUrl, (CFStringRef)@"com.compuserve.gif", 0, NULL);
             if (!destination) {
                 reject(@"GIF_ERROR", @"Failed to create GIF image destination", nil);
                 return;
@@ -2963,7 +2829,7 @@ RCT_EXPORT_METHOD(shareFile:(NSString *)filePath
                 reject(@"SHARE_ERROR", @"Unable to find active view controller to share file", nil);
                 return;
             }
-            if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad && rootVC.view) {
+            if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad && rootVC.view) {
                 activityVC.popoverPresentationController.sourceView = rootVC.view;
                 activityVC.popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(rootVC.view.bounds), CGRectGetMidY(rootVC.view.bounds), 1, 1);
                 activityVC.popoverPresentationController.permittedArrowDirections = 0;
@@ -2976,6 +2842,8 @@ RCT_EXPORT_METHOD(shareFile:(NSString *)filePath
             reject(@"SHARE_ERROR", e.reason, nil);
         }
     });
+}
+
 - (void)invalidate {
     [super invalidate];
     hasListeners = NO;
