@@ -203,7 +203,6 @@ export interface PersistedSettings {
   showConsoleLevels?: {info: boolean; warn: boolean; error: boolean};
   reduxAutoRefresh?: boolean;
   reduxExpandDepth?: number;
-  showDuplicateLogs?: boolean;
   showUpdateToast?: boolean;
   useNativeFab?: boolean;
   shakeToOpen?: boolean;
@@ -497,8 +496,6 @@ export interface InspectorContextValue {
   setDefaultTab: React.Dispatch<React.SetStateAction<ActiveTab>>;
   isDark: boolean;
   setIsDark: React.Dispatch<React.SetStateAction<boolean>>;
-  showDuplicateLogs: boolean;
-  setShowDuplicateLogs: React.Dispatch<React.SetStateAction<boolean>>;
   showUpdateToast: boolean;
   setShowUpdateToast: React.Dispatch<React.SetStateAction<boolean>>;
   showConsoleLevels: {info: boolean; warn: boolean; error: boolean};

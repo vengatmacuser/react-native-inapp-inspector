@@ -105,8 +105,6 @@ const SettingsPanel = () => {
     setModalHeightPercent,
     modalAnimationType,
     setModalAnimationType,
-    showDuplicateLogs,
-    setShowDuplicateLogs,
     showUpdateToast,
     setShowUpdateToast,
     showConsoleLevels,
@@ -3406,109 +3404,6 @@ const SettingsPanel = () => {
               ),
             });
           })}
-        </View>
-
-        {/* Log Deduplication Card */}
-        <View
-          style={{
-            backgroundColor: AppColors.primaryLight,
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: AppColors.grayBorderSecondary,
-            overflow: 'hidden',
-            padding: 16,
-            gap: 14,
-          }}>
-          <Text
-            style={{
-              fontFamily: AppFonts.interBold,
-              fontSize: 11,
-              lineHeight: 14,
-              color: AppColors.grayTextWeak,
-              letterSpacing: 0.8,
-            }}>
-            {t('settings.logFiltersDeduplication')}
-          </Text>
-
-          {/* Show Duplicate Logs */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 10,
-                flex: 1,
-              }}>
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  backgroundColor: AppColors.purpleShade50,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <EyeIcon color={AppColors.purple} size={15} />
-              </View>
-              <View style={{flex: 1}}>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interBold,
-                    fontSize: 13.5,
-                    lineHeight: 18,
-                    color: AppColors.primaryBlack,
-                  }}>
-                  {t('settings.general.duplicateLogs')}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: AppFonts.interRegular,
-                    fontSize: 11,
-                    lineHeight: 15,
-                    color: AppColors.grayText,
-                    marginTop: 1,
-                  }}>
-                  {t('settings.general.duplicateLogsDescription')}
-                </Text>
-              </View>
-            </View>
-
-            <TouchableScale
-              accessible={true}
-              accessibilityRole="switch"
-              accessibilityLabel="Toggle show duplicate logs"
-              accessibilityState={{checked: showDuplicateLogs}}
-              onPress={() => setShowDuplicateLogs(prev => !prev)}
-              style={{
-                width: 42,
-                height: 24,
-                borderRadius: 12,
-                backgroundColor: showDuplicateLogs
-                  ? AppColors.purple
-                  : AppColors.grayBorderSecondary,
-                padding: 2,
-                justifyContent: 'center',
-                alignItems: showDuplicateLogs ? 'flex-end' : 'flex-start',
-              }}>
-              <View
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  backgroundColor: AppColors.white,
-                  shadowColor: AppColors.black,
-                  shadowOpacity: 0.18,
-                  shadowRadius: 2,
-                  shadowOffset: {width: 0, height: 1},
-                }}
-              />
-            </TouchableScale>
-          </View>
         </View>
 
         <View

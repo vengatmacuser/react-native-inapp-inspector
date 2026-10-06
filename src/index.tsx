@@ -681,7 +681,6 @@ const NetworkInspector = ({
 
   // #6 — tab the inspector opens on. Shown with a DEFAULT badge in Settings.
   const [defaultTab, setDefaultTab] = useState<ActiveTab>('apis');
-  const [showDuplicateLogs, setShowDuplicateLogs] = useState<boolean>(false);
   const [showUpdateToast, setShowUpdateToast] = useState<boolean>(true);
   const [isUpdatePopupVisible, setIsUpdatePopupVisible] =
     useState<boolean>(false);
@@ -764,7 +763,6 @@ const NetworkInspector = ({
     setCaptureAutoHide(true);
     setCaptureAutoGif(true);
     setCaptureWidgetEnabled(true);
-    setShowDuplicateLogs(false);
     setShowUpdateToast(true);
     setPeekOpacity(0.3);
     setLogFilters(new Set(['user-log']));
@@ -839,8 +837,6 @@ const NetworkInspector = ({
         setCaptureWidgetEnabled(saved.captureWidgetEnabled);
       if (saved.peekOpacity != null)
         setPeekOpacity(Math.max(0.05, Math.min(1.0, saved.peekOpacity)));
-      if (saved.showDuplicateLogs != null)
-        setShowDuplicateLogs(saved.showDuplicateLogs);
       if (saved.showUpdateToast != null)
         setShowUpdateToast(saved.showUpdateToast);
       if (saved.isGroupByPageEnabled != null)
@@ -925,7 +921,6 @@ const NetworkInspector = ({
       showConsoleLevels,
       reduxAutoRefresh,
       reduxExpandDepth,
-      showDuplicateLogs,
       showUpdateToast,
       captureFps,
       captureScale,
@@ -956,7 +951,6 @@ const NetworkInspector = ({
     showConsoleLevels,
     reduxAutoRefresh,
     reduxExpandDepth,
-    showDuplicateLogs,
     captureFps,
     captureScale,
     captureBitrate,
@@ -1868,28 +1862,6 @@ const NetworkInspector = ({
       });
     }
 
-    // #9 — collapse consecutive identical requests
-    if (!showDuplicateLogs) {
-      const collapsed: NetworkLog[] = [];
-      for (const log of result) {
-        const last = collapsed[collapsed.length - 1];
-        if (
-          last &&
-          last.method === log.method &&
-          last.url === log.url &&
-          last.status === log.status
-        ) {
-          collapsed[collapsed.length - 1] = {
-            ...last,
-            duplicateCount: (last.duplicateCount || 1) + 1,
-          };
-        } else {
-          collapsed.push({...log, duplicateCount: 1});
-        }
-      }
-      result = collapsed;
-    }
-
     return result;
   }, [
     logs,
@@ -1905,7 +1877,6 @@ const NetworkInspector = ({
     protocolFilter,
     networkSortBy,
     sortOrder,
-    showDuplicateLogs,
   ]);
 
   const availableMethods = useMemo(() => {
@@ -2048,9 +2019,7 @@ const NetworkInspector = ({
       const activeFilters =
         sectionFilters[g.pageName] || new Set(['success', 'failed', 'loading']);
 
-      const defaultExpanded = isSearching
-        ? true
-        : g.pageName === activePageName;
+      const defaultExpanded = true;
       const isCollapsed = sectionExpandOverrides.has(g.pageName)
         ? !sectionExpandOverrides.get(g.pageName)
         : !defaultExpanded;
@@ -2430,35 +2399,12 @@ const NetworkInspector = ({
         : a.timestamp - b.timestamp,
     );
 
-    // Collapse consecutive identical messages into one row with a ×N counter unless duplicates are explicitly enabled
-    if (!showDuplicateLogs) {
-      const collapsed: ConsoleLog[] = [];
-      for (const log of result) {
-        const last = collapsed[collapsed.length - 1];
-        if (
-          last &&
-          last.type === log.type &&
-          last.sourceMethod === log.sourceMethod &&
-          last.message === log.message
-        ) {
-          collapsed[collapsed.length - 1] = {
-            ...last,
-            duplicateCount: (last.duplicateCount || 1) + 1,
-          };
-        } else {
-          collapsed.push({...log, duplicateCount: 1});
-        }
-      }
-      result = collapsed;
-    }
-
     return result;
   }, [
     visibleConsoleLogs,
     logFilters,
     logSearch,
     logSortOrder,
-    showDuplicateLogs,
   ]);
 
   const logCounts = useMemo(() => {
@@ -2974,8 +2920,6 @@ const NetworkInspector = ({
       setDefaultTab,
       isDark,
       setIsDark,
-      showDuplicateLogs,
-      setShowDuplicateLogs,
       showUpdateToast,
       setShowUpdateToast,
       showConsoleLevels,
@@ -3146,7 +3090,6 @@ const NetworkInspector = ({
       settingsActiveSubTab,
       defaultTab,
       isDark,
-      showDuplicateLogs,
       showUpdateToast,
       showConsoleLevels,
       storage,

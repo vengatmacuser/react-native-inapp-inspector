@@ -191,7 +191,7 @@ const addOrUpdateLog = (log: NetworkLog) => {
   notify();
 };
 
-let isInsideFetch = false;
+let insideFetchDepth = 0;
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -231,7 +231,7 @@ export const setupNetworkLogger = () => {
     };
 
     globalXHR.prototype.send = function (body?: any) {
-      if (!isNetworkModuleEnabled || isInsideFetch || this.__inAppInspectorTracked) {
+      if (!isNetworkModuleEnabled || insideFetchDepth > 0 || this.__inAppInspectorTracked) {
         return originalSend.apply(this, [body]);
       }
 
@@ -403,12 +403,12 @@ export const setupNetworkLogger = () => {
       } catch {}
 
       try {
-        isInsideFetch = true;
+        insideFetchDepth++;
         let response: any;
         try {
           response = await originalFetch(url, options);
         } finally {
-          isInsideFetch = false;
+          insideFetchDepth = Math.max(0, insideFetchDepth - 1);
         }
         const duration = Date.now() - start;
 
