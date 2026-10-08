@@ -247,10 +247,6 @@ export interface NetworkInspectorProps {
   remoteConfig?: boolean | any;
 }
 
-export interface NavigationTrackerProps {
-  onStateChange: (state: any) => void;
-}
-
 export interface InspectorContextValue {
   // ─── Modal / launcher ──────────────────────────────────────────────────────
   visible: boolean;
@@ -273,7 +269,6 @@ export interface InspectorContextValue {
   setModalAnimationType: React.Dispatch<
     React.SetStateAction<'slide' | 'fade' | 'none'>
   >;
-  hasNavigationContext: boolean;
   setNavState: React.Dispatch<React.SetStateAction<any>>;
 
   // ─── Tabs ──────────────────────────────────────────────────────────────────

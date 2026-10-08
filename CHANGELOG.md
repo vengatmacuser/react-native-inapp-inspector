@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.17] - 2026-10-09
+
+### Fixed
+- Fixed Metro bundler resolution error `Unable to resolve "@react-navigation/native"` by removing hard static imports of `@react-navigation/native` (fixes #2). Navigation tracking continues to work seamlessly via decoupled duck-typed `navigationRef` prop.
+
 ### Added
 - NPM update indicator: an animated pulsing dot appears in the header next to the npm chip when a newer version is published; tapping it links to the package page.
 - Shining sweep animation on the floating launcher (FAB), layered on top of the existing pulse ring.

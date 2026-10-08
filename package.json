@@ -445,11 +445,6 @@
     "react-native-linear-gradient": ">=2.0.0",
     "react-native-svg": ">=12.0.0"
   },
-  "peerDependenciesMeta": {
-    "@react-navigation/native": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@react-navigation/native": "6.1.9",
     "@types/react": "19.1.0",

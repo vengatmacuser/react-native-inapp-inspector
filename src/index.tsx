@@ -8,7 +8,6 @@ import {
   UIManager,
   LogBox,
 } from 'react-native';
-import {NavigationContext} from '@react-navigation/native';
 
 // i18n
 import {
@@ -1159,8 +1158,6 @@ const NetworkInspector = ({
   const prevEventIdsRef = useRef<Set<number>>(new Set());
 
   const [navState, setNavState] = useState<any>(null);
-  const navigationContext = React.useContext(NavigationContext);
-  const hasNavigationContext = navigationContext !== undefined;
 
   const currentRouteRef = useRef<RouteInfo>({
     path: '',
@@ -2686,7 +2683,6 @@ const NetworkInspector = ({
       setModalHeightPercent,
       modalAnimationType,
       setModalAnimationType,
-      hasNavigationContext,
       setNavState,
 
       // ─── Tabs ───────────────────────────────────────────────────────────
@@ -2977,7 +2973,6 @@ const NetworkInspector = ({
       environment,
       modalHeightPercent,
       modalAnimationType,
-      hasNavigationContext,
       setNavState,
       activeTab,
       switchActiveTab,
