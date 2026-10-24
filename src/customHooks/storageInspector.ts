@@ -218,8 +218,14 @@ export const getResolvedMMKV = (id: string = 'default'): any => {
     if (req) {
       const mmkvMod = req('react-native-mmkv');
       const MMKVClass = mmkvMod?.MMKV || mmkvMod?.default?.MMKV;
-      if (MMKVClass && typeof MMKVClass === 'function') {
-        if (!customMMKVInstances.has('default')) {
+      const createMMKVFn = mmkvMod?.createMMKV || mmkvMod?.default?.createMMKV;
+      if (!customMMKVInstances.has('default')) {
+        if (createMMKVFn && typeof createMMKVFn === 'function') {
+          try {
+            const defaultInst = createMMKVFn();
+            customMMKVInstances.set('default', defaultInst);
+          } catch {}
+        } else if (MMKVClass && typeof MMKVClass === 'function') {
           try {
             const defaultInst = new MMKVClass();
             customMMKVInstances.set('default', defaultInst);
@@ -373,12 +379,23 @@ export const fetchStorageEntries = async (
     }
   } else if (driver === 'mmkv') {
     const mmkv = getResolvedMMKV(instanceId);
-    if (!mmkv || typeof mmkv.getAllKeys !== 'function') {
+    if (!mmkv) {
+      return [];
+    }
+
+    const getKeysFn =
+      typeof mmkv.getAllKeys === 'function'
+        ? () => mmkv.getAllKeys()
+        : typeof mmkv.keys === 'function'
+        ? () => mmkv.keys()
+        : null;
+
+    if (!getKeysFn) {
       return [];
     }
 
     try {
-      const keys: string[] = mmkv.getAllKeys();
+      const keys: string[] = getKeysFn();
       for (const k of keys) {
         let rawVal: any = null;
         if (typeof mmkv.getString === 'function') {
@@ -464,8 +481,14 @@ export const removeStorageEntry = async (
       return true;
     } else if (driver === 'mmkv') {
       const mmkv = getResolvedMMKV(instanceId);
-      if (!mmkv || typeof mmkv.delete !== 'function') return false;
-      mmkv.delete(key);
+      if (!mmkv) return false;
+      if (typeof mmkv.remove === 'function') {
+        mmkv.remove(key);
+      } else if (typeof mmkv.delete === 'function') {
+        mmkv.delete(key);
+      } else {
+        return false;
+      }
       notifyChange();
       return true;
     }
@@ -491,8 +514,14 @@ export const clearStorageDriver = async (
       return true;
     } else if (driver === 'mmkv') {
       const mmkv = getResolvedMMKV(instanceId);
-      if (!mmkv || typeof mmkv.clearAll !== 'function') return false;
-      mmkv.clearAll();
+      if (!mmkv) return false;
+      if (typeof mmkv.clearAll === 'function') {
+        mmkv.clearAll();
+      } else if (typeof mmkv.clear === 'function') {
+        mmkv.clear();
+      } else {
+        return false;
+      }
       notifyChange();
       return true;
     }

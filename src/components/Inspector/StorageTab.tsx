@@ -14,6 +14,7 @@ import {
 import TouchableScale from '../TouchableScale';
 import EndOfListFooter from '../EndOfListFooter';
 import {ConfirmationModal} from './ConfirmationModal';
+import StorageExportModal from './StorageExportModal';
 import {AppColors} from '../../styles/AppColors';
 import {AppFonts} from '../../styles/AppFonts';
 import {useTranslation} from '../../i18n';
@@ -30,6 +31,7 @@ import {
   ResetIcon,
   ChevronIcon,
   WarningTriangleIcon,
+  ExportIcon,
 } from '../NetworkIcons';
 import {
   fetchStorageEntries,
@@ -184,6 +186,13 @@ export const StorageTab = React.memo(() => {
   const listRef = useRef<FlatList>(null);
   const [activeDriver, setActiveDriver] = useState<StorageDriver>('asyncStorage');
   const [activeMMKVId, setActiveMMKVId] = useState<string>('default');
+
+  // Maintain fresh refs to active driver & MMKV ID so callbacks never invoke stale driver operations
+  const activeDriverRef = useRef<StorageDriver>(activeDriver);
+  activeDriverRef.current = activeDriver;
+  const activeMMKVIdRef = useRef<string>(activeMMKVId);
+  activeMMKVIdRef.current = activeMMKVId;
+
   const [entries, setEntries] = useState<StorageEntry[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
@@ -195,6 +204,11 @@ export const StorageTab = React.memo(() => {
     listRef.current?.scrollToOffset({offset: 0, animated: false});
   }, [search, activeDriver, activeMMKVId]);
 
+  // Reset expanded keys when switching storage driver or instance
+  useEffect(() => {
+    setExpandedKeys({});
+  }, [activeDriver, activeMMKVId]);
+
   // Modal State for Create / Edit
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
@@ -202,6 +216,7 @@ export const StorageTab = React.memo(() => {
   const [editValue, setEditValue] = useState<string>('');
   const [editType, setEditType] = useState<'string' | 'json' | 'number' | 'boolean'>('string');
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
 
   const mmkvInstanceIds = useMemo(() => getRegisteredMMKVInstanceIds(), []);
 
@@ -228,29 +243,29 @@ export const StorageTab = React.memo(() => {
   }, [loadEntries]);
 
   // Toggle JSON accordion
-  const toggleExpand = (key: string) => {
+  const toggleExpand = useCallback((key: string) => {
     setExpandedKeys(prev => ({...prev, [key]: !prev[key]}));
-  };
+  }, []);
 
   // Open Create Modal
-  const handleOpenCreate = () => {
+  const handleOpenCreate = useCallback(() => {
     setModalMode('create');
     setEditKeyName('');
     setEditValue('');
     setEditType('string');
     setJsonError(null);
     setModalVisible(true);
-  };
+  }, []);
 
   // Open Edit Modal
-  const handleOpenEdit = (entry: StorageEntry) => {
+  const handleOpenEdit = useCallback((entry: StorageEntry) => {
     setModalMode('edit');
     setEditKeyName(entry.key);
     setEditValue(entry.value);
     setEditType(entry.type === 'json' ? 'json' : entry.type === 'number' ? 'number' : entry.type === 'boolean' ? 'boolean' : 'string');
     setJsonError(null);
     setModalVisible(true);
-  };
+  }, []);
 
   const [confirmConfig, setConfirmConfig] = useState<{
     visible: boolean;
@@ -267,7 +282,9 @@ export const StorageTab = React.memo(() => {
   });
 
   // Delete single key
-  const handleDeleteKey = (key: string) => {
+  const handleDeleteKey = useCallback((key: string) => {
+    const currentDriver = activeDriverRef.current;
+    const currentMMKVId = activeMMKVIdRef.current;
     setConfirmConfig({
       visible: true,
       title: t('storage.deleteKeyTitle', 'Delete Key'),
@@ -277,9 +294,9 @@ export const StorageTab = React.memo(() => {
       onConfirm: async () => {
         setConfirmConfig(prev => ({...prev, visible: false}));
         const ok = await removeStorageEntry(
-          activeDriver,
+          currentDriver,
           key,
-          activeDriver === 'mmkv' ? activeMMKVId : undefined,
+          currentDriver === 'mmkv' ? currentMMKVId : undefined,
         );
         if (ok) {
           showToast(`Deleted "${key}"`);
@@ -289,24 +306,26 @@ export const StorageTab = React.memo(() => {
         }
       },
     });
-  };
+  }, [t, loadEntries]);
 
   // Clear all keys
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
+    const currentDriver = activeDriverRef.current;
+    const currentMMKVId = activeMMKVIdRef.current;
     setConfirmConfig({
       visible: true,
       title: t('storage.clearTitle', 'Clear Storage Driver'),
       message: t('storage.clearMessage', {
-        driver: activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV',
-        defaultValue: `Are you sure you want to delete all keys in ${activeDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'}?`,
+        driver: currentDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV',
+        defaultValue: `Are you sure you want to delete all keys in ${currentDriver === 'asyncStorage' ? 'AsyncStorage' : 'MMKV'}?`,
       }),
       confirmText: t('storage.clearConfirm', 'Clear All'),
       cancelText: t('common.cancel', 'Cancel'),
       onConfirm: async () => {
         setConfirmConfig(prev => ({...prev, visible: false}));
         const ok = await clearStorageDriver(
-          activeDriver,
-          activeDriver === 'mmkv' ? activeMMKVId : undefined,
+          currentDriver,
+          currentDriver === 'mmkv' ? currentMMKVId : undefined,
         );
         if (ok) {
           showToast(t('storage.cleared', 'All storage keys wiped'));
@@ -314,7 +333,7 @@ export const StorageTab = React.memo(() => {
         }
       },
     });
-  };
+  }, [t, loadEntries]);
 
   // Save Modal (Create / Update)
   const handleSaveModal = async () => {
@@ -341,11 +360,13 @@ export const StorageTab = React.memo(() => {
       }
     }
 
+    const currentDriver = activeDriverRef.current;
+    const currentMMKVId = activeMMKVIdRef.current;
     const success = await setStorageEntry(
-      activeDriver,
+      currentDriver,
       editKeyName.trim(),
       finalVal,
-      activeDriver === 'mmkv' ? activeMMKVId : undefined,
+      currentDriver === 'mmkv' ? currentMMKVId : undefined,
     );
 
     if (success) {
@@ -414,7 +435,7 @@ export const StorageTab = React.memo(() => {
         badge={getTypeBadge(item.type)}
       />
     ),
-    [expandedKeys, handleCopyEntry],
+    [expandedKeys, handleCopyEntry, handleOpenEdit, handleDeleteKey, toggleExpand],
   );
 
   return (
@@ -583,13 +604,27 @@ export const StorageTab = React.memo(() => {
           )}
         </View>
 
-        {/* Action Buttons: Add Key & Refresh */}
+        {/* Action Buttons: Add Key, Export & Refresh */}
         <TouchableScale
           onPress={handleOpenCreate}
           style={styles.addKeyBtn}
           hitSlop={6}>
           <PlusIcon size={13} color={AppColors.white} />
           <Text style={styles.addKeyBtnText}>{t('storage.add', 'Add')}</Text>
+        </TouchableScale>
+
+        <TouchableScale
+          onPress={() => setIsExportModalOpen(true)}
+          style={[
+            styles.actionIconBtn,
+            {
+              borderColor: `${AppColors.purple}38`,
+              backgroundColor: `${AppColors.purple}0F`,
+            },
+          ]}
+          hitSlop={6}
+          testID="inspector.storage.exportBtn">
+          <ExportIcon size={13} color={AppColors.purple} />
         </TouchableScale>
 
         <TouchableScale
@@ -831,6 +866,15 @@ export const StorageTab = React.memo(() => {
         icon="trash"
         onConfirm={confirmConfig.onConfirm}
         onCancel={() => setConfirmConfig(prev => ({...prev, visible: false}))}
+      />
+
+      <StorageExportModal
+        visible={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        driver={activeDriver}
+        instanceId={activeMMKVId}
+        entries={entries}
+        filteredEntries={filteredEntries}
       />
     </View>
   );

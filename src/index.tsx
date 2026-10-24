@@ -3418,20 +3418,36 @@ export {
   formatLogReport,
   formatConsoleLogsExport,
   formatNetworkLogsExport,
+  formatAnalyticsEventsExport,
+  formatStorageEntriesExport,
   estimateConsoleLogsExportSize,
   estimateNetworkLogsExportSize,
+  estimateAnalyticsExportSize,
+  estimateStorageExportSize,
   generateConsoleLogsFilename,
   generateNetworkLogsFilename,
+  generateAnalyticsFilename,
+  generateStorageFilename,
   DEFAULT_CONSOLE_EXPORT_OPTIONS,
   DEFAULT_NETWORK_EXPORT_OPTIONS,
+  DEFAULT_ANALYTICS_EXPORT_OPTIONS,
+  DEFAULT_STORAGE_EXPORT_OPTIONS,
+  shareAnalyticsEvents,
+  shareStorageEntries,
   type ConsoleLogExportFormat,
   type ConsoleLogExportOptions,
   type NetworkLogExportFormat,
   type NetworkLogExportOptions,
+  type AnalyticsExportFormat,
+  type AnalyticsExportOptions,
+  type StorageExportFormat,
+  type StorageExportOptions,
 } from './helpers/shareFormatter';
 
 export {default as ConsoleExportModal} from './components/Inspector/ConsoleExportModal';
 export {default as NetworkExportModal} from './components/Inspector/NetworkExportModal';
+export {default as AnalyticsExportModal} from './components/Inspector/AnalyticsExportModal';
+export {default as StorageExportModal} from './components/Inspector/StorageExportModal';
 
 export {
   BrandCircleIcon,

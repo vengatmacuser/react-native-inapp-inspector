@@ -9,7 +9,8 @@ import type {
   ReduxHistoryEntry,
   SocketConnectionRecord,
 } from '../types';
-import {formatDateTime, getCurlCommand} from './index';
+import type {StorageEntry} from '../customHooks/storageInspector';
+import {formatDateTime, getCurlCommand, getEventCategory} from './index';
 
 function safeStringify(data: any): string {
   if (data === undefined) return 'undefined';
@@ -955,4 +956,412 @@ export async function shareNetworkLogs(
   const title = customTitle || filename;
   await triggerNativeShare(title, content, filename);
 }
+
+function escapeCsvValue(val: any): string {
+  if (val === null || val === undefined) return '""';
+  let str = typeof val === 'object' ? JSON.stringify(val) : String(val);
+  str = str.replace(/"/g, '""');
+  return `"${str}"`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANALYTICS EVENTS EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type AnalyticsExportFormat = 'json' | 'csv' | 'txt';
+
+export interface AnalyticsExportOptions {
+  includeParameters?: boolean;
+  includeScreen?: boolean;
+  includeTimestamps?: boolean;
+  includeCategory?: boolean;
+  includeAppInfo?: boolean;
+  includeUserProps?: boolean;
+  ignorePattern?: string;
+}
+
+export const DEFAULT_ANALYTICS_EXPORT_OPTIONS: AnalyticsExportOptions = {
+  includeParameters: true,
+  includeScreen: true,
+  includeTimestamps: true,
+  includeCategory: true,
+  includeAppInfo: true,
+  includeUserProps: true,
+  ignorePattern: '',
+};
+
+export function generateAnalyticsFilename(
+  format: AnalyticsExportFormat = 'json',
+): string {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const random6 = Math.random().toString(36).substring(2, 8).padEnd(6, '0');
+  const ext = format === 'csv' ? 'csv' : format === 'txt' ? 'txt' : 'json';
+  return `analytics_${dd}${mm}${yy}_${random6}.${ext}`;
+}
+
+export function formatAnalyticsEventsExport(
+  events: AnalyticsEvent[],
+  format: AnalyticsExportFormat = 'json',
+  options: AnalyticsExportOptions = DEFAULT_ANALYTICS_EXPORT_OPTIONS,
+): string {
+  if (!events || events.length === 0) {
+    return format === 'json' ? '[]' : 'No analytics events to export.';
+  }
+
+  const {
+    includeParameters = true,
+    includeScreen = true,
+    includeTimestamps = true,
+    includeCategory = true,
+    includeAppInfo = true,
+    includeUserProps = true,
+    ignorePattern = '',
+  } = options;
+
+  let activeEvents = events;
+  if (ignorePattern && ignorePattern.trim().length > 0) {
+    try {
+      const reg = new RegExp(ignorePattern.trim(), 'i');
+      activeEvents = events.filter(e => {
+        const name = e.name || '';
+        const paramsStr = e.params ? safeStringify(e.params) : '';
+        const screen = e.screenName || e.screenClass || '';
+        return !reg.test(name) && !reg.test(paramsStr) && !reg.test(screen);
+      });
+    } catch {}
+  }
+
+  const now = new Date();
+  const timeHeader = formatDateTime(now.getTime());
+  const sepLine = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+  if (format === 'json') {
+    const serialized = activeEvents.map((e, index) => {
+      const item: any = {
+        index: index + 1,
+        id: e.id,
+        name: e.name,
+      };
+      if (includeCategory) {
+        item.category = getEventCategory(e.name);
+      }
+      if (includeTimestamps) {
+        item.timestamp = e.timestamp;
+        item.formattedTime = formatDateTime(e.timestamp);
+      }
+      if (includeScreen && (e.screenName || e.screenClass || e.pageTitle)) {
+        item.screen = e.screenName || e.screenClass || e.pageTitle;
+      }
+      if (e.userId) {
+        item.userId = e.userId;
+      }
+      if (e.source) {
+        item.source = e.source;
+      }
+      if (includeParameters && e.params) {
+        item.params = e.params;
+      }
+      if (
+        includeUserProps &&
+        e.userProperties &&
+        Object.keys(e.userProperties).length > 0
+      ) {
+        item.userProperties = e.userProperties;
+      }
+      return item;
+    });
+    return JSON.stringify(serialized, null, 2);
+  }
+
+  if (format === 'csv') {
+    const headers = [
+      'Index',
+      'Event Name',
+      ...(includeCategory ? ['Category'] : []),
+      ...(includeTimestamps ? ['Timestamp', 'Date Time'] : []),
+      ...(includeScreen ? ['Screen'] : []),
+      'User ID',
+      'Source',
+      ...(includeParameters ? ['Parameters'] : []),
+      ...(includeUserProps ? ['User Properties'] : []),
+    ];
+
+    const rows = activeEvents.map((e, idx) => {
+      const row = [
+        String(idx + 1),
+        escapeCsvValue(e.name),
+        ...(includeCategory ? [escapeCsvValue(getEventCategory(e.name))] : []),
+        ...(includeTimestamps
+          ? [String(e.timestamp), escapeCsvValue(formatDateTime(e.timestamp))]
+          : []),
+        ...(includeScreen
+          ? [escapeCsvValue(e.screenName || e.screenClass || e.pageTitle || '')]
+          : []),
+        escapeCsvValue(e.userId || ''),
+        escapeCsvValue(e.source || ''),
+        ...(includeParameters
+          ? [escapeCsvValue(e.params ? JSON.stringify(e.params) : '')]
+          : []),
+        ...(includeUserProps
+          ? [escapeCsvValue(e.userProperties ? JSON.stringify(e.userProperties) : '')]
+          : []),
+      ];
+      return row.join(',');
+    });
+
+    return [headers.join(','), ...rows].join('\n');
+  }
+
+  // format === 'txt'
+  const headerLines: string[] = [];
+  if (includeAppInfo) {
+    headerLines.push(
+      sepLine,
+      '📊 ANALYTICS EVENTS EXPORT (TEXT REPORT)',
+      `🕒 Exported At:   ${timeHeader}`,
+      `📈 Total Events:  ${activeEvents.length}`,
+      '⚙️ Generator:     React Native InApp Inspector',
+      sepLine,
+      '',
+    );
+  }
+
+  const body = activeEvents
+    .map((e, index) => {
+      const cat = includeCategory ? getEventCategory(e.name) : '';
+      const screen = e.screenName || e.screenClass || e.pageTitle || '';
+      const lines: string[] = [
+        `[#${index + 1}] Event: ${e.name}${cat ? ` (Category: ${cat})` : ''}`,
+      ];
+      if (includeTimestamps) {
+        lines.push(`     Time:   ${formatDateTime(e.timestamp)}`);
+      }
+      if (includeScreen && screen) {
+        lines.push(`     Screen: ${screen}`);
+      }
+      if (e.userId) {
+        lines.push(`     User:   ${e.userId}`);
+      }
+      if (e.source) {
+        lines.push(`     Source: ${e.source}`);
+      }
+      if (includeParameters && e.params && Object.keys(e.params).length > 0) {
+        lines.push('     Params:');
+        lines.push(safeStringify(e.params));
+      }
+      if (
+        includeUserProps &&
+        e.userProperties &&
+        Object.keys(e.userProperties).length > 0
+      ) {
+        lines.push('     User Properties:');
+        lines.push(safeStringify(e.userProperties));
+      }
+      return lines.join('\n');
+    })
+    .join('\n\n');
+
+  return `${headerLines.join('\n')}${body}\n\n${sepLine}\n🏁 END OF ANALYTICS EXPORT\n${sepLine}`;
+}
+
+export function estimateAnalyticsExportSize(
+  events: AnalyticsEvent[],
+  format: AnalyticsExportFormat = 'json',
+  options: AnalyticsExportOptions = DEFAULT_ANALYTICS_EXPORT_OPTIONS,
+): number {
+  if (!events || events.length === 0) return 0;
+  const sampleCount = Math.min(events.length, 10);
+  const sampleEvents = events.slice(0, sampleCount);
+  const sampleOutput = formatAnalyticsEventsExport(sampleEvents, format, options);
+  const avgBytes = sampleOutput.length / sampleCount;
+  return Math.round(avgBytes * events.length);
+}
+
+export async function shareAnalyticsEvents(
+  events: AnalyticsEvent[],
+  format: AnalyticsExportFormat = 'json',
+  options: AnalyticsExportOptions = DEFAULT_ANALYTICS_EXPORT_OPTIONS,
+  customTitle?: string,
+): Promise<void> {
+  const content = formatAnalyticsEventsExport(events, format, options);
+  const filename = generateAnalyticsFilename(format);
+  const title = customTitle || filename;
+  await triggerNativeShare(title, content, filename);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STORAGE ENTRIES EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type StorageExportFormat = 'json' | 'csv' | 'txt';
+
+export interface StorageExportOptions {
+  formatJsonValues?: boolean;
+  includeMetadata?: boolean;
+  includeDriverInfo?: boolean;
+  ignorePattern?: string;
+}
+
+export const DEFAULT_STORAGE_EXPORT_OPTIONS: StorageExportOptions = {
+  formatJsonValues: true,
+  includeMetadata: true,
+  includeDriverInfo: true,
+  ignorePattern: '',
+};
+
+export function generateStorageFilename(
+  driver: string = 'storage',
+  format: StorageExportFormat = 'json',
+): string {
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yy = String(now.getFullYear()).slice(-2);
+  const random6 = Math.random().toString(36).substring(2, 8).padEnd(6, '0');
+  const ext = format === 'csv' ? 'csv' : format === 'txt' ? 'txt' : 'json';
+  const prefix = driver.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+  return `${prefix}_${dd}${mm}${yy}_${random6}.${ext}`;
+}
+
+export function formatStorageEntriesExport(
+  entries: StorageEntry[],
+  format: StorageExportFormat = 'json',
+  options: StorageExportOptions = DEFAULT_STORAGE_EXPORT_OPTIONS,
+  driverName: string = 'AsyncStorage',
+): string {
+  if (!entries || entries.length === 0) {
+    return format === 'json' ? '{}' : 'No storage entries to export.';
+  }
+
+  const {
+    formatJsonValues = true,
+    includeMetadata = true,
+    includeDriverInfo = true,
+    ignorePattern = '',
+  } = options;
+
+  let activeEntries = entries;
+  if (ignorePattern && ignorePattern.trim().length > 0) {
+    try {
+      const reg = new RegExp(ignorePattern.trim(), 'i');
+      activeEntries = entries.filter(e => {
+        return !reg.test(e.key) && !reg.test(e.value);
+      });
+    } catch {}
+  }
+
+  const now = new Date();
+  const timeHeader = formatDateTime(now.getTime());
+  const sepLine = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+  if (format === 'json') {
+    if (includeMetadata) {
+      const output: any = {
+        driver: driverName,
+        exportedAt: now.toISOString(),
+        totalKeys: activeEntries.length,
+        entries: activeEntries.map(e => ({
+          key: e.key,
+          type: e.type,
+          byteSize: e.byteSize,
+          value:
+            formatJsonValues && e.parsedValue !== undefined
+              ? e.parsedValue
+              : e.value,
+        })),
+      };
+      return JSON.stringify(output, null, 2);
+    } else {
+      const dict: Record<string, any> = {};
+      activeEntries.forEach(e => {
+        dict[e.key] =
+          formatJsonValues && e.parsedValue !== undefined
+            ? e.parsedValue
+            : e.value;
+      });
+      return JSON.stringify(dict, null, 2);
+    }
+  }
+
+  if (format === 'csv') {
+    const headers = ['Key', 'Type', 'Byte Size', 'Value'];
+    const rows = activeEntries.map(e => [
+      escapeCsvValue(e.key),
+      escapeCsvValue(e.type),
+      String(e.byteSize),
+      escapeCsvValue(e.value),
+    ]);
+    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  }
+
+  // format === 'txt'
+  const headerLines: string[] = [];
+  if (includeDriverInfo) {
+    headerLines.push(
+      sepLine,
+      `🗄️ STORAGE ENTRIES EXPORT: ${driverName.toUpperCase()}`,
+      `🕒 Exported At: ${timeHeader}`,
+      `📊 Total Keys:   ${activeEntries.length}`,
+      '⚙️ Generator:    React Native InApp Inspector',
+      sepLine,
+      '',
+    );
+  }
+
+  const body = activeEntries
+    .map((e, index) => {
+      const lines = [
+        `[#${index + 1}] Key: "${e.key}" (${e.type}, ${e.byteSize} bytes)`,
+        '     Value:',
+        formatJsonValues && e.parsedValue !== undefined
+          ? safeStringify(e.parsedValue)
+          : e.value,
+      ];
+      return lines.join('\n');
+    })
+    .join('\n\n');
+
+  return `${headerLines.join('\n')}${body}\n\n${sepLine}\n🏁 END OF STORAGE EXPORT\n${sepLine}`;
+}
+
+export function estimateStorageExportSize(
+  entries: StorageEntry[],
+  format: StorageExportFormat = 'json',
+  options: StorageExportOptions = DEFAULT_STORAGE_EXPORT_OPTIONS,
+  driverName: string = 'AsyncStorage',
+): number {
+  if (!entries || entries.length === 0) return 0;
+  const sampleCount = Math.min(entries.length, 10);
+  const sampleEntries = entries.slice(0, sampleCount);
+  const sampleOutput = formatStorageEntriesExport(
+    sampleEntries,
+    format,
+    options,
+    driverName,
+  );
+  const avgBytes = sampleOutput.length / sampleCount;
+  return Math.round(avgBytes * entries.length);
+}
+
+export async function shareStorageEntries(
+  entries: StorageEntry[],
+  format: StorageExportFormat = 'json',
+  options: StorageExportOptions = DEFAULT_STORAGE_EXPORT_OPTIONS,
+  driverName: string = 'AsyncStorage',
+  customTitle?: string,
+): Promise<void> {
+  const content = formatStorageEntriesExport(
+    entries,
+    format,
+    options,
+    driverName,
+  );
+  const filename = generateStorageFilename(driverName, format);
+  const title = customTitle || filename;
+  await triggerNativeShare(title, content, filename);
+}
+
 

@@ -12,6 +12,7 @@ import {
 import {animateNextLayout, useInspector} from './InspectorContext';
 import AnalyticsEventCard from '../AnalyticsEventCard';
 import AnalyticsFilterModal from './AnalyticsFilterModal';
+import AnalyticsExportModal from './AnalyticsExportModal';
 import EndOfListFooter from '../EndOfListFooter';
 import EmptyState from '../EmptyState';
 import styles from '../../styles';
@@ -30,6 +31,7 @@ import {
   GlobeIcon,
   BoltIcon,
   SparkleIcon,
+  ExportIcon,
 } from '../NetworkIcons';
 
 const LOAD_MORE_STEP = 10;
@@ -57,6 +59,7 @@ const AnalyticsTab = React.memo(() => {
   const initialLimit = maxAnalyticsEventsLimit || 100;
   const listRef = useRef<FlatList>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isExportModalVisible, setIsExportModalVisible] = useState(false);
   const [displayLimit, setDisplayLimit] = useState<number>(initialLimit);
 
   React.useEffect(() => {
@@ -312,6 +315,24 @@ const AnalyticsTab = React.memo(() => {
                 )}
               </TouchableOpacity>
 
+              {/* Export Analytics Button */}
+              <TouchableOpacity
+                style={[
+                  styles.toolbarBtn,
+                  {
+                    borderColor: `${AppColors.purple}38`,
+                    backgroundColor: `${AppColors.purple}0F`,
+                  },
+                ]}
+                onPress={() => setIsExportModalVisible(true)}
+                hitSlop={6}
+                testID="inspector.analytics.exportBtn">
+                <ExportIcon
+                  color={AppColors.purple}
+                  size={15}
+                />
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={[
                   styles.toolbarBtn,
@@ -521,6 +542,13 @@ const AnalyticsTab = React.memo(() => {
           </>
         ) : null}
       </View>
+
+      <AnalyticsExportModal
+        visible={isExportModalVisible}
+        onClose={() => setIsExportModalVisible(false)}
+        filteredEvents={filteredAnalyticsEvents}
+        allEvents={analyticsEvents}
+      />
     </>
   );
 });

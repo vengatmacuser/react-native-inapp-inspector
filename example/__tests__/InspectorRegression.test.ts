@@ -33,6 +33,16 @@ import {
   openInspector,
   closeInspector,
   reopenInspector,
+  connectMMKV,
+  removeStorageEntry,
+  clearStorageDriver,
+  getRegisteredMMKVInstanceIds,
+  AnalyticsExportModal,
+  StorageExportModal,
+  formatAnalyticsEventsExport,
+  formatStorageEntriesExport,
+  generateAnalyticsFilename,
+  generateStorageFilename,
 } from 'react-native-inapp-inspector';
 import React from 'react';
 import { NativeModules } from 'react-native';
@@ -427,5 +437,191 @@ describe('Inspector Full Regression & Safety Test Suite', () => {
       expect(element.props.onHide).toBe(onHideMock);
     });
   });
+
+  describe('Storage Inspector MMKV Compatibility (GitHub Issue #5)', () => {
+    it('supports MMKV v4 instances exposing remove() without delete()', async () => {
+      const mockStorage: Record<string, string> = {
+        sessionToken: 'xyz789',
+        theme: 'dark',
+      };
+      const removeMock = jest.fn((key: string) => {
+        delete mockStorage[key];
+      });
+      const clearAllMock = jest.fn(() => {
+        Object.keys(mockStorage).forEach(k => delete mockStorage[k]);
+      });
+      const setMock = jest.fn((key: string, val: string) => {
+        mockStorage[key] = val;
+      });
+
+      // MMKV v4 API shape: remove(), getAllKeys(), clearAll(), set()
+      const mmkvV4Instance = {
+        remove: removeMock,
+        getAllKeys: jest.fn(() => Object.keys(mockStorage)),
+        clearAll: clearAllMock,
+        getString: jest.fn((key: string) => mockStorage[key] ?? null),
+        set: setMock,
+        // Notice delete is deliberately undefined in MMKV v4
+        delete: undefined,
+      };
+
+      connectMMKV(mmkvV4Instance, 'v4-instance');
+      expect(getRegisteredMMKVInstanceIds()).toContain('v4-instance');
+
+      // Test delete operation on MMKV v4
+      const deleteResult = await removeStorageEntry('mmkv', 'sessionToken', 'v4-instance');
+      expect(deleteResult).toBe(true);
+      expect(removeMock).toHaveBeenCalledWith('sessionToken');
+      expect(mockStorage.sessionToken).toBeUndefined();
+
+      // Test clear operation on MMKV v4
+      const clearResult = await clearStorageDriver('mmkv', 'v4-instance');
+      expect(clearResult).toBe(true);
+      expect(clearAllMock).toHaveBeenCalled();
+    });
+
+    it('supports legacy MMKV v2/v3 instances exposing delete()', async () => {
+      const mockStorage: Record<string, string> = {
+        legacyKey: 'legacyValue',
+      };
+      const deleteMock = jest.fn((key: string) => {
+        delete mockStorage[key];
+      });
+      const clearMock = jest.fn(() => {
+        Object.keys(mockStorage).forEach(k => delete mockStorage[k]);
+      });
+
+      // MMKV v2/v3 API shape: delete(), getAllKeys(), clear()
+      const mmkvLegacyInstance = {
+        delete: deleteMock,
+        getAllKeys: jest.fn(() => Object.keys(mockStorage)),
+        clear: clearMock,
+        getString: jest.fn((key: string) => mockStorage[key] ?? null),
+        set: jest.fn(),
+      };
+
+      connectMMKV(mmkvLegacyInstance, 'legacy-instance');
+
+      // Test delete operation on legacy MMKV
+      const deleteResult = await removeStorageEntry('mmkv', 'legacyKey', 'legacy-instance');
+      expect(deleteResult).toBe(true);
+      expect(deleteMock).toHaveBeenCalledWith('legacyKey');
+      expect(mockStorage.legacyKey).toBeUndefined();
+
+      // Test clear operation on legacy MMKV
+      const clearResult = await clearStorageDriver('mmkv', 'legacy-instance');
+      expect(clearResult).toBe(true);
+      expect(clearMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('Analytics & Storage Export Options', () => {
+    it('exports AnalyticsExportModal and StorageExportModal components', () => {
+      expect(AnalyticsExportModal).toBeDefined();
+      expect(StorageExportModal).toBeDefined();
+      expect(typeof AnalyticsExportModal).toBe('function');
+      expect(typeof StorageExportModal).toBe('function');
+    });
+
+    it('formats analytics events into JSON, CSV, and TXT exports', () => {
+      const mockEvents: any[] = [
+        {
+          id: 1,
+          name: 'purchase',
+          screenName: 'CheckoutScreen',
+          screenClass: 'CheckoutClass',
+          userId: 'user_123',
+          params: {item_id: 'prod_99', value: 29.99},
+          userProperties: {tier: 'vip'},
+          timestamp: 1700000000000,
+          source: 'firebase',
+        },
+        {
+          id: 2,
+          name: 'screen_view',
+          screenName: 'HomeScreen',
+          screenClass: 'HomeClass',
+          userId: 'user_123',
+          params: {screen_name: 'HomeScreen'},
+          userProperties: {},
+          timestamp: 1700000010000,
+          source: 'manual',
+        },
+      ];
+
+      // JSON Export
+      const jsonExport = formatAnalyticsEventsExport(mockEvents, 'json');
+      expect(typeof jsonExport).toBe('string');
+      const parsedJson = JSON.parse(jsonExport);
+      expect(Array.isArray(parsedJson)).toBe(true);
+      expect(parsedJson.length).toBe(2);
+      expect(parsedJson[0].name).toBe('purchase');
+      expect(parsedJson[0].params.item_id).toBe('prod_99');
+
+      // CSV Export
+      const csvExport = formatAnalyticsEventsExport(mockEvents, 'csv');
+      expect(typeof csvExport).toBe('string');
+      expect(csvExport).toContain('Event Name');
+      expect(csvExport).toContain('purchase');
+      expect(csvExport).toContain('CheckoutScreen');
+
+      // TXT Export
+      const txtExport = formatAnalyticsEventsExport(mockEvents, 'txt');
+      expect(typeof txtExport).toBe('string');
+      expect(txtExport).toContain('ANALYTICS EVENTS EXPORT');
+      expect(txtExport).toContain('purchase');
+
+      // Filename generator
+      const filename = generateAnalyticsFilename('csv');
+      expect(filename.startsWith('analytics_')).toBe(true);
+      expect(filename.endsWith('.csv')).toBe(true);
+    });
+
+    it('formats storage entries into JSON, CSV, and TXT exports', () => {
+      const mockEntries: any[] = [
+        {
+          key: 'session_token',
+          value: 'jwt_abc_123',
+          parsedValue: undefined,
+          type: 'string',
+          byteSize: 32,
+        },
+        {
+          key: 'user_profile',
+          value: '{"name":"John","id":42}',
+          parsedValue: {name: 'John', id: 42},
+          type: 'json',
+          byteSize: 64,
+        },
+      ];
+
+      // JSON Export
+      const jsonExport = formatStorageEntriesExport(mockEntries, 'json', undefined, 'MMKV');
+      expect(typeof jsonExport).toBe('string');
+      const parsedJson = JSON.parse(jsonExport);
+      expect(parsedJson.driver).toBe('MMKV');
+      expect(parsedJson.entries.length).toBe(2);
+      expect(parsedJson.entries[1].value.name).toBe('John');
+
+      // CSV Export
+      const csvExport = formatStorageEntriesExport(mockEntries, 'csv');
+      expect(typeof csvExport).toBe('string');
+      expect(csvExport).toContain('Key,Type,Byte Size,Value');
+      expect(csvExport).toContain('"session_token"');
+      expect(csvExport).toContain('"user_profile"');
+
+      // TXT Export
+      const txtExport = formatStorageEntriesExport(mockEntries, 'txt', undefined, 'AsyncStorage');
+      expect(typeof txtExport).toBe('string');
+      expect(txtExport).toContain('STORAGE ENTRIES EXPORT: ASYNCSTORAGE');
+      expect(txtExport).toContain('session_token');
+
+      // Filename generator
+      const filename = generateStorageFilename('async_storage', 'json');
+      expect(filename.startsWith('async_storage_')).toBe(true);
+      expect(filename.endsWith('.json')).toBe(true);
+    });
+  });
 });
+
 
