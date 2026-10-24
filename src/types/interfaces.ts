@@ -245,6 +245,9 @@ export interface NetworkInspectorProps {
   initialVisible?: boolean;
   visible?: boolean;
   remoteConfig?: boolean | any;
+  onHide?: () => void;
+  onOpen?: () => void;
+  onClose?: () => void;
 }
 
 export interface InspectorContextValue {

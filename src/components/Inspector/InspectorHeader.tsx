@@ -552,7 +552,11 @@ const InspectorHeader = React.memo(() => {
                     minWidth: 0,
                     marginRight: 6,
                   }}>
-                  <BrandCircleIcon size={isNarrow ? 38 : isCompact ? 40 : 42} />
+                  <AppHeaderLogo
+                    size={isNarrow ? 38 : isCompact ? 40 : 42}
+                    customIcon={appIcon}
+                    shape="circle"
+                  />
                   <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
                     {/* Top Row: Prominent clear branding title */}
                     <Text

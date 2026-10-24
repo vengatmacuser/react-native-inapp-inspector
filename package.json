@@ -1,7 +1,7 @@
 {
   "name": "react-native-inapp-inspector",
   "version": "2.5.17",
-  "description": "The zero-config, all-in-one in-app debugger & network logger for React Native & Expo (Flipper / Chucker alternative). Inspect Network (fetch/Axios/GraphQL), Console logs with Metro Symbolication, Redux State, Firebase Analytics, Storage (AsyncStorage/MMKV), Hardware Telemetry, and JS Bundle size directly on device.",
+  "description": "The zero-config, all-in-one in-app debugger & network logger for React Native & Expo (Flipper, Reactotron & Chucker alternative). Intercept XHR with onloadend support, early pre-mount request queueing, fetch, Axios & GraphQL, inspect console logs with Metro symbolication, Redux state, Firebase Analytics, AsyncStorage/MMKV storage, hardware telemetry, and crash reports directly on device.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vengatmacuser/react-native-inapp-inspector.git"
@@ -133,6 +133,7 @@
     "prepare": "npm run build",
     "watch": "tsc -w",
     "prepack": "npm run build",
+    "test": "cd example && npx jest --no-watchman",
     "release": "node release.cjs",
     "serve-apk": "node ./bin/cli.js 8083",
     "e2e:build:ios": "cd example && npm run e2e:build:ios",
@@ -164,6 +165,15 @@
     "api-debugger",
     "axios-interceptor",
     "fetch-logger",
+    "xmlhttprequest-logger",
+    "xhr-logger",
+    "xhr-interceptor",
+    "xhr-monkeypatch",
+    "onloadend",
+    "early-request-logging",
+    "pre-mount-logging",
+    "network-request-logger",
+    "in-app-network-inspector",
     "graphql-inspector",
     "websocket-logger",
     "websocket-inspector",

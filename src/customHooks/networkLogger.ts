@@ -218,6 +218,7 @@ export const setupNetworkLogger = () => {
       this.__logUrl = typeof url === "string" ? url : String(url);
       this.__logRequestHeaders = {};
       this.__logStartTime = Date.now();
+      this.__logFinished = false;
 
       return originalOpen.apply(this, [method, url, async !== false, user, password]);
     };
@@ -330,10 +331,19 @@ export const setupNetworkLogger = () => {
       };
 
       // Ensure listeners for all possible completion/failure states
-      this.addEventListener("load", onFinished);
-      this.addEventListener("error", onErrorOrAbort);
-      this.addEventListener("abort", onErrorOrAbort);
-      this.addEventListener("timeout", onErrorOrAbort);
+      if (typeof this.addEventListener === "function") {
+        this.addEventListener("load", onFinished);
+        this.addEventListener("error", onErrorOrAbort);
+        this.addEventListener("abort", onErrorOrAbort);
+        this.addEventListener("timeout", onErrorOrAbort);
+        this.addEventListener("loadend", () => {
+          if (this.status >= 200) {
+            onFinished();
+          } else {
+            onErrorOrAbort();
+          }
+        });
+      }
 
       // React Native XMLHttpRequest hook for onreadystatechange and handlers
       const prevOnReadyStateChange = this.onreadystatechange;
@@ -349,6 +359,34 @@ export const setupNetworkLogger = () => {
           return prevOnReadyStateChange.apply(this, args);
         }
       };
+
+      // Intercept onloadend property (supporting assignment before or after send)
+      let customOnLoadEnd = this.onloadend;
+      const handleLoadEnd = function (this: any, ...args: any[]) {
+        if (this.status >= 200) {
+          onFinished();
+        } else {
+          onErrorOrAbort();
+        }
+        if (typeof customOnLoadEnd === "function") {
+          return customOnLoadEnd.apply(this, args);
+        }
+      };
+
+      try {
+        Object.defineProperty(this, "onloadend", {
+          configurable: true,
+          enumerable: true,
+          get() {
+            return handleLoadEnd;
+          },
+          set(fn) {
+            customOnLoadEnd = fn;
+          },
+        });
+      } catch {
+        this.onloadend = handleLoadEnd;
+      }
 
       return originalSend.apply(this, [body]);
     };

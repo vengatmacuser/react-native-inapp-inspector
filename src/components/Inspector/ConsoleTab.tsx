@@ -53,6 +53,7 @@ const ConsoleTab = React.memo(() => {
     setSelectedLog,
     selectedConsoleLogs,
     toggleSelectConsoleLog,
+    isDark,
   } = useInspector();
 
   const initialLimit = maxConsoleLogs || 100;
@@ -230,9 +231,9 @@ const ConsoleTab = React.memo(() => {
     <View style={{flex: 1}}>
       <View
         style={{
-          backgroundColor: AppColors.white,
+          backgroundColor: isDark ? AppColors.slate900 : AppColors.white,
           borderBottomWidth: 1,
-          borderBottomColor: AppColors.dividerColor,
+          borderBottomColor: isDark ? AppColors.slate800 : AppColors.dividerColor,
           paddingBottom: 6,
         }}>
         <View
@@ -243,6 +244,10 @@ const ConsoleTab = React.memo(() => {
           <View
             style={[
               styles.searchContainer,
+              isDark && {
+                backgroundColor: AppColors.slate800,
+                borderColor: AppColors.slate700,
+              },
               isSearchFocused && {
                 borderColor: AppColors.purple,
                 borderWidth: 1.5,
@@ -259,7 +264,10 @@ const ConsoleTab = React.memo(() => {
               onChangeText={setLogSearch}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
-              style={styles.searchInput}
+              style={[
+                styles.searchInput,
+                isDark && {color: AppColors.white},
+              ]}
               autoCorrect={false}
               autoCapitalize="none"
             />
@@ -317,7 +325,13 @@ const ConsoleTab = React.memo(() => {
               />
             </TouchableScale>
             <TouchableScale
-              style={styles.toolbarBtn}
+              style={[
+                styles.toolbarBtn,
+                isDark && {
+                  backgroundColor: AppColors.slate800,
+                  borderColor: AppColors.slate700,
+                },
+              ]}
               onPress={() =>
                 setLogSortOrder(o =>
                   o === 'newest' ? 'oldest' : 'newest',
@@ -325,7 +339,7 @@ const ConsoleTab = React.memo(() => {
               }
               hitSlop={10}>
               <SortArrowIcon
-                color={AppColors.grayTextStrong}
+                color={isDark ? AppColors.slate200 : AppColors.grayTextStrong}
                 size={18}
                 direction={
                   logSortOrder === 'newest' ? 'down' : 'up'
@@ -487,6 +501,8 @@ const ConsoleTab = React.memo(() => {
                         fontSize: 10.5,
                         color: isActive
                           ? AppColors.white
+                          : isDark
+                          ? AppColors.slate200
                           : AppColors.primaryBlack,
                       }}>
                       {chip.label}

@@ -45,7 +45,7 @@ export interface AboutModalProps {
 }
 
 export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
-  const {updateAvailable, latestNpmVersion} = useInspector();
+  const {updateAvailable, latestNpmVersion, appIcon} = useInspector();
 
   return (
     <View style={styles.container}>
@@ -57,7 +57,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({onClose: _onClose}) => {
         <View style={styles.heroCard}>
           <View style={styles.heroHeaderRow}>
             <View style={styles.heroBrandRow}>
-              <AppHeaderLogo size={46} shape="circle" />
+              <AppHeaderLogo size={46} customIcon={appIcon} shape="circle" />
               <View style={{flex: 1}}>
                 <View style={styles.heroTitleRow}>
                   <Text style={styles.heroTitle}>{t('about.heroTitle', 'In-App Inspector')}</Text>

@@ -30,7 +30,11 @@ import {
   subscribePushEvents,
   getPushRecords,
   clearPushRecords,
+  openInspector,
+  closeInspector,
+  reopenInspector,
 } from 'react-native-inapp-inspector';
+import React from 'react';
 import { NativeModules } from 'react-native';
 
 describe('Inspector Full Regression & Safety Test Suite', () => {
@@ -91,6 +95,181 @@ describe('Inspector Full Regression & Safety Test Suite', () => {
       expect(failedGetLog?.status).toBe(0);
       expect(failedGetLog?.response).toContain('Network request failed');
 
+      clearNetworkLogs();
+    });
+
+    it('intercepts XHR completion via onloadend property assigned before and after send', () => {
+      clearNetworkLogs();
+
+      const originalXHR = (globalThis as any).XMLHttpRequest;
+      class MockXHR {
+        __logMethod?: string;
+        __logUrl?: string;
+        __logRequestHeaders?: Record<string, string>;
+        __logStartTime?: number;
+        __logFinished?: boolean;
+        __logId?: number;
+        status = 200;
+        responseType = 'text';
+        responseText = '{"success":true}';
+        response = '{"success":true}';
+        onloadend: any = null;
+        private listeners: Record<string, Function[]> = {};
+
+        open(method: string, url: string) {}
+        setRequestHeader(h: string, v: string) {}
+        send(body?: any) {}
+        getAllResponseHeaders() {
+          return 'content-type: application/json\r\n';
+        }
+        addEventListener(event: string, fn: Function) {
+          if (!this.listeners[event]) this.listeners[event] = [];
+          this.listeners[event].push(fn);
+        }
+        dispatchEvent(event: string) {
+          (this.listeners[event] || []).forEach(fn => fn.call(this));
+        }
+      }
+
+      (globalThis as any).XMLHttpRequest = MockXHR;
+      (globalThis as any).__XHR_LOGGER_INITIALIZED__ = false;
+      (globalThis as any).__NETWORK_LOGGER_INITIALIZED__ = false;
+      setupNetworkLogger();
+
+      // 1. onloadend assigned AFTER send()
+      const xhr1 = new (globalThis as any).XMLHttpRequest();
+      xhr1.open('GET', 'https://api.example.com/test-onloadend-after');
+      xhr1.send();
+
+      let callback1Fired = false;
+      xhr1.onloadend = () => {
+        callback1Fired = true;
+      };
+
+      if (typeof xhr1.onloadend === 'function') {
+        xhr1.onloadend();
+      }
+
+      expect(callback1Fired).toBe(true);
+      let logs = getNetworkLogs();
+      const log1 = logs.find(l => l.url.includes('test-onloadend-after'));
+      expect(log1).toBeDefined();
+      expect(log1?.status).toBe(200);
+      expect(log1?.response).toEqual({ success: true });
+
+      // 2. onloadend assigned BEFORE send()
+      const xhr2 = new (globalThis as any).XMLHttpRequest();
+      xhr2.open('POST', 'https://api.example.com/test-onloadend-before');
+      let callback2Fired = false;
+      xhr2.onloadend = () => {
+        callback2Fired = true;
+      };
+      xhr2.send(JSON.stringify({ test: 123 }));
+
+      if (typeof xhr2.onloadend === 'function') {
+        xhr2.onloadend();
+      }
+
+      expect(callback2Fired).toBe(true);
+      logs = getNetworkLogs();
+      const log2 = logs.find(l => l.url.includes('test-onloadend-before'));
+      expect(log2).toBeDefined();
+      expect(log2?.method).toBe('POST');
+      expect(log2?.status).toBe(200);
+
+      (globalThis as any).XMLHttpRequest = originalXHR;
+      clearNetworkLogs();
+    });
+
+    it('intercepts XHR completion via addEventListener loadend event', () => {
+      clearNetworkLogs();
+
+      const originalXHR = (globalThis as any).XMLHttpRequest;
+      class MockXHR {
+        status = 201;
+        responseType = 'json';
+        response = { created: true };
+        private listeners: Record<string, Function[]> = {};
+
+        open() {}
+        setRequestHeader() {}
+        send() {}
+        getAllResponseHeaders() {
+          return '';
+        }
+        addEventListener(event: string, fn: Function) {
+          if (!this.listeners[event]) this.listeners[event] = [];
+          this.listeners[event].push(fn);
+        }
+        trigger(event: string) {
+          (this.listeners[event] || []).forEach(fn => fn.call(this));
+        }
+      }
+
+      (globalThis as any).XMLHttpRequest = MockXHR;
+      (globalThis as any).__XHR_LOGGER_INITIALIZED__ = false;
+      (globalThis as any).__NETWORK_LOGGER_INITIALIZED__ = false;
+      setupNetworkLogger();
+
+      const xhr = new (globalThis as any).XMLHttpRequest();
+      xhr.open('PUT', 'https://api.example.com/resource/42');
+      xhr.send();
+      xhr.trigger('loadend');
+
+      const logs = getNetworkLogs();
+      const log = logs.find(l => l.url.includes('resource/42'));
+      expect(log).toBeDefined();
+      expect(log?.method).toBe('PUT');
+      expect(log?.status).toBe(201);
+      expect(log?.response).toEqual({ created: true });
+
+      (globalThis as any).XMLHttpRequest = originalXHR;
+      clearNetworkLogs();
+    });
+
+    it('queues pre-UI mount requests in memory and flushes them when subscribed or modal opens', () => {
+      clearNetworkLogs();
+
+      // Simulate network requests before UI mounts
+      const logger = (globalThis as any).__NETWORK_LOGGER__;
+      logger({
+        id: 101,
+        url: 'https://api.example.com/startup-config',
+        method: 'GET',
+        status: 200,
+        response: { theme: 'dark' },
+        startTime: Date.now() - 500,
+        duration: 80,
+        client: 'xhr',
+      });
+      logger({
+        id: 102,
+        url: 'https://api.example.com/auth-token',
+        method: 'POST',
+        status: 200,
+        response: { token: 'xyz123' },
+        startTime: Date.now() - 300,
+        duration: 120,
+        client: 'xhr',
+      });
+
+      // 1. Verify requests are queued in memory immediately
+      const queuedLogs = getNetworkLogs();
+      expect(queuedLogs.length).toBe(2);
+      expect(queuedLogs.some(l => l.url.includes('startup-config'))).toBe(true);
+      expect(queuedLogs.some(l => l.url.includes('auth-token'))).toBe(true);
+
+      // 2. Verify subscription delivers all queued logs instantly
+      let deliveredLogs: any[] = [];
+      const unsub = subscribeNetworkLogs(logs => {
+        deliveredLogs = logs;
+      });
+
+      expect(deliveredLogs.length).toBe(2);
+      expect(deliveredLogs[0].url).toContain('auth-token');
+      expect(deliveredLogs[1].url).toContain('startup-config');
+
+      unsub();
       clearNetworkLogs();
     });
   });
@@ -215,4 +394,38 @@ describe('Inspector Full Regression & Safety Test Suite', () => {
       expect(Array.isArray(socketRecords)).toBe(true);
     });
   });
+
+  describe('Programmatic Control & Dismissal (GitHub Issue #4 & #3)', () => {
+    it('provides openInspector, closeInspector, and reopenInspector methods', () => {
+      expect(typeof openInspector).toBe('function');
+      expect(typeof closeInspector).toBe('function');
+      expect(typeof reopenInspector).toBe('function');
+
+      // Calling them does not throw
+      expect(() => openInspector()).not.toThrow();
+      expect(() => closeInspector()).not.toThrow();
+      expect(() => reopenInspector(false)).not.toThrow();
+      expect(() => reopenInspector(true)).not.toThrow();
+    });
+
+    it('exports InAppInspector which accepts onHide, onOpen, onClose, and appIcon props', () => {
+      expect(InAppInspector).toBeDefined();
+      const onHideMock = jest.fn();
+      const onOpenMock = jest.fn();
+      const onCloseMock = jest.fn();
+
+      // Render props check (React element creation)
+      const element = React.createElement(InAppInspector, {
+        enabled: true,
+        appIcon: 123,
+        onHide: onHideMock,
+        onOpen: onOpenMock,
+        onClose: onCloseMock,
+      });
+      expect(React.isValidElement(element)).toBe(true);
+      expect(element.props.appIcon).toBe(123);
+      expect(element.props.onHide).toBe(onHideMock);
+    });
+  });
 });
+

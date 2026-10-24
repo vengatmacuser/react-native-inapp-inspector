@@ -17,6 +17,7 @@ import {
 } from '../NetworkIcons';
 import HighlightText from '../HighlightText';
 import TouchableScale from '../TouchableScale';
+import {useInspector} from './InspectorContext';
 import type {PushCardProps} from '../../types';
 
 interface PushSourceColorDef {
@@ -128,6 +129,7 @@ function PushCard({
   searchStr = '',
 }: PushCardProps) {
   const {t} = useTranslation();
+  const {isDark} = useInspector();
   const colors = useMemo(() => getSourceColors(item.source), [item.source]);
   const statePill = useMemo(
     () => getAppStatePill(item.appState, item.action),
@@ -158,8 +160,11 @@ function PushCard({
         {
           borderLeftWidth: 3.5,
           borderLeftColor: colors.border,
-          backgroundColor: colors.cardBg,
+          backgroundColor: isDark
+            ? (colors.cardBg === AppColors.white ? AppColors.slate900 : colors.cardBg)
+            : colors.cardBg,
         },
+        isDark && {borderColor: AppColors.slate800},
       ]}
       accessibilityRole="button"
       accessibilityLabel={`Push Notification: ${item.title || 'Notification'}`}>
@@ -253,19 +258,26 @@ function PushCard({
         </View>
 
         {/* Row 2: Message Box (Spacious 68px height matching ConsoleLogCard) */}
-        <View style={styles.messageBox}>
+        <View
+          style={[
+            styles.messageBox,
+            isDark && {
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          ]}>
           <HighlightText
             text={item.title || '(No Title)'}
             searchWords={searchStr ? [searchStr] : []}
             numberOfLines={1}
-            style={styles.messageTitle}
+            style={[styles.messageTitle, isDark && {color: AppColors.white}]}
             highlightStyle={styles.highlight}
           />
           <HighlightText
             text={item.body || '(No message body)'}
             searchWords={searchStr ? [searchStr] : []}
             numberOfLines={2}
-            style={styles.messageBody}
+            style={[styles.messageBody, isDark && {color: AppColors.slate200}]}
             highlightStyle={styles.highlight}
           />
         </View>

@@ -34,6 +34,7 @@ import {
 import {loadSettings, saveSettings} from '../../helpers/settingsStore';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {showToast} from '../../helpers/toast';
+import {useInspector} from './InspectorContext';
 
 export interface CountryOption {
   id: string;
@@ -154,7 +155,12 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
   const [pendingLang, setPendingLang] = useState<PendingLang | null>(null);
 
   const currentLangCode = getLanguage();
-  const isDark = AppColors.primaryLight !== AppColors.white;
+  let isDarkFromContext = false;
+  try {
+    const inspector = useInspector();
+    if (inspector) isDarkFromContext = inspector.isDark;
+  } catch (_) {}
+  const isDark = isDarkFromContext || AppColors.primaryLight !== AppColors.white;
 
   const selectedCountry = useMemo(() => {
     return COUNTRY_OPTIONS.find(c => c.id === selectedCountryId) || COUNTRY_OPTIONS[0];
@@ -264,14 +270,14 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
               </LinearGradient>
               <View>
                 <View style={styles.titleRow}>
-                  <Text style={styles.titleText}>
+                  <Text style={[styles.titleText, isDark && {color: AppColors.white}]}>
                     {t('settings.general.selectLanguage', 'Select Language')}
                   </Text>
                   <View style={styles.countBadge}>
                     <Text style={styles.countBadgeText}>25</Text>
                   </View>
                 </View>
-                <Text style={styles.subTitleText}>
+                <Text style={[styles.subTitleText, isDark && {color: AppColors.slate400}]}>
                   {t('settings.general.languageDescription', 'Choose preferred display language')}
                 </Text>
               </View>
@@ -301,14 +307,24 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
           </View>
 
           {/* Search bar with dedicated icon and clear action */}
-          <View style={styles.searchContainer}>
+          <View
+            style={[
+              styles.searchContainer,
+              isDark && {
+                backgroundColor: AppColors.slate800,
+                borderColor: AppColors.slate700,
+              },
+            ]}>
             <SearchIcon color={AppColors.grayTextWeak} size={15} />
             <TextInput
               value={search}
               onChangeText={setSearch}
               placeholder={t('common.search', 'Search language, country or code...')}
               placeholderTextColor={AppColors.grayTextWeak}
-              style={styles.searchInput}
+              style={[
+                styles.searchInput,
+                isDark && {color: AppColors.white},
+              ]}
               autoCapitalize="none"
               autoCorrect={false}
               clearButtonMode="never"
@@ -324,7 +340,11 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
           </View>
 
           {/* Horizontal Country Filter Chips */}
-          <View style={styles.countryScrollWrap}>
+          <View
+            style={[
+              styles.countryScrollWrap,
+              isDark && {borderBottomColor: AppColors.slate800},
+            ]}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -340,12 +360,17 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                     }}
                     style={[
                       styles.countryChip,
+                      isDark && {
+                        backgroundColor: AppColors.slate800,
+                        borderColor: AppColors.slate700,
+                      },
                       isActive && styles.countryChipActive,
                     ]}>
                     <CountryFlag code={country.id} size={15} style={{marginRight: 6}} />
                     <Text
                       style={[
                         styles.countryChipText,
+                        isDark && {color: AppColors.slate200},
                         isActive && styles.countryChipTextActive,
                       ]}>
                       {country.name}
@@ -354,11 +379,13 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                       <View
                         style={[
                           styles.countryChipBadge,
+                          isDark && {backgroundColor: 'rgba(255,255,255,0.1)'},
                           isActive && styles.countryChipBadgeActive,
                         ]}>
                         <Text
                           style={[
                             styles.countryChipBadgeText,
+                            isDark && {color: AppColors.slate400},
                             isActive && styles.countryChipBadgeTextActive,
                           ]}>
                           {country.badge}
@@ -397,6 +424,7 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                     }
                     style={[
                       styles.langRow,
+                      isDark && {borderBottomColor: AppColors.slate800},
                       isSelected && styles.langRowSelected,
                     ]}>
                     {/* Active Accent Left Indicator */}
@@ -406,6 +434,10 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                       <View
                         style={[
                           styles.flagContainer,
+                          isDark && {
+                            backgroundColor: AppColors.slate800,
+                            borderColor: AppColors.slate700,
+                          },
                           isSelected && styles.flagContainerSelected,
                         ]}>
                         <CountryFlag code={lang.code} size={20} />
@@ -415,6 +447,7 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                           <Text
                             style={[
                               styles.langNativeName,
+                              isDark && {color: AppColors.white},
                               isSelected && styles.langNativeNameSelected,
                             ]}>
                             {lang.nativeName}
@@ -422,11 +455,13 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                           <View
                             style={[
                               styles.codePill,
+                              isDark && {backgroundColor: 'rgba(255,255,255,0.1)'},
                               isSelected && styles.codePillSelected,
                             ]}>
                             <Text
                               style={[
                                 styles.codePillText,
+                                isDark && {color: AppColors.slate200},
                                 isSelected && styles.codePillTextSelected,
                               ]}>
                               {lang.code.toUpperCase()}
@@ -436,6 +471,7 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                         <Text
                           style={[
                             styles.langEnglishName,
+                            isDark && {color: AppColors.slate400},
                             isSelected && styles.langEnglishNameSelected,
                           ]}>
                           {englishSubtitle}
@@ -463,13 +499,26 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
             <TouchableWithoutFeedback onPress={handleCancelLanguageChange}>
               <View style={confirmStyles.backdrop} />
             </TouchableWithoutFeedback>
-            <View style={confirmStyles.card}>
+            <View
+              style={[
+                confirmStyles.card,
+                isDark && {
+                  backgroundColor: AppColors.slate900,
+                  borderColor: AppColors.slate800,
+                },
+              ]}>
               {/* Close corner button */}
               <TouchableScale
                 onPress={handleCancelLanguageChange}
                 hitSlop={8}
-                style={confirmStyles.cornerCloseBtn}>
-                <CloseWhite size={11} color={AppColors.grayTextWeak} />
+                style={[
+                  confirmStyles.cornerCloseBtn,
+                  isDark && {backgroundColor: AppColors.slate800},
+                ]}>
+                <CloseWhite
+                  size={11}
+                  color={isDark ? AppColors.white : AppColors.grayTextWeak}
+                />
               </TouchableScale>
 
               {/* Top Graphic Icon */}
@@ -478,10 +527,10 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
               </View>
 
               {/* Title & Message */}
-              <Text style={confirmStyles.title}>
+              <Text style={[confirmStyles.title, isDark && {color: AppColors.white}]}>
                 {t('language.confirmTitle', 'Change Language?')}
               </Text>
-              <Text style={confirmStyles.message}>
+              <Text style={[confirmStyles.message, isDark && {color: AppColors.slate200}]}>
                 {t(
                   'language.confirmMessage',
                   `Switch to ${pendingLang.nativeName} (${LANGUAGE_ENGLISH_NAMES[pendingLang.code] || pendingLang.nativeName})? The inspector will reload to apply the new language.`,
@@ -489,14 +538,21 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
               </Text>
 
               {/* Language switch preview */}
-              <View style={confirmStyles.switchPreview}>
+              <View
+                style={[
+                  confirmStyles.switchPreview,
+                  isDark && {
+                    backgroundColor: AppColors.slate800,
+                    borderColor: AppColors.slate700,
+                  },
+                ]}>
                 <View style={confirmStyles.switchItem}>
-                  <Text style={confirmStyles.switchLabel}>
+                  <Text style={[confirmStyles.switchLabel, isDark && {color: AppColors.slate400}]}>
                     {t('language.current', 'Current')}
                   </Text>
                   <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
                     <CountryFlag code={currentLangCode} size={16} />
-                    <Text style={confirmStyles.switchValue}>
+                    <Text style={[confirmStyles.switchValue, isDark && {color: AppColors.white}]}>
                       {currentLangCode.toUpperCase()}
                     </Text>
                   </View>
@@ -524,8 +580,11 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
                   accessibilityRole="button"
                   accessibilityLabel={t('common.cancel', 'Cancel')}
                   onPress={handleCancelLanguageChange}
-                  style={confirmStyles.cancelBtn}>
-                  <Text style={confirmStyles.cancelBtnText}>
+                  style={[
+                    confirmStyles.cancelBtn,
+                    isDark && {backgroundColor: AppColors.slate800},
+                  ]}>
+                  <Text style={[confirmStyles.cancelBtnText, isDark && {color: AppColors.slate200}]}>
                     {t('common.cancel', 'Cancel')}
                   </Text>
                 </TouchableScale>

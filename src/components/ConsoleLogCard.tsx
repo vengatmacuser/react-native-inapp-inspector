@@ -390,7 +390,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
   isSelected,
   onToggleSelect,
 }: ConsoleLogCardProps) {
-  const {setSelectedLog} = useInspector();
+  const {setSelectedLog, isDark} = useInspector();
   const {t} = useTranslation();
   const jsonContent = getJsonContent(item.message);
   const isAnalyticsError = item.message
@@ -512,8 +512,11 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           {
             borderLeftWidth: 3.5,
             borderLeftColor: colors.border,
-            backgroundColor: colors.cardBg,
+            backgroundColor: isDark
+              ? (colors.cardBg === AppColors.white ? AppColors.slate900 : colors.cardBg)
+              : colors.cardBg,
           },
+          isDark && {borderColor: AppColors.slate800},
         ]}>
         <View style={styles.cardBody}>
           {/* Row 1: Header Row (Checkbox, Serial, Method Badge, JSON Type / Source Chip, Duplicate Badge, Chevron) */}
@@ -595,14 +598,24 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
           </View>
 
           {/* Row 2: Message Box (Spacious 68px static height for 3 lines) */}
-          <View style={styles.messageBox}>
+          <View
+            style={[
+              styles.messageBox,
+              isDark && {
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+              },
+            ]}>
             {jsonContent ? (
               <View style={styles.jsonPreviewRow}>
                 {jsonContent.header ? (
                   <LogSyntaxHighlighter
                     text={jsonContent.header}
                     search={searchStr}
-                    style={styles.messageText}
+                    style={[
+                      styles.messageText,
+                      isDark && {color: AppColors.white},
+                    ]}
                     detectLinks={false}
                     numberOfLines={1}
                   />
@@ -611,7 +624,10 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
                   <LogSyntaxHighlighter
                     text={jsonPreview.text.replace(/\s+/g, ' ')}
                     search={searchStr}
-                    style={styles.jsonPreviewText}
+                    style={[
+                      styles.jsonPreviewText,
+                      isDark && {color: AppColors.slate200},
+                    ]}
                     detectLinks={false}
                     numberOfLines={jsonContent.header ? 2 : 3}
                   />
@@ -621,7 +637,7 @@ export const ConsoleLogCard = React.memo(function ConsoleLogCard({
               getLogMessageWithBadges(
                 item.message,
                 searchStr,
-                styles.messageText,
+                [styles.messageText, isDark && {color: AppColors.white}],
                 styles.highlight,
                 3,
               )

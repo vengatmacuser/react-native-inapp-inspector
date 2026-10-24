@@ -178,6 +178,23 @@ import {LIB_VERSION, DEFAULT_HIDDEN_URL_PATTERNS} from './constants';
 // Stylesheet
 import {toggleGlobalTheme} from './styles';
 
+type InspectorCommand = 'open' | 'close' | 'restore';
+const inspectorCommandListeners = new Set<(cmd: InspectorCommand) => void>();
+
+const openInspector = () => {
+  inspectorCommandListeners.forEach(listener => listener('open'));
+};
+
+const closeInspector = () => {
+  inspectorCommandListeners.forEach(listener => listener('close'));
+};
+
+const reopenInspector = (openModal: boolean = false) => {
+  inspectorCommandListeners.forEach(listener =>
+    listener(openModal ? 'open' : 'restore'),
+  );
+};
+
 const NetworkInspector = ({
   enabled = true,
   storage,
@@ -188,6 +205,9 @@ const NetworkInspector = ({
   visible: controlledVisible,
   remoteConfig = false,
   captureWidgetEnabled: propCaptureWidgetEnabled,
+  onHide,
+  onOpen,
+  onClose,
 }: NetworkInspectorProps): React.JSX.Element | null => {
   // Set custom storage synchronously during render phase
   setCustomStorage(storage || null);
@@ -222,13 +242,56 @@ const NetworkInspector = ({
     setIsDismissed(true);
     setVisible(false);
     hideNativeFloatingButton().catch(() => {});
-  }, []);
+    onHide?.();
+  }, [onHide]);
 
   useEffect(() => {
     if (controlledVisible !== undefined) {
+      if (controlledVisible) {
+        setIsDismissed(false);
+      }
       setVisible(controlledVisible);
     }
   }, [controlledVisible]);
+
+  useEffect(() => {
+    if (enabled) {
+      setIsDismissed(false);
+    }
+  }, [enabled]);
+
+  useEffect(() => {
+    const handleCommand = (cmd: InspectorCommand) => {
+      if (cmd === 'open') {
+        setIsDismissed(false);
+        setIsMinimized(false);
+        setVisible(true);
+      } else if (cmd === 'restore') {
+        setIsDismissed(false);
+        setIsMinimized(false);
+        setVisible(false);
+      } else if (cmd === 'close') {
+        setIsMinimized(false);
+        setVisible(false);
+      }
+    };
+    inspectorCommandListeners.add(handleCommand);
+    return () => {
+      inspectorCommandListeners.delete(handleCommand);
+    };
+  }, []);
+
+  const prevVisibleRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (prevVisibleRef.current !== null && prevVisibleRef.current !== visible) {
+      if (visible) {
+        onOpen?.();
+      } else {
+        onClose?.();
+      }
+    }
+    prevVisibleRef.current = visible;
+  }, [visible, onOpen, onClose]);
 
   const [isReady, setIsReady] = useState(false);
   const [selected, setSelected] = useState<NetworkLog | null>(null);
@@ -3176,6 +3239,9 @@ export default NetworkInspectorWrapper;
 export {
   NetworkInspectorWrapper as InAppInspector,
   NetworkInspectorWrapper as NetworkInspector,
+  openInspector,
+  closeInspector,
+  reopenInspector,
 };
 
 // Re-export public APIs

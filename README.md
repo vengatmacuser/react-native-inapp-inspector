@@ -110,6 +110,8 @@ The **zero-config, all-in-one in-app debugging toolkit for React Native & Expo**
 
 ### 🌐 1. Network Inspector & Timing Waterfall
 - **Universal HTTP/HTTPS Interception**: Automatically hooks into `fetch`, default Axios, `axios.create()` instances, and `XMLHttpRequest`.
+- **Advanced XHR Monkey-Patch with `onloadend`**: Native interception for `XMLHttpRequest` completion via `onloadend` property (set before or after `.send()`) and `loadend` event listeners, guaranteeing 100% capture rate for third-party uploaders, polyfills, and custom network clients.
+- **Zero-Loss Pre-Mount Request Queueing**: API calls executed during app bootstrap before React components or the inspector UI mount are queued in memory and instantly synchronized as soon as the modal opens.
 - **Latency Breakdown**: Proportional timing waterfall bars, latency grading (Fast `<200ms`, Moderate `200-800ms`, Slow `>800ms`).
 - **Telemetry Strip**: Real-time **Success Rate %**, **Avg Latency (ms)**, and **P95 Latency (ms)**.
 - **Payload Viewer**: Formatted JSON syntax tree, raw payload view, request & response headers, query parameters, and caller origin.
@@ -300,17 +302,54 @@ export default function App() {
 
 ## 💡 Advanced Usage & Feature Guides
 
-### 🌐 Early Startup Network Logging
-If your app triggers API calls before root components mount, invoke `setupNetworkLogger()` at the top of your index entry file (`index.js` or `index.ts`):
+### 🌐 Early Startup Network Logging & XHR `onloadend` Interception
+`react-native-inapp-inspector` auto-initializes upon module load. If your app triggers API calls before root React components mount (e.g., auth verification, config fetch, or analytics init in `index.js`), requests are **safely buffered in an in-memory queue** and automatically appear the moment the inspector modal opens.
+
+#### Automatic Module-Level Setup:
+```typescript
+// index.js / index.ts (entry point)
+import { setupNetworkLogger, getNetworkLogs, subscribeNetworkLogs } from 'react-native-inapp-inspector';
+
+// Auto-patches fetch, Axios, and XMLHttpRequest (including onloadend)
+setupNetworkLogger();
+```
+
+#### XHR with `onloadend` Handler (Pre-Mount & Post-Mount):
+Both `xhr.onloadend` assignments (before or after `.send()`) and `addEventListener('loadend')` are intercepted without breaking user callbacks:
 
 ```typescript
-import { setupNetworkLogger } from 'react-native-inapp-inspector';
+const xhr = new XMLHttpRequest();
+xhr.open('POST', 'https://api.myapp.com/v1/auth/session');
+xhr.setRequestHeader('Content-Type', 'application/json');
 
-// Automatically captures fetch, Axios, and XMLHttpRequest
-setupNetworkLogger({
-  maxRequests: 200,
-  ignoredUrls: ['https://clients3.google.com/generate_204'],
+// Even if onloadend is assigned after send(), the inspector intercepts the response
+xhr.send(JSON.stringify({ deviceId: 'mobile-123' }));
+
+xhr.onloadend = (event) => {
+  console.log('Request completed with status:', xhr.status);
+};
+```
+
+#### Programmatic Log Access & Subscriptions:
+You can also inspect or export network traffic programmatically without opening the UI:
+
+```typescript
+import { getNetworkLogs, subscribeNetworkLogs, clearNetworkLogs } from 'react-native-inapp-inspector/network';
+
+// Retrieve all captured requests currently queued in memory
+const allLogs = getNetworkLogs();
+console.log(`Captured ${allLogs.length} requests before UI mount`);
+
+// Listen to incoming network requests in real time
+const unsubscribe = subscribeNetworkLogs((logs) => {
+  const latest = logs[0];
+  if (latest && latest.status >= 400) {
+    console.warn(`[API ERROR] ${latest.method} ${latest.url} returned status ${latest.status}`);
+  }
 });
+
+// Clean up listener when no longer needed
+// unsubscribe();
 ```
 
 ### ⚡ WebSocket & Socket.IO Interception
@@ -447,17 +486,23 @@ console.log('Current language:', getLanguage());
 | Prop | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `enabled` | `boolean` | `true` | When `false`, completely unmounts with 0% overhead. |
+| `visible` | `boolean` | `undefined` | Controlled visibility of the inspector modal. |
+| `appIcon` | `ImageSourcePropType` | `undefined` | Custom branding icon rendered on the inspector header and launcher. |
 | `environment` | `string` | `'DEV'` | Environment badge displayed on top bar (`'DEV'`, `'QA'`, `'STAGING'`). |
 | `navigationRef` | `NavigationContainerRef` | `undefined` | React Navigation ref for tagging logs with active screen names. |
 | `storage` | `AsyncStorage / MMKV` | `undefined` | Custom storage instance for persisting inspector settings. |
-| `theme` | `'dark' \| 'light' \| 'system'` | `'dark'` | Visual theme preference. |
-| `defaultTab` | `ActiveTab` | `ActiveTab.APIs` | Initial tab opened when expanding the inspector modal. |
+| `onHide` | `() => void` | `undefined` | Callback fired when user drags to "Release to hide inspector". |
+| `onOpen` | `() => void` | `undefined` | Callback fired when the inspector modal opens. |
+| `onClose` | `() => void` | `undefined` | Callback fired when the inspector modal closes. |
 
 ### Module Exports: `react-native-inapp-inspector`
 
 | Export | Type | Description |
 | :--- | :--- | :--- |
-| `setupNetworkLogger(options?)` | `Function` | Intercepts `fetch`, Axios, and XMLHttpRequest. |
+| `openInspector()` | `Function` | Programmatically opens the inspector modal. |
+| `closeInspector()` | `Function` | Programmatically closes the inspector modal. |
+| `reopenInspector(openModal?)` | `Function` | Restores launcher after being hidden via "Release to hide". |
+| `setupNetworkLogger(options?)` | `Function` | Intercepts `fetch`, Axios, and XMLHttpRequest (including `onloadend`). |
 | `setupConsoleLogger()` | `Function` | Intercepts `console.log/info/warn/error` with Metro symbolication. |
 | `setupSocketLogger()` | `Function` | Intercepts WebSocket and Socket.IO real-time traffic. |
 | `connectReduxStore(store)` | `Function` | Connects a Redux store for action timeline and state diffs. |
@@ -557,7 +602,7 @@ Contributions are warmly welcomed! Please check out [CONTRIBUTING.md](CONTRIBUTI
 `react-native-debugger` · `in-app-debugger` · `react-native-devtools` · `flipper-alternative` · `flipper-alternative-react-native` · `chucker-for-react-native` · `chucker-react-native` · `charles-proxy-alternative` · `proxyman-alternative` · `reactotron-alternative` · `zero-config-debugging` · `mobile-devtools` · `on-device-debugging` · `react-native-debug-menu`
 
 ### 🌐 Network, APIs & Real-time Protocols
-`react-native-network-logger` · `react-native-network-inspector` · `http-logger` · `api-inspector` · `api-debugger` · `axios-interceptor` · `fetch-logger` · `graphql-inspector` · `websocket-logger` · `websocket-inspector` · `socketio-debugger` · `curl-export` · `copy-as-curl` · `latency-waterfall` · `p95-latency-monitor` · `ssl-pinning-safe-logger` · `rest-api-debugger`
+`react-native-network-logger` · `react-native-network-inspector` · `xmlhttprequest-logger` · `xhr-interceptor` · `xhr-monkeypatch` · `onloadend` · `pre-mount-logging` · `early-request-logging` · `http-logger` · `api-inspector` · `api-debugger` · `axios-interceptor` · `fetch-logger` · `graphql-inspector` · `websocket-logger` · `websocket-inspector` · `socketio-debugger` · `curl-export` · `copy-as-curl` · `latency-waterfall` · `p95-latency-monitor` · `ssl-pinning-safe-logger` · `rest-api-debugger` · `in-app-network-inspector`
 
 ### 💾 State Management & Device Storage
 `redux-devtools-react-native` · `redux-inspector` · `redux-logger` · `redux-toolkit-debugger` · `rtk-query-inspector` · `redux-persist-debugger` · `asyncstorage-viewer` · `asyncstorage-inspector` · `asyncstorage-editor` · `mmkv-inspector` · `mmkv-viewer` · `mmkv-debugger` · `live-storage-crud`
