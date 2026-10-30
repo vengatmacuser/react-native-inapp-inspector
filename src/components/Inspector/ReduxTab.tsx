@@ -688,13 +688,13 @@ const ReduxTab = React.memo(() => {
             }`}
             accessibilityHint="Switches sorting between recently updated and alphabetical"
             style={[
-              styles.toolbarBtn,
-              sortMode === 'latest' && {backgroundColor: `${AppColors.brandPurple}1F`, borderColor: AppColors.brandPurple},
+              styles.toolbarBtnSort,
+              sortMode === 'latest' && styles.toolbarBtnActive,
             ]}
             onPress={() => setSortMode(prev => (prev === 'latest' ? 'alpha' : 'latest'))}
             hitSlop={6}>
             <SortArrowIcon
-              color={sortMode === 'latest' ? AppColors.brandPurple : AppColors.grayTextStrong}
+              color={sortMode === 'latest' ? '#7C3AED' : '#0284C7'}
               size={16}
             />
           </TouchableOpacity>
@@ -779,15 +779,21 @@ const reduxTabStyles = StyleSheet.create({
     backgroundColor: AppColors.white,
     marginHorizontal: 8,
     marginTop: 8,
-    borderRadius: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: AppColors.dividerColor,
-    shadowColor: AppColors.primaryBlack,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    borderRadius: 16,
+    padding: 12,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 3.5,
+    borderTopColor: AppColors.white,
+    borderLeftColor: AppColors.grayBorderSecondary,
+    borderRightColor: AppColors.grayBorderSecondary,
+    borderBottomColor: AppColors.slate200,
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 2,
   },
   statCol: {
     flex: 1,
@@ -863,14 +869,20 @@ const reduxTabStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: AppColors.white,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: AppColors.grayBorderSecondary,
+    borderRadius: 14,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 3,
+    borderTopColor: AppColors.white,
+    borderLeftColor: AppColors.grayBorderSecondary,
+    borderRightColor: AppColors.grayBorderSecondary,
+    borderBottomColor: AppColors.slate200,
     shadowColor: AppColors.shadowColorString,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 2.5,
-    elevation: 1.5,
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 2,
     height: 118,
     overflow: 'hidden',
   },

@@ -116,8 +116,18 @@ import {
 import {
   trackActiveTelemetryHeartbeat,
   setTelemetryEnabled,
+  trackTelemetryEvent,
+  trackInspectorOpen,
+  trackInspectorClose,
   trackInspectorTabView,
   trackInspectorScreenView,
+  trackInspectorExport,
+  trackInspectorClear,
+  trackInspectorFilter,
+  trackInspectorMediaCapture,
+  trackInspectorCrashCaptured,
+  trackInspectorLanguageChanged,
+  trackInspectorAction,
 } from './helpers/telemetry';
 
 import {
@@ -1502,8 +1512,10 @@ const NetworkInspector = ({
 
   // #6 — every time the inspector is opened, land on chosen default tab & sync latest logs
   useEffect(() => {
+    const wasVisible = isVisibleRefObj.current;
     isVisibleRefObj.current = visible;
     if (visible) {
+      trackInspectorOpen('modal');
       trackInspectorScreenView('InspectorModal');
       const target =
         defaultTab === 'apis' || tabVisibility?.[defaultTab]
@@ -1555,6 +1567,9 @@ const NetworkInspector = ({
         cancelAnimationFrame(frame);
       };
     } else {
+      if (wasVisible) {
+        trackInspectorClose();
+      }
       setIsReady(false);
       setSelectedLogs(new Set());
       setSelectedConsoleLogs(new Set());
@@ -2574,6 +2589,7 @@ const NetworkInspector = ({
   function handleDelete() {
     if (activeTab === 'logs') {
       if (selectedConsoleLogs.size > 0) {
+        trackInspectorClear('logs', selectedConsoleLogs.size);
         setConsoleLogs(prev =>
           prev.filter(l => !selectedConsoleLogs.has(l.id)),
         );
@@ -2590,6 +2606,7 @@ const NetworkInspector = ({
           cancelText: t('common.cancel', 'Cancel'),
           onConfirm: () => {
             setConfirmModal(prev => ({...prev, visible: false}));
+            trackInspectorClear('logs', consoleLogs.length);
             clearConsoleLogs();
             setConsoleLogs([]);
             setSelectedConsoleLogs(new Set());
@@ -2610,6 +2627,7 @@ const NetworkInspector = ({
         cancelText: t('common.cancel', 'Cancel'),
         onConfirm: () => {
           setConfirmModal(prev => ({...prev, visible: false}));
+          trackInspectorClear('analytics', analyticsEvents.length);
           clearAnalyticsEvents();
           setAnalyticsEvents([]);
           setSelectedEvent(null);
@@ -2630,6 +2648,7 @@ const NetworkInspector = ({
         cancelText: t('common.cancel', 'Cancel'),
         onConfirm: () => {
           setConfirmModal(prev => ({...prev, visible: false}));
+          trackInspectorClear('redux');
           clearActionHistory();
           setReduxLastActionMap({});
         },
@@ -2648,6 +2667,7 @@ const NetworkInspector = ({
         cancelText: t('crash.clearCancel', 'Cancel'),
         onConfirm: () => {
           setConfirmModal(prev => ({...prev, visible: false}));
+          trackInspectorClear('crash', crashRecords.length);
           clearCrashRecords();
           setCrashRecords([]);
           setSelectedCrash(null);
@@ -2657,6 +2677,7 @@ const NetworkInspector = ({
     }
     // Default: APIs tab. Only clears NETWORK logs — never touches the other tabs.
     if (selectedLogs.size > 0) {
+      trackInspectorClear('network', selectedLogs.size);
       setLogs(prev => prev.filter(l => !selectedLogs.has(l.id)));
       setSelectedLogs(new Set());
     } else {
@@ -2671,6 +2692,7 @@ const NetworkInspector = ({
         cancelText: t('common.cancel', 'Cancel'),
         onConfirm: () => {
           setConfirmModal(prev => ({...prev, visible: false}));
+          trackInspectorClear('network', logs.length);
           clearNetworkOnly();
         },
       });
@@ -3583,3 +3605,20 @@ export {
 } from './editor';
 
 export {LIB_VERSION} from './constants/version';
+
+export {
+  trackActiveTelemetryHeartbeat,
+  setTelemetryEnabled,
+  trackTelemetryEvent,
+  trackInspectorOpen,
+  trackInspectorClose,
+  trackInspectorTabView,
+  trackInspectorScreenView,
+  trackInspectorExport,
+  trackInspectorClear,
+  trackInspectorFilter,
+  trackInspectorMediaCapture,
+  trackInspectorCrashCaptured,
+  trackInspectorLanguageChanged,
+  trackInspectorAction,
+} from './helpers/telemetry';

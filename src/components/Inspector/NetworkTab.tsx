@@ -627,34 +627,22 @@ const NetworkTab = React.memo(() => {
 
               <View style={styles.toolbarRight}>
                 <TouchableScale
-                  style={[
-                    styles.toolbarBtn,
-                    {
-                      borderColor: `${AppColors.purple}38`,
-                      backgroundColor: `${AppColors.purple}0F`,
-                    },
-                  ]}
+                  style={styles.toolbarBtnExport}
                   onPress={() => setIsExportModalVisible(true)}
                   hitSlop={6}
                   testID="inspector.network.exportBtn">
                   <ExportIcon
-                    color={AppColors.purple}
+                    color="#7C3AED"
                     size={15}
                   />
                 </TouchableScale>
 
                 <TouchableScale
-                  style={[
-                    styles.toolbarBtn,
-                    {
-                      borderColor: `${AppColors.errorColor}38`,
-                      backgroundColor: `${AppColors.errorColor}0F`,
-                    },
-                  ]}
+                  style={styles.toolbarBtnDelete}
                   onPress={handleDelete}
                   hitSlop={6}>
                   <TrashIcon
-                    color={AppColors.errorColor}
+                    color="#DC2626"
                     size={15}
                   />
                   {selectedLogs.size > 0 && (
@@ -668,11 +656,8 @@ const NetworkTab = React.memo(() => {
 
                 <TouchableScale
                   style={[
-                    styles.toolbarBtn,
-                    isGroupByPageEnabled && {
-                      borderColor: AppColors.purple,
-                      backgroundColor: `${AppColors.purple}15`,
-                    },
+                    styles.toolbarBtnGroup,
+                    isGroupByPageEnabled && styles.toolbarBtnActive,
                   ]}
                   onPress={() => setIsGroupByPageEnabled(prev => !prev)}
                   hitSlop={6}
@@ -687,8 +672,8 @@ const NetworkTab = React.memo(() => {
                   <LayersIcon
                     color={
                       isGroupByPageEnabled
-                        ? AppColors.purple
-                        : AppColors.grayTextStrong
+                        ? '#7C3AED'
+                        : '#16A34A'
                     }
                     size={16}
                   />
@@ -698,7 +683,7 @@ const NetworkTab = React.memo(() => {
                 </TouchableScale>
 
                 <TouchableScale
-                  style={styles.toolbarBtn}
+                  style={styles.toolbarBtnSort}
                   onPress={() =>
                     setSortOrder(o =>
                       o === 'newest' ? 'oldest' : 'newest',
@@ -709,8 +694,8 @@ const NetworkTab = React.memo(() => {
                     direction={
                       sortOrder === 'newest' ? 'down' : 'up'
                     }
-                    color={AppColors.grayTextStrong}
-                    size={18}
+                    color="#0284C7"
+                    size={17}
                   />
                 </TouchableScale>
               </View>
@@ -750,17 +735,34 @@ const NetworkTab = React.memo(() => {
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          paddingHorizontal: 9,
-                          paddingVertical: 4.5,
-                          borderRadius: 8,
+                          paddingHorizontal: 10,
+                          paddingVertical: 5.5,
+                          borderRadius: 14,
                           backgroundColor: isActive
                             ? chipColor
-                            : `${chipColor}12`,
-                          borderWidth: 1,
-                          borderColor: isActive
-                            ? chipColor
-                            : `${chipColor}30`,
+                            : AppColors.primaryLight,
+                          borderTopWidth: 1.5,
+                          borderLeftWidth: 1,
+                          borderRightWidth: 1,
+                          borderBottomWidth: isActive ? 3 : 2.5,
+                          borderTopColor: isActive
+                            ? 'rgba(255, 255, 255, 0.45)'
+                            : AppColors.white,
+                          borderLeftColor: isActive
+                            ? 'rgba(255, 255, 255, 0.2)'
+                            : `${chipColor}50`,
+                          borderRightColor: isActive
+                            ? 'rgba(0, 0, 0, 0.15)'
+                            : `${chipColor}50`,
+                          borderBottomColor: isActive
+                            ? 'rgba(0, 0, 0, 0.35)'
+                            : `${chipColor}90`,
                           gap: 5,
+                          shadowColor: chipColor,
+                          shadowOffset: {width: 0, height: 2},
+                          shadowOpacity: isActive ? 0.28 : 0.08,
+                          shadowRadius: 3.5,
+                          elevation: isActive ? 3 : 2,
                         }}>
                         {chip.id === 'all' && <LayersIcon size={11} color={iconColor} />}
                         {chip.id === 'errors' && <CircleXIcon size={11} color={iconColor} />}
@@ -811,30 +813,41 @@ const NetworkTab = React.memo(() => {
                     flexDirection: 'row',
                     alignItems: 'center',
                     paddingHorizontal: 10,
-                    paddingVertical: 4.5,
-                    borderRadius: 8,
+                    paddingVertical: 5.5,
+                    borderRadius: 14,
                     backgroundColor:
                       isFilterActive
-                        ? `${AppColors.purple}20`
-                        : AppColors.grayBackground,
-                    borderWidth: 1,
-                    borderColor:
-                      isFilterActive
                         ? AppColors.purple
-                        : AppColors.grayBorderSecondary,
+                        : AppColors.primaryLight,
+                    borderTopWidth: 1.5,
+                    borderLeftWidth: 1,
+                    borderRightWidth: 1,
+                    borderBottomWidth: isFilterActive ? 3 : 2.5,
+                    borderTopColor: isFilterActive
+                      ? 'rgba(255, 255, 255, 0.45)'
+                      : AppColors.white,
+                    borderLeftColor: isFilterActive
+                      ? 'rgba(255, 255, 255, 0.2)'
+                      : '#CBD5E1',
+                    borderRightColor: isFilterActive
+                      ? 'rgba(0, 0, 0, 0.15)'
+                      : '#CBD5E1',
+                    borderBottomColor: isFilterActive
+                      ? 'rgba(0, 0, 0, 0.35)'
+                      : '#94A3B8',
                     gap: 5,
-                    shadowColor: AppColors.black,
-                    shadowOpacity: 0.04,
-                    shadowRadius: 2,
-                    shadowOffset: {width: 0, height: 1},
-                    elevation: 1,
+                    shadowColor: isFilterActive ? AppColors.purple : AppColors.black,
+                    shadowOffset: {width: 0, height: 2},
+                    shadowOpacity: isFilterActive ? 0.28 : 0.08,
+                    shadowRadius: 3.5,
+                    elevation: isFilterActive ? 3 : 2,
                   }}>
                   <FilterIcon
                     size={11}
                     color={
                       isFilterActive
-                        ? AppColors.purple
-                        : AppColors.grayText
+                        ? AppColors.white
+                        : AppColors.grayTextStrong
                     }
                   />
                   <Text
@@ -843,15 +856,15 @@ const NetworkTab = React.memo(() => {
                       fontSize: 10.5,
                       color:
                         isFilterActive
-                          ? AppColors.purple
-                          : AppColors.grayText,
+                          ? AppColors.white
+                          : AppColors.grayTextStrong,
                     }}>
                     {t('network.moreFilters', 'More Filters')}
                   </Text>
                   {isFilterActive && (
                     <View
                       style={{
-                        backgroundColor: AppColors.purple,
+                        backgroundColor: AppColors.white,
                         paddingHorizontal: 4.5,
                         paddingVertical: 1,
                         borderRadius: 6,
@@ -860,7 +873,7 @@ const NetworkTab = React.memo(() => {
                         style={{
                           fontFamily: AppFonts.interBold,
                           fontSize: 8.5,
-                          color: AppColors.white,
+                          color: AppColors.purple,
                         }}>
                         {activeFiltersCount}
                       </Text>

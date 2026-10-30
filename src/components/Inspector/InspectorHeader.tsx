@@ -5,6 +5,7 @@ import {
   Linking,
   Platform,
   Pressable,
+  ScrollView,
   StatusBar,
   Text,
   TouchableOpacity,
@@ -36,6 +37,7 @@ import {
   triggerNativeHaptic,
 } from '../../native/NativeInspector';
 import {ScreenCapture, CapturedMediaItem, generateCaptureId} from '../../capture';
+import {trackInspectorMediaCapture} from '../../helpers/telemetry';
 import {MediaPreviewModal} from './MediaPreviewModal';
 import {LanguageSelectorModal} from './LanguageSelectorModal';
 import CountryFlag from '../CountryFlag';
@@ -174,6 +176,7 @@ const InspectorHeader = React.memo(() => {
           height: result.height,
         };
         setPreviewMediaItem(newItem);
+        trackInspectorMediaCapture('screenshot', result.format || 'png');
         refreshMediaCount?.().catch(() => {});
         showToast(t('header.screenshotCaptured'));
       } else {
@@ -209,6 +212,11 @@ const InspectorHeader = React.memo(() => {
             hasAudio: result.hasAudio,
           };
           setPreviewMediaItem(newItem);
+          trackInspectorMediaCapture(
+            result.format === 'gif' ? 'video' : 'video',
+            result.format,
+            Math.round((result.durationMs || 0) / 1000),
+          );
           refreshMediaCount?.().catch(() => {});
           showToast(
             t('header.recordingSaved', {
@@ -328,7 +336,7 @@ const InspectorHeader = React.memo(() => {
   }, [modalHeightPercent, windowWidth]);
 
   const buttonSize = isNarrow ? 28 : isCompact ? 30 : 32;
-  const logoSize = isNarrow ? 36 : isCompact ? 38 : 40;
+  const logoSize = isNarrow ? 44 : isCompact ? 48 : 50;
 
   return (
     <>
@@ -336,14 +344,14 @@ const InspectorHeader = React.memo(() => {
         style={[
           styles.headerGradient,
           {
-            minHeight: (isNarrow ? 50 : 54) + headerTopPadding,
+            minHeight: (isNarrow ? 66 : 72) + headerTopPadding,
           },
         ]}>
         {/* LinearGradient as absolute background layer to avoid Fabric view recycling crash.
             BVLinearGradient as a direct parent of conditionally-mounted children triggers
             RCTComponentViewRegistry 'Attempt to recycle a mounted view' assertion. */}
         <LinearGradient
-          colors={[AppColors.indigo600, AppColors.violet600]}
+          colors={['#6366F1', '#4F46E5', '#4338CA']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={{
@@ -352,8 +360,22 @@ const InspectorHeader = React.memo(() => {
             left: 0,
             right: 0,
             bottom: 0,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          }}
+          pointerEvents="none"
+        />
+        {/* Specular clay highlight sheen on upper half */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '42%',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            backgroundColor: 'rgba(255, 255, 255, 0.12)',
           }}
           pointerEvents="none"
         />
@@ -365,8 +387,8 @@ const InspectorHeader = React.memo(() => {
                 width: '100%',
                 justifyContent: 'space-between',
                 paddingHorizontal: isNarrow ? 8 : 10,
-                paddingVertical: 7,
-                minHeight: isNarrow ? 50 : 54,
+                paddingVertical: isNarrow ? 6 : 8,
+                minHeight: isNarrow ? 66 : 72,
               },
             ]}>
             <View
@@ -404,25 +426,27 @@ const InspectorHeader = React.memo(() => {
                   }}
                   hitSlop={15}
                   style={{
-                    width: isNarrow ? 30 : 34,
-                    height: isNarrow ? 30 : 34,
-                    borderRadius: isNarrow ? 15 : 17,
+                    width: isNarrow ? 34 : 38,
+                    height: isNarrow ? 34 : 38,
+                    borderRadius: isNarrow ? 11 : 12,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: `${AppColors.white}2E`,
-                    borderWidth: 1,
-                    borderColor: `${AppColors.white}4D`,
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    borderTopWidth: 1.5,
+                    borderLeftWidth: 1,
+                    borderRightWidth: 1,
+                    borderBottomWidth: 3,
+                    borderTopColor: 'rgba(255, 255, 255, 0.65)',
+                    borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                    borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                    borderBottomColor: 'rgba(0, 0, 0, 0.35)',
+                    shadowColor: '#000',
+                    shadowOffset: {width: 0, height: 2},
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3,
+                    elevation: 3,
                     flexShrink: 0,
                   }}>
-                  <View
-                    style={{
-                      position: 'absolute',
-                      width: isNarrow ? 38 : 42,
-                      height: isNarrow ? 38 : 42,
-                      borderRadius: 21,
-                      backgroundColor: `${AppColors.white}1A`,
-                    }}
-                  />
                   <WhiteBackNavigation />
                 </TouchableScale>
               )}
@@ -550,13 +574,31 @@ const InspectorHeader = React.memo(() => {
                     gap: isNarrow ? 7 : 8.5,
                     flex: 1,
                     minWidth: 0,
-                    marginRight: 6,
+                    marginRight: 4,
                   }}>
-                  <AppHeaderLogo
-                    size={isNarrow ? 38 : isCompact ? 40 : 42}
-                    customIcon={appIcon}
-                    shape="circle"
-                  />
+                  <View
+                    style={{
+                      borderRadius: Math.round((logoSize + 4) / 2),
+                      borderTopWidth: 2,
+                      borderLeftWidth: 1.5,
+                      borderRightWidth: 1.5,
+                      borderBottomWidth: 3,
+                      borderTopColor: 'rgba(255, 255, 255, 0.7)',
+                      borderLeftColor: 'rgba(255, 255, 255, 0.4)',
+                      borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                      borderBottomColor: 'rgba(0, 0, 0, 0.35)',
+                      shadowColor: '#000',
+                      shadowOffset: {width: 0, height: 2},
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3,
+                      elevation: 3,
+                    }}>
+                    <AppHeaderLogo
+                      size={logoSize}
+                      customIcon={appIcon}
+                      shape="circle"
+                    />
+                  </View>
                   <View style={{gap: 3, flex: 1, minWidth: 0, justifyContent: 'center'}}>
                     {/* Top Row: Prominent clear branding title */}
                     <Text
@@ -564,12 +606,15 @@ const InspectorHeader = React.memo(() => {
                         styles.headerTitle,
                         {
                           fontFamily: AppFonts.interBold,
-                          fontWeight: '700',
-                          fontSize: isNarrow ? 14 : isCompact ? 15 : 15.5,
-                          lineHeight: isNarrow ? 18 : isCompact ? 19 : 20,
+                          fontWeight: '800',
+                          fontSize: isNarrow ? 15 : isCompact ? 16 : 17,
+                          lineHeight: isNarrow ? 20 : isCompact ? 21 : 22,
                           color: AppColors.white,
-                          letterSpacing: -0.2,
+                          letterSpacing: -0.3,
                           paddingBottom: 0,
+                          textShadowColor: 'rgba(0, 0, 0, 0.25)',
+                          textShadowOffset: {width: 0, height: 1.5},
+                          textShadowRadius: 3,
                         },
                       ]}
                       numberOfLines={1}
@@ -578,15 +623,19 @@ const InspectorHeader = React.memo(() => {
                     </Text>
 
                     {/* Sub Row: Language Selector, OS Chip, NPM Version Chip */}
-                    <View
-                      style={{
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      nestedScrollEnabled={true}
+                      contentContainerStyle={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 4,
-                        minWidth: 0,
-                        marginTop: 2,
-                        flexWrap: 'nowrap',
-                        overflow: 'hidden',
+                        gap: 4.5,
+                        paddingRight: 4,
+                      }}
+                      style={{
+                        marginTop: 1,
+                        maxWidth: '100%',
                       }}>
                       {/* Country / Language Selector Pill */}
                       <TouchableScale
@@ -601,28 +650,34 @@ const InspectorHeader = React.memo(() => {
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          backgroundColor: `${AppColors.white}24`,
-                          borderRadius: 5,
-                          paddingHorizontal: 5,
-                          paddingVertical: 1.5,
+                          backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                          borderRadius: 7,
+                          paddingHorizontal: 5.5,
+                          paddingVertical: 2,
                           gap: 3,
-                          borderWidth: 1,
-                          borderColor: `${AppColors.white}38`,
+                          borderTopWidth: 1.5,
+                          borderLeftWidth: 1,
+                          borderRightWidth: 1,
+                          borderBottomWidth: 2,
+                          borderTopColor: 'rgba(255, 255, 255, 0.55)',
+                          borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                          borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                          borderBottomColor: 'rgba(0, 0, 0, 0.25)',
                           flexShrink: 0,
                         }}>
-                        <CountryFlag code={currentLang?.code || 'en'} size={9} borderRadius={2} />
+                        <CountryFlag code={currentLang?.code || 'en'} size={10.5} borderRadius={2.5} />
                         <Text
                           style={{
                             fontFamily: AppFonts.interBold,
-                            fontSize: 8,
-                            lineHeight: 10.5,
+                            fontSize: 9,
+                            lineHeight: 12,
                             color: AppColors.white,
                             letterSpacing: 0.2,
                           }}
                           numberOfLines={1}>
                           {currentLang?.code?.toUpperCase() || 'EN'}
                         </Text>
-                        <ChevronDownIcon size={6} color={`${AppColors.white}CC`} />
+                        <ChevronDownIcon size={6.5} color={AppColors.white} />
                       </TouchableScale>
 
                       {/* Host OS & Version */}
@@ -630,37 +685,41 @@ const InspectorHeader = React.memo(() => {
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          backgroundColor: `${AppColors.white}1F`,
-                          borderRadius: 5,
-                          paddingHorizontal: 5,
-                          paddingVertical: 1.5,
+                          backgroundColor: 'rgba(255, 255, 255, 0.20)',
+                          borderRadius: 7,
+                          paddingHorizontal: 5.5,
+                          paddingVertical: 2,
                           gap: 3,
-                          borderWidth: 1,
-                          borderColor: `${AppColors.white}2E`,
-                          flexShrink: 1,
-                          minWidth: 0,
+                          borderTopWidth: 1.5,
+                          borderLeftWidth: 1,
+                          borderRightWidth: 1,
+                          borderBottomWidth: 2,
+                          borderTopColor: 'rgba(255, 255, 255, 0.55)',
+                          borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                          borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                          borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+                          flexShrink: 0,
                         }}>
                         {Platform.OS === 'ios' ? (
                           <AppleIcon
-                            color={`${AppColors.white}E6`}
-                            size={8.5}
+                            color={AppColors.white}
+                            size={9.5}
                           />
                         ) : (
                           <AndroidIcon
-                            color={`${AppColors.white}E6`}
-                            size={8.5}
+                            color={AppColors.white}
+                            size={9.5}
                           />
                         )}
                         <Text
                           style={{
-                            fontFamily: AppFonts.interMedium,
-                            fontSize: 8,
-                            lineHeight: 10.5,
-                            color: `${AppColors.white}EB`,
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 9,
+                            lineHeight: 12,
+                            color: AppColors.white,
                             letterSpacing: 0.1,
                           }}
-                          numberOfLines={1}
-                          ellipsizeMode="tail">
+                          numberOfLines={1}>
                           {appVersionString}
                         </Text>
                       </View>
@@ -675,31 +734,38 @@ const InspectorHeader = React.memo(() => {
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          backgroundColor: `${AppColors.white}1F`,
-                          borderRadius: 5,
+                          backgroundColor: 'rgba(255, 255, 255, 0.20)',
+                          borderRadius: 7,
                           paddingHorizontal: 5.5,
-                          paddingVertical: 1.5,
+                          paddingVertical: 2,
                           gap: 3,
-                          borderWidth: 1,
-                          borderColor: `${AppColors.white}2E`,
+                          borderTopWidth: 1.5,
+                          borderLeftWidth: 1,
+                          borderRightWidth: 1,
+                          borderBottomWidth: 2,
+                          borderTopColor: 'rgba(255, 255, 255, 0.55)',
+                          borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                          borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                          borderBottomColor: 'rgba(0, 0, 0, 0.25)',
                           flexShrink: 0,
                         }}>
                         <NpmIcon
-                          size={8.5}
-                          color={AppColors.npmRedLight}
+                          size={9.5}
+                          color="#FECDD3"
                         />
                         <Text
                           style={{
-                            fontFamily: AppFonts.interMedium,
-                            fontSize: 8,
-                            lineHeight: 10.5,
-                            color: `${AppColors.white}EB`,
+                            fontFamily: AppFonts.interBold,
+                            fontSize: 9,
+                            lineHeight: 12,
+                            color: AppColors.white,
                             letterSpacing: 0.1,
-                          }}>
+                          }}
+                          numberOfLines={1}>
                           v{LIB_VERSION}
                         </Text>
                       </Pressable>
-                    </View>
+                    </ScrollView>
                   </View>
                 </View>
               ) : null}
@@ -1584,8 +1650,8 @@ const InspectorHeader = React.memo(() => {
                   alignItems: 'center',
                   justifyContent: 'flex-end',
                   flexShrink: 0,
-                  marginLeft: 6,
-                  gap: isNarrow ? 6 : 7.5,
+                  marginLeft: 4,
+                  gap: isNarrow ? 4.5 : 5.5,
                 },
               ]}>
               {/* Settings / Reset & About buttons */}
@@ -1606,10 +1672,16 @@ const InspectorHeader = React.memo(() => {
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 7 : 8,
+                        borderRadius: isNarrow ? 8 : 10,
                         backgroundColor: 'rgba(255, 255, 255, 0.22)',
-                        borderColor: 'rgba(255, 255, 255, 0.45)',
-                        borderWidth: 1,
+                        borderTopWidth: 1.5,
+                        borderLeftWidth: 1,
+                        borderRightWidth: 1,
+                        borderBottomWidth: 2.5,
+                        borderTopColor: 'rgba(255, 255, 255, 0.6)',
+                        borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                        borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                        borderBottomColor: 'rgba(0, 0, 0, 0.35)',
                       },
                     ]}>
                     <InfoCircleIcon
@@ -1640,15 +1712,26 @@ const InspectorHeader = React.memo(() => {
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 7 : 8,
-                        backgroundColor: 'rgba(245, 158, 11, 0.26)',
-                        borderColor: 'rgba(252, 211, 77, 0.45)',
-                        borderWidth: 1,
+                        borderRadius: 11,
+                        backgroundColor: 'rgba(245, 158, 11, 0.35)',
+                        borderTopWidth: 1.5,
+                        borderLeftWidth: 1,
+                        borderRightWidth: 1,
+                        borderBottomWidth: 3,
+                        borderTopColor: 'rgba(255, 255, 255, 0.65)',
+                        borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                        borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                        borderBottomColor: '#B45309',
+                        shadowColor: AppColors.amber600,
+                        shadowOffset: {width: 0, height: 2},
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3,
+                        elevation: 3,
                       },
                     ]}>
                     <ResetIcon
                       color={AppColors.white}
-                      size={isNarrow ? 13 : 15}
+                      size={isNarrow ? 15 : 17}
                     />
                   </TouchableScale>
                 </>
@@ -1669,19 +1752,28 @@ const InspectorHeader = React.memo(() => {
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 7 : 8,
+                        borderRadius: 11,
                         backgroundColor: peekMode
-                          ? 'rgba(6, 182, 212, 0.38)'
-                          : 'rgba(6, 182, 212, 0.18)',
-                        borderColor: peekMode
-                          ? 'rgba(103, 232, 249, 0.65)'
-                          : 'rgba(103, 232, 249, 0.35)',
-                        borderWidth: 1,
+                          ? 'rgba(6, 182, 212, 0.45)'
+                          : 'rgba(255, 255, 255, 0.22)',
+                        borderTopWidth: 1.5,
+                        borderLeftWidth: 1,
+                        borderRightWidth: 1,
+                        borderBottomWidth: 3,
+                        borderTopColor: 'rgba(255, 255, 255, 0.65)',
+                        borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                        borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                        borderBottomColor: peekMode ? '#0E7490' : 'rgba(0, 0, 0, 0.35)',
+                        shadowColor: peekMode ? '#06B6D4' : '#000',
+                        shadowOffset: {width: 0, height: 2},
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3,
+                        elevation: 3,
                       },
                     ]}>
                     <EyeIcon
                       color={AppColors.white}
-                      size={isNarrow ? 13 : 15}
+                      size={isNarrow ? 15 : 17}
                     />
                   </TouchableScale>
 
@@ -1697,15 +1789,26 @@ const InspectorHeader = React.memo(() => {
                       {
                         width: buttonSize,
                         height: buttonSize,
-                        borderRadius: isNarrow ? 7 : 8,
-                        backgroundColor: 'rgba(168, 85, 247, 0.28)',
-                        borderColor: 'rgba(216, 180, 254, 0.45)',
-                        borderWidth: 1,
+                        borderRadius: 11,
+                        backgroundColor: 'rgba(255, 255, 255, 0.22)',
+                        borderTopWidth: 1.5,
+                        borderLeftWidth: 1,
+                        borderRightWidth: 1,
+                        borderBottomWidth: 3,
+                        borderTopColor: 'rgba(255, 255, 255, 0.65)',
+                        borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                        borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                        borderBottomColor: 'rgba(0, 0, 0, 0.35)',
+                        shadowColor: '#000',
+                        shadowOffset: {width: 0, height: 2},
+                        shadowOpacity: 0.22,
+                        shadowRadius: 3,
+                        elevation: 3,
                       },
                     ]}>
                     <SettingsIcon
                       color={AppColors.white}
-                      size={isNarrow ? 13 : 15}
+                      size={isNarrow ? 15 : 17}
                     />
                   </TouchableScale>
                 </>
@@ -1724,13 +1827,24 @@ const InspectorHeader = React.memo(() => {
                   {
                     width: buttonSize,
                     height: buttonSize,
-                    borderRadius: isNarrow ? 7 : 8,
-                    backgroundColor: 'rgba(56, 189, 248, 0.22)',
-                    borderColor: 'rgba(125, 211, 252, 0.40)',
-                    borderWidth: 1,
+                    borderRadius: 11,
+                    backgroundColor: 'rgba(56, 189, 248, 0.32)',
+                    borderTopWidth: 1.5,
+                    borderLeftWidth: 1,
+                    borderRightWidth: 1,
+                    borderBottomWidth: 3,
+                    borderTopColor: 'rgba(255, 255, 255, 0.65)',
+                    borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                    borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                    borderBottomColor: '#0284C7',
+                    shadowColor: '#38BDF8',
+                    shadowOffset: {width: 0, height: 2},
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3,
+                    elevation: 3,
                   },
                 ]}>
-                <ChevronDownIcon size={isNarrow ? 15 : 17} color={AppColors.white} />
+                <ChevronDownIcon size={isNarrow ? 18 : 20} color={AppColors.white} />
               </TouchableOpacity>
 
               {/* Close button */}
@@ -1746,13 +1860,24 @@ const InspectorHeader = React.memo(() => {
                   {
                     width: buttonSize,
                     height: buttonSize,
-                    borderRadius: isNarrow ? 7 : 8,
-                    backgroundColor: 'rgba(244, 63, 94, 0.28)',
-                    borderColor: 'rgba(251, 113, 133, 0.48)',
-                    borderWidth: 1,
+                    borderRadius: 11,
+                    backgroundColor: 'rgba(244, 63, 94, 0.40)',
+                    borderTopWidth: 1.5,
+                    borderLeftWidth: 1,
+                    borderRightWidth: 1,
+                    borderBottomWidth: 3,
+                    borderTopColor: 'rgba(255, 255, 255, 0.65)',
+                    borderLeftColor: 'rgba(255, 255, 255, 0.35)',
+                    borderRightColor: 'rgba(0, 0, 0, 0.15)',
+                    borderBottomColor: '#BE123C',
+                    shadowColor: '#F43F5E',
+                    shadowOffset: {width: 0, height: 2},
+                    shadowOpacity: 0.30,
+                    shadowRadius: 3,
+                    elevation: 3,
                   },
                 ]}>
-                <CloseWhite size={isNarrow ? 13 : 15} />
+                <CloseWhite size={isNarrow ? 15 : 17} />
               </TouchableOpacity>
             </View>
           </View>

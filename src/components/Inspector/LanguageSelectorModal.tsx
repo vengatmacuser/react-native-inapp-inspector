@@ -34,6 +34,7 @@ import {
 import {loadSettings, saveSettings} from '../../helpers/settingsStore';
 import {triggerNativeHaptic} from '../../native/NativeInspector';
 import {showToast} from '../../helpers/toast';
+import {trackInspectorLanguageChanged} from '../../helpers/telemetry';
 import {useInspector} from './InspectorContext';
 
 export interface CountryOption {
@@ -198,7 +199,9 @@ export const LanguageSelectorModal = React.memo(({visible, onClose}: LanguageSel
   const handleConfirmLanguageChange = async () => {
     if (!pendingLang) return;
     triggerNativeHaptic('medium');
+    const oldCode = getLanguage();
     setLanguage(pendingLang.code);
+    trackInspectorLanguageChanged(pendingLang.code, oldCode);
     try {
       const current = await loadSettings();
       await saveSettings({...current, language: pendingLang.code});
@@ -721,8 +724,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
+    borderTopWidth: 1.5,
+    borderBottomWidth: 2.5,
     borderColor: AppColors.grayBorderSecondary,
+    borderTopColor: AppColors.white,
+    borderBottomColor: AppColors.slate200,
     gap: 8,
+    shadowColor: AppColors.shadowColorString,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   searchInput: {
     flex: 1,
@@ -757,14 +769,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: AppColors.grayBackground,
+    backgroundColor: AppColors.primaryLight,
     borderWidth: 1,
+    borderTopWidth: 1.5,
+    borderBottomWidth: 2,
     borderColor: AppColors.grayBorderSecondary,
+    borderTopColor: AppColors.white,
+    borderBottomColor: AppColors.slate200,
     gap: 5,
+    shadowColor: AppColors.shadowColorString,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   countryChipActive: {
     backgroundColor: `${AppColors.brandPurple}14`,
     borderColor: `${AppColors.brandPurple}55`,
+    borderTopColor: AppColors.white,
+    borderBottomColor: AppColors.brandPurple,
+    borderBottomWidth: 2.5,
   },
   countryChipFlag: {
     fontSize: 13,
@@ -944,7 +968,11 @@ const confirmStyles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: `${AppColors.white}CC`,
+    borderTopWidth: 2,
+    borderBottomWidth: 4,
+    borderColor: AppColors.slate200,
+    borderTopColor: AppColors.white,
+    borderBottomColor: AppColors.slate200,
     ...Platform.select({
       ios: {
         shadowColor: AppColors.indigo600,
@@ -1007,11 +1035,20 @@ const confirmStyles = StyleSheet.create({
     marginBottom: 20,
     paddingVertical: 10,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: AppColors.grayBackground,
     borderWidth: 1,
+    borderTopWidth: 1.5,
+    borderBottomWidth: 2.5,
     borderColor: AppColors.grayBorderSecondary,
+    borderTopColor: AppColors.white,
+    borderBottomColor: AppColors.slate200,
     width: '100%',
+    shadowColor: AppColors.shadowColorString,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   switchItem: {
     alignItems: 'center',
@@ -1055,9 +1092,18 @@ const confirmStyles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: AppColors.graySurface,
     borderWidth: 1,
+    borderTopWidth: 1.5,
+    borderBottomWidth: 2.5,
     borderColor: AppColors.grayBorderSecondary,
+    borderTopColor: AppColors.white,
+    borderBottomColor: AppColors.slate200,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: AppColors.shadowColorString,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   cancelBtnText: {
     fontFamily: AppFonts.interSemiBold,
@@ -1069,6 +1115,10 @@ const confirmStyles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     overflow: 'hidden',
+    borderTopWidth: 1.5,
+    borderBottomWidth: 3,
+    borderTopColor: '#A5B4FC',
+    borderBottomColor: '#3730A3',
     ...Platform.select({
       ios: {
         shadowColor: AppColors.indigo600,

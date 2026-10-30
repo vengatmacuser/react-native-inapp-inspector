@@ -46,6 +46,7 @@ import {
 } from '../../helpers/shareFormatter';
 import {useTranslation} from '../../i18n';
 import type {NetworkLog} from '../../types';
+import {trackInspectorExport} from '../../helpers/telemetry';
 
 export interface NetworkExportModalProps {
   visible: boolean;
@@ -357,6 +358,7 @@ export const NetworkExportModal: React.FC<NetworkExportModalProps> = ({
   const handleShare = useCallback(async () => {
     if (!exportedContent) return;
     triggerNativeHaptic('light');
+    trackInspectorExport('network', format, selectedLogs.length);
     try {
       const fileUri = await writeNativeExportFile(
         exportedFilename,
@@ -395,6 +397,7 @@ export const NetworkExportModal: React.FC<NetworkExportModalProps> = ({
   const handleSaveToDisk = useCallback(async () => {
     if (!exportedContent) return;
     triggerNativeHaptic('medium');
+    trackInspectorExport('network', format, selectedLogs.length);
     try {
       const fileUri = await writeNativeExportFile(
         exportedFilename,
@@ -432,14 +435,15 @@ export const NetworkExportModal: React.FC<NetworkExportModalProps> = ({
         showToast(err?.message || 'Save error');
       }
     }
-  }, [exportedContent, exportedFilename, format, t]);
+  }, [exportedContent, exportedFilename, format, selectedLogs.length, t]);
 
   const handleCopy = useCallback(() => {
     if (!exportedContent) return;
     triggerNativeHaptic('light');
+    trackInspectorExport('network', format, selectedLogs.length);
     copyToClipboard(exportedContent, 'API Network Logs');
     showToast(t('network.copiedLogs', 'API requests copied to clipboard!'));
-  }, [exportedContent, t]);
+  }, [exportedContent, format, selectedLogs.length, t]);
 
   const hasFilterDifference = filteredLogs.length !== allLogs.length;
 
@@ -1252,12 +1256,23 @@ const styles = StyleSheet.create({
   levelChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 5.5,
-    borderRadius: 8,
-    backgroundColor: AppColors.grayBackground,
-    borderWidth: 1,
-    borderColor: AppColors.dividerColor,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: AppColors.white,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2.5,
+    borderTopColor: AppColors.white,
+    borderLeftColor: AppColors.grayBorderSecondary,
+    borderRightColor: AppColors.grayBorderSecondary,
+    borderBottomColor: AppColors.slate200,
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
     gap: 5,
   },
   levelChipText: {
@@ -1298,15 +1313,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8.5,
-    borderRadius: 9,
-    backgroundColor: AppColors.grayBackground,
-    borderWidth: 1,
-    borderColor: AppColors.dividerColor,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: AppColors.white,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2.5,
+    borderTopColor: AppColors.white,
+    borderLeftColor: AppColors.grayBorderSecondary,
+    borderRightColor: AppColors.grayBorderSecondary,
+    borderBottomColor: AppColors.slate200,
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   segmentBtnActive: {
-    backgroundColor: `${AppColors.purple}14`,
-    borderColor: AppColors.purple,
+    backgroundColor: AppColors.purple,
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.25)',
+    borderRightColor: 'rgba(0, 0, 0, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+    shadowColor: AppColors.purple,
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.28,
+    shadowRadius: 4,
+    elevation: 3,
   },
   segmentBtnText: {
     fontFamily: AppFonts.interMedium,
@@ -1564,11 +1598,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: AppColors.purple,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     gap: 7,
+    borderTopWidth: 2,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 3.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
+    borderRightColor: 'rgba(0, 0, 0, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.28)',
     shadowColor: AppColors.purple,
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
   },

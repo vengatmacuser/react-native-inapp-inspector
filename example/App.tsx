@@ -32,14 +32,14 @@ const navigationRef = createNavigationContainerRef();
 function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+      <StatusBar barStyle="dark-content" backgroundColor="#EEF2F6" />
       <ErrorBoundary>
         <NavigationContainer ref={navigationRef}>
           <Stack.Navigator
             screenOptions={{
               headerShown: false,
               contentStyle: {
-                backgroundColor: '#F8FAFC',
+                backgroundColor: '#EEF2F6',
               },
             }}>
             <Stack.Screen name="Home" component={HomeScreen} />

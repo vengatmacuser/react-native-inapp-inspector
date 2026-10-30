@@ -4,10 +4,10 @@
   </a>
 </p>
 
-<h1 align="center">React Native In-App Inspector</h1>
+<h1 align="center">React Native In-App Inspector 🔍⚡</h1>
 
 <p align="center">
-  <b>The modern, zero-config on-device debugging suite for React Native & Expo</b>
+  <b>The Screen-Aware On-Device Network Logger & Debugging Suite for React Native & Expo</b>
 </p>
 
 <p align="center">
@@ -25,10 +25,10 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/v/react-native-inapp-inspector?color=6366f1&label=npm&logo=npm" alt="npm version" /></a>
-  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/dm/react-native-inapp-inspector?color=3b82f6&label=downloads" alt="npm downloads" /></a>
-  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/github/stars/vengatmacuser/react-native-inapp-inspector?color=f59e0b&label=stars&logo=github" alt="GitHub stars" /></a>
-  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license" /></a>
+  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/v/react-native-inapp-inspector?color=00F0FF&label=npm&logo=npm" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/react-native-inapp-inspector"><img src="https://img.shields.io/npm/dm/react-native-inapp-inspector?color=38BDF8&label=downloads" alt="npm downloads" /></a>
+  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector"><img src="https://img.shields.io/github/stars/vengatmacuser/react-native-inapp-inspector?color=FFB800&label=stars&logo=github" alt="GitHub stars" /></a>
+  <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-00FF9D.svg" alt="license" /></a>
   <a href="https://github.com/sponsors/vengatmacuser"><img src="https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ea4aaa?logo=githubsponsors&logoColor=white" alt="sponsor" /></a>
 </p>
 
@@ -45,13 +45,23 @@
   <img src="https://img.shields.io/badge/Storage-AsyncStorage%20%7C%20MMKV-f59e0b?logo=databricks&logoColor=white" alt="Storage" />
   <img src="https://img.shields.io/badge/Push%20Logger-APNs%20%7C%20FCM-10b981?logo=firebase&logoColor=white" alt="Push" />
   <img src="https://img.shields.io/badge/Localization-25%20Languages-ec4899" alt="Localization" />
+  <img src="https://img.shields.io/badge/Navigation-Screen--Aware%20Tracking-6366f1?logo=reactnavigation&logoColor=white" alt="Screen-Aware Tracking" />
   <img src="https://img.shields.io/badge/Screen%20Capture-Video%20%7C%20GIF%20%7C%20Screenshot-8b5cf6" alt="Screen Capture" />
   <a href="https://github.com/vengatmacuser/react-native-inapp-inspector/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome" /></a>
 </p>
 
-The **zero-config, all-in-one in-app debugging toolkit for React Native & Expo**. Inspect HTTP/HTTPS network traffic, WebSocket and Socket.IO real-time streams, console logs with Metro symbolicated stack traces, Redux state diffs, AsyncStorage & MMKV live storage, push notifications, native hardware metrics, and capture screenshots or screen recordings directly on your device with **zero native setup**.
+> 🚀 **The standalone, zero-cable Flipper alternative.** Inspect HTTP/HTTPS traffic grouped by screen, capture XHR/Fetch/Axios, symbolicate console errors with Metro line numbers, and edit AsyncStorage/MMKV live on physical devices and TestFlight builds.
 
-> 🚀 **The modern, lightweight alternative to Flipper, Charles, Proxyman, and Chucker** — works standalone on device, in test builds, and across standalone APKs/IPAs without desktop companion apps, cables, or open debugger ports.
+---
+
+### 💡 Why Developers Choose In-App Inspector
+
+Most mobile network loggers dump all API calls into a flat, noisy list. **`react-native-inapp-inspector` links every network call, error, and console log directly to the active screen in your React Navigation hierarchy.**
+
+* **Screen-Aware Attribution:** Filter logs by `page:CheckoutScreen` or `page:ProfileScreen`.
+* **Zero Host Overhead:** 0% CPU footprint when closed; zero UI thread impact.
+* **100% On-Device:** No Mac/PC companion apps, no Wi-Fi proxies, no cable tethering.
+* **Complete QA Tooling:** Capture screenshots, record reproduction videos, and export instant cURL commands.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/vengatmacuser/react-native-inapp-inspector/main/assets/walkthrough.gif" alt="React Native In-App Inspector Walkthrough" width="360" style="border-radius: 20px; box-shadow: 0 12px 36px rgba(0,0,0,0.5);" />
@@ -88,6 +98,7 @@ The **zero-config, all-in-one in-app debugging toolkit for React Native & Expo**
 
 | Capability | **react-native-inapp-inspector** | Flipper (Deprecated) | Chucker | Charles / Proxyman | Reactotron | RN Debugger |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Screen-Aware (Page-wise) API Attribution** | ✅ (Built-in) | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Standalone on Device (No PC/Cable Required)** | ✅ | ❌ | ✅ (Android only) | ❌ | ❌ | ❌ |
 | **Zero-Render Inactive Mode (0% Background CPU)** | ✅ | ❌ | ⚠️ | ❌ | ⚠️ | ❌ |
 | **HTTP/HTTPS Network Logger (Fetch / Axios / XHR)** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -280,15 +291,21 @@ if (store) {
 }
 connectAsyncStorage(AsyncStorage);
 
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+
+const navigationRef = createNavigationContainerRef();
+
 export default function App() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      {/* Your host app components */}
-      <YourAppRoot />
+      <NavigationContainer ref={navigationRef}>
+        <YourAppRoot />
+      </NavigationContainer>
 
-      {/* Floating overlay UI */}
+      {/* Floating overlay UI with automated page-wise screen tracking */}
       {__DEV__ && (
         <NetworkInspector
+          navigationRef={navigationRef}
           enabled={true}
           environment="DEV"
         />

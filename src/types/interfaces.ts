@@ -212,6 +212,8 @@ export interface PersistedSettings {
   deviceFirstSeen?: number;
   telemetryLastPing?: number;
   telemetryLastActive?: number;
+  telemetrySessionCount?: number;
+  telemetryLastSessionTime?: number;
   starPromptActioned?: boolean;
   starPromptLastShown?: number;
   starPromptFirstSeen?: number;

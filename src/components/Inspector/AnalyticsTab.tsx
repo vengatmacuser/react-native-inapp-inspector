@@ -282,19 +282,16 @@ const AnalyticsTab = React.memo(() => {
               {/* GA Dashboard-style Filter Button */}
               <TouchableOpacity
                 style={[
-                  styles.toolbarBtn,
-                  isAnalyticsFilterApplied && {
-                    borderColor: `${AppColors.brandPurple}60`,
-                    backgroundColor: `${AppColors.brandPurple}15`,
-                  },
+                  styles.toolbarBtnFilter,
+                  isAnalyticsFilterApplied && styles.toolbarBtnActive,
                 ]}
                 onPress={() => setIsFilterModalOpen(true)}
                 hitSlop={6}>
                 <FilterIcon
                   color={
                     isAnalyticsFilterApplied
-                      ? AppColors.brandPurple
-                      : AppColors.grayTextStrong
+                      ? '#7C3AED'
+                      : '#D97706'
                   }
                   size={15}
                 />
@@ -317,34 +314,22 @@ const AnalyticsTab = React.memo(() => {
 
               {/* Export Analytics Button */}
               <TouchableOpacity
-                style={[
-                  styles.toolbarBtn,
-                  {
-                    borderColor: `${AppColors.purple}38`,
-                    backgroundColor: `${AppColors.purple}0F`,
-                  },
-                ]}
+                style={styles.toolbarBtnExport}
                 onPress={() => setIsExportModalVisible(true)}
                 hitSlop={6}
                 testID="inspector.analytics.exportBtn">
                 <ExportIcon
-                  color={AppColors.purple}
+                  color="#7C3AED"
                   size={15}
                 />
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[
-                  styles.toolbarBtn,
-                  {
-                    borderColor: `${AppColors.errorColor}38`,
-                    backgroundColor: `${AppColors.errorColor}0F`,
-                  },
-                ]}
+                style={styles.toolbarBtnDelete}
                 onPress={handleDelete}
                 hitSlop={6}>
                 <TrashIcon
-                  color={AppColors.errorColor}
+                  color="#DC2626"
                   size={15}
                 />
               </TouchableOpacity>
@@ -426,17 +411,34 @@ const AnalyticsTab = React.memo(() => {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        paddingHorizontal: 9,
-                        paddingVertical: 4.5,
-                        borderRadius: 8,
+                        paddingHorizontal: 10,
+                        paddingVertical: 5.5,
+                        borderRadius: 14,
                         backgroundColor: isActive
                           ? chipColor
-                          : `${chipColor}12`,
-                        borderWidth: 1,
-                        borderColor: isActive
-                          ? chipColor
-                          : `${chipColor}30`,
+                          : AppColors.primaryLight,
+                        borderTopWidth: 1.5,
+                        borderLeftWidth: 1,
+                        borderRightWidth: 1,
+                        borderBottomWidth: isActive ? 3 : 2.5,
+                        borderTopColor: isActive
+                          ? 'rgba(255, 255, 255, 0.45)'
+                          : AppColors.white,
+                        borderLeftColor: isActive
+                          ? 'rgba(255, 255, 255, 0.2)'
+                          : `${chipColor}50`,
+                        borderRightColor: isActive
+                          ? 'rgba(0, 0, 0, 0.15)'
+                          : `${chipColor}50`,
+                        borderBottomColor: isActive
+                          ? 'rgba(0, 0, 0, 0.35)'
+                          : `${chipColor}90`,
                         gap: 5,
+                        shadowColor: chipColor,
+                        shadowOffset: {width: 0, height: 2},
+                        shadowOpacity: isActive ? 0.28 : 0.08,
+                        shadowRadius: 3.5,
+                        elevation: isActive ? 3 : 2,
                       }}>
                       <ChipIcon size={11} color={iconColor} />
                       <Text

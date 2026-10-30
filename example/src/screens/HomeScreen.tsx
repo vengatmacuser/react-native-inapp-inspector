@@ -2351,9 +2351,9 @@ export function HomeScreen() {
           testID="home.trigger.get"
           style={({pressed}) => [
             styles.footerButton,
-            batchSuccess && {backgroundColor: '#059669'},
+            batchSuccess && {backgroundColor: '#059669', borderBottomColor: '#047857'},
             {
-              opacity: pressed ? 0.85 : 1,
+              opacity: pressed ? 0.9 : 1,
               transform: [{scale: pressed ? 0.97 : 1}],
             },
           ]}

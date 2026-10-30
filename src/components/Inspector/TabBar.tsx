@@ -142,10 +142,23 @@ const TabBar = React.memo(() => {
           }}>
           <View
             style={{
-              width: 22,
-              height: 22,
-              borderRadius: 11,
-              backgroundColor: AppColors.grayBorderSecondary,
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: AppColors.primaryLight,
+              borderTopWidth: 1.5,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderBottomWidth: 2,
+              borderTopColor: AppColors.white,
+              borderLeftColor: '#CBD5E1',
+              borderRightColor: '#CBD5E1',
+              borderBottomColor: '#94A3B8',
+              shadowColor: AppColors.black,
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.10,
+              shadowRadius: 2,
+              elevation: 2,
               alignItems: 'center',
               justifyContent: 'center',
             }}>
@@ -266,17 +279,26 @@ const TabBar = React.memo(() => {
                 }}
                 style={[
                   styles.contentTabButton,
-                  {
-                    backgroundColor: isActive ? theme.themeColor : theme.bgInactive,
-                    borderColor: isActive ? theme.themeColor : theme.borderInactive,
-                  },
-                  isActive && {
-                    shadowColor: theme.themeColor,
-                    shadowOffset: {width: 0, height: 2},
-                    shadowOpacity: 0.28,
-                    shadowRadius: 3.5,
-                    elevation: 3,
-                  },
+                  isActive
+                    ? {
+                        backgroundColor: theme.themeColor,
+                        borderTopColor: 'rgba(255, 255, 255, 0.45)',
+                        borderLeftColor: 'rgba(255, 255, 255, 0.25)',
+                        borderRightColor: 'rgba(0, 0, 0, 0.12)',
+                        borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+                        shadowColor: theme.themeColor,
+                        shadowOffset: {width: 0, height: 3},
+                        shadowOpacity: 0.35,
+                        shadowRadius: 5,
+                        elevation: 3,
+                      }
+                    : {
+                        backgroundColor: AppColors.white,
+                        borderTopColor: AppColors.white,
+                        borderLeftColor: AppColors.grayBorderSecondary,
+                        borderRightColor: AppColors.grayBorderSecondary,
+                        borderBottomColor: AppColors.slate200,
+                      },
                 ]}>
                 <View
                   style={{
@@ -389,10 +411,23 @@ const TabBar = React.memo(() => {
           }}>
           <View
             style={{
-              width: 22,
-              height: 22,
-              borderRadius: 11,
-              backgroundColor: AppColors.grayBorderSecondary,
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: AppColors.primaryLight,
+              borderTopWidth: 1.5,
+              borderLeftWidth: 1,
+              borderRightWidth: 1,
+              borderBottomWidth: 2,
+              borderTopColor: AppColors.white,
+              borderLeftColor: '#CBD5E1',
+              borderRightColor: '#CBD5E1',
+              borderBottomColor: '#94A3B8',
+              shadowColor: AppColors.black,
+              shadowOffset: {width: 0, height: 1},
+              shadowOpacity: 0.10,
+              shadowRadius: 2,
+              elevation: 2,
               alignItems: 'center',
               justifyContent: 'center',
             }}>
@@ -408,8 +443,8 @@ const TabBar = React.memo(() => {
             paddingLeft: 6,
             paddingRight: 10,
             borderLeftWidth: 1,
-            borderLeftColor: AppColors.dividerColor,
-            backgroundColor: AppColors.primaryLight,
+            borderLeftColor: '#CBD5E1',
+            backgroundColor: AppColors.grayBackground,
             justifyContent: 'center',
             shadowColor: AppColors.shadowColorString,
             shadowOffset: {width: -3, height: 0},
@@ -433,25 +468,27 @@ const TabBar = React.memo(() => {
               styles.contentTabButton,
               {
                 marginRight: 0,
-                borderRadius: 8,
+                borderRadius: 12,
                 backgroundColor: isMediaActive
-                  ? AppColors.brandPurple
-                  : `${AppColors.brandPurple}0D`,
-                borderColor: isMediaActive
-                  ? AppColors.brandPurple
-                  : `${AppColors.brandPurple}2B`,
-                borderWidth: 1,
+                  ? AppColors.purple
+                  : AppColors.primaryLight,
+                borderTopWidth: 1.5,
+                borderLeftWidth: 1.5,
+                borderRightWidth: 1.5,
+                borderBottomWidth: isMediaActive ? 3.5 : 3,
+                borderTopColor: isMediaActive ? 'rgba(255, 255, 255, 0.45)' : AppColors.white,
+                borderLeftColor: isMediaActive ? 'rgba(255, 255, 255, 0.2)' : '#CBD5E1',
+                borderRightColor: isMediaActive ? 'rgba(0, 0, 0, 0.15)' : '#CBD5E1',
+                borderBottomColor: isMediaActive ? 'rgba(0, 0, 0, 0.35)' : '#94A3B8',
                 paddingHorizontal: 10,
                 paddingVertical: 7,
                 alignItems: 'center',
                 justifyContent: 'center',
-              },
-              isMediaActive && {
-                shadowColor: AppColors.brandPurple,
+                shadowColor: isMediaActive ? AppColors.purple : AppColors.black,
                 shadowOffset: {width: 0, height: 2},
-                shadowOpacity: 0.28,
-                shadowRadius: 3.5,
-                elevation: 3,
+                shadowOpacity: isMediaActive ? 0.32 : 0.10,
+                shadowRadius: 4,
+                elevation: isMediaActive ? 3 : 2,
               },
             ]}>
             <View

@@ -227,34 +227,22 @@ const PushTab = React.memo(() => {
 
           <View style={styles.toolbarRight}>
             <TouchableScale
-              style={[
-                styles.toolbarBtn,
-                {
-                  backgroundColor: `${AppColors.brandPurple}14`,
-                  borderColor: `${AppColors.brandPurple}30`,
-                },
-              ]}
+              style={styles.toolbarBtnSimulate}
               onPress={handleSimulatePress}
               hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel="Simulate incoming push notification">
-              <BoltIcon color={AppColors.brandPurple} size={15} />
+              <BoltIcon color="#D97706" size={15} />
             </TouchableScale>
 
             {pushRecords.length > 0 && (
               <TouchableScale
-                style={[
-                  styles.toolbarBtn,
-                  {
-                    borderColor: `${AppColors.errorColor}38`,
-                    backgroundColor: `${AppColors.errorColor}0F`,
-                  },
-                ]}
+                style={styles.toolbarBtnDelete}
                 onPress={clearAllPushLogs}
                 hitSlop={6}
                 accessibilityRole="button"
                 accessibilityLabel="Clear all push notification history">
-                <TrashIcon color={AppColors.errorColor} size={15} />
+                <TrashIcon color="#DC2626" size={15} />
               </TouchableScale>
             )}
           </View>
@@ -369,12 +357,23 @@ const pushTabStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
+    paddingHorizontal: 10,
+    paddingVertical: 5.5,
     borderRadius: 20,
-    backgroundColor: AppColors.grayBackground,
-    borderWidth: 1,
-    borderColor: AppColors.dividerColor,
+    backgroundColor: AppColors.white,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2.5,
+    borderTopColor: AppColors.white,
+    borderLeftColor: AppColors.grayBorderSecondary,
+    borderRightColor: AppColors.grayBorderSecondary,
+    borderBottomColor: AppColors.slate200,
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   filterPillText: {
     fontSize: 11,

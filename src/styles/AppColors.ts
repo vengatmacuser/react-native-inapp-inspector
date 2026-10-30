@@ -5,7 +5,7 @@ const LightColors = {
   purpleShade50: '#EEF2FF',      // Indigo Silk Tint
   offerPurple: '#7C3AED',        // Vibrant Header Violet
   grayBorderSecondary: '#E2E8F0',
-  grayBackground: '#F8FAFC',     // Clean Pearl Slate Surface
+  grayBackground: '#EEF2F6',     // Clay Surface Canvas
   grayText: '#475569',
   grayTextWeak: '#64748B',
   greenColor: '#10B981',

@@ -6,7 +6,9 @@ import {isReduxConnected} from '../customHooks/reduxLogger';
 import {isFirebaseAnalyticsPatched} from '../customHooks/analyticsLogger';
 import {getCrashRecords} from '../customHooks/crashHandler';
 import {getNetworkLogs} from '../customHooks/networkLogger';
+import {getConsoleLogs} from '../customHooks/consoleLogger';
 import {isNativeModuleAvailable} from '../native/NativeInspector';
+import {getLanguage} from '../i18n';
 import {
   getAppName,
   getBundleIdentifier,
@@ -87,11 +89,11 @@ function getCollectUrl(): string {
 function getPlatformUserAgent(params: Record<string, any>): string {
   try {
     const os = Platform.OS;
-    const osVer = String(params.os_version || (os === 'ios' ? '17.0' : '13.0'));
+    const osVer = String(params.os_version || (os === 'ios' ? '17.0' : '14.0'));
     const locale = (params.device_locale || 'en_US').replace('_', '-');
     if (os === 'android') {
       const model = params.device_model || 'Android';
-      return `Mozilla/5.0 (Linux; U; Android ${osVer}; ${locale}; ${model}) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.0.0 Mobile Safari/537.36 (react-native-inapp-inspector/${LIB_VERSION})`;
+      return `Mozilla/5.0 (Linux; U; Android ${osVer}; ${locale}; ${model}) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.0.0 Mobile Safari/537.36 (react-native-inapp-inspector/${LIB_VERSION})`;
     } else if (os === 'ios') {
       const iosVer = osVer.replace(/\./g, '_');
       const model = params.device_model || 'iPhone';
@@ -103,49 +105,16 @@ function getPlatformUserAgent(params: Record<string, any>): string {
   }
 }
 
-function getClientCollectUrl(
-  eventName: string,
-  params: Record<string, any>,
-  clientId: string,
-): string {
-  const {measurementId} = getCredentials();
-  if (!measurementId) return '';
-  const nowSec = String(Math.floor(Date.now() / 1000));
-  const queryParams = new URLSearchParams({
-    v: '2',
-    tid: measurementId,
-    cid: clientId,
-    en: eventName,
-    _p: String(Math.floor(1000000 + Math.random() * 9000000)),
-    ul: (params.device_locale || 'en_US').toLowerCase().replace('_', '-'),
-    sr: params.screen_resolution || '1080x1920',
-    _s: '1',
-    _ee: '1',
-    seg: '1',
-    _et: '1000',
-    sid: nowSec,
-    sct: '1',
-    dl: `https://${params.bundle_id || 'app.native'}/inspector`,
-    dt: `${params.app_name || 'App'} - Inspector`,
-    'ep.country_code': params.country_code || 'unknown',
-    'ep.app_name': params.app_name || 'App',
-    'ep.platform': params.platform || Platform.OS,
-    'ep.pkg_version': params.pkg_version || LIB_VERSION,
-    'ep.install_type': params.install_type || 'local_dev',
-    'ep.js_engine': params.js_engine || 'hermes',
-    'ep.rn_version': params.rn_version || '',
-    'ep.device_brand': params.device_brand || '',
-    'ep.device_model': params.device_model || '',
-  });
-  return `https://www.google-analytics.com/g/collect?${queryParams.toString()}`;
-}
+// ─── Telemetry Session Lifecycle ───────────────────────────────────────────
 
-// ─── Telemetry State & Heartbeat ───────────────────────────────────────────
-
-const PING_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const DAILY_PING_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes inactivity creates new session
 
 let isTelemetryEnabled = true;
 let _hasSearchFilterBeenUsed = false;
+let _currentSessionId: string = String(Math.floor(Date.now() / 1000));
+let _currentSessionNumber = 1;
+let _sessionInitialized = false;
 
 export function setTelemetryEnabled(enabled: boolean): void {
   isTelemetryEnabled = enabled;
@@ -179,6 +148,33 @@ async function getOrCreateClientId(): Promise<string> {
   } catch {
     return `${Math.floor(100000000 + Math.random() * 900000000)}.${Math.floor(1000000000 + Math.random() * 9000000000)}`;
   }
+}
+
+async function getSessionInfo(): Promise<{sessionId: string; sessionNumber: number}> {
+  const now = Date.now();
+  if (!_sessionInitialized) {
+    try {
+      const settings = await loadSettings();
+      const lastSessionTime = settings.telemetryLastSessionTime || 0;
+      let count = settings.telemetrySessionCount || 0;
+      if (now - lastSessionTime >= SESSION_TIMEOUT_MS || count === 0) {
+        count += 1;
+        _currentSessionId = String(Math.floor(now / 1000));
+        _currentSessionNumber = count;
+        await saveSettings({
+          ...settings,
+          telemetrySessionCount: count,
+          telemetryLastSessionTime: now,
+        });
+      } else {
+        _currentSessionNumber = count;
+      }
+      _sessionInitialized = true;
+    } catch {
+      _currentSessionNumber = 1;
+    }
+  }
+  return {sessionId: _currentSessionId, sessionNumber: _currentSessionNumber};
 }
 
 function isDeviceEmulator(): boolean {
@@ -233,7 +229,7 @@ function getDeviceLocaleInfo(): {countryCode: string; locale: string; timeZone: 
   }
 }
 
-function getSystemMetadata(environment?: string, currentSettings?: PersistedSettings) {
+function getSystemMetadata(environment?: string, currentSettings?: PersistedSettings): Record<string, any> {
   const rnConstants = Platform.constants as any;
   const rnVersion = rnConstants?.reactNativeVersion
     ? `${rnConstants.reactNativeVersion.major}.${rnConstants.reactNativeVersion.minor}.${rnConstants.reactNativeVersion.patch}`
@@ -247,13 +243,17 @@ function getSystemMetadata(environment?: string, currentSettings?: PersistedSett
   const { countryCode, locale, timeZone } = getDeviceLocaleInfo();
 
   let screenRes = 'unknown';
+  let screenWidth = 0;
+  let screenHeight = 0;
   let screenDensity = 1;
   let fontScale = 1;
   let deviceFormFactor = 'phone';
   let screenOrientation = 'portrait';
   try {
     const dim = Dimensions.get('window');
-    screenRes = `${Math.round(dim.width)}x${Math.round(dim.height)}`;
+    screenWidth = Math.round(dim.width);
+    screenHeight = Math.round(dim.height);
+    screenRes = `${screenWidth}x${screenHeight}`;
     screenDensity = PixelRatio.get();
     fontScale = PixelRatio.getFontScale();
     screenOrientation = dim.width > dim.height ? 'landscape' : 'portrait';
@@ -273,6 +273,7 @@ function getSystemMetadata(environment?: string, currentSettings?: PersistedSett
     (globalThis as any)?.__turboModuleProxy?.name === 'Expo' ||
     (Platform.constants as any)?.ExpoVersion
   );
+  const expoVersion = isExpo ? String((Platform.constants as any)?.ExpoVersion || 'managed') : 'bare';
 
   let hermesVersion = 'non_hermes';
   let jsEngine = 'jsc';
@@ -306,19 +307,25 @@ function getSystemMetadata(environment?: string, currentSettings?: PersistedSett
     capturedCrashesCount = getCrashRecords().length;
   } catch {}
 
+  let capturedApisCount = 0;
   let capturedApisBracket = '0';
   try {
-    const apiCount = getNetworkLogs().length;
+    capturedApisCount = getNetworkLogs().length;
     capturedApisBracket =
-      apiCount === 0
+      capturedApisCount === 0
         ? '0'
-        : apiCount <= 10
+        : capturedApisCount <= 10
         ? '1-10'
-        : apiCount <= 50
+        : capturedApisCount <= 50
         ? '11-50'
-        : apiCount <= 100
+        : capturedApisCount <= 100
         ? '51-100'
         : '100+';
+  } catch {}
+
+  let capturedLogsCount = 0;
+  try {
+    capturedLogsCount = getConsoleLogs().length;
   } catch {}
 
   let isMetroConnected = false;
@@ -361,11 +368,16 @@ function getSystemMetadata(environment?: string, currentSettings?: PersistedSett
   } catch {}
 
   const reactVer = typeof React !== 'undefined' && React.version ? React.version : 'unknown';
+  let activeLanguage = 'en';
+  try {
+    activeLanguage = getLanguage() || 'en';
+  } catch {}
 
   return {
     pkg_name: PKG_NAME,
     pkg_version: LIB_VERSION,
     lib_version: LIB_VERSION,
+    inspector_version: LIB_VERSION,
     install_type: isDev ? 'local_dev' : 'bundled_production',
     app_name: appName,
     bundle_id: bundleId,
@@ -373,7 +385,9 @@ function getSystemMetadata(environment?: string, currentSettings?: PersistedSett
     app_build: appBuild,
     react_version: reactVer,
     platform: Platform.OS,
+    operating_system: Platform.OS === 'ios' ? 'iOS' : 'Android',
     os_version: String(Platform.Version || 'unknown'),
+    operating_system_version: String(Platform.Version || 'unknown'),
     rn_version: rnVersion,
     country_code: countryCode,
     device_locale: locale,
@@ -381,13 +395,18 @@ function getSystemMetadata(environment?: string, currentSettings?: PersistedSett
     device_brand: deviceBrand,
     device_model: deviceModel,
     device_manufacturer: deviceManufacturer,
+    device_type: isEmulator ? 'emulator' : 'real_device',
+    device_category: deviceFormFactor,
     device_form_factor: deviceFormFactor,
     screen_resolution: screenRes,
+    screen_width: screenWidth,
+    screen_height: screenHeight,
     screen_density: screenDensity,
     screen_orientation: screenOrientation,
     font_scale: fontScale,
     appearance_mode: appearanceMode,
     is_expo: isExpo,
+    expo_version: expoVersion,
     js_engine: jsEngine,
     hermes_version: hermesVersion,
     is_hermes: isHermes,
@@ -399,17 +418,142 @@ function getSystemMetadata(environment?: string, currentSettings?: PersistedSett
     default_landing_tab: defaultLandingTab,
     captured_crashes_count: capturedCrashesCount,
     captured_apis_bracket: capturedApisBracket,
+    captured_apis_count: capturedApisCount,
+    captured_logs_count: capturedLogsCount,
     search_filter_used: _hasSearchFilterBeenUsed,
     is_metro_connected: isMetroConnected,
     is_dev: isDev,
     is_emulator: isEmulator,
-    device_type: isEmulator ? 'emulator' : 'real_device',
     app_mode: isDev ? 'local_mode' : 'bundled_application',
     redux_attached: reduxAttached,
     analytics_attached: analyticsAttached,
+    active_language: activeLanguage,
     environment: environment || (isDev ? 'DEV' : 'PROD'),
     engagement_time_msec: 1000,
   };
+}
+
+function getClientCollectUrl(
+  eventName: string,
+  params: Record<string, any>,
+  clientId: string,
+  sessionId: string,
+  sessionNum: number,
+): string {
+  const {measurementId} = getCredentials();
+  if (!measurementId) return '';
+  const nowSec = sessionId || String(Math.floor(Date.now() / 1000));
+  const queryParams = new URLSearchParams({
+    v: '2',
+    tid: measurementId,
+    cid: clientId,
+    en: eventName,
+    _p: String(Math.floor(1000000 + Math.random() * 9000000)),
+    ul: (params.device_locale || 'en_US').toLowerCase().replace('_', '-'),
+    sr: params.screen_resolution || '1080x1920',
+    _s: '1',
+    _ee: '1',
+    seg: '1',
+    _et: String(params.engagement_time_msec || 1000),
+    sid: nowSec,
+    sct: String(sessionNum || 1),
+    dl: `https://${params.bundle_id || 'app.native'}/inspector/${params.screen_name || eventName}`,
+    dt: `${params.app_name || 'App'} - Inspector`,
+  });
+
+  // Attach all relevant event parameters with 'ep.' or 'epn.' prefix
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null) continue;
+    if (['v', 'tid', 'cid', 'en', '_p', 'ul', 'sr', '_s', '_ee', 'seg', '_et', 'sid', 'sct', 'dl', 'dt'].includes(key)) {
+      continue;
+    }
+    if (typeof value === 'number') {
+      queryParams.set(`epn.${key}`, String(value));
+    } else {
+      queryParams.set(`ep.${key}`, String(value));
+    }
+  }
+
+  return `https://www.google-analytics.com/g/collect?${queryParams.toString()}`;
+}
+
+async function dispatchGAEvents(
+  clientId: string,
+  sessionId: string,
+  sessionNumber: number,
+  events: Array<{name: string; params: Record<string, any>}>,
+  metadata: Record<string, any>,
+): Promise<void> {
+  const url = getCollectUrl();
+  if (!url) return;
+
+  const firstEvent = events[0] || {name: 'app_open', params: {}};
+  const clientUrl = getClientCollectUrl(
+    firstEvent.name,
+    firstEvent.params,
+    clientId,
+    sessionId,
+    sessionNumber,
+  );
+
+  // Channel 1: Direct Google Analytics client collection (resolves IP -> Country/Region/City automatically)
+  if (clientUrl) {
+    fetch(clientUrl, {
+      method: 'POST',
+      headers: {
+        'User-Agent': getPlatformUserAgent(metadata),
+      },
+    }).catch(() => {});
+  }
+
+  // Channel 2: Measurement Protocol with rich structured parameters
+  // Note: GA4 allows up to 25 custom user properties. We curate the top 18 core dimensions.
+  const userProperties = {
+    app_name: { value: String(metadata.app_name || '') },
+    bundle_id: { value: String(metadata.bundle_id || '') },
+    app_version: { value: String(metadata.app_version || '') },
+    pkg_version: { value: String(metadata.pkg_version || '') },
+    platform: { value: String(metadata.platform || '') },
+    os_version: { value: String(metadata.os_version || '') },
+    rn_version: { value: String(metadata.rn_version || '') },
+    react_version: { value: String(metadata.react_version || '') },
+    js_engine: { value: String(metadata.js_engine || '') },
+    is_fabric: { value: String(Boolean(metadata.is_fabric)) },
+    device_brand: { value: String(metadata.device_brand || '') },
+    device_model: { value: String(metadata.device_model || '') },
+    device_type: { value: String(metadata.device_type || '') },
+    country_code: { value: String(metadata.country_code || '') },
+    device_locale: { value: String(metadata.device_locale || '') },
+    time_zone: { value: String(metadata.time_zone || '') },
+    environment: { value: String(metadata.environment || 'DEV') },
+    active_language: { value: String(metadata.active_language || 'en') },
+  };
+
+  const formattedEvents = events.map(e => ({
+    name: e.name,
+    params: {
+      session_id: sessionId,
+      ga_session_id: sessionId,
+      session_number: sessionNumber,
+      ga_session_number: sessionNumber,
+      engagement_time_msec: e.params?.engagement_time_msec ?? 1000,
+      screen_name: e.params?.screen_name || `inspector_${metadata.default_landing_tab || 'apis'}`,
+      screen_class: 'NetworkInspector',
+      ...e.params,
+    },
+  }));
+
+  await fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      client_id: clientId,
+      user_id: clientId,
+      non_personalized_ads: true,
+      user_properties: userProperties,
+      events: formattedEvents,
+    }),
+  }).catch(() => {});
 }
 
 export async function trackActiveTelemetryHeartbeat(
@@ -426,105 +570,48 @@ export async function trackActiveTelemetryHeartbeat(
     return;
   }
 
-  const url = getCollectUrl();
-  if (!url) return;
-
   try {
     const settings = await loadSettings();
-    const lastPing = settings.telemetryLastPing || 0;
+    const lastDailyPing = settings.telemetryLastPing || 0;
     const now = Date.now();
     const isNewDevice = !settings.deviceRegistered;
-
-    // Send on first launch or if 24h passed since last ping
-    if (!isNewDevice && now - lastPing < PING_INTERVAL_MS) return;
+    const isDailyDue = isNewDevice || (now - lastDailyPing >= DAILY_PING_INTERVAL_MS);
 
     const clientId = await getOrCreateClientId();
-    const params = getSystemMetadata(environment, settings);
+    const {sessionId, sessionNumber} = await getSessionInfo();
+    const metadata = getSystemMetadata(environment, settings);
 
-    const deviceParams = {
-      ...params,
+    const baseEventParams = {
+      ...metadata,
       device_id: clientId,
+      session_id: sessionId,
+      session_number: sessionNumber,
       is_new_device: isNewDevice,
       device_first_seen: settings.deviceFirstSeen || now,
     };
 
-    const eventsToDispatch = isNewDevice
-      ? [
-          {name: 'first_open', params: deviceParams},
-          {name: 'first_device_install', params: deviceParams},
-          {name: 'session_start', params: deviceParams},
-          {name: 'active_device', params: deviceParams},
-          {name: 'inspector_active_heartbeat', params: deviceParams},
-        ]
-      : [
-          {name: 'session_start', params: deviceParams},
-          {name: 'app_open', params: deviceParams},
-          {name: 'active_device', params: deviceParams},
-          {name: 'inspector_active_heartbeat', params: deviceParams},
-        ];
+    const eventsToDispatch: Array<{name: string; params: Record<string, any>}> = [];
 
-    // Channel 1: Direct Google Analytics client collection (resolves IP -> Country/Region/City automatically)
-    const clientUrl = getClientCollectUrl(
-      isNewDevice ? 'first_open' : 'session_start',
-      params,
-      clientId,
-    );
-    if (clientUrl) {
-      fetch(clientUrl, {
-        method: 'POST',
-        headers: {
-          'User-Agent': getPlatformUserAgent(params),
-        },
-      }).catch(() => {});
+    if (isNewDevice) {
+      eventsToDispatch.push(
+        {name: 'first_open', params: baseEventParams},
+        {name: 'first_device_install', params: baseEventParams},
+      );
     }
 
-    // Channel 2: Measurement Protocol with rich structured parameters
-    await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        client_id: clientId,
-        user_id: clientId,
-        non_personalized_ads: true,
-        user_properties: {
-          device_id: { value: clientId },
-          pkg_name: { value: params.pkg_name },
-          pkg_version: { value: params.pkg_version },
-          install_type: { value: params.install_type },
-          app_name: { value: params.app_name },
-          bundle_id: { value: params.bundle_id },
-          app_version: { value: params.app_version },
-          react_version: { value: params.react_version },
-          country: { value: params.country_code },
-          country_code: { value: params.country_code },
-          locale: { value: params.device_locale },
-          time_zone: { value: params.time_zone },
-          device_brand: { value: params.device_brand },
-          device_model: { value: params.device_model },
-          device_form_factor: { value: params.device_form_factor },
-          screen_resolution: { value: params.screen_resolution },
-          appearance_mode: { value: params.appearance_mode },
-          is_expo: { value: String(params.is_expo) },
-          js_engine: { value: params.js_engine },
-          is_fabric: { value: String(params.is_fabric) },
-          is_bridgeless: { value: String(params.is_bridgeless) },
-          has_native_module: { value: String(params.has_native_module) },
-          has_mmkv: { value: String(params.has_mmkv) },
-          fab_mode: { value: params.fab_mode },
-          default_landing_tab: { value: params.default_landing_tab },
-          captured_crashes_count: { value: String(params.captured_crashes_count) },
-          captured_apis_bracket: { value: params.captured_apis_bracket },
-          search_filter_used: { value: String(params.search_filter_used) },
-          is_metro_connected: { value: String(params.is_metro_connected) },
-          redux_attached: { value: String(params.redux_attached) },
-          analytics_attached: { value: String(params.analytics_attached) },
-          platform: { value: params.platform },
-          rn_version: { value: params.rn_version },
-          lib_version: { value: params.lib_version },
-        },
-        events: eventsToDispatch,
-      }),
-    });
+    eventsToDispatch.push(
+      {name: 'session_start', params: baseEventParams},
+      {name: 'app_open', params: baseEventParams},
+    );
+
+    if (isDailyDue) {
+      eventsToDispatch.push(
+        {name: 'active_device', params: baseEventParams},
+        {name: 'inspector_active_heartbeat', params: baseEventParams},
+      );
+    }
+
+    await dispatchGAEvents(clientId, sessionId, sessionNumber, eventsToDispatch, metadata);
 
     await saveSettings({
       ...settings,
@@ -532,8 +619,10 @@ export async function trackActiveTelemetryHeartbeat(
       telemetryDeviceId: clientId,
       deviceRegistered: true,
       deviceFirstSeen: settings.deviceFirstSeen || now,
-      telemetryLastPing: now,
+      telemetryLastPing: isDailyDue ? now : lastDailyPing,
       telemetryLastActive: now,
+      telemetryLastSessionTime: now,
+      telemetrySessionCount: sessionNumber,
     });
   } catch {
     // silent
@@ -545,88 +634,58 @@ export async function trackTelemetryEvent(
   eventParams?: Record<string, any>,
 ): Promise<void> {
   if (!isTelemetryEnabled) return;
-  const url = getCollectUrl();
-  if (!url) return;
+  if (process.env.NODE_ENV === 'test' || typeof (globalThis as any).jest !== 'undefined') return;
 
   try {
     const clientId = await getOrCreateClientId();
+    const {sessionId, sessionNumber} = await getSessionInfo();
     const settings = await loadSettings().catch(() => ({} as PersistedSettings));
     const metadata = getSystemMetadata(undefined, settings);
 
     const params = {
       ...metadata,
       device_id: clientId,
+      session_id: sessionId,
+      session_number: sessionNumber,
       ...eventParams,
-      engagement_time_msec: 100,
+      engagement_time_msec: eventParams?.engagement_time_msec ?? 500,
     };
 
-    const clientUrl = getClientCollectUrl(eventName, params, clientId);
-    if (clientUrl) {
-      fetch(clientUrl, {
-        method: 'POST',
-        headers: {
-          'User-Agent': getPlatformUserAgent(metadata),
-        },
-      }).catch(() => {});
-    }
-
-    await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        client_id: clientId,
-        user_id: clientId,
-        non_personalized_ads: true,
-        user_properties: {
-          device_id: { value: clientId },
-          pkg_name: { value: metadata.pkg_name },
-          pkg_version: { value: metadata.pkg_version },
-          install_type: { value: metadata.install_type },
-          app_name: { value: metadata.app_name },
-          bundle_id: { value: metadata.bundle_id },
-          app_version: { value: metadata.app_version },
-          react_version: { value: metadata.react_version },
-          country: { value: metadata.country_code },
-          country_code: { value: metadata.country_code },
-          locale: { value: metadata.device_locale },
-          time_zone: { value: metadata.time_zone },
-          device_brand: { value: metadata.device_brand },
-          device_model: { value: metadata.device_model },
-          device_form_factor: { value: metadata.device_form_factor },
-          screen_resolution: { value: metadata.screen_resolution },
-          appearance_mode: { value: metadata.appearance_mode },
-          is_expo: { value: String(metadata.is_expo) },
-          js_engine: { value: metadata.js_engine },
-          is_fabric: { value: String(metadata.is_fabric) },
-          is_bridgeless: { value: String(metadata.is_bridgeless) },
-          has_native_module: { value: String(metadata.has_native_module) },
-          has_mmkv: { value: String(metadata.has_mmkv) },
-          fab_mode: { value: metadata.fab_mode },
-          default_landing_tab: { value: metadata.default_landing_tab },
-          captured_crashes_count: { value: String(metadata.captured_crashes_count) },
-          captured_apis_bracket: { value: metadata.captured_apis_bracket },
-          search_filter_used: { value: String(metadata.search_filter_used) },
-          is_metro_connected: { value: String(metadata.is_metro_connected) },
-          redux_attached: { value: String(metadata.redux_attached) },
-          analytics_attached: { value: String(metadata.analytics_attached) },
-          platform: { value: metadata.platform },
-          rn_version: { value: metadata.rn_version },
-          lib_version: { value: metadata.lib_version },
-        },
-        events: [{ name: eventName, params }],
-      }),
-    });
+    await dispatchGAEvents(clientId, sessionId, sessionNumber, [{name: eventName, params}], metadata);
   } catch {
     // silent
   }
 }
 
 /**
+ * Tracks when the In-App Inspector is opened (via FAB, shake, or manual trigger)
+ */
+export function trackInspectorOpen(trigger = 'fab', extraDetails?: Record<string, any>): void {
+  trackTelemetryEvent('inspector_open', {
+    trigger,
+    screen_name: 'inspector_main',
+    screen_class: 'NetworkInspector',
+    ...extraDetails,
+  });
+}
+
+/**
+ * Tracks when the In-App Inspector is minimized or closed
+ */
+export function trackInspectorClose(durationMs?: number): void {
+  trackTelemetryEvent('inspector_close', {
+    duration_ms: durationMs || 0,
+    screen_name: 'inspector_closed',
+  });
+}
+
+/**
  * Tracks when a developer opens/switches tabs in the In-App Inspector (e.g. APIs, Logs, Redux, Performance, Storage, etc.)
  */
-export function trackInspectorTabView(tabName: string): void {
+export function trackInspectorTabView(tabName: string, previousTab?: string): void {
   trackTelemetryEvent('inspector_tab_view', {
     tab_name: tabName,
+    previous_tab: previousTab || '',
     screen_name: `tab_${tabName}`,
     screen_class: 'NetworkInspector',
   });
@@ -643,16 +702,97 @@ export function trackInspectorScreenView(screenName: string): void {
 }
 
 /**
- * Tracks screen / performance recording events
+ * Tracks when data is exported (cURL, HAR, JSON, Markdown, Logs)
  */
-export function trackInspectorScreenRecord(
-  action: 'start' | 'stop' | 'toggle',
-  recordingType = 'screen',
+export function trackInspectorExport(
+  module: string,
+  exportFormat: string,
+  recordCount = 1,
 ): void {
-  trackTelemetryEvent('inspector_screen_record', {
-    action,
-    recording_type: recordingType,
+  trackTelemetryEvent('inspector_export', {
+    module,
+    export_format: exportFormat,
+    record_count: recordCount,
   });
 }
 
+/**
+ * Tracks when data is cleared (Clear network, Clear console, Clear crashes, Clear storage)
+ */
+export function trackInspectorClear(module: string, clearedCount = 0): void {
+  trackTelemetryEvent('inspector_clear', {
+    module,
+    cleared_count: clearedCount,
+  });
+}
 
+/**
+ * Tracks search query submissions or filter toggles
+ */
+export function trackInspectorFilter(
+  module: string,
+  filterType: string,
+  filterValue?: string,
+): void {
+  markSearchFilterUsed();
+  trackTelemetryEvent('inspector_filter', {
+    module,
+    filter_type: filterType,
+    filter_value: filterValue || '',
+  });
+}
+
+/**
+ * Tracks screen captures and video recordings
+ */
+export function trackInspectorMediaCapture(
+  captureType: 'screenshot' | 'video',
+  format = 'png',
+  durationSec = 0,
+): void {
+  trackTelemetryEvent('inspector_media_capture', {
+    capture_type: captureType,
+    format,
+    duration_sec: durationSec,
+  });
+}
+
+/**
+ * Tracks when unhandled crashes or exceptions are intercepted
+ */
+export function trackInspectorCrashCaptured(crash: {
+  message?: string;
+  caller?: string;
+  isFatal?: boolean;
+}): void {
+  trackTelemetryEvent('inspector_crash_captured', {
+    is_fatal: Boolean(crash.isFatal),
+    error_caller: crash.caller || 'Unknown',
+    error_summary: (crash.message || 'Error').slice(0, 100),
+  });
+}
+
+/**
+ * Tracks Inspector language changes
+ */
+export function trackInspectorLanguageChanged(newLanguage: string, previousLanguage?: string): void {
+  trackTelemetryEvent('inspector_language_changed', {
+    new_language: newLanguage,
+    previous_language: previousLanguage || '',
+  });
+}
+
+/**
+ * Tracks user actions such as copying cURL, URL, payload, or replaying requests
+ */
+export function trackInspectorAction(
+  actionType: string,
+  module: string,
+  details?: Record<string, any>,
+): void {
+  trackTelemetryEvent('inspector_action', {
+    action_type: actionType,
+    module,
+    ...details,
+  });
+}

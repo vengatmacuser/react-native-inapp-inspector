@@ -15,6 +15,7 @@ import {
   setNativeFloatingButtonBadge,
 } from '../native/NativeInspector';
 import {t} from '../i18n';
+import {trackInspectorCrashCaptured} from '../helpers/telemetry';
 
 export interface CrashEventPayload {
   error: Error | any;
@@ -598,6 +599,11 @@ export const handleInterceptedCrash = (
     };
 
     crashRecordsStore.unshift(crashRecord);
+    trackInspectorCrashCaptured({
+      message: crashRecord.message,
+      caller: crashRecord.name,
+      isFatal: crashRecord.isFatal,
+    });
     if (crashRecordsStore.length > maxStoredCrashes) {
       crashRecordsStore = crashRecordsStore.slice(0, maxStoredCrashes);
     }

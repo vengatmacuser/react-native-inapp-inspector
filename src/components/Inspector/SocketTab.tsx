@@ -431,11 +431,8 @@ const SocketTab = React.memo(() => {
           <View style={styles.toolbarRight}>
             <TouchableScale
               style={[
-                styles.toolbarBtn,
-                !isSocketFiltersDefault(modalFilters) && {
-                  borderColor: AppColors.purple,
-                  backgroundColor: `${AppColors.purple}15`,
-                },
+                styles.toolbarBtnFilter,
+                !isSocketFiltersDefault(modalFilters) && styles.toolbarBtnActive,
               ]}
               onPress={() => setIsFilterModalOpen(true)}
               hitSlop={6}
@@ -444,8 +441,8 @@ const SocketTab = React.memo(() => {
               <FilterIcon
                 color={
                   !isSocketFiltersDefault(modalFilters)
-                    ? AppColors.purple
-                    : AppColors.grayTextStrong
+                    ? '#7C3AED'
+                    : '#D97706'
                 }
                 size={15}
               />
@@ -455,34 +452,22 @@ const SocketTab = React.memo(() => {
             </TouchableScale>
 
             <TouchableScale
-              style={[
-                styles.toolbarBtn,
-                {
-                  backgroundColor: `${AppColors.amber600}14`,
-                  borderColor: `${AppColors.amber600}30`,
-                },
-              ]}
+              style={styles.toolbarBtnSimulate}
               onPress={handleSimulatePress}
               hitSlop={6}
               accessibilityRole="button"
               accessibilityLabel="Simulate test WebSocket traffic">
-              <BoltIcon color={AppColors.amber600} size={15} />
+              <BoltIcon color="#D97706" size={15} />
             </TouchableScale>
 
             {socketRecords.length > 0 && (
               <TouchableScale
-                style={[
-                  styles.toolbarBtn,
-                  {
-                    borderColor: `${AppColors.errorColor}38`,
-                    backgroundColor: `${AppColors.errorColor}0F`,
-                  },
-                ]}
+                style={styles.toolbarBtnDelete}
                 onPress={handleClearAllConfirm}
                 hitSlop={6}
                 accessibilityRole="button"
                 accessibilityLabel="Clear all socket logs">
-                <TrashIcon color={AppColors.errorColor} size={15} />
+                <TrashIcon color="#DC2626" size={15} />
               </TouchableScale>
             )}
           </View>
@@ -703,12 +688,23 @@ const socketTabStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 4.5,
+    paddingHorizontal: 10,
+    paddingVertical: 5.5,
     borderRadius: 20,
-    backgroundColor: AppColors.grayBackground,
-    borderWidth: 1,
-    borderColor: AppColors.dividerColor,
+    backgroundColor: AppColors.white,
+    borderTopWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 2.5,
+    borderTopColor: AppColors.white,
+    borderLeftColor: AppColors.grayBorderSecondary,
+    borderRightColor: AppColors.grayBorderSecondary,
+    borderBottomColor: AppColors.slate200,
+    shadowColor: AppColors.black,
+    shadowOffset: {width: 0, height: 1.5},
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   filterPillText: {
     fontSize: 11,

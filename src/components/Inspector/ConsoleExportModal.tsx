@@ -47,6 +47,7 @@ import {
 } from '../../helpers/shareFormatter';
 import {useTranslation} from '../../i18n';
 import type {ConsoleLog} from '../../types';
+import {trackInspectorExport} from '../../helpers/telemetry';
 
 export interface ConsoleExportModalProps {
   visible: boolean;
@@ -319,6 +320,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
   const handleShare = useCallback(async () => {
     if (!exportedContent) return;
     triggerNativeHaptic('light');
+    trackInspectorExport('console', format, selectedLogs.length);
     try {
       const fileUri = await writeNativeExportFile(
         exportedFilename,
@@ -353,6 +355,7 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
   const handleSaveToDisk = useCallback(async () => {
     if (!exportedContent) return;
     triggerNativeHaptic('medium');
+    trackInspectorExport('console', format, selectedLogs.length);
     try {
       const fileUri = await writeNativeExportFile(
         exportedFilename,
@@ -391,9 +394,10 @@ export const ConsoleExportModal: React.FC<ConsoleExportModalProps> = ({
   const handleCopy = useCallback(() => {
     if (!exportedContent) return;
     triggerNativeHaptic('light');
+    trackInspectorExport('console', format, selectedLogs.length);
     copyToClipboard(exportedContent, 'Console Logs');
     showToast(t('console.copiedLogs', 'Logs copied to clipboard!'));
-  }, [exportedContent, t]);
+  }, [exportedContent, format, selectedLogs.length, t]);
 
   const hasFilterDifference = filteredLogs.length !== allLogs.length;
 
@@ -1482,11 +1486,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: AppColors.purple,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     gap: 7,
+    borderTopWidth: 2,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 3.5,
+    borderTopColor: 'rgba(255, 255, 255, 0.45)',
+    borderLeftColor: 'rgba(255, 255, 255, 0.2)',
+    borderRightColor: 'rgba(0, 0, 0, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.28)',
     shadowColor: AppColors.purple,
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
   },

@@ -625,10 +625,14 @@ const SettingsPanel = () => {
         <View
           style={{
             backgroundColor: AppColors.primaryLight,
-            borderRadius: 12,
+            borderRadius: 14,
             padding: 3,
             borderWidth: 1,
+            borderTopWidth: 1.5,
+            borderBottomWidth: 3,
             borderColor: AppColors.grayBorderSecondary,
+            borderTopColor: AppColors.white,
+            borderBottomColor: AppColors.slate200,
             flexDirection: 'row',
             alignItems: 'center',
             shadowColor: AppColors.black,
@@ -684,6 +688,15 @@ const SettingsPanel = () => {
                   gap: 4,
                   borderRadius: 9,
                   backgroundColor: isActive ? AppColors.purple : 'transparent',
+                  borderTopWidth: isActive ? 1.5 : 0,
+                  borderBottomWidth: isActive ? 2.5 : 0,
+                  borderTopColor: '#C4B5FD',
+                  borderBottomColor: '#4C1D95',
+                  shadowColor: AppColors.purple,
+                  shadowOffset: {width: 0, height: 2},
+                  shadowOpacity: isActive ? 0.25 : 0,
+                  shadowRadius: 3,
+                  elevation: isActive ? 2 : 0,
                 }}>
                 <IconComp
                   color={isActive ? AppColors.white : AppColors.grayText}
@@ -852,15 +865,19 @@ const SettingsPanel = () => {
                     key={moduleItem.key}
                     style={{
                       backgroundColor: AppColors.primaryLight,
-                      borderRadius: 13,
+                      borderRadius: 14,
                       borderWidth: 1,
+                      borderTopWidth: 1.5,
+                      borderBottomWidth: 3,
                       borderColor: isChecked
                         ? `${theme.color}38`
                         : AppColors.grayBorderSecondary,
+                      borderTopColor: AppColors.white,
+                      borderBottomColor: isChecked ? `${theme.color}66` : AppColors.slate200,
                       padding: 12,
                       gap: 8,
                       shadowColor: AppColors.black,
-                      shadowOpacity: isChecked ? 0.03 : 0.01,
+                      shadowOpacity: isChecked ? 0.05 : 0.02,
                       shadowRadius: 3,
                       shadowOffset: {width: 0, height: 1.5},
                       elevation: 1.5,
