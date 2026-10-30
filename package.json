@@ -1,6 +1,6 @@
 {
   "name": "react-native-inapp-inspector",
-  "version": "2.5.19",
+  "version": "2.5.20",
   "description": "Screen-aware in-app network inspector, API debugger, and DevTools for React Native & Expo. Standalone on-device alternative to Flipper and Reactotron with page-wise API attribution, cURL export, console symbolication, and storage editing.",
   "repository": {
     "type": "git",
